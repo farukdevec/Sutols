@@ -1,0 +1,6 @@
+[submodule "gitsunum/shower"]
+	path = gitsunum/shower
+	url = https://github.com/shower/shower.git
+[submodule "gitsunum/reveal.js"]
+	path = gitsunum/reveal.js
+	url = https://github.com/hakimel/reveal.js.git
