@@ -4,11 +4,6 @@ import '../services/presentation_auto_builder.dart';
 import '../state/presentation_controller.dart';
 import 'html_presentation_editor_page.dart';
 
-const Color _draftInk = Color(0xFF142033);
-const Color _draftMuted = Color(0xFF6C7890);
-const Color _draftAccent = Color(0xFF0B7BFF);
-const Color _draftBorder = Color(0xFFDCE5F1);
-
 class PresentationTextDraftPage extends StatefulWidget {
   const PresentationTextDraftPage({
     super.key,
@@ -43,8 +38,8 @@ class _PresentationTextDraftPageState extends State<PresentationTextDraftPage> {
     setState(() {
       _pages.add(
         _DraftPageFields(
-          titleHint: 'Yeni Sayfa',
-          bodyHint: 'Bu sayfanin metnini yazin.',
+          titleHint: 'Sayfa basligi',
+          bodyHint: 'Bu sayfada anlatmak istediginiz metni yazin.',
         ),
       );
     });
@@ -95,16 +90,17 @@ class _PresentationTextDraftPageState extends State<PresentationTextDraftPage> {
     final theme = Theme.of(context);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF3F6FB),
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        foregroundColor: _draftInk,
+        backgroundColor: theme.colorScheme.surface,
+        foregroundColor: theme.colorScheme.onSurface,
         surfaceTintColor: Colors.transparent,
+        elevation: 0,
         title: Text(
           'Sunum Metni',
           style: theme.textTheme.titleLarge?.copyWith(
-            color: _draftInk,
-            fontWeight: FontWeight.w900,
+            color: theme.colorScheme.onSurface,
+            fontWeight: FontWeight.w700,
           ),
         ),
         actions: <Widget>[
@@ -112,6 +108,7 @@ class _PresentationTextDraftPageState extends State<PresentationTextDraftPage> {
             tooltip: 'Sayfa ekle',
             onPressed: _addPage,
             icon: const Icon(Icons.add_rounded),
+            color: theme.colorScheme.primary,
           ),
           const SizedBox(width: 4),
         ],
@@ -120,7 +117,7 @@ class _PresentationTextDraftPageState extends State<PresentationTextDraftPage> {
         top: false,
         child: LayoutBuilder(
           builder: (context, constraints) {
-            final horizontalPadding = constraints.maxWidth >= 900 ? 28.0 : 14.0;
+            final horizontalPadding = context.spacing.md;
 
             return Column(
               children: <Widget>[
@@ -128,23 +125,19 @@ class _PresentationTextDraftPageState extends State<PresentationTextDraftPage> {
                   child: ListView.separated(
                     padding: EdgeInsets.fromLTRB(
                       horizontalPadding,
-                      18,
+                      16,
                       horizontalPadding,
-                      18,
+                      16,
                     ),
                     itemCount: _pages.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 12),
+                    separatorBuilder: (_, __) => SizedBox(height: context.spacing.md),
                     itemBuilder: (context, index) {
-                      return Center(
-                        child: ConstrainedBox(
-                          constraints: const BoxConstraints(maxWidth: 920),
-                          child: _DraftPageCard(
-                            page: _pages[index],
-                            index: index,
-                            canRemove: _pages.length > 1,
-                            onRemove: () => _removePage(index),
-                          ),
-                        ),
+                      return _DraftPageCard(
+                        page: _pages[index],
+                        index: index,
+                        canRemove: _pages.length > 1,
+                        onRemove: () => _removePage(index),
+                        maxWidth: constraints.maxWidth < 720 ? constraints.maxWidth : 720,
                       );
                     },
                   ),
@@ -187,32 +180,29 @@ class _DraftPageCard extends StatelessWidget {
     required this.index,
     required this.canRemove,
     required this.onRemove,
+    required this.maxWidth,
   });
 
   final _DraftPageFields page;
   final int index;
   final bool canRemove;
   final VoidCallback onRemove;
+  final double maxWidth;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final sutolColors = context.sutolColors;
 
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: _draftBorder),
-        boxShadow: const <BoxShadow>[
-          BoxShadow(
-            color: Color(0x10000000),
-            blurRadius: 18,
-            offset: Offset(0, 10),
-          ),
-        ],
+    return AnimatedContainer(
+      duration: context.motion.fast,
+      curve: context.motion.defaultCurve,
+      decoration: context.decoration.cardElevated(
+        color: theme.colorScheme.surface,
+        elevation: 1,
       ),
       child: Padding(
-        padding: const EdgeInsets.all(14),
+        padding: EdgeInsets.all(context.spacing.md),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
@@ -223,50 +213,50 @@ class _DraftPageCard extends StatelessWidget {
                   height: 36,
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF0F6FF),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: const Color(0xFFCFE0F8)),
+                    color: sutolColors.primaryContainer,
+                    borderRadius: BorderRadius.circular(10),
                   ),
                   child: Text(
                     '${index + 1}',
                     style: theme.textTheme.titleSmall?.copyWith(
-                      color: _draftAccent,
-                      fontWeight: FontWeight.w900,
+                      color: sutolColors.onPrimaryContainer,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
                 ),
-                const SizedBox(width: 10),
+                SizedBox(width: context.spacing.sm),
                 Expanded(
                   child: Text(
                     'Sayfa ${index + 1}',
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      color: _draftInk,
-                      fontWeight: FontWeight.w900,
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      color: theme.colorScheme.onSurface,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 ),
                 IconButton(
                   tooltip: 'Sayfayi sil',
                   onPressed: canRemove ? onRemove : null,
-                  icon: const Icon(Icons.delete_outline_rounded),
-                  color: const Color(0xFFD13A3A),
+                  icon: Icon(Icons.delete_outline_rounded, size: 20),
+                  color: theme.colorScheme.error,
                 ),
               ],
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: context.spacing.md),
             TextField(
               controller: page.titleController,
               textInputAction: TextInputAction.next,
               decoration: _inputDecoration(
                 label: 'Baslik',
                 hint: page.titleHint,
+                theme: theme,
               ),
-              style: theme.textTheme.titleMedium?.copyWith(
-                color: _draftInk,
-                fontWeight: FontWeight.w800,
+              style: theme.textTheme.titleSmall?.copyWith(
+                color: theme.colorScheme.onSurface,
+                fontWeight: FontWeight.w600,
               ),
             ),
-            const SizedBox(height: 10),
+            SizedBox(height: context.spacing.sm),
             TextField(
               controller: page.bodyController,
               minLines: 4,
@@ -274,10 +264,11 @@ class _DraftPageCard extends StatelessWidget {
               decoration: _inputDecoration(
                 label: 'Metin',
                 hint: page.bodyHint,
+                theme: theme,
               ),
-              style: theme.textTheme.bodyLarge?.copyWith(
-                color: _draftInk,
-                height: 1.3,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurface,
+                height: 1.5,
               ),
             ),
           ],
@@ -301,18 +292,19 @@ class _DraftBottomBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final sutolColors = context.sutolColors;
 
-    return DecoratedBox(
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(
-          top: BorderSide(color: _draftBorder),
-        ),
-      ),
+    return Container(
+      decoration: context.decoration.panel(),
       child: SafeArea(
         top: false,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+          padding: EdgeInsets.fromLTRB(
+            context.spacing.md,
+            context.spacing.sm,
+            context.spacing.md,
+            context.spacing.sm,
+          ),
           child: Center(
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 920),
@@ -321,22 +313,22 @@ class _DraftBottomBar extends StatelessWidget {
                   final compact = constraints.maxWidth < 560;
                   final pageLabel = Text(
                     '$pageCount sayfa',
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: _draftMuted,
-                      fontWeight: FontWeight.w800,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                      fontWeight: FontWeight.w500,
                     ),
                   );
                   final addButton = OutlinedButton.icon(
                     onPressed: onAddPage,
-                    icon: const Icon(Icons.add_rounded),
-                    label: const Text('Sayfa ekle'),
+                    icon: const Icon(Icons.add_rounded, size: 18),
+                    label: const Text('Sayfa ekle', style: TextStyle(fontSize: 13)),
                   );
                   final createButton = FilledButton.icon(
                     onPressed: onCreate,
-                    icon: const Icon(Icons.auto_awesome_rounded),
-                    label: const Text('Sunumu Olustur'),
+                    icon: const Icon(Icons.auto_awesome_rounded, size: 18),
+                    label: const Text('Sunumu Olustur', style: TextStyle(fontSize: 13)),
                     style: FilledButton.styleFrom(
-                      backgroundColor: _draftAccent,
+                      backgroundColor: sutolColors.seed,
                       foregroundColor: Colors.white,
                     ),
                   );
@@ -346,9 +338,9 @@ class _DraftBottomBar extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: <Widget>[
                         pageLabel,
-                        const SizedBox(height: 10),
+                        SizedBox(height: context.spacing.sm),
                         addButton,
-                        const SizedBox(height: 8),
+                        SizedBox(height: context.spacing.xs),
                         createButton,
                       ],
                     );
@@ -358,7 +350,7 @@ class _DraftBottomBar extends StatelessWidget {
                     children: <Widget>[
                       Expanded(child: pageLabel),
                       addButton,
-                      const SizedBox(width: 10),
+                      SizedBox(width: context.spacing.sm),
                       createButton,
                     ],
                   );
@@ -375,24 +367,29 @@ class _DraftBottomBar extends StatelessWidget {
 InputDecoration _inputDecoration({
   required String label,
   required String hint,
+  required ThemeData theme,
 }) {
   return InputDecoration(
     labelText: label,
     hintText: hint,
-    hintStyle: const TextStyle(color: Color(0xFF9AA7BC)),
+    hintStyle: TextStyle(
+      color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
+      fontSize: 14,
+    ),
     filled: true,
-    fillColor: const Color(0xFFF7F9FD),
+    fillColor: theme.colorScheme.surface,
+    contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 12),
     border: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(8),
-      borderSide: const BorderSide(color: _draftBorder),
+      borderRadius: BorderRadius.circular(12),
+      borderSide: BorderSide(color: theme.colorScheme.outline, width: 1.5),
     ),
     enabledBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(8),
-      borderSide: const BorderSide(color: _draftBorder),
+      borderRadius: BorderRadius.circular(12),
+      borderSide: BorderSide(color: theme.colorScheme.outline, width: 1.5),
     ),
     focusedBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(8),
-      borderSide: const BorderSide(color: _draftAccent, width: 1.4),
+      borderRadius: BorderRadius.circular(12),
+      borderSide: BorderSide(color: theme.colorScheme.primary, width: 2),
     ),
   );
 }
