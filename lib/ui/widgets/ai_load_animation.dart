@@ -18,7 +18,7 @@ class AiLoadAnimation extends StatefulWidget {
   State<AiLoadAnimation> createState() => _AiLoadAnimationState();
 }
 
-enum AiLoadStyle { dots, lines, pulse }
+enum AiLoadStyle { dots, lines, pulse, spinningLight }
 
 class _AiLoadAnimationState extends State<AiLoadAnimation>
     with SingleTickerProviderStateMixin {
@@ -63,10 +63,16 @@ class _AiLoadAnimationState extends State<AiLoadAnimation>
                 controller: _controller,
                 color: dotColor,
               ),
+            AiLoadStyle.spinningLight => _SpinningLightWidget(
+                controller: _controller,
+                color: dotColor,
+              ),
           },
         ),
-        const SizedBox(height: 24),
-        _buildMessage(dotColor),
+        if (widget.message.isNotEmpty) ...[
+          const SizedBox(height: 24),
+          _buildMessage(dotColor),
+        ],
       ],
     );
   }
@@ -107,7 +113,7 @@ class _AiLoadAnimationState extends State<AiLoadAnimation>
   }
 }
 
-// ── Dots (ChatGPT-style) ────────────────────────
+// ── Dots (Professional wave) ───────────────────
 
 class _DotsWidget extends StatelessWidget {
   const _DotsWidget({
@@ -125,26 +131,30 @@ class _DotsWidget extends StatelessWidget {
       builder: (context, _) {
         return Row(
           mainAxisAlignment: MainAxisAlignment.center,
-          children: List.generate(3, (i) {
-            final t = (controller.value + i * 0.18) % 1.0;
-            final bounce = _bounceOut(t);
-            final scale = 1.0 - 0.25 * bounce;
-            final alpha = 0.5 + 0.5 * (1.0 - bounce);
+          children: List.generate(5, (i) {
+            final t = (controller.value - i * 0.15) % 1.0;
+            final bell = t < 0.5 ? t / 0.5 : (1.0 - t) / 0.5;
+            final ease = bell * bell * (3 - 2 * bell);
+            final scale = 0.3 + 0.7 * ease;
+            final alpha = 0.1 + 0.9 * ease;
 
             return Padding(
-              padding: EdgeInsets.symmetric(horizontal: 6),
-              child: Transform.translate(
-                offset: Offset(0, -bounce * 28),
-                child: Transform.scale(
-                  scale: scale,
-                  child: Container(
-                    width: 10,
-                    height: 10,
-                    decoration: BoxDecoration(
-                      color: color.withValues(alpha: alpha),
-                      shape: BoxShape.circle,
-                    ),
-                  ),
+              padding: const EdgeInsets.symmetric(horizontal: 6),
+              child: Container(
+                width: 10 * scale,
+                height: 10 * scale,
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: alpha),
+                  shape: BoxShape.circle,
+                  boxShadow: ease > 0.6
+                      ? [
+                          BoxShadow(
+                            color: color.withValues(alpha: ease * 0.2),
+                            blurRadius: 8,
+                            spreadRadius: 2,
+                          ),
+                        ]
+                      : null,
                 ),
               ),
             );
@@ -152,15 +162,6 @@ class _DotsWidget extends StatelessWidget {
         );
       },
     );
-  }
-
-  double _bounceOut(double t) {
-    if (t < 0.5) {
-      final p = t / 0.5;
-      return p * p * (3 - 2 * p);
-    }
-    final p = (t - 0.5) / 0.5;
-    return 1.0 - p * p * (3 - 2 * p);
   }
 }
 
@@ -210,6 +211,154 @@ class _LinesWidget extends StatelessWidget {
       },
     );
   }
+}
+
+// ── Spinning Light ────────────────────────
+
+class _SpinningLightWidget extends StatelessWidget {
+  const _SpinningLightWidget({
+    required this.controller,
+    required this.color,
+  });
+
+  final AnimationController controller;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: controller,
+      builder: (context, _) {
+        final angle = controller.value * 2 * math.pi;
+
+        return Center(
+          child: SizedBox(
+            width: 80,
+            height: 80,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                // Expanding ring pulses
+                ...List.generate(3, (i) {
+                  final t = (controller.value + i * 0.33) % 1.0;
+                  final r = 10 + t * 30;
+                  final alpha = (1.0 - t) * 0.25;
+                  return Container(
+                    width: r * 2,
+                    height: r * 2,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: color.withValues(alpha: alpha),
+                        width: 1.5,
+                      ),
+                    ),
+                  );
+                }),
+                // Rotating light beam
+                Transform.rotate(
+                  angle: angle,
+                  child: CustomPaint(
+                    size: const Size(80, 80),
+                    painter: _LightSweepPainter(color: color),
+                  ),
+                ),
+                // Glow behind center
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: color.withValues(alpha: 0.4),
+                        blurRadius: 30,
+                        spreadRadius: 15,
+                      ),
+                    ],
+                  ),
+                ),
+                // Center light orb
+                Container(
+                  width: 16,
+                  height: 16,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: RadialGradient(
+                      colors: [
+                        Colors.white,
+                        color.withValues(alpha: 0.8),
+                      ],
+                      stops: const [0.3, 1.0],
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: color.withValues(alpha: 0.6),
+                        blurRadius: 15,
+                        spreadRadius: 5,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _LightSweepPainter extends CustomPainter {
+  final Color color;
+
+  _LightSweepPainter({required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = size.width / 2;
+
+    final paint = Paint()
+      ..shader = SweepGradient(
+        startAngle: -0.15,
+        endAngle: 0.15,
+        center: Alignment.center,
+        colors: [
+          color.withValues(alpha: 0.35),
+          color.withValues(alpha: 0.15),
+          color.withValues(alpha: 0.0),
+        ],
+        stops: const [0.0, 0.4, 1.0],
+      ).createShader(Rect.fromCircle(center: center, radius: radius));
+
+    canvas.drawCircle(center, radius, paint);
+
+    final edgePaint = Paint()
+      ..shader = SweepGradient(
+        startAngle: -0.15,
+        endAngle: -0.05,
+        center: Alignment.center,
+        colors: [
+          color.withValues(alpha: 0.5),
+          color.withValues(alpha: 0.0),
+        ],
+        stops: const [0.0, 1.0],
+      ).createShader(Rect.fromCircle(center: center, radius: radius));
+
+    canvas.drawCircle(center, radius, edgePaint);
+
+    final ringPaint = Paint()
+      ..color = color.withValues(alpha: 0.08)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1;
+
+    canvas.drawCircle(center, radius * 0.85, ringPaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _LightSweepPainter oldDelegate) =>
+      oldDelegate.color != color;
 }
 
 // ── Pulse (Gemini-style) ────────────────────────

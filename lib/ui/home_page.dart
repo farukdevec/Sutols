@@ -1,10 +1,9 @@
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
 
 import '../services/ai_service.dart';
 import '../services/presentation_auto_builder.dart';
 import '../state/presentation_controller.dart';
+import 'widgets/ai_load_animation.dart';
 import 'design/design_system.dart';
 import 'html_presentation_editor_page.dart';
 
@@ -15,28 +14,22 @@ class SutolHomePage extends StatefulWidget {
   State<SutolHomePage> createState() => _SutolHomePageState();
 }
 
-class _SutolHomePageState extends State<SutolHomePage> with SingleTickerProviderStateMixin {
+class _SutolHomePageState extends State<SutolHomePage> {
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _promptController = TextEditingController();
   bool _isGenerating = false;
   String _loadingStepTitle = '';
   String _loadingStepDescription = '';
-  late final AnimationController _loadingAnimController;
 
   @override
   void initState() {
     super.initState();
-    _loadingAnimController = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 2),
-    )..repeat();
   }
 
   @override
   void dispose() {
     _titleController.dispose();
     _promptController.dispose();
-    _loadingAnimController.dispose();
     super.dispose();
   }
 
@@ -191,7 +184,6 @@ class _SutolHomePageState extends State<SutolHomePage> with SingleTickerProvider
                               duration: AppMotion.standard,
                               child: _isGenerating
                                   ? _LoadingState(
-                                      animation: _loadingAnimController,
                                       title: _loadingStepTitle,
                                       description: _loadingStepDescription,
                                     )
@@ -322,19 +314,17 @@ class _InputCard extends StatelessWidget {
 
 class _LoadingState extends StatelessWidget {
   const _LoadingState({
-    required this.animation,
     required this.title,
     required this.description,
   });
-  
-  final Animation<double> animation;
+
   final String title;
   final String description;
 
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    
+
     return Container(
       padding: const EdgeInsets.all(AppSpacing.s48),
       decoration: BoxDecoration(
@@ -345,7 +335,7 @@ class _LoadingState extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          _AiLoadingWaveform(animation: animation),
+          const AiLoadAnimation(size: 80, style: AiLoadStyle.spinningLight, message: ''),
           const SizedBox(height: AppSpacing.s32),
           AnimatedSwitcher(
             duration: const Duration(milliseconds: 300),
@@ -367,55 +357,6 @@ class _LoadingState extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _AiLoadingWaveform extends StatelessWidget {
-  const _AiLoadingWaveform({required this.animation});
-  final Animation<double> animation;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.colors;
-    
-    return SizedBox(
-      height: 48,
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: List.generate(5, (index) {
-          return AnimatedBuilder(
-            animation: animation,
-            builder: (context, child) {
-              final phaseOffset = index * 0.15;
-              final wave = math.sin((animation.value * 2 - phaseOffset) * 2 * math.pi);
-              
-              final heightScale = 0.3 + 0.7 * ((wave + 1) / 2);
-              final opacity = 0.4 + 0.6 * ((wave + 1) / 2);
-              
-              return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 4.0),
-                child: Container(
-                  width: 8,
-                  height: 48 * heightScale,
-                  decoration: BoxDecoration(
-                    color: colors.accent.withValues(alpha: opacity),
-                    borderRadius: BorderRadius.circular(4),
-                    boxShadow: [
-                      BoxShadow(
-                        color: colors.accent.withValues(alpha: opacity * 0.5),
-                        blurRadius: 10 * heightScale,
-                        spreadRadius: 1,
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            },
-          );
-        }),
       ),
     );
   }

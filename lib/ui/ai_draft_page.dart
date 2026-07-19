@@ -181,7 +181,7 @@ class _AiDraftPageState extends State<AiDraftPage> {
         key: ValueKey('generating'),
         child: AiLoadAnimation(
           message: 'Konu araştırılıyor ve slaytlar oluşturuluyor...',
-          style: AiLoadStyle.lines,
+          style: AiLoadStyle.dots,
         ),
       );
     }
