@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import '../services/ai_service.dart';
 import '../services/presentation_auto_builder.dart';
 import '../state/presentation_controller.dart';
 import 'design/design_system.dart';
@@ -18,6 +19,8 @@ class _SutolHomePageState extends State<SutolHomePage> with SingleTickerProvider
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _promptController = TextEditingController();
   bool _isGenerating = false;
+  String _loadingStepTitle = '';
+  String _loadingStepDescription = '';
   late final AnimationController _loadingAnimController;
 
   @override
@@ -44,28 +47,74 @@ class _SutolHomePageState extends State<SutolHomePage> with SingleTickerProvider
 
     setState(() {
       _isGenerating = true;
+      _loadingStepTitle = 'Konu Araştırılıyor...';
+      _loadingStepDescription = 'Yapay zeka internet üzerinde konunuzla ilgili en güncel bilgileri tarıyor.';
     });
 
-    // Simulate AI generation delay
-    await Future<void>.delayed(const Duration(milliseconds: 1500));
+    try {
+      final aiService = AiService();
+      final research = await aiService.research(prompt, maxResults: 3);
 
-    if (!mounted) return;
+      if (!mounted) return;
+      setState(() {
+        _loadingStepTitle = 'İçerik Oluşturuluyor...';
+        _loadingStepDescription = 'Araştırma sonuçları analiz ediliyor ve slayt metinleri yazılıyor.';
+      });
 
-    final drafts = [PresentationDraftPage(title: title, body: prompt)];
-    final generatedPages = const PresentationAutoBuilder().buildPages(drafts);
+      final slides = await aiService.generateSlides(prompt, slideCount: 5);
 
-    final controller = PresentationController();
-    controller.replaceDeck(generatedPages);
+      if (!mounted) return;
+      setState(() {
+        _loadingStepTitle = 'Tasarım Hazırlanıyor...';
+        _loadingStepDescription = 'Slaytlar için en uygun şablonlar, renkler ve yerleşimler seçiliyor.';
+      });
 
-    setState(() {
-      _isGenerating = false;
-    });
+      final drafts = slides
+          .map((s) => PresentationDraftPage(title: s.title, body: s.body))
+          .toList();
 
-    Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        builder: (_) => HtmlPresentationEditorPage(controller: controller),
-      ),
-    );
+      if (research.summary.isNotEmpty) {
+        drafts.insert(
+          0,
+          PresentationDraftPage(
+            title: 'Arastirma Ozeti',
+            body: research.summary,
+          ),
+        );
+      }
+
+      await Future.delayed(const Duration(milliseconds: 800));
+      final generatedPages = const PresentationAutoBuilder().buildPages(drafts);
+
+      if (!mounted) return;
+      setState(() {
+        _loadingStepTitle = 'Son Rötuşlar Yapılıyor...';
+        _loadingStepDescription = 'Sunum bileşenleri birleştiriliyor ve sahne hazırlanıyor.';
+      });
+      await Future.delayed(const Duration(milliseconds: 800));
+
+      final controller = PresentationController();
+      controller.replaceDeck(generatedPages);
+
+      setState(() {
+        _isGenerating = false;
+      });
+
+      if (!mounted) return;
+      Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (_) => HtmlPresentationEditorPage(controller: controller),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isGenerating = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Hata: $e')),
+      );
+    }
   }
 
   @override
@@ -89,13 +138,22 @@ class _SutolHomePageState extends State<SutolHomePage> with SingleTickerProvider
                 padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s32, vertical: AppSpacing.s24),
                 child: Row(
                   children: [
-                    Text(
-                      'Sutol',
-                      style: AppTypography.headline.copyWith(
-                        color: colors.textPrimary,
-                        letterSpacing: -0.5,
-                      ),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Image.asset('assets/images/logo.png', height: 32),
+                        const SizedBox(width: 10),
+                        Text(
+                          'Sutol',
+                          style: AppTypography.headline.copyWith(
+                            color: colors.textPrimary,
+                            letterSpacing: -0.5,
+                          ),
+                        ),
+                      ],
                     ),
+                    const Spacer(),
+                    _UserAvatar(),
                   ],
                 ),
               ),
@@ -110,7 +168,7 @@ class _SutolHomePageState extends State<SutolHomePage> with SingleTickerProvider
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text(
-                            'Create Professional Presentations',
+                            'Fikirden sunuma, tek cümlede.',
                             textAlign: TextAlign.center,
                             style: AppTypography.display.copyWith(
                               color: colors.textPrimary,
@@ -118,7 +176,7 @@ class _SutolHomePageState extends State<SutolHomePage> with SingleTickerProvider
                           ),
                           const SizedBox(height: AppSpacing.s16),
                           Text(
-                            'Transform your ideas into stunning slides instantly.',
+                            'Anlatmak istediğinizi yazın. Sutol, sizin için tasarlanmış bir sunumu saniyeler içinde hazırlasın.',
                             textAlign: TextAlign.center,
                             style: AppTypography.bodyLarge.copyWith(
                               color: colors.textSecondary,
@@ -132,7 +190,11 @@ class _SutolHomePageState extends State<SutolHomePage> with SingleTickerProvider
                             child: AnimatedSwitcher(
                               duration: AppMotion.standard,
                               child: _isGenerating
-                                  ? _LoadingState(animation: _loadingAnimController)
+                                  ? _LoadingState(
+                                      animation: _loadingAnimController,
+                                      title: _loadingStepTitle,
+                                      description: _loadingStepDescription,
+                                    )
                                   : _InputCard(
                                       titleController: _titleController,
                                       promptController: _promptController,
@@ -224,7 +286,7 @@ class _InputCard extends StatelessWidget {
             controller: titleController,
             style: AppTypography.titleMedium.copyWith(color: colors.textPrimary),
             decoration: InputDecoration(
-              hintText: 'Presentation Title',
+              hintText: 'Sunum Başlığı',
               filled: true,
               fillColor: colors.surface,
             ),
@@ -236,7 +298,7 @@ class _InputCard extends StatelessWidget {
             minLines: 3,
             style: AppTypography.bodyLarge.copyWith(color: colors.textPrimary),
             decoration: InputDecoration(
-              hintText: 'What is this presentation about? Describe your topic, key points, and audience...',
+              hintText: 'Bu sunum ne hakkında? Konuyu, ana fikirleri ve kitleyi kısaca anlatın...',
               filled: true,
               fillColor: colors.surface,
             ),
@@ -259,9 +321,15 @@ class _InputCard extends StatelessWidget {
 }
 
 class _LoadingState extends StatelessWidget {
-  const _LoadingState({required this.animation});
+  const _LoadingState({
+    required this.animation,
+    required this.title,
+    required this.description,
+  });
   
   final Animation<double> animation;
+  final String title;
+  final String description;
 
   @override
   Widget build(BuildContext context) {
@@ -277,47 +345,115 @@ class _LoadingState extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          AnimatedBuilder(
+          _AiLoadingWaveform(animation: animation),
+          const SizedBox(height: AppSpacing.s32),
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 300),
+            child: Text(
+              title,
+              key: ValueKey<String>('title_$title'),
+              style: AppTypography.titleMedium.copyWith(color: colors.textPrimary),
+              textAlign: TextAlign.center,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.s8),
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 300),
+            child: Text(
+              description,
+              key: ValueKey<String>('desc_$description'),
+              style: AppTypography.bodyMedium.copyWith(color: colors.textSecondary),
+              textAlign: TextAlign.center,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AiLoadingWaveform extends StatelessWidget {
+  const _AiLoadingWaveform({required this.animation});
+  final Animation<double> animation;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    
+    return SizedBox(
+      height: 48,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: List.generate(5, (index) {
+          return AnimatedBuilder(
             animation: animation,
             builder: (context, child) {
-              return Transform.rotate(
-                angle: animation.value * 2 * math.pi,
+              final phaseOffset = index * 0.15;
+              final wave = math.sin((animation.value * 2 - phaseOffset) * 2 * math.pi);
+              
+              final heightScale = 0.3 + 0.7 * ((wave + 1) / 2);
+              final opacity = 0.4 + 0.6 * ((wave + 1) / 2);
+              
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4.0),
                 child: Container(
-                  width: 64,
-                  height: 64,
+                  width: 8,
+                  height: 48 * heightScale,
                   decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: SweepGradient(
-                      colors: [
-                        colors.accent.withValues(alpha: 0.1),
-                        colors.accent,
-                      ],
-                    ),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(4.0),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: colors.surfaceElevated,
+                    color: colors.accent.withValues(alpha: opacity),
+                    borderRadius: BorderRadius.circular(4),
+                    boxShadow: [
+                      BoxShadow(
+                        color: colors.accent.withValues(alpha: opacity * 0.5),
+                        blurRadius: 10 * heightScale,
+                        spreadRadius: 1,
                       ),
-                    ),
+                    ],
                   ),
                 ),
               );
             },
+          );
+        }),
+      ),
+    );
+  }
+}
+
+class _UserAvatar extends StatelessWidget {
+  const _UserAvatar();
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    return GestureDetector(
+      onTap: () {},
+      child: Container(
+        width: 40,
+        height: 40,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          gradient: LinearGradient(
+            colors: [colors.primary, colors.primary.withValues(alpha: 0.7)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
           ),
-          const SizedBox(height: AppSpacing.s32),
-          Text(
-            'Slaytlar hazırlanıyor...',
-            style: AppTypography.titleMedium.copyWith(color: colors.textPrimary),
+          boxShadow: [
+            BoxShadow(
+              color: colors.primary.withValues(alpha: 0.3),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: const Center(
+          child: Icon(
+            Icons.person_rounded,
+            size: 20,
+            color: Colors.white,
           ),
-          const SizedBox(height: AppSpacing.s8),
-          Text(
-            'Yapay zeka içeriğinizi yapılandırıyor ve tasarlıyor',
-            style: AppTypography.bodyMedium.copyWith(color: colors.textSecondary),
-          ),
-        ],
+        ),
       ),
     );
   }

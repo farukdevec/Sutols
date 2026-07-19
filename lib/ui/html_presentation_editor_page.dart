@@ -205,6 +205,9 @@ class _HtmlPresentationEditorPageState
                                 onRedo: widget.controller.redo,
                                 canUndo: widget.controller.canUndo,
                                 canRedo: widget.controller.canRedo,
+                                onAddText: widget.controller.addTextBlock,
+                                onRemoveText: widget.controller.removeSelectedTextBlock,
+                                canRemoveText: widget.controller.canRemoveTextBlock,
                               ),
                               const SizedBox(height: 12),
                               Expanded(
@@ -712,6 +715,9 @@ class _HtmlStudioHeader extends StatelessWidget {
     required this.onRedo,
     required this.canUndo,
     required this.canRedo,
+    required this.onAddText,
+    required this.onRemoveText,
+    required this.canRemoveText,
   });
 
   final int pageCount;
@@ -725,6 +731,9 @@ class _HtmlStudioHeader extends StatelessWidget {
   final VoidCallback onRedo;
   final bool canUndo;
   final bool canRedo;
+  final VoidCallback onAddText;
+  final VoidCallback onRemoveText;
+  final bool canRemoveText;
 
   @override
   Widget build(BuildContext context) {
@@ -742,6 +751,8 @@ class _HtmlStudioHeader extends StatelessWidget {
             onTap: () => Navigator.of(context).pop(),
           ),
           const SizedBox(width: 12),
+          Image.asset('assets/images/logo.png', height: 28),
+          const SizedBox(width: 10),
           Text(
             'Sutol',
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
@@ -766,17 +777,16 @@ class _HtmlStudioHeader extends StatelessWidget {
             canRedo: canRedo,
             
           ),
-          const SizedBox(width: 8),
-          const _StudioHeaderMenuChip(label: 'HTML Sahne'),
           const Spacer(),
-          _StudioHeaderInfoChip(
-            icon: Icons.layers_rounded,
-            label: '$pageCount Sayfa',
+          _ToolbarAction(
+            icon: Icons.add_rounded,
+            onTap: onAddText,
           ),
           const SizedBox(width: 8),
-          _StudioHeaderInfoChip(
-            icon: Icons.text_fields_rounded,
-            label: '$blockCount Metin',
+          _ToolbarAction(
+            icon: Icons.delete_outline_rounded,
+            onTap: canRemoveText ? onRemoveText : null,
+            destructive: true,
           ),
           const SizedBox(width: 12),
           _StudioPreviewButton(onTap: onPreview),
@@ -1250,7 +1260,19 @@ class _HtmlInspectorPanel extends StatelessWidget {
           Expanded(
             child: activeTab == _HtmlToolTab.text
                 ? SingleChildScrollView(
-                    child: _HtmlTextEffectControls(controller: controller),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        _HtmlTextControls(
+                          controller: controller,
+                          textController: textController,
+                        ),
+                        const SizedBox(height: 24),
+                        const Divider(height: 1),
+                        const SizedBox(height: 16),
+                        _HtmlTextEffectControls(controller: controller),
+                      ],
+                    ),
                   )
                 : SingleChildScrollView(
                     child: AnimatedSwitcher(
@@ -1319,97 +1341,9 @@ class _HtmlStageWorkspace extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final selectedComponent = controller.selectedComponentBlock;
-    final selectedModel = selectedComponent?.modelAssetId == null
-        ? null
-        : findPresentation3DModelAsset(selectedComponent!.modelAssetId!);
-    final showModelAnimationControl = activeTab == _HtmlToolTab.models3d &&
-        selectedModel?.hasAnimations == true;
-    final showModel360Control =
-        activeTab == _HtmlToolTab.models3d && selectedModel != null;
-
     return Column(
       children: <Widget>[
-        Container(
-          padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
-          decoration: BoxDecoration(
-            color: context.colors.surfaceElevated,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: context.colors.border),
-          ),
-          child: activeTab == _HtmlToolTab.text
-              ? _HtmlTextControls(
-                  controller: controller,
-                  textController: textController,
-                )
-              : Row(
-                  children: <Widget>[
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: <Widget>[
-                          Text(
-                            'Sunum Sahnesi',
-                            style: Theme.of(context)
-                                .textTheme
-                                .headlineSmall
-                                ?.copyWith(
-                                  color: context._htmlInk,
-                                  fontWeight: FontWeight.w900,
-                                ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            controller.hasMultiSelection
-                                ? '${controller.selectedItemCount} oge secili. Herhangi birini surukleyerek grubu birlikte tasiyabilirsin.'
-                                : 'Soldan arac sec, sahnede duzenle ve alttan sayfalar arasinda gecis yap.',
-                            style: Theme.of(context)
-                                .textTheme
-                                .bodyMedium
-                                ?.copyWith(
-                                  color: context._htmlMuted,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    if (showModel360Control) ...<Widget>[
-                      _ModelMotionControl(
-                        semanticLabel: '${selectedModel.label} 360° inceleme',
-                        title: '360° İnceleme',
-                        enabledLabel: 'Fare aktif',
-                        disabledLabel: 'Taşıma modu',
-                        enabledIcon: Icons.mouse_rounded,
-                        disabledIcon: Icons.touch_app_rounded,
-                        enabled: selectedComponent!.modelOrbitEnabled,
-                        onChanged: controller.updateSelectedModelOrbitEnabled,
-                      ),
-                      const SizedBox(width: 10),
-                    ],
-                    if (showModelAnimationControl) ...<Widget>[
-                      _ModelMotionControl(
-                        semanticLabel: '${selectedModel!.label} animasyonu',
-                        title: 'Model Animasyonu',
-                        enabledLabel: 'Açık',
-                        disabledLabel: 'Kapalı',
-                        enabledIcon: Icons.motion_photos_on_rounded,
-                        disabledIcon: Icons.motion_photos_off_rounded,
-                        enabled: selectedComponent!.modelAnimationEnabled,
-                        onChanged:
-                            controller.updateSelectedModelAnimationEnabled,
-                      ),
-                      const SizedBox(width: 12),
-                    ],
-                    _InspectorStatChip(
-                      icon: Icons.notes_rounded,
-                      label: 'Sayfa ${controller.selectedIndex + 1}',
-                    ),
-                  ],
-                ),
-        ),
-        const SizedBox(height: 14),
+
         Expanded(
           child: Container(
             padding: const EdgeInsets.all(14),
@@ -1434,84 +1368,6 @@ class _HtmlStageWorkspace extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-}
-
-class _ModelMotionControl extends StatelessWidget {
-  const _ModelMotionControl({
-    required this.semanticLabel,
-    required this.title,
-    required this.enabledLabel,
-    required this.disabledLabel,
-    required this.enabledIcon,
-    required this.disabledIcon,
-    required this.enabled,
-    required this.onChanged,
-  });
-
-  final String semanticLabel;
-  final String title;
-  final String enabledLabel;
-  final String disabledLabel;
-  final IconData enabledIcon;
-  final IconData disabledIcon;
-  final bool enabled;
-  final ValueChanged<bool> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return Semantics(
-      container: true,
-      label: semanticLabel,
-      toggled: enabled,
-      child: Container(
-        padding: const EdgeInsets.fromLTRB(12, 7, 8, 7),
-        decoration: BoxDecoration(
-          color: enabled ? const Color(0xFFEAF3FF) : const Color(0xFFF5F7FA),
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(
-            color: enabled ? const Color(0xFFB9D6FF) : context.sutolColors.outline,
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            Icon(
-              enabled ? enabledIcon : disabledIcon,
-              color: enabled ? context._htmlAccent : context._htmlMuted,
-              size: 21,
-            ),
-            const SizedBox(width: 8),
-            Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                Text(
-                  title,
-                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                        color: context._htmlInk,
-                        fontWeight: FontWeight.w900,
-                      ),
-                ),
-                Text(
-                  enabled ? enabledLabel : disabledLabel,
-                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        color: enabled ? context._htmlAccent : context._htmlMuted,
-                        fontWeight: FontWeight.w800,
-                      ),
-                ),
-              ],
-            ),
-            const SizedBox(width: 7),
-            Switch.adaptive(
-              value: enabled,
-              onChanged: onChanged,
-              activeTrackColor: context._htmlAccent,
-            ),
-          ],
-        ),
-      ),
     );
   }
 }
@@ -1597,6 +1453,22 @@ class _HtmlPageFilmstrip extends StatelessWidget {
                     ? controller.removeSelectedPage
                     : null,
                 subtle: true,
+              ),
+            ],
+          ),
+          const SizedBox(width: 12),
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _StudioHeaderInfoChip(
+                icon: Icons.layers_rounded,
+                label: '${controller.pages.length} Sayfa',
+              ),
+              const SizedBox(height: 8),
+              _StudioHeaderInfoChip(
+                icon: Icons.text_fields_rounded,
+                label: '${controller.selectedPageBlockCount} Metin',
               ),
             ],
           ),
@@ -3378,31 +3250,28 @@ class _HtmlTextControls extends StatelessWidget {
     final selectedTextBlock = controller.selectedTextBlock;
     final selectedTextCount = controller.selectedTextSelectionCount;
 
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        return Wrap(
-          spacing: 10,
-          runSpacing: 8,
-          crossAxisAlignment: WrapCrossAlignment.end,
-          children: <Widget>[
-            const _ToolbarBadge(
-              icon: Icons.text_fields_rounded,
-              label: 'Metin Katmani',
-            ),
-            if (selectedTextCount > 1)
-              _ToolbarChip(
-                label: '$selectedTextCount metin secili',
-              ),
-            SizedBox(
-              width: math.min(constraints.maxWidth, 310),
-              child: _TextFieldControl(
-                controller: textController,
-                enabled: selectedTextBlock != null,
-                onChanged: controller.updateSelectedText,
-              ),
-            ),
-            SizedBox(
-              width: 188,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: <Widget>[
+        const _ToolbarBadge(
+          icon: Icons.text_fields_rounded,
+          label: 'Metin Katmanı',
+        ),
+        if (selectedTextCount > 1) ...[
+          const SizedBox(height: 8),
+          _ToolbarChip(label: '$selectedTextCount metin seçili'),
+        ],
+        const SizedBox(height: 12),
+        _TextFieldControl(
+          controller: textController,
+          enabled: selectedTextBlock != null,
+          onChanged: controller.updateSelectedText,
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              flex: 3,
               child: _TypeDropdownControl(
                 value: selectedTextBlock?.textStyle,
                 onChanged: selectedTextBlock == null
@@ -3414,8 +3283,9 @@ class _HtmlTextControls extends StatelessWidget {
                       },
               ),
             ),
-            SizedBox(
-              width: 146,
+            const SizedBox(width: 8),
+            Expanded(
+              flex: 2,
               child: _SizeStepperControl(
                 value: selectedTextBlock?.fontSize.round(),
                 onDecrease: selectedTextBlock == null
@@ -3430,20 +3300,9 @@ class _HtmlTextControls extends StatelessWidget {
                         ),
               ),
             ),
-            _ToolbarAction(
-              icon: Icons.add_rounded,
-              onTap: controller.addTextBlock,
-            ),
-            _ToolbarAction(
-              icon: Icons.delete_outline_rounded,
-              onTap: controller.canRemoveTextBlock
-                  ? controller.removeSelectedTextBlock
-                  : null,
-              destructive: true,
-            ),
           ],
-        );
-      },
+        ),
+      ],
     );
   }
 }
