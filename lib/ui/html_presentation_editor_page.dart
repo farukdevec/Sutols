@@ -12,10 +12,14 @@ import 'presentation_preview_page.dart';
 import 'widgets/editor_shell.dart';
 import 'widgets/html_stage/html_page_stage.dart';
 
-const Color _htmlInk = Color(0xFF142033);
-const Color _htmlMuted = Color(0xFF6C7890);
-const Color _htmlAccent = Color(0xFF0B7BFF);
-const Color _htmlPanel = Color(0xFFFFFFFF);
+import 'design/design_system.dart';
+
+extension on BuildContext {
+  Color get _htmlInk => sutolColors.onSurface;
+  Color get _htmlMuted => sutolColors.onSurfaceVariant;
+  Color get _htmlAccent => sutolColors.primary;
+  Color get _htmlPanel => sutolColors.surface;
+}
 
 enum _HtmlToolTab {
   backgrounds,
@@ -176,16 +180,8 @@ class _HtmlPresentationEditorPageState
             final blockCount = widget.controller.selectedPageBlockCount;
             return Scaffold(
               body: DecoratedBox(
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: <Color>[
-                      Color(0xFFF2F6FC),
-                      Color(0xFFE9F0FA),
-                      Color(0xFFF6F8FC),
-                    ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
+                decoration: BoxDecoration(
+                  color: context.colors.surface,
                 ),
                 child: SafeArea(
                   child: LayoutBuilder(
@@ -350,7 +346,7 @@ class _HtmlHeader extends StatelessWidget {
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                color: _htmlInk,
+                color: context._htmlInk,
                 fontWeight: FontWeight.w800,
               ),
         ),
@@ -360,7 +356,7 @@ class _HtmlHeader extends StatelessWidget {
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: _htmlMuted,
+                color: context._htmlMuted,
                 fontWeight: FontWeight.w500,
               ),
         ),
@@ -395,7 +391,7 @@ class _HtmlHeader extends StatelessWidget {
         onLoad: onLoad,
         onExportHtml: onExport,
         onExportPdf: onExportPdf,
-        light: false,
+        
       ),
     ];
 
@@ -405,16 +401,9 @@ class _HtmlHeader extends StatelessWidget {
         return Container(
           padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
           decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.9),
-            borderRadius: BorderRadius.circular(26),
-            border: Border.all(color: const Color(0xFFD9E2F1)),
-            boxShadow: const <BoxShadow>[
-              BoxShadow(
-                color: Color(0x14000000),
-                blurRadius: 20,
-                offset: Offset(0, 10),
-              ),
-            ],
+            color: context.colors.surfaceElevated,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: context.colors.border),
           ),
           child: compact
               ? Column(
@@ -425,9 +414,9 @@ class _HtmlHeader extends StatelessWidget {
                       children: <Widget>[
                         IconButton(
                           onPressed: () => Navigator.of(context).pop(),
-                          icon: const Icon(
+                          icon: Icon(
                             Icons.arrow_back_rounded,
-                            color: _htmlInk,
+                            color: context._htmlInk,
                           ),
                         ),
                         const SizedBox(width: 8),
@@ -452,9 +441,9 @@ class _HtmlHeader extends StatelessWidget {
                   children: <Widget>[
                     IconButton(
                       onPressed: () => Navigator.of(context).pop(),
-                      icon: const Icon(
+                      icon: Icon(
                         Icons.arrow_back_rounded,
-                        color: _htmlInk,
+                        color: context._htmlInk,
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -486,19 +475,19 @@ class _HeaderBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
       decoration: BoxDecoration(
-        color: const Color(0xFFF4F7FC),
+        color: context.sutolColors.surfaceSubtle,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFDCE5F1)),
+        border: Border.all(color: context.sutolColors.outline),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
-          Icon(icon, size: 18, color: _htmlInk),
+          Icon(icon, size: 18, color: context._htmlInk),
           const SizedBox(width: 8),
           Text(
             label,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: _htmlInk,
+                  color: context._htmlInk,
                   fontWeight: FontWeight.w700,
                 ),
           ),
@@ -522,7 +511,7 @@ class _HeaderAction extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: _htmlAccent,
+      color: context._htmlAccent,
       borderRadius: BorderRadius.circular(18),
       child: InkWell(
         onTap: onTap,
@@ -532,12 +521,12 @@ class _HeaderAction extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
-              Icon(icon, size: 18, color: Colors.white),
+              Icon(icon, size: 18, color: context.sutolColors.onPrimary),
               const SizedBox(width: 8),
               Text(
                 label,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Colors.white,
+                      color: context.sutolColors.surface,
                       fontWeight: FontWeight.w800,
                     ),
               ),
@@ -562,22 +551,18 @@ class _FileMenuButton extends StatelessWidget {
     required this.onLoad,
     required this.onExportHtml,
     required this.onExportPdf,
-    this.light = false,
   });
 
   final VoidCallback onSave;
   final VoidCallback onLoad;
   final VoidCallback onExportHtml;
   final VoidCallback onExportPdf;
-  final bool light;
 
   @override
   Widget build(BuildContext context) {
-    final background =
-        light ? Colors.white.withValues(alpha: 0.16) : _htmlAccent;
-    final foreground = light ? Colors.white : Colors.white;
-    final border =
-        light ? Border.all(color: Colors.white.withValues(alpha: 0.16)) : null;
+    final background = context.sutolColors.surfaceSubtle;
+    final foreground = context._htmlInk;
+    final border = Border.all(color: context.sutolColors.outline);
 
     return PopupMenuButton<_FileMenuAction>(
       tooltip: 'Dosya islemleri',
@@ -667,25 +652,19 @@ class _HistoryButtons extends StatelessWidget {
     required this.onRedo,
     required this.canUndo,
     required this.canRedo,
-    this.light = false,
   });
 
   final VoidCallback onUndo;
   final VoidCallback onRedo;
   final bool canUndo;
   final bool canRedo;
-  final bool light;
 
   @override
   Widget build(BuildContext context) {
-    final background =
-        light ? Colors.white.withValues(alpha: 0.12) : const Color(0xFFF4F7FC);
-    final borderColor =
-        light ? Colors.white.withValues(alpha: 0.16) : const Color(0xFFDCE5F1);
-    final enabledColor = light ? Colors.white : _htmlInk;
-    final disabledColor = light
-        ? Colors.white.withValues(alpha: 0.42)
-        : _htmlMuted.withValues(alpha: 0.52);
+    final background = context.sutolColors.surfaceSubtle;
+    final borderColor = context.sutolColors.outline;
+    final enabledColor = context._htmlInk;
+    final disabledColor = context._htmlMuted.withValues(alpha: 0.52);
 
     return Container(
       height: 50,
@@ -752,23 +731,9 @@ class _HtmlStudioHeader extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(26),
-        gradient: const LinearGradient(
-          colors: <Color>[
-            Color(0xFF18C7C8),
-            Color(0xFF3677DE),
-            Color(0xFF7A2DF0),
-          ],
-          begin: Alignment.centerLeft,
-          end: Alignment.centerRight,
-        ),
-        boxShadow: const <BoxShadow>[
-          BoxShadow(
-            color: Color(0x1F3B2D78),
-            blurRadius: 28,
-            offset: Offset(0, 14),
-          ),
-        ],
+        color: context.colors.surfaceElevated,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: context.colors.border),
       ),
       child: Row(
         children: <Widget>[
@@ -780,7 +745,7 @@ class _HtmlStudioHeader extends StatelessWidget {
           Text(
             'Sutol',
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  color: Colors.white,
+                  color: context._htmlInk,
                   fontWeight: FontWeight.w900,
                   letterSpacing: -0.02,
                 ),
@@ -791,7 +756,7 @@ class _HtmlStudioHeader extends StatelessWidget {
             onLoad: onLoad,
             onExportHtml: onExport,
             onExportPdf: onExportPdf,
-            light: true,
+            
           ),
           const SizedBox(width: 8),
           _HistoryButtons(
@@ -799,7 +764,7 @@ class _HtmlStudioHeader extends StatelessWidget {
             onRedo: onRedo,
             canUndo: canUndo,
             canRedo: canRedo,
-            light: true,
+            
           ),
           const SizedBox(width: 8),
           const _StudioHeaderMenuChip(label: 'HTML Sahne'),
@@ -835,7 +800,7 @@ class _StudioHeaderIconButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: Colors.white.withValues(alpha: 0.16),
+      color: context.sutolColors.surfaceSubtle,
       borderRadius: BorderRadius.circular(18),
       child: InkWell(
         onTap: onTap,
@@ -843,7 +808,7 @@ class _StudioHeaderIconButton extends StatelessWidget {
         child: SizedBox(
           width: 50,
           height: 50,
-          child: Icon(icon, color: Colors.white),
+          child: Icon(icon, color: context._htmlInk),
         ),
       ),
     );
@@ -862,14 +827,14 @@ class _StudioHeaderMenuChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.12),
+        color: context.sutolColors.surfaceSubtle,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.16)),
+        border: Border.all(color: context.sutolColors.outline),
       ),
       child: Text(
         label,
         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: Colors.white,
+              color: context._htmlInk,
               fontWeight: FontWeight.w700,
             ),
       ),
@@ -891,19 +856,19 @@ class _StudioHeaderInfoChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.12),
+        color: context.sutolColors.surfaceSubtle,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.16)),
+        border: Border.all(color: context.sutolColors.outline),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
-          Icon(icon, size: 17, color: Colors.white),
+          Icon(icon, size: 17, color: context._htmlInk),
           const SizedBox(width: 8),
           Text(
             label,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Colors.white,
+                  color: context._htmlInk,
                   fontWeight: FontWeight.w700,
                 ),
           ),
@@ -923,7 +888,7 @@ class _StudioPreviewButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: Colors.white.withValues(alpha: 0.18),
+      color: context.sutolColors.surfaceSubtle,
       borderRadius: BorderRadius.circular(18),
       child: InkWell(
         onTap: onTap,
@@ -933,16 +898,16 @@ class _StudioPreviewButton extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
-              const Icon(
+              Icon(
                 Icons.slideshow_rounded,
-                color: Colors.white,
+                color: context._htmlInk,
                 size: 18,
               ),
               const SizedBox(width: 8),
               Text(
                 'Sunum Modu',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Colors.white,
+                      color: context._htmlInk,
                       fontWeight: FontWeight.w800,
                     ),
               ),
@@ -964,7 +929,7 @@ class _StudioExportButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: Colors.white,
+      color: context._htmlAccent,
       borderRadius: BorderRadius.circular(18),
       child: InkWell(
         onTap: onTap,
@@ -974,16 +939,16 @@ class _StudioExportButton extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
-              const Icon(
+              Icon(
                 Icons.download_rounded,
-                color: _htmlInk,
+                color: context.sutolColors.onPrimary,
                 size: 18,
               ),
               const SizedBox(width: 8),
               Text(
                 'HTML Disa Aktar',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: _htmlInk,
+                      color: context.sutolColors.onPrimary,
                       fontWeight: FontWeight.w800,
                     ),
               ),
@@ -1026,18 +991,18 @@ class _HtmlStudioLayout extends StatelessWidget {
           onExport: onExport,
           onExportPdf: onExportPdf,
         ),
-        const SizedBox(width: 12),
-        SizedBox(
-          width: 316,
-          child: _HtmlInspectorPanel(
+        const SizedBox(width: 16),
+        Expanded(
+          child: _HtmlStageWorkspace(
             controller: controller,
             textController: textController,
             activeTab: activeTab,
           ),
         ),
-        const SizedBox(width: 14),
-        Expanded(
-          child: _HtmlStageWorkspace(
+        const SizedBox(width: 16),
+        SizedBox(
+          width: 320,
+          child: _HtmlInspectorPanel(
             controller: controller,
             textController: textController,
             activeTab: activeTab,
@@ -1069,16 +1034,9 @@ class _HtmlToolRail extends StatelessWidget {
       width: 108,
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 14),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.92),
-        borderRadius: BorderRadius.circular(28),
-        border: Border.all(color: const Color(0xFFDCE5F1)),
-        boxShadow: const <BoxShadow>[
-          BoxShadow(
-            color: Color(0x12000000),
-            blurRadius: 22,
-            offset: Offset(0, 12),
-          ),
-        ],
+        color: context.colors.surfaceElevated,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: context.colors.border),
       ),
       child: LayoutBuilder(
         builder: (context, constraints) {
@@ -1137,7 +1095,7 @@ class _HtmlToolRail extends StatelessWidget {
               label: 'Disa Aktar',
               icon: Icons.download_rounded,
               accent: const Color(0xFFEEF5FF),
-              iconColor: _htmlAccent,
+              iconColor: context._htmlAccent,
               onTap: onExport,
             ),
             const SizedBox(height: 10),
@@ -1199,7 +1157,7 @@ class _RailButton extends StatelessWidget {
     final borderColor =
         isSelected ? const Color(0xFFD4E4FF) : Colors.transparent;
     final effectiveIconColor =
-        iconColor ?? (isSelected ? _htmlAccent : _htmlMuted);
+        iconColor ?? (isSelected ? context._htmlAccent : context._htmlMuted);
 
     return Material(
       color: backgroundColor,
@@ -1222,7 +1180,7 @@ class _RailButton extends StatelessWidget {
                 label,
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: isSelected ? _htmlInk : _htmlMuted,
+                      color: isSelected ? context._htmlInk : context._htmlMuted,
                       fontWeight:
                           isSelected ? FontWeight.w800 : FontWeight.w700,
                     ),
@@ -1251,16 +1209,9 @@ class _HtmlInspectorPanel extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.fromLTRB(18, 18, 18, 18),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.94),
-        borderRadius: BorderRadius.circular(30),
-        border: Border.all(color: const Color(0xFFDCE5F1)),
-        boxShadow: const <BoxShadow>[
-          BoxShadow(
-            color: Color(0x12000000),
-            blurRadius: 22,
-            offset: Offset(0, 12),
-          ),
-        ],
+        color: context.colors.surfaceElevated,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: context.colors.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1268,7 +1219,7 @@ class _HtmlInspectorPanel extends StatelessWidget {
           Text(
             _studioPanelTitle(activeTab),
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  color: _htmlInk,
+                  color: context._htmlInk,
                   fontWeight: FontWeight.w900,
                 ),
           ),
@@ -1276,7 +1227,7 @@ class _HtmlInspectorPanel extends StatelessWidget {
           Text(
             _studioPanelSubtitle(activeTab, controller),
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: _htmlMuted,
+                  color: context._htmlMuted,
                   fontWeight: FontWeight.w600,
                 ),
           ),
@@ -1333,19 +1284,19 @@ class _InspectorStatChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: const Color(0xFFF5F8FD),
+        color: context.sutolColors.surfaceSubtle,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFDCE5F1)),
+        border: Border.all(color: context.sutolColors.outline),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
-          Icon(icon, size: 16, color: _htmlInk),
+          Icon(icon, size: 16, color: context._htmlInk),
           const SizedBox(width: 8),
           Text(
             label,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: _htmlInk,
+                  color: context._htmlInk,
                   fontWeight: FontWeight.w800,
                 ),
           ),
@@ -1382,16 +1333,9 @@ class _HtmlStageWorkspace extends StatelessWidget {
         Container(
           padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
           decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.94),
-            borderRadius: BorderRadius.circular(30),
-            border: Border.all(color: const Color(0xFFDCE5F1)),
-            boxShadow: const <BoxShadow>[
-              BoxShadow(
-                color: Color(0x12000000),
-                blurRadius: 22,
-                offset: Offset(0, 12),
-              ),
-            ],
+            color: context.colors.surfaceElevated,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: context.colors.border),
           ),
           child: activeTab == _HtmlToolTab.text
               ? _HtmlTextControls(
@@ -1410,7 +1354,7 @@ class _HtmlStageWorkspace extends StatelessWidget {
                                 .textTheme
                                 .headlineSmall
                                 ?.copyWith(
-                                  color: _htmlInk,
+                                  color: context._htmlInk,
                                   fontWeight: FontWeight.w900,
                                 ),
                           ),
@@ -1423,7 +1367,7 @@ class _HtmlStageWorkspace extends StatelessWidget {
                                 .textTheme
                                 .bodyMedium
                                 ?.copyWith(
-                                  color: _htmlMuted,
+                                  color: context._htmlMuted,
                                   fontWeight: FontWeight.w600,
                                 ),
                           ),
@@ -1470,16 +1414,9 @@ class _HtmlStageWorkspace extends StatelessWidget {
           child: Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.94),
-              borderRadius: BorderRadius.circular(32),
-              border: Border.all(color: const Color(0xFFDCE5F1)),
-              boxShadow: const <BoxShadow>[
-                BoxShadow(
-                  color: Color(0x12000000),
-                  blurRadius: 24,
-                  offset: Offset(0, 14),
-                ),
-              ],
+              color: context.colors.surfaceElevated,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: context.colors.border),
             ),
             child: Column(
               children: <Widget>[
@@ -1534,7 +1471,7 @@ class _ModelMotionControl extends StatelessWidget {
           color: enabled ? const Color(0xFFEAF3FF) : const Color(0xFFF5F7FA),
           borderRadius: BorderRadius.circular(18),
           border: Border.all(
-            color: enabled ? const Color(0xFFB9D6FF) : const Color(0xFFDCE5F1),
+            color: enabled ? const Color(0xFFB9D6FF) : context.sutolColors.outline,
           ),
         ),
         child: Row(
@@ -1542,7 +1479,7 @@ class _ModelMotionControl extends StatelessWidget {
           children: <Widget>[
             Icon(
               enabled ? enabledIcon : disabledIcon,
-              color: enabled ? _htmlAccent : _htmlMuted,
+              color: enabled ? context._htmlAccent : context._htmlMuted,
               size: 21,
             ),
             const SizedBox(width: 8),
@@ -1553,14 +1490,14 @@ class _ModelMotionControl extends StatelessWidget {
                 Text(
                   title,
                   style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                        color: _htmlInk,
+                        color: context._htmlInk,
                         fontWeight: FontWeight.w900,
                       ),
                 ),
                 Text(
                   enabled ? enabledLabel : disabledLabel,
                   style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        color: enabled ? _htmlAccent : _htmlMuted,
+                        color: enabled ? context._htmlAccent : context._htmlMuted,
                         fontWeight: FontWeight.w800,
                       ),
                 ),
@@ -1570,7 +1507,7 @@ class _ModelMotionControl extends StatelessWidget {
             Switch.adaptive(
               value: enabled,
               onChanged: onChanged,
-              activeTrackColor: _htmlAccent,
+              activeTrackColor: context._htmlAccent,
             ),
           ],
         ),
@@ -1591,9 +1528,9 @@ class _HtmlPageFilmstrip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
       decoration: BoxDecoration(
-        color: const Color(0xFFF7F9FD),
+        color: context.sutolColors.surfaceSubtle,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: const Color(0xFFDCE5F1)),
+        border: Border.all(color: context.sutolColors.outline),
       ),
       child: Row(
         children: <Widget>[
@@ -1601,9 +1538,9 @@ class _HtmlPageFilmstrip extends StatelessWidget {
             width: 138,
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: context.sutolColors.surface,
               borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: const Color(0xFFDCE5F1)),
+              border: Border.all(color: context.sutolColors.outline),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -1611,7 +1548,7 @@ class _HtmlPageFilmstrip extends StatelessWidget {
                 Text(
                   'Sayfalar',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: _htmlInk,
+                        color: context._htmlInk,
                         fontWeight: FontWeight.w900,
                       ),
                 ),
@@ -1619,7 +1556,7 @@ class _HtmlPageFilmstrip extends StatelessWidget {
                 Text(
                   '${controller.selectedIndex + 1} / ${controller.pages.length}',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: _htmlMuted,
+                        color: context._htmlMuted,
                         fontWeight: FontWeight.w700,
                       ),
                 ),
@@ -1698,7 +1635,7 @@ class _HtmlStudioPageThumb extends StatelessWidget {
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(20),
               border: Border.all(
-                color: isSelected ? _htmlAccent : const Color(0xFFDCE5F1),
+                color: isSelected ? context._htmlAccent : context.sutolColors.outline,
                 width: isSelected ? 1.4 : 1,
               ),
             ),
@@ -1722,7 +1659,7 @@ class _HtmlStudioPageThumb extends StatelessWidget {
                   child: Text(
                     '${index + 1}. Sayfa',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: _htmlInk,
+                          color: context._htmlInk,
                           fontWeight: FontWeight.w800,
                         ),
                   ),
@@ -1750,16 +1687,10 @@ class _HtmlPageSidebar extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: _htmlPanel,
+        color: context._htmlPanel,
         borderRadius: BorderRadius.circular(30),
-        border: Border.all(color: const Color(0xFFDCE5F1)),
-        boxShadow: const <BoxShadow>[
-          BoxShadow(
-            color: Color(0x12000000),
-            blurRadius: 20,
-            offset: Offset(0, 12),
-          ),
-        ],
+        border: Border.all(color: context.sutolColors.outline),
+        boxShadow: context.elevation2,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1770,7 +1701,7 @@ class _HtmlPageSidebar extends StatelessWidget {
                 child: Text(
                   'Sayfalar',
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                        color: _htmlInk,
+                        color: context._htmlInk,
                         fontWeight: FontWeight.w800,
                       ),
                 ),
@@ -1843,7 +1774,7 @@ class _SidebarAction extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: subtle ? const Color(0xFFF5F7FB) : const Color(0xFFF0F5FF),
+      color: subtle ? context.sutolColors.surfaceSubtle : context.sutolColors.surfaceTinted,
       borderRadius: BorderRadius.circular(18),
       child: InkWell(
         onTap: onTap,
@@ -1853,7 +1784,7 @@ class _SidebarAction extends StatelessWidget {
           child: SizedBox(
             width: 48,
             height: 48,
-            child: Icon(icon, color: _htmlInk),
+            child: Icon(icon, color: context._htmlInk),
           ),
         ),
       ),
@@ -1886,7 +1817,7 @@ class _HtmlPageCard extends StatelessWidget {
           color: isSelected ? const Color(0xFFF0F6FF) : const Color(0xFFF8FAFD),
           borderRadius: BorderRadius.circular(24),
           border: Border.all(
-            color: isSelected ? _htmlAccent : const Color(0xFFDCE5F1),
+            color: isSelected ? context._htmlAccent : context.sutolColors.outline,
             width: isSelected ? 1.5 : 1,
           ),
         ),
@@ -1896,7 +1827,7 @@ class _HtmlPageCard extends StatelessWidget {
             Text(
               'Sayfa ${index + 1}',
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: _htmlInk,
+                    color: context._htmlInk,
                     fontWeight: FontWeight.w800,
                   ),
             ),
@@ -1939,16 +1870,10 @@ class _HtmlWorkbench extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
       decoration: BoxDecoration(
-        color: _htmlPanel,
+        color: context._htmlPanel,
         borderRadius: BorderRadius.circular(32),
-        border: Border.all(color: const Color(0xFFDCE5F1)),
-        boxShadow: const <BoxShadow>[
-          BoxShadow(
-            color: Color(0x12000000),
-            blurRadius: 22,
-            offset: Offset(0, 12),
-          ),
-        ],
+        border: Border.all(color: context.sutolColors.outline),
+        boxShadow: context.elevation2,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1989,9 +1914,9 @@ class _HtmlTopToolbar extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFD),
+        color: context.sutolColors.surfaceTinted,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: const Color(0xFFDCE5F1)),
+        border: Border.all(color: context.sutolColors.outline),
       ),
       child: LayoutBuilder(
         builder: (context, constraints) {
@@ -2020,7 +1945,7 @@ class _HtmlTopToolbar extends StatelessWidget {
                 Container(
                   width: 1,
                   height: 42,
-                  color: const Color(0xFFDCE5F1),
+                  color: context.sutolColors.outline,
                 ),
                 const SizedBox(width: 12),
                 Expanded(child: controls),
@@ -2059,9 +1984,9 @@ class _HtmlTabStrip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.sutolColors.surface,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFDCE5F1)),
+        border: Border.all(color: context.sutolColors.outline),
       ),
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
@@ -2124,7 +2049,7 @@ class _HtmlTabButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: isSelected ? _htmlAccent : Colors.transparent,
+      color: isSelected ? context._htmlAccent : Colors.transparent,
       borderRadius: BorderRadius.circular(14),
       child: InkWell(
         onTap: onTap,
@@ -2137,13 +2062,13 @@ class _HtmlTabButton extends StatelessWidget {
               Icon(
                 icon,
                 size: 16,
-                color: isSelected ? Colors.white : _htmlInk,
+                color: isSelected ? Colors.white : context._htmlInk,
               ),
               const SizedBox(width: 7),
               Text(
                 label,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: isSelected ? Colors.white : _htmlInk,
+                      color: isSelected ? Colors.white : context._htmlInk,
                       fontWeight: FontWeight.w700,
                     ),
               ),
@@ -2205,9 +2130,9 @@ class _Html3DModelControls extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.sutolColors.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFDCE5F1)),
+        border: Border.all(color: context.sutolColors.outline),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -2277,7 +2202,7 @@ class _HtmlTransitionControls extends StatelessWidget {
             Text(
               'Popüler Geçişler',
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: _htmlInk,
+                    color: context._htmlInk,
                     fontWeight: FontWeight.w900,
                   ),
             ),
@@ -2285,7 +2210,7 @@ class _HtmlTransitionControls extends StatelessWidget {
             Text(
               'Sunumlarda en sık tercih edilen 10 geçişten birini seç.',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: _htmlMuted,
+                    color: context._htmlMuted,
                     fontWeight: FontWeight.w600,
                   ),
             ),
@@ -2345,7 +2270,7 @@ class _TransitionLibraryCard extends StatelessWidget {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(18),
             border: Border.all(
-              color: isSelected ? _htmlAccent : const Color(0xFFDCE5F1),
+              color: isSelected ? context._htmlAccent : context.sutolColors.outline,
               width: isSelected ? 1.6 : 1,
             ),
           ),
@@ -2364,7 +2289,7 @@ class _TransitionLibraryCard extends StatelessWidget {
                 ),
                 child: Icon(
                   presentationTransitionIcon(kind),
-                  color: Colors.white,
+                  color: context.sutolColors.surface,
                   size: 25,
                 ),
               ),
@@ -2376,7 +2301,7 @@ class _TransitionLibraryCard extends StatelessWidget {
                     Text(
                       presentationTransitionLabel(kind),
                       style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                            color: _htmlInk,
+                            color: context._htmlInk,
                             fontWeight: FontWeight.w900,
                           ),
                     ),
@@ -2386,7 +2311,7 @@ class _TransitionLibraryCard extends StatelessWidget {
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: _htmlMuted,
+                            color: context._htmlMuted,
                             fontWeight: FontWeight.w600,
                             height: 1.25,
                           ),
@@ -2399,7 +2324,7 @@ class _TransitionLibraryCard extends StatelessWidget {
                 isSelected
                     ? Icons.check_circle_rounded
                     : Icons.add_circle_outline_rounded,
-                color: _htmlAccent,
+                color: context._htmlAccent,
                 size: 24,
               ),
             ],
@@ -2424,7 +2349,7 @@ class _Model3DLibraryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: isSelected ? const Color(0xFFF0F6FF) : Colors.white,
+      color: isSelected ? context.sutolColors.primaryLight : context.sutolColors.surface,
       borderRadius: BorderRadius.circular(16),
       child: InkWell(
         onTap: onAdd,
@@ -2435,7 +2360,7 @@ class _Model3DLibraryCard extends StatelessWidget {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: isSelected ? _htmlAccent : const Color(0xFFDCE5F1),
+              color: isSelected ? context.sutolColors.primary : context.sutolColors.outline,
               width: isSelected ? 1.5 : 1,
             ),
           ),
@@ -2445,16 +2370,13 @@ class _Model3DLibraryCard extends StatelessWidget {
                 width: 68,
                 height: 58,
                 decoration: BoxDecoration(
+                  color: context.sutolColors.surfaceSubtle,
                   borderRadius: BorderRadius.circular(14),
-                  gradient: const LinearGradient(
-                    colors: <Color>[Color(0xFF13294B), Color(0xFF247BCE)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
+                  border: Border.all(color: context.sutolColors.outlineVariant),
                 ),
                 child: Icon(
                   model.icon,
-                  color: Colors.white,
+                  color: context.sutolColors.primary,
                   size: 34,
                 ),
               ),
@@ -2466,7 +2388,7 @@ class _Model3DLibraryCard extends StatelessWidget {
                     Text(
                       model.label,
                       style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                            color: _htmlInk,
+                            color: context._htmlInk,
                             fontWeight: FontWeight.w900,
                           ),
                     ),
@@ -2474,7 +2396,7 @@ class _Model3DLibraryCard extends StatelessWidget {
                     Text(
                       '${model.category} · ${(model.byteSize / (1024 * 1024)).toStringAsFixed(1)} MB',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: _htmlMuted,
+                            color: context._htmlMuted,
                             fontWeight: FontWeight.w700,
                           ),
                     ),
@@ -2492,9 +2414,9 @@ class _Model3DLibraryCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 8),
-              const Icon(
+              Icon(
                 Icons.add_circle_rounded,
-                color: _htmlAccent,
+                color: context._htmlAccent,
                 size: 26,
               ),
             ],
@@ -2610,7 +2532,7 @@ class _BackgroundPresetCard extends StatelessWidget {
     final colors = presentationBackgroundPreviewColors(kind);
 
     return Material(
-      color: Colors.white,
+      color: context.sutolColors.surface,
       borderRadius: BorderRadius.circular(16),
       child: InkWell(
         onTap: onTap,
@@ -2621,7 +2543,7 @@ class _BackgroundPresetCard extends StatelessWidget {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: isSelected ? _htmlAccent : const Color(0xFFDCE5F1),
+              color: isSelected ? context._htmlAccent : context.sutolColors.outline,
               width: isSelected ? 1.5 : 1,
             ),
             boxShadow: isSelected
@@ -2654,7 +2576,7 @@ class _BackgroundPresetCard extends StatelessWidget {
                   Icon(
                     presentationBackgroundIcon(kind),
                     size: 16,
-                    color: isSelected ? _htmlAccent : _htmlMuted,
+                    color: isSelected ? context._htmlAccent : context._htmlMuted,
                   ),
                   const SizedBox(width: 6),
                   Expanded(
@@ -2663,7 +2585,7 @@ class _BackgroundPresetCard extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: _htmlInk,
+                            color: context._htmlInk,
                             fontWeight: FontWeight.w900,
                           ),
                     ),
@@ -2676,7 +2598,7 @@ class _BackgroundPresetCard extends StatelessWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: _htmlMuted,
+                      color: context._htmlMuted,
                       fontWeight: FontWeight.w700,
                     ),
               ),
@@ -2867,9 +2789,9 @@ class _HtmlComponentControls extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.sutolColors.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFDCE5F1)),
+        border: Border.all(color: context.sutolColors.outline),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -2950,9 +2872,9 @@ class _ComponentCategorySectionState extends State<_ComponentCategorySection> {
   Widget build(BuildContext context) {
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: const Color(0xFFF7F9FD),
+        color: context.sutolColors.surfaceSubtle,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFE3EBF6)),
+        border: Border.all(color: context.sutolColors.primaryLight),
       ),
       child: ExpansionTile(
         initiallyExpanded: widget.initiallyExpanded,
@@ -2967,19 +2889,19 @@ class _ComponentCategorySectionState extends State<_ComponentCategorySection> {
           widget.definitions.isEmpty
               ? Icons.widgets_rounded
               : presentationComponentIcon(widget.definitions.first.kind),
-          color: _htmlAccent,
+          color: context._htmlAccent,
         ),
         title: Text(
           widget.category,
           style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                color: _htmlInk,
+                color: context._htmlInk,
                 fontWeight: FontWeight.w900,
               ),
         ),
         subtitle: Text(
           '${widget.definitions.length} bilesen',
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: _htmlMuted,
+                color: context._htmlMuted,
                 fontWeight: FontWeight.w700,
               ),
         ),
@@ -3028,13 +2950,12 @@ class _ComponentLibraryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = presentationComponentPreviewColors(definition.kind);
     final subtitle = definition.tags.isEmpty
         ? definition.description
         : definition.tags.take(5).join(', ');
 
     return Material(
-      color: Colors.white,
+      color: context.sutolColors.surface,
       borderRadius: BorderRadius.circular(14),
       child: InkWell(
         borderRadius: BorderRadius.circular(14),
@@ -3043,7 +2964,7 @@ class _ComponentLibraryCard extends StatelessWidget {
           padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: const Color(0xFFDCE5F1)),
+            border: Border.all(color: context.sutolColors.outline),
           ),
           child: Row(
             children: <Widget>[
@@ -3051,16 +2972,13 @@ class _ComponentLibraryCard extends StatelessWidget {
                 width: 58,
                 height: 46,
                 decoration: BoxDecoration(
+                  color: context.sutolColors.surfaceSubtle,
                   borderRadius: BorderRadius.circular(12),
-                  gradient: LinearGradient(
-                    colors: colors,
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
+                  border: Border.all(color: context.sutolColors.outlineVariant),
                 ),
                 child: Icon(
                   presentationComponentIcon(definition.kind),
-                  color: Colors.white,
+                  color: context._htmlAccent,
                   size: 22,
                 ),
               ),
@@ -3074,7 +2992,7 @@ class _ComponentLibraryCard extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: _htmlInk,
+                            color: context._htmlInk,
                             fontWeight: FontWeight.w900,
                           ),
                     ),
@@ -3084,7 +3002,7 @@ class _ComponentLibraryCard extends StatelessWidget {
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: _htmlMuted,
+                            color: context._htmlMuted,
                             fontWeight: FontWeight.w700,
                             height: 1.2,
                           ),
@@ -3093,9 +3011,9 @@ class _ComponentLibraryCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 8),
-              const Icon(
+              Icon(
                 Icons.add_circle_rounded,
-                color: _htmlAccent,
+                color: context._htmlAccent,
                 size: 22,
               ),
             ],
@@ -3120,19 +3038,19 @@ class _ToolbarBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: const Color(0xFFEDF4FF),
+        color: context.sutolColors.surfaceTinted,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFD7E5FB)),
+        border: Border.all(color: context.sutolColors.outlineVariant),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
-          Icon(icon, size: 16, color: _htmlAccent),
+          Icon(icon, size: 16, color: context.sutolColors.primary),
           const SizedBox(width: 8),
           Text(
             label,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: _htmlInk,
+                  color: context._htmlInk,
                   fontWeight: FontWeight.w800,
                 ),
           ),
@@ -3154,14 +3072,14 @@ class _ToolbarChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.sutolColors.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFDCE5F1)),
+        border: Border.all(color: context.sutolColors.outline),
       ),
       child: Text(
         label,
         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: _htmlInk,
+              color: context._htmlInk,
               fontWeight: FontWeight.w700,
             ),
       ),
@@ -3198,12 +3116,12 @@ class _ToolbarAction extends StatelessWidget {
               border: Border.all(
                 color: destructive
                     ? const Color(0xFFFFD8D8)
-                    : const Color(0xFFDCE5F1),
+                    : context.sutolColors.outline,
               ),
             ),
             child: Icon(
               icon,
-              color: destructive ? const Color(0xFFD13A3A) : _htmlInk,
+              color: destructive ? const Color(0xFFD13A3A) : context._htmlInk,
               size: 20,
             ),
           ),
@@ -3261,12 +3179,12 @@ class _HtmlTextEffectControls extends StatelessWidget {
                       controller.updateSelectedTextAnimation(value);
                     }
                   },
-            dropdownColor: Colors.white,
+            dropdownColor: context.sutolColors.surface,
             borderRadius: BorderRadius.circular(14),
             isExpanded: true,
             icon: const Icon(Icons.keyboard_arrow_down_rounded),
-            style: const TextStyle(
-              color: _htmlInk,
+            style: TextStyle(
+              color: context._htmlInk,
               fontWeight: FontWeight.w700,
             ),
             decoration: _inputDecoration('Animasyon seç'),
@@ -3277,8 +3195,8 @@ class _HtmlTextEffectControls extends StatelessWidget {
                     child: Text(
                       _textAnimationLabel(animation),
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: _htmlInk,
+                      style: TextStyle(
+                        color: context._htmlInk,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
@@ -3291,7 +3209,7 @@ class _HtmlTextEffectControls extends StatelessWidget {
         Text(
           'Renk',
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: _htmlInk,
+                color: context._htmlInk,
                 fontWeight: FontWeight.w800,
               ),
         ),
@@ -3314,26 +3232,26 @@ class _HtmlTextEffectControls extends StatelessWidget {
         Container(
           padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
           decoration: BoxDecoration(
-            color: const Color(0xFFF7F9FD),
+            color: context.sutolColors.surfaceSubtle,
             borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: const Color(0xFFDCE5F1)),
+            border: Border.all(color: context.sutolColors.outline),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
               Row(
                 children: <Widget>[
-                  const Icon(
+                  Icon(
                     Icons.brightness_7_rounded,
                     size: 18,
-                    color: _htmlAccent,
+                    color: context._htmlAccent,
                   ),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       'Parlaklık',
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: _htmlInk,
+                            color: context._htmlInk,
                             fontWeight: FontWeight.w800,
                           ),
                     ),
@@ -3341,7 +3259,7 @@ class _HtmlTextEffectControls extends StatelessWidget {
                   Text(
                     enabled ? '${(block.glowIntensity * 100).round()}%' : '—',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: _htmlMuted,
+                          color: context._htmlMuted,
                           fontWeight: FontWeight.w800,
                         ),
                   ),
@@ -3358,7 +3276,7 @@ class _HtmlTextEffectControls extends StatelessWidget {
               Text(
                 '0% parlama olmadan, 200% en güçlü parlama ile gösterir.',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: _htmlMuted,
+                      color: context._htmlMuted,
                       fontWeight: FontWeight.w600,
                     ),
               ),
@@ -3412,7 +3330,7 @@ class _TextColorSwatch extends StatelessWidget {
               color: option.color,
               borderRadius: BorderRadius.circular(14),
               border: Border.all(
-                color: isSelected ? _htmlAccent : const Color(0xFFCBD6E6),
+                color: isSelected ? context._htmlAccent : context.sutolColors.outline,
                 width: isSelected ? 3 : 1,
               ),
               boxShadow: isSelected
@@ -3425,16 +3343,16 @@ class _TextColorSwatch extends StatelessWidget {
                   : null,
             ),
             child: option.hex == null
-                ? const Icon(
+                ? Icon(
                     Icons.auto_awesome_rounded,
-                    color: _htmlInk,
+                    color: context._htmlInk,
                     size: 18,
                   )
                 : isSelected
                     ? Icon(
                         Icons.check_rounded,
                         color: option.color.computeLuminance() > 0.55
-                            ? _htmlInk
+                            ? context._htmlInk
                             : Colors.white,
                         size: 20,
                       )
@@ -3549,8 +3467,8 @@ class _TextFieldControl extends StatelessWidget {
         controller: controller,
         enabled: enabled,
         onChanged: onChanged,
-        style: const TextStyle(
-          color: _htmlInk,
+        style: TextStyle(
+          color: context._htmlInk,
           fontWeight: FontWeight.w700,
         ),
         decoration: _inputDecoration('Buraya metin yazin'),
@@ -3577,11 +3495,11 @@ class _TypeDropdownControl extends StatelessWidget {
         initialValue: value,
         onChanged: onChanged,
         isDense: true,
-        dropdownColor: Colors.white,
+        dropdownColor: context.sutolColors.surface,
         borderRadius: BorderRadius.circular(14),
         icon: const Icon(Icons.keyboard_arrow_down_rounded),
-        style: const TextStyle(
-          color: _htmlInk,
+        style: TextStyle(
+          color: context._htmlInk,
           fontWeight: FontWeight.w700,
         ),
         decoration: _inputDecoration('Yazı stili'),
@@ -3591,8 +3509,8 @@ class _TypeDropdownControl extends StatelessWidget {
                 value: style,
                 child: Text(
                   _htmlTextStyleLabel(style),
-                  style: const TextStyle(
-                    color: _htmlInk,
+                  style: TextStyle(
+                    color: context._htmlInk,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -3622,23 +3540,23 @@ class _SizeStepperControl extends StatelessWidget {
       child: Container(
         height: 48,
         decoration: BoxDecoration(
-          color: const Color(0xFFF7F9FD),
+          color: context.sutolColors.surfaceSubtle,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: const Color(0xFFDCE5F1)),
+          border: Border.all(color: context.sutolColors.outline),
         ),
         child: Row(
           children: <Widget>[
             IconButton(
               onPressed: onDecrease,
               visualDensity: VisualDensity.compact,
-              icon: const Icon(Icons.remove_rounded, color: _htmlInk, size: 20),
+              icon: Icon(Icons.remove_rounded, color: context._htmlInk, size: 20),
             ),
             Expanded(
               child: Center(
                 child: Text(
                   value?.toString() ?? '-',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: _htmlInk,
+                        color: context._htmlInk,
                         fontWeight: FontWeight.w800,
                       ),
                 ),
@@ -3647,7 +3565,7 @@ class _SizeStepperControl extends StatelessWidget {
             IconButton(
               onPressed: onIncrease,
               visualDensity: VisualDensity.compact,
-              icon: const Icon(Icons.add_rounded, color: _htmlInk, size: 20),
+              icon: Icon(Icons.add_rounded, color: context._htmlInk, size: 20),
             ),
           ],
         ),
@@ -3675,7 +3593,7 @@ class _ControlFieldShell extends StatelessWidget {
           child: Text(
             label,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: _htmlInk,
+                  color: context._htmlInk,
                   fontWeight: FontWeight.w700,
                 ),
           ),
@@ -3703,9 +3621,9 @@ class _HtmlStageCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
       decoration: BoxDecoration(
-        color: const Color(0xFFF7FAFF),
+        color: context.sutolColors.surfaceSubtle,
         borderRadius: BorderRadius.circular(28),
-        border: Border.all(color: const Color(0xFFDCE5F1)),
+        border: Border.all(color: context.sutolColors.outline),
       ),
       child: LayoutBuilder(
         builder: (context, constraints) {
@@ -3860,7 +3778,7 @@ Future<void> _showStageItemContextMenu(
 
   final action = await showMenu<_StageItemContextAction>(
     context: context,
-    color: Colors.white,
+    color: context.sutolColors.surface,
     elevation: 16,
     shape: RoundedRectangleBorder(
       borderRadius: BorderRadius.circular(16),
@@ -3942,7 +3860,7 @@ class _StageContextMenuRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = destructive ? const Color(0xFFD73A49) : _htmlInk;
+    final color = destructive ? const Color(0xFFD73A49) : context._htmlInk;
     return SizedBox(
       width: 150,
       child: Row(
@@ -4155,26 +4073,26 @@ String _studioPanelSubtitle(
 InputDecoration _inputDecoration(String hintText) {
   return InputDecoration(
     hintText: hintText,
-    hintStyle: const TextStyle(color: _htmlMuted),
+    hintStyle: const TextStyle(color: SutolLightColors.onSurfaceVariant),
     isDense: true,
     filled: true,
-    fillColor: const Color(0xFFF7F9FD),
+    fillColor: SutolLightColors.surfaceSubtle,
     contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
     border: OutlineInputBorder(
       borderRadius: BorderRadius.circular(14),
-      borderSide: const BorderSide(color: Color(0xFFDCE5F1)),
+      borderSide: const BorderSide(color: SutolLightColors.outline),
     ),
     enabledBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(14),
-      borderSide: const BorderSide(color: Color(0xFFDCE5F1)),
+      borderSide: const BorderSide(color: SutolLightColors.outline),
     ),
     disabledBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(14),
-      borderSide: const BorderSide(color: Color(0xFFE7EDF6)),
+      borderSide: const BorderSide(color: SutolLightColors.outlineVariant),
     ),
     focusedBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(14),
-      borderSide: const BorderSide(color: _htmlAccent, width: 1.2),
+      borderSide: const BorderSide(color: SutolLightColors.primary, width: 1.2),
     ),
   );
 }

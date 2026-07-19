@@ -18,15 +18,8 @@ class SutolApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: sutolLightTheme,
       darkTheme: sutolDarkTheme,
-      themeMode: ThemeMode.system,
+      themeMode: ThemeMode.light,
       home: const SutolHomePage(),
     );
   }
-}
-
-// Custom extensions for easier access to design system properties
-extension SutolThemeExtension on ThemeData {
-  Color get seed => Colors.blue;
-  Color get surface => Colors.white;
-  Color get background => Colors.grey[50]!;
 }

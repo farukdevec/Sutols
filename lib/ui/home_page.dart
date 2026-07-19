@@ -1,163 +1,192 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
+import '../services/presentation_auto_builder.dart';
 import '../state/presentation_controller.dart';
-import 'presentation_text_draft_page.dart';
+import 'design/design_system.dart';
+import 'html_presentation_editor_page.dart';
 
-class SutolHomePage extends StatelessWidget {
+class SutolHomePage extends StatefulWidget {
   const SutolHomePage({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+  State<SutolHomePage> createState() => _SutolHomePageState();
+}
 
-    return Container(
-      color: context.background,
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 1200),
-          child: Padding(
-            padding: EdgeInsets.symmetric(
-              horizontal: 32,
-              vertical: 64,
-            ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                const SizedBox(height: 48),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                  decoration: BoxDecoration(
-                    gradient: SutolColors.brandGradient,
-                    borderRadius: BorderRadius.circular(12),
-                    boxShadow: [BoxShadow(color: Color(0x08000000), blurRadius: 24, offset: Offset(0, 8))],
-                  ),
-                  child: Text(
-                    'NEW',
-                    style: theme.textTheme.labelMedium?.copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 32),
-                Text(
-                  'Create Professional',
-                  style: theme.textTheme.displayLarge?.copyWith(
-                    color: context.onSurface,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: -0.03,
-                    height: 1.1,
-                  ),
-                ),
-                Text(
-                  'Presentations',
-                  style: theme.textTheme.displayLarge?.copyWith(
-                    background: Paint()
-                      ..shader = LinearGradient(
-                        colors: [context.seed, context.seed.withValues(alpha: 0.6)],
-                      ).createShader(const Rect.fromLTWH(0, 0, 300, 40)),
-                    foregroundColor: Colors.transparent,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: -0.03,
-                    height: 1.1,
-                  ),
-                ),
-                const SizedBox(height: 36),
-                Text(
-                  'Transform your ideas into stunning presentations with AI-powered tools. Create, edit, and present like the pros with our intuitive platform.',
-                  style: theme.textTheme.bodyLarge?.copyWith(
-                    color: context.onSurfaceVariant,
-                    fontWeight: FontWeight.w400,
-                    height: 1.5,
-                  ),
-                  maxLines: 4,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 56),
-                Row(
-                  children: <Widget>[
-                    Container(
-                      height: 56,
-                      padding: const EdgeInsets.symmetric(horizontal: 32),
-                      decoration: BoxDecoration(
-                        color: context.seed,
-                        borderRadius: BorderRadius.circular(12),
-                        boxShadow: [BoxShadow(color: SutolColors.shadow, blurRadius: 12, offset: Offset(0, 4))],
+class _SutolHomePageState extends State<SutolHomePage> with SingleTickerProviderStateMixin {
+  final TextEditingController _titleController = TextEditingController();
+  final TextEditingController _promptController = TextEditingController();
+  bool _isGenerating = false;
+  late final AnimationController _loadingAnimController;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadingAnimController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 2),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _titleController.dispose();
+    _promptController.dispose();
+    _loadingAnimController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _generatePresentation() async {
+    final title = _titleController.text.trim();
+    final prompt = _promptController.text.trim();
+    if (title.isEmpty && prompt.isEmpty) return;
+
+    setState(() {
+      _isGenerating = true;
+    });
+
+    // Simulate AI generation delay
+    await Future<void>.delayed(const Duration(milliseconds: 1500));
+
+    if (!mounted) return;
+
+    final drafts = [PresentationDraftPage(title: title, body: prompt)];
+    final generatedPages = const PresentationAutoBuilder().buildPages(drafts);
+
+    final controller = PresentationController();
+    controller.replaceDeck(generatedPages);
+
+    setState(() {
+      _isGenerating = false;
+    });
+
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => HtmlPresentationEditorPage(controller: controller),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+
+    return Scaffold(
+      backgroundColor: colors.surface,
+      body: Stack(
+        children: [
+          // Ambient Glow Background
+          const Positioned.fill(
+            child: _AmbientGlowBackground(),
+          ),
+          
+          // Content
+          Column(
+            children: [
+              // Navbar
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s32, vertical: AppSpacing.s24),
+                child: Row(
+                  children: [
+                    Text(
+                      'Sutol',
+                      style: AppTypography.headline.copyWith(
+                        color: colors.textPrimary,
+                        letterSpacing: -0.5,
                       ),
-                      child: Material(
-                        color: Colors.transparent,
-                        child: InkWell(
-                          onTap: () {
-                            Navigator.of(context).push(
-                              MaterialPageRoute<void>(
-                                builder: (_) => const _ModernPresentationEntryPage(),
-                              ),
-                            );
-                          },
-                          borderRadius: BorderRadius.circular(12),
-                          child: Center(
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: <Widget>[
-                                const Icon(Icons.add_rounded, color: Colors.white, size: 24),
-                                const SizedBox(width: 12),
-                                Text(
-                                  'Start Creating',
-                                  style: theme.textTheme.labelLarge?.copyWith(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ],
+                    ),
+                  ],
+                ),
+              ),
+              
+              // Main centered card
+              Expanded(
+                child: Center(
+                  child: SingleChildScrollView(
+                    child: Padding(
+                      padding: const EdgeInsets.all(AppSpacing.s32),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            'Create Professional Presentations',
+                            textAlign: TextAlign.center,
+                            style: AppTypography.display.copyWith(
+                              color: colors.textPrimary,
                             ),
                           ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 20),
-                    TextButton.icon(
-                      onPressed: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute<void>(
-                            builder: (_) => const _ModernPresentationEntryPage(),
+                          const SizedBox(height: AppSpacing.s16),
+                          Text(
+                            'Transform your ideas into stunning slides instantly.',
+                            textAlign: TextAlign.center,
+                            style: AppTypography.bodyLarge.copyWith(
+                              color: colors.textSecondary,
+                            ),
                           ),
-                        );
-                      },
-                      icon: Icon(Icons.play_circle_outline_rounded, color: context.seed, size: 24),
-                      label: Text(
-                        'Watch Demo',
-                        style: theme.textTheme.labelLarge?.copyWith(
-                          color: context.seed,
-                          fontWeight: FontWeight.w600,
-                        ),
+                          const SizedBox(height: AppSpacing.s48),
+                          
+                          // The Card
+                          ConstrainedBox(
+                            constraints: const BoxConstraints(maxWidth: 680),
+                            child: AnimatedSwitcher(
+                              duration: AppMotion.standard,
+                              child: _isGenerating
+                                  ? _LoadingState(animation: _loadingAnimController)
+                                  : _InputCard(
+                                      titleController: _titleController,
+                                      promptController: _promptController,
+                                      onGenerate: _generatePresentation,
+                                    ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                  ],
+                  ),
                 ),
-                const SizedBox(height: 56),
-                Row(
-                  children: <Widget>[
-                    _FeatureBadge(
-                      icon: Icons.design_services_rounded,
-                      text: 'Professional Templates',
-                    ),
-                    const SizedBox(width: 16),
-                    _FeatureBadge(
-                      icon: Icons.auto_awesome_rounded,
-                      text: 'AI-Powered Generation',
-                    ),
-                    const SizedBox(width: 16),
-                    _FeatureBadge(
-                      icon: Icons.settings_suggest_rounded,
-                      text: 'Customizable',
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 80),
-              ],
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AmbientGlowBackground extends StatefulWidget {
+  const _AmbientGlowBackground();
+
+  @override
+  State<_AmbientGlowBackground> createState() => _AmbientGlowBackgroundState();
+}
+
+class _AmbientGlowBackgroundState extends State<_AmbientGlowBackground> {
+  Offset _mousePos = Offset.zero;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    return MouseRegion(
+      onHover: (event) {
+        setState(() {
+          _mousePos = event.localPosition;
+        });
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 50),
+        decoration: BoxDecoration(
+          gradient: RadialGradient(
+            center: FractionalOffset(
+              _mousePos.dx / MediaQuery.of(context).size.width,
+              _mousePos.dy / MediaQuery.of(context).size.height,
             ),
+            radius: 0.8,
+            colors: [
+              colors.accent.withValues(alpha: 0.06),
+              colors.surface,
+            ],
+            stops: const [0.0, 1.0],
           ),
         ),
       ),
@@ -165,68 +194,128 @@ class SutolHomePage extends StatelessWidget {
   }
 }
 
-class _ModernPresentationEntryPage extends StatefulWidget {
-  const _ModernPresentationEntryPage();
-
-  @override
-  State<_ModernPresentationEntryPage> createState() => _ModernPresentationEntryPageState();
-}
-
-class _ModernPresentationEntryPageState extends State<_ModernPresentationEntryPage> {
-  late final PresentationController _controller;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = PresentationController();
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return PresentationTextDraftPage(controller: _controller);
-  }
-}
-
-class _FeatureBadge extends StatelessWidget {
-  const _FeatureBadge({
-    required this.icon,
-    required this.text,
+class _InputCard extends StatelessWidget {
+  const _InputCard({
+    required this.titleController,
+    required this.promptController,
+    required this.onGenerate,
   });
 
-  final IconData icon;
-  final String text;
+  final TextEditingController titleController;
+  final TextEditingController promptController;
+  final VoidCallback onGenerate;
 
   @override
   Widget build(BuildContext context) {
-    final sutolColors = context.sutolColors;
-
+    final colors = context.colors;
+    
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.all(AppSpacing.s32),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: sutolColors.outline.withValues(alpha: 0.5), width: 1),
-        boxShadow: SutolElevation.level1,
+        color: colors.surfaceElevated.withValues(alpha: 0.8),
+        borderRadius: BorderRadius.circular(AppRadius.xl),
+        border: Border.all(color: colors.border.withValues(alpha: 0.5)),
+        boxShadow: AppShadows.lg,
       ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: <Widget>[
-          Icon(icon, size: 18, color: sutolColors.seed),
-          const SizedBox(width: 8),
-          Text(
-            text,
-            style: TextStyle(
-              fontFamily: 'Inter',
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: sutolColors.onSurface,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          TextField(
+            controller: titleController,
+            style: AppTypography.titleMedium.copyWith(color: colors.textPrimary),
+            decoration: InputDecoration(
+              hintText: 'Presentation Title',
+              filled: true,
+              fillColor: colors.surface,
             ),
+          ),
+          const SizedBox(height: AppSpacing.s16),
+          TextField(
+            controller: promptController,
+            maxLines: 5,
+            minLines: 3,
+            style: AppTypography.bodyLarge.copyWith(color: colors.textPrimary),
+            decoration: InputDecoration(
+              hintText: 'What is this presentation about? Describe your topic, key points, and audience...',
+              filled: true,
+              fillColor: colors.surface,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.s24),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              FilledButton.icon(
+                onPressed: onGenerate,
+                icon: const Icon(Icons.auto_awesome_rounded),
+                label: const Text('Oluştur'),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _LoadingState extends StatelessWidget {
+  const _LoadingState({required this.animation});
+  
+  final Animation<double> animation;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.s48),
+      decoration: BoxDecoration(
+        color: colors.surfaceElevated.withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(AppRadius.xl),
+        border: Border.all(color: colors.border.withValues(alpha: 0.3)),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          AnimatedBuilder(
+            animation: animation,
+            builder: (context, child) {
+              return Transform.rotate(
+                angle: animation.value * 2 * math.pi,
+                child: Container(
+                  width: 64,
+                  height: 64,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: SweepGradient(
+                      colors: [
+                        colors.accent.withValues(alpha: 0.1),
+                        colors.accent,
+                      ],
+                    ),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(4.0),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: colors.surfaceElevated,
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+          const SizedBox(height: AppSpacing.s32),
+          Text(
+            'Slaytlar hazırlanıyor...',
+            style: AppTypography.titleMedium.copyWith(color: colors.textPrimary),
+          ),
+          const SizedBox(height: AppSpacing.s8),
+          Text(
+            'Yapay zeka içeriğinizi yapılandırıyor ve tasarlıyor',
+            style: AppTypography.bodyMedium.copyWith(color: colors.textSecondary),
           ),
         ],
       ),

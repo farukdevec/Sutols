@@ -4,11 +4,8 @@ import 'package:flutter/material.dart';
 
 import '../../models/slide_model.dart';
 import '../../state/presentation_controller.dart';
-
-const Color _editorInk = Color(0xFF142033);
-const Color _editorMuted = Color(0xFF667389);
-const Color _editorAccent = Color(0xFF0B7BFF);
-const Color _editorPanel = Color(0xFFFFFFFF);
+import '../design/design_system.dart';
+import '../design/sutol_widgets.dart';
 
 typedef EditorStageBuilder = Widget Function(
   BuildContext context,
@@ -133,16 +130,8 @@ class _PresentationEditorShellState extends State<PresentationEditorShell> {
       builder: (context, _) {
         return Scaffold(
           body: DecoratedBox(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                colors: <Color>[
-                  Color(0xFFF2F6FC),
-                  Color(0xFFE9F0FA),
-                  Color(0xFFF6F8FC),
-                ],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
+            decoration: BoxDecoration(
+              color: context.background,
             ),
             child: SafeArea(
               child: LayoutBuilder(
@@ -284,203 +273,56 @@ class _EditorStudioHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(26),
-        gradient: const LinearGradient(
-          colors: <Color>[
-            Color(0xFF18C7C8),
-            Color(0xFF3677DE),
-            Color(0xFF7A2DF0),
-          ],
-          begin: Alignment.centerLeft,
-          end: Alignment.centerRight,
-        ),
-        boxShadow: const <BoxShadow>[
-          BoxShadow(
-            color: Color(0x1F3B2D78),
-            blurRadius: 28,
-            offset: Offset(0, 14),
-          ),
-        ],
+      decoration: context.decoration.cardElevated(
+        color: context.surface,
+        elevation: 1,
       ),
       child: Row(
         children: <Widget>[
-          _StudioIconButton(
+          SutolIconButton(
             icon: Icons.arrow_back_rounded,
-            onTap: () => Navigator.of(context).pop(),
+            onPressed: () => Navigator.of(context).pop(),
           ),
           const SizedBox(width: 12),
           Text(
             'Sutol',
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  color: Colors.white,
+                  color: context.onSurface,
                   fontWeight: FontWeight.w900,
                   letterSpacing: -0.02,
                 ),
           ),
           const SizedBox(width: 18),
-          const _StudioMenuChip(label: 'Dosya'),
+          const SutolChip(label: 'Dosya'),
           const SizedBox(width: 8),
-          const _StudioMenuChip(label: 'Metin Sahnesi'),
+          const SutolChip(label: 'Metin Sahnesi'),
           const SizedBox(width: 8),
-          const _StudioMenuChip(label: 'Duzenleme'),
+          const SutolChip(label: 'Duzenleme'),
           const Spacer(),
-          _StudioMetricChip(
+          SutolChip(
             icon: Icons.layers_rounded,
             label: '${controller.pages.length} Sayfa',
           ),
           const SizedBox(width: 8),
-          _StudioMetricChip(
+          SutolChip(
             icon: Icons.text_fields_rounded,
             label: '${controller.selectedPageBlockCount} Metin',
           ),
           const SizedBox(width: 8),
-          _StudioMetricChip(
+          SutolChip(
             icon: Icons.select_all_rounded,
             label: '${controller.selectedItemCount} Secili',
           ),
           if (primaryActionLabel != null &&
               onPrimaryAction != null) ...<Widget>[
             const SizedBox(width: 12),
-            _StudioActionButton(
+            SutolButton(
               label: primaryActionLabel!,
-              onTap: onPrimaryAction!,
+              onPressed: onPrimaryAction,
+              icon: Icons.play_circle_fill_rounded,
             ),
           ],
         ],
-      ),
-    );
-  }
-}
-
-class _StudioIconButton extends StatelessWidget {
-  const _StudioIconButton({
-    required this.icon,
-    required this.onTap,
-  });
-
-  final IconData icon;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Colors.white.withValues(alpha: 0.16),
-      borderRadius: BorderRadius.circular(18),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(18),
-        child: SizedBox(
-          width: 50,
-          height: 50,
-          child: Icon(icon, color: Colors.white),
-        ),
-      ),
-    );
-  }
-}
-
-class _StudioMenuChip extends StatelessWidget {
-  const _StudioMenuChip({
-    required this.label,
-  });
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.16)),
-      ),
-      child: Text(
-        label,
-        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: Colors.white,
-              fontWeight: FontWeight.w700,
-            ),
-      ),
-    );
-  }
-}
-
-class _StudioMetricChip extends StatelessWidget {
-  const _StudioMetricChip({
-    required this.icon,
-    required this.label,
-  });
-
-  final IconData icon;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.16)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: <Widget>[
-          Icon(icon, size: 17, color: Colors.white),
-          const SizedBox(width: 8),
-          Text(
-            label,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w700,
-                ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _StudioActionButton extends StatelessWidget {
-  const _StudioActionButton({
-    required this.label,
-    required this.onTap,
-  });
-
-  final String label;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(18),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(18),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
-              const Icon(
-                Icons.play_circle_fill_rounded,
-                color: _editorInk,
-                size: 18,
-              ),
-              const SizedBox(width: 8),
-              Text(
-                label,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: _editorInk,
-                      fontWeight: FontWeight.w800,
-                    ),
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }
@@ -559,19 +401,11 @@ class _EditorToolRail extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 108,
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 14),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.92),
-        borderRadius: BorderRadius.circular(28),
-        border: Border.all(color: const Color(0xFFDCE5F1)),
-        boxShadow: const <BoxShadow>[
-          BoxShadow(
-            color: Color(0x12000000),
-            blurRadius: 22,
-            offset: Offset(0, 12),
-          ),
-        ],
+      width: 80,
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 14),
+      decoration: context.decoration.cardElevated(
+        color: context.surface,
+        elevation: 1,
       ),
       child: Column(
         children: <Widget>[
@@ -581,6 +415,7 @@ class _EditorToolRail extends StatelessWidget {
             isSelected: activeTab == _EditorToolTab.text,
             onTap: () => onTabChanged(_EditorToolTab.text),
           ),
+          const SizedBox(height: 12),
           _EditorRailButton(
             label: 'Sayfalar',
             icon: Icons.view_carousel_rounded,
@@ -589,12 +424,10 @@ class _EditorToolRail extends StatelessWidget {
           ),
           const Spacer(),
           if (primaryActionLabel != null && onPrimaryAction != null)
-            _EditorRailButton(
-              label: 'Olustur',
+            SutolIconButton(
               icon: Icons.play_circle_fill_rounded,
-              accent: const Color(0xFFEEF5FF),
-              iconColor: _editorAccent,
-              onTap: onPrimaryAction!,
+              onPressed: onPrimaryAction,
+              tooltip: primaryActionLabel,
             ),
         ],
       ),
@@ -608,54 +441,46 @@ class _EditorRailButton extends StatelessWidget {
     required this.icon,
     required this.onTap,
     this.isSelected = false,
-    this.accent,
-    this.iconColor,
   });
 
   final String label;
   final IconData icon;
   final VoidCallback onTap;
   final bool isSelected;
-  final Color? accent;
-  final Color? iconColor;
 
   @override
   Widget build(BuildContext context) {
-    final backgroundColor =
-        accent ?? (isSelected ? const Color(0xFFEDF4FF) : Colors.transparent);
-    final borderColor =
-        isSelected ? const Color(0xFFD4E4FF) : Colors.transparent;
-    final effectiveIconColor =
-        iconColor ?? (isSelected ? _editorAccent : _editorMuted);
+    final bgColor = isSelected ? context.primaryLight : Colors.transparent;
+    final fgColor = isSelected ? context.primary : context.onSurfaceVariant;
 
-    return Material(
-      color: backgroundColor,
-      borderRadius: BorderRadius.circular(22),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(22),
-        child: Container(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(22),
-            border: Border.all(color: borderColor),
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(context.radiusMd),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        decoration: BoxDecoration(
+          color: bgColor,
+          borderRadius: BorderRadius.circular(context.radiusMd),
+          border: Border(
+            left: BorderSide(
+              color: isSelected ? context.primary : Colors.transparent,
+              width: 3,
+            ),
           ),
-          child: Column(
-            children: <Widget>[
-              Icon(icon, color: effectiveIconColor, size: 24),
-              const SizedBox(height: 8),
-              Text(
-                label,
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: isSelected ? _editorInk : _editorMuted,
-                      fontWeight:
-                          isSelected ? FontWeight.w800 : FontWeight.w700,
-                    ),
+        ),
+        child: Column(
+          children: <Widget>[
+            Icon(icon, color: fgColor, size: 24),
+            const SizedBox(height: 6),
+            Text(
+              label,
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                color: fgColor,
+                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -677,17 +502,9 @@ class _EditorInspectorPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.fromLTRB(18, 18, 18, 18),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.94),
-        borderRadius: BorderRadius.circular(30),
-        border: Border.all(color: const Color(0xFFDCE5F1)),
-        boxShadow: const <BoxShadow>[
-          BoxShadow(
-            color: Color(0x12000000),
-            blurRadius: 22,
-            offset: Offset(0, 12),
-          ),
-        ],
+      decoration: context.decoration.cardElevated(
+        color: context.surface,
+        elevation: 1,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -695,16 +512,15 @@ class _EditorInspectorPanel extends StatelessWidget {
           Text(
             _editorPanelTitle(activeTab),
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  color: _editorInk,
-                  fontWeight: FontWeight.w900,
+                  color: context.onSurface,
+                  fontWeight: FontWeight.w800,
                 ),
           ),
           const SizedBox(height: 6),
           Text(
             _editorPanelSubtitle(activeTab, controller),
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: _editorMuted,
-                  fontWeight: FontWeight.w600,
+                  color: context.onSurfaceVariant,
                 ),
           ),
           const SizedBox(height: 14),
@@ -712,11 +528,11 @@ class _EditorInspectorPanel extends StatelessWidget {
             spacing: 8,
             runSpacing: 8,
             children: <Widget>[
-              _EditorInspectorStatChip(
+              SutolChip(
                 icon: Icons.layers_rounded,
                 label: '${controller.pages.length} Sayfa',
               ),
-              _EditorInspectorStatChip(
+              SutolChip(
                 icon: Icons.select_all_rounded,
                 label: '${controller.selectedItemCount} Secili',
               ),
@@ -735,42 +551,6 @@ class _EditorInspectorPanel extends StatelessWidget {
                 ),
               ),
             ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _EditorInspectorStatChip extends StatelessWidget {
-  const _EditorInspectorStatChip({
-    required this.icon,
-    required this.label,
-  });
-
-  final IconData icon;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF5F8FD),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFDCE5F1)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: <Widget>[
-          Icon(icon, size: 16, color: _editorInk),
-          const SizedBox(width: 8),
-          Text(
-            label,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: _editorInk,
-                  fontWeight: FontWeight.w800,
-                ),
           ),
         ],
       ),
@@ -797,17 +577,9 @@ class _EditorStudioWorkspace extends StatelessWidget {
       children: <Widget>[
         Container(
           padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.94),
-            borderRadius: BorderRadius.circular(30),
-            border: Border.all(color: const Color(0xFFDCE5F1)),
-            boxShadow: const <BoxShadow>[
-              BoxShadow(
-                color: Color(0x12000000),
-                blurRadius: 22,
-                offset: Offset(0, 12),
-              ),
-            ],
+          decoration: context.decoration.cardElevated(
+            color: context.surface,
+            elevation: 1,
           ),
           child: Row(
             children: <Widget>[
@@ -819,8 +591,8 @@ class _EditorStudioWorkspace extends StatelessWidget {
                       stageTitle,
                       style:
                           Theme.of(context).textTheme.headlineSmall?.copyWith(
-                                color: _editorInk,
-                                fontWeight: FontWeight.w900,
+                                color: context.onSurface,
+                                fontWeight: FontWeight.w800,
                               ),
                     ),
                     const SizedBox(height: 4),
@@ -829,15 +601,15 @@ class _EditorStudioWorkspace extends StatelessWidget {
                           ? '${controller.selectedItemCount} oge secili. Herhangi birini surukleyerek grubu birlikte tasiyabilirsin.'
                           : stageHint,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: _editorMuted,
-                            fontWeight: FontWeight.w600,
+                            color: context.onSurfaceVariant,
+                            fontWeight: FontWeight.w500,
                           ),
                     ),
                   ],
                 ),
               ),
               const SizedBox(width: 12),
-              _EditorInspectorStatChip(
+              SutolChip(
                 icon: Icons.notes_rounded,
                 label: 'Sayfa ${controller.selectedIndex + 1}',
               ),
@@ -848,17 +620,9 @@ class _EditorStudioWorkspace extends StatelessWidget {
         Expanded(
           child: Container(
             padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.94),
-              borderRadius: BorderRadius.circular(32),
-              border: Border.all(color: const Color(0xFFDCE5F1)),
-              boxShadow: const <BoxShadow>[
-                BoxShadow(
-                  color: Color(0x12000000),
-                  blurRadius: 24,
-                  offset: Offset(0, 14),
-                ),
-              ],
+            decoration: context.decoration.cardElevated(
+              color: context.surface,
+              elevation: 2,
             ),
             child: Column(
               children: <Widget>[
@@ -929,13 +693,14 @@ class _EditorTextInspectorControls extends StatelessWidget {
           spacing: 8,
           runSpacing: 8,
           children: <Widget>[
-            _EditorInspectorBadge(
-              icon: Icons.text_fields_rounded,
-              label: 'Metin Katmani',
+            const SutolBadge(
+              label: 'Metin Katmanı',
+              variant: SutolBadgeVariant.info,
             ),
             if (selectedTextCount > 1)
-              _EditorInspectorLabelChip(
-                label: '$selectedTextCount metin secili',
+              SutolBadge(
+                label: '$selectedTextCount metin seçili',
+                variant: SutolBadgeVariant.neutral,
               ),
           ],
         ),
@@ -948,7 +713,7 @@ class _EditorTextInspectorControls extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         _LabeledDropdown(
-          label: 'Yazı Stili',
+          label: 'Yazi Stili',
           value: selectedTextBlock?.textStyle,
           onChanged: selectedTextBlock == null
               ? null
@@ -977,21 +742,24 @@ class _EditorTextInspectorControls extends StatelessWidget {
         Row(
           children: <Widget>[
             Expanded(
-              child: _EditorSoftActionButton(
+              child: SutolButton(
                 icon: Icons.add_rounded,
                 label: 'Metin Ekle',
-                onTap: controller.addTextBlock,
+                variant: SutolButtonVariant.secondary,
+                isCompact: true,
+                onPressed: controller.addTextBlock,
               ),
             ),
             const SizedBox(width: 10),
             Expanded(
-              child: _EditorSoftActionButton(
+              child: SutolButton(
                 icon: Icons.delete_outline_rounded,
                 label: 'Sil',
-                onTap: controller.canRemoveTextBlock
+                variant: SutolButtonVariant.destructive,
+                isCompact: true,
+                onPressed: controller.canRemoveTextBlock
                     ? controller.removeSelectedTextBlock
                     : null,
-                destructive: true,
               ),
             ),
           ],
@@ -1017,9 +785,9 @@ class _EditorPageInspectorControls extends StatelessWidget {
           spacing: 8,
           runSpacing: 8,
           children: <Widget>[
-            _EditorInspectorBadge(
-              icon: Icons.view_carousel_rounded,
+            SutolBadge(
               label: 'Sayfa Kontrolleri',
+              variant: SutolBadgeVariant.info,
             ),
           ],
         ),
@@ -1027,21 +795,24 @@ class _EditorPageInspectorControls extends StatelessWidget {
         Row(
           children: <Widget>[
             Expanded(
-              child: _EditorSoftActionButton(
+              child: SutolButton(
                 icon: Icons.add_rounded,
                 label: 'Yeni Sayfa',
-                onTap: controller.addPage,
+                variant: SutolButtonVariant.secondary,
+                isCompact: true,
+                onPressed: controller.addPage,
               ),
             ),
             const SizedBox(width: 10),
             Expanded(
-              child: _EditorSoftActionButton(
+              child: SutolButton(
                 icon: Icons.remove_rounded,
                 label: 'Sayfa Sil',
-                onTap: controller.canRemovePage
+                variant: SutolButtonVariant.destructive,
+                isCompact: true,
+                onPressed: controller.canRemovePage
                     ? controller.removeSelectedPage
                     : null,
-                destructive: true,
               ),
             ),
           ],
@@ -1050,146 +821,19 @@ class _EditorPageInspectorControls extends StatelessWidget {
         Container(
           width: double.infinity,
           padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            color: const Color(0xFFF7F9FD),
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: const Color(0xFFDCE5F1)),
+          decoration: context.decoration.cardElevated(
+            color: context.surfaceVariant,
+            elevation: 0,
           ),
           child: Text(
             'Alt taraftaki sayfa seridinden sayfalar arasinda hizli gecis yapabilirsin.',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: _editorMuted,
-                  fontWeight: FontWeight.w600,
+                  color: context.onSurfaceVariant,
+                  fontWeight: FontWeight.w500,
                 ),
           ),
         ),
       ],
-    );
-  }
-}
-
-class _EditorInspectorBadge extends StatelessWidget {
-  const _EditorInspectorBadge({
-    required this.icon,
-    required this.label,
-  });
-
-  final IconData icon;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        color: const Color(0xFFEDF4FF),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFD7E5FB)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: <Widget>[
-          Icon(icon, size: 16, color: _editorAccent),
-          const SizedBox(width: 8),
-          Text(
-            label,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: _editorInk,
-                  fontWeight: FontWeight.w800,
-                ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _EditorInspectorLabelChip extends StatelessWidget {
-  const _EditorInspectorLabelChip({
-    required this.label,
-  });
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFDCE5F1)),
-      ),
-      child: Text(
-        label,
-        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: _editorInk,
-              fontWeight: FontWeight.w700,
-            ),
-      ),
-    );
-  }
-}
-
-class _EditorSoftActionButton extends StatelessWidget {
-  const _EditorSoftActionButton({
-    required this.icon,
-    required this.label,
-    required this.onTap,
-    this.destructive = false,
-  });
-
-  final IconData icon;
-  final String label;
-  final VoidCallback? onTap;
-  final bool destructive;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: destructive ? const Color(0xFFFFF4F4) : Colors.white,
-      borderRadius: BorderRadius.circular(16),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        child: Opacity(
-          opacity: onTap == null ? 0.45 : 1,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: destructive
-                    ? const Color(0xFFFFD8D8)
-                    : const Color(0xFFDCE5F1),
-              ),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: <Widget>[
-                Icon(
-                  icon,
-                  size: 18,
-                  color: destructive ? const Color(0xFFD13A3A) : _editorInk,
-                ),
-                const SizedBox(width: 8),
-                Flexible(
-                  child: Text(
-                    label,
-                    overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: destructive
-                              ? const Color(0xFFD13A3A)
-                              : _editorInk,
-                          fontWeight: FontWeight.w800,
-                        ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
     );
   }
 }
@@ -1205,20 +849,18 @@ class _EditorFilmstrip extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF7F9FD),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: const Color(0xFFDCE5F1)),
+      decoration: context.decoration.cardElevated(
+        color: context.surfaceVariant,
+        elevation: 0,
       ),
       child: Row(
         children: <Widget>[
           Container(
             width: 138,
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: const Color(0xFFDCE5F1)),
+            decoration: context.decoration.cardElevated(
+              color: context.surface,
+              elevation: 0,
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -1226,15 +868,15 @@ class _EditorFilmstrip extends StatelessWidget {
                 Text(
                   'Sayfalar',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: _editorInk,
-                        fontWeight: FontWeight.w900,
+                        color: context.onSurface,
+                        fontWeight: FontWeight.w800,
                       ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   '${controller.selectedIndex + 1} / ${controller.pages.length}',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: _editorMuted,
+                        color: context.onSurfaceVariant,
                         fontWeight: FontWeight.w700,
                       ),
                 ),
@@ -1264,17 +906,16 @@ class _EditorFilmstrip extends StatelessWidget {
           const SizedBox(width: 12),
           Column(
             children: <Widget>[
-              _RoundIconButton(
+              SutolIconButton(
                 icon: Icons.add_rounded,
                 onPressed: controller.addPage,
               ),
               const SizedBox(height: 8),
-              _RoundIconButton(
+              SutolIconButton(
                 icon: Icons.remove_rounded,
                 onPressed: controller.canRemovePage
                     ? controller.removeSelectedPage
                     : null,
-                subtle: true,
               ),
             ],
           ),
@@ -1302,18 +943,18 @@ class _EditorStudioPageThumb extends StatelessWidget {
     return SizedBox(
       width: 148,
       child: Material(
-        color: isSelected ? const Color(0xFFEEF5FF) : Colors.white,
-        borderRadius: BorderRadius.circular(20),
+        color: isSelected ? context.primaryLight : context.surface,
+        borderRadius: BorderRadius.circular(context.radiusLg),
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(context.radiusLg),
           child: AnimatedContainer(
-            duration: const Duration(milliseconds: 180),
+            duration: context.motion.fast,
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(context.radiusLg),
               border: Border.all(
-                color: isSelected ? _editorAccent : const Color(0xFFDCE5F1),
+                color: isSelected ? context.primary : context.outline,
                 width: isSelected ? 1.4 : 1,
               ),
             ),
@@ -1321,7 +962,7 @@ class _EditorStudioPageThumb extends StatelessWidget {
               children: <Widget>[
                 Expanded(
                   child: ClipRRect(
-                    borderRadius: BorderRadius.circular(14),
+                    borderRadius: BorderRadius.circular(context.radiusMd),
                     child: IgnorePointer(
                       child: PresentationPageCanvas(
                         page: page,
@@ -1337,8 +978,8 @@ class _EditorStudioPageThumb extends StatelessWidget {
                   child: Text(
                     '${index + 1}. Sayfa',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: _editorInk,
-                          fontWeight: FontWeight.w800,
+                          color: context.onSurface,
+                          fontWeight: FontWeight.w700,
                         ),
                   ),
                 ),
@@ -1393,23 +1034,15 @@ class _EditorHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.88),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: const Color(0xFFD9E2F1)),
-        boxShadow: const <BoxShadow>[
-          BoxShadow(
-            color: Color(0x14000000),
-            blurRadius: 18,
-            offset: Offset(0, 10),
-          ),
-        ],
+      decoration: context.decoration.cardElevated(
+        color: context.surface,
+        elevation: 1,
       ),
       child: Row(
         children: <Widget>[
-          IconButton(
+          SutolIconButton(
             onPressed: () => Navigator.of(context).pop(),
-            icon: const Icon(Icons.arrow_back_rounded, color: _editorInk),
+            icon: Icons.arrow_back_rounded,
           ),
           const SizedBox(width: 8),
           Expanded(
@@ -1419,7 +1052,7 @@ class _EditorHeader extends StatelessWidget {
                 Text(
                   title,
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        color: _editorInk,
+                        color: context.onSurface,
                         fontWeight: FontWeight.w800,
                       ),
                 ),
@@ -1427,7 +1060,7 @@ class _EditorHeader extends StatelessWidget {
                 Text(
                   subtitle,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: _editorMuted,
+                        color: context.onSurfaceVariant,
                         fontWeight: FontWeight.w500,
                       ),
                 ),
@@ -1439,46 +1072,10 @@ class _EditorHeader extends StatelessWidget {
             runSpacing: 10,
             crossAxisAlignment: WrapCrossAlignment.center,
             children: <Widget>[
-              _InfoChip(icon: Icons.layers_rounded, label: '$pageCount Sayfa'),
-              _InfoChip(icon: Icons.notes_rounded, label: '$blockCount Metin'),
+              SutolChip(icon: Icons.layers_rounded, label: '$pageCount Sayfa'),
+              SutolChip(icon: Icons.notes_rounded, label: '$blockCount Metin'),
               if (trailing != null) trailing!,
             ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _InfoChip extends StatelessWidget {
-  const _InfoChip({
-    required this.icon,
-    required this.label,
-  });
-
-  final IconData icon;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF5F8FD),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFDCE5F1)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: <Widget>[
-          Icon(icon, size: 18, color: _editorInk),
-          const SizedBox(width: 8),
-          Text(
-            label,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: _editorInk,
-                  fontWeight: FontWeight.w700,
-                ),
           ),
         ],
       ),
@@ -1499,17 +1096,9 @@ class _PageSidebar extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: _editorPanel,
-        borderRadius: BorderRadius.circular(30),
-        border: Border.all(color: const Color(0xFFDCE5F1)),
-        boxShadow: const <BoxShadow>[
-          BoxShadow(
-            color: Color(0x12000000),
-            blurRadius: 20,
-            offset: Offset(0, 12),
-          ),
-        ],
+      decoration: context.decoration.cardElevated(
+        color: context.surface,
+        elevation: 1,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1520,22 +1109,21 @@ class _PageSidebar extends StatelessWidget {
                 child: Text(
                   'Sayfalar',
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        color: _editorInk,
+                        color: context.onSurface,
                         fontWeight: FontWeight.w800,
                       ),
                 ),
               ),
-              _RoundIconButton(
+              SutolIconButton(
                 icon: Icons.add_rounded,
                 onPressed: controller.addPage,
               ),
               const SizedBox(width: 8),
-              _RoundIconButton(
+              SutolIconButton(
                 icon: Icons.remove_rounded,
                 onPressed: controller.canRemovePage
                     ? controller.removeSelectedPage
                     : null,
-                subtle: true,
               ),
             ],
           ),
@@ -1596,15 +1184,15 @@ class _PageThumbnail extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(22),
+      borderRadius: BorderRadius.circular(context.radiusLg),
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 220),
+        duration: context.motion.fast,
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFFF1F6FF) : const Color(0xFFF8FAFD),
-          borderRadius: BorderRadius.circular(22),
+          color: isSelected ? context.primaryLight : context.surface,
+          borderRadius: BorderRadius.circular(context.radiusLg),
           border: Border.all(
-            color: isSelected ? _editorAccent : const Color(0xFFDCE5F1),
+            color: isSelected ? context.primary : context.outline,
             width: isSelected ? 1.4 : 1,
           ),
         ),
@@ -1614,7 +1202,7 @@ class _PageThumbnail extends StatelessWidget {
             Text(
               'Sayfa ${index + 1}',
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: _editorInk,
+                    color: context.onSurface,
                     fontWeight: FontWeight.w800,
                   ),
             ),
@@ -1622,7 +1210,7 @@ class _PageThumbnail extends StatelessWidget {
             AspectRatio(
               aspectRatio: 16 / 9,
               child: ClipRRect(
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(context.radiusMd),
                 child: IgnorePointer(
                   child: PresentationPageCanvas(
                     page: page,
@@ -1662,17 +1250,9 @@ class _EditorWorkspace extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: _editorPanel,
-        borderRadius: BorderRadius.circular(30),
-        border: Border.all(color: const Color(0xFFDCE5F1)),
-        boxShadow: const <BoxShadow>[
-          BoxShadow(
-            color: Color(0x12000000),
-            blurRadius: 20,
-            offset: Offset(0, 12),
-          ),
-        ],
+      decoration: context.decoration.cardElevated(
+        color: context.surface,
+        elevation: 1,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1687,7 +1267,7 @@ class _EditorWorkspace extends StatelessWidget {
             Text(
               stageHint,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: _editorMuted,
+                    color: context.onSurfaceVariant,
                     fontWeight: FontWeight.w500,
                   ),
             ),
@@ -1709,29 +1289,16 @@ class _EditorWorkspace extends StatelessWidget {
                           ? 'Kutuyu surukleyebilir, sag tutamactan yatayda genisletip daraltabilirsin.'
                           : 'Bos alanda surukleyerek coklu secim yapabilir veya yeni metin ekleyebilirsin.',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: _editorMuted,
+                        color: context.onSurfaceVariant,
                         fontWeight: FontWeight.w600,
                       ),
                 ),
               ),
               if (primaryActionLabel != null && onPrimaryAction != null)
-                FilledButton(
+                SutolButton(
+                  label: primaryActionLabel!,
                   onPressed: onPrimaryAction,
-                  style: FilledButton.styleFrom(
-                    backgroundColor: _editorAccent,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 24,
-                      vertical: 18,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(18),
-                    ),
-                  ),
-                  child: Text(
-                    primaryActionLabel!,
-                    style: const TextStyle(fontWeight: FontWeight.w800),
-                  ),
+                  icon: Icons.play_circle_fill_rounded,
                 ),
             ],
           ),
@@ -1770,7 +1337,7 @@ class _WorkspaceToolbar extends StatelessWidget {
                   child: Text(
                     title,
                     style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                          color: _editorInk,
+                          color: context.onSurface,
                           fontWeight: FontWeight.w800,
                         ),
                   ),
@@ -1790,7 +1357,7 @@ class _WorkspaceToolbar extends StatelessWidget {
               SizedBox(
                 width: 168,
                 child: _LabeledDropdown(
-                  label: 'Yazı Stili',
+                  label: 'Yazi Stili',
                   value: selectedTextBlock?.textStyle,
                   onChanged: selectedTextBlock == null
                       ? null
@@ -1820,17 +1387,16 @@ class _WorkspaceToolbar extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 12),
-              _RoundIconButton(
+              SutolIconButton(
                 icon: Icons.add_rounded,
                 onPressed: controller.addTextBlock,
               ),
               const SizedBox(width: 8),
-              _RoundIconButton(
+              SutolIconButton(
                 icon: Icons.delete_outline_rounded,
                 onPressed: controller.canRemoveTextBlock
                     ? controller.removeSelectedTextBlock
                     : null,
-                subtle: true,
               ),
             ],
           );
@@ -1842,7 +1408,7 @@ class _WorkspaceToolbar extends StatelessWidget {
             Text(
               title,
               style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                    color: _editorInk,
+                    color: context.onSurface,
                     fontWeight: FontWeight.w800,
                   ),
             ),
@@ -1864,7 +1430,7 @@ class _WorkspaceToolbar extends StatelessWidget {
                 SizedBox(
                   width: 168,
                   child: _LabeledDropdown(
-                    label: 'Yazı Stili',
+                    label: 'Yazi Stili',
                     value: selectedTextBlock?.textStyle,
                     onChanged: selectedTextBlock == null
                         ? null
@@ -1892,16 +1458,15 @@ class _WorkspaceToolbar extends StatelessWidget {
                             ),
                   ),
                 ),
-                _RoundIconButton(
+                SutolIconButton(
                   icon: Icons.add_rounded,
                   onPressed: controller.addTextBlock,
                 ),
-                _RoundIconButton(
+                SutolIconButton(
                   icon: Icons.delete_outline_rounded,
                   onPressed: controller.canRemoveTextBlock
                       ? controller.removeSelectedTextBlock
                       : null,
-                  subtle: true,
                 ),
               ],
             ),
@@ -1933,35 +1498,35 @@ class _LabeledTextField extends StatelessWidget {
         controller: controller,
         enabled: enabled,
         onChanged: onChanged,
-        style: const TextStyle(
-          color: _editorInk,
+        style: TextStyle(
+          color: context.onSurface,
           fontWeight: FontWeight.w700,
         ),
         decoration: InputDecoration(
           hintText: 'Buraya metin yazin',
-          hintStyle: const TextStyle(color: _editorMuted),
+          hintStyle: TextStyle(color: context.onSurfaceVariant),
           isDense: true,
           filled: true,
-          fillColor: const Color(0xFFF7F9FD),
+          fillColor: context.surfaceVariant,
           contentPadding: const EdgeInsets.symmetric(
             horizontal: 14,
             vertical: 14,
           ),
           border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: const BorderSide(color: Color(0xFFDCE5F1)),
+            borderRadius: BorderRadius.circular(context.radiusMd),
+            borderSide: BorderSide(color: context.outline),
           ),
           enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: const BorderSide(color: Color(0xFFDCE5F1)),
+            borderRadius: BorderRadius.circular(context.radiusMd),
+            borderSide: BorderSide(color: context.outline),
           ),
           disabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: const BorderSide(color: Color(0xFFE7EDF6)),
+            borderRadius: BorderRadius.circular(context.radiusMd),
+            borderSide: BorderSide(color: context.outline.withValues(alpha: 0.5)),
           ),
           focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: const BorderSide(color: _editorAccent, width: 1.2),
+            borderRadius: BorderRadius.circular(context.radiusMd),
+            borderSide: BorderSide(color: context.primary, width: 1.5),
           ),
         ),
       ),
@@ -1988,35 +1553,35 @@ class _LabeledDropdown extends StatelessWidget {
         initialValue: value,
         onChanged: onChanged,
         isDense: true,
-        dropdownColor: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        dropdownColor: context.surface,
+        borderRadius: BorderRadius.circular(context.radiusMd),
         icon: const Icon(Icons.keyboard_arrow_down_rounded),
-        style: const TextStyle(
-          color: _editorInk,
+        style: TextStyle(
+          color: context.onSurface,
           fontWeight: FontWeight.w700,
         ),
         decoration: InputDecoration(
           filled: true,
-          fillColor: const Color(0xFFF7F9FD),
+          fillColor: context.surfaceVariant,
           contentPadding: const EdgeInsets.symmetric(
             horizontal: 14,
             vertical: 14,
           ),
           border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: const BorderSide(color: Color(0xFFDCE5F1)),
+            borderRadius: BorderRadius.circular(context.radiusMd),
+            borderSide: BorderSide(color: context.outline),
           ),
           enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: const BorderSide(color: Color(0xFFDCE5F1)),
+            borderRadius: BorderRadius.circular(context.radiusMd),
+            borderSide: BorderSide(color: context.outline),
           ),
           disabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: const BorderSide(color: Color(0xFFE7EDF6)),
+            borderRadius: BorderRadius.circular(context.radiusMd),
+            borderSide: BorderSide(color: context.outline.withValues(alpha: 0.5)),
           ),
           focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: const BorderSide(color: _editorAccent, width: 1.2),
+            borderRadius: BorderRadius.circular(context.radiusMd),
+            borderSide: BorderSide(color: context.primary, width: 1.5),
           ),
         ),
         items: PresentationTextStyle.values
@@ -2025,8 +1590,8 @@ class _LabeledDropdown extends StatelessWidget {
                 value: style,
                 child: Text(
                   _textStyleLabel(style),
-                  style: const TextStyle(
-                    color: _editorInk,
+                  style: TextStyle(
+                    color: context.onSurface,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -2058,23 +1623,23 @@ class _LabeledFontSizeStepper extends StatelessWidget {
       child: Container(
         height: 50,
         decoration: BoxDecoration(
-          color: const Color(0xFFF7F9FD),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: const Color(0xFFDCE5F1)),
+          color: context.surfaceVariant,
+          borderRadius: BorderRadius.circular(context.radiusMd),
+          border: Border.all(color: context.outline),
         ),
         child: Row(
           children: <Widget>[
             IconButton(
               onPressed: onDecrease,
               visualDensity: VisualDensity.compact,
-              icon: const Icon(Icons.remove_rounded, color: _editorInk),
+              icon: Icon(Icons.remove_rounded, color: context.onSurface),
             ),
             Expanded(
               child: Center(
                 child: Text(
                   value?.toString() ?? '-',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: _editorInk,
+                        color: context.onSurface,
                         fontWeight: FontWeight.w800,
                       ),
                 ),
@@ -2083,7 +1648,7 @@ class _LabeledFontSizeStepper extends StatelessWidget {
             IconButton(
               onPressed: onIncrease,
               visualDensity: VisualDensity.compact,
-              icon: const Icon(Icons.add_rounded, color: _editorInk),
+              icon: Icon(Icons.add_rounded, color: context.onSurface),
             ),
           ],
         ),
@@ -2111,45 +1676,13 @@ class _LabeledControl extends StatelessWidget {
           child: Text(
             label,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: _editorInk,
+                  color: context.onSurface,
                   fontWeight: FontWeight.w700,
                 ),
           ),
         ),
         child,
       ],
-    );
-  }
-}
-
-class _RoundIconButton extends StatelessWidget {
-  const _RoundIconButton({
-    required this.icon,
-    required this.onPressed,
-    this.subtle = false,
-  });
-
-  final IconData icon;
-  final VoidCallback? onPressed;
-  final bool subtle;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: subtle ? const Color(0xFFF5F7FB) : const Color(0xFFF0F6FF),
-      borderRadius: BorderRadius.circular(16),
-      child: InkWell(
-        onTap: onPressed,
-        borderRadius: BorderRadius.circular(16),
-        child: Opacity(
-          opacity: onPressed == null ? 0.45 : 1,
-          child: SizedBox(
-            width: 46,
-            height: 46,
-            child: Icon(icon, color: _editorInk),
-          ),
-        ),
-      ),
     );
   }
 }
@@ -2571,7 +2104,7 @@ class _PresentationPageCanvasState extends State<PresentationPageCanvas> {
                   child: Text(
                     'Bos alanda surukle: coklu secim, cerceveden boyutlandir',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: _editorInk,
+                          color: context.onSurface,
                           fontWeight: FontWeight.w700,
                         ),
                   ),
@@ -2591,7 +2124,7 @@ class _PresentationPageCanvasState extends State<PresentationPageCanvas> {
                 child: Text(
                   'Metin veya bilesen ekleyin',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: _editorMuted,
+                        color: context.onSurfaceVariant,
                         fontWeight: FontWeight.w700,
                       ),
                 ),
@@ -2736,10 +2269,10 @@ class _PresentationPageCanvasState extends State<PresentationPageCanvas> {
                 child: IgnorePointer(
                   child: DecoratedBox(
                     decoration: BoxDecoration(
-                      color: _editorAccent.withValues(alpha: 0.12),
+                      color: context.onSurface.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                        color: _editorAccent,
+                        color: context.primary,
                         width: 1.4,
                       ),
                     ),
@@ -2861,7 +2394,7 @@ class _PageTextBlock extends StatelessWidget {
         : block.text.trim().isEmpty
             ? math.max(0.42, textOpacity * 0.52)
             : textOpacity;
-    final textColor = (darkSurface ? Colors.white : _editorInk).withValues(
+    final textColor = (darkSurface ? Colors.white : context.onSurface).withValues(
       alpha: effectiveTextAlpha,
     );
     final displayStyle = Theme.of(context).textTheme.headlineSmall?.copyWith(
@@ -2872,7 +2405,7 @@ class _PageTextBlock extends StatelessWidget {
           letterSpacing: _letterSpacingForType(block.type),
         );
     final editingStyle = Theme.of(context).textTheme.headlineSmall?.copyWith(
-          color: darkSurface ? Colors.white : _editorInk,
+          color: darkSurface ? Colors.white : context.onSurface,
           fontWeight: _fontWeightForType(block.type),
           fontSize: adjustedFontSize,
           height: _lineHeightForType(block.type),
@@ -2892,11 +2425,11 @@ class _PageTextBlock extends StatelessWidget {
               border: InputBorder.none,
               hintText: 'Buraya metin yazin',
               hintStyle: TextStyle(
-                color: _editorMuted,
+                color: context.onSurfaceVariant,
                 fontWeight: FontWeight.w600,
               ),
             ),
-            cursorColor: _editorAccent,
+            cursorColor: context.primary,
           )
         : Text(
             displayText,
@@ -2938,12 +2471,12 @@ class _PageTextBlock extends StatelessWidget {
                       color: showSelectionBorder && isSelected
                           ? (isEditing && textOpacity <= 0
                               ? Colors.white.withValues(alpha: 0.96)
-                              : _editorAccent.withValues(alpha: 0.08))
+                              : context.primary.withValues(alpha: 0.08))
                           : Colors.transparent,
                       borderRadius: BorderRadius.circular(22),
                       border: Border.all(
                         color: showSelectionBorder
-                            ? (isSelected ? _editorAccent : Colors.transparent)
+                            ? (isSelected ? context.primary : Colors.transparent)
                             : Colors.transparent,
                         width: isSelected ? 1.6 : 1,
                       ),
@@ -2970,7 +2503,7 @@ class _PageTextBlock extends StatelessWidget {
                               color: Colors.white,
                               borderRadius: BorderRadius.circular(999),
                               border:
-                                  Border.all(color: _editorAccent, width: 1.4),
+                                  Border.all(color: context.primary, width: 1.4),
                               boxShadow: const <BoxShadow>[
                                 BoxShadow(
                                   color: Color(0x18000000),
@@ -2983,7 +2516,7 @@ class _PageTextBlock extends StatelessWidget {
                               child: Container(
                                 width: 2,
                                 height: 18,
-                                color: _editorAccent,
+                                color: context.primary,
                               ),
                             ),
                           ),
@@ -3095,12 +2628,12 @@ class _PageComponentBlock extends StatelessWidget {
                       : const Duration(milliseconds: 140),
                   decoration: BoxDecoration(
                     color: isSelected && showSelectionBorder
-                        ? _editorAccent.withValues(alpha: 0.08)
+                        ? context.primary.withValues(alpha: 0.08)
                         : Colors.transparent,
                     borderRadius: BorderRadius.circular(18),
                     border: Border.all(
                       color: showSelectionBorder && isSelected
-                          ? _editorAccent
+                          ? context.primary
                           : Colors.transparent,
                       width: isSelected ? 1.8 : 1,
                     ),
@@ -3182,7 +2715,7 @@ class _PageComponentBlock extends StatelessWidget {
                         border: Border.all(
                           color: block.modelOrbitEnabled
                               ? Colors.white
-                              : _editorAccent,
+                              : context.primary,
                           width: 1.5,
                         ),
                         boxShadow: const <BoxShadow>[
@@ -3208,15 +2741,15 @@ class _PageComponentBlock extends StatelessWidget {
                               color: Colors.white,
                             ),
                           ] else ...<Widget>[
-                            const Icon(
+                            Icon(
                               Icons.threesixty_rounded,
                               size: 31,
-                              color: _editorAccent,
+                              color: context.primary,
                             ),
-                            const Icon(
+                            Icon(
                               Icons.touch_app_rounded,
                               size: 16,
-                              color: _editorAccent,
+                              color: context.primary,
                             ),
                           ],
                         ],
@@ -3273,7 +2806,7 @@ class _ComponentResizeGrip extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(999),
-                  border: Border.all(color: _editorAccent, width: 1.6),
+                  border: Border.all(color: context.primary, width: 1.6),
                   boxShadow: const <BoxShadow>[
                     BoxShadow(
                       color: Color(0x26000000),

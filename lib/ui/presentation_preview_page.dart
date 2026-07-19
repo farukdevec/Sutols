@@ -1,16 +1,14 @@
 import 'dart:math' as math;
+import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import 'design/design_system.dart';
 import '../models/slide_model.dart';
 import '../services/presentation_fullscreen_service.dart';
 import '../state/presentation_controller.dart';
 import 'widgets/html_stage/html_page_stage.dart';
-
-const Color _previewInk = Color(0xFFF8FBFF);
-const Color _previewMuted = Color(0xB8F8FBFF);
-const Color _previewAccent = Color(0xFF67E8F9);
 
 class PresentationPreviewPage extends StatefulWidget {
   const PresentationPreviewPage({
@@ -187,6 +185,7 @@ class _PresentationPreviewPageState extends State<PresentationPreviewPage> {
     return AnimatedBuilder(
       animation: widget.controller,
       builder: (context, _) {
+        final colors = context.sutolColors;
         final pages = widget.controller.pages;
         final effectSettings = widget.controller.effectSettings;
         final reduceMotion = _shouldReducePreviewMotion(
@@ -204,7 +203,7 @@ class _PresentationPreviewPageState extends State<PresentationPreviewPage> {
         }
 
         return Scaffold(
-          backgroundColor: const Color(0xFF02040A),
+          backgroundColor: colors.background,
           body: KeyboardListener(
             focusNode: _focusNode,
             autofocus: true,
@@ -215,23 +214,17 @@ class _PresentationPreviewPageState extends State<PresentationPreviewPage> {
                 fit: StackFit.expand,
                 children: <Widget>[
                   DecoratedBox(
-                    decoration: const BoxDecoration(
-                      gradient: RadialGradient(
-                        colors: <Color>[
-                          Color(0xFF101C31),
-                          Color(0xFF02040A),
-                        ],
-                        radius: 1.0,
-                      ),
+                    decoration: BoxDecoration(
+                      color: colors.background,
                     ),
                     child: page == null
-                        ? const Center(
+                        ? Center(
                             child: Text(
                               'Sunumda sayfa yok.',
-                              style: TextStyle(
-                                color: _previewInk,
-                                fontWeight: FontWeight.w700,
-                              ),
+                              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                                    color: colors.onSurface,
+                                    fontWeight: FontWeight.w700,
+                                  ),
                             ),
                           )
                         : _PreviewDeckStage(
@@ -324,7 +317,7 @@ class _PreviewDeckStage extends StatelessWidget {
   Widget build(BuildContext context) {
     final duration = reduceMotion ||
             effectSettings.transitionKind == PresentationTransitionKind.none
-        ? Duration.zero
+        ? SutolMotion.instant
         : Duration(milliseconds: effectSettings.transitionDurationMs);
 
     return LayoutBuilder(
@@ -363,9 +356,9 @@ class _PreviewDeckStage extends StatelessWidget {
                       child: AnimatedScale(
                         scale: zoomed ? effectSettings.zoomScale : 1,
                         duration: reduceMotion
-                            ? Duration.zero
-                            : const Duration(milliseconds: 320),
-                        curve: Curves.easeOutCubic,
+                            ? SutolMotion.instant
+                            : SutolMotion.moderate,
+                        curve: SutolMotion.easeOut,
                         child: Stack(
                           fit: StackFit.expand,
                           children: <Widget>[
@@ -429,7 +422,7 @@ class _SmoothModelMorphStage extends StatelessWidget {
     return TweenAnimationBuilder<double>(
       tween: Tween<double>(begin: 0, end: 1),
       duration: duration,
-      curve: Curves.easeInOutCubic,
+      curve: SutolMotion.easeInOut,
       builder: (context, progress, _) => HtmlPageStage(
         page: _interpolateModelPages(fromPage, toPage, progress),
         visibleRevealStep: visibleRevealStep,
@@ -535,6 +528,7 @@ class _PreviewHotspotRegion extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.sutolColors;
     return Positioned.fromRect(
       rect: rect,
       child: Tooltip(
@@ -546,23 +540,23 @@ class _PreviewHotspotRegion extends StatelessWidget {
             color: Colors.transparent,
             child: InkWell(
               onTap: onTap,
-              borderRadius: BorderRadius.circular(18),
+              borderRadius: BorderRadius.circular(SutolRadius.lg),
               child: DecoratedBox(
                 decoration: BoxDecoration(
-                  color: _previewAccent.withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(18),
+                  color: colors.primary.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(SutolRadius.lg),
                   border: Border.all(
-                    color: _previewAccent.withValues(alpha: 0.32),
+                    color: colors.primary.withValues(alpha: 0.4),
                   ),
                 ),
                 child: Align(
                   alignment: Alignment.topRight,
                   child: Padding(
-                    padding: const EdgeInsets.all(8),
+                    padding: EdgeInsets.all(context.sm),
                     child: Icon(
                       Icons.ads_click_rounded,
                       size: 18,
-                      color: _previewAccent.withValues(alpha: 0.9),
+                      color: colors.primary,
                     ),
                   ),
                 ),
@@ -610,7 +604,7 @@ class _PreviewTopBar extends StatelessWidget {
       child: Align(
         alignment: Alignment.topCenter,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(18, 14, 18, 0),
+          padding: EdgeInsets.fromLTRB(context.lg, context.md, context.lg, 0),
           child: Row(
             children: <Widget>[
               _PreviewControlButton(
@@ -618,19 +612,18 @@ class _PreviewTopBar extends StatelessWidget {
                 label: 'Cikis',
                 onTap: onClose,
               ),
-              const SizedBox(width: 10),
+              SizedBox(width: context.md),
               _PreviewInfoPill(
                 icon: Icons.slideshow_rounded,
                 label: '${currentIndex + 1} / $pageCount',
               ),
-              const SizedBox(width: 10),
+              SizedBox(width: context.md),
               _PreviewInfoPill(
                 icon: presentationTransitionIcon(effectSettings.transitionKind),
-                label:
-                    presentationTransitionLabel(effectSettings.transitionKind),
+                label: presentationTransitionLabel(effectSettings.transitionKind),
               ),
               if (maxRevealStep > 0) ...<Widget>[
-                const SizedBox(width: 10),
+                SizedBox(width: context.md),
                 _PreviewInfoPill(
                   icon: Icons.auto_awesome_rounded,
                   label: '$currentRevealStep / $maxRevealStep',
@@ -644,7 +637,7 @@ class _PreviewTopBar extends StatelessWidget {
                 label: hasNotes || presenterMode ? 'Notlar' : 'Presenter',
                 onTap: onTogglePresenter,
               ),
-              const SizedBox(width: 10),
+              SizedBox(width: context.md),
               if (onToggleZoom != null) ...<Widget>[
                 _PreviewControlButton(
                   icon: zoomed
@@ -653,7 +646,7 @@ class _PreviewTopBar extends StatelessWidget {
                   label: zoomed ? 'Zoom Kapat' : 'Zoom',
                   onTap: onToggleZoom!,
                 ),
-                const SizedBox(width: 10),
+                SizedBox(width: context.md),
               ],
               _PreviewControlButton(
                 icon: Icons.fullscreen_rounded,
@@ -680,63 +673,69 @@ class _PreviewPresenterPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final notes = page.speakerNotes.trim();
+    final colors = context.sutolColors;
+
     return SafeArea(
       child: Align(
         alignment: Alignment.topRight,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(18, 74, 18, 0),
+          padding: EdgeInsets.fromLTRB(context.xl, 74, context.xl, 0),
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 380),
-            child: Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.54),
-                borderRadius: BorderRadius.circular(22),
-                border: Border.all(
-                  color: Colors.white.withValues(alpha: 0.12),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(SutolRadius.xl),
+              child: BackdropFilter(
+                filter: ui.ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+                child: Container(
+                  padding: EdgeInsets.all(context.xl),
+                  decoration: context.decoration.glass(
+                    borderRadius: SutolRadius.xl,
+                    opacity: 0.7,
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Text(
+                        'Sunucu Notu',
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                              color: colors.primary,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 0.5,
+                            ),
+                      ),
+                      SizedBox(height: context.sm),
+                      Text(
+                        notes.isEmpty ? 'Not yok.' : notes,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              color: colors.onSurface,
+                              height: 1.5,
+                            ),
+                      ),
+                      SizedBox(height: context.xl),
+                      Text(
+                        'Sonraki',
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                              color: colors.onSurfaceVariant,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 0.5,
+                            ),
+                      ),
+                      SizedBox(height: context.xs),
+                      Text(
+                        nextPage == null
+                            ? 'Sunum sonu'
+                            : _previewPageTitle(nextPage!),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                              color: colors.onSurface,
+                              fontWeight: FontWeight.w600,
+                            ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  Text(
-                    'Sunucu Notu',
-                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                          color: _previewMuted,
-                          fontWeight: FontWeight.w800,
-                        ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    notes.isEmpty ? 'Not yok.' : notes,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: _previewInk,
-                          height: 1.35,
-                          fontWeight: FontWeight.w700,
-                        ),
-                  ),
-                  const SizedBox(height: 14),
-                  Text(
-                    'Sonraki',
-                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                          color: _previewMuted,
-                          fontWeight: FontWeight.w800,
-                        ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    nextPage == null
-                        ? 'Sunum sonu'
-                        : _previewPageTitle(nextPage!),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: _previewInk,
-                          fontWeight: FontWeight.w800,
-                        ),
-                  ),
-                ],
               ),
             ),
           ),
@@ -767,47 +766,52 @@ class _PreviewBottomBar extends StatelessWidget {
       child: Align(
         alignment: Alignment.bottomCenter,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(18, 0, 18, 18),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-            decoration: BoxDecoration(
-              color: Colors.black.withValues(alpha: 0.42),
-              borderRadius: BorderRadius.circular(999),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: <Widget>[
-                _PreviewIconButton(
-                  icon: Icons.arrow_back_rounded,
-                  label: 'Onceki slayt',
-                  onTap: onPrevious,
+          padding: EdgeInsets.fromLTRB(context.xl, 0, context.xl, context.xl),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(SutolRadius.full),
+            child: BackdropFilter(
+              filter: ui.ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                decoration: context.decoration.glass(
+                  borderRadius: SutolRadius.full,
+                  opacity: 0.6,
                 ),
-                const SizedBox(width: 10),
-                ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 520),
-                  child: SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Row(
-                      children: List<Widget>.generate(
-                        pageCount,
-                        (index) => _PreviewDot(
-                          index: index,
-                          isSelected: index == currentIndex,
-                          label: 'Slayt ${index + 1}',
-                          onTap: () => onSelect(index),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    _PreviewIconButton(
+                      icon: Icons.arrow_back_rounded,
+                      label: 'Onceki slayt',
+                      onTap: onPrevious,
+                    ),
+                    const SizedBox(width: 8),
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 400),
+                      child: SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          children: List<Widget>.generate(
+                            pageCount,
+                            (index) => _PreviewDot(
+                              index: index,
+                              isSelected: index == currentIndex,
+                              label: 'Slayt ${index + 1}',
+                              onTap: () => onSelect(index),
+                            ),
+                          ),
                         ),
                       ),
                     ),
-                  ),
+                    const SizedBox(width: 8),
+                    _PreviewIconButton(
+                      icon: Icons.arrow_forward_rounded,
+                      label: 'Sonraki slayt',
+                      onTap: onNext,
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 10),
-                _PreviewIconButton(
-                  icon: Icons.arrow_forward_rounded,
-                  label: 'Sonraki slayt',
-                  onTap: onNext,
-                ),
-              ],
+              ),
             ),
           ),
         ),
@@ -827,32 +831,39 @@ class _PreviewInfoPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.36),
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: <Widget>[
-          Icon(icon, color: _previewMuted, size: 17),
-          const SizedBox(width: 8),
-          Text(
-            label,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: _previewInk,
-                  fontWeight: FontWeight.w800,
-                ),
+    final colors = context.sutolColors;
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(SutolRadius.full),
+      child: BackdropFilter(
+        filter: ui.ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            color: colors.surface.withValues(alpha: 0.4),
+            borderRadius: BorderRadius.circular(SutolRadius.full),
+            border: Border.all(color: colors.outline.withValues(alpha: 0.2)),
           ),
-        ],
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              Icon(icon, color: colors.onSurfaceVariant, size: 16),
+              const SizedBox(width: 6),
+              Text(
+                label,
+                style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                      color: colors.onSurface,
+                      fontWeight: FontWeight.w600,
+                    ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
 }
 
-class _PreviewControlButton extends StatelessWidget {
+class _PreviewControlButton extends StatefulWidget {
   const _PreviewControlButton({
     required this.icon,
     required this.label,
@@ -864,37 +875,59 @@ class _PreviewControlButton extends StatelessWidget {
   final VoidCallback onTap;
 
   @override
+  State<_PreviewControlButton> createState() => _PreviewControlButtonState();
+}
+
+class _PreviewControlButtonState extends State<_PreviewControlButton> {
+  bool _isHovered = false;
+
+  @override
   Widget build(BuildContext context) {
+    final colors = context.sutolColors;
     return Tooltip(
-      message: label,
+      message: widget.label,
       child: Semantics(
-        label: label,
+        label: widget.label,
         button: true,
-        child: Material(
-          color: Colors.black.withValues(alpha: 0.42),
-          borderRadius: BorderRadius.circular(999),
-          child: InkWell(
-            onTap: onTap,
-            borderRadius: BorderRadius.circular(999),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 10),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(999),
-                border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: <Widget>[
-                  Icon(icon, color: _previewInk, size: 18),
-                  const SizedBox(width: 8),
-                  Text(
-                    label,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: _previewInk,
-                          fontWeight: FontWeight.w800,
-                        ),
+        child: MouseRegion(
+          onEnter: (_) => setState(() => _isHovered = true),
+          onExit: (_) => setState(() => _isHovered = false),
+          child: GestureDetector(
+            onTap: widget.onTap,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(SutolRadius.full),
+              child: BackdropFilter(
+                filter: ui.ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+                child: AnimatedContainer(
+                  duration: context.motionFast,
+                  curve: context.motionDefaultCurve,
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: _isHovered
+                        ? colors.surface.withValues(alpha: 0.6)
+                        : colors.surface.withValues(alpha: 0.4),
+                    borderRadius: BorderRadius.circular(SutolRadius.full),
+                    border: Border.all(
+                      color: _isHovered
+                          ? colors.outline.withValues(alpha: 0.4)
+                          : colors.outline.withValues(alpha: 0.2),
+                    ),
                   ),
-                ],
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      Icon(widget.icon, color: colors.onSurface, size: 16),
+                      const SizedBox(width: 6),
+                      Text(
+                        widget.label,
+                        style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                              color: colors.onSurface,
+                              fontWeight: FontWeight.w600,
+                            ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ),
           ),
@@ -904,7 +937,7 @@ class _PreviewControlButton extends StatelessWidget {
   }
 }
 
-class _PreviewIconButton extends StatelessWidget {
+class _PreviewIconButton extends StatefulWidget {
   const _PreviewIconButton({
     required this.icon,
     required this.label,
@@ -916,25 +949,45 @@ class _PreviewIconButton extends StatelessWidget {
   final VoidCallback? onTap;
 
   @override
+  State<_PreviewIconButton> createState() => _PreviewIconButtonState();
+}
+
+class _PreviewIconButtonState extends State<_PreviewIconButton> {
+  bool _isHovered = false;
+
+  @override
   Widget build(BuildContext context) {
+    final colors = context.sutolColors;
+    final enabled = widget.onTap != null;
     return Tooltip(
-      message: label,
+      message: widget.label,
       child: Semantics(
-        label: label,
+        label: widget.label,
         button: true,
-        enabled: onTap != null,
-        child: Material(
-          color: Colors.white.withValues(alpha: onTap == null ? 0.05 : 0.1),
-          shape: const CircleBorder(),
-          child: InkWell(
-            customBorder: const CircleBorder(),
-            onTap: onTap,
-            child: Opacity(
-              opacity: onTap == null ? 0.42 : 1,
-              child: SizedBox(
-                width: 44,
-                height: 44,
-                child: Icon(icon, color: _previewInk, size: 21),
+        enabled: enabled,
+        child: MouseRegion(
+          onEnter: (_) => setState(() => _isHovered = true),
+          onExit: (_) => setState(() => _isHovered = false),
+          cursor: enabled ? SystemMouseCursors.click : SystemMouseCursors.basic,
+          child: GestureDetector(
+            onTap: widget.onTap,
+            child: AnimatedContainer(
+              duration: context.motionFast,
+              curve: context.motionDefaultCurve,
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: enabled && _isHovered
+                    ? colors.surface.withValues(alpha: 0.2)
+                    : Colors.transparent,
+                shape: BoxShape.circle,
+              ),
+              child: Center(
+                child: AnimatedOpacity(
+                  duration: context.motionFast,
+                  opacity: enabled ? 1.0 : 0.4,
+                  child: Icon(widget.icon, color: colors.onSurface, size: 20),
+                ),
               ),
             ),
           ),
@@ -959,25 +1012,28 @@ class _PreviewDot extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.sutolColors;
     return Tooltip(
       message: label,
       child: Semantics(
         label: label,
         button: true,
         selected: isSelected,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 4),
-          child: Material(
-            color: isSelected
-                ? _previewAccent
-                : Colors.white.withValues(alpha: 0.24),
-            shape: const CircleBorder(),
-            child: InkWell(
-              customBorder: const CircleBorder(),
-              onTap: onTap,
-              child: SizedBox(
-                width: isSelected ? 15 : 11,
-                height: isSelected ? 15 : 11,
+        child: GestureDetector(
+          onTap: onTap,
+          child: MouseRegion(
+            cursor: SystemMouseCursors.click,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+              child: AnimatedContainer(
+                duration: context.motionFast,
+                curve: context.motionDefaultCurve,
+                width: isSelected ? 24 : 8,
+                height: 8,
+                decoration: BoxDecoration(
+                  color: isSelected ? colors.primary : colors.onSurface.withValues(alpha: 0.24),
+                  borderRadius: BorderRadius.circular(SutolRadius.full),
+                ),
               ),
             ),
           ),
@@ -1074,8 +1130,8 @@ Widget _buildPreviewTransition({
 
   final curved = CurvedAnimation(
     parent: animation,
-    curve: Curves.easeOutCubic,
-    reverseCurve: Curves.easeInCubic,
+    curve: SutolMotion.easeOut,
+    reverseCurve: SutolMotion.easeIn,
   );
 
   switch (kind) {
@@ -1084,8 +1140,8 @@ Widget _buildPreviewTransition({
     case PresentationTransitionKind.smooth:
       final smooth = CurvedAnimation(
         parent: animation,
-        curve: Curves.easeInOutSine,
-        reverseCurve: Curves.easeInOutSine,
+        curve: SutolMotion.smooth,
+        reverseCurve: SutolMotion.smooth,
       );
       return FadeTransition(opacity: smooth, child: child);
     case PresentationTransitionKind.fade:
