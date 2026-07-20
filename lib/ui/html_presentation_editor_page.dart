@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 
 import '../models/slide_model.dart';
 import '../services/presentation_export_service.dart';
+import '../services/presentation_auto_builder.dart';
 import '../services/presentation_fullscreen_service.dart';
 import '../services/presentation_project_io.dart';
 import '../state/presentation_controller.dart';
@@ -22,6 +23,7 @@ extension on BuildContext {
 }
 
 enum _HtmlToolTab {
+  templates,
   backgrounds,
   components,
   text,
@@ -1052,6 +1054,13 @@ class _HtmlToolRail extends StatelessWidget {
         builder: (context, constraints) {
           final primaryActions = <Widget>[
             _RailButton(
+              label: 'Şablon',
+              icon: Icons.dashboard_customize_rounded,
+              isSelected: activeTab == _HtmlToolTab.templates,
+              onTap: () => onTabChanged(_HtmlToolTab.templates),
+            ),
+            const SizedBox(height: 10),
+            _RailButton(
               label: 'Arka Plan',
               icon: Icons.wallpaper_rounded,
               isSelected: activeTab == _HtmlToolTab.backgrounds,
@@ -1865,6 +1874,13 @@ class _HtmlTabStrip extends StatelessWidget {
         child: Row(
           children: <Widget>[
             _HtmlTabButton(
+              label: 'Şablonlar',
+              icon: Icons.dashboard_customize_rounded,
+              isSelected: activeTab == _HtmlToolTab.templates,
+              onTap: () => onTabChanged(_HtmlToolTab.templates),
+            ),
+            const SizedBox(width: 6),
+            _HtmlTabButton(
               label: 'Arka Planlar',
               icon: Icons.wallpaper_rounded,
               isSelected: activeTab == _HtmlToolTab.backgrounds,
@@ -1967,6 +1983,8 @@ class _HtmlControlPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     switch (activeTab) {
+      case _HtmlToolTab.templates:
+        return _HtmlTemplateControls(controller: controller);
       case _HtmlToolTab.backgrounds:
         return _HtmlBackgroundControls(
           controller: controller,
@@ -2290,6 +2308,135 @@ class _Model3DLibraryCard extends StatelessWidget {
                 Icons.add_circle_rounded,
                 color: context._htmlAccent,
                 size: 26,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _HtmlTemplateControls extends StatelessWidget {
+  const _HtmlTemplateControls({required this.controller});
+
+  final PresentationController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    final templates = PresentationTemplate.values
+        .where((template) => template != PresentationTemplate.automatic)
+        .toList(growable: false);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: <Widget>[
+        const _ToolbarBadge(
+          icon: Icons.dashboard_customize_rounded,
+          label: 'Sunum Şablonları',
+        ),
+        const SizedBox(height: 10),
+        Text(
+          'Şablon seçimi tüm slaytlara uygulanır. Metinleriniz ve bileşenleriniz korunur.',
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: context._htmlMuted,
+                fontWeight: FontWeight.w600,
+              ),
+        ),
+        const SizedBox(height: 14),
+        for (final template in templates) ...<Widget>[
+          _TemplatePresetCard(
+            template: template,
+            isSelected: controller.pages.every(
+              (page) =>
+                  page.backgroundKind == presentationTemplateBackground(template),
+            ),
+            onTap: () {
+              final background = presentationTemplateBackground(template);
+              if (background != null) {
+                controller.updateAllPageBackgrounds(background);
+              }
+            },
+          ),
+          const SizedBox(height: 10),
+        ],
+      ],
+    );
+  }
+}
+
+class _TemplatePresetCard extends StatelessWidget {
+  const _TemplatePresetCard({
+    required this.template,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  final PresentationTemplate template;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final background = presentationTemplateBackground(template)!;
+    final previewColors = presentationBackgroundPreviewColors(background);
+    return Material(
+      color: isSelected ? const Color(0xFFF0F6FF) : context.sutolColors.surface,
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: isSelected ? context._htmlAccent : context.sutolColors.outline,
+              width: isSelected ? 1.6 : 1,
+            ),
+          ),
+          child: Row(
+            children: <Widget>[
+              Container(
+                width: 52,
+                height: 52,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(13),
+                  gradient: LinearGradient(colors: previewColors),
+                ),
+                child: Icon(
+                  presentationBackgroundIcon(background),
+                  color: Colors.white,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Text(
+                      presentationTemplateLabel(template),
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                            color: context._htmlInk,
+                            fontWeight: FontWeight.w900,
+                          ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      presentationTemplateDescription(template),
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: context._htmlMuted,
+                            fontWeight: FontWeight.w600,
+                          ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(
+                isSelected
+                    ? Icons.check_circle_rounded
+                    : Icons.arrow_forward_rounded,
+                color: context._htmlAccent,
               ),
             ],
           ),
@@ -3896,6 +4043,8 @@ bool _shouldReduceHtmlMotion(
 
 String _studioPanelTitle(_HtmlToolTab tab) {
   switch (tab) {
+    case _HtmlToolTab.templates:
+      return 'Sunum Şablonları';
     case _HtmlToolTab.backgrounds:
       return 'Arka Plan Kutuphanesi';
     case _HtmlToolTab.components:
@@ -3914,6 +4063,8 @@ String _studioPanelSubtitle(
   PresentationController controller,
 ) {
   switch (tab) {
+    case _HtmlToolTab.templates:
+      return 'Tek bir seçimle tüm slaytların görsel temasını değiştir.';
     case _HtmlToolTab.backgrounds:
       return 'Ornek HTML sunumlardan cikarilan kaliteli sahne arka planlarini sec.';
     case _HtmlToolTab.components:

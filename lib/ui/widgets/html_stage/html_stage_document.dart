@@ -127,7 +127,7 @@ String buildHtmlStageMarkup({
     final displayText = block.text.trim().isEmpty ? 'Metin kutusu' : block.text;
     final typewriterCycle = _typewriterCycleSeconds(displayText);
     buffer.writeln(
-      '<div class="$classes" data-sutol-text-id="${_escapeAttribute(block.id)}" data-reveal-step="${block.revealStep}"$hotspotAttr style="left:${_pct(block.position.dx)}%;top:${_pct(block.position.dy)}%;width:${_pct(block.widthFactor)}%;--base-font-size:${(block.fontSize / 10).toStringAsFixed(2)}cqw;--sutol-glow:${block.glowIntensity.toStringAsFixed(2)};--sutol-type-cycle:${typewriterCycle.toStringAsFixed(2)}s;${block.textColorHex == null ? '' : 'color:${_escapeAttribute(block.textColorHex!)};--sutol-text-color:${_escapeAttribute(block.textColorHex!)};'}">${_textBlockMarkup(displayText, block.textAnimation)}</div>',
+      '<div class="$classes" data-sutol-text-id="${_escapeAttribute(block.id)}" data-reveal-step="${block.revealStep}"$hotspotAttr style="left:${_pct(block.position.dx)}%;top:${_pct(block.position.dy)}%;width:${_pct(block.widthFactor)}%;--sutol-left:${_pct(block.position.dx)}%;--sutol-top:${_pct(block.position.dy)}%;--base-font-size:${(block.fontSize / 10).toStringAsFixed(2)}cqw;--sutol-glow:${block.glowIntensity.toStringAsFixed(2)};--sutol-type-cycle:${typewriterCycle.toStringAsFixed(2)}s;${block.textColorHex == null ? '' : 'color:${_escapeAttribute(block.textColorHex!)};--sutol-text-color:${_escapeAttribute(block.textColorHex!)};'}">${_textBlockMarkup(displayText, block.textAnimation)}</div>',
     );
   }
 
@@ -538,6 +538,9 @@ body {
   line-height: 1.22;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
+  max-width: calc(100% - var(--sutol-left, 0%) - 3cqw);
+  max-height: calc(100% - var(--sutol-top, 0%) - 3cqw);
+  overflow: hidden;
 }
 
 .sutol-html-stage.theme-dark .sutol-html-block {
@@ -1927,6 +1930,24 @@ const String _stagePatchScript = r'''
     }
   }
 
+  function fitText(element) {
+    // Metin kutusu sahnenin güvenli alanını aşarsa yazı boyutunu kademeli
+    // olarak küçültür. CSS'teki min değer okunabilirlik sınırını korur.
+    element.style.removeProperty('font-size');
+    const baseSize = parseFloat(window.getComputedStyle(element).fontSize) || 12;
+    let scale = 1;
+    let attempts = 0;
+    while (element.scrollHeight > element.clientHeight + 1 && scale > 0.46 && attempts < 18) {
+      scale *= 0.92;
+      element.style.fontSize = (baseSize * scale).toFixed(2) + 'px';
+      attempts += 1;
+    }
+  }
+
+  function fitAllText() {
+    document.querySelectorAll('.sutol-html-block').forEach(fitText);
+  }
+
   function patchElement(attribute, item) {
     const element = document.querySelector(selectorFor(attribute, item.id));
     if (!element) return false;
@@ -1936,6 +1957,8 @@ const String _stagePatchScript = r'''
     element.style.left = item.left;
     element.style.top = item.top;
     element.style.width = item.width;
+    element.style.setProperty('--sutol-left', item.left);
+    element.style.setProperty('--sutol-top', item.top);
     if (item.height !== undefined) element.style.height = item.height;
     if (item.modelOrbitTheta !== null && item.modelOrbitTheta !== undefined &&
         item.modelOrbitPhi !== null && item.modelOrbitPhi !== undefined) {
@@ -1987,6 +2010,7 @@ const String _stagePatchScript = r'''
         element.textContent = item.text;
       }
     }
+    if (element.classList.contains('sutol-html-block')) fitText(element);
     return true;
   }
 
@@ -2006,8 +2030,21 @@ const String _stagePatchScript = r'''
     if (window.SutolStageComponents) {
       window.SutolStageComponents.refresh();
     }
+    fitAllText();
   });
 
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', fitAllText, { once: true });
+  } else {
+    fitAllText();
+  }
+  if (document.fonts && document.fonts.ready) {
+    document.fonts.ready.then(fitAllText);
+  }
+  if (window.ResizeObserver) {
+    const stage = document.querySelector('.sutol-html-stage');
+    if (stage) new ResizeObserver(fitAllText).observe(stage);
+  }
   window.SutolStagePatcher = true;
 })();
 ''';

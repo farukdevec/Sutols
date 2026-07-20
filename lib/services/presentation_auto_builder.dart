@@ -15,29 +15,80 @@ class PresentationDraftPage {
   bool get isBlank => title.trim().isEmpty && body.trim().isEmpty;
 }
 
+/// Sunum oluşturulurken kullanılan görsel düzen. `automatic`, konuya göre
+/// arka plan seçer; diğer seçenekler ise sunum boyunca tutarlı bir görünüm
+/// sağlar.
+enum PresentationTemplate {
+  automatic,
+  academic,
+  corporate,
+  creative,
+  minimal,
+}
+
+String presentationTemplateLabel(PresentationTemplate template) {
+  switch (template) {
+    case PresentationTemplate.automatic:
+      return 'Otomatik';
+    case PresentationTemplate.academic:
+      return 'Akademik';
+    case PresentationTemplate.corporate:
+      return 'Kurumsal';
+    case PresentationTemplate.creative:
+      return 'Yaratıcı';
+    case PresentationTemplate.minimal:
+      return 'Minimal';
+  }
+}
+
+String presentationTemplateDescription(PresentationTemplate template) {
+  switch (template) {
+    case PresentationTemplate.automatic:
+      return 'Konuya göre seçilir';
+    case PresentationTemplate.academic:
+      return 'Dengeli, açıklayıcı düzen';
+    case PresentationTemplate.corporate:
+      return 'Net ve profesyonel görünüm';
+    case PresentationTemplate.creative:
+      return 'Vurucu, görsel odaklı sahne';
+    case PresentationTemplate.minimal:
+      return 'Sade, metin odaklı düzen';
+  }
+}
+
 class PresentationAutoBuilder {
   const PresentationAutoBuilder();
 
-  List<PresentationPage> buildPages(List<PresentationDraftPage> drafts) {
+  List<PresentationPage> buildPages(
+    List<PresentationDraftPage> drafts, {
+    PresentationTemplate template = PresentationTemplate.automatic,
+  }) {
     var pageCounter = 1;
     var textCounter = 1;
     var componentCounter = 1;
     final pages = <PresentationPage>[];
 
-    for (final draft in drafts) {
+    // Uzun AI yanıtlarını tek bir kutuya koymak yerine okunabilir parçalara
+    // ayırıyoruz. Böylece hem düzen korunur hem de export/önizlemede taşma
+    // ihtimali ciddi biçimde azalır.
+    for (final draft in _splitLongDrafts(drafts, template: template)) {
       final title = draft.title.trim();
       final body = draft.body.trim();
       if (title.isEmpty && body.isEmpty) {
         continue;
       }
 
-      final match = _bestMatch(title: title, body: body);
+      final match = _bestMatch(title: title, body: body, template: template);
       final titleOnly = title.isNotEmpty && body.isEmpty;
       final longBody = body.length >= 170;
       final componentKinds = _bestComponentKinds(
         title: title,
         body: body,
-        maxComponents: titleOnly || longBody ? 1 : 2,
+        maxComponents: template == PresentationTemplate.minimal
+            ? 0
+            : titleOnly || longBody
+                ? 1
+                : 2,
       );
       final hasComponents = componentKinds.isNotEmpty;
       final textBlocks = <PresentationTextBlock>[];
@@ -49,9 +100,11 @@ class PresentationAutoBuilder {
             text: title,
             position:
                 titleOnly ? const Offset(0.08, 0.16) : const Offset(0.08, 0.12),
-            fontSize: titleOnly ? 64 : 54,
+            fontSize: _titleFontSize(title, titleOnly: titleOnly),
             type: PresentationTextType.title,
-            widthFactor: hasComponents
+            widthFactor: template == PresentationTemplate.minimal
+                ? 0.84
+                : hasComponents
                 ? titleOnly
                     ? 0.56
                     : 0.58
@@ -69,8 +122,8 @@ class PresentationAutoBuilder {
             text: body,
             position: title.isEmpty
                 ? const Offset(0.08, 0.18)
-                : const Offset(0.08, 0.30),
-            fontSize: longBody ? 30 : 34,
+                : Offset(0.08, _bodyTop(title)),
+            fontSize: _bodyFontSize(body, hasComponents: hasComponents),
             type: PresentationTextType.body,
             widthFactor: hasComponents
                 ? 0.58
@@ -109,7 +162,15 @@ class PresentationAutoBuilder {
   _AutoTheme _bestMatch({
     required String title,
     required String body,
+    required PresentationTemplate template,
   }) {
+    final templateBackground = presentationTemplateBackground(template);
+    if (templateBackground != null) {
+      return _AutoTheme(
+        backgroundKind: templateBackground,
+        keywords: const <_AutoKeyword>[],
+      );
+    }
     final normalizedTitle = _normalize(title);
     final normalizedBody = _normalize(body);
     final normalizedText = '$normalizedTitle $normalizedBody';
@@ -145,6 +206,31 @@ class PresentationAutoBuilder {
     }
 
     return best;
+  }
+
+  List<PresentationDraftPage> _splitLongDrafts(
+    List<PresentationDraftPage> drafts, {
+    required PresentationTemplate template,
+  }) {
+    final maxCharacters = template == PresentationTemplate.minimal ? 420 : 280;
+    final result = <PresentationDraftPage>[];
+    for (final draft in drafts) {
+      final body = draft.body.trim();
+      if (body.length <= maxCharacters) {
+        result.add(draft);
+        continue;
+      }
+      final chunks = _splitText(body, maxCharacters);
+      for (var index = 0; index < chunks.length; index += 1) {
+        result.add(
+          PresentationDraftPage(
+            title: index == 0 ? draft.title : '${draft.title} (devam)',
+            body: chunks[index],
+          ),
+        );
+      }
+    }
+    return result;
   }
 
   List<PresentationComponentKind> _bestComponentKinds({
@@ -360,6 +446,64 @@ Size _componentSize(int index, {required bool single}) {
     return const Size(0.24, 0.28);
   }
   return const Size(0.22, 0.24);
+}
+
+double _titleFontSize(String title, {required bool titleOnly}) {
+  final length = title.replaceAll(RegExp(r'\s+'), ' ').trim().length;
+  final base = titleOnly ? 64.0 : 54.0;
+  if (length <= 36) return base;
+  if (length <= 64) return base - 8;
+  if (length <= 92) return base - 16;
+  return base - 22;
+}
+
+double _bodyFontSize(String body, {required bool hasComponents}) {
+  final length = body.length;
+  if (length >= 250) return hasComponents ? 27 : 30;
+  if (length >= 170) return hasComponents ? 29 : 31;
+  return hasComponents ? 32 : 34;
+}
+
+double _bodyTop(String title) {
+  final length = title.replaceAll(RegExp(r'\s+'), ' ').trim().length;
+  if (length <= 40) return 0.30;
+  if (length <= 72) return 0.35;
+  return 0.42;
+}
+
+PresentationBackgroundKind? presentationTemplateBackground(
+  PresentationTemplate template,
+) {
+  switch (template) {
+    case PresentationTemplate.automatic:
+      return null;
+    case PresentationTemplate.academic:
+      return PresentationBackgroundKind.lightEducation;
+    case PresentationTemplate.corporate:
+      return PresentationBackgroundKind.lightCorporate;
+    case PresentationTemplate.creative:
+      return PresentationBackgroundKind.lightCreative;
+    case PresentationTemplate.minimal:
+      return PresentationBackgroundKind.lightWarm;
+  }
+}
+
+List<String> _splitText(String text, int maxCharacters) {
+  final words = text.split(RegExp(r'\s+')).where((word) => word.isNotEmpty);
+  final chunks = <String>[];
+  var current = StringBuffer();
+  for (final word in words) {
+    final nextLength = current.length == 0 ? word.length : current.length + word.length + 1;
+    if (current.length > 0 && nextLength > maxCharacters) {
+      chunks.add(current.toString());
+      current = StringBuffer(word);
+    } else {
+      if (current.length > 0) current.write(' ');
+      current.write(word);
+    }
+  }
+  if (current.length > 0) chunks.add(current.toString());
+  return chunks;
 }
 
 const int _minimumComponentScore = 12;

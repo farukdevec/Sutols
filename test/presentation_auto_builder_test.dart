@@ -221,4 +221,30 @@ void main() {
       );
     }
   });
+
+  test('splits long content into readable continuation slides', () {
+    final body = List<String>.filled(90, 'okunabilir').join(' ');
+    final pages = const PresentationAutoBuilder().buildPages(
+      <PresentationDraftPage>[
+        PresentationDraftPage(title: 'Uzun içerik', body: body),
+      ],
+    );
+
+    expect(pages, hasLength(greaterThan(1)));
+    expect(pages.first.textBlocks.last.text.length, lessThanOrEqualTo(280));
+    expect(pages.last.textBlocks.first.text, contains('(devam)'));
+  });
+
+  test('uses the selected template background and minimal layout', () {
+    final pages = const PresentationAutoBuilder().buildPages(
+      const <PresentationDraftPage>[
+        PresentationDraftPage(title: 'Özet', body: 'Kısa açıklama'),
+      ],
+      template: PresentationTemplate.minimal,
+    );
+
+    expect(pages.single.backgroundKind, PresentationBackgroundKind.lightWarm);
+    expect(pages.single.componentBlocks, isEmpty);
+    expect(pages.single.textBlocks.first.widthFactor, 0.84);
+  });
 }

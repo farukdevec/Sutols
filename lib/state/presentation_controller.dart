@@ -350,6 +350,20 @@ class PresentationController extends ChangeNotifier {
     notifyListeners();
   }
 
+  void updateAllPageBackgrounds(PresentationBackgroundKind value) {
+    if (_pages.every((page) => page.backgroundKind == value)) {
+      return;
+    }
+    _recordUndo();
+    final updatedPages = _pages
+        .map((page) => page.copyWith(backgroundKind: value))
+        .toList(growable: false);
+    _pages
+      ..clear()
+      ..addAll(updatedPages);
+    notifyListeners();
+  }
+
   void updateSelectedPageNotes(String value) {
     if (selectedPage.speakerNotes == value) {
       return;
