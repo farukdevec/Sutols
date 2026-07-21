@@ -4,6 +4,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../models/slide_model.dart';
+import '../services/presentation_auto_builder.dart';
 
 class PresentationController extends ChangeNotifier {
   static const double _minTextWidthFactor = 0.18;
@@ -350,7 +351,7 @@ class PresentationController extends ChangeNotifier {
     notifyListeners();
   }
 
-  void updateAllPageBackgrounds(PresentationBackgroundKind value) {
+void updateAllPageBackgrounds(PresentationBackgroundKind value) {
     if (_pages.every((page) => page.backgroundKind == value)) {
       return;
     }
@@ -358,6 +359,55 @@ class PresentationController extends ChangeNotifier {
     final updatedPages = _pages
         .map((page) => page.copyWith(backgroundKind: value))
         .toList(growable: false);
+    _pages
+      ..clear()
+      ..addAll(updatedPages);
+    notifyListeners();
+  }
+
+  void applyTemplate(PresentationTemplate template) {
+    final config = _templateConfig(template);
+    _recordUndo();
+
+    final updatedPages = _pages.map((page) {
+      var updatedPage = page.copyWith(
+        backgroundKind: config.backgroundKind ?? page.backgroundKind,
+      );
+
+      // Apply text styles and animations to all text blocks
+      final updatedTextBlocks = updatedPage.textBlocks.map((block) {
+        var newBlock = block;
+        if (block.type == PresentationTextType.title) {
+          newBlock = newBlock.copyWith(
+            textStyle: config.titleTextStyle,
+            textAnimation: config.titleTextAnimation,
+            textColorHex: config.titleTextColor,
+            glowIntensity: config.glowIntensity,
+            fontSize: (block.fontSize * config.fontScale).clamp(18.0, 120.0),
+          );
+        } else {
+          newBlock = newBlock.copyWith(
+            textStyle: config.bodyTextStyle,
+            textAnimation: config.bodyTextAnimation,
+            textColorHex: config.bodyTextColor,
+            glowIntensity: config.glowIntensity,
+            fontSize: (block.fontSize * config.fontScale).clamp(18.0, 120.0),
+          );
+        }
+        return newBlock;
+      }).toList(growable: false);
+
+      updatedPage = updatedPage.copyWith(textBlocks: updatedTextBlocks);
+
+      // Update transition settings
+      _effectSettings = _effectSettings.copyWith(
+        transitionKind: config.transitionKind,
+        transitionDurationMs: config.transitionDurationMs,
+      );
+
+      return updatedPage;
+    }).toList(growable: false);
+
     _pages
       ..clear()
       ..addAll(updatedPages);
@@ -1276,6 +1326,16 @@ class PresentationController extends ChangeNotifier {
     } else {
       _setSingleSelection(componentBlockId: firstComponentId);
     }
+  }
+
+  PresentationTemplateConfig _templateConfig(PresentationTemplate template) {
+    return templateConfig(template);
+  }
+
+  Offset _componentPositionForTemplate(int index, int existingCount) {
+    final startX = 0.65 + (existingCount % 3) * 0.04;
+    final startY = 0.18 + (index % 4) * 0.12;
+    return Offset(startX.clamp(0.08, 0.70).toDouble(), startY.clamp(0.08, 0.68).toDouble());
   }
 }
 

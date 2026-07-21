@@ -24,6 +24,13 @@ enum PresentationTemplate {
   corporate,
   creative,
   minimal,
+  darkCorporate,
+  techStartup,
+  scientific,
+  elegant,
+  bold,
+  pastel,
+  highContrast,
 }
 
 String presentationTemplateLabel(PresentationTemplate template) {
@@ -38,6 +45,20 @@ String presentationTemplateLabel(PresentationTemplate template) {
       return 'Yaratıcı';
     case PresentationTemplate.minimal:
       return 'Minimal';
+    case PresentationTemplate.darkCorporate:
+      return 'Koyu Kurumsal';
+    case PresentationTemplate.techStartup:
+      return 'Teknoloji Girişimi';
+    case PresentationTemplate.scientific:
+      return 'Bilimsel';
+    case PresentationTemplate.elegant:
+      return 'Şık';
+    case PresentationTemplate.bold:
+      return 'Cesur';
+    case PresentationTemplate.pastel:
+      return 'Pastel';
+    case PresentationTemplate.highContrast:
+      return 'Yüksek Kontrast';
   }
 }
 
@@ -53,6 +74,20 @@ String presentationTemplateDescription(PresentationTemplate template) {
       return 'Vurucu, görsel odaklı sahne';
     case PresentationTemplate.minimal:
       return 'Sade, metin odaklı düzen';
+    case PresentationTemplate.darkCorporate:
+      return 'Koyu tema, executive sunumlar';
+    case PresentationTemplate.techStartup:
+      return 'Modern, teknoloji odaklı';
+    case PresentationTemplate.scientific:
+      return 'Veri ve bilim odaklı temiz tasarım';
+    case PresentationTemplate.elegant:
+      return 'Zarfı, yüksek estetik';
+    case PresentationTemplate.bold:
+      return 'Güçlü, dikkat çekici';
+    case PresentationTemplate.pastel:
+      return 'Yumuşak, dostane tonlar';
+    case PresentationTemplate.highContrast:
+      return 'Maksimum okunabilirlik';
   }
 }
 
@@ -67,6 +102,7 @@ class PresentationAutoBuilder {
     var textCounter = 1;
     var componentCounter = 1;
     final pages = <PresentationPage>[];
+    final config = templateConfig(template);
 
     // Uzun AI yanıtlarını tek bir kutuya koymak yerine okunabilir parçalara
     // ayırıyoruz. Böylece hem düzen korunur hem de export/önizlemede taşma
@@ -81,15 +117,18 @@ class PresentationAutoBuilder {
       final match = _bestMatch(title: title, body: body, template: template);
       final titleOnly = title.isNotEmpty && body.isEmpty;
       final longBody = body.length >= 170;
-      final componentKinds = _bestComponentKinds(
-        title: title,
-        body: body,
-        maxComponents: template == PresentationTemplate.minimal
-            ? 0
-            : titleOnly || longBody
-                ? 1
-                : 2,
-      );
+      final templateComponentKinds = config.componentKinds;
+      final componentKinds = templateComponentKinds.isNotEmpty
+          ? templateComponentKinds
+          : _bestComponentKinds(
+              title: title,
+              body: body,
+              maxComponents: template == PresentationTemplate.minimal
+                  ? 0
+                  : titleOnly || longBody
+                      ? 1
+                      : 2,
+            );
       final hasComponents = componentKinds.isNotEmpty;
       final textBlocks = <PresentationTextBlock>[];
 
@@ -100,17 +139,23 @@ class PresentationAutoBuilder {
             text: title,
             position:
                 titleOnly ? const Offset(0.08, 0.16) : const Offset(0.08, 0.12),
-            fontSize: _titleFontSize(title, titleOnly: titleOnly),
+            fontSize: (_titleFontSize(title, titleOnly: titleOnly) *
+                    config.fontScale)
+                .roundToDouble(),
             type: PresentationTextType.title,
+            textStyle: config.titleTextStyle,
+            textAnimation: config.titleTextAnimation,
+            textColorHex: config.titleTextColor,
+            glowIntensity: config.glowIntensity,
             widthFactor: template == PresentationTemplate.minimal
                 ? 0.84
                 : hasComponents
-                ? titleOnly
-                    ? 0.56
-                    : 0.58
-                : titleOnly
-                    ? 0.78
-                    : 0.76,
+                    ? titleOnly
+                        ? 0.56
+                        : 0.58
+                    : titleOnly
+                        ? 0.78
+                        : 0.76,
           ),
         );
       }
@@ -123,8 +168,14 @@ class PresentationAutoBuilder {
             position: title.isEmpty
                 ? const Offset(0.08, 0.18)
                 : Offset(0.08, _bodyTop(title)),
-            fontSize: _bodyFontSize(body, hasComponents: hasComponents),
+            fontSize: (_bodyFontSize(body, hasComponents: hasComponents) *
+                    config.fontScale)
+                .roundToDouble(),
             type: PresentationTextType.body,
+            textStyle: config.bodyTextStyle,
+            textAnimation: config.bodyTextAnimation,
+            textColorHex: config.bodyTextColor,
+            glowIntensity: config.glowIntensity,
             widthFactor: hasComponents
                 ? 0.58
                 : longBody
@@ -149,7 +200,7 @@ class PresentationAutoBuilder {
       pages.add(
         PresentationPage(
           id: 'page-${pageCounter++}',
-          backgroundKind: match.backgroundKind,
+          backgroundKind: config.backgroundKind ?? match.backgroundKind,
           textBlocks: textBlocks,
           componentBlocks: componentBlocks,
         ),
@@ -485,6 +536,268 @@ PresentationBackgroundKind? presentationTemplateBackground(
       return PresentationBackgroundKind.lightCreative;
     case PresentationTemplate.minimal:
       return PresentationBackgroundKind.lightWarm;
+    case PresentationTemplate.darkCorporate:
+      return PresentationBackgroundKind.businessFinance;
+    case PresentationTemplate.techStartup:
+      return PresentationBackgroundKind.lightTechnology;
+    case PresentationTemplate.scientific:
+      return PresentationBackgroundKind.science;
+    case PresentationTemplate.elegant:
+      return PresentationBackgroundKind.lightNature;
+    case PresentationTemplate.bold:
+      return PresentationBackgroundKind.technology;
+    case PresentationTemplate.pastel:
+      return PresentationBackgroundKind.lightCreative;
+    case PresentationTemplate.highContrast:
+      return PresentationBackgroundKind.lightCorporate;
+  }
+}
+
+/// Comprehensive template configuration that defines all visual aspects
+/// of a template including background, text styles, animations, transitions, etc.
+@immutable
+class PresentationTemplateConfig {
+  const PresentationTemplateConfig({
+    required this.backgroundKind,
+    required this.titleTextStyle,
+    required this.bodyTextStyle,
+    required this.titleTextAnimation,
+    required this.bodyTextAnimation,
+    required this.titleTextColor,
+    required this.bodyTextColor,
+    required this.transitionKind,
+    required this.transitionDurationMs,
+    required this.componentKinds,
+    required this.glowIntensity,
+    required this.fontScale,
+  });
+
+  final PresentationBackgroundKind? backgroundKind;
+  final PresentationTextStyle titleTextStyle;
+  final PresentationTextStyle bodyTextStyle;
+  final PresentationTextAnimation titleTextAnimation;
+  final PresentationTextAnimation bodyTextAnimation;
+  final String? titleTextColor;
+  final String? bodyTextColor;
+  final PresentationTransitionKind transitionKind;
+  final int transitionDurationMs;
+  final List<PresentationComponentKind> componentKinds;
+  final double glowIntensity;
+  final double fontScale;
+}
+
+PresentationTemplateConfig templateConfig(PresentationTemplate template) {
+  switch (template) {
+    case PresentationTemplate.automatic:
+      return const PresentationTemplateConfig(
+        backgroundKind: null,
+        titleTextStyle: PresentationTextStyle.standard,
+        bodyTextStyle: PresentationTextStyle.standard,
+        titleTextAnimation: PresentationTextAnimation.none,
+        bodyTextAnimation: PresentationTextAnimation.none,
+        titleTextColor: null,
+        bodyTextColor: null,
+        transitionKind: PresentationTransitionKind.smooth,
+        transitionDurationMs: 600,
+        componentKinds: [],
+        glowIntensity: 1.0,
+        fontScale: 1.0,
+      );
+    case PresentationTemplate.academic:
+      return const PresentationTemplateConfig(
+        backgroundKind: PresentationBackgroundKind.lightEducation,
+        titleTextStyle: PresentationTextStyle.bilimTemiz,
+        bodyTextStyle: PresentationTextStyle.bilimTemiz,
+        titleTextAnimation: PresentationTextAnimation.yavasBelirme,
+        bodyTextAnimation: PresentationTextAnimation.none,
+        titleTextColor: '#1A237E',
+        bodyTextColor: '#283593',
+        transitionKind: PresentationTransitionKind.smooth,
+        transitionDurationMs: 800,
+        componentKinds: [
+          PresentationComponentKind.egitim01,
+          PresentationComponentKind.egitim02,
+        ],
+        glowIntensity: 0.3,
+        fontScale: 1.0,
+      );
+    case PresentationTemplate.corporate:
+      return const PresentationTemplateConfig(
+        backgroundKind: PresentationBackgroundKind.lightCorporate,
+        titleTextStyle: PresentationTextStyle.teknolojiTemiz,
+        bodyTextStyle: PresentationTextStyle.teknolojiTemiz,
+        titleTextAnimation: PresentationTextAnimation.perdeAcilisi,
+        bodyTextAnimation: PresentationTextAnimation.yavasBelirme,
+        titleTextColor: '#0D47A1',
+        bodyTextColor: '#1565C0',
+        transitionKind: PresentationTransitionKind.fade,
+        transitionDurationMs: 500,
+        componentKinds: [
+          PresentationComponentKind.genelSunumIs01,
+          PresentationComponentKind.genelSunumIs02,
+        ],
+        glowIntensity: 0.2,
+        fontScale: 1.05,
+      );
+    case PresentationTemplate.creative:
+      return const PresentationTemplateConfig(
+        backgroundKind: PresentationBackgroundKind.lightCreative,
+        titleTextStyle: PresentationTextStyle.openBungee,
+        bodyTextStyle: PresentationTextStyle.openCaveat,
+        titleTextAnimation: PresentationTextAnimation.sinematikYaklasma,
+        bodyTextAnimation: PresentationTextAnimation.ziplayarakGiris,
+        titleTextColor: '#7B1FA2',
+        bodyTextColor: '#8E24AA',
+        transitionKind: PresentationTransitionKind.convex,
+        transitionDurationMs: 700,
+        componentKinds: [
+          PresentationComponentKind.sanat01,
+          PresentationComponentKind.sanat02,
+        ],
+        glowIntensity: 0.5,
+        fontScale: 1.1,
+      );
+    case PresentationTemplate.minimal:
+      return const PresentationTemplateConfig(
+        backgroundKind: PresentationBackgroundKind.lightWarm,
+        titleTextStyle: PresentationTextStyle.openOswald,
+        bodyTextStyle: PresentationTextStyle.openOswald,
+        titleTextAnimation: PresentationTextAnimation.none,
+        bodyTextAnimation: PresentationTextAnimation.none,
+        titleTextColor: '#3E2723',
+        bodyTextColor: '#5D4037',
+        transitionKind: PresentationTransitionKind.none,
+        transitionDurationMs: 300,
+        componentKinds: [],
+        glowIntensity: 0.0,
+        fontScale: 1.0,
+      );
+    case PresentationTemplate.darkCorporate:
+      return const PresentationTemplateConfig(
+        backgroundKind: PresentationBackgroundKind.businessFinance,
+        titleTextStyle: PresentationTextStyle.teknolojiDramatik,
+        bodyTextStyle: PresentationTextStyle.teknolojiTemiz,
+        titleTextAnimation: PresentationTextAnimation.metalikParlama,
+        bodyTextAnimation: PresentationTextAnimation.daktilo,
+        titleTextColor: '#FFFFFF',
+        bodyTextColor: '#B0BEC5',
+        transitionKind: PresentationTransitionKind.slide,
+        transitionDurationMs: 600,
+        componentKinds: [
+          PresentationComponentKind.ekonomiIsFinans01,
+          PresentationComponentKind.ekonomiIsFinans02,
+        ],
+        glowIntensity: 0.8,
+        fontScale: 1.0,
+      );
+    case PresentationTemplate.techStartup:
+      return const PresentationTemplateConfig(
+        backgroundKind: PresentationBackgroundKind.lightTechnology,
+        titleTextStyle: PresentationTextStyle.teknolojiDeneysel,
+        bodyTextStyle: PresentationTextStyle.teknolojiTemiz,
+        titleTextAnimation: PresentationTextAnimation.holografikDalga,
+        bodyTextAnimation: PresentationTextAnimation.holografikDalga,
+        titleTextColor: '#00E5FF',
+        bodyTextColor: '#4DD0E1',
+        transitionKind: PresentationTransitionKind.zoom,
+        transitionDurationMs: 500,
+        componentKinds: [
+          PresentationComponentKind.teknoloji01,
+          PresentationComponentKind.teknoloji02,
+        ],
+        glowIntensity: 1.0,
+        fontScale: 1.05,
+      );
+    case PresentationTemplate.scientific:
+      return const PresentationTemplateConfig(
+        backgroundKind: PresentationBackgroundKind.science,
+        titleTextStyle: PresentationTextStyle.bilimDramatik,
+        bodyTextStyle: PresentationTextStyle.bilimTemiz,
+        titleTextAnimation: PresentationTextAnimation.bilimDramatik,
+        bodyTextAnimation: PresentationTextAnimation.fizikDramatik,
+        titleTextColor: '#54D6FF',
+        bodyTextColor: '#81D4FA',
+        transitionKind: PresentationTransitionKind.split,
+        transitionDurationMs: 900,
+        componentKinds: [
+          PresentationComponentKind.fizik01,
+          PresentationComponentKind.kimya01,
+        ],
+        glowIntensity: 0.6,
+        fontScale: 1.0,
+      );
+    case PresentationTemplate.elegant:
+      return const PresentationTemplateConfig(
+        backgroundKind: PresentationBackgroundKind.lightNature,
+        titleTextStyle: PresentationTextStyle.openPlayfairDisplay,
+        bodyTextStyle: PresentationTextStyle.openPlayfairDisplay,
+        titleTextAnimation: PresentationTextAnimation.siviDalga,
+        bodyTextAnimation: PresentationTextAnimation.yercekimsizSuzulme,
+        titleTextColor: '#2E7D32',
+        bodyTextColor: '#43A047',
+        transitionKind: PresentationTransitionKind.reveal,
+        transitionDurationMs: 1000,
+        componentKinds: [
+          PresentationComponentKind.cevreDoga01,
+          PresentationComponentKind.cevreDoga02,
+        ],
+        glowIntensity: 0.4,
+        fontScale: 1.05,
+      );
+    case PresentationTemplate.bold:
+      return const PresentationTemplateConfig(
+        backgroundKind: PresentationBackgroundKind.technology,
+        titleTextStyle: PresentationTextStyle.openBebasNeue,
+        bodyTextStyle: PresentationTextStyle.openUnbounded,
+        titleTextAnimation: PresentationTextAnimation.isikTaramasi,
+        bodyTextAnimation: PresentationTextAnimation.neonKontur,
+        titleTextColor: '#FFD600',
+        bodyTextColor: '#FFEB3B',
+        transitionKind: PresentationTransitionKind.wipe,
+        transitionDurationMs: 400,
+        componentKinds: [
+          PresentationComponentKind.teknoloji03,
+          PresentationComponentKind.teknoloji04,
+        ],
+        glowIntensity: 1.5,
+        fontScale: 1.15,
+      );
+    case PresentationTemplate.pastel:
+      return const PresentationTemplateConfig(
+        backgroundKind: PresentationBackgroundKind.lightCreative,
+        titleTextStyle: PresentationTextStyle.gunesTemiz,
+        bodyTextStyle: PresentationTextStyle.gunesTemiz,
+        titleTextAnimation: PresentationTextAnimation.gunesTemiz,
+        bodyTextAnimation: PresentationTextAnimation.yavasBelirme,
+        titleTextColor: '#E91E63',
+        bodyTextColor: '#F06292',
+        transitionKind: PresentationTransitionKind.convex,
+        transitionDurationMs: 800,
+        componentKinds: [
+          PresentationComponentKind.moda01,
+          PresentationComponentKind.moda02,
+        ],
+        glowIntensity: 0.5,
+        fontScale: 1.0,
+      );
+    case PresentationTemplate.highContrast:
+      return const PresentationTemplateConfig(
+        backgroundKind: PresentationBackgroundKind.lightCorporate,
+        titleTextStyle: PresentationTextStyle.openBebasNeue,
+        bodyTextStyle: PresentationTextStyle.openOswald,
+        titleTextAnimation: PresentationTextAnimation.daktilo,
+        bodyTextAnimation: PresentationTextAnimation.bulaniktanNet,
+        titleTextColor: '#000000',
+        bodyTextColor: '#212121',
+        transitionKind: PresentationTransitionKind.fade,
+        transitionDurationMs: 300,
+        componentKinds: [
+          PresentationComponentKind.genelSunumIs03,
+          PresentationComponentKind.genelSunumIs04,
+        ],
+        glowIntensity: 0.0,
+        fontScale: 1.1,
+      );
   }
 }
 

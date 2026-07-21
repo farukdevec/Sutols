@@ -2028,25 +2028,6 @@ class _Html3DModelControls extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Row(
-            children: <Widget>[
-              const _ToolbarBadge(
-                icon: Icons.view_in_ar_rounded,
-                label: '3D Model Kütüphanesi',
-              ),
-              const SizedBox(width: 10),
-              _ToolbarChip(label: '${presentation3DModelCatalog.length} model'),
-              const Spacer(),
-              _ToolbarAction(
-                icon: Icons.delete_outline_rounded,
-                onTap: canRemoveModel
-                    ? controller.removeSelectedComponentBlock
-                    : null,
-                destructive: true,
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
           for (final model in presentation3DModelCatalog)
             _Model3DLibraryCard(
               model: model,
@@ -2337,7 +2318,7 @@ class _HtmlTemplateControls extends StatelessWidget {
         ),
         const SizedBox(height: 10),
         Text(
-          'Şablon seçimi tüm slaytlara uygulanır. Metinleriniz ve bileşenleriniz korunur.',
+          'Şablon seçimi tüm slaytlara uygulanır. Metinleriniz, bileşenleriniz ve animasyonlarınız korunur.',
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: context._htmlMuted,
                 fontWeight: FontWeight.w600,
@@ -2352,10 +2333,7 @@ class _HtmlTemplateControls extends StatelessWidget {
                   page.backgroundKind == presentationTemplateBackground(template),
             ),
             onTap: () {
-              final background = presentationTemplateBackground(template);
-              if (background != null) {
-                controller.updateAllPageBackgrounds(background);
-              }
+              controller.applyTemplate(template);
             },
           ),
           const SizedBox(height: 10),
@@ -2816,26 +2794,6 @@ class _HtmlComponentControls extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Row(
-            children: <Widget>[
-              const _ToolbarBadge(
-                icon: Icons.widgets_rounded,
-                label: 'Bilesen Kutuphanesi',
-              ),
-              const SizedBox(width: 10),
-              _ToolbarChip(
-                  label: '${presentationComponentDefinitions.length} bilesen'),
-              const Spacer(),
-              _ToolbarAction(
-                icon: Icons.delete_outline_rounded,
-                onTap: controller.canRemoveComponentBlock
-                    ? controller.removeSelectedComponentBlock
-                    : null,
-                destructive: true,
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
           SizedBox(
             height: 420,
             child: ListView.separated(
@@ -3400,14 +3358,18 @@ class _HtmlTextControls extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
-        const _ToolbarBadge(
-          icon: Icons.text_fields_rounded,
-          label: 'Metin Katmanı',
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: <Widget>[
+            _ToolbarBadge(
+              icon: Icons.text_fields_rounded,
+              label: 'Metin Katmanı',
+            ),
+            if (selectedTextCount > 1)
+              _ToolbarChip(label: '$selectedTextCount metin seçili'),
+          ],
         ),
-        if (selectedTextCount > 1) ...[
-          const SizedBox(height: 8),
-          _ToolbarChip(label: '$selectedTextCount metin seçili'),
-        ],
         const SizedBox(height: 12),
         _TextFieldControl(
           controller: textController,
