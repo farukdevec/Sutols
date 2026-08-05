@@ -228,3 +228,5 @@ Bir değişiklik göndermeden önce:
 ## Lisans
 
 Bu depo için henüz bir kök lisans dosyası belirtilmemiştir. Kaynak kodu kullanmadan veya dağıtmadan önce proje sahibinden izin alın. `gitsunum/` altındaki üçüncü taraf projelerin lisansları ayrıca geçerlidir.
+#   s u t o l s  
+ 
