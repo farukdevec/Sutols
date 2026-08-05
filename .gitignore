@@ -20,3 +20,4 @@ coverage/
 *.log
 *.tmp
 *.swp
+functions/sutols-firebase-adminsdk-*.json
