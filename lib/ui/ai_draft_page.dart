@@ -6,6 +6,7 @@ import '../services/presentation_auto_builder.dart';
 import '../state/presentation_controller.dart';
 import 'html_presentation_editor_page.dart';
 import 'widgets/ai_load_animation.dart';
+import 'widgets/source_selector.dart';
 
 class AiDraftPage extends StatefulWidget {
   const AiDraftPage({super.key});
@@ -24,7 +25,8 @@ class _AiDraftPageState extends State<AiDraftPage> {
   String? _error;
   bool _generating = false;
   List<AiSlideContent>? _generatedSlides;
-  String? _researchSummary;
+  AiResearchResponse? _researchResponse;
+  bool _showSourceSelector = false;
 
   @override
   void initState() {
@@ -63,27 +65,21 @@ class _AiDraftPageState extends State<AiDraftPage> {
       return;
     }
 
-    final slideCount = int.tryParse(_slideCountController.text.trim()) ?? 5;
-    if (slideCount < 1 || slideCount > 20) {
-      setState(() => _error = 'Slayt sayisi 1-20 arasinda olmalidir');
-      return;
-    }
-
     setState(() {
       _generating = true;
       _error = null;
       _generatedSlides = null;
-      _researchSummary = null;
+      _researchResponse = null;
+      _showSourceSelector = false;
     });
 
     try {
-      final research = await _aiService.research(topic, maxResults: 3);
-      final slides = await _aiService.generateSlides(topic, slideCount: slideCount);
+      final research = await _aiService.research(topic, maxResults: 5);
 
       setState(() {
         _generating = false;
-        _generatedSlides = slides;
-        _researchSummary = research.summary;
+        _researchResponse = research;
+        _showSourceSelector = true;
       });
     } catch (e) {
       setState(() {
@@ -93,35 +89,104 @@ class _AiDraftPageState extends State<AiDraftPage> {
     }
   }
 
-  void _applyToEditor() {
-    if (_generatedSlides == null || _generatedSlides!.isEmpty) return;
+  Future<void> _onSourceConfirmed(SourceSelectionResult result) async {
+    final topic = _topicController.text.trim();
+    final slideCount = int.tryParse(_slideCountController.text.trim()) ?? 5;
 
-    final drafts = _generatedSlides!.map((s) => PresentationDraftPage(
-      title: s.title,
-      body: s.body,
-    )).toList();
+    setState(() {
+      _generating = true;
+      _showSourceSelector = false;
+    });
 
-    final builder = const PresentationAutoBuilder();
-    final pages = builder.buildPages(drafts);
+    try {
+      final slides = await _aiService.generateSlides(topic, slideCount: slideCount);
 
-    final effectSettings = PresentationEffectSettings(
-      transitionKind: PresentationTransitionKind.slide,
-    );
+      final drafts = <PresentationDraftPage>[];
 
-    final controller = PresentationController();
-    controller.replaceDeck(pages, effectSettings: effectSettings);
+      // Research summary with source citations
+      if (_researchResponse != null && _researchResponse!.summary.isNotEmpty) {
+        final sourcesText = result.selectedResults
+            .map((r) => '• ${r.title}: ${r.url}')
+            .join('\n');
 
-    if (_generatedSlides!.length == 1) {
-      final firstPage = controller.pages.first;
-      if (firstPage.textBlocks.isNotEmpty) {
+        drafts.add(PresentationDraftPage(
+          title: 'Arastirma Ozeti',
+          body: '${_researchResponse!.summary}\n\nKaynaklar:\n$sourcesText',
+        ));
       }
-    }
 
-    Navigator.of(context).push<void>(
-      MaterialPageRoute<void>(
-        builder: (_) => HtmlPresentationEditorPage(controller: controller),
-      ),
-    );
+      // Generated slides
+      drafts.addAll(slides.map((s) => PresentationDraftPage(
+        title: s.title,
+        body: s.body,
+      )));
+
+      // Analysis slides
+      if (result.includeAnalysis) {
+        try {
+          final analysis = await _aiService.analyze(topic);
+
+          if (analysis.summary.isNotEmpty) {
+            drafts.add(PresentationDraftPage(
+              title: 'Stratejik Analiz',
+              body: analysis.summary,
+            ));
+          }
+          if (analysis.swot.isNotEmpty) {
+            drafts.add(PresentationDraftPage(
+              title: 'SWOT Analizi',
+              body: analysis.swot.map((i) => '${i.title}: ${i.content}').join('\n\n'),
+            ));
+          }
+          if (analysis.keyStatistics.isNotEmpty) {
+            drafts.add(PresentationDraftPage(
+              title: 'Önemli İstatistikler',
+              body: analysis.keyStatistics.map((i) => '${i.title}: ${i.content}').join('\n\n'),
+            ));
+          }
+          if (analysis.trends.isNotEmpty) {
+            drafts.add(PresentationDraftPage(
+              title: 'Güncel Trendler',
+              body: analysis.trends.map((i) => '${i.title}: ${i.content}').join('\n\n'),
+            ));
+          }
+          if (analysis.recommendations.isNotEmpty) {
+            drafts.add(PresentationDraftPage(
+              title: 'Öneriler',
+              body: analysis.recommendations.map((i) => '${i.title}: ${i.content}').join('\n\n'),
+            ));
+          }
+        } catch (_) {}
+      }
+
+      setState(() {
+        _generating = false;
+        _generatedSlides = slides;
+      });
+
+      // Auto-apply to editor with analysis slides
+      final builder = const PresentationAutoBuilder();
+      final pages = builder.buildPages(drafts);
+
+      final effectSettings = PresentationEffectSettings(
+        transitionKind: PresentationTransitionKind.slide,
+      );
+
+      final controller = PresentationController();
+      controller.replaceDeck(pages, effectSettings: effectSettings);
+
+      if (!mounted) return;
+      Navigator.of(context).pushReplacement<void, void>(
+        MaterialPageRoute<void>(
+          builder: (_) => HtmlPresentationEditorPage(controller: controller),
+        ),
+      );
+    } catch (e) {
+      setState(() {
+        _generating = false;
+        _error = 'Hata: $e';
+      });
+    }
   }
 
   @override
@@ -186,6 +251,18 @@ class _AiDraftPageState extends State<AiDraftPage> {
       );
     }
 
+    if (_showSourceSelector && _researchResponse != null) {
+      return Padding(
+        key: const ValueKey('source_selector'),
+        padding: const EdgeInsets.all(24),
+        child: SourceSelector(
+          results: _researchResponse!.results,
+          topic: _topicController.text.trim(),
+          onConfirm: _onSourceConfirmed,
+        ),
+      );
+    }
+
     return SingleChildScrollView(
       key: const ValueKey('content'),
       padding: const EdgeInsets.all(24),
@@ -193,7 +270,7 @@ class _AiDraftPageState extends State<AiDraftPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildInputSection(theme),
-          if (_researchSummary != null) ...[
+          if (_researchResponse != null) ...[
             const SizedBox(height: 24),
             _buildResearchSection(theme),
           ],
@@ -273,9 +350,68 @@ class _AiDraftPageState extends State<AiDraftPage> {
               ],
             ),
             const SizedBox(height: 12),
-            Text(_researchSummary!),
+            Text(_researchResponse!.summary),
+            if (_researchResponse!.results.isNotEmpty) ...[
+              const SizedBox(height: 16),
+              const Divider(),
+              const SizedBox(height: 8),
+              Text('Kaynaklar', style: theme.textTheme.titleSmall),
+              const SizedBox(height: 8),
+              ..._researchResponse!.results.map((r) => Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.surface,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: theme.dividerColor.withValues(alpha: 0.3),
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(r.title,
+                        style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(r.snippet,
+                        style: TextStyle(fontSize: 12, color: theme.colorScheme.onSurfaceVariant),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 2),
+                      Text(r.url,
+                        style: TextStyle(fontSize: 11, color: theme.colorScheme.primary),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+              )),
+            ],
           ],
         ),
+      ),
+    );
+  }
+
+  void _applyToEditorFromPreview() {
+    if (_generatedSlides == null || _generatedSlides!.isEmpty) return;
+    final drafts = _generatedSlides!.map((s) => PresentationDraftPage(
+      title: s.title,
+      body: s.body,
+    )).toList();
+    final pages = const PresentationAutoBuilder().buildPages(drafts);
+    final controller = PresentationController();
+    controller.replaceDeck(pages, effectSettings: const PresentationEffectSettings(
+      transitionKind: PresentationTransitionKind.slide,
+    ));
+    if (!mounted) return;
+    Navigator.of(context).push<void>(
+      MaterialPageRoute<void>(
+        builder: (_) => HtmlPresentationEditorPage(controller: controller),
       ),
     );
   }
@@ -289,7 +425,7 @@ class _AiDraftPageState extends State<AiDraftPage> {
             Text('Oluşturulan Slaytlar', style: theme.textTheme.titleLarge),
             const Spacer(),
             FilledButton.icon(
-              onPressed: _applyToEditor,
+              onPressed: _applyToEditorFromPreview,
               icon: const Icon(Icons.edit),
               label: const Text('Editöre Aktar'),
             ),

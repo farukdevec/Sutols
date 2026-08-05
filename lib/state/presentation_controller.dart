@@ -814,6 +814,14 @@ void updateAllPageBackgrounds(PresentationBackgroundKind value) {
     );
   }
 
+  void cutSelectedItems() {
+    if (!hasSelection) {
+      return;
+    }
+    copySelectedItems();
+    removeSelectedItems();
+  }
+
   void duplicateSelectedItems() {
     if (!hasSelection) {
       return;
@@ -827,6 +835,19 @@ void updateAllPageBackgrounds(PresentationBackgroundKind value) {
           .where((block) => _selectedComponentBlockIds.contains(block.id))
           .toList(growable: false),
     );
+  }
+
+  void selectAllItems() {
+    final page = selectedPage;
+    _selectedTextBlockIds
+      ..clear()
+      ..addAll(page.textBlocks.map((b) => b.id));
+    _selectedComponentBlockIds
+      ..clear()
+      ..addAll(page.componentBlocks.map((b) => b.id));
+    _selectedTextBlockId = page.textBlocks.firstOrNull?.id;
+    _selectedComponentBlockId = page.componentBlocks.firstOrNull?.id;
+    notifyListeners();
   }
 
   void _insertCopiedItems({

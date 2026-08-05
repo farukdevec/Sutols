@@ -26,6 +26,32 @@ class AiResearchResult {
   });
 }
 
+class AiAnalysisItem {
+  final String title;
+  final String content;
+
+  const AiAnalysisItem({
+    required this.title,
+    required this.content,
+  });
+}
+
+class AiAnalysisResponse {
+  final List<AiAnalysisItem> swot;
+  final List<AiAnalysisItem> keyStatistics;
+  final List<AiAnalysisItem> trends;
+  final List<AiAnalysisItem> recommendations;
+  final String summary;
+
+  const AiAnalysisResponse({
+    required this.swot,
+    required this.keyStatistics,
+    required this.trends,
+    required this.recommendations,
+    required this.summary,
+  });
+}
+
 class AiResearchResponse {
   final List<AiResearchResult> results;
   final String summary;
@@ -71,6 +97,42 @@ class AiService {
 
     final data = jsonDecode(resp.body) as Map<String, dynamic>;
     return data['text'] as String;
+  }
+
+  Future<AiAnalysisResponse> analyze(String topic, {String language = 'turkish'}) async {
+    final resp = await http.post(
+      Uri.parse('$baseUrl/api/analyze'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'topic': topic,
+        'language': language,
+      }),
+    ).timeout(const Duration(seconds: 180));
+
+    if (resp.statusCode != 200) {
+      throw Exception('Analiz hatasi: ${resp.statusCode} ${resp.body}');
+    }
+
+    final data = jsonDecode(resp.body) as Map<String, dynamic>;
+    return AiAnalysisResponse(
+      swot: (data['swot'] as List).map((i) => AiAnalysisItem(
+        title: i['title'] as String,
+        content: i['content'] as String,
+      )).toList(),
+      keyStatistics: (data['key_statistics'] as List).map((i) => AiAnalysisItem(
+        title: i['title'] as String,
+        content: i['content'] as String,
+      )).toList(),
+      trends: (data['trends'] as List).map((i) => AiAnalysisItem(
+        title: i['title'] as String,
+        content: i['content'] as String,
+      )).toList(),
+      recommendations: (data['recommendations'] as List).map((i) => AiAnalysisItem(
+        title: i['title'] as String,
+        content: i['content'] as String,
+      )).toList(),
+      summary: data['summary'] as String,
+    );
   }
 
   Future<AiResearchResponse> research(String topic, {int maxResults = 5}) async {

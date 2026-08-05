@@ -1,0 +1,193 @@
+import 'dart:convert';
+
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:http/http.dart' as http;
+
+import '../state/presentation_controller.dart';
+import 'fallback_slide_generator.dart';
+import 'gemini_presentation_service.dart';
+import 'layout_service.dart';
+import 'model_matching_service.dart';
+import 'presentation_deck_builder.dart';
+import 'usage_service.dart';
+
+/// createPresentation sonucu: Firestore doküman ID'si + düzenlenebilir deck.
+class PresentationGenerationResult {
+  const PresentationGenerationResult({
+    required this.presentationId,
+    required this.controller,
+    this.usedFallback = false,
+  });
+
+  final String presentationId;
+  final PresentationController controller;
+
+  /// AI (Gemini) çalışmadığında kelime tabanlı yedek kullanıldıysa true.
+  final bool usedFallback;
+}
+
+class PresentationService {
+  final _gemini = GeminiPresentationService();
+  final _matcher = ModelMatchingService();
+  final _layout = LayoutService();
+
+  static const String _apiBase =
+      'https://firestore.googleapis.com/v1/projects/sutols/databases/(default)/documents';
+
+  Future<PresentationGenerationResult> createPresentation({
+    required String userId,
+    required String topic,
+    int slideCount = 5,
+  }) async {
+    // 0. Günlük kota kontrolü (Gemini çağrısından önce)
+    final userDoc =
+        await FirebaseFirestore.instance.collection('users').doc(userId).get();
+    final tier = userDoc.data()?['tier'] as String? ?? 'free';
+    final dailyLimit = tier == 'premium' ? 999 : (tier == 'plus' ? 15 : 3);
+    final allowed =
+        await UsageService().tryConsumeDailyQuota(userId, dailyLimit);
+    if (!allowed) {
+      throw Exception(
+          'Günlük sunum oluşturma hakkınız doldu. Yarın tekrar deneyin veya planınızı yükseltin.');
+    }
+
+    // 1. Gemini'den slayt içeriklerini al (çalışmazsa kelime tabanlı yedeğe düş)
+    // ignore: avoid_print
+    print('ADIM 1: Gemini çağrısı başlıyor');
+    GeminiPresentation geminiResult;
+    var usedFallback = false;
+    try {
+      geminiResult = await _gemini.generatePresentation(topic, slideCount: slideCount);
+    } catch (e) {
+      // ignore: avoid_print
+      print('AI HATASI (limit vb.): $e — kelime tabanlı yedek kullanılıyor');
+      usedFallback = true;
+      geminiResult = FallbackSlideGenerator.generatePresentation(topic, slideCount: slideCount);
+    }
+    // ignore: avoid_print
+    print('ADIM 1 TAMAM (yedek: $usedFallback)');
+
+    // 2. Her slayt için model eşleştir ve layout belirle
+    final slidesData = <Map<String, dynamic>>[];
+    final deckSlides = <DeckSlide>[];
+    for (final slide in geminiResult.slides) {
+      // ignore: avoid_print
+      print('ADIM 2: Model eşleştirme başlıyor - ${slide.title}');
+      final matches = await _matcher.matchModelsForSlide(slide.keywords);
+      // ignore: avoid_print
+      print('ADIM 2 TAMAM - ${matches.length} eşleşme');
+      final strongMatches = matches.where((m) => m.score >= 2).toList();
+      final layout = _layout.decideLayout(matches);
+      final maxShow = _layout.maxModelsToShow(layout);
+      final shownModelIds = strongMatches.take(maxShow).map((m) => m.id).toList();
+
+      slidesData.add({
+        'title': slide.title,
+        'content': slide.content,
+        'layout': layout.name,
+        'modelIds': shownModelIds,
+      });
+      deckSlides.add(
+        DeckSlide(
+          title: slide.title,
+          content: slide.content,
+          models: matches,
+        ),
+      );
+    }
+
+    // 2b. Düzenlenebilir deck'i oluştur (metin sol, 3B modeller sağ)
+    final controller = PresentationDeckBuilder.buildController(
+      topic: topic,
+      slides: deckSlides,
+    );
+
+    // 3. Firestore'a kaydet (REST API - Firestore SDK'sını bypass eder)
+    // ignore: avoid_print
+    print('ADIM 3: Firestore yazma başlıyor');
+    final idToken = await _authToken();
+    if (idToken == null) {
+      throw Exception('Lütfen önce giriş yapın.');
+    }
+
+    final body = jsonEncode({
+      'fields': {
+        'userId': {'stringValue': userId},
+        'userEmail': {
+          'stringValue': FirebaseAuth.instance.currentUser?.email ?? '',
+        },
+        'slideCount': {'integerValue': '${slidesData.length}'},
+        'topic': {'stringValue': topic},
+        'createdAt': {'timestampValue': DateTime.now().toUtc().toIso8601String()},
+        'slides': {
+          'arrayValue': {
+            'values': slidesData.map((slide) {
+              return {
+                'mapValue': {
+                  'fields': {
+                    'title': {'stringValue': slide['title'] as String},
+                    'content': {'stringValue': slide['content'] as String},
+                    'layout': {'stringValue': slide['layout'] as String},
+                    'modelIds': {
+                      'arrayValue': {
+                        'values': (slide['modelIds'] as List)
+                            .map((id) => {'stringValue': id as String})
+                            .toList(),
+                      },
+                    },
+                  },
+                },
+              };
+            }).toList(),
+          },
+        },
+      },
+    });
+
+    final response = await http.post(
+      Uri.parse('$_apiBase/presentations'),
+      headers: {
+        'Authorization': 'Bearer $idToken',
+        'Content-Type': 'application/json',
+      },
+      body: body,
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception('Sunum kaydedilemedi (HTTP ${response.statusCode}): ${response.body}');
+    }
+
+    final result = jsonDecode(response.body) as Map<String, dynamic>;
+    final docName = result['name'] as String;
+    // ignore: avoid_print
+    print('ADIM 3 TAMAM');
+
+    await _incrementPresentationCount(userId);
+
+    return PresentationGenerationResult(
+      presentationId: docName.split('/').last,
+      controller: controller,
+      usedFallback: usedFallback,
+    );
+  }
+
+  Future<void> _incrementPresentationCount(String userId) async {
+    try {
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .set({
+            'presentationCount': FieldValue.increment(1),
+          }, SetOptions(merge: true));
+    } catch (_) {
+      // Best-effort: sayım hatası sunum oluşturmayı bozmamalı.
+    }
+  }
+
+  static Future<String?> _authToken() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return null;
+    return user.getIdToken();
+  }
+}

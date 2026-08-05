@@ -1,0 +1,8149 @@
+[
+ {
+  "fileName": "01_SWOT_Analiz_Kupu.glb",
+  "name": "SWOT Analiz Küpü",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/01_SWOT_Analiz_Kupu.glb",
+  "tags": [
+   "swot",
+   "analiz",
+   "strateji",
+   "küp",
+   "iş-analizi"
+  ],
+  "category": "analiz-modeli",
+  "tier": "free"
+ },
+ {
+  "fileName": "01_Yukselen_3B_Bar_Grafigi.glb",
+  "name": "Yükselen 3B Bar Grafiği",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/01_Yukselen_3B_Bar_Grafigi.glb",
+  "tags": [
+   "grafik",
+   "bar",
+   "veri",
+   "büyüme",
+   "istatistik"
+  ],
+  "category": "grafik",
+  "tier": "free"
+ },
+ {
+  "fileName": "02_PESTEL_Analiz_Carki.glb",
+  "name": "PESTEL Analiz Çarkı",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/02_PESTEL_Analiz_Carki.glb",
+  "tags": [
+   "pestel",
+   "analiz",
+   "çark",
+   "strateji",
+   "çevresel"
+  ],
+  "category": "analiz-modeli",
+  "tier": "free"
+ },
+ {
+  "fileName": "02_Pasta_Grafik_Dilimli.glb",
+  "name": "Pasta Grafik Dilimli",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/02_Pasta_Grafik_Dilimli.glb",
+  "tags": [
+   "grafik",
+   "pasta",
+   "dilim",
+   "oran",
+   "veri"
+  ],
+  "category": "grafik",
+  "tier": "free"
+ },
+ {
+  "fileName": "03_Cizgi_Grafik_3B_Eksenli.glb",
+  "name": "Çizgi Grafik 3B Eksenli",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/03_Cizgi_Grafik_3B_Eksenli.glb",
+  "tags": [
+   "grafik",
+   "çizgi",
+   "eksen",
+   "trend",
+   "veri"
+  ],
+  "category": "grafik",
+  "tier": "free"
+ },
+ {
+  "fileName": "03_Is_Modeli_Kanvasi_Panosu.glb",
+  "name": "İş Modeli Kanvası Panosu",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/03_Is_Modeli_Kanvasi_Panosu.glb",
+  "tags": [
+   "iş-modeli",
+   "kanvas",
+   "strateji",
+   "pano",
+   "girişim"
+  ],
+  "category": "analiz-modeli",
+  "tier": "free"
+ },
+ {
+  "fileName": "04_Hedef_Tahtasi_ve_Ok.glb",
+  "name": "Hedef Tahtası ve Ok",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/04_Hedef_Tahtasi_ve_Ok.glb",
+  "tags": [
+   "hedef",
+   "tahta",
+   "ok",
+   "başarı",
+   "amaç"
+  ],
+  "category": "sembol",
+  "tier": "free"
+ },
+ {
+  "fileName": "04_Strateji_Yol_Haritasi.glb",
+  "name": "Strateji Yol Haritası",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/04_Strateji_Yol_Haritasi.glb",
+  "tags": [
+   "strateji",
+   "yol-haritası",
+   "plan",
+   "rota",
+   "hedef"
+  ],
+  "category": "diyagram",
+  "tier": "free"
+ },
+ {
+  "fileName": "05_Puzzle_Parcalari_Seti.glb",
+  "name": "Puzzle Parçaları Seti",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/05_Puzzle_Parcalari_Seti.glb",
+  "tags": [
+   "puzzle",
+   "parça",
+   "bütünleşme",
+   "uyum",
+   "takım"
+  ],
+  "category": "sembol",
+  "tier": "free"
+ },
+ {
+  "fileName": "05_Zaman_Cizelgesi_Kilometre_Taslari.glb",
+  "name": "Zaman Çizelgesi Kilometre Taşları",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/05_Zaman_Cizelgesi_Kilometre_Taslari.glb",
+  "tags": [
+   "zaman",
+   "çizelge",
+   "kilometre-taşı",
+   "plan",
+   "takvim"
+  ],
+  "category": "diyagram",
+  "tier": "free"
+ },
+ {
+  "fileName": "06_Domino_Taslari_Dizisi.glb",
+  "name": "Domino Taşları Dizisi",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/06_Domino_Taslari_Dizisi.glb",
+  "tags": [
+   "domino",
+   "zincir",
+   "etki",
+   "sıra",
+   "bağlantı"
+  ],
+  "category": "sembol",
+  "tier": "free"
+ },
+ {
+  "fileName": "06_Gantt_Semasi_Bloklari.glb",
+  "name": "Gantt Şeması Blokları",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/06_Gantt_Semasi_Bloklari.glb",
+  "tags": [
+   "gantt",
+   "şema",
+   "proje",
+   "zaman",
+   "planlama"
+  ],
+  "category": "diyagram",
+  "tier": "free"
+ },
+ {
+  "fileName": "07_KPI_Gosterge_Paneli.glb",
+  "name": "KPI Gösterge Paneli",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/07_KPI_Gosterge_Paneli.glb",
+  "tags": [
+   "kpi",
+   "gösterge",
+   "panel",
+   "ölçüm",
+   "performans"
+  ],
+  "category": "analiz-modeli",
+  "tier": "free"
+ },
+ {
+  "fileName": "07_Merdiven_Kariyer_Basamaklari.glb",
+  "name": "Merdiven Kariyer Basamakları",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/07_Merdiven_Kariyer_Basamaklari.glb",
+  "tags": [
+   "merdiven",
+   "kariyer",
+   "basamak",
+   "yükselme",
+   "gelişim"
+  ],
+  "category": "sembol",
+  "tier": "free"
+ },
+ {
+  "fileName": "08_Dengeli_Puan_Karti_Terazisi.glb",
+  "name": "Dengeli Puan Kartı Terazisi",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/08_Dengeli_Puan_Karti_Terazisi.glb",
+  "tags": [
+   "terazi",
+   "puan",
+   "denge",
+   "performans",
+   "strateji"
+  ],
+  "category": "analiz-modeli",
+  "tier": "free"
+ },
+ {
+  "fileName": "08_Yon_Tabelasi_Cok_Yonlu.glb",
+  "name": "Yön Tabelası Çok Yönlü",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/08_Yon_Tabelasi_Cok_Yonlu.glb",
+  "tags": [
+   "tabela",
+   "yön",
+   "rota",
+   "seçim",
+   "işaret"
+  ],
+  "category": "sembol",
+  "tier": "free"
+ },
+ {
+  "fileName": "09_Beyaz_Tahta_Sunum_Panosu.glb",
+  "name": "Beyaz Tahta Sunum Panosu",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/09_Beyaz_Tahta_Sunum_Panosu.glb",
+  "tags": [
+   "tahta",
+   "sunum",
+   "pano",
+   "beyaz",
+   "eğitim"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "09_OKR_Hedef_Agaci.glb",
+  "name": "OKR Hedef Ağacı",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/09_OKR_Hedef_Agaci.glb",
+  "tags": [
+   "okr",
+   "hedef",
+   "ağaç",
+   "strateji",
+   "başarı"
+  ],
+  "category": "analiz-modeli",
+  "tier": "free"
+ },
+ {
+  "fileName": "100_Gayrimenkul_Yatirimi_Evi.glb",
+  "name": "Gayrimenkul Yatırımı Evi",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/100_Gayrimenkul_Yatirimi_Evi.glb",
+  "tags": [
+   "gayrimenkul",
+   "ev",
+   "yatırım",
+   "emlak",
+   "mülk"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "101_Altin_Kulceleri.glb",
+  "name": "Altın Külçeleri",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/101_Altin_Kulceleri.glb",
+  "tags": [
+   "altın",
+   "külçe",
+   "yatırım",
+   "değer",
+   "servet"
+  ],
+  "category": "sembol",
+  "tier": "free"
+ },
+ {
+  "fileName": "102_Petrol_Varili_Fiyat_Gostergesi.glb",
+  "name": "Petrol Varili Fiyat Göstergesi",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/102_Petrol_Varili_Fiyat_Gostergesi.glb",
+  "tags": [
+   "petrol",
+   "varil",
+   "fiyat",
+   "gösterge",
+   "ekonomi"
+  ],
+  "category": "sembol",
+  "tier": "free"
+ },
+ {
+  "fileName": "103_Ekonomik_Buyume_Merdiveni.glb",
+  "name": "Ekonomik Büyüme Merdiveni",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/103_Ekonomik_Buyume_Merdiveni.glb",
+  "tags": [
+   "ekonomi",
+   "büyüme",
+   "merdiven",
+   "gelişim",
+   "yükseliş"
+  ],
+  "category": "sembol",
+  "tier": "free"
+ },
+ {
+  "fileName": "104_Arz_Talep_Terazisi.glb",
+  "name": "Arz Talep Terazisi",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/104_Arz_Talep_Terazisi.glb",
+  "tags": [
+   "arz",
+   "talep",
+   "terazi",
+   "denge",
+   "ekonomi"
+  ],
+  "category": "sembol",
+  "tier": "free"
+ },
+ {
+  "fileName": "105_Kuresel_Ticaret_Para_Akisi.glb",
+  "name": "Küresel Ticaret Para Akışı",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/105_Kuresel_Ticaret_Para_Akisi.glb",
+  "tags": [
+   "küresel",
+   "ticaret",
+   "para",
+   "akış",
+   "dünya"
+  ],
+  "category": "sembol",
+  "tier": "free"
+ },
+ {
+  "fileName": "106_Finansal_Denetim_Buyuteci.glb",
+  "name": "Finansal Denetim Büyüteci",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/106_Finansal_Denetim_Buyuteci.glb",
+  "tags": [
+   "finans",
+   "denetim",
+   "büyüteç",
+   "kontrol",
+   "inceleme"
+  ],
+  "category": "sembol",
+  "tier": "free"
+ },
+ {
+  "fileName": "107_Iflas_Eden_Sirket_Binasi.glb",
+  "name": "İflas Eden Şirket Binası",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/107_Iflas_Eden_Sirket_Binasi.glb",
+  "tags": [
+   "iflas",
+   "şirket",
+   "bina",
+   "risk",
+   "ekonomi"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "108_Tasarruf_Hedefi_Kavanozu.glb",
+  "name": "Tasarruf Hedefi Kavanozu",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/108_Tasarruf_Hedefi_Kavanozu.glb",
+  "tags": [
+   "tasarruf",
+   "kavanoz",
+   "para",
+   "hedef",
+   "birikim"
+  ],
+  "category": "sembol",
+  "tier": "free"
+ },
+ {
+  "fileName": "109_Merkez_Bankasi_Kasasi.glb",
+  "name": "Merkez Bankası Kasası",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/109_Merkez_Bankasi_Kasasi.glb",
+  "tags": [
+   "banka",
+   "kasa",
+   "para",
+   "merkez",
+   "güven"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "10_Organizasyon_Semasi.glb",
+  "name": "Organizasyon Şeması",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/10_Organizasyon_Semasi.glb",
+  "tags": [
+   "organizasyon",
+   "şema",
+   "yapı",
+   "hiyerarşi",
+   "yönetim"
+  ],
+  "category": "diyagram",
+  "tier": "free"
+ },
+ {
+  "fileName": "10_Toplanti_Masasi_ve_Sandalyeler.glb",
+  "name": "Toplantı Masası ve Sandalyeler",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/10_Toplanti_Masasi_ve_Sandalyeler.glb",
+  "tags": [
+   "toplantı",
+   "masa",
+   "sandalye",
+   "ofis",
+   "iş"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "119_urun_rafi.glb",
+  "name": "Ürün Rafı",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/119_urun_rafi.glb",
+  "tags": [
+   "ürün",
+   "raf",
+   "mağaza",
+   "perakende",
+   "vitrin"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "11_Insan_Figuru_Siluetleri_Takim.glb",
+  "name": "İnsan Figürü Siluetleri Takım",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/11_Insan_Figuru_Siluetleri_Takim.glb",
+  "tags": [
+   "insan",
+   "figür",
+   "siluet",
+   "takım",
+   "personel"
+  ],
+  "category": "ikon-3d",
+  "tier": "free"
+ },
+ {
+  "fileName": "11_Karar_Agaci.glb",
+  "name": "Karar Ağacı",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/11_Karar_Agaci.glb",
+  "tags": [
+   "karar",
+   "ağaç",
+   "diyagram",
+   "seçenek",
+   "analiz"
+  ],
+  "category": "diyagram",
+  "tier": "free"
+ },
+ {
+  "fileName": "120_magaza_vitrini.glb",
+  "name": "Mağaza Vitrini",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/120_magaza_vitrini.glb",
+  "tags": [
+   "mağaza",
+   "vitrin",
+   "perakende",
+   "alışveriş",
+   "sergi"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "121_cevrimici_magaza_dizustu.glb",
+  "name": "Çevrimiçi Mağaza Dizüstü",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/121_cevrimici_magaza_dizustu.glb",
+  "tags": [
+   "e-ticaret",
+   "dizüstü",
+   "çevrimiçi",
+   "mağaza",
+   "dijital"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "122_mobil_alisveris_telefonu.glb",
+  "name": "Mobil Alışveriş Telefonu",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/122_mobil_alisveris_telefonu.glb",
+  "tags": [
+   "mobil",
+   "telefon",
+   "alışveriş",
+   "e-ticaret",
+   "uygulama"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "123_paket_acma_kutusu.glb",
+  "name": "Paket Açma Kutusu",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/123_paket_acma_kutusu.glb",
+  "tags": [
+   "paket",
+   "kutu",
+   "teslimat",
+   "e-ticaret",
+   "lojistik"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "124_urun_fotograf_cekim_cadiri.glb",
+  "name": "Ürün Fotoğraf Çekim Çadırı",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/124_urun_fotograf_cekim_cadiri.glb",
+  "tags": [
+   "ürün",
+   "fotoğraf",
+   "çekim",
+   "çadır",
+   "e-ticaret"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "125_musteri_persona_bustleri.glb",
+  "name": "Müşteri Persona Büstleri",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/125_musteri_persona_bustleri.glb",
+  "tags": [
+   "müşteri",
+   "persona",
+   "büst",
+   "hedef-kitle",
+   "pazarlama"
+  ],
+  "category": "ikon-3d",
+  "tier": "free"
+ },
+ {
+  "fileName": "126_hedef_kitle_gruplari.glb",
+  "name": "Hedef Kitle Grupları",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/126_hedef_kitle_gruplari.glb",
+  "tags": [
+   "hedef-kitle",
+   "grup",
+   "müşteri",
+   "segment",
+   "pazarlama"
+  ],
+  "category": "ikon-3d",
+  "tier": "free"
+ },
+ {
+  "fileName": "127_musteri_sadakat_karti.glb",
+  "name": "Müşteri Sadakat Kartı",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/127_musteri_sadakat_karti.glb",
+  "tags": [
+   "sadakat",
+   "kart",
+   "müşteri",
+   "ödül",
+   "bağlılık"
+  ],
+  "category": "sembol",
+  "tier": "free"
+ },
+ {
+  "fileName": "128_bes_yildizli_degerlendirme.glb",
+  "name": "Beş Yıldızlı Değerlendirme",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/128_bes_yildizli_degerlendirme.glb",
+  "tags": [
+   "yıldız",
+   "değerlendirme",
+   "puan",
+   "müşteri",
+   "geri-bildirim"
+  ],
+  "category": "sembol",
+  "tier": "free"
+ },
+ {
+  "fileName": "129_musteri_geri_bildirim_balonlari.glb",
+  "name": "Müşteri Geri Bildirim Balonları",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/129_musteri_geri_bildirim_balonlari.glb",
+  "tags": [
+   "geri-bildirim",
+   "balon",
+   "müşteri",
+   "yorum",
+   "iletişim"
+  ],
+  "category": "sembol",
+  "tier": "free"
+ },
+ {
+  "fileName": "12_Surec_Akis_Semasi.glb",
+  "name": "Süreç Akış Şeması",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/12_Surec_Akis_Semasi.glb",
+  "tags": [
+   "süreç",
+   "akış",
+   "şema",
+   "iş-akışı",
+   "adım"
+  ],
+  "category": "diyagram",
+  "tier": "free"
+ },
+ {
+  "fileName": "12_Toklasma_Ikonu.glb",
+  "name": "Tokalaşma İkonu",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/12_Toklasma_Ikonu.glb",
+  "tags": [
+   "tokalaşma",
+   "el",
+   "anlaşma",
+   "ortaklık",
+   "selam"
+  ],
+  "category": "ikon-3d",
+  "tier": "free"
+ },
+ {
+  "fileName": "130_satis_temsilcisi_ve_musteri.glb",
+  "name": "Satış Temsilcisi ve Müşteri",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/130_satis_temsilcisi_ve_musteri.glb",
+  "tags": [
+   "satış",
+   "temsilci",
+   "müşteri",
+   "pazarlık",
+   "iletişim"
+  ],
+  "category": "ikon-3d",
+  "tier": "free"
+ },
+ {
+  "fileName": "131_crm_musteri_kartlari.glb",
+  "name": "CRM Müşteri Kartları",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/131_crm_musteri_kartlari.glb",
+  "tags": [
+   "crm",
+   "müşteri",
+   "kart",
+   "kayıt",
+   "yönetim"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "132_potansiyel_musteri_miknatisi.glb",
+  "name": "Potansiyel Müşteri Mıknatısı",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/132_potansiyel_musteri_miknatisi.glb",
+  "tags": [
+   "mıknatıs",
+   "müşteri",
+   "potansiyel",
+   "çekim",
+   "satış"
+  ],
+  "category": "sembol",
+  "tier": "free"
+ },
+ {
+  "fileName": "133_eposta_kampanya_zarfi.glb",
+  "name": "E-posta Kampanya Zarfı",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/133_eposta_kampanya_zarfi.glb",
+  "tags": [
+   "e-posta",
+   "zarf",
+   "kampanya",
+   "pazarlama",
+   "iletişim"
+  ],
+  "category": "sembol",
+  "tier": "free"
+ },
+ {
+  "fileName": "134_sosyal_medya_paylasim_kupleri.glb",
+  "name": "Sosyal Medya Paylaşım Küpleri",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/134_sosyal_medya_paylasim_kupleri.glb",
+  "tags": [
+   "sosyal-medya",
+   "paylaşım",
+   "küp",
+   "beğeni",
+   "içerik"
+  ],
+  "category": "sembol",
+  "tier": "free"
+ },
+ {
+  "fileName": "135_influencer_halka_isigi.glb",
+  "name": "Influencer Halka Işığı",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/135_influencer_halka_isigi.glb",
+  "tags": [
+   "influencer",
+   "halka-ışık",
+   "sosyal-medya",
+   "içerik",
+   "tanıtım"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "136_podcast_reklam_mikrofonu.glb",
+  "name": "Podcast Reklam Mikrofonu",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/136_podcast_reklam_mikrofonu.glb",
+  "tags": [
+   "podcast",
+   "mikrofon",
+   "reklam",
+   "ses",
+   "yayın"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "137_viral_icerik_roketi.glb",
+  "name": "Viral İçerik Roketi",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/137_viral_icerik_roketi.glb",
+  "tags": [
+   "viral",
+   "içerik",
+   "roket",
+   "sosyal-medya",
+   "yükseliş"
+  ],
+  "category": "sembol",
+  "tier": "free"
+ },
+ {
+  "fileName": "138_marka_bilinirligi_radari.glb",
+  "name": "Marka Bilinirliği Radarı",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/138_marka_bilinirligi_radari.glb",
+  "tags": [
+   "marka",
+   "bilinirlik",
+   "radar",
+   "ölçüm",
+   "pazarlama"
+  ],
+  "category": "grafik",
+  "tier": "free"
+ },
+ {
+  "fileName": "139_pazar_payi_pasta_dilimleri.glb",
+  "name": "Pazar Payı Pasta Dilimleri",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/139_pazar_payi_pasta_dilimleri.glb",
+  "tags": [
+   "pazar-payı",
+   "pasta",
+   "dilim",
+   "oran",
+   "rekabet"
+  ],
+  "category": "grafik",
+  "tier": "free"
+ },
+ {
+  "fileName": "13_Archimedes_Yuzen_Cisim_Duzenegi.glb",
+  "name": "Archimedes Yüzen Cisim Düzeneği",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/13_Archimedes_Yuzen_Cisim_Duzenegi.glb",
+  "tags": [
+   "archimedes",
+   "fizik",
+   "kaldırma-kuvveti",
+   "deney",
+   "su"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "13_Dongusel_Surec_Oklari.glb",
+  "name": "Döngüsel Süreç Okları",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/13_Dongusel_Surec_Oklari.glb",
+  "tags": [
+   "döngü",
+   "süreç",
+   "ok",
+   "tekrar",
+   "akış"
+  ],
+  "category": "diyagram",
+  "tier": "free"
+ },
+ {
+  "fileName": "140_urun_lansmani_sahnesi.glb",
+  "name": "Ürün Lansmanı Sahnesi",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/140_urun_lansmani_sahnesi.glb",
+  "tags": [
+   "ürün",
+   "lansman",
+   "sahne",
+   "tanıtım",
+   "etkinlik"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "141_abonelik_kutusu.glb",
+  "name": "Abonelik Kutusu",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/141_abonelik_kutusu.glb",
+  "tags": [
+   "abonelik",
+   "kutu",
+   "paket",
+   "e-ticaret",
+   "teslimat"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "142_terk_edilmis_alisveris_sepeti.glb",
+  "name": "Terk Edilmiş Alışveriş Sepeti",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/142_terk_edilmis_alisveris_sepeti.glb",
+  "tags": [
+   "alışveriş",
+   "sepet",
+   "terk",
+   "e-ticaret",
+   "dönüşüm"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "143_kod_editoru_ekrani.glb",
+  "name": "Kod Editörü Ekranı",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/143_kod_editoru_ekrani.glb",
+  "tags": [
+   "kod",
+   "editör",
+   "yazılım",
+   "programlama",
+   "ekran"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "144_mobil_uygulama_arayuz_telefonu.glb",
+  "name": "Mobil Uygulama Arayüz Telefonu",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/144_mobil_uygulama_arayuz_telefonu.glb",
+  "tags": [
+   "mobil",
+   "uygulama",
+   "arayüz",
+   "telefon",
+   "tasarım"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "145_web_sitesi_tarayıci_penceresi.glb",
+  "name": "Web Sitesi Tarayıcı Penceresi",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/145_web_sitesi_tarayıci_penceresi.glb",
+  "tags": [
+   "web",
+   "site",
+   "tarayıcı",
+   "pencere",
+   "dijital"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "146_api_baglanti_bloklari.glb",
+  "name": "API Bağlantı Blokları",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/146_api_baglanti_bloklari.glb",
+  "tags": [
+   "api",
+   "bağlantı",
+   "blok",
+   "entegrasyon",
+   "yazılım"
+  ],
+  "category": "diyagram",
+  "tier": "free"
+ },
+ {
+  "fileName": "147_mikroservis_mimarisi.glb",
+  "name": "Mikroservis Mimarisi",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/147_mikroservis_mimarisi.glb",
+  "tags": [
+   "mikroservis",
+   "mimari",
+   "yazılım",
+   "servis",
+   "sistem"
+  ],
+  "category": "diyagram",
+  "tier": "free"
+ },
+ {
+  "fileName": "148_veritabani_silindiri.glb",
+  "name": "Veritabanı Silindiri",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/148_veritabani_silindiri.glb",
+  "tags": [
+   "veritabanı",
+   "silindir",
+   "veri",
+   "depolama",
+   "yazılım"
+  ],
+  "category": "sembol",
+  "tier": "free"
+ },
+ {
+  "fileName": "149_veri_ambari_raflari.glb",
+  "name": "Veri Ambarı Rafları",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/149_veri_ambari_raflari.glb",
+  "tags": [
+   "veri-ambari",
+   "raf",
+   "veri",
+   "depolama",
+   "büyük-veri"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "14_Pascal_Prensipi_Siringa_Duzenegi.glb",
+  "name": "Pascal Prensibi Şırınga Düzeneği",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/14_Pascal_Prensipi_Siringa_Duzenegi.glb",
+  "tags": [
+   "pascal",
+   "fizik",
+   "basınç",
+   "şırınga",
+   "deney"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "14_Satis_Hunisi.glb",
+  "name": "Satış Hunisi",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/14_Satis_Hunisi.glb",
+  "tags": [
+   "satış",
+   "huni",
+   "dönüşüm",
+   "pazarlama",
+   "müşteri"
+  ],
+  "category": "diyagram",
+  "tier": "free"
+ },
+ {
+  "fileName": "150_veri_golu_adasi.glb",
+  "name": "Veri Gölü Adası",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/150_veri_golu_adasi.glb",
+  "tags": [
+   "veri-gölü",
+   "ada",
+   "veri",
+   "depolama",
+   "yazılım"
+  ],
+  "category": "sembol",
+  "tier": "free"
+ },
+ {
+  "fileName": "151_etl_veri_boru_hatti.glb",
+  "name": "ETL Veri Boru Hattı",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/151_etl_veri_boru_hatti.glb",
+  "tags": [
+   "etl",
+   "veri",
+   "boru-hattı",
+   "akış",
+   "yazılım"
+  ],
+  "category": "diyagram",
+  "tier": "free"
+ },
+ {
+  "fileName": "152_devops_sonsuzluk_dongusu.glb",
+  "name": "DevOps Sonsuzluk Döngüsü",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/152_devops_sonsuzluk_dongusu.glb",
+  "tags": [
+   "devops",
+   "döngü",
+   "sonsuzluk",
+   "süreç",
+   "yazılım"
+  ],
+  "category": "sembol",
+  "tier": "free"
+ },
+ {
+  "fileName": "153_ci_cd_uretim_bandi.glb",
+  "name": "CI/CD Üretim Bandı",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/153_ci_cd_uretim_bandi.glb",
+  "tags": [
+   "ci-cd",
+   "üretim-bandı",
+   "yazılım",
+   "otomasyon",
+   "dağıtım"
+  ],
+  "category": "diyagram",
+  "tier": "free"
+ },
+ {
+  "fileName": "154_konteyner_kupleri.glb",
+  "name": "Konteyner Küpleri",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/154_konteyner_kupleri.glb",
+  "tags": [
+   "konteyner",
+   "küp",
+   "yazılım",
+   "kapsülleme",
+   "dağıtım"
+  ],
+  "category": "sembol",
+  "tier": "free"
+ },
+ {
+  "fileName": "155_kubernetes_kumesi.glb",
+  "name": "Kubernetes Kümesi",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/155_kubernetes_kumesi.glb",
+  "tags": [
+   "kubernetes",
+   "küme",
+   "bulut",
+   "orkestrasyon",
+   "yazılım"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "156_git_dal_birlesme_agaci.glb",
+  "name": "Git Dal Birleşme Ağacı",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/156_git_dal_birlesme_agaci.glb",
+  "tags": [
+   "git",
+   "dal",
+   "birleşme",
+   "ağaç",
+   "yazılım"
+  ],
+  "category": "diyagram",
+  "tier": "free"
+ },
+ {
+  "fileName": "157_yazilim_hata_bocegi_simgesi.glb",
+  "name": "Yazılım Hata Böceği Simgesi",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/157_yazilim_hata_bocegi_simgesi.glb",
+  "tags": [
+   "hata",
+   "böcek",
+   "simge",
+   "yazılım",
+   "debug"
+  ],
+  "category": "ikon-3d",
+  "tier": "free"
+ },
+ {
+  "fileName": "15_Oncelik_Matrisi.glb",
+  "name": "Öncelik Matrisi",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/15_Oncelik_Matrisi.glb",
+  "tags": [
+   "öncelik",
+   "matris",
+   "analiz",
+   "planlama",
+   "karar"
+  ],
+  "category": "analiz-modeli",
+  "tier": "free"
+ },
+ {
+  "fileName": "15_Termometre_Turleri_Seti.glb",
+  "name": "Termometre Türleri Seti",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/15_Termometre_Turleri_Seti.glb",
+  "tags": [
+   "termometre",
+   "sıcaklık",
+   "ölçüm",
+   "set",
+   "fizik"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "164_akilli_ev_kontrol_merkezi.glb",
+  "name": "Akıllı Ev Kontrol Merkezi",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/164_akilli_ev_kontrol_merkezi.glb",
+  "tags": [
+   "akıllı-ev",
+   "kontrol",
+   "merkez",
+   "otomasyon",
+   "teknoloji"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "165_kenar_bilisim_cihazi.glb",
+  "name": "Kenar Bilişim Cihazı",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/165_kenar_bilisim_cihazi.glb",
+  "tags": [
+   "kenar-bilişim",
+   "cihaz",
+   "edge",
+   "teknoloji",
+   "iot"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "166_kuantum_bilgisayar.glb",
+  "name": "Kuantum Bilgisayar",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/166_kuantum_bilgisayar.glb",
+  "tags": [
+   "kuantum",
+   "bilgisayar",
+   "teknoloji",
+   "hesaplama",
+   "gelecek"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "167_kuantum_bit_kuresi.glb",
+  "name": "Kuantum Bit Küresi",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/167_kuantum_bit_kuresi.glb",
+  "tags": [
+   "kuantum",
+   "bit",
+   "küre",
+   "qubit",
+   "fizik"
+  ],
+  "category": "sembol",
+  "tier": "free"
+ },
+ {
+  "fileName": "168_makine_ogrenmesi_islem_hatti.glb",
+  "name": "Makine Öğrenmesi İşlem Hattı",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/168_makine_ogrenmesi_islem_hatti.glb",
+  "tags": [
+   "makine-öğrenmesi",
+   "yapay-zeka",
+   "işlem-hattı",
+   "veri",
+   "model"
+  ],
+  "category": "diyagram",
+  "tier": "free"
+ },
+ {
+  "fileName": "169_veri_etiketleme_istasyonu.glb",
+  "name": "Veri Etiketleme İstasyonu",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/169_veri_etiketleme_istasyonu.glb",
+  "tags": [
+   "veri",
+   "etiketleme",
+   "istasyon",
+   "yapay-zeka",
+   "eğitim"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "16_Isi_Iletimi_Metal_Cubuk_Duzenegi.glb",
+  "name": "Isı İletimi Metal Çubuk Düzeneği",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/16_Isi_Iletimi_Metal_Cubuk_Duzenegi.glb",
+  "tags": [
+   "ısı",
+   "iletim",
+   "metal",
+   "çubuk",
+   "deney"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "16_Risk_Matrisi.glb",
+  "name": "Risk Matrisi",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/16_Risk_Matrisi.glb",
+  "tags": [
+   "risk",
+   "matris",
+   "analiz",
+   "değerlendirme",
+   "yönetim"
+  ],
+  "category": "analiz-modeli",
+  "tier": "free"
+ },
+ {
+  "fileName": "170_yapay_zeka_cipi.glb",
+  "name": "Yapay Zeka Çipi",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/170_yapay_zeka_cipi.glb",
+  "tags": [
+   "yapay-zeka",
+   "çip",
+   "donanım",
+   "teknoloji",
+   "işlemci"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "171_uretken_yapay_zeka_kivilcim_kupu.glb",
+  "name": "Üretken Yapay Zeka Kıvılcım Küpü",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/171_uretken_yapay_zeka_kivilcim_kupu.glb",
+  "tags": [
+   "yapay-zeka",
+   "üretken",
+   "kıvılcım",
+   "küp",
+   "yenilik"
+  ],
+  "category": "sembol",
+  "tier": "free"
+ },
+ {
+  "fileName": "172_sohbet_robotu_terminali.glb",
+  "name": "Sohbet Robotu Terminali",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/172_sohbet_robotu_terminali.glb",
+  "tags": [
+   "sohbet-robotu",
+   "chatbot",
+   "terminal",
+   "yapay-zeka",
+   "iletişim"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "179_3B_tarayıcı.glb",
+  "name": "3B Tarayıcı",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/179_3B_tarayıcı.glb",
+  "tags": [
+   "3b",
+   "tarayıcı",
+   "tarama",
+   "model",
+   "teknoloji"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "17_Etki_Efor_Matrisi.glb",
+  "name": "Etki Efor Matrisi",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/17_Etki_Efor_Matrisi.glb",
+  "tags": [
+   "etki",
+   "efor",
+   "matris",
+   "öncelik",
+   "analiz"
+  ],
+  "category": "analiz-modeli",
+  "tier": "free"
+ },
+ {
+  "fileName": "17_Konveksiyon_Akimlari_Isinan_Su.glb",
+  "name": "Konveksiyon Akımları Isınan Su",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/17_Konveksiyon_Akimlari_Isinan_Su.glb",
+  "tags": [
+   "konveksiyon",
+   "akım",
+   "ısı",
+   "fizik",
+   "deney"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "180_dijital_dönüşüm_köprüsü.glb",
+  "name": "Dijital Dönüşüm Köprüsü",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/180_dijital_dönüşüm_köprüsü.glb",
+  "tags": [
+   "dijital",
+   "dönüşüm",
+   "köprü",
+   "teknoloji",
+   "geçiş"
+  ],
+  "category": "sembol",
+  "tier": "free"
+ },
+ {
+  "fileName": "181_eski_sistemden_buluta_geçiş.glb",
+  "name": "Eski Sistemden Buluta Geçiş",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/181_eski_sistemden_buluta_geçiş.glb",
+  "tags": [
+   "bulut",
+   "geçiş",
+   "sistem",
+   "migrasyon",
+   "teknoloji"
+  ],
+  "category": "sembol",
+  "tier": "free"
+ },
+ {
+  "fileName": "182_otomatik_süreç_robotu.glb",
+  "name": "Otomatik Süreç Robotu",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/182_otomatik_süreç_robotu.glb",
+  "tags": [
+   "otomasyon",
+   "süreç",
+   "robot",
+   "rpa",
+   "verimlilik"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "183_akıllı_sözleşme_belgesi.glb",
+  "name": "Akıllı Sözleşme Belgesi",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/183_akıllı_sözleşme_belgesi.glb",
+  "tags": [
+   "akıllı-sözleşme",
+   "belge",
+   "blockchain",
+   "dijital",
+   "sözleşme"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "184_NFT_galeri_çerçevesi.glb",
+  "name": "NFT Galeri Çerçevesi",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/184_NFT_galeri_çerçevesi.glb",
+  "tags": [
+   "nft",
+   "galeri",
+   "çerçeve",
+   "dijital-sanat",
+   "koleksiyon"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "185_metaverse_toplanti_odasi.glb",
+  "name": "Metaverse Toplantı Odası",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/185_metaverse_toplanti_odasi.glb",
+  "tags": [
+   "metaverse",
+   "toplantı",
+   "sanal",
+   "odası",
+   "gelecek"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "186_guvenlik_duvari_tuglalari.glb",
+  "name": "Güvenlik Duvarı Tuğlaları",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/186_guvenlik_duvari_tuglalari.glb",
+  "tags": [
+   "güvenlik",
+   "duvar",
+   "tuğla",
+   "firewall",
+   "koruma"
+  ],
+  "category": "sembol",
+  "tier": "free"
+ },
+ {
+  "fileName": "187_sifreli_veri_kasasi.glb",
+  "name": "Şifreli Veri Kasası",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/187_sifreli_veri_kasasi.glb",
+  "tags": [
+   "şifre",
+   "veri",
+   "kasa",
+   "güvenlik",
+   "koruma"
+  ],
+  "category": "sembol",
+  "tier": "free"
+ },
+ {
+  "fileName": "188_iki_faktorlu_kimlik_dogrulama_telefonu.glb",
+  "name": "İki Faktörlü Kimlik Doğrulama Telefonu",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/188_iki_faktorlu_kimlik_dogrulama_telefonu.glb",
+  "tags": [
+   "kimlik",
+   "doğrulama",
+   "2fa",
+   "telefon",
+   "güvenlik"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "189_parmak_izi_okuyucu.glb",
+  "name": "Parmak İzi Okuyucu",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/189_parmak_izi_okuyucu.glb",
+  "tags": [
+   "parmak-izi",
+   "biyometri",
+   "okuyucu",
+   "kimlik",
+   "güvenlik"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "18_Elektroskop_Duzenegi.glb",
+  "name": "Elektroskop Düzeneği",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/18_Elektroskop_Duzenegi.glb",
+  "tags": [
+   "elektroskop",
+   "fizik",
+   "deney",
+   "yük",
+   "ölçüm"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "18_Paydas_Haritasi.glb",
+  "name": "Paydaş Haritası",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/18_Paydas_Haritasi.glb",
+  "tags": [
+   "paydaş",
+   "harita",
+   "analiz",
+   "ilişki",
+   "yönetim"
+  ],
+  "category": "analiz-modeli",
+  "tier": "free"
+ },
+ {
+  "fileName": "190_iris_tarayıci.glb",
+  "name": "İris Tarayıcı",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/190_iris_tarayıci.glb",
+  "tags": [
+   "iris",
+   "tarayıcı",
+   "biyometri",
+   "kimlik",
+   "güvenlik"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "191_kimlik_avi_kancasi_ve_e_posta.glb",
+  "name": "Kimlik Avı Kancası ve E-Posta",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/191_kimlik_avi_kancasi_ve_e_posta.glb",
+  "tags": [
+   "kimlik-avı",
+   "phishing",
+   "e-posta",
+   "siber-güvenlik",
+   "saldırı"
+  ],
+  "category": "sembol",
+  "tier": "free"
+ },
+ {
+  "fileName": "192_kotu_amacli_yazilim_uyarisi.glb",
+  "name": "Kötü Amaçlı Yazılım Uyarısı",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/192_kotu_amacli_yazilim_uyarisi.glb",
+  "tags": [
+   "kötü-amaçlı",
+   "yazılım",
+   "uyarı",
+   "virüs",
+   "güvenlik"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "193_fidye_yazilimi_kilitli_dosya.glb",
+  "name": "Fidye Yazılımı Kilitli Dosya",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/193_fidye_yazilimi_kilitli_dosya.glb",
+  "tags": [
+   "fidye-yazılımı",
+   "kilit",
+   "dosya",
+   "siber-güvenlik",
+   "tehdit"
+  ],
+  "category": "sembol",
+  "tier": "free"
+ },
+ {
+  "fileName": "194_antivirüs_tarama_kalkanı.glb",
+  "name": "Antivirüs Tarama Kalkanı",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/194_antivirüs_tarama_kalkanı.glb",
+  "tags": [
+   "antivirüs",
+   "tarama",
+   "kalkan",
+   "koruma",
+   "güvenlik"
+  ],
+  "category": "sembol",
+  "tier": "free"
+ },
+ {
+  "fileName": "195_VPN_tüneli.glb",
+  "name": "VPN Tüneli",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/195_VPN_tüneli.glb",
+  "tags": [
+   "vpn",
+   "tünel",
+   "gizlilik",
+   "ağ",
+   "güvenlik"
+  ],
+  "category": "diyagram",
+  "tier": "free"
+ },
+ {
+  "fileName": "196_sıfır_güven_kontrol_noktası.glb",
+  "name": "Sıfır Güven Kontrol Noktası",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/196_sıfır_güven_kontrol_noktası.glb",
+  "tags": [
+   "sıfır-güven",
+   "kontrol",
+   "nokta",
+   "erişim",
+   "güvenlik"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "197_güvenlik_operasyon_merkezi_masası.glb",
+  "name": "Güvenlik Operasyon Merkezi Masası",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/197_güvenlik_operasyon_merkezi_masası.glb",
+  "tags": [
+   "güvenlik",
+   "operasyon",
+   "merkez",
+   "soc",
+   "masa"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "198_siber_saldırı_dünya_haritası.glb",
+  "name": "Siber Saldırı Dünya Haritası",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/198_siber_saldırı_dünya_haritası.glb",
+  "tags": [
+   "siber-saldırı",
+   "dünya",
+   "harita",
+   "tehdit",
+   "ağ"
+  ],
+  "category": "grafik",
+  "tier": "free"
+ },
+ {
+  "fileName": "199_etik_hacker_çalışma_istasyonu.glb",
+  "name": "Etik Hacker Çalışma İstasyonu",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/199_etik_hacker_çalışma_istasyonu.glb",
+  "tags": [
+   "etik-hacker",
+   "çalışma",
+   "istasyon",
+   "siber-güvenlik",
+   "test"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "19_Maglev_Tren_Modeli.glb",
+  "name": "Maglev Tren Modeli",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/19_Maglev_Tren_Modeli.glb",
+  "tags": [
+   "maglev",
+   "tren",
+   "fizik",
+   "manyetik",
+   "ulaşım"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "19_Rekabet_Konumlandirma_Haritasi.glb",
+  "name": "Rekabet Konumlandırma Haritası",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/19_Rekabet_Konumlandirma_Haritasi.glb",
+  "tags": [
+   "rekabet",
+   "konumlandırma",
+   "harita",
+   "pazar",
+   "strateji"
+  ],
+  "category": "analiz-modeli",
+  "tier": "free"
+ },
+ {
+  "fileName": "200_ag_yonlendiricisi.glb",
+  "name": "Ağ Yönlendiricisi",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/200_ag_yonlendiricisi.glb",
+  "tags": [
+   "ağ",
+   "yönlendirici",
+   "router",
+   "iletişim",
+   "donanım"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "201_ag_anahtari.glb",
+  "name": "Ağ Anahtarı",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/201_ag_anahtari.glb",
+  "tags": [
+   "ağ",
+   "anahtar",
+   "switch",
+   "iletişim",
+   "donanım"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "202_wifi_erisim_noktasi.glb",
+  "name": "WiFi Erişim Noktası",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/202_wifi_erisim_noktasi.glb",
+  "tags": [
+   "wifi",
+   "erişim",
+   "nokta",
+   "kablosuz",
+   "ağ"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "203_fiber_ag_dagitim_kutusu.glb",
+  "name": "Fiber Ağ Dağıtım Kutusu",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/203_fiber_ag_dagitim_kutusu.glb",
+  "tags": [
+   "fiber",
+   "ağ",
+   "dağıtım",
+   "kutu",
+   "donanım"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "204_denizalti_internet_kablosu_kesiti.glb",
+  "name": "Denizaltı İnternet Kablosu Kesiti",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/204_denizalti_internet_kablosu_kesiti.glb",
+  "tags": [
+   "denizaltı",
+   "internet",
+   "kablo",
+   "kesit",
+   "ağ"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "205_dns_sunucu_agi.glb",
+  "name": "DNS Sunucu Ağı",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/205_dns_sunucu_agi.glb",
+  "tags": [
+   "dns",
+   "sunucu",
+   "ağ",
+   "çözümleme",
+   "yazılım"
+  ],
+  "category": "diyagram",
+  "tier": "free"
+ },
+ {
+  "fileName": "206_yuk_dengeleyici.glb",
+  "name": "Yük Dengeleyici",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/206_yuk_dengeleyici.glb",
+  "tags": [
+   "yük",
+   "dengeleme",
+   "sunucu",
+   "trafik",
+   "ağ"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "207_yedekleme_kaset_unitesi.glb",
+  "name": "Yedekleme Kaset Ünitesi",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/207_yedekleme_kaset_unitesi.glb",
+  "tags": [
+   "yedekleme",
+   "kaset",
+   "ünite",
+   "veri",
+   "depolama"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "208_felaket_kurtarma_veri_merkezi.glb",
+  "name": "Felaket Kurtarma Veri Merkezi",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/208_felaket_kurtarma_veri_merkezi.glb",
+  "tags": [
+   "felaket-kurtarma",
+   "veri-merkezi",
+   "yedekleme",
+   "süreklilik",
+   "sistem"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "209_biyometrik_gecis_kapisi.glb",
+  "name": "Biyometrik Geçiş Kapısı",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/209_biyometrik_gecis_kapisi.glb",
+  "tags": [
+   "biyometrik",
+   "geçiş",
+   "kapı",
+   "güvenlik",
+   "erişim"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "20_Buyume_Matrisi.glb",
+  "name": "Büyüme Matrisi",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/20_Buyume_Matrisi.glb",
+  "tags": [
+   "büyüme",
+   "matris",
+   "strateji",
+   "analiz",
+   "pazar"
+  ],
+  "category": "analiz-modeli",
+  "tier": "free"
+ },
+ {
+  "fileName": "20_Kloroplast_Modeli.glb",
+  "name": "Kloroplast Modeli",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/20_Kloroplast_Modeli.glb",
+  "tags": [
+   "kloroplast",
+   "fotosentez",
+   "hücre",
+   "biyoloji",
+   "model"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "20_Radyoaktif_Bozunma_Zinciri.glb",
+  "name": "Radyoaktif Bozunma Zinciri",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/20_Radyoaktif_Bozunma_Zinciri.glb",
+  "tags": [
+   "radyoaktif",
+   "bozunma",
+   "zincir",
+   "fizik",
+   "atom"
+  ],
+  "category": "diyagram",
+  "tier": "free"
+ },
+ {
+  "fileName": "210_akilli_kart_okuyucu.glb",
+  "name": "Akıllı Kart Okuyucu",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/210_akilli_kart_okuyucu.glb",
+  "tags": [
+   "akıllı-kart",
+   "okuyucu",
+   "kimlik",
+   "ödeme",
+   "güvenlik"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "211_gizlilik_maskeli_kullanici.glb",
+  "name": "Gizlilik Maskeli Kullanıcı",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/211_gizlilik_maskeli_kullanici.glb",
+  "tags": [
+   "gizlilik",
+   "maske",
+   "kullanıcı",
+   "anonim",
+   "kişisel-veri"
+  ],
+  "category": "ikon-3d",
+  "tier": "free"
+ },
+ {
+  "fileName": "212_cerez_izin_kavanozu.glb",
+  "name": "Çerez İzin Kavanozu",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/212_cerez_izin_kavanozu.glb",
+  "tags": [
+   "çerez",
+   "izin",
+   "kavanoz",
+   "gizlilik",
+   "onay"
+  ],
+  "category": "sembol",
+  "tier": "free"
+ },
+ {
+  "fileName": "213_veri_sizintisi_catlak_borusu.glb",
+  "name": "Veri Sızıntısı Çatlak Borusu",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/213_veri_sizintisi_catlak_borusu.glb",
+  "tags": [
+   "veri-sızıntısı",
+   "çatlak",
+   "boru",
+   "güvenlik",
+   "tehdit"
+  ],
+  "category": "sembol",
+  "tier": "free"
+ },
+ {
+  "fileName": "21_Bitki_Kok_Sistemi_Kesiti.glb",
+  "name": "Bitki Kök Sistemi Kesiti",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/21_Bitki_Kok_Sistemi_Kesiti.glb",
+  "tags": [
+   "bitki",
+   "kök",
+   "sistem",
+   "kesit",
+   "biyoloji"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "21_Fuzyon_Fisyon_Karsilastirma.glb",
+  "name": "Füzyon Fisyon Karşılaştırma",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/21_Fuzyon_Fisyon_Karsilastirma.glb",
+  "tags": [
+   "füzyon",
+   "fisyon",
+   "karşılaştırma",
+   "fizik",
+   "enerji"
+  ],
+  "category": "diyagram",
+  "tier": "free"
+ },
+ {
+  "fileName": "21_Kan_Hucreleri_Seti.glb",
+  "name": "Kan Hücreleri Seti",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/21_Kan_Hucreleri_Seti.glb",
+  "tags": [
+   "kan",
+   "hücre",
+   "set",
+   "biyoloji",
+   "sağlık"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "21_Portfoy_Matrisi.glb",
+  "name": "Portföy Matrisi",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/21_Portfoy_Matrisi.glb",
+  "tags": [
+   "portföy",
+   "matris",
+   "yatırım",
+   "analiz",
+   "strateji"
+  ],
+  "category": "analiz-modeli",
+  "tier": "free"
+ },
+ {
+  "fileName": "22_Deger_Zinciri.glb",
+  "name": "Değer Zinciri",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/22_Deger_Zinciri.glb",
+  "tags": [
+   "değer-zinciri",
+   "süreç",
+   "analiz",
+   "strateji",
+   "işletme"
+  ],
+  "category": "diyagram",
+  "tier": "free"
+ },
+ {
+  "fileName": "22_Kalp_Kapakcigi_Kesiti.glb",
+  "name": "Kalp Kapağı Kesiti",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/22_Kalp_Kapakcigi_Kesiti.glb",
+  "tags": [
+   "kalp",
+   "kapak",
+   "kesit",
+   "anatomi",
+   "sağlık"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "22_Kimyasal_Bag_Turleri_Seti.glb",
+  "name": "Kimyasal Bağ Türleri Seti",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/22_Kimyasal_Bag_Turleri_Seti.glb",
+  "tags": [
+   "kimyasal",
+   "bağ",
+   "türleri",
+   "set",
+   "kimya"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "22_Omurga_ve_Omurlar.glb",
+  "name": "Omurga ve Omurlar",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/22_Omurga_ve_Omurlar.glb",
+  "tags": [
+   "omurga",
+   "omur",
+   "anatomi",
+   "iskelet",
+   "sağlık"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "232_planet_disli_sistemi.glb",
+  "name": "Planet Dişli Sistemi",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/232_planet_disli_sistemi.glb",
+  "tags": [
+   "planet",
+   "dişli",
+   "sistem",
+   "makine",
+   "mekanizma"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "233_diferansiyel_mekanizmasi.glb",
+  "name": "Diferansiyel Mekanizması",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/233_diferansiyel_mekanizmasi.glb",
+  "tags": [
+   "diferansiyel",
+   "mekanizma",
+   "makine",
+   "dişli",
+   "otomotiv"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "234_krank_biyel_mekanizmasi.glb",
+  "name": "Krank Biyel Mekanizması",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/234_krank_biyel_mekanizmasi.glb",
+  "tags": [
+   "krank",
+   "biyel",
+   "mekanizma",
+   "makine",
+   "motor"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "235_kam_mili_ve_supap_sistemi.glb",
+  "name": "Kam Mili ve Supap Sistemi",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/235_kam_mili_ve_supap_sistemi.glb",
+  "tags": [
+   "kam",
+   "mili",
+   "supap",
+   "sistem",
+   "motor"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "236_pnomatik_silindir.glb",
+  "name": "Pnömatik Silindir",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/236_pnomatik_silindir.glb",
+  "tags": [
+   "pnömatik",
+   "silindir",
+   "makine",
+   "hava",
+   "otomasyon"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "237_kompresor_kesiti.glb",
+  "name": "Kompresör Kesiti",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/237_kompresor_kesiti.glb",
+  "tags": [
+   "kompresör",
+   "kesit",
+   "makine",
+   "hava",
+   "basınç"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "238_hidrolik_pompa.glb",
+  "name": "Hidrolik Pompa",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/238_hidrolik_pompa.glb",
+  "tags": [
+   "hidrolik",
+   "pompa",
+   "makine",
+   "sıvı",
+   "basınç"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "239_santrifuj_pompa_kesiti.glb",
+  "name": "Santrifüj Pompa Kesiti",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/239_santrifuj_pompa_kesiti.glb",
+  "tags": [
+   "santrifüj",
+   "pompa",
+   "kesit",
+   "makine",
+   "sıvı"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "23_Elektroliz_Duzenegi.glb",
+  "name": "Elektroliz Düzeneği",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/23_Elektroliz_Duzenegi.glb",
+  "tags": [
+   "elektroliz",
+   "deney",
+   "kimya",
+   "düzenek",
+   "elektrik"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "23_Embriyo_Gelisim_Asamalari.glb",
+  "name": "Embriyo Gelişim Aşamaları",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/23_Embriyo_Gelisim_Asamalari.glb",
+  "tags": [
+   "embriyo",
+   "gelişim",
+   "biyoloji",
+   "aşama",
+   "insan"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "23_Noral_Ag_Yapay_Zeka.glb",
+  "name": "Nöral Ağ Yapay Zeka",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/23_Noral_Ag_Yapay_Zeka.glb",
+  "tags": [
+   "nöral-ağ",
+   "yapay-zeka",
+   "sinir",
+   "makine-öğrenmesi",
+   "teknoloji"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "23_Tedarik_Zinciri_Halkalari.glb",
+  "name": "Tedarik Zinciri Halkaları",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/23_Tedarik_Zinciri_Halkalari.glb",
+  "tags": [
+   "tedarik",
+   "zincir",
+   "lojistik",
+   "halka",
+   "iş"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "240_endustriyel_vana_kesiti.glb",
+  "name": "Endüstriyel Vana Kesiti",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/240_endustriyel_vana_kesiti.glb",
+  "tags": [
+   "vana",
+   "endüstriyel",
+   "kesit",
+   "makine",
+   "boru"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "241_isi_esajoru.glb",
+  "name": "Isı Eşanjörü",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/241_isi_esajoru.glb",
+  "tags": [
+   "ısı",
+   "eşanjör",
+   "ısıtma",
+   "makine",
+   "enerji"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "242_kazan_dairesi_sistemi.glb",
+  "name": "Kazan Dairesi Sistemi",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/242_kazan_dairesi_sistemi.glb",
+  "tags": [
+   "kazan",
+   "ısıtma",
+   "sistem",
+   "makine",
+   "enerji"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "243_sogutma_kulesi.glb",
+  "name": "Soğutma Kulesi",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/243_sogutma_kulesi.glb",
+  "tags": [
+   "soğutma",
+   "kule",
+   "endüstri",
+   "enerji",
+   "sistem"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "244_hvac_klima_santrali.glb",
+  "name": "HVAC Klima Santrali",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/244_hvac_klima_santrali.glb",
+  "tags": [
+   "klima",
+   "hvac",
+   "havalandırma",
+   "santral",
+   "iklimlendirme"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "245_asansor_mekanizmasi.glb",
+  "name": "Asansör Mekanizması",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/245_asansor_mekanizmasi.glb",
+  "tags": [
+   "asansör",
+   "mekanizma",
+   "makine",
+   "kaldırma",
+   "ulaşım"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "246_yuruyen_merdiven_mekanizmasi.glb",
+  "name": "Yürüyen Merdiven Mekanizması",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/246_yuruyen_merdiven_mekanizmasi.glb",
+  "tags": [
+   "yürüyen-merdiven",
+   "mekanizma",
+   "makine",
+   "ulaşım"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "247_kule_vinc.glb",
+  "name": "Kule Vinç",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/247_kule_vinc.glb",
+  "tags": [
+   "kule",
+   "vinç",
+   "inşaat",
+   "makine",
+   "kaldırma"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "248_portal_vinc.glb",
+  "name": "Portal Vinç",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/248_portal_vinc.glb",
+  "tags": [
+   "portal",
+   "vinç",
+   "makine",
+   "endüstri",
+   "kaldırma"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "249_forklift.glb",
+  "name": "Forklift",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/249_forklift.glb",
+  "tags": [
+   "forklift",
+   "makine",
+   "depo",
+   "taşıma",
+   "endüstri"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "24_Damitma_Duzenegi.glb",
+  "name": "Damıtma Düzeneği",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/24_Damitma_Duzenegi.glb",
+  "tags": [
+   "damıtma",
+   "deney",
+   "kimya",
+   "düzenek",
+   "laboratuvar"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "24_Hayvan_vs_Bitki_Hucresi.glb",
+  "name": "Hayvan vs Bitki Hücresi",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/24_Hayvan_vs_Bitki_Hucresi.glb",
+  "tags": [
+   "hücre",
+   "hayvan",
+   "bitki",
+   "biyoloji",
+   "karşılaştırma"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "24_Proje_Ucgeni.glb",
+  "name": "Proje Üçgeni",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/24_Proje_Ucgeni.glb",
+  "tags": [
+   "proje",
+   "üçgen",
+   "yönetim",
+   "analiz",
+   "planlama"
+  ],
+  "category": "analiz-modeli",
+  "tier": "free"
+ },
+ {
+  "fileName": "24_Sunucu_Rafi_Veri_Merkezi.glb",
+  "name": "Sunucu Rafı Veri Merkezi",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/24_Sunucu_Rafi_Veri_Merkezi.glb",
+  "tags": [
+   "sunucu",
+   "veri-merkezi",
+   "bilişim",
+   "raf",
+   "bulut"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "259_gunes_termal_kolektoru.glb",
+  "name": "Güneş Termal Kolektörü",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/259_gunes_termal_kolektoru.glb",
+  "tags": [
+   "güneş",
+   "termal",
+   "kolektör",
+   "enerji",
+   "yenilenebilir"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "25_Basari_Kontrol_Listesi.glb",
+  "name": "Başarı Kontrol Listesi",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/25_Basari_Kontrol_Listesi.glb",
+  "tags": [
+   "başarı",
+   "kontrol",
+   "liste",
+   "hedef",
+   "planlama"
+  ],
+  "category": "sembol",
+  "tier": "free"
+ },
+ {
+  "fileName": "25_Buret_Titrasyon_Duzenegi.glb",
+  "name": "Büret Titrasyon Düzeneği",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/25_Buret_Titrasyon_Duzenegi.glb",
+  "tags": [
+   "büret",
+   "titrasyon",
+   "kimya",
+   "deney",
+   "laboratuvar"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "25_Kemik_Kesiti.glb",
+  "name": "Kemik Kesiti",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/25_Kemik_Kesiti.glb",
+  "tags": [
+   "kemik",
+   "kesit",
+   "anatomi",
+   "iskelet",
+   "sağlık"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "25_Siber_Guvenlik_Kalkani_Kilit.glb",
+  "name": "Siber Güvenlik Kalkanı Kilit",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/25_Siber_Guvenlik_Kalkani_Kilit.glb",
+  "tags": [
+   "siber-güvenlik",
+   "kalkan",
+   "kilit",
+   "güvenlik",
+   "koruma"
+  ],
+  "category": "ikon-3d",
+  "tier": "free"
+ },
+ {
+  "fileName": "260_acik_deniz_ruzgar_turbini.glb",
+  "name": "Açık Deniz Rüzgar Türbini",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/260_acik_deniz_ruzgar_turbini.glb",
+  "tags": [
+   "rüzgar",
+   "türbin",
+   "deniz",
+   "enerji",
+   "yenilenebilir"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "261_dikey_eksenli_ruzgar_turbini.glb",
+  "name": "Dikey Eksenli Rüzgar Türbini",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/261_dikey_eksenli_ruzgar_turbini.glb",
+  "tags": [
+   "rüzgar",
+   "türbin",
+   "dikey",
+   "enerji",
+   "yenilenebilir"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "262_jeotermal_enerji_santrali_kesiti.glb",
+  "name": "Jeotermal Enerji Santrali Kesiti",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/262_jeotermal_enerji_santrali_kesiti.glb",
+  "tags": [
+   "jeotermal",
+   "enerji",
+   "santral",
+   "kesit",
+   "yenilenebilir"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "263_dalga_enerjisi_donusturucu.glb",
+  "name": "Dalga Enerjisi Dönüştürücü",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/263_dalga_enerjisi_donusturucu.glb",
+  "tags": [
+   "dalga",
+   "enerji",
+   "dönüştürücü",
+   "deniz",
+   "yenilenebilir"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "264_gelgit_turbini.glb",
+  "name": "Gelgit Türbini",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/264_gelgit_turbini.glb",
+  "tags": [
+   "gelgit",
+   "türbin",
+   "deniz",
+   "enerji",
+   "yenilenebilir"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "265_biyogaz_tesisi.glb",
+  "name": "Biyogaz Tesisi",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/265_biyogaz_tesisi.glb",
+  "tags": [
+   "biyogaz",
+   "tesis",
+   "enerji",
+   "atık",
+   "yenilenebilir"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "266_biyokutle_enerji_santrali.glb",
+  "name": "Biyokütle Enerji Santrali",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/266_biyokutle_enerji_santrali.glb",
+  "tags": [
+   "biyokütle",
+   "enerji",
+   "santral",
+   "yenilenebilir",
+   "atık"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "267_hidrojen_elektrolizoru.glb",
+  "name": "Hidrojen Elektrolizörü",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/267_hidrojen_elektrolizoru.glb",
+  "tags": [
+   "hidrojen",
+   "elektroliz",
+   "enerji",
+   "yakıt",
+   "yenilenebilir"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "26_Bulut_Bilisim_Ikonu.glb",
+  "name": "Bulut Bilişim İkonu",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/26_Bulut_Bilisim_Ikonu.glb",
+  "tags": [
+   "bulut",
+   "bilişim",
+   "ikon",
+   "teknoloji",
+   "veri"
+  ],
+  "category": "ikon-3d",
+  "tier": "free"
+ },
+ {
+  "fileName": "26_Ilerleme_Gostergesi.glb",
+  "name": "İlerleme Göstergesi",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/26_Ilerleme_Gostergesi.glb",
+  "tags": [
+   "ilerleme",
+   "gösterge",
+   "başarı",
+   "hedef",
+   "analiz"
+  ],
+  "category": "sembol",
+  "tier": "free"
+ },
+ {
+  "fileName": "26_Kas_Lifi_Mikroyapisi.glb",
+  "name": "Kas Lifi Mikroyapısı",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/26_Kas_Lifi_Mikroyapisi.glb",
+  "tags": [
+   "kas",
+   "lif",
+   "mikro",
+   "anatomi",
+   "sağlık"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "26_beher_ve_deney_tupu_seti.glb",
+  "name": "Beher ve Deney Tüpü Seti",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/26_beher_ve_deney_tupu_seti.glb",
+  "tags": [
+   "beher",
+   "deney-tüpü",
+   "laboratuvar",
+   "kimya",
+   "deney"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "27_5G_Anten_Kulesi.glb",
+  "name": "5G Anten Kulesi",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/27_5G_Anten_Kulesi.glb",
+  "tags": [
+   "5g",
+   "anten",
+   "kule",
+   "iletişim",
+   "teknoloji"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "27_Karaciger_Lobul_Yapisi.glb",
+  "name": "Karaciğer Lobul Yapısı",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/27_Karaciger_Lobul_Yapisi.glb",
+  "tags": [
+   "karaciğer",
+   "lobul",
+   "anatomi",
+   "organ",
+   "sağlık"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "27_Yuzde_Halka_Grafigi.glb",
+  "name": "Yüzde Halka Grafiği",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/27_Yuzde_Halka_Grafigi.glb",
+  "tags": [
+   "yüzde",
+   "halka",
+   "grafik",
+   "istatistik",
+   "veri"
+  ],
+  "category": "grafik",
+  "tier": "free"
+ },
+ {
+  "fileName": "27_atom_orbitalleri.glb",
+  "name": "Atom Orbitalleri",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/27_atom_orbitalleri.glb",
+  "tags": [
+   "atom",
+   "orbital",
+   "kimya",
+   "fizik",
+   "bilim"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "28_Dagilim_Grafigi_Noktalari.glb",
+  "name": "Dağılım Grafiği Noktaları",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/28_Dagilim_Grafigi_Noktalari.glb",
+  "tags": [
+   "dağılım",
+   "grafik",
+   "nokta",
+   "istatistik",
+   "veri"
+  ],
+  "category": "grafik",
+  "tier": "free"
+ },
+ {
+  "fileName": "28_Elektrikli_Aracja_Sarj_Istasyonu.glb",
+  "name": "Elektrikli Araç Şarj İstasyonu",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/28_Elektrikli_Aracja_Sarj_Istasyonu.glb",
+  "tags": [
+   "elektrikli-araç",
+   "şarj",
+   "istasyon",
+   "enerji",
+   "ulaşım"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "28_Pankreas_Insulin_Modeli.glb",
+  "name": "Pankreas İnsülin Modeli",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/28_Pankreas_Insulin_Modeli.glb",
+  "tags": [
+   "pankreas",
+   "insülin",
+   "diyabet",
+   "anatomi",
+   "sağlık"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "28_kristal_orgu_yapilari.glb",
+  "name": "Kristal Örgü Yapıları",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/28_kristal_orgu_yapilari.glb",
+  "tags": [
+   "kristal",
+   "örgü",
+   "yapı",
+   "kimya",
+   "malzeme"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "290_tam_insan_anatomisi_govdesi.glb",
+  "name": "Tam İnsan Anatomisi Gövdesi",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/290_tam_insan_anatomisi_govdesi.glb",
+  "tags": [
+   "insan",
+   "anatomi",
+   "gövde",
+   "vücut",
+   "sağlık"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "291_atardamar_toplardamar_kesiti.glb",
+  "name": "Atardamar Toplardamar Kesiti",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/291_atardamar_toplardamar_kesiti.glb",
+  "tags": [
+   "atardamar",
+   "toplardamar",
+   "damar",
+   "kesit",
+   "sağlık"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "292_alyuvar_oksijen_tasima.glb",
+  "name": "Alyuvar Oksijen Taşıma",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/292_alyuvar_oksijen_tasima.glb",
+  "tags": [
+   "alyuvar",
+   "oksijen",
+   "kan",
+   "taşıma",
+   "biyoloji"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "293_kan_pihtilasma_asamalari.glb",
+  "name": "Kan Pıhtılaşma Aşamaları",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/293_kan_pihtilasma_asamalari.glb",
+  "tags": [
+   "kan",
+   "pıhtılaşma",
+   "aşama",
+   "biyoloji",
+   "sağlık"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "294_kalp_pili_ve_kalp_kesiti.glb",
+  "name": "Kalp Pili ve Kalp Kesiti",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/294_kalp_pili_ve_kalp_kesiti.glb",
+  "tags": [
+   "kalp",
+   "kalp-pili",
+   "kesit",
+   "anatomi",
+   "sağlık"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "295_tansiyon_olcum_cihazi.glb",
+  "name": "Tansiyon Ölçüm Cihazı",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/295_tansiyon_olcum_cihazi.glb",
+  "tags": [
+   "tansiyon",
+   "ölçüm",
+   "cihaz",
+   "sağlık",
+   "tıp"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "296_ekg_monitoru.glb",
+  "name": "EKG Monitörü",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/296_ekg_monitoru.glb",
+  "tags": [
+   "ekg",
+   "monitör",
+   "kalp",
+   "sağlık",
+   "tıp"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "297_stetoskop.glb",
+  "name": "Stetoskop",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/297_stetoskop.glb",
+  "tags": [
+   "stetoskop",
+   "tıp",
+   "sağlık",
+   "doktor",
+   "alet"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "298_ultrason_cihazi.glb",
+  "name": "Ultrason Cihazı",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/298_ultrason_cihazi.glb",
+  "tags": [
+   "ultrason",
+   "cihaz",
+   "tıp",
+   "görüntüleme",
+   "sağlık"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "299_mr_goruntuleme_cihazi.glb",
+  "name": "MR Görüntüleme Cihazı",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/299_mr_goruntuleme_cihazi.glb",
+  "tags": [
+   "mr",
+   "görüntüleme",
+   "cihaz",
+   "tıp",
+   "sağlık"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "29_Alan_Grafigi_Katmanlari.glb",
+  "name": "Alan Grafiği Katmanları",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/29_Alan_Grafigi_Katmanlari.glb",
+  "tags": [
+   "alan",
+   "grafik",
+   "katman",
+   "istatistik",
+   "veri"
+  ],
+  "category": "grafik",
+  "tier": "free"
+ },
+ {
+  "fileName": "29_Lityum_Batarya_Hucresi_Kesiti.glb",
+  "name": "Lityum Batarya Hücresi Kesiti",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/29_Lityum_Batarya_Hucresi_Kesiti.glb",
+  "tags": [
+   "lityum",
+   "batarya",
+   "pil",
+   "kesit",
+   "enerji"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "29_Tiroid_Endokrin_Bezler.glb",
+  "name": "Tiroid Endokrin Bezler",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/29_Tiroid_Endokrin_Bezler.glb",
+  "tags": [
+   "tiroid",
+   "endokrin",
+   "bez",
+   "hormon",
+   "anatomi"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "29_ph_metre.glb",
+  "name": "pH Metre",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/29_ph_metre.glb",
+  "tags": [
+   "ph",
+   "metre",
+   "ölçüm",
+   "laboratuvar",
+   "kimya"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "300_bilgisayarli_tomografi_cihazi.glb",
+  "name": "Bilgisayarlı Tomografi Cihazı",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/300_bilgisayarli_tomografi_cihazi.glb",
+  "tags": [
+   "tomografi",
+   "cihaz",
+   "görüntüleme",
+   "tıp",
+   "sağlık"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "301_rontgen_cihazi.glb",
+  "name": "Röntgen Cihazı",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/301_rontgen_cihazi.glb",
+  "tags": [
+   "röntgen",
+   "cihaz",
+   "görüntüleme",
+   "tıp",
+   "sağlık"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "302_ameliyat_masasi.glb",
+  "name": "Ameliyat Masası",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/302_ameliyat_masasi.glb",
+  "tags": [
+   "ameliyat",
+   "masa",
+   "cerrahi",
+   "tıp",
+   "sağlık"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "303_anestezi_cihazi.glb",
+  "name": "Anestezi Cihazı",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/303_anestezi_cihazi.glb",
+  "tags": [
+   "anestezi",
+   "cihaz",
+   "ameliyat",
+   "tıp",
+   "sağlık"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "304_ventilator_cihazi.glb",
+  "name": "Ventilatör Cihazı",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/304_ventilator_cihazi.glb",
+  "tags": [
+   "ventilatör",
+   "solunum",
+   "cihaz",
+   "tıp",
+   "sağlık"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "305_defibrilator.glb",
+  "name": "Defibrilatör",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/305_defibrilator.glb",
+  "tags": [
+   "defibrilatör",
+   "kalp",
+   "cihaz",
+   "tıp",
+   "acil"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "307_asi_sisesi_ve_enjektor.glb",
+  "name": "Aşı Şişesi ve Enjektör",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/307_asi_sisesi_ve_enjektor.glb",
+  "tags": [
+   "aşı",
+   "şişe",
+   "enjektör",
+   "sağlık",
+   "tıp"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "30_Antikor_Antijen_Modeli.glb",
+  "name": "Antikor Antijen Modeli",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/30_Antikor_Antijen_Modeli.glb",
+  "tags": [
+   "antikor",
+   "antijen",
+   "bağışıklık",
+   "biyoloji",
+   "sağlık"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "30_QR_Kod_Kupu.glb",
+  "name": "QR Kod Küpü",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/30_QR_Kod_Kupu.glb",
+  "tags": [
+   "qr",
+   "kod",
+   "küp",
+   "teknoloji",
+   "ikon"
+  ],
+  "category": "ikon-3d",
+  "tier": "free"
+ },
+ {
+  "fileName": "30_Radar_Grafigi.glb",
+  "name": "Radar Grafiği",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/30_Radar_Grafigi.glb",
+  "tags": [
+   "radar",
+   "grafik",
+   "analiz",
+   "veri",
+   "istatistik"
+  ],
+  "category": "grafik",
+  "tier": "free"
+ },
+ {
+  "fileName": "30_gaz_siringasi_duzenegi.glb",
+  "name": "Gaz Şırıngası Düzeneği",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/30_gaz_siringasi_duzenegi.glb",
+  "tags": [
+   "gaz",
+   "şırınga",
+   "deney",
+   "kimya",
+   "laboratuvar"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "31_Isi_Haritasi_Izgarasi.glb",
+  "name": "Isı Haritası Izgarası",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/31_Isi_Haritasi_Izgarasi.glb",
+  "tags": [
+   "ısı",
+   "harita",
+   "ızgara",
+   "veri",
+   "istatistik"
+  ],
+  "category": "grafik",
+  "tier": "free"
+ },
+ {
+  "fileName": "31_Protein_Sentezi_Ribozom.glb",
+  "name": "Protein Sentezi Ribozom",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/31_Protein_Sentezi_Ribozom.glb",
+  "tags": [
+   "protein",
+   "sentez",
+   "ribozom",
+   "biyoloji",
+   "hücre"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "31_VR_Basligi_Metaverse.glb",
+  "name": "VR Başlığı Metaverse",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/31_VR_Basligi_Metaverse.glb",
+  "tags": [
+   "vr",
+   "başlık",
+   "metaverse",
+   "teknoloji",
+   "sanal"
+  ],
+  "category": "ikon-3d",
+  "tier": "free"
+ },
+ {
+  "fileName": "31_newton_besigi.glb",
+  "name": "Newton Beşiği",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/31_newton_besigi.glb",
+  "tags": [
+   "newton",
+   "beşik",
+   "fizik",
+   "momentum",
+   "deney"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "320_mide_anatomisi.glb",
+  "name": "Mide Anatomisi",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/320_mide_anatomisi.glb",
+  "tags": [
+   "mide",
+   "anatomi",
+   "organ",
+   "sindirim",
+   "sağlık"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "321_ince_ve_kalin_bagirsak_kesiti.glb",
+  "name": "İnce ve Kalın Bağırsak Kesiti",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/321_ince_ve_kalin_bagirsak_kesiti.glb",
+  "tags": [
+   "bağırsak",
+   "ince",
+   "kalın",
+   "sindirim",
+   "kesit"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "322_safra_kesesi_anatomisi.glb",
+  "name": "Safra Kesesi Anatomisi",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/322_safra_kesesi_anatomisi.glb",
+  "tags": [
+   "safra",
+   "kese",
+   "anatomi",
+   "sindirim",
+   "organ"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "323_dalak_anatomisi.glb",
+  "name": "Dalak Anatomisi",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/323_dalak_anatomisi.glb",
+  "tags": [
+   "dalak",
+   "anatomi",
+   "organ",
+   "bağışıklık",
+   "sağlık"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "324_ureme_sistemi_anatomisi.glb",
+  "name": "Üreme Sistemi Anatomisi",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/324_ureme_sistemi_anatomisi.glb",
+  "tags": [
+   "üreme",
+   "sistem",
+   "anatomi",
+   "organ",
+   "sağlık"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "325_hamilelik_trimester_asamalari.glb",
+  "name": "Hamilelik Trimester Aşamaları",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/325_hamilelik_trimester_asamalari.glb",
+  "tags": [
+   "hamilelik",
+   "trimester",
+   "aşama",
+   "gebelik",
+   "sağlık"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "326_insan_embriyosu_kesiti.glb",
+  "name": "İnsan Embriyosu Kesiti",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/326_insan_embriyosu_kesiti.glb",
+  "tags": [
+   "embriyo",
+   "insan",
+   "kesit",
+   "gelişim",
+   "biyoloji"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "327_bagisiklik_hucreleri_seti.glb",
+  "name": "Bağışıklık Hücreleri Seti",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/327_bagisiklik_hucreleri_seti.glb",
+  "tags": [
+   "bağışıklık",
+   "hücre",
+   "set",
+   "biyoloji",
+   "sağlık"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "328_insulin_kalemi.glb",
+  "name": "İnsülin Kalemi",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/328_insulin_kalemi.glb",
+  "tags": [
+   "insülin",
+   "kalem",
+   "diyabet",
+   "sağlık",
+   "tıp"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "32_Elektrik_Jeneratoru_Kesiti.glb",
+  "name": "Elektrik Jeneratörü Kesiti",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/32_Elektrik_Jeneratoru_Kesiti.glb",
+  "tags": [
+   "jeneratör",
+   "elektrik",
+   "kesit",
+   "enerji",
+   "makine"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "32_Sankey_Akis_Diyagrami.glb",
+  "name": "Sankey Akış Diyagramı",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/32_Sankey_Akis_Diyagrami.glb",
+  "tags": [
+   "sankey",
+   "akış",
+   "diyagram",
+   "veri",
+   "enerji"
+  ],
+  "category": "diyagram",
+  "tier": "free"
+ },
+ {
+  "fileName": "33_Agac_Haritasi_Bloklari.glb",
+  "name": "Ağaç Haritası Blokları",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/33_Agac_Haritasi_Bloklari.glb",
+  "tags": [
+   "ağaç",
+   "harita",
+   "blok",
+   "diyagram",
+   "hiyerarşi"
+  ],
+  "category": "diyagram",
+  "tier": "free"
+ },
+ {
+  "fileName": "33_Transformator_Kesiti.glb",
+  "name": "Transformatör Kesiti",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/33_Transformator_Kesiti.glb",
+  "tags": [
+   "transformatör",
+   "trafo",
+   "elektrik",
+   "kesit",
+   "enerji"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "345_arke_hucresi.glb",
+  "name": "Arke Hücresi",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/345_arke_hucresi.glb",
+  "tags": [
+   "arke",
+   "hücre",
+   "mikroorganizma",
+   "biyoloji",
+   "bilim"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "346_bakteriyofaj.glb",
+  "name": "Bakteriyofaj",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/346_bakteriyofaj.glb",
+  "tags": [
+   "bakteriyofaj",
+   "virüs",
+   "bakteri",
+   "biyoloji",
+   "mikro"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "347_mantar_spor_kesiti.glb",
+  "name": "Mantar Spor Kesiti",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/347_mantar_spor_kesiti.glb",
+  "tags": [
+   "mantar",
+   "spor",
+   "kesit",
+   "biyoloji",
+   "mikro"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "348_alg_hucresi.glb",
+  "name": "Alg Hücresi",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/348_alg_hucresi.glb",
+  "tags": [
+   "alg",
+   "hücre",
+   "yosun",
+   "biyoloji",
+   "bitki"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "349_protozoa_hucresi.glb",
+  "name": "Protozoa Hücresi",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/349_protozoa_hucresi.glb",
+  "tags": [
+   "protozoa",
+   "hücre",
+   "mikroorganizma",
+   "biyoloji",
+   "tek-hücreli"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "34_Basit_Elektrik_Devresi.glb",
+  "name": "Basit Elektrik Devresi",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/34_Basit_Elektrik_Devresi.glb",
+  "tags": [
+   "elektrik",
+   "devre",
+   "basit",
+   "fizik",
+   "eğitim"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "34_Kan_Grubu_Semasi.glb",
+  "name": "Kan Grubu Şeması",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/34_Kan_Grubu_Semasi.glb",
+  "tags": [
+   "kan",
+   "grup",
+   "şema",
+   "sağlık",
+   "biyoloji"
+  ],
+  "category": "diyagram",
+  "tier": "free"
+ },
+ {
+  "fileName": "34_Piramit_Diyagrami.glb",
+  "name": "Piramit Diyagramı",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/34_Piramit_Diyagrami.glb",
+  "tags": [
+   "piramit",
+   "diyagram",
+   "hiyerarşi",
+   "analiz",
+   "veri"
+  ],
+  "category": "diyagram",
+  "tier": "free"
+ },
+ {
+  "fileName": "350_amip_modeli.glb",
+  "name": "Amip Modeli",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/350_amip_modeli.glb",
+  "tags": [
+   "amip",
+   "mikroorganizma",
+   "tek-hücreli",
+   "biyoloji",
+   "model"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "351_parazit_yasam_dongusu.glb",
+  "name": "Parazit Yaşam Döngüsü",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/351_parazit_yasam_dongusu.glb",
+  "tags": [
+   "parazit",
+   "yaşam-döngüsü",
+   "biyoloji",
+   "döngü",
+   "sağlık"
+  ],
+  "category": "diyagram",
+  "tier": "free"
+ },
+ {
+  "fileName": "352_kelebek_yasam_dongusu.glb",
+  "name": "Kelebek Yaşam Döngüsü",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/352_kelebek_yasam_dongusu.glb",
+  "tags": [
+   "kelebek",
+   "yaşam-döngüsü",
+   "döngü",
+   "biyoloji",
+   "doğa"
+  ],
+  "category": "diyagram",
+  "tier": "free"
+ },
+ {
+  "fileName": "353_kurbaga_yasam_dongusu.glb",
+  "name": "Kurbağa Yaşam Döngüsü",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/353_kurbaga_yasam_dongusu.glb",
+  "tags": [
+   "kurbağa",
+   "yaşam-döngüsü",
+   "döngü",
+   "biyoloji",
+   "doğa"
+  ],
+  "category": "diyagram",
+  "tier": "free"
+ },
+ {
+  "fileName": "354_tohum_cimlenme_asamalari.glb",
+  "name": "Tohum Çimlenme Aşamaları",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/354_tohum_cimlenme_asamalari.glb",
+  "tags": [
+   "tohum",
+   "çimlenme",
+   "aşama",
+   "bitki",
+   "biyoloji"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "355_bitki_govdesi_enine_kesiti.glb",
+  "name": "Bitki Gövdesi Enine Kesiti",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/355_bitki_govdesi_enine_kesiti.glb",
+  "tags": [
+   "bitki",
+   "gövde",
+   "kesit",
+   "biyoloji",
+   "botanik"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "356_agac_govdesi_yas_halkalari.glb",
+  "name": "Ağaç Gövdesi Yaş Halkaları",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/356_agac_govdesi_yas_halkalari.glb",
+  "tags": [
+   "ağaç",
+   "gövde",
+   "yaş-halkası",
+   "doğa",
+   "biyoloji"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "357_stoma_ve_bekci_hucreleri.glb",
+  "name": "Stoma ve Bekçi Hücreleri",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/357_stoma_ve_bekci_hucreleri.glb",
+  "tags": [
+   "stoma",
+   "bekçi",
+   "hücre",
+   "bitki",
+   "biyoloji"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "358_fotosentez_elektron_tasima_zinciri.glb",
+  "name": "Fotosentez Elektron Taşıma Zinciri",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/358_fotosentez_elektron_tasima_zinciri.glb",
+  "tags": [
+   "fotosentez",
+   "elektron",
+   "taşıma",
+   "klorofil",
+   "biyoloji"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "359_besin_agi_piramidi.glb",
+  "name": "Besin Ağı Piramidi",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/359_besin_agi_piramidi.glb",
+  "tags": [
+   "besin",
+   "ağ",
+   "piramit",
+   "ekosistem",
+   "doğa"
+  ],
+  "category": "diyagram",
+  "tier": "free"
+ },
+ {
+  "fileName": "35_Refleks_Yayi.glb",
+  "name": "Refleks Yayı",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/35_Refleks_Yayi.glb",
+  "tags": [
+   "refleks",
+   "yay",
+   "sinir",
+   "biyoloji",
+   "anatomi"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "35_Venn_Diyagrami_Halkalari.glb",
+  "name": "Venn Diyagramı Halkaları",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/35_Venn_Diyagrami_Halkalari.glb",
+  "tags": [
+   "venn",
+   "diyagram",
+   "halka",
+   "küme",
+   "analiz"
+  ],
+  "category": "diyagram",
+  "tier": "free"
+ },
+ {
+  "fileName": "35_paralel_seri_devre_karsilastirmasi.glb",
+  "name": "Paralel Seri Devre Karşılaştırması",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/35_paralel_seri_devre_karsilastirmasi.glb",
+  "tags": [
+   "paralel",
+   "seri",
+   "devre",
+   "elektrik",
+   "fizik"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "360_karbon_dongusu_ekosistemi.glb",
+  "name": "Karbon Döngüsü Ekosistemi",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/360_karbon_dongusu_ekosistemi.glb",
+  "tags": [
+   "karbon",
+   "döngü",
+   "ekosistem",
+   "doğa",
+   "biyoloji"
+  ],
+  "category": "diyagram",
+  "tier": "free"
+ },
+ {
+  "fileName": "361_azot_dongusu_ekosistemi.glb",
+  "name": "Azot Döngüsü Ekosistemi",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/361_azot_dongusu_ekosistemi.glb",
+  "tags": [
+   "azot",
+   "döngü",
+   "ekosistem",
+   "doğa",
+   "biyoloji"
+  ],
+  "category": "diyagram",
+  "tier": "free"
+ },
+ {
+  "fileName": "362_fosfor_dongusu_ekosistemi.glb",
+  "name": "Fosfor Döngüsü Ekosistemi",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/362_fosfor_dongusu_ekosistemi.glb",
+  "tags": [
+   "fosfor",
+   "döngü",
+   "ekosistem",
+   "doğa",
+   "biyoloji"
+  ],
+  "category": "diyagram",
+  "tier": "free"
+ },
+ {
+  "fileName": "363_orman_ekosistemi_dioramasi.glb",
+  "name": "Orman Ekosistemi Dioraması",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/363_orman_ekosistemi_dioramasi.glb",
+  "tags": [
+   "orman",
+   "ekosistem",
+   "diorama",
+   "ağaç",
+   "doğa"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "364_sulak_alan_ekosistemi.glb",
+  "name": "Sulak Alan Ekosistemi",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/364_sulak_alan_ekosistemi.glb",
+  "tags": [
+   "sulak",
+   "ekosistem",
+   "doğa",
+   "su",
+   "biyoloji"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "365_mercan_resifi_ekosistemi.glb",
+  "name": "Mercan Resifi Ekosistemi",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/365_mercan_resifi_ekosistemi.glb",
+  "tags": [
+   "mercan",
+   "resif",
+   "ekosistem",
+   "deniz",
+   "doğa"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "36_Balik_Kilcigi_Neden_Sonuc.glb",
+  "name": "Balık Kılçığı Neden Sonuç",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/36_Balik_Kilcigi_Neden_Sonuc.glb",
+  "tags": [
+   "balık-kılçığı",
+   "neden-sonuç",
+   "analiz",
+   "diyagram",
+   "sorun"
+  ],
+  "category": "diyagram",
+  "tier": "free"
+ },
+ {
+  "fileName": "36_Beyin_Yarim_Kureleri.glb",
+  "name": "Beyin Yarım Küreleri",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/36_Beyin_Yarim_Kureleri.glb",
+  "tags": [
+   "beyin",
+   "yarım-küre",
+   "sinir",
+   "anatomi",
+   "sağlık"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "36_hidrolik_fren_sistemi.glb",
+  "name": "Hidrolik Fren Sistemi",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/36_hidrolik_fren_sistemi.glb",
+  "tags": [
+   "hidrolik",
+   "fren",
+   "sistem",
+   "makine",
+   "araç"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "372_molekuler_model_seti.glb",
+  "name": "Moleküler Model Seti",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/372_molekuler_model_seti.glb",
+  "tags": [
+   "molekül",
+   "model",
+   "kimya",
+   "set",
+   "atom"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "373_karbon_atomu_allotroplari.glb",
+  "name": "Karbon Atomu Allotropları",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/373_karbon_atomu_allotroplari.glb",
+  "tags": [
+   "karbon",
+   "atom",
+   "allotrop",
+   "kimya",
+   "grafit"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "374_grafen_kafes_yapisi.glb",
+  "name": "Grafen Kafes Yapısı",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/374_grafen_kafes_yapisi.glb",
+  "tags": [
+   "grafen",
+   "kafes",
+   "yapı",
+   "malzeme",
+   "kimya"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "375_elmas_kristal_kafesi.glb",
+  "name": "Elmas Kristal Kafesi",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/375_elmas_kristal_kafesi.glb",
+  "tags": [
+   "elmas",
+   "kristal",
+   "kafes",
+   "kimya",
+   "malzeme"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "376_tuz_kristal_kafesi.glb",
+  "name": "Tuz Kristal Kafesi",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/376_tuz_kristal_kafesi.glb",
+  "tags": [
+   "tuz",
+   "kristal",
+   "kafes",
+   "kimya",
+   "iyon"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "377_polimer_zinciri_modeli.glb",
+  "name": "Polimer Zinciri Modeli",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/377_polimer_zinciri_modeli.glb",
+  "tags": [
+   "polimer",
+   "zincir",
+   "model",
+   "kimya",
+   "malzeme"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "378_dna_jel_elektroforez_duzenegi.glb",
+  "name": "DNA Jel Elektroforez Düzeneği",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/378_dna_jel_elektroforez_duzenegi.glb",
+  "tags": [
+   "dna",
+   "jel",
+   "elektroforez",
+   "genetik",
+   "laboratuvar"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "379_kromatografi_kolonu.glb",
+  "name": "Kromatografi Kolonu",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/379_kromatografi_kolonu.glb",
+  "tags": [
+   "kromatografi",
+   "kolon",
+   "kimya",
+   "laboratuvar",
+   "ayırma"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "37_Musteri_Yolculugu_Yolu.glb",
+  "name": "Müşteri Yolculuğu Yolu",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/37_Musteri_Yolculugu_Yolu.glb",
+  "tags": [
+   "müşteri",
+   "yolculuk",
+   "iş",
+   "pazarlama",
+   "analiz"
+  ],
+  "category": "analiz-modeli",
+  "tier": "free"
+ },
+ {
+  "fileName": "37_Sindirim_Enzimleri_Modeli.glb",
+  "name": "Sindirim Enzimleri Modeli",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/37_Sindirim_Enzimleri_Modeli.glb",
+  "tags": [
+   "sindirim",
+   "enzim",
+   "model",
+   "biyoloji",
+   "sağlık"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "37_otomobil_suspansiyon_sistemi.glb",
+  "name": "Otomobil Süspansiyon Sistemi",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/37_otomobil_suspansiyon_sistemi.glb",
+  "tags": [
+   "otomobil",
+   "süspansiyon",
+   "sistem",
+   "araç",
+   "makine"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "380_ince_tabaka_kromatografi_plakasi.glb",
+  "name": "İnce Tabaka Kromatografi Plakası",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/380_ince_tabaka_kromatografi_plakasi.glb",
+  "tags": [
+   "kromatografi",
+   "plaka",
+   "kimya",
+   "laboratuvar",
+   "ayırma"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "38_Alveol_Gaz_Degisimi.glb",
+  "name": "Alveol Gaz Değişimi",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/38_Alveol_Gaz_Degisimi.glb",
+  "tags": [
+   "alveol",
+   "gaz",
+   "değişim",
+   "solunum",
+   "akciğer"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "38_Disk_Fren_Mekanizmasi.glb",
+  "name": "Disk Fren Mekanizması",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/38_Disk_Fren_Mekanizmasi.glb",
+  "tags": [
+   "disk",
+   "fren",
+   "mekanizma",
+   "araç",
+   "makine"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "38_Donusum_Hunisi_Asamalari.glb",
+  "name": "Dönüşüm Hunisi Aşamaları",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/38_Donusum_Hunisi_Asamalari.glb",
+  "tags": [
+   "dönüşüm",
+   "huni",
+   "aşama",
+   "diyagram",
+   "analiz"
+  ],
+  "category": "diyagram",
+  "tier": "free"
+ },
+ {
+  "fileName": "39_Buhar_Makinesi.glb",
+  "name": "Buhar Makinesi",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/39_Buhar_Makinesi.glb",
+  "tags": [
+   "buhar",
+   "makine",
+   "tarih",
+   "enerji",
+   "motor"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "39_ergonomik_ofis_koltugu.glb",
+  "name": "Ergonomik Ofis Koltuğu",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/39_ergonomik_ofis_koltugu.glb",
+  "tags": [
+   "ofis",
+   "koltuk",
+   "ergonomi",
+   "mobilya",
+   "iş"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "40_Turbin_Kesiti.glb",
+  "name": "Türbin Kesiti",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/40_Turbin_Kesiti.glb",
+  "tags": [
+   "türbin",
+   "kesit",
+   "enerji",
+   "makine",
+   "elektrik"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "40_ayakta_calisma_masasi.glb",
+  "name": "Ayakta Çalışma Masası",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/40_ayakta_calisma_masasi.glb",
+  "tags": [
+   "masa",
+   "ofis",
+   "ergonomi",
+   "çalışma",
+   "mobilya"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "41_Doppler_Etkisi_Dalga_Modeli.glb",
+  "name": "Doppler Etkisi Dalga Modeli",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/41_Doppler_Etkisi_Dalga_Modeli.glb",
+  "tags": [
+   "doppler",
+   "dalga",
+   "fizik",
+   "ses",
+   "model"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "41_nukleer_reaktor_kesiti.glb",
+  "name": "Nükleer Reaktör Kesiti",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/41_nukleer_reaktor_kesiti.glb",
+  "tags": [
+   "nükleer",
+   "reaktör",
+   "kesit",
+   "enerji",
+   "santral"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "41_toplanti_odasi_ekrani.glb",
+  "name": "Toplantı Odası Ekranı",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/41_toplanti_odasi_ekrani.glb",
+  "tags": [
+   "toplantı",
+   "ekran",
+   "ofis",
+   "sunum",
+   "oda"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "42_Elektromanyetik_Spektrum_Seridi.glb",
+  "name": "Elektromanyetik Spektrum Şeridi",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/42_Elektromanyetik_Spektrum_Seridi.glb",
+  "tags": [
+   "elektromanyetik",
+   "spektrum",
+   "dalga",
+   "fizik",
+   "radyasyon"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "42_gunes_paneli_sistemi.glb",
+  "name": "Güneş Paneli Sistemi",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/42_gunes_paneli_sistemi.glb",
+  "tags": [
+   "güneş",
+   "panel",
+   "sistem",
+   "enerji",
+   "yenilenebilir"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "42_video_konferans_kamerasi.glb",
+  "name": "Video Konferans Kamerası",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/42_video_konferans_kamerasi.glb",
+  "tags": [
+   "kamera",
+   "konferans",
+   "video",
+   "iletişim",
+   "teknoloji"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "43_Ohm_Kanunu_Duzeneği.glb",
+  "name": "Ohm Kanunu Düzeneği",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/43_Ohm_Kanunu_Duzeneği.glb",
+  "tags": [
+   "ohm",
+   "kanun",
+   "elektrik",
+   "devre",
+   "fizik"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "43_masa_mikrofonu.glb",
+  "name": "Masa Mikrofonu",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/43_masa_mikrofonu.glb",
+  "tags": [
+   "mikrofon",
+   "masa",
+   "sunum",
+   "ses",
+   "toplantı"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "43_ruzgar_turbini.glb",
+  "name": "Rüzgar Türbini",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/43_ruzgar_turbini.glb",
+  "tags": [
+   "rüzgar",
+   "türbin",
+   "enerji",
+   "yenilenebilir",
+   "elektrik"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "44_Tek_Element_Karti.glb",
+  "name": "Tek Element Kartı",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/44_Tek_Element_Karti.glb",
+  "tags": [
+   "element",
+   "kart",
+   "kimya",
+   "periyodik",
+   "eğitim"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "44_baraj_hidroelektrik_santrali.glb",
+  "name": "Baraj Hidroelektrik Santrali",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/44_baraj_hidroelektrik_santrali.glb",
+  "tags": [
+   "baraj",
+   "hidroelektrik",
+   "santral",
+   "enerji",
+   "su"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "44_kablosuz_sunum_kumandasi.glb",
+  "name": "Kablosuz Sunum Kumandası",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/44_kablosuz_sunum_kumandasi.glb",
+  "tags": [
+   "sunum",
+   "kumanda",
+   "kablosuz",
+   "teknoloji",
+   "aksesuar"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "45_Isik_Tayfi_Gokkusagi.glb",
+  "name": "Işık Tayfı Gökkuşağı",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/45_Isik_Tayfi_Gokkusagi.glb",
+  "tags": [
+   "ışık",
+   "tayf",
+   "gökkuşağı",
+   "fizik",
+   "renk"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "45_kamera_objektif_mekanizmasi.glb",
+  "name": "Kamera Objektif Mekanizması",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/45_kamera_objektif_mekanizmasi.glb",
+  "tags": [
+   "kamera",
+   "objektif",
+   "mekanizma",
+   "lens",
+   "fotoğraf"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "45_lazer_isaretci.glb",
+  "name": "Lazer İşaretçi",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/45_lazer_isaretci.glb",
+  "tags": [
+   "lazer",
+   "işaretçi",
+   "sunum",
+   "teknoloji",
+   "aksesuar"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "46_Ses_Dalgasi_Yayilimi.glb",
+  "name": "Ses Dalgası Yayılımı",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/46_Ses_Dalgasi_Yayilimi.glb",
+  "tags": [
+   "ses",
+   "dalga",
+   "yayılım",
+   "fizik",
+   "akustik"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "46_dag_olusumu_kesiti.glb",
+  "name": "Dağ Oluşumu Kesiti",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/46_dag_olusumu_kesiti.glb",
+  "tags": [
+   "dağ",
+   "oluşum",
+   "kesit",
+   "jeoloji",
+   "doğa"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "46_projeksiyon_cihazi.glb",
+  "name": "Projeksiyon Cihazı",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/46_projeksiyon_cihazi.glb",
+  "tags": [
+   "projeksiyon",
+   "cihaz",
+   "sunum",
+   "teknoloji",
+   "görüntü"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "475_sumer_ziggurati.glb",
+  "name": "Sümer Zigguratı",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/475_sumer_ziggurati.glb",
+  "tags": [
+   "sümer",
+   "ziggurat",
+   "tarih",
+   "mimari",
+   "uygarlık"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "476_babil_istar_kapisi.glb",
+  "name": "Babil İştar Kapısı",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/476_babil_istar_kapisi.glb",
+  "tags": [
+   "babil",
+   "iştar",
+   "kapı",
+   "tarih",
+   "uygarlık"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "477_pers_persepolis_sutunlari.glb",
+  "name": "Pers Persepolis Sütunları",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/477_pers_persepolis_sutunlari.glb",
+  "tags": [
+   "pers",
+   "persepolis",
+   "sütun",
+   "tarih",
+   "mimari"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "478_hitit_savas_arabasi.glb",
+  "name": "Hitit Savaş Arabası",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/478_hitit_savas_arabasi.glb",
+  "tags": [
+   "hitit",
+   "savaş",
+   "araba",
+   "tarih",
+   "uygarlık"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "479_truva_ati.glb",
+  "name": "Truva Atı",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/479_truva_ati.glb",
+  "tags": [
+   "truva",
+   "at",
+   "tarih",
+   "efsane",
+   "mitoloji"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "47_Basit_Harmonik_Salinim_Sarkac.glb",
+  "name": "Basit Harmonik Salınım Sarkaç",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/47_Basit_Harmonik_Salinim_Sarkac.glb",
+  "tags": [
+   "sarkaç",
+   "salınım",
+   "harmonik",
+   "fizik",
+   "deney"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "47_Kivrim_ve_Kirik_Dag_Modeli.glb",
+  "name": "Kıvrım ve Kırık Dağ Modeli",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/47_Kivrim_ve_Kirik_Dag_Modeli.glb",
+  "tags": [
+   "kıvrım",
+   "kırık",
+   "dağ",
+   "jeoloji",
+   "model"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "47_projeksiyon_perdesi.glb",
+  "name": "Projeksiyon Perdesi",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/47_projeksiyon_perdesi.glb",
+  "tags": [
+   "projeksiyon",
+   "perde",
+   "sunum",
+   "ekran",
+   "toplantı"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "480_antik_yunan_amforasi.glb",
+  "name": "Antik Yunan Amforası",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/480_antik_yunan_amforasi.glb",
+  "tags": [
+   "amfora",
+   "antik",
+   "yunan",
+   "tarih",
+   "arkeoloji"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "481_antik_tiyatro_kesiti.glb",
+  "name": "Antik Tiyatro Kesiti",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/481_antik_tiyatro_kesiti.glb",
+  "tags": [
+   "tiyatro",
+   "antik",
+   "kesit",
+   "tarih",
+   "mimari"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "482_roma_forumu.glb",
+  "name": "Roma Forumu",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/482_roma_forumu.glb",
+  "tags": [
+   "roma",
+   "forum",
+   "tarih",
+   "mimari",
+   "uygarlık"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "483_roma_lejyoner_migferi.glb",
+  "name": "Roma Lejyoner Miğferi",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/483_roma_lejyoner_migferi.glb",
+  "tags": [
+   "roma",
+   "lejyoner",
+   "miğfer",
+   "tarih",
+   "savaş"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "484_roma_gladyator_ekipmani.glb",
+  "name": "Roma Gladyatör Ekipmanı",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/484_roma_gladyator_ekipmani.glb",
+  "tags": [
+   "gladyatör",
+   "roma",
+   "ekipman",
+   "tarih",
+   "savaş"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "485_bizans_mozaik_paneli.glb",
+  "name": "Bizans Mozaik Paneli",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/485_bizans_mozaik_paneli.glb",
+  "tags": [
+   "bizans",
+   "mozaik",
+   "panel",
+   "tarih",
+   "sanat"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "486_ayasofya_tarihsel_kesiti.glb",
+  "name": "Ayasofya Tarihsel Kesiti",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/486_ayasofya_tarihsel_kesiti.glb",
+  "tags": [
+   "ayasofya",
+   "kesit",
+   "tarih",
+   "mimari",
+   "ibadethane"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "487_orta_cag_mancinik.glb",
+  "name": "Orta Çağ Mancınık",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/487_orta_cag_mancinik.glb",
+  "tags": [
+   "mancınık",
+   "orta-çağ",
+   "savaş",
+   "tarih",
+   "makine"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "488_orta_cag_el_yazmasi_kitabi.glb",
+  "name": "Orta Çağ El Yazması Kitabı",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/488_orta_cag_el_yazmasi_kitabi.glb",
+  "tags": [
+   "el-yazması",
+   "kitap",
+   "orta-çağ",
+   "tarih",
+   "kültür"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "489_gotik_katedral_kesiti.glb",
+  "name": "Gotik Katedral Kesiti",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/489_gotik_katedral_kesiti.glb",
+  "tags": [
+   "gotik",
+   "katedral",
+   "kesit",
+   "mimari",
+   "tarih"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "48_Toprak_Katmanlari_Kesiti.glb",
+  "name": "Toprak Katmanları Kesiti",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/48_Toprak_Katmanlari_Kesiti.glb",
+  "tags": [
+   "toprak",
+   "katman",
+   "kesit",
+   "jeoloji",
+   "doğa"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "48_Yercekimi_Kuyusu.glb",
+  "name": "Yerçekimi Kuyusu",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/48_Yercekimi_Kuyusu.glb",
+  "tags": [
+   "yerçekimi",
+   "kuyu",
+   "fizik",
+   "uzay",
+   "bilim"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "48_flipchart_panosu.glb",
+  "name": "Flipchart Panosu",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/48_flipchart_panosu.glb",
+  "tags": [
+   "flipchart",
+   "pano",
+   "sunum",
+   "ofis",
+   "eğitim"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "490_ronesans_ressam_atolyesi.glb",
+  "name": "Rönesans Ressam Atölyesi",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/490_ronesans_ressam_atolyesi.glb",
+  "tags": [
+   "rönesans",
+   "ressam",
+   "atölye",
+   "sanat",
+   "tarih"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "491_leonardo_ucus_makinesi.glb",
+  "name": "Leonardo Uçuş Makinesi",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/491_leonardo_ucus_makinesi.glb",
+  "tags": [
+   "leonardo",
+   "uçuş",
+   "makine",
+   "icat",
+   "tarih"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "493_osmanli_topu.glb",
+  "name": "Osmanlı Topu",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/493_osmanli_topu.glb",
+  "tags": [
+   "osmanlı",
+   "top",
+   "savaş",
+   "tarih",
+   "silah"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "494_osmanli_tugrasi_kabartmasi.glb",
+  "name": "Osmanlı Tuğrası Kabartması",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/494_osmanli_tugrasi_kabartmasi.glb",
+  "tags": [
+   "osmanlı",
+   "tuğra",
+   "kabartma",
+   "tarih",
+   "sembol"
+  ],
+  "category": "sembol",
+  "tier": "free"
+ },
+ {
+  "fileName": "495_yeniceri_migferi.glb",
+  "name": "Yeniçeri Miğferi",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/495_yeniceri_migferi.glb",
+  "tags": [
+   "yeniçeri",
+   "miğfer",
+   "osmanlı",
+   "tarih",
+   "savaş"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "496_selcuklu_cift_basli_kartal_kabartmasi.glb",
+  "name": "Selçuklu Çift Başlı Kartal Kabartması",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/496_selcuklu_cift_basli_kartal_kabartmasi.glb",
+  "tags": [
+   "selçuklu",
+   "kartal",
+   "kabartma",
+   "tarih",
+   "sembol"
+  ],
+  "category": "sembol",
+  "tier": "free"
+ },
+ {
+  "fileName": "497_ipek_yolu_kervani.glb",
+  "name": "İpek Yolu Kervanı",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/497_ipek_yolu_kervani.glb",
+  "tags": [
+   "ipek-yolu",
+   "kervan",
+   "tarih",
+   "ticaret",
+   "ulaşım"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "498_cografi_kesifler_dunya_haritasi.glb",
+  "name": "Coğrafi Keşifler Dünya Haritası",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/498_cografi_kesifler_dunya_haritasi.glb",
+  "tags": [
+   "coğrafi-keşif",
+   "harita",
+   "dünya",
+   "tarih",
+   "keşif"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "499_pusula_ve_portolan_haritasi.glb",
+  "name": "Pusula ve Portolan Haritası",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/499_pusula_ve_portolan_haritasi.glb",
+  "tags": [
+   "pusula",
+   "portolan",
+   "harita",
+   "denizcilik",
+   "keşif"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "49_Erozyon_Cesitleri.glb",
+  "name": "Erozyon Çeşitleri",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/49_Erozyon_Cesitleri.glb",
+  "tags": [
+   "erozyon",
+   "çeşit",
+   "toprak",
+   "doğa",
+   "çevre"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "49_Kaldirac_Turleri_Seti.glb",
+  "name": "Kaldıraç Türleri Seti",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/49_Kaldirac_Turleri_Seti.glb",
+  "tags": [
+   "kaldıraç",
+   "tür",
+   "set",
+   "fizik",
+   "makine"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "49_yapiskan_not_panosu.glb",
+  "name": "Yapışkan Not Panosu",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/49_yapiskan_not_panosu.glb",
+  "tags": [
+   "yapışkan-not",
+   "pano",
+   "planlama",
+   "ofis",
+   "organizasyon"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "500_sanayi_devrimi_fabrikasi.glb",
+  "name": "Sanayi Devrimi Fabrikası",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/500_sanayi_devrimi_fabrikasi.glb",
+  "tags": [
+   "sanayi-devrimi",
+   "fabrika",
+   "tarih",
+   "endüstri",
+   "makine"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "501_telgraf_cihazi.glb",
+  "name": "Telgraf Cihazı",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/501_telgraf_cihazi.glb",
+  "tags": [
+   "telgraf",
+   "cihaz",
+   "iletişim",
+   "tarih",
+   "icat"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "50_Egik_Duzlem_Deney_Duzeneği.glb",
+  "name": "Eğik Düzlem Deney Düzeneği",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/50_Egik_Duzlem_Deney_Duzeneği.glb",
+  "tags": [
+   "eğik-düzlem",
+   "deney",
+   "düzenek",
+   "fizik",
+   "basit-makine"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "50_Okyanus_Akintilari_Kuresi.glb",
+  "name": "Okyanus Akıntıları Küresi",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/50_Okyanus_Akintilari_Kuresi.glb",
+  "tags": [
+   "okyanus",
+   "akıntı",
+   "küre",
+   "coğrafya",
+   "su"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "50_dosya_klasorleri_seti.glb",
+  "name": "Dosya Klasörleri Seti",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/50_dosya_klasorleri_seti.glb",
+  "tags": [
+   "dosya",
+   "klasör",
+   "ofis",
+   "organizasyon",
+   "belge"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "51_Buzul_Vadisi_Olusumu.glb",
+  "name": "Buzul Vadisi Oluşumu",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/51_Buzul_Vadisi_Olusumu.glb",
+  "tags": [
+   "buzul",
+   "vadi",
+   "oluşum",
+   "jeoloji",
+   "doğa"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "52_Karstik_Arazi_Modeli.glb",
+  "name": "Karstik Arazi Modeli",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/52_Karstik_Arazi_Modeli.glb",
+  "tags": [
+   "karstik",
+   "arazi",
+   "model",
+   "jeoloji",
+   "kayaç"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "53_kiyi_asinim_sekilleri.glb",
+  "name": "Kıyı Aşınım Şekilleri",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/53_kiyi_asinim_sekilleri.glb",
+  "tags": [
+   "kıyı",
+   "aşınım",
+   "şekil",
+   "coğrafya",
+   "jeoloji"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "54_menderes_olusum_asamalari.glb",
+  "name": "Menderes Oluşum Aşamaları",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/54_menderes_olusum_asamalari.glb",
+  "tags": [
+   "menderes",
+   "oluşum",
+   "aşama",
+   "nehir",
+   "coğrafya"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "55_cig_olusumu_kesiti.glb",
+  "name": "Çığ Oluşumu Kesiti",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/55_cig_olusumu_kesiti.glb",
+  "tags": [
+   "çığ",
+   "oluşum",
+   "kesit",
+   "doğa",
+   "dağ"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "56_Orta_Cag_Kalesi.glb",
+  "name": "Orta Çağ Kalesi",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/56_Orta_Cag_Kalesi.glb",
+  "tags": [
+   "kale",
+   "orta-çağ",
+   "tarih",
+   "mimari",
+   "savunma"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "57_Roma_Su_Kemeri.glb",
+  "name": "Roma Su Kemeri",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/57_Roma_Su_Kemeri.glb",
+  "tags": [
+   "su-kemer",
+   "roma",
+   "tarih",
+   "mimari",
+   "su"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "58_Antik_Yunan_Tapinagi.glb",
+  "name": "Antik Yunan Tapınağı",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/58_Antik_Yunan_Tapinagi.glb",
+  "tags": [
+   "tapınak",
+   "antik",
+   "yunan",
+   "tarih",
+   "mimari"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "59_Osmanli_Camisi.glb",
+  "name": "Osmanlı Camisi",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/59_Osmanli_Camisi.glb",
+  "tags": [
+   "cami",
+   "osmanlı",
+   "tarih",
+   "mimari",
+   "ibadethane"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "60_Tac_Mahal.glb",
+  "name": "Tac Mahal",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/60_Tac_Mahal.glb",
+  "tags": [
+   "tac-mahal",
+   "mimari",
+   "tarih",
+   "anıt",
+   "kültür"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "61_Maya_Piramidi.glb",
+  "name": "Maya Piramidi",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/61_Maya_Piramidi.glb",
+  "tags": [
+   "maya",
+   "piramit",
+   "tarih",
+   "uygarlık",
+   "mimari"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "72_Madeni_Para_Yigini.glb",
+  "name": "Madeni Para Yığını",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/72_Madeni_Para_Yigini.glb",
+  "tags": [
+   "madeni-para",
+   "para",
+   "finans",
+   "ekonomi",
+   "yığın"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "73_Banknot_Destesi.glb",
+  "name": "Banknot Destesi",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/73_Banknot_Destesi.glb",
+  "tags": [
+   "banknot",
+   "para",
+   "finans",
+   "ekonomi",
+   "nakit"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "73_El_Sikisma.glb",
+  "name": "El Sıkışma",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/73_El_Sikisma.glb",
+  "tags": [
+   "el",
+   "sıkışma",
+   "anlaşma",
+   "iş",
+   "ortaklık"
+  ],
+  "category": "sembol",
+  "tier": "free"
+ },
+ {
+  "fileName": "74_Konusma_Kursusu.glb",
+  "name": "Konuşma Kürsüsü",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/74_Konusma_Kursusu.glb",
+  "tags": [
+   "kürsü",
+   "konuşma",
+   "sunum",
+   "toplantı",
+   "sahne"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "74_Kumbara.glb",
+  "name": "Kumbara",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/74_Kumbara.glb",
+  "tags": [
+   "kumbara",
+   "birikim",
+   "para",
+   "tasarruf",
+   "finans"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "75_Ampul_ve_Fikir.glb",
+  "name": "Ampul ve Fikir",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/75_Ampul_ve_Fikir.glb",
+  "tags": [
+   "ampul",
+   "fikir",
+   "yenilik",
+   "yaratıcılık",
+   "ikon"
+  ],
+  "category": "ikon-3d",
+  "tier": "free"
+ },
+ {
+  "fileName": "75_Banka_Binasi.glb",
+  "name": "Banka Binası",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/75_Banka_Binasi.glb",
+  "tags": [
+   "banka",
+   "bina",
+   "finans",
+   "ekonomi",
+   "kurum"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "76_3B_Buyuyen_Bar_Grafigi.glb",
+  "name": "3B Büyüyen Bar Grafiği",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/76_3B_Buyuyen_Bar_Grafigi.glb",
+  "tags": [
+   "grafik",
+   "bar",
+   "büyüme",
+   "veri",
+   "istatistik"
+  ],
+  "category": "grafik",
+  "tier": "free"
+ },
+ {
+  "fileName": "76_ATM_Cihazi.glb",
+  "name": "ATM Cihazı",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/76_ATM_Cihazi.glb",
+  "tags": [
+   "atm",
+   "cihaz",
+   "bankacılık",
+   "nakit",
+   "finans"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "77_Hedef_Tahtasi_ve_Ok.glb",
+  "name": "Hedef Tahtası ve Ok",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/77_Hedef_Tahtasi_ve_Ok.glb",
+  "tags": [
+   "hedef",
+   "tahta",
+   "ok",
+   "başarı",
+   "amaç"
+  ],
+  "category": "sembol",
+  "tier": "free"
+ },
+ {
+  "fileName": "77_Kredi_Karti_ve_POS.glb",
+  "name": "Kredi Kartı ve POS",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/77_Kredi_Karti_ve_POS.glb",
+  "tags": [
+   "kredi-kartı",
+   "pos",
+   "ödeme",
+   "bankacılık",
+   "finans"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "78_Kan_Hucreleri_Seti.glb",
+  "name": "Kan Hücreleri Seti",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/78_Kan_Hucreleri_Seti.glb",
+  "tags": [
+   "kan",
+   "hücre",
+   "set",
+   "biyoloji",
+   "sağlık"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "78_Temassiz_Odeme_Terminali.glb",
+  "name": "Temassız Ödeme Terminali",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/78_Temassiz_Odeme_Terminali.glb",
+  "tags": [
+   "ödeme",
+   "terminal",
+   "temassız",
+   "bankacılık",
+   "teknoloji"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "79_Dijital_Cuzdan_Telefonu.glb",
+  "name": "Dijital Cüzdan Telefonu",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/79_Dijital_Cuzdan_Telefonu.glb",
+  "tags": [
+   "dijital-cüzdan",
+   "telefon",
+   "ödeme",
+   "mobil",
+   "finans"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "79_Elektromanyetik_Spektrum.glb",
+  "name": "Elektromanyetik Spektrum",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/79_Elektromanyetik_Spektrum.glb",
+  "tags": [
+   "elektromanyetik",
+   "spektrum",
+   "dalga",
+   "fizik",
+   "ışık"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "80_Iklim_Kusaklari_Kuresi.glb",
+  "name": "İklim Kuşakları Küresi",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/80_Iklim_Kusaklari_Kuresi.glb",
+  "tags": [
+   "iklim",
+   "kuşak",
+   "küre",
+   "coğrafya",
+   "dünya"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "80_Mobil_Bankacilik_Ekrani.glb",
+  "name": "Mobil Bankacılık Ekranı",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/80_Mobil_Bankacilik_Ekrani.glb",
+  "tags": [
+   "mobil",
+   "bankacılık",
+   "ekran",
+   "finans",
+   "uygulama"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "81_Borsa_Boga_Figuru.glb",
+  "name": "Borsa Boğa Figürü",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/81_Borsa_Boga_Figuru.glb",
+  "tags": [
+   "borsa",
+   "boğa",
+   "figür",
+   "finans",
+   "yatırım"
+  ],
+  "category": "sembol",
+  "tier": "free"
+ },
+ {
+  "fileName": "81_Gobeklitepe_T_Taslari.glb",
+  "name": "Göbeklitepe T Taşları",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/81_Gobeklitepe_T_Taslari.glb",
+  "tags": [
+   "göbeklitepe",
+   "t-taşı",
+   "tarih",
+   "arkeoloji",
+   "anıt"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "82_Borsa_Ayi_Figuru.glb",
+  "name": "Borsa Ayı Figürü",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/82_Borsa_Ayi_Figuru.glb",
+  "tags": [
+   "borsa",
+   "ayı",
+   "figür",
+   "finans",
+   "düşüş"
+  ],
+  "category": "sembol",
+  "tier": "free"
+ },
+ {
+  "fileName": "82_Sunucu_Rafi_Siber_Guvenlik.glb",
+  "name": "Sunucu Rafı Siber Güvenlik",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/82_Sunucu_Rafi_Siber_Guvenlik.glb",
+  "tags": [
+   "siber-güvenlik",
+   "sunucu",
+   "raf",
+   "güvenlik",
+   "bilişim"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "83_Yapay_Zeka_Noral_Ag.glb",
+  "name": "Yapay Zeka Nöral Ağ",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/83_Yapay_Zeka_Noral_Ag.glb",
+  "tags": [
+   "yapay-zeka",
+   "nöral-ağ",
+   "sinir",
+   "teknoloji",
+   "makine-öğrenmesi"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "83_Yukselen_Hisse_Grafigi.glb",
+  "name": "Yükselen Hisse Grafiği",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/83_Yukselen_Hisse_Grafigi.glb",
+  "tags": [
+   "hisse",
+   "yükseliş",
+   "grafik",
+   "borsa",
+   "finans"
+  ],
+  "category": "grafik",
+  "tier": "free"
+ },
+ {
+  "fileName": "84_Dusen_Hisse_Grafigi.glb",
+  "name": "Düşen Hisse Grafiği",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/84_Dusen_Hisse_Grafigi.glb",
+  "tags": [
+   "hisse",
+   "düşüş",
+   "grafik",
+   "borsa",
+   "finans"
+  ],
+  "category": "grafik",
+  "tier": "free"
+ },
+ {
+  "fileName": "85_Doviz_Kuru_Panosu.glb",
+  "name": "Döviz Kuru Panosu",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/85_Doviz_Kuru_Panosu.glb",
+  "tags": [
+   "döviz",
+   "kur",
+   "pano",
+   "finans",
+   "para"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "86_Kripto_Para_Madeni.glb",
+  "name": "Kripto Para Madeni",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/86_Kripto_Para_Madeni.glb",
+  "tags": [
+   "kripto",
+   "para",
+   "madeni",
+   "bitcoin",
+   "finans"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "87_Blokzincir_Para_Transferi.glb",
+  "name": "Blokzincir Para Transferi",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/87_Blokzincir_Para_Transferi.glb",
+  "tags": [
+   "blokzincir",
+   "transfer",
+   "para",
+   "kripto",
+   "teknoloji"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "88_Butce_Pasta_Kutulari.glb",
+  "name": "Bütçe Pasta Kutuları",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/88_Butce_Pasta_Kutulari.glb",
+  "tags": [
+   "bütçe",
+   "pasta",
+   "dilim",
+   "finans",
+   "planlama"
+  ],
+  "category": "grafik",
+  "tier": "free"
+ },
+ {
+  "fileName": "89_Gelir_Gider_Terazisi.glb",
+  "name": "Gelir Gider Terazisi",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/89_Gelir_Gider_Terazisi.glb",
+  "tags": [
+   "gelir",
+   "gider",
+   "terazi",
+   "finans",
+   "denge"
+  ],
+  "category": "sembol",
+  "tier": "free"
+ },
+ {
+  "fileName": "90_Nakit_Akisi_Borulari.glb",
+  "name": "Nakit Akışı Boruları",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/90_Nakit_Akisi_Borulari.glb",
+  "tags": [
+   "nakit",
+   "akış",
+   "boru",
+   "finans",
+   "likidite"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "91_Kar_Marji_Gostergesi.glb",
+  "name": "Kar Marjı Göstergesi",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/91_Kar_Marji_Gostergesi.glb",
+  "tags": [
+   "kar",
+   "marj",
+   "gösterge",
+   "finans",
+   "analiz"
+  ],
+  "category": "sembol",
+  "tier": "free"
+ },
+ {
+  "fileName": "92_Faiz_Orani_Gostergesi.glb",
+  "name": "Faiz Oranı Göstergesi",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/92_Faiz_Orani_Gostergesi.glb",
+  "tags": [
+   "faiz",
+   "oran",
+   "gösterge",
+   "finans",
+   "ekonomi"
+  ],
+  "category": "sembol",
+  "tier": "free"
+ },
+ {
+  "fileName": "93_Enflasyon_Alisveris_Sepeti.glb",
+  "name": "Enflasyon Alışveriş Sepeti",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/93_Enflasyon_Alisveris_Sepeti.glb",
+  "tags": [
+   "enflasyon",
+   "alışveriş",
+   "sepet",
+   "ekonomi",
+   "fiyat"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "94_Vergi_Hesap_Makinesi.glb",
+  "name": "Vergi Hesap Makinesi",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/94_Vergi_Hesap_Makinesi.glb",
+  "tags": [
+   "vergi",
+   "hesap-makinesi",
+   "finans",
+   "muhasebe",
+   "ekonomi"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "95_Fatura_ve_Makbuz_Seti.glb",
+  "name": "Fatura ve Makbuz Seti",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/95_Fatura_ve_Makbuz_Seti.glb",
+  "tags": [
+   "fatura",
+   "makbuz",
+   "set",
+   "ödeme",
+   "muhasebe"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "96_Maas_Bordrosu.glb",
+  "name": "Maaş Bordrosu",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/96_Maas_Bordrosu.glb",
+  "tags": [
+   "maaş",
+   "bordro",
+   "iş",
+   "finans",
+   "muhasebe"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "97_Sigorta_Semsiyesi.glb",
+  "name": "Sigorta Şemsiyesi",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/97_Sigorta_Semsiyesi.glb",
+  "tags": [
+   "sigorta",
+   "şemsiye",
+   "koruma",
+   "güvence",
+   "finans"
+  ],
+  "category": "sembol",
+  "tier": "free"
+ },
+ {
+  "fileName": "98_Emeklilik_Fonu_Kavanozu.glb",
+  "name": "Emeklilik Fonu Kavanozu",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/98_Emeklilik_Fonu_Kavanozu.glb",
+  "tags": [
+   "emeklilik",
+   "fon",
+   "kavanoz",
+   "birikim",
+   "finans"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "99_Yatirim_Portfoyu_Cantasi.glb",
+  "name": "Yatırım Portföyü Çantası",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/99_Yatirim_Portfoyu_Cantasi.glb",
+  "tags": [
+   "yatırım",
+   "portföy",
+   "çanta",
+   "finans",
+   "borsa"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "ada_atol.glb",
+  "name": "Ada Atol",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/ada_atol.glb",
+  "tags": [
+   "ada",
+   "atol",
+   "okyanus",
+   "coğrafya",
+   "doğa"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "akciger_solunum_sistemi.glb",
+  "name": "Akciğer Solunum Sistemi",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/akciger_solunum_sistemi.glb",
+  "tags": [
+   "akciğer",
+   "solunum",
+   "sistem",
+   "anatomi",
+   "sağlık"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "akilli_telefon.glb",
+  "name": "Akıllı Telefon",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/akilli_telefon.glb",
+  "tags": [
+   "akıllı-telefon",
+   "telefon",
+   "teknoloji",
+   "mobil",
+   "iletişim"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "anemometre.glb",
+  "name": "Anemometre",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/anemometre.glb",
+  "tags": [
+   "anemometre",
+   "rüzgar",
+   "ölçüm",
+   "hava",
+   "meteoroloji"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "antik_roma_sutunu.glb",
+  "name": "Antik Roma Sütunu",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/antik_roma_sutunu.glb",
+  "tags": [
+   "roma",
+   "sütun",
+   "antik",
+   "tarih",
+   "mimari"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "asma_kopru_yapisi.glb",
+  "name": "Asma Köprü Yapısı",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/asma_kopru_yapisi.glb",
+  "tags": [
+   "asma-köprü",
+   "köprü",
+   "yapı",
+   "mimari",
+   "mühendislik"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "atmosfer_katmanlari.glb",
+  "name": "Atmosfer Katmanları",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/atmosfer_katmanlari.glb",
+  "tags": [
+   "atmosfer",
+   "katman",
+   "dünya",
+   "bilim",
+   "coğrafya"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "atom_cekirdek_elektron.glb",
+  "name": "Atom Çekirdek Elektron",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/atom_cekirdek_elektron.glb",
+  "tags": [
+   "atom",
+   "çekirdek",
+   "elektron",
+   "fizik",
+   "kimya"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "award_medal.glb",
+  "name": "Ödül Madalyası",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/award_medal.glb",
+  "tags": [
+   "ödül",
+   "madalya",
+   "başarı",
+   "sembol",
+   "kutlama"
+  ],
+  "category": "sembol",
+  "tier": "free"
+ },
+ {
+  "fileName": "ay.glb",
+  "name": "Ay",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/ay.glb",
+  "tags": [
+   "ay",
+   "gök",
+   "uydu",
+   "uzay",
+   "astronomi"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "ayin_evreleri.glb",
+  "name": "Ayın Evreleri",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/ayin_evreleri.glb",
+  "tags": [
+   "ay",
+   "evre",
+   "döngü",
+   "uzay",
+   "astronomi"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "ayirma_hunisi.glb",
+  "name": "Ayırma Hunisi",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/ayirma_hunisi.glb",
+  "tags": [
+   "ayırma",
+   "huni",
+   "kimya",
+   "laboratuvar",
+   "deney"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "bakteri_modeli.glb",
+  "name": "Bakteri Modeli",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/bakteri_modeli.glb",
+  "tags": [
+   "bakteri",
+   "mikroorganizma",
+   "biyoloji",
+   "model",
+   "sağlık"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "balina_iskeleti.glb",
+  "name": "Balina İskeleti",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/balina_iskeleti.glb",
+  "tags": [
+   "balina",
+   "iskelet",
+   "deniz",
+   "hayvan",
+   "biyoloji"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "basketball.glb",
+  "name": "Basketbol Topu",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/basketball.glb",
+  "tags": [
+   "basketbol",
+   "top",
+   "spor",
+   "oyun",
+   "kırmızı"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "beyin_sinir_sistemi.glb",
+  "name": "Beyin Sinir Sistemi",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/beyin_sinir_sistemi.glb",
+  "tags": [
+   "beyin",
+   "sinir",
+   "sistem",
+   "anatomi",
+   "sağlık"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "bisiklet.glb",
+  "name": "Bisiklet",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/bisiklet.glb",
+  "tags": [
+   "bisiklet",
+   "ulaşım",
+   "spor",
+   "araç",
+   "tekerlek"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "bisiklet_zincir_dislisi.glb",
+  "name": "Bisiklet Zincir Dişlisi",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/bisiklet_zincir_dislisi.glb",
+  "tags": [
+   "bisiklet",
+   "zincir",
+   "dişli",
+   "mekanizma",
+   "makine"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "bisturi.glb",
+  "name": "Bistüri",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/bisturi.glb",
+  "tags": [
+   "bistüri",
+   "cerrahi",
+   "tıp",
+   "alet",
+   "sağlık"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "bobrek_ve_nefron.glb",
+  "name": "Böbrek ve Nefron",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/bobrek_ve_nefron.glb",
+  "tags": [
+   "böbrek",
+   "nefron",
+   "anatomi",
+   "organ",
+   "sağlık"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "bocek_dis_iskelet_anatomisi.glb",
+  "name": "Böcek Dış İskelet Anatomisi",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/bocek_dis_iskelet_anatomisi.glb",
+  "tags": [
+   "böcek",
+   "dış-iskelet",
+   "anatomi",
+   "biyoloji",
+   "hayvan"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "buyutec.glb",
+  "name": "Büyüteç",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/buyutec.glb",
+  "tags": [
+   "büyüteç",
+   "araştırma",
+   "analiz",
+   "alet",
+   "ikon"
+  ],
+  "category": "ikon-3d",
+  "tier": "free"
+ },
+ {
+  "fileName": "buz_kristali_modeli.glb",
+  "name": "Buz Kristali Modeli",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/buz_kristali_modeli.glb",
+  "tags": [
+   "buz",
+   "kristal",
+   "model",
+   "su",
+   "kimya"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "buzdagi.glb",
+  "name": "Buzdağı",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/buzdagi.glb",
+  "tags": [
+   "buzdağı",
+   "buz",
+   "deniz",
+   "doğa",
+   "iklim"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "buzul.glb",
+  "name": "Buzul",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/buzul.glb",
+  "tags": [
+   "buzul",
+   "buz",
+   "jeoloji",
+   "doğa",
+   "iklim"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "cerrahi_makas.glb",
+  "name": "Cerrahi Makas",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/cerrahi_makas.glb",
+  "tags": [
+   "cerrahi",
+   "makas",
+   "tıp",
+   "alet",
+   "sağlık"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "cicek_anatomisi.glb",
+  "name": "Çiçek Anatomisi",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/cicek_anatomisi.glb",
+  "tags": [
+   "çiçek",
+   "anatomi",
+   "bitki",
+   "botanik",
+   "biyoloji"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "cin_seddi_bolumu.glb",
+  "name": "Çin Seddi Bölümü",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/cin_seddi_bolumu.glb",
+  "tags": [
+   "çin-seddi",
+   "duvar",
+   "tarih",
+   "mimari",
+   "savunma"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "cnc_makine_kafasi.glb",
+  "name": "CNC Makine Kafası",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/cnc_makine_kafasi.glb",
+  "tags": [
+   "cnc",
+   "makine",
+   "kafa",
+   "endüstri",
+   "imalat"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "col_vahasi.glb",
+  "name": "Çöl Vahası",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/col_vahasi.glb",
+  "tags": [
+   "çöl",
+   "vaha",
+   "doğa",
+   "coğrafya",
+   "su"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "dalgakiran_maketi.glb",
+  "name": "Dalgakıran Maketi",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/dalgakiran_maketi.glb",
+  "tags": [
+   "dalgakıran",
+   "dalga",
+   "liman",
+   "maket",
+   "deniz"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "delta_agiz_modeli.glb",
+  "name": "Delta Ağız Modeli",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/delta_agiz_modeli.glb",
+  "tags": [
+   "delta",
+   "ağız",
+   "nehir",
+   "model",
+   "coğrafya"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "deprem_fay_hatti_kesiti.glb",
+  "name": "Deprem Fay Hattı Kesiti",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/deprem_fay_hatti_kesiti.glb",
+  "tags": [
+   "deprem",
+   "fay",
+   "hat",
+   "kesit",
+   "jeoloji"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "deri_katman_yapisi.glb",
+  "name": "Deri Katman Yapısı",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/deri_katman_yapisi.glb",
+  "tags": [
+   "deri",
+   "katman",
+   "yapı",
+   "anatomi",
+   "sağlık"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "desk_calendar.glb",
+  "name": "Masa Takvimi",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/desk_calendar.glb",
+  "tags": [
+   "takvim",
+   "masa",
+   "planlama",
+   "ofis",
+   "zaman"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "dis_anatomisi.glb",
+  "name": "Diş Anatomisi",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/dis_anatomisi.glb",
+  "tags": [
+   "diş",
+   "anatomi",
+   "ağız",
+   "sağlık",
+   "tıp"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "disli_sistemi_secenekleri.glb",
+  "name": "Dişli Sistemi Seçenekleri",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/disli_sistemi_secenekleri.glb",
+  "tags": [
+   "dişli",
+   "sistem",
+   "makine",
+   "mekanizma",
+   "seçenek"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "dizustu_bilgisayar.glb",
+  "name": "Dizüstü Bilgisayar",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/dizustu_bilgisayar.glb",
+  "tags": [
+   "dizüstü",
+   "bilgisayar",
+   "teknoloji",
+   "laptop",
+   "bilişim"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "dna_sarmali.glb",
+  "name": "DNA Sarmalı",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/dna_sarmali.glb",
+  "tags": [
+   "dna",
+   "sarmal",
+   "genetik",
+   "biyoloji",
+   "molekül"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "drone.glb",
+  "name": "Drone",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/drone.glb",
+  "tags": [
+   "drone",
+   "hava",
+   "teknoloji",
+   "uçuş",
+   "kamera"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "dunyanin_mevsimsel_hareketi.glb",
+  "name": "Dünyanın Mevsimsel Hareketi",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/dunyanin_mevsimsel_hareketi.glb",
+  "tags": [
+   "dünya",
+   "mevsim",
+   "hareket",
+   "coğrafya",
+   "güneş"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "eklem_ve_bag_yapisi.glb",
+  "name": "Eklem ve Bağ Yapısı",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/eklem_ve_bag_yapisi.glb",
+  "tags": [
+   "eklem",
+   "bağ",
+   "yapı",
+   "anatomi",
+   "iskelet"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "el_bilek_iskeleti.glb",
+  "name": "El Bilek İskeleti",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/el_bilek_iskeleti.glb",
+  "tags": [
+   "el",
+   "bilek",
+   "iskelet",
+   "anatomi",
+   "kemik"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "elektrik_motoru_kesiti.glb",
+  "name": "Elektrik Motoru Kesiti",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/elektrik_motoru_kesiti.glb",
+  "tags": [
+   "elektrik",
+   "motor",
+   "kesit",
+   "makine",
+   "enerji"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "endustriyel_robot_iskeleti.glb",
+  "name": "Endüstriyel Robot İskeleti",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/endustriyel_robot_iskeleti.glb",
+  "tags": [
+   "robot",
+   "endüstriyel",
+   "iskelet",
+   "makine",
+   "üretim"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "eski_deniz_pusulasi.glb",
+  "name": "Eski Deniz Pusulası",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/eski_deniz_pusulasi.glb",
+  "tags": [
+   "pusula",
+   "denizcilik",
+   "eski",
+   "tarih",
+   "yön"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "eski_fotograf_makinesi.glb",
+  "name": "Eski Fotoğraf Makinesi",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/eski_fotograf_makinesi.glb",
+  "tags": [
+   "fotoğraf",
+   "makine",
+   "eski",
+   "tarih",
+   "kamera"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "eski_kil_yazi_tableti.glb",
+  "name": "Eski Kil Yazı Tableti",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/eski_kil_yazi_tableti.glb",
+  "tags": [
+   "kil",
+   "tablet",
+   "yazı",
+   "tarih",
+   "arkeoloji"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "eski_model_tuplu_televizyon.glb",
+  "name": "Eski Model Tüplü Televizyon",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/eski_model_tuplu_televizyon.glb",
+  "tags": [
+   "televizyon",
+   "tüplü",
+   "eski",
+   "teknoloji",
+   "tarih"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "eski_radyo.glb",
+  "name": "Eski Radyo",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/eski_radyo.glb",
+  "tags": [
+   "radyo",
+   "eski",
+   "tarih",
+   "iletişim",
+   "teknoloji"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "eyfel_kulesi.glb",
+  "name": "Eyfel Kulesi",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/eyfel_kulesi.glb",
+  "tags": [
+   "eyfel",
+   "kule",
+   "paris",
+   "mimari",
+   "anıt"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "fotograf_tripodu.glb",
+  "name": "Fotoğraf Tripodu",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/fotograf_tripodu.glb",
+  "tags": [
+   "tripod",
+   "fotoğraf",
+   "kamera",
+   "ekipman",
+   "sehpa"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "galaksi.glb",
+  "name": "Galaksi",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/galaksi.glb",
+  "tags": [
+   "galaksi",
+   "uzay",
+   "astronomi",
+   "yıldız",
+   "gök"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "geleneksel_turk_cadiri.glb",
+  "name": "Geleneksel Türk Çadırı",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/geleneksel_turk_cadiri.glb",
+  "tags": [
+   "çadır",
+   "türk",
+   "geleneksel",
+   "kültür",
+   "göçebe"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "gemi_tekne_kesiti.glb",
+  "name": "Gemi Tekne Kesiti",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/gemi_tekne_kesiti.glb",
+  "tags": [
+   "gemi",
+   "tekne",
+   "kesit",
+   "denizcilik",
+   "taşıma"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "gercekci_dunya.glb",
+  "name": "Gerçekçi Dünya",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/gercekci_dunya.glb",
+  "tags": [
+   "dünya",
+   "küre",
+   "gezegen",
+   "coğrafya",
+   "gerçekçi"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "geyser_modeli.glb",
+  "name": "Gayzer Modeli",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/geyser_modeli.glb",
+  "tags": [
+   "gayzer",
+   "model",
+   "jeoloji",
+   "su",
+   "doğa"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "globe_routes.glb",
+  "name": "Küre Rotaları",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/globe_routes.glb",
+  "tags": [
+   "küre",
+   "rota",
+   "dünya",
+   "seyahat",
+   "ulaşım"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "goz_anatomisi.glb",
+  "name": "Göz Anatomisi",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/goz_anatomisi.glb",
+  "tags": [
+   "göz",
+   "anatomi",
+   "görme",
+   "sağlık",
+   "organ"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "gunes.glb",
+  "name": "Güneş",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/gunes.glb",
+  "tags": [
+   "güneş",
+   "yıldız",
+   "uzay",
+   "astronomi",
+   "ışık"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "gunes_ay_tutulmasi.glb",
+  "name": "Güneş Ay Tutulması",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/gunes_ay_tutulmasi.glb",
+  "tags": [
+   "tutulma",
+   "güneş",
+   "ay",
+   "uzay",
+   "astronomi"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "hassas_terazi.glb",
+  "name": "Hassas Terazi",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/hassas_terazi.glb",
+  "tags": [
+   "terazi",
+   "hassas",
+   "ölçüm",
+   "laboratuvar",
+   "denge"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "helikopter_rotor_sistemi.glb",
+  "name": "Helikopter Rotor Sistemi",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/helikopter_rotor_sistemi.glb",
+  "tags": [
+   "helikopter",
+   "rotor",
+   "sistem",
+   "hava",
+   "mekanizma"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "hidrolik_pres_sistemi.glb",
+  "name": "Hidrolik Pres Sistemi",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/hidrolik_pres_sistemi.glb",
+  "tags": [
+   "hidrolik",
+   "pres",
+   "sistem",
+   "makine",
+   "endüstri"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "higrometre.glb",
+  "name": "Higrometre",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/higrometre.glb",
+  "tags": [
+   "higrometre",
+   "nem",
+   "ölçüm",
+   "hava",
+   "meteoroloji"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "hucre_yapisi.glb",
+  "name": "Hücre Yapısı",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/hucre_yapisi.glb",
+  "tags": [
+   "hücre",
+   "yapı",
+   "biyoloji",
+   "organel",
+   "model"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "hucre_zari_kesiti.glb",
+  "name": "Hücre Zarı Kesiti",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/hucre_zari_kesiti.glb",
+  "tags": [
+   "hücre",
+   "zar",
+   "kesit",
+   "biyoloji",
+   "molekül"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "iklim_kusaklari.glb",
+  "name": "İklim Kuşakları",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/iklim_kusaklari.glb",
+  "tags": [
+   "iklim",
+   "kuşak",
+   "coğrafya",
+   "dünya",
+   "sıcaklık"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "innovation_bulb_gear.glb",
+  "name": "Yenilik Ampul Dişli",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/innovation_bulb_gear.glb",
+  "tags": [
+   "ampul",
+   "dişli",
+   "yenilik",
+   "icat",
+   "fikir"
+  ],
+  "category": "ikon-3d",
+  "tier": "free"
+ },
+ {
+  "fileName": "insan_beyni_bolumleri.glb",
+  "name": "İnsan Beyni Bölümleri",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/insan_beyni_bolumleri.glb",
+  "tags": [
+   "beyin",
+   "bölüm",
+   "anatomi",
+   "sinir",
+   "sağlık"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "insan_kafatasi.glb",
+  "name": "İnsan Kafatası",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/insan_kafatasi.glb",
+  "tags": [
+   "kafatası",
+   "iskelet",
+   "anatomi",
+   "insan",
+   "kemik"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "insansi_robot.glb",
+  "name": "İnsansı Robot",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/insansi_robot.glb",
+  "tags": [
+   "robot",
+   "insansı",
+   "teknoloji",
+   "yapay-zeka",
+   "makine"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "isik_kutusu.glb",
+  "name": "Işık Kutusu",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/isik_kutusu.glb",
+  "tags": [
+   "ışık",
+   "kutu",
+   "deney",
+   "optik",
+   "fizik"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "iskelet_sistemi_anatomik.glb",
+  "name": "İskelet Sistemi Anatomik",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/iskelet_sistemi_anatomik.glb",
+  "tags": [
+   "iskelet",
+   "sistem",
+   "anatomi",
+   "kemik",
+   "vücut"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "jet_motoru_kesiti.glb",
+  "name": "Jet Motoru Kesiti",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/jet_motoru_kesiti.glb",
+  "tags": [
+   "jet",
+   "motor",
+   "kesit",
+   "uçak",
+   "makine"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "jupiter.glb",
+  "name": "Jüpiter",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/jupiter.glb",
+  "tags": [
+   "jüpiter",
+   "gezegen",
+   "uzay",
+   "astronomi",
+   "güneş-sistemi"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "kaktus_ic_yapisi.glb",
+  "name": "Kaktüs İç Yapısı",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/kaktus_ic_yapisi.glb",
+  "tags": [
+   "kaktüs",
+   "iç-yapı",
+   "bitki",
+   "biyoloji",
+   "çöl"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "kalp_dolasim_sistemi.glb",
+  "name": "Kalp Dolaşım Sistemi",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/kalp_dolasim_sistemi.glb",
+  "tags": [
+   "kalp",
+   "dolaşım",
+   "sistem",
+   "anatomi",
+   "kan"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "kamp_atesi.glb",
+  "name": "Kamp Ateşi",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/kamp_atesi.glb",
+  "tags": [
+   "kamp",
+   "ateş",
+   "doğa",
+   "şenlik",
+   "kampçılık"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "kanyon.glb",
+  "name": "Kanyon",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/kanyon.glb",
+  "tags": [
+   "kanyon",
+   "vadi",
+   "jeoloji",
+   "doğa",
+   "kaya"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "kara_delik.glb",
+  "name": "Kara Delik",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/kara_delik.glb",
+  "tags": [
+   "kara-delik",
+   "uzay",
+   "astronomi",
+   "yerçekimi",
+   "bilim"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "kas_sistemi.glb",
+  "name": "Kas Sistemi",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/kas_sistemi.glb",
+  "tags": [
+   "kas",
+   "sistem",
+   "anatomi",
+   "vücut",
+   "sağlık"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "kasirga_ve_hortum_kesiti.glb",
+  "name": "Kasırga ve Hortum Kesiti",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/kasirga_ve_hortum_kesiti.glb",
+  "tags": [
+   "kasırga",
+   "hortum",
+   "kesit",
+   "hava",
+   "meteoroloji"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "kesif_cagi_yelkenli_gemisi.glb",
+  "name": "Keşif Çağı Yelkenli Gemisi",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/kesif_cagi_yelkenli_gemisi.glb",
+  "tags": [
+   "yelkenli",
+   "gemi",
+   "keşif",
+   "tarih",
+   "denizcilik"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "kilic_ve_kalkan.glb",
+  "name": "Kılıç ve Kalkan",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/kilic_ve_kalkan.glb",
+  "tags": [
+   "kılıç",
+   "kalkan",
+   "savaş",
+   "tarih",
+   "silah"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "kimyasal_erlenmayer_tipasi.glb",
+  "name": "Kimyasal Erlenmayer Tıpası",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/kimyasal_erlenmayer_tipasi.glb",
+  "tags": [
+   "erlenmayer",
+   "tıpa",
+   "kimya",
+   "laboratuvar",
+   "deney"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "kitap_ve_mezuniyet_kepi.glb",
+  "name": "Kitap ve Mezuniyet Kepi",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/kitap_ve_mezuniyet_kepi.glb",
+  "tags": [
+   "mezuniyet",
+   "kep",
+   "kitap",
+   "eğitim",
+   "başarı"
+  ],
+  "category": "ikon-3d",
+  "tier": "free"
+ },
+ {
+  "fileName": "kiyi_seridi_kesiti.glb",
+  "name": "Kıyı Şeridi Kesiti",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/kiyi_seridi_kesiti.glb",
+  "tags": [
+   "kıyı",
+   "şerit",
+   "kesit",
+   "coğrafya",
+   "deniz"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "klasik_iki_kollu_terazi.glb",
+  "name": "Klasik İki Kollu Terazi",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/klasik_iki_kollu_terazi.glb",
+  "tags": [
+   "terazi",
+   "iki-kollu",
+   "denge",
+   "adalet",
+   "klasik"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "klasik_otomobil.glb",
+  "name": "Klasik Otomobil",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/klasik_otomobil.glb",
+  "tags": [
+   "otomobil",
+   "klasik",
+   "araç",
+   "tarih",
+   "motor"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "kolezyum.glb",
+  "name": "Kolezyum",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/kolezyum.glb",
+  "tags": [
+   "kolezyum",
+   "roma",
+   "tiyatro",
+   "tarih",
+   "mimari"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "koordinat_kuresi.glb",
+  "name": "Koordinat Küresi",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/koordinat_kuresi.glb",
+  "tags": [
+   "koordinat",
+   "küre",
+   "matematik",
+   "coğrafya",
+   "model"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "koruyucu_gozluk.glb",
+  "name": "Koruyucu Gözlük",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/koruyucu_gozluk.glb",
+  "tags": [
+   "gözlük",
+   "koruyucu",
+   "güvenlik",
+   "laboratuvar",
+   "ekipman"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "kromozom_modeli.glb",
+  "name": "Kromozom Modeli",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/kromozom_modeli.glb",
+  "tags": [
+   "kromozom",
+   "genetik",
+   "dna",
+   "biyoloji",
+   "model"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "kulak_anatomisi.glb",
+  "name": "Kulak Anatomisi",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/kulak_anatomisi.glb",
+  "tags": [
+   "kulak",
+   "anatomi",
+   "işitme",
+   "sağlık",
+   "organ"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "kule_vinc_kaldirma_sistemi.glb",
+  "name": "Kule Vinç Kaldırma Sistemi",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/kule_vinc_kaldirma_sistemi.glb",
+  "tags": [
+   "kule-vinç",
+   "kaldırma",
+   "sistem",
+   "inşaat",
+   "makine"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "kum_saati.glb",
+  "name": "Kum Saati",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/kum_saati.glb",
+  "tags": [
+   "kum-saati",
+   "zaman",
+   "ölçüm",
+   "ikon",
+   "tarih"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "kuyruklu_yildiz.glb",
+  "name": "Kuyruklu Yıldız",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/kuyruklu_yildiz.glb",
+  "tags": [
+   "kuyruklu-yıldız",
+   "uzay",
+   "astronomi",
+   "gök",
+   "kuyruklu"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "laboratuvar_onlugu.glb",
+  "name": "Laboratuvar Önlüğü",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/laboratuvar_onlugu.glb",
+  "tags": [
+   "önlük",
+   "laboratuvar",
+   "koruma",
+   "bilim",
+   "ekipman"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "laboratuvar_pipet_pompasi.glb",
+  "name": "Laboratuvar Pipet Pompası",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/laboratuvar_pipet_pompasi.glb",
+  "tags": [
+   "pipet",
+   "pompa",
+   "laboratuvar",
+   "ölçüm",
+   "deney"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "lastik_dis_deseni.glb",
+  "name": "Lastik Diş Deseni",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/lastik_dis_deseni.glb",
+  "tags": [
+   "lastik",
+   "diş",
+   "desen",
+   "araç",
+   "tekerlek"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "levha_sinirlari.glb",
+  "name": "Levha Sınırları",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/levha_sinirlari.glb",
+  "tags": [
+   "levha",
+   "sınır",
+   "tektonik",
+   "jeoloji",
+   "deprem"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "magara_sarkit_dikit.glb",
+  "name": "Mağara Sarkıt Dikit",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/magara_sarkit_dikit.glb",
+  "tags": [
+   "mağara",
+   "sarkıt",
+   "dikit",
+   "jeoloji",
+   "doğa"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "magma_odasi_kesiti.glb",
+  "name": "Magma Odası Kesiti",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/magma_odasi_kesiti.glb",
+  "tags": [
+   "magma",
+   "oda",
+   "kesit",
+   "volkan",
+   "jeoloji"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "magnifying_glass.glb",
+  "name": "Büyüteç Camı",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/magnifying_glass.glb",
+  "tags": [
+   "büyüteç",
+   "cam",
+   "araştırma",
+   "analiz",
+   "ikon"
+  ],
+  "category": "ikon-3d",
+  "tier": "free"
+ },
+ {
+  "fileName": "makara_sistemi_kaldirac.glb",
+  "name": "Makara Sistemi Kaldıraç",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/makara_sistemi_kaldirac.glb",
+  "tags": [
+   "makara",
+   "kaldıraç",
+   "sistem",
+   "fizik",
+   "basit-makine"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "mantar_miselyum_agi.glb",
+  "name": "Mantar Miselyum Ağı",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/mantar_miselyum_agi.glb",
+  "tags": [
+   "mantar",
+   "miselyum",
+   "ağ",
+   "biyoloji",
+   "doğa"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "manyetik_alan_bobini.glb",
+  "name": "Manyetik Alan Bobini",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/manyetik_alan_bobini.glb",
+  "tags": [
+   "manyetik",
+   "alan",
+   "bobin",
+   "fizik",
+   "elektrik"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "manyetik_karistirici.glb",
+  "name": "Manyetik Karıştırıcı",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/manyetik_karistirici.glb",
+  "tags": [
+   "karıştırıcı",
+   "manyetik",
+   "laboratuvar",
+   "kimya",
+   "deney"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "mars.glb",
+  "name": "Mars",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/mars.glb",
+  "tags": [
+   "mars",
+   "gezegen",
+   "uzay",
+   "astronomi",
+   "kızıl"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "masaustu_bilgisayar.glb",
+  "name": "Masaüstü Bilgisayar",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/masaustu_bilgisayar.glb",
+  "tags": [
+   "masaüstü",
+   "bilgisayar",
+   "teknoloji",
+   "bilişim",
+   "pc"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "matbaa_makinesi.glb",
+  "name": "Matbaa Makinesi",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/matbaa_makinesi.glb",
+  "tags": [
+   "matbaa",
+   "makine",
+   "baskı",
+   "tarih",
+   "icat"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "maya_hucresi_modeli.glb",
+  "name": "Maya Hücresi Modeli",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/maya_hucresi_modeli.glb",
+  "tags": [
+   "maya",
+   "hücre",
+   "model",
+   "biyoloji",
+   "mantar"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "mekanik_saat.glb",
+  "name": "Mekanik Saat",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/mekanik_saat.glb",
+  "tags": [
+   "saat",
+   "mekanik",
+   "zaman",
+   "tarih",
+   "alet"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "meridyen_paralel_kure.glb",
+  "name": "Meridyen Paralel Küre",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/meridyen_paralel_kure.glb",
+  "tags": [
+   "meridyen",
+   "paralel",
+   "küre",
+   "coğrafya",
+   "koordinat"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "merkur.glb",
+  "name": "Merkür",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/merkur.glb",
+  "tags": [
+   "merkür",
+   "gezegen",
+   "uzay",
+   "astronomi",
+   "güneş-sistemi"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "meyve_kesiti_tohum_yapisi.glb",
+  "name": "Meyve Kesiti Tohum Yapısı",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/meyve_kesiti_tohum_yapisi.glb",
+  "tags": [
+   "meyve",
+   "kesit",
+   "tohum",
+   "bitki",
+   "biyoloji"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "miknatis_manyetik_alan_cizgileri.glb",
+  "name": "Mıknatıs Manyetik Alan Çizgileri",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/miknatis_manyetik_alan_cizgileri.glb",
+  "tags": [
+   "mıknatıs",
+   "manyetik",
+   "alan",
+   "çizgi",
+   "fizik"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "mikroskop.glb",
+  "name": "Mikroskop",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/mikroskop.glb",
+  "tags": [
+   "mikroskop",
+   "laboratuvar",
+   "bilim",
+   "inceleme",
+   "alet"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "mikroskop_objektifi.glb",
+  "name": "Mikroskop Objektifi",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/mikroskop_objektifi.glb",
+  "tags": [
+   "mikroskop",
+   "objektif",
+   "lens",
+   "laboratuvar",
+   "alet"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "misir_piramidi.glb",
+  "name": "Mısır Piramidi",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/misir_piramidi.glb",
+  "tags": [
+   "mısır",
+   "piramit",
+   "tarih",
+   "mimari",
+   "anıt"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "mitokondri_modeli.glb",
+  "name": "Mitokondri Modeli",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/mitokondri_modeli.glb",
+  "tags": [
+   "mitokondri",
+   "hücre",
+   "enerji",
+   "biyoloji",
+   "model"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "molekul_bag_yapilari.glb",
+  "name": "Molekül Bağ Yapıları",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/molekul_bag_yapilari.glb",
+  "tags": [
+   "molekül",
+   "bağ",
+   "yapı",
+   "kimya",
+   "atom"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "nehir_kivrimi_maketi.glb",
+  "name": "Nehir Kıvrımı Maketi",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/nehir_kivrimi_maketi.glb",
+  "tags": [
+   "nehir",
+   "kıvrım",
+   "maket",
+   "coğrafya",
+   "akarsu"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "neptun.glb",
+  "name": "Neptün",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/neptun.glb",
+  "tags": [
+   "neptün",
+   "gezegen",
+   "uzay",
+   "astronomi",
+   "güneş-sistemi"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "noron_ve_sinaps_modeli.glb",
+  "name": "Nöron ve Sinaps Modeli",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/noron_ve_sinaps_modeli.glb",
+  "tags": [
+   "nöron",
+   "sinaps",
+   "sinir",
+   "biyoloji",
+   "model"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "olcu_silindiri.glb",
+  "name": "Ölçü Silindiri",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/olcu_silindiri.glb",
+  "tags": [
+   "ölçü",
+   "silindir",
+   "laboratuvar",
+   "kimya",
+   "deney"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "optik_fiber_kablo.glb",
+  "name": "Optik Fiber Kablo",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/optik_fiber_kablo.glb",
+  "tags": [
+   "optik",
+   "fiber",
+   "kablo",
+   "iletişim",
+   "teknoloji"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "otomobil_parcalari_motor_sistemi.glb",
+  "name": "Otomobil Parçaları Motor Sistemi",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/otomobil_parcalari_motor_sistemi.glb",
+  "tags": [
+   "otomobil",
+   "motor",
+   "parça",
+   "sistem",
+   "makine"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "ozgurluk_aniti.glb",
+  "name": "Özgürlük Anıtı",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/ozgurluk_aniti.glb",
+  "tags": [
+   "özgürlük",
+   "anıt",
+   "heykel",
+   "tarih",
+   "sembol"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "periyodik_element_dolabi.glb",
+  "name": "Periyodik Element Dolabı",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/periyodik_element_dolabi.glb",
+  "tags": [
+   "periyodik",
+   "element",
+   "dolap",
+   "kimya",
+   "eğitim"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "permafrost_kesit.glb",
+  "name": "Permafrost Kesit",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/permafrost_kesit.glb",
+  "tags": [
+   "permafrost",
+   "kesit",
+   "toprak",
+   "iklim",
+   "jeoloji"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "pie_chart.glb",
+  "name": "Pasta Grafiği",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/pie_chart.glb",
+  "tags": [
+   "pasta",
+   "grafik",
+   "veri",
+   "istatistik",
+   "dilim"
+  ],
+  "category": "grafik",
+  "tier": "free"
+ },
+ {
+  "fileName": "pil_batarya_kesiti.glb",
+  "name": "Pil Batarya Kesiti",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/pil_batarya_kesiti.glb",
+  "tags": [
+   "pil",
+   "batarya",
+   "kesit",
+   "enerji",
+   "elektrik"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "pistonlu_motor_secenekleri.glb",
+  "name": "Pistonlu Motor Seçenekleri",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/pistonlu_motor_secenekleri.glb",
+  "tags": [
+   "piston",
+   "motor",
+   "makine",
+   "araç",
+   "seçenek"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "polen_tanesi_modeli.glb",
+  "name": "Polen Tanesi Modeli",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/polen_tanesi_modeli.glb",
+  "tags": [
+   "polen",
+   "toz",
+   "bitki",
+   "biyoloji",
+   "model"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "prizma_blogu.glb",
+  "name": "Prizma Bloğu",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/prizma_blogu.glb",
+  "tags": [
+   "prizma",
+   "blok",
+   "geometri",
+   "optik",
+   "matematik"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "prizma_isik_kirilmasi.glb",
+  "name": "Prizma Işık Kırılması",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/prizma_isik_kirilmasi.glb",
+  "tags": [
+   "prizma",
+   "ışık",
+   "kırılma",
+   "fizik",
+   "spektrum"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "protein_sarmali.glb",
+  "name": "Protein Sarmalı",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/protein_sarmali.glb",
+  "tags": [
+   "protein",
+   "sarmal",
+   "molekül",
+   "biyoloji",
+   "yapı"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "pusula_ignesi.glb",
+  "name": "Pusula İğnesi",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/pusula_ignesi.glb",
+  "tags": [
+   "pusula",
+   "iğne",
+   "yön",
+   "navigasyon",
+   "manyetik"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "ribozom_modeli.glb",
+  "name": "Ribozom Modeli",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/ribozom_modeli.glb",
+  "tags": [
+   "ribozom",
+   "hücre",
+   "protein",
+   "biyoloji",
+   "model"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "robot_kol_eklemleri.glb",
+  "name": "Robot Kol Eklemleri",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/robot_kol_eklemleri.glb",
+  "tags": [
+   "robot",
+   "kol",
+   "eklem",
+   "makine",
+   "endüstri"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "roket.glb",
+  "name": "Roket",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/roket.glb",
+  "tags": [
+   "roket",
+   "uzay",
+   "fırlatma",
+   "astronomi",
+   "teknoloji"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "rulman_yatak_sistemi.glb",
+  "name": "Rulman Yatak Sistemi",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/rulman_yatak_sistemi.glb",
+  "tags": [
+   "rulman",
+   "yatak",
+   "sistem",
+   "makine",
+   "mekanizma"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "ruzgar_gulu_pervane.glb",
+  "name": "Rüzgar Gülü Pervane",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/ruzgar_gulu_pervane.glb",
+  "tags": [
+   "rüzgar-gülü",
+   "pervane",
+   "rüzgar",
+   "enerji",
+   "hava"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "ruzgar_sistemleri.glb",
+  "name": "Rüzgar Sistemleri",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/ruzgar_sistemleri.glb",
+  "tags": [
+   "rüzgar",
+   "sistem",
+   "hava",
+   "coğrafya",
+   "meteoroloji"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "ruzgar_yon_oku.glb",
+  "name": "Rüzgar Yön Oku",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/ruzgar_yon_oku.glb",
+  "tags": [
+   "rüzgar",
+   "yön",
+   "ok",
+   "hava",
+   "gösterge"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "santrifuj_rotoru.glb",
+  "name": "Santrifüj Rotoru",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/santrifuj_rotoru.glb",
+  "tags": [
+   "santrifüj",
+   "rotor",
+   "laboratuvar",
+   "makine",
+   "döner"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "santrifuj_tupu.glb",
+  "name": "Santrifüj Tüpü",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/santrifuj_tupu.glb",
+  "tags": [
+   "santrifüj",
+   "tüp",
+   "laboratuvar",
+   "deney",
+   "kimya"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "sanziman_vites_kutusu.glb",
+  "name": "Şanzıman Vites Kutusu",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/sanziman_vites_kutusu.glb",
+  "tags": [
+   "şanzıman",
+   "vites",
+   "kutu",
+   "araç",
+   "makine"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "sarkac_basit_harmonik_hareket.glb",
+  "name": "Sarkaç Basit Harmonik Hareket",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/sarkac_basit_harmonik_hareket.glb",
+  "tags": [
+   "sarkaç",
+   "harmonik",
+   "hareket",
+   "fizik",
+   "salınım"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "saturn.glb",
+  "name": "Satürn",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/saturn.glb",
+  "tags": [
+   "satürn",
+   "gezegen",
+   "halka",
+   "uzay",
+   "astronomi"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "sekstant.glb",
+  "name": "Sekstant",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/sekstant.glb",
+  "tags": [
+   "sekstant",
+   "denizcilik",
+   "ölçüm",
+   "navigasyon",
+   "tarih"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "selale.glb",
+  "name": "Şelale",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/selale.glb",
+  "tags": [
+   "şelale",
+   "su",
+   "doğa",
+   "nehir",
+   "manzara"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "sfenks.glb",
+  "name": "Sfenks",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/sfenks.glb",
+  "tags": [
+   "sfenks",
+   "mısır",
+   "tarih",
+   "anıt",
+   "heykel"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "sicak_hava_balonu.glb",
+  "name": "Sıcak Hava Balonu",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/sicak_hava_balonu.glb",
+  "tags": [
+   "sıcak-hava",
+   "balon",
+   "uçuş",
+   "hava",
+   "gezi"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "sicak_nokta_hawaii.glb",
+  "name": "Sıcak Nokta Hawaii",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/sicak_nokta_hawaii.glb",
+  "tags": [
+   "sıcak-nokta",
+   "hawaii",
+   "volkan",
+   "jeoloji",
+   "ada"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "sicaklik_sensoru.glb",
+  "name": "Sıcaklık Sensörü",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/sicaklik_sensoru.glb",
+  "tags": [
+   "sıcaklık",
+   "sensör",
+   "ölçüm",
+   "teknoloji",
+   "termometre"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "sindirim_sistemi.glb",
+  "name": "Sindirim Sistemi",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/sindirim_sistemi.glb",
+  "tags": [
+   "sindirim",
+   "sistem",
+   "anatomi",
+   "organ",
+   "sağlık"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "siringa_pompasi.glb",
+  "name": "Şırınga Pompası",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/siringa_pompasi.glb",
+  "tags": [
+   "şırınga",
+   "pompa",
+   "tıp",
+   "sağlık",
+   "cihaz"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "soccer_ball.glb",
+  "name": "Futbol Topu",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/soccer_ball.glb",
+  "tags": [
+   "futbol",
+   "top",
+   "spor",
+   "oyun",
+   "kale"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "sovalye_zirhi.glb",
+  "name": "Şövalye Zırhı",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/sovalye_zirhi.glb",
+  "tags": [
+   "şövalye",
+   "zırh",
+   "savaş",
+   "tarih",
+   "savunma"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "stonehenge.glb",
+  "name": "Stonehenge",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/stonehenge.glb",
+  "tags": [
+   "stonehenge",
+   "taş",
+   "anıt",
+   "tarih",
+   "arkeoloji"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "stopwatch.glb",
+  "name": "Kronometre",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/stopwatch.glb",
+  "tags": [
+   "kronometre",
+   "zaman",
+   "ölçüm",
+   "spor",
+   "alet"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "su_dongusu.glb",
+  "name": "Su Döngüsü",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/su_dongusu.glb",
+  "tags": [
+   "su",
+   "döngü",
+   "yağmur",
+   "doğa",
+   "coğrafya"
+  ],
+  "category": "diyagram",
+  "tier": "free"
+ },
+ {
+  "fileName": "su_molekulu.glb",
+  "name": "Su Molekülü",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/su_molekulu.glb",
+  "tags": [
+   "su",
+   "molekül",
+   "kimya",
+   "h2o",
+   "atom"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "tarih_oncesi_tas_aletler.glb",
+  "name": "Tarih Öncesi Taş Aletler",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/tarih_oncesi_tas_aletler.glb",
+  "tags": [
+   "taş",
+   "alet",
+   "tarih-öncesi",
+   "arkeoloji",
+   "ilkel"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "tektonik_levha_hareketleri.glb",
+  "name": "Tektonik Levha Hareketleri",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/tektonik_levha_hareketleri.glb",
+  "tags": [
+   "tektonik",
+   "levha",
+   "hareket",
+   "jeoloji",
+   "deprem"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "teleskop.glb",
+  "name": "Teleskop",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/teleskop.glb",
+  "tags": [
+   "teleskop",
+   "uzay",
+   "astronomi",
+   "gözlem",
+   "alet"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "tren_ray_sistemi.glb",
+  "name": "Tren Ray Sistemi",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/tren_ray_sistemi.glb",
+  "tags": [
+   "tren",
+   "ray",
+   "sistem",
+   "ulaşım",
+   "demiryolu"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "trex_dinozor_iskeleti.glb",
+  "name": "T-Rex Dinozor İskeleti",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/trex_dinozor_iskeleti.glb",
+  "tags": [
+   "dinozor",
+   "trex",
+   "iskelet",
+   "tarih",
+   "fosil"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "tsunami_olusum_modeli.glb",
+  "name": "Tsunami Oluşum Modeli",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/tsunami_olusum_modeli.glb",
+  "tags": [
+   "tsunami",
+   "oluşum",
+   "model",
+   "dalga",
+   "deprem"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "uc_boyutlu_yazici_mekanizmasi.glb",
+  "name": "Üç Boyutlu Yazıcı Mekanizması",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/uc_boyutlu_yazici_mekanizmasi.glb",
+  "tags": [
+   "3d-yazıcı",
+   "yazıcı",
+   "mekanizma",
+   "teknoloji",
+   "üretim"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "ucak.glb",
+  "name": "Uçak",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/ucak.glb",
+  "tags": [
+   "uçak",
+   "hava",
+   "ulaşım",
+   "yolculuk",
+   "taşıt"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "ucak_kanat_govde_kesiti.glb",
+  "name": "Uçak Kanat Gövde Kesiti",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/ucak_kanat_govde_kesiti.glb",
+  "tags": [
+   "uçak",
+   "kanat",
+   "gövde",
+   "kesit",
+   "aerodinamik"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "uluslararasi_uzay_istasyonu.glb",
+  "name": "Uluslararası Uzay İstasyonu",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/uluslararasi_uzay_istasyonu.glb",
+  "tags": [
+   "uzay",
+   "istasyon",
+   "iss",
+   "astronomi",
+   "yörünge"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "uranus.glb",
+  "name": "Uranüs",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/uranus.glb",
+  "tags": [
+   "uranüs",
+   "gezegen",
+   "uzay",
+   "astronomi",
+   "güneş-sistemi"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "uydu.glb",
+  "name": "Uydu",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/uydu.glb",
+  "tags": [
+   "uydu",
+   "uzay",
+   "yörünge",
+   "iletişim",
+   "teknoloji"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "uzay_araci.glb",
+  "name": "Uzay Aracı",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/uzay_araci.glb",
+  "tags": [
+   "uzay",
+   "araç",
+   "roket",
+   "astronomi",
+   "keşif"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "venus.glb",
+  "name": "Venüs",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/venus.glb",
+  "tags": [
+   "venüs",
+   "gezegen",
+   "uzay",
+   "astronomi",
+   "güneş-sistemi"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "viking_gemisi.glb",
+  "name": "Viking Gemisi",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/viking_gemisi.glb",
+  "tags": [
+   "viking",
+   "gemi",
+   "tarih",
+   "denizcilik",
+   "savaş"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "virus_yapisi.glb",
+  "name": "Virüs Yapısı",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/virus_yapisi.glb",
+  "tags": [
+   "virüs",
+   "yapı",
+   "mikroorganizma",
+   "biyoloji",
+   "sağlık"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "volkan.glb",
+  "name": "Volkan",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/volkan.glb",
+  "tags": [
+   "volkan",
+   "yanardağ",
+   "jeoloji",
+   "magma",
+   "doğa"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "volleyball_ball.glb",
+  "name": "Voleybol Topu",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/volleyball_ball.glb",
+  "tags": [
+   "voleybol",
+   "top",
+   "spor",
+   "oyun",
+   "ekip"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "workflow_arrows.glb",
+  "name": "İş Akışı Okları",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/workflow_arrows.glb",
+  "tags": [
+   "iş-akışı",
+   "ok",
+   "süreç",
+   "diyagram",
+   "analiz"
+  ],
+  "category": "diyagram",
+  "tier": "free"
+ },
+ {
+  "fileName": "yagmur_damlasi_olcer.glb",
+  "name": "Yağmur Damlası Ölçer",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/yagmur_damlasi_olcer.glb",
+  "tags": [
+   "yağmur",
+   "damla",
+   "ölçer",
+   "hava",
+   "meteoroloji"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "yakit_pompasi.glb",
+  "name": "Yakıt Pompası",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/yakit_pompasi.glb",
+  "tags": [
+   "yakıt",
+   "pompa",
+   "araç",
+   "benzin",
+   "makine"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "yapboz_parcalari.glb",
+  "name": "Yapboz Parçaları",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/yapboz_parcalari.glb",
+  "tags": [
+   "yapboz",
+   "parça",
+   "bulmaca",
+   "oyun",
+   "birleştirme"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "yaprak_damar_fotosentez_kesiti.glb",
+  "name": "Yaprak Damar Fotosentez Kesiti",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/yaprak_damar_fotosentez_kesiti.glb",
+  "tags": [
+   "yaprak",
+   "damar",
+   "fotosentez",
+   "kesit",
+   "bitki"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "yer_kabugu_katman_modeli.glb",
+  "name": "Yer Kabuğu Katman Modeli",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/yer_kabugu_katman_modeli.glb",
+  "tags": [
+   "yer-kabuğu",
+   "katman",
+   "model",
+   "jeoloji",
+   "dünya"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "yeralti_suyu_kesiti.glb",
+  "name": "Yeraltı Suyu Kesiti",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/yeralti_suyu_kesiti.glb",
+  "tags": [
+   "yeraltı",
+   "su",
+   "kesit",
+   "coğrafya",
+   "kuyu"
+  ],
+  "category": "diger",
+  "tier": "free"
+ },
+ {
+  "fileName": "yolcu_ucagi.glb",
+  "name": "Yolcu Uçağı",
+  "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/yolcu_ucagi.glb",
+  "tags": [
+   "yolcu",
+   "uçak",
+   "hava",
+   "ulaşım",
+   "taşıt"
+  ],
+  "category": "diger",
+  "tier": "free"
+ }
+]

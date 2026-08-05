@@ -91,6 +91,11 @@
           setTimeout(() => loader.remove(), 300);
         }
       });
+
+      // Prevent browser default right-click menu so Flutter handles it
+      document.addEventListener('contextmenu', function (e) {
+        e.preventDefault();
+      });
     </script>
     <script src="flutter_bootstrap.js" async></script>
   </body>

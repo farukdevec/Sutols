@@ -156,6 +156,7 @@ class _HtmlPresentationEditorPageState
       autofocus: true,
       child: CallbackShortcuts(
         bindings: <ShortcutActivator, VoidCallback>{
+          // Undo / Redo
           const SingleActivator(LogicalKeyboardKey.keyZ, control: true):
               widget.controller.undo,
           const SingleActivator(LogicalKeyboardKey.keyZ, meta: true):
@@ -174,6 +175,48 @@ class _HtmlPresentationEditorPageState
             meta: true,
             shift: true,
           ): widget.controller.redo,
+
+          // Kopyala / Yapıştır / Kes
+          const SingleActivator(LogicalKeyboardKey.keyC, control: true):
+              widget.controller.copySelectedItems,
+          const SingleActivator(LogicalKeyboardKey.keyC, meta: true):
+              widget.controller.copySelectedItems,
+          const SingleActivator(LogicalKeyboardKey.keyV, control: true):
+              widget.controller.pasteCopiedItems,
+          const SingleActivator(LogicalKeyboardKey.keyV, meta: true):
+              widget.controller.pasteCopiedItems,
+          const SingleActivator(LogicalKeyboardKey.keyX, control: true):
+              widget.controller.cutSelectedItems,
+          const SingleActivator(LogicalKeyboardKey.keyX, meta: true):
+              widget.controller.cutSelectedItems,
+
+          // Çoğalt
+          const SingleActivator(LogicalKeyboardKey.keyD, control: true):
+              widget.controller.duplicateSelectedItems,
+          const SingleActivator(LogicalKeyboardKey.keyD, meta: true):
+              widget.controller.duplicateSelectedItems,
+
+          // Tümünü seç
+          const SingleActivator(LogicalKeyboardKey.keyA, control: true):
+              widget.controller.selectAllItems,
+          const SingleActivator(LogicalKeyboardKey.keyA, meta: true):
+              widget.controller.selectAllItems,
+
+          // Kaydet
+          const SingleActivator(LogicalKeyboardKey.keyS, control: true):
+              _saveProject,
+          const SingleActivator(LogicalKeyboardKey.keyS, meta: true):
+              _saveProject,
+
+          // Sil
+          const SingleActivator(LogicalKeyboardKey.delete):
+              widget.controller.removeSelectedItems,
+          const SingleActivator(LogicalKeyboardKey.backspace):
+              widget.controller.removeSelectedItems,
+
+          // Seçimi temizle
+          const SingleActivator(LogicalKeyboardKey.escape):
+              widget.controller.clearSelection,
         },
         child: AnimatedBuilder(
           animation: widget.controller,
@@ -3693,6 +3736,13 @@ class _HtmlStageCard extends StatelessWidget {
                               globalPosition,
                             );
                           },
+                          onSecondaryTapCanvas: (globalPosition) {
+                            _showCanvasContextMenu(
+                              context,
+                              controller,
+                              globalPosition,
+                            );
+                          },
                           onToggleModelOrbit: (itemId) {
                             if (controller.selectedComponentBlockId != itemId) {
                               controller.selectComponentBlock(itemId);
@@ -3732,6 +3782,11 @@ enum _StageItemContextAction {
   paste,
   duplicate,
   delete,
+}
+
+enum _CanvasContextAction {
+  paste,
+  selectAll,
 }
 
 Future<void> _showStageItemContextMenu(
@@ -3812,6 +3867,59 @@ Future<void> _showStageItemContextMenu(
       controller.duplicateSelectedItems();
     case _StageItemContextAction.delete:
       controller.removeSelectedItems();
+  }
+}
+
+Future<void> _showCanvasContextMenu(
+  BuildContext context,
+  PresentationController controller,
+  Offset globalPosition,
+) async {
+  final overlay = Overlay.of(context).context.findRenderObject();
+  if (overlay is! RenderBox) {
+    return;
+  }
+
+  final action = await showMenu<_CanvasContextAction>(
+    context: context,
+    color: context.sutolColors.surface,
+    elevation: 16,
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(16),
+      side: const BorderSide(color: Color(0xFFDCE5F1)),
+    ),
+    position: RelativeRect.fromRect(
+      Rect.fromLTWH(globalPosition.dx, globalPosition.dy, 1, 1),
+      Offset.zero & overlay.size,
+    ),
+    items: <PopupMenuEntry<_CanvasContextAction>>[
+      PopupMenuItem<_CanvasContextAction>(
+        value: controller.canPasteItems ? _CanvasContextAction.paste : null,
+        enabled: controller.canPasteItems,
+        child: const _StageContextMenuRow(
+          icon: Icons.content_paste_rounded,
+          label: 'Yapıştır',
+        ),
+      ),
+      const PopupMenuItem<_CanvasContextAction>(
+        value: _CanvasContextAction.selectAll,
+        child: _StageContextMenuRow(
+          icon: Icons.select_all_rounded,
+          label: 'Tümünü Seç',
+        ),
+      ),
+    ],
+  );
+
+  if (action == null || !context.mounted) {
+    return;
+  }
+
+  switch (action) {
+    case _CanvasContextAction.paste:
+      controller.pasteCopiedItems();
+    case _CanvasContextAction.selectAll:
+      controller.selectAllItems();
   }
 }
 

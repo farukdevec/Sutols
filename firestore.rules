@@ -1,0 +1,95 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+
+    match /models/{modelId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+
+    match /presentations/{presentationId} {
+      allow read: if request.auth != null
+                   && (isAdmin() || request.auth.uid == resource.data.userId);
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.userId;
+      allow update: if request.auth != null
+                    && (isAdmin() || (
+                         request.auth.uid == resource.data.userId
+                         && request.resource.data.userId == resource.data.userId));
+      allow delete: if request.auth != null && request.auth.uid == resource.data.userId;
+    }
+
+
+    match /users/{uid} {
+      allow read: if request.auth != null && (isAdmin() || request.auth.uid == uid);
+      allow create: if request.auth != null && request.auth.uid == uid
+                    && request.resource.data.tier == 'free'
+                    && request.resource.data.presentationCount == 0
+                    && (request.resource.data.role == 'user'
+                        || !('role' in request.resource.data));
+      allow update: if request.auth != null
+                    && (isAdmin() || (
+                         request.auth.uid == uid
+                         && request.resource.data.tier == resource.data.tier
+                         && request.resource.data.diff(resource.data).affectedKeys()
+                              .hasOnly(['lastActiveAt', 'presentationCount', 'displayName', 'email'])));
+      allow delete: if false;
+    }
+
+
+    match /admins/{uid} {
+      allow read: if isAdmin();
+      allow write: if false; // sadece Console/Admin SDK'dan elle eklenir
+    }
+
+
+    match /promoCodes/{code} {
+      allow read: if isAdmin(); // sadece admin okuyabilir (tier haritalaması için)
+      allow write: if isAdmin(); // sadece admin oluşturabilir/düzenleyebilir
+    }
+
+
+    match /promoRequests/{requestId} {
+      // Kullanıcı yalnızca kendi adına ve yalnızca "pending" ile talep açabilir.
+      allow create: if request.auth != null
+                    && request.auth.uid == request.resource.data.uid
+                    && request.resource.data.status == 'pending';
+      // Kullanıcı kendi talebini, admin tüm talepleri okuyabilir.
+      allow read: if request.auth != null
+                  && (isAdmin() || request.resource.data.uid == request.auth.uid);
+      // Durumu yalnızca admin güncelleyebilir (onay/red).
+      allow update: if isAdmin();
+      allow delete: if false;
+    }
+
+
+    match /usage/{usageId} {
+      allow read: if request.auth != null
+                  && (isAdmin() || resource.data.uid == request.auth.uid);
+      allow create: if request.auth != null
+                    && request.resource.data.uid == request.auth.uid
+                    && request.resource.data.count == 1;
+      allow update: if request.auth != null
+                    && resource.data.uid == request.auth.uid
+                    && request.resource.data.count == resource.data.count + 1
+                    && request.resource.data.count <= dailyLimitFor(request.auth.uid);
+      allow delete: if false;
+    }
+
+
+    function isAdmin() {
+      return request.auth != null &&
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+
+
+    function dailyLimitFor(uid) {
+      let tier = get(/databases/$(database)/documents/users/$(uid)).data.tier;
+      return tier == 'premium' ? 999 : (tier == 'plus' ? 15 : 3);
+    }
+  }
+}

@@ -10,6 +10,11 @@ dependencies:
   flutter:
     sdk: flutter
   http: ^1.2.0
+  firebase_core: ^4.6.0
+  firebase_auth: ^6.3.0
+  firebase_ai: ^3.10.0
+  cloud_firestore: ^6.2.0
+  shared_preferences: ^2.5.5
 
 dev_dependencies:
   flutter_test:

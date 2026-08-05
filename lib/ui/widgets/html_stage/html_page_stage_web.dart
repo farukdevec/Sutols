@@ -7,6 +7,7 @@ import 'dart:ui_web' as ui_web;
 import 'package:flutter/widgets.dart';
 
 import '../../../models/slide_model.dart';
+import '../../../services/remote_model_sources.dart';
 import 'html_stage_document.dart';
 
 class HtmlPageStage extends StatefulWidget {
@@ -86,6 +87,7 @@ class _HtmlPageStageState extends State<HtmlPageStage> {
       visibleRevealStep: widget.visibleRevealStep,
       showBadge: widget.showBadge,
       renderMode: widget.renderMode,
+      modelSourcesById: RemoteModelSources.all,
     );
   }
 

@@ -68,6 +68,24 @@ class GenerateSlidesResponse(BaseModel):
     slides: list[SlideContent]
 
 
+class AnalyzeRequest(BaseModel):
+    topic: str
+    language: str = "turkish"
+
+
+class AnalysisItem(BaseModel):
+    title: str
+    content: str
+
+
+class AnalyzeResponse(BaseModel):
+    swot: list[AnalysisItem]
+    key_statistics: list[AnalysisItem]
+    trends: list[AnalysisItem]
+    recommendations: list[AnalysisItem]
+    summary: str
+
+
 def _ollama_generate(prompt: str, system: Optional[str] = None, temperature: float = 0.3, max_tokens: int = 2048) -> str:
     payload = {
         "model": OLLAMA_MODEL,
@@ -152,14 +170,15 @@ def generate(req: GenerateRequest):
 
 @app.post("/api/research", response_model=ResearchResponse)
 def research(req: ResearchRequest):
-    results = _web_search(req.topic, max_results=req.max_results)
+    results = _web_search(req.topic, max_results=max(req.max_results, 5))
 
     context = "\n\n".join(
-        f"Baslik: {r.title}\nIcerik: {r.snippet}" for r in results[:3]
+        f"Baslik: {r.title}\nIcerik: {r.snippet}\nKaynak: {r.url}" for r in results[:5]
     )
 
-    summary_prompt = f"""Asagidaki web arama sonuclarina gore "{req.topic}" konusunu ozetle.
-    Ozet madde madde ve bilgilendirici olsun.
+    summary_prompt = f"""Asagidaki web arama sonuclarina gore "{req.topic}" konusunu detayli ozetle.
+    Ozet en az 3 paragraf, bilgilendirici ve madde madde olsun.
+    Her bilgiyi verirken kaynagini da belirt.
 
     ARAMA SONUCLARI:
     {context}
@@ -310,6 +329,82 @@ def generate_content(req: GenerateRequest):
         max_tokens=req.max_tokens,
     )
     return GenerateResponse(text=text)
+
+
+@app.post("/api/analyze", response_model=AnalyzeResponse)
+def analyze(req: AnalyzeRequest):
+    lang = "Türkçe" if req.language == "turkish" else "English"
+
+    search_results = _web_search(req.topic, max_results=5)
+    context = "\n".join(f"- {r.title}: {r.snippet}" for r in search_results[:5]) if search_results else ""
+
+    system_prompt = f"""Sen profesyonel bir stratejik analistsin.
+    Verilen konu hakkinda {lang} olarak detayli analiz yap.
+    Yanit her zaman gecerli JSON formatinda olmali."""
+
+    user_prompt = f"""Konu: {req.topic}
+
+WEB ARAMA SONUCLARI:
+{context}
+
+Yukaridaki bilgilere dayanarak asagidaki JSON yapisinda analiz uret:
+
+{{
+    "swot": [
+        {{"title": "Guclu Yon", "content": "..."}},
+        {{"title": "Zayif Yon", "content": "..."}},
+        {{"title": "Firsat", "content": "..."}},
+        {{"title": "Tehdit", "content": "..."}}
+    ],
+    "key_statistics": [
+        {{"title": "Istatistik Basligi", "content": "Rakamsal veri ve aciklamasi"}}
+    ],
+    "trends": [
+        {{"title": "Trend Basligi", "content": "Trend aciklamasi"}}
+    ],
+    "recommendations": [
+        {{"title": "Tavsiye Basligi", "content": "Detayli oneri"}}
+    ],
+    "summary": "Kapsamli bir ozet paragrafi"
+}}
+
+Her bolumde en az 2, en fazla 4 madde olsun.
+Rakamsal verileri ve somut bilgileri tercih et.
+"""
+
+    response = _ollama_chat(
+        messages=[
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_prompt},
+        ],
+        temperature=0.3,
+        max_tokens=4096,
+    )
+
+    try:
+        json_str = response
+        if "```json" in json_str:
+            json_str = json_str.split("```json")[1].split("```")[0].strip()
+        elif "```" in json_str:
+            json_str = json_str.split("```")[1].split("```")[0].strip()
+
+        data = json.loads(json_str)
+        return AnalyzeResponse(
+            swot=[AnalysisItem(**i) for i in data.get("swot", [])],
+            key_statistics=[AnalysisItem(**i) for i in data.get("key_statistics", [])],
+            trends=[AnalysisItem(**i) for i in data.get("trends", [])],
+            recommendations=[AnalysisItem(**i) for i in data.get("recommendations", [])],
+            summary=data.get("summary", ""),
+        )
+    except (json.JSONDecodeError, ValueError, TypeError) as e:
+        log.warning(f"Analiz JSON ayristirma hatasi, fallback: {e}")
+        return AnalyzeResponse(
+            swot=[AnalysisItem(title="Genel Degerlendirme", content=response[:500])],
+            key_statistics=[],
+            trends=[],
+            recommendations=[],
+            summary=response[:500],
+        )
 
 
 if __name__ == "__main__":

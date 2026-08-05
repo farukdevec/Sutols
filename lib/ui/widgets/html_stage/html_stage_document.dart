@@ -135,26 +135,32 @@ String buildHtmlStageMarkup({
     if (!_isVisibleAtRevealStep(block.revealStep, visibleRevealStep)) {
       continue;
     }
-    final model = block.modelAssetId == null
-        ? null
-        : findPresentation3DModelAsset(block.modelAssetId!);
+    final is3D = block.modelAssetId != null;
+    final catalogModel = is3D ? findPresentation3DModelAsset(block.modelAssetId!) : null;
+    final remoteSource = is3D ? modelSourcesById[block.modelAssetId!] : null;
+    final resolvableSource = catalogModel != null
+        ? modelSourcesById[catalogModel.id] ?? _flutterWebModelAssetPath(catalogModel)
+        : remoteSource;
+    final has3D = resolvableSource != null;
     final componentHtml =
-        model == null ? presentationComponentHtml(block.kind) : '';
-    final hasHtmlComponent = model != null || componentHtml.trim().isNotEmpty;
+        has3D ? '' : presentationComponentHtml(block.kind);
+    final hasHtmlComponent = has3D || componentHtml.trim().isNotEmpty;
     final classes = <String>[
       'sutol-html-component',
-      if (model == null) 'component-${_componentDomKindName(block.kind)}',
-      if (model != null) 'component-3d-model',
+      if (!is3D) 'component-${_componentDomKindName(block.kind)}',
+      if (is3D) 'component-3d-model',
       if (hasHtmlComponent) 'has-html-component',
       if (block.id == selectedComponentBlockId) 'is-selected',
     ].join(' ');
     final hotspotAttr = block.hotspotTargetPageId == null
         ? ''
         : ' data-hotspot-target="${_escapeAttribute(block.hotspotTargetPageId!)}"';
-    final componentInner = model != null
+    final componentInner = has3D
         ? _model3DMarkup(
-            model,
-            modelSourcesById[model.id] ?? _flutterWebModelAssetPath(model),
+            catalogModel?.label ?? block.modelAssetId!,
+            resolvableSource,
+            id: block.modelAssetId!,
+            hasAnimations: catalogModel?.hasAnimations ?? false,
             animationEnabled: block.modelAnimationEnabled,
             orbitTheta: block.modelOrbitTheta,
             orbitPhi: block.modelOrbitPhi,
@@ -163,10 +169,10 @@ String buildHtmlStageMarkup({
         : componentHtml.trim().isEmpty
             ? '<span class="sutol-component-shape"></span>'
             : '<div class="sutol-html-component-inner">$componentHtml</div>';
-    final label = model?.label ?? presentationComponentLabel(block.kind);
-    final modelAttr = model == null
+    final label = catalogModel?.label ?? block.modelAssetId ?? '';
+    final modelAttr = !is3D
         ? ''
-        : ' data-sutol-model-id="${_escapeAttribute(model.id)}" data-sutol-orbit-theta="${block.modelOrbitTheta.toStringAsFixed(2)}" data-sutol-orbit-phi="${block.modelOrbitPhi.toStringAsFixed(2)}"';
+        : ' data-sutol-model-id="${_escapeAttribute(block.modelAssetId!)}" data-sutol-orbit-theta="${block.modelOrbitTheta.toStringAsFixed(2)}" data-sutol-orbit-phi="${block.modelOrbitPhi.toStringAsFixed(2)}"';
     buffer.writeln(
       '<div class="$classes" data-sutol-component-id="${_escapeAttribute(block.id)}"$modelAttr data-reveal-step="${block.revealStep}" aria-label="${_escapeAttribute(label)}"$hotspotAttr style="left:${_pct(block.position.dx)}%;top:${_pct(block.position.dy)}%;width:${_pct(block.size.width)}%;height:${_pct(block.size.height)}%;">$componentInner</div>',
     );
@@ -181,23 +187,24 @@ String buildHtmlStageMarkup({
 }
 
 String _model3DMarkup(
-  Presentation3DModelAsset model,
+  String label,
   String source, {
+  required String id,
+  required bool hasAnimations,
   required bool animationEnabled,
   required double orbitTheta,
   required double orbitPhi,
   bool deferSource = false,
 }) {
-  final animationMarkup =
-      model.hasAnimations && animationEnabled ? ' autoplay' : '';
+  final animationMarkup = hasAnimations && animationEnabled ? ' autoplay' : '';
   final cameraOrbit =
       '${orbitTheta.toStringAsFixed(2)}deg ${orbitPhi.toStringAsFixed(2)}deg auto';
   final sourceMarkup = deferSource
-      ? 'data-sutol-model-source-id="${_escapeAttribute(model.id)}"'
+      ? 'data-sutol-model-source-id="${_escapeAttribute(id)}"'
       : 'src="${_escapeAttribute(source)}"';
   return '''
 <div class="sutol-html-component-inner sutol-3d-model-inner">
-  <model-viewer class="sutol-3d-model-viewer" $sourceMarkup alt="${_escapeAttribute(model.label)}" camera-controls$animationMarkup camera-orbit="$cameraOrbit" interaction-prompt="none" shadow-intensity="1" shadow-softness="0.8" exposure="1" loading="eager" reveal="auto"></model-viewer>
+  <model-viewer class="sutol-3d-model-viewer" $sourceMarkup alt="${_escapeAttribute(label)}" camera-controls$animationMarkup camera-orbit="$cameraOrbit" interaction-prompt="none" shadow-intensity="1" shadow-softness="0.8" exposure="1" loading="eager" reveal="auto"></model-viewer>
 </div>
 ''';
 }

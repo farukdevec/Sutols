@@ -31,6 +31,8 @@ typedef CanvasItemSecondaryTap = void Function(
   Offset globalPosition,
 );
 
+typedef CanvasSecondaryTap = void Function(Offset globalPosition);
+
 typedef CanvasModelRotate = void Function(String itemId, Offset delta);
 
 enum _EditorToolTab {
@@ -1770,6 +1772,7 @@ class PresentationPageCanvas extends StatefulWidget {
     this.onSelectComponentBlock,
     this.onSecondaryTapTextBlock,
     this.onSecondaryTapComponentBlock,
+    this.onSecondaryTapCanvas,
     this.onToggleModelOrbit,
     this.onRotateModel,
     this.onBeginModelOrbit,
@@ -1798,6 +1801,7 @@ class PresentationPageCanvas extends StatefulWidget {
   final ValueChanged<String>? onSelectComponentBlock;
   final CanvasItemSecondaryTap? onSecondaryTapTextBlock;
   final CanvasItemSecondaryTap? onSecondaryTapComponentBlock;
+  final CanvasSecondaryTap? onSecondaryTapCanvas;
   final ValueChanged<String>? onToggleModelOrbit;
   final CanvasModelRotate? onRotateModel;
   final ValueChanged<String>? onBeginModelOrbit;
@@ -2080,6 +2084,11 @@ class _PresentationPageCanvasState extends State<PresentationPageCanvas> {
                   onTap: () {
                     widget.onClearSelection?.call();
                     _stopInlineEditing();
+                  },
+                  onSecondaryTapDown: (details) {
+                    widget.onClearSelection?.call();
+                    _stopInlineEditing();
+                    widget.onSecondaryTapCanvas?.call(details.globalPosition);
                   },
                   onPanStart: _startSelectionDrag,
                   onPanUpdate: _updateSelectionDrag,
