@@ -136,11 +136,8 @@ String buildHtmlStageMarkup({
       continue;
     }
     final is3D = block.modelAssetId != null;
-    final catalogModel = is3D ? findPresentation3DModelAsset(block.modelAssetId!) : null;
     final remoteSource = is3D ? modelSourcesById[block.modelAssetId!] : null;
-    final resolvableSource = catalogModel != null
-        ? modelSourcesById[catalogModel.id] ?? _flutterWebModelAssetPath(catalogModel)
-        : remoteSource;
+    final resolvableSource = remoteSource;
     final has3D = resolvableSource != null;
     final componentHtml =
         has3D ? '' : presentationComponentHtml(block.kind);
@@ -157,10 +154,10 @@ String buildHtmlStageMarkup({
         : ' data-hotspot-target="${_escapeAttribute(block.hotspotTargetPageId!)}"';
     final componentInner = has3D
         ? _model3DMarkup(
-            catalogModel?.label ?? block.modelAssetId!,
+            block.modelAssetId!,
             resolvableSource,
             id: block.modelAssetId!,
-            hasAnimations: catalogModel?.hasAnimations ?? false,
+            hasAnimations: false,
             animationEnabled: block.modelAnimationEnabled,
             orbitTheta: block.modelOrbitTheta,
             orbitPhi: block.modelOrbitPhi,
@@ -169,7 +166,7 @@ String buildHtmlStageMarkup({
         : componentHtml.trim().isEmpty
             ? '<span class="sutol-component-shape"></span>'
             : '<div class="sutol-html-component-inner">$componentHtml</div>';
-    final label = catalogModel?.label ?? block.modelAssetId ?? '';
+    final label = block.modelAssetId ?? '';
     final modelAttr = !is3D
         ? ''
         : ' data-sutol-model-id="${_escapeAttribute(block.modelAssetId!)}" data-sutol-orbit-theta="${block.modelOrbitTheta.toStringAsFixed(2)}" data-sutol-orbit-phi="${block.modelOrbitPhi.toStringAsFixed(2)}"';
@@ -207,10 +204,6 @@ String _model3DMarkup(
   <model-viewer class="sutol-3d-model-viewer" $sourceMarkup alt="${_escapeAttribute(label)}" camera-controls$animationMarkup camera-orbit="$cameraOrbit" interaction-prompt="none" shadow-intensity="1" shadow-softness="0.8" exposure="1" loading="eager" reveal="auto"></model-viewer>
 </div>
 ''';
-}
-
-String _flutterWebModelAssetPath(Presentation3DModelAsset model) {
-  return 'assets/${model.assetPath}';
 }
 
 String _escape(String value) =>

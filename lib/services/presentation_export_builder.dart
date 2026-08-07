@@ -153,12 +153,10 @@ String _embeddedAssetsBootstrap({
       .toSet();
   final modelSources = <String, String>{};
   for (final modelId in usedModelIds) {
-    final model = findPresentation3DModelAsset(modelId);
-    if (model == null) {
-      continue;
+    final source = modelSourcesById[modelId];
+    if (source != null) {
+      modelSources[modelId] = source;
     }
-    modelSources[modelId] =
-        modelSourcesById[modelId] ?? 'assets/${model.assetPath}';
   }
 
   return '''

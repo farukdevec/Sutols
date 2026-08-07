@@ -2,8 +2,7 @@
 /// çözülebilmesi için global kaynak kayıt defteri.
 ///
 /// Key: model doküman ID'si (örn. "01_SWOT_Analiz_Kupu")
-/// Value: yükleme kaynağı — yerel asset yolu (assets/assets/models/...) veya
-/// Cloudflare R2 modelUrl.
+/// Value: yükleme kaynağı — Cloudflare R2 modelUrl.
 class RemoteModelSources {
   RemoteModelSources._();
 

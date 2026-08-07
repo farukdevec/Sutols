@@ -1,14 +1,20 @@
 import 'dart:math' as math;
 
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../models/slide_model.dart';
+import '../services/firestore_rest_helper.dart';
 import '../services/presentation_export_service.dart';
 import '../services/presentation_auto_builder.dart';
 import '../services/presentation_fullscreen_service.dart';
+import '../services/presentation_project_codec.dart';
 import '../services/presentation_project_io.dart';
+import '../services/presentation_project_store.dart';
+import '../services/remote_model_sources.dart';
 import '../state/presentation_controller.dart';
+import '../state/theme_controller.dart';
 import 'presentation_preview_page.dart';
 import 'widgets/editor_shell.dart';
 import 'widgets/html_stage/html_page_stage.dart';
@@ -35,9 +41,17 @@ class HtmlPresentationEditorPage extends StatefulWidget {
   const HtmlPresentationEditorPage({
     super.key,
     required this.controller,
+    this.presentationId,
+    this.initialUpdatedByName,
   });
 
   final PresentationController controller;
+
+  /// Bağlı Firestore sunum ID'si (varsa kayıt buluta yazılır).
+  final String? presentationId;
+
+  /// Açılışta gösterilecek "son düzenleyen" adı.
+  final String? initialUpdatedByName;
 
   @override
   State<HtmlPresentationEditorPage> createState() =>
@@ -48,6 +62,7 @@ class _HtmlPresentationEditorPageState
     extends State<HtmlPresentationEditorPage> {
   late final TextEditingController _textController;
   _HtmlToolTab _activeTab = _HtmlToolTab.text;
+  String? _lastEditorLabel;
 
   @override
   void initState() {
@@ -56,6 +71,10 @@ class _HtmlPresentationEditorPageState
     _textController = TextEditingController(
       text: widget.controller.selectedTextBlock?.text ?? '',
     );
+    final initial = widget.initialUpdatedByName;
+    if (initial != null && initial.trim().isNotEmpty) {
+      _lastEditorLabel = initial.trim();
+    }
   }
 
   @override
@@ -112,6 +131,32 @@ class _HtmlPresentationEditorPageState
   }
 
   Future<void> _saveProject() async {
+    final presentationId = widget.presentationId;
+    if (presentationId != null) {
+      final json = PresentationProjectCodec.encodeProject(
+        pages: widget.controller.pages.toList(growable: false),
+        effectSettings: widget.controller.effectSettings,
+      );
+      try {
+        await PresentationProjectStore.saveProject(
+          presentationId: presentationId,
+          json: json,
+        );
+        final user = FirebaseAuth.instance.currentUser;
+        final name = user != null &&
+                (user.displayName ?? '').trim().isNotEmpty
+            ? user.displayName!.trim()
+            : (user?.email ?? '');
+        if (mounted) {
+          setState(() => _lastEditorLabel = name);
+          _showSnack('Sunum buluta kaydedildi.');
+        }
+      } catch (e) {
+        _showSnack('Buluta kaydedilemedi: $e');
+      }
+      return;
+    }
+
     await savePresentationProjectAsJson(
       pages: widget.controller.pages.toList(growable: false),
       effectSettings: widget.controller.effectSettings,
@@ -253,6 +298,7 @@ class _HtmlPresentationEditorPageState
                                 onAddText: widget.controller.addTextBlock,
                                 onRemoveText: widget.controller.removeSelectedTextBlock,
                                 canRemoveText: widget.controller.canRemoveTextBlock,
+                                lastEditorLabel: _lastEditorLabel,
                               ),
                               const SizedBox(height: 12),
                               Expanded(
@@ -287,6 +333,7 @@ class _HtmlPresentationEditorPageState
                               onRedo: widget.controller.redo,
                               canUndo: widget.controller.canUndo,
                               canRedo: widget.controller.canRedo,
+                              lastEditorLabel: _lastEditorLabel,
                             ),
                             const SizedBox(height: 14),
                             Expanded(
@@ -370,6 +417,7 @@ class _HtmlHeader extends StatelessWidget {
     required this.onRedo,
     required this.canUndo,
     required this.canRedo,
+    this.lastEditorLabel,
   });
 
   final int pageCount;
@@ -383,6 +431,7 @@ class _HtmlHeader extends StatelessWidget {
   final VoidCallback onRedo;
   final bool canUndo;
   final bool canRedo;
+  final String? lastEditorLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -423,6 +472,12 @@ class _HtmlHeader extends StatelessWidget {
         icon: Icons.html_rounded,
         label: 'HTML / CSS',
       ),
+      if (lastEditorLabel != null && lastEditorLabel!.isNotEmpty)
+        _HeaderBadge(
+          icon: Icons.edit_rounded,
+          label: 'Son düzenleme: $lastEditorLabel',
+        ),
+      _ThemeToggleButton(),
       _HistoryButtons(
         onUndo: onUndo,
         onRedo: onRedo,
@@ -591,6 +646,51 @@ enum _FileMenuAction {
   load,
   exportHtml,
   exportPdf,
+}
+
+class _ThemeToggleButton extends StatelessWidget {
+  const _ThemeToggleButton();
+
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder<ThemeMode>(
+      valueListenable: ThemeController.instance.mode,
+      builder: (context, mode, _) {
+        final isDark = mode == ThemeMode.dark;
+        return Material(
+          color: context.sutolColors.surfaceSubtle,
+          borderRadius: BorderRadius.circular(18),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(18),
+            onTap: ThemeController.instance.toggle,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  Icon(
+                    isDark
+                        ? Icons.light_mode_rounded
+                        : Icons.dark_mode_rounded,
+                    size: 18,
+                    color: context._htmlInk,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    isDark ? 'Açık Tema' : 'Koyu Tema',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: context._htmlInk,
+                          fontWeight: FontWeight.w700,
+                        ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
 }
 
 class _FileMenuButton extends StatelessWidget {
@@ -763,6 +863,7 @@ class _HtmlStudioHeader extends StatelessWidget {
     required this.onAddText,
     required this.onRemoveText,
     required this.canRemoveText,
+    this.lastEditorLabel,
   });
 
   final int pageCount;
@@ -779,6 +880,7 @@ class _HtmlStudioHeader extends StatelessWidget {
   final VoidCallback onAddText;
   final VoidCallback onRemoveText;
   final bool canRemoveText;
+  final String? lastEditorLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -823,6 +925,15 @@ class _HtmlStudioHeader extends StatelessWidget {
             
           ),
           const Spacer(),
+          if (lastEditorLabel != null && lastEditorLabel!.isNotEmpty) ...[
+            _StudioHeaderInfoChip(
+              icon: Icons.edit_rounded,
+              label: 'Son düzenleme: $lastEditorLabel',
+            ),
+            const SizedBox(width: 8),
+          ],
+          _ThemeToggleButton(),
+          const SizedBox(width: 8),
           _ToolbarAction(
             icon: Icons.add_rounded,
             onTap: onAddText,
@@ -2057,7 +2168,6 @@ class _Html3DModelControls extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final selectedModelId = controller.selectedComponentBlock?.modelAssetId;
-    final canRemoveModel = selectedModelId != null;
 
     return Container(
       width: double.infinity,
@@ -2075,11 +2185,31 @@ class _Html3DModelControls extends StatelessWidget {
             _Model3DLibraryCard(
               model: model,
               isSelected: selectedModelId == model.id,
-              onAdd: () => controller.add3DModelBlock(model),
+              onAdd: () => _addCatalogModel(controller, model),
             ),
         ],
       ),
     );
+  }
+
+  /// Katalog modellerinin kaynak URL'si buluttadır (R2); sahnenin
+  /// çözebilmesi için Firestore'daki modelUrl'i kayıt defterine işler.
+  static Future<void> _addCatalogModel(
+    PresentationController controller,
+    Presentation3DModelAsset model,
+  ) async {
+    if (RemoteModelSources.sourceFor(model.id) == null) {
+      final doc =
+          await FirestoreRestHelper.getDocument('models/${model.id}');
+      final fields = doc?['fields'] as Map<String, dynamic>?;
+      final url = fields == null
+          ? ''
+          : FirestoreRestHelper.stringField(fields, 'modelUrl');
+      if (url.isNotEmpty) {
+        RemoteModelSources.registerAll(<String, String>{model.id: url});
+      }
+    }
+    controller.add3DModelBlock(model);
   }
 }
 

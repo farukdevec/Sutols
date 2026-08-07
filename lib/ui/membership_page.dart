@@ -17,7 +17,11 @@ class MembershipPage extends StatelessWidget {
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 1100),
           child: Padding(
-            padding: const EdgeInsets.all(AppSpacing.s32),
+            padding: EdgeInsets.all(
+              MediaQuery.sizeOf(context).width < 600
+                  ? AppSpacing.s16
+                  : AppSpacing.s32,
+            ),
             child: Column(
               children: [
                 Text(

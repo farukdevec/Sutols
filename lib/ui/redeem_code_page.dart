@@ -4,16 +4,23 @@ import 'package:flutter/material.dart';
 
 import 'design/design_system.dart';
 
-/// Kullanıcının promosyon kodu talebi oluşturduğu sayfa.
+/// Kullanıcının promosyon kodunu anında kullandığı sayfa.
 ///
-/// Kod doğrulaması istemcide yapılmaz: "Talep Et -> Admin Onayla" akışıyla
-/// promoRequests koleksiyonuna "pending" kayıt atılır; tier güncellemesi
-/// admin onayı sonrası uygulanır.
+/// Kod `promoCodes` dokümanından okunur, geçerliliği doğrulanır ve tier
+/// güncellemesi + `usedCount` artışı tek transaction'da atomik yapılır.
+/// Kurallar (firestore.rules) bu işlemi bağımsız olarak da doğrular
+/// (`isRedeemableCode`); istemci yalnızca deneyim katmanıdır.
 class RedeemCodePage extends StatefulWidget {
   const RedeemCodePage({super.key});
 
   @override
   State<RedeemCodePage> createState() => _RedeemCodePageState();
+}
+
+class _RedeemException implements Exception {
+  const _RedeemException(this.message);
+
+  final String message;
 }
 
 class _RedeemCodePageState extends State<RedeemCodePage> {
@@ -25,6 +32,18 @@ class _RedeemCodePageState extends State<RedeemCodePage> {
     _codeController.dispose();
     super.dispose();
   }
+
+  static int _tierRank(String tier) => switch (tier) {
+        'premium' => 3,
+        'plus' => 2,
+        _ => 1,
+      };
+
+  static String _tierLabel(String tier) => switch (tier) {
+        'premium' => 'Premium',
+        'plus' => 'Plus',
+        _ => 'Ücretsiz',
+      };
 
   Future<void> _redeem() async {
     final code = _codeController.text.trim().toUpperCase();
@@ -40,38 +59,68 @@ class _RedeemCodePageState extends State<RedeemCodePage> {
       return;
     }
 
+    final db = FirebaseFirestore.instance;
     setState(() => _busy = true);
     try {
-      final pending = await FirebaseFirestore.instance
-          .collection('promoRequests')
-          .where('uid', isEqualTo: user.uid)
-          .where('status', isEqualTo: 'pending')
-          .where('code', isEqualTo: code)
-          .limit(1)
-          .get();
+      await db.runTransaction((transaction) async {
+        final codeSnap =
+            await transaction.get(db.collection('promoCodes').doc(code));
+        if (!codeSnap.exists) {
+          throw const _RedeemException('Geçersiz kod. Kontrol edip tekrar deneyin.');
+        }
+        final data = codeSnap.data()!;
 
-      if (pending.docs.isNotEmpty) {
-        _showMessage('Bu kod için zaten bekleyen bir talebiniz var.',
-            isError: true);
-        return;
-      }
+        if (data['active'] != true) {
+          throw const _RedeemException('Bu kod şu anda aktif değil.');
+        }
 
-      await FirebaseFirestore.instance.collection('promoRequests').add({
-        'uid': user.uid,
-        'email': user.email ?? '',
-        'code': code,
-        'status': 'pending',
-        'createdAt': FieldValue.serverTimestamp(),
+        final expiresAt = data['expiresAt'] as DateTime?;
+        if (expiresAt != null && !expiresAt.isAfter(DateTime.now().toUtc())) {
+          throw const _RedeemException('Bu kodun süresi dolmuş.');
+        }
+
+        final maxUses = data['maxUses'] as int?;
+        final usedCount = (data['usedCount'] as int?) ?? 0;
+        if (maxUses != null && usedCount >= maxUses) {
+          throw const _RedeemException('Bu kodun kullanım limiti doldu.');
+        }
+
+        final targetUid = data['targetUid'] as String?;
+        if (targetUid != null &&
+            targetUid.isNotEmpty &&
+            targetUid != user.uid) {
+          throw const _RedeemException('Bu kod başka bir kullanıcıya özeldir.');
+        }
+
+        final grantsTier = data['grantsTier'] as String? ?? '';
+        final userSnap = await transaction.get(db.collection('users').doc(user.uid));
+        final currentTier = (userSnap.data()?['tier'] as String?) ?? 'free';
+        if (grantsTier.isEmpty || _tierRank(grantsTier) <= _tierRank(currentTier)) {
+          throw _RedeemException('Zaten ${_tierLabel(currentTier)} planındasınız.');
+        }
+
+        transaction.set(
+          db.collection('users').doc(user.uid),
+          {
+            'tier': grantsTier,
+            'redeemedCode': code,
+            'redeemedAt': FieldValue.serverTimestamp(),
+          },
+          SetOptions(merge: true),
+        );
+        transaction.update(db.collection('promoCodes').doc(code), {
+          'usedCount': FieldValue.increment(1),
+        });
       });
 
       if (!mounted) return;
       _codeController.clear();
-      _showMessage(
-        'Talebiniz alındı, onaylandıktan sonra hesabınıza tanımlanacaktır.',
-        isError: false,
-      );
+      _showMessage('Kod başarıyla kullanıldı, planınız güncellendi!',
+          isError: false);
+    } on _RedeemException catch (e) {
+      _showMessage(e.message, isError: true);
     } catch (e) {
-      _showMessage('Talep oluşturulamadı: $e', isError: true);
+      _showMessage('Kod kullanılamadı: $e', isError: true);
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -91,6 +140,7 @@ class _RedeemCodePageState extends State<RedeemCodePage> {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final narrow = MediaQuery.sizeOf(context).width < 600;
 
     return Scaffold(
       backgroundColor: colors.surface,
@@ -99,10 +149,12 @@ class _RedeemCodePageState extends State<RedeemCodePage> {
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 480),
           child: Padding(
-            padding: const EdgeInsets.all(AppSpacing.s32),
+            padding: EdgeInsets.all(narrow ? AppSpacing.s16 : AppSpacing.s32),
             child: Card(
               child: Padding(
-                padding: const EdgeInsets.all(AppSpacing.s32),
+                padding: EdgeInsets.all(
+                  narrow ? AppSpacing.s24 : AppSpacing.s32,
+                ),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -116,7 +168,7 @@ class _RedeemCodePageState extends State<RedeemCodePage> {
                     ),
                     const SizedBox(height: AppSpacing.s8),
                     Text(
-                      'Kodunuz onay için gönderilir; onaylandıktan sonra planınız güncellenir.',
+                      'Kod doğrulanır ve planınız anında güncellenir.',
                       textAlign: TextAlign.center,
                       style: AppTypography.bodyMedium.copyWith(
                         color: colors.textSecondary,
@@ -142,8 +194,8 @@ class _RedeemCodePageState extends State<RedeemCodePage> {
                               height: 18,
                               child: CircularProgressIndicator(strokeWidth: 2),
                             )
-                          : const Icon(Icons.send_rounded),
-                      label: Text(_busy ? 'Gönderiliyor...' : 'Kod Gönder'),
+                          : const Icon(Icons.check_rounded),
+                      label: Text(_busy ? 'Kullanılıyor...' : 'Kodu Kullan'),
                     ),
                   ],
                 ),

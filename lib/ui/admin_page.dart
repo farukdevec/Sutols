@@ -269,66 +269,78 @@ class _UserTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final narrow = MediaQuery.sizeOf(context).width < 480;
     final isSuspended = user.effectiveStatus == 'suspended';
     final statusColor = isSuspended ? colors.danger : colors.success;
+
+    final info = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          user.email.isNotEmpty ? user.email : user.id,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: AppTypography.titleMedium.copyWith(
+            color: colors.textPrimary,
+          ),
+        ),
+        const SizedBox(height: AppSpacing.s8),
+        Wrap(
+          spacing: AppSpacing.s8,
+          runSpacing: AppSpacing.s8,
+          children: [
+            Chip(
+              label: Text('Tier: ${user.tier.isEmpty ? 'free' : user.tier}'),
+              visualDensity: VisualDensity.compact,
+            ),
+            Chip(
+              label: Text('${user.presentationCount} sunum'),
+              visualDensity: VisualDensity.compact,
+            ),
+            Chip(
+              label: Text(
+                isSuspended ? 'Askıda' : 'Aktif',
+                style: TextStyle(
+                  color: statusColor,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              visualDensity: VisualDensity.compact,
+              side: BorderSide(color: statusColor.withValues(alpha: 0.5)),
+            ),
+          ],
+        ),
+      ],
+    );
+
+    final action = FilledButton.tonalIcon(
+      onPressed: onToggle,
+      icon: Icon(
+        isSuspended ? Icons.play_circle_outline : Icons.pause_circle_outline,
+        size: 18,
+      ),
+      label: Text(isSuspended ? 'Aktifleştir' : 'Askıya Al'),
+    );
 
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.s16),
-        child: Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+        child: narrow
+            ? Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Text(
-                    user.email.isNotEmpty ? user.email : user.id,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: AppTypography.titleMedium.copyWith(
-                      color: colors.textPrimary,
-                    ),
-                  ),
-                  const SizedBox(height: AppSpacing.s8),
-                  Wrap(
-                    spacing: AppSpacing.s8,
-                    runSpacing: AppSpacing.s8,
-                    children: [
-                      Chip(
-                        label: Text('Tier: ${user.tier.isEmpty ? 'free' : user.tier}'),
-                        visualDensity: VisualDensity.compact,
-                      ),
-                      Chip(
-                        label: Text('${user.presentationCount} sunum'),
-                        visualDensity: VisualDensity.compact,
-                      ),
-                      Chip(
-                        label: Text(
-                          isSuspended ? 'Askıda' : 'Aktif',
-                          style: TextStyle(
-                            color: statusColor,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        visualDensity: VisualDensity.compact,
-                        side: BorderSide(color: statusColor.withValues(alpha: 0.5)),
-                      ),
-                    ],
-                  ),
+                  info,
+                  const SizedBox(height: AppSpacing.s12),
+                  Align(alignment: Alignment.centerRight, child: action),
+                ],
+              )
+            : Row(
+                children: [
+                  Expanded(child: info),
+                  const SizedBox(width: AppSpacing.s12),
+                  action,
                 ],
               ),
-            ),
-            const SizedBox(width: AppSpacing.s12),
-            FilledButton.tonalIcon(
-              onPressed: onToggle,
-              icon: Icon(
-                isSuspended ? Icons.play_circle_outline : Icons.pause_circle_outline,
-                size: 18,
-              ),
-              label: Text(isSuspended ? 'Aktifleştir' : 'Askıya Al'),
-            ),
-          ],
-        ),
       ),
     );
   }

@@ -14,29 +14,76 @@ service cloud.firestore {
 
     match /presentations/{presentationId} {
       allow read: if request.auth != null
-                   && (isAdmin() || request.auth.uid == resource.data.userId);
-      allow create: if request.auth != null && request.auth.uid == request.resource.data.userId;
-      allow update: if request.auth != null
+                   && (isAdmin() || request.auth.uid == resource.data.userId
+                       || resource.data.shared == true);
+      allow create: if request.auth != null && isNotSuspended(request.auth.uid)
+                    && request.auth.uid == request.resource.data.userId;
+      allow update: if request.auth != null && isNotSuspended(request.auth.uid)
                     && (isAdmin() || (
-                         request.auth.uid == resource.data.userId
+                         (request.auth.uid == resource.data.userId
+                          || resource.data.shared == true)
                          && request.resource.data.userId == resource.data.userId));
-      allow delete: if request.auth != null && request.auth.uid == resource.data.userId;
+      allow delete: if request.auth != null && isNotSuspended(request.auth.uid)
+                    && (isAdmin() || request.auth.uid == resource.data.userId);
+    }
+
+
+    // Slaytlar alt koleksiyonda; sahiplik ana belge üzerinden doğrulanır.
+    match /presentations/{presentationId}/slides/{slideId} {
+      allow read: if request.auth != null
+                  && (isAdmin() || parentReadable(request.auth.uid, presentationId));
+      allow create: if request.auth != null && isNotSuspended(request.auth.uid)
+                    && parentWritable(request.auth.uid, presentationId)
+                    && request.resource.data.order is int;
+      allow update: if request.auth != null && isNotSuspended(request.auth.uid)
+                    && (isAdmin() || parentWritable(request.auth.uid, presentationId));
+      allow delete: if request.auth != null && isNotSuspended(request.auth.uid)
+                    && (isAdmin() || parentWritable(request.auth.uid, presentationId));
+    }
+
+
+    // Editör proje durumu (deck JSON). Paylaşılan sunumda her yetkili kullanıcı
+    // kendi kimliğiyle yazabilir (updatedByUid imzası zorunlu).
+    match /presentations/{presentationId}/project/{projectDocId} {
+      allow read: if request.auth != null
+                  && (isAdmin() || parentReadable(request.auth.uid, presentationId));
+      allow create: if request.auth != null && isNotSuspended(request.auth.uid)
+                    && (isAdmin() || (
+                         parentWritable(request.auth.uid, presentationId)
+                         && request.resource.data.updatedByUid == request.auth.uid));
+      allow update: if request.auth != null && isNotSuspended(request.auth.uid)
+                    && (isAdmin() || (
+                         parentWritable(request.auth.uid, presentationId)
+                         && request.resource.data.updatedByUid == request.auth.uid));
+      allow delete: if false;
     }
 
 
     match /users/{uid} {
       allow read: if request.auth != null && (isAdmin() || request.auth.uid == uid);
-      allow create: if request.auth != null && request.auth.uid == uid
+      allow create: if request.auth != null && isNotSuspended(request.auth.uid)
+                    && request.auth.uid == uid
                     && request.resource.data.tier == 'free'
                     && request.resource.data.presentationCount == 0
                     && (request.resource.data.role == 'user'
                         || !('role' in request.resource.data));
-      allow update: if request.auth != null
+      allow update: if request.auth != null && isNotSuspended(request.auth.uid)
                     && (isAdmin() || (
                          request.auth.uid == uid
-                         && request.resource.data.tier == resource.data.tier
-                         && request.resource.data.diff(resource.data).affectedKeys()
-                              .hasOnly(['lastActiveAt', 'presentationCount', 'displayName', 'email'])));
+                         && (
+                           // Normal sınırlı alan güncellemeleri (tier değişmez)
+                           (request.resource.data.tier == resource.data.tier
+                            && request.resource.data.diff(resource.data).affectedKeys()
+                                 .hasOnly(['lastActiveAt', 'presentationCount', 'displayName', 'email']))
+                           ||
+                           // Promosyon kodu ile anında tier yükseltme
+                           (request.resource.data.diff(resource.data).affectedKeys()
+                                .hasOnly(['tier', 'redeemedCode', 'redeemedAt'])
+                            && request.resource.data.tier != resource.data.tier
+                            && isRedeemableCode(request.resource.data.redeemedCode,
+                                                request.auth.uid,
+                                                request.resource.data.tier))
+                         )));
       allow delete: if false;
     }
 
@@ -48,42 +95,105 @@ service cloud.firestore {
 
 
     match /promoCodes/{code} {
-      allow read: if isAdmin(); // sadece admin okuyabilir (tier haritalaması için)
-      allow write: if isAdmin(); // sadece admin oluşturabilir/düzenleyebilir
+      // Hedefsiz kodlar her giriş yapan kullanıcı tarafından tek tek okunabilir
+      // (kullanım için); hedefli kodları yalnızca hedef kullanıcı ve admin görür.
+      // Sorgu/liste çekimleri kurallar gereği engellenir (koşul içerik bağımlı),
+      // böylece kodlar enumerate edilemez.
+      allow read: if request.auth != null
+                  && (isAdmin() || codeTargets(request.auth.uid));
+      allow create: if isAdmin();
+      // Kullanıcı yalnızca kendi kullanımı sırasında usedCount artırabilir;
+      // tier yükseltmesi users/{uid} güncelleme kuralında doğrulanır.
+      allow update: if isAdmin()
+                    || (request.auth != null
+                        && isNotSuspended(request.auth.uid)
+                        && request.resource.data.diff(resource.data).affectedKeys()
+                             .hasOnly(['usedCount'])
+                        && request.resource.data.usedCount == resource.data.usedCount + 1);
+      allow delete: if isAdmin();
     }
 
 
-    match /promoRequests/{requestId} {
-      // Kullanıcı yalnızca kendi adına ve yalnızca "pending" ile talep açabilir.
-      allow create: if request.auth != null
-                    && request.auth.uid == request.resource.data.uid
-                    && request.resource.data.status == 'pending';
-      // Kullanıcı kendi talebini, admin tüm talepleri okuyabilir.
+    // Günlük sunum kotası: users/{uid}/usage/{date} (docId = YYYY-MM-DD).
+    match /users/{uid}/usage/{date} {
       allow read: if request.auth != null
-                  && (isAdmin() || request.resource.data.uid == request.auth.uid);
-      // Durumu yalnızca admin güncelleyebilir (onay/red).
-      allow update: if isAdmin();
-      allow delete: if false;
-    }
-
-
-    match /usage/{usageId} {
-      allow read: if request.auth != null
-                  && (isAdmin() || resource.data.uid == request.auth.uid);
-      allow create: if request.auth != null
-                    && request.resource.data.uid == request.auth.uid
+                  && (isAdmin() || request.auth.uid == uid);
+      allow create: if request.auth != null && isNotSuspended(request.auth.uid)
+                    && request.auth.uid == uid
                     && request.resource.data.count == 1;
-      allow update: if request.auth != null
-                    && resource.data.uid == request.auth.uid
+      allow update: if request.auth != null && isNotSuspended(request.auth.uid)
+                    && request.auth.uid == uid
                     && request.resource.data.count == resource.data.count + 1
                     && request.resource.data.count <= dailyLimitFor(request.auth.uid);
       allow delete: if false;
     }
 
 
+    // Promosyon talepleri akışı kaldırıldı; koleksiyon tamamen kapalıdır.
+    match /promoRequests/{requestId} {
+      allow read: if false;
+      allow write: if false;
+    }
+
+
     function isAdmin() {
-      return request.auth != null &&
-        exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+      return request.auth != null && (
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid)) ||
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid))
+         && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin')
+      );
+    }
+
+
+    // Askıya alınmış kullanıcı hiçbir yazma işlemi yapamaz.
+    // Adminler bu kısıtlamadan muaftır (admin sistemi bozulmaz).
+    // Dokümanı olmayan kullanıcı askıda sayılmaz (kayıt akışı korunur).
+    function isNotSuspended(uid) {
+      return isAdmin()
+        || !(exists(/databases/$(database)/documents/users/$(uid))
+             && get(/databases/$(database)/documents/users/$(uid)).data.status == 'suspended');
+    }
+
+
+    function parentOwnedBy(uid, presentationId) {
+      return get(/databases/$(database)/documents/presentations/$(presentationId)).data.userId == uid;
+    }
+
+
+    function parentShared(presentationId) {
+      return get(/databases/$(database)/documents/presentations/$(presentationId)).data.shared == true;
+    }
+
+
+    function parentReadable(uid, presentationId) {
+      return parentOwnedBy(uid, presentationId) || parentShared(presentationId);
+    }
+
+
+    function parentWritable(uid, presentationId) {
+      return parentOwnedBy(uid, presentationId) || parentShared(presentationId);
+    }
+
+
+    // Kod, isteyen kullanıcı için okunabilir mi?
+    function codeTargets(uid) {
+      return !('targetUid' in resource.data)
+        || resource.data.targetUid == ''
+        || resource.data.targetUid == uid;
+    }
+
+
+    // Kod geçerli ve bu kullanıcı için kullanılabilir mi?
+    // (tier yükseltme kuralının güvence katmanı: istemci hilesine karşı.)
+    function isRedeemableCode(code, uid, tier) {
+      let path = /databases/$(database)/documents/promoCodes/$(code);
+      return exists(path)
+        && get(path).data.active == true
+        && (!('expiresAt' in get(path).data) || get(path).data.expiresAt > request.time)
+        && (!('maxUses' in get(path).data)
+            || (('usedCount' in get(path).data) && get(path).data.usedCount < get(path).data.maxUses))
+        && (!('targetUid' in get(path).data) || get(path).data.targetUid == '' || get(path).data.targetUid == uid)
+        && get(path).data.grantsTier == tier;
     }
 
 

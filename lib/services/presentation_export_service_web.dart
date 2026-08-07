@@ -4,10 +4,11 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:html' as html;
 
-import 'package:flutter/services.dart';
+import 'package:http/http.dart' as http;
 
 import '../models/slide_model.dart';
 import 'presentation_export_builder.dart';
+import 'remote_model_sources.dart';
 
 Future<void> exportPresentationAsHtml({
   required List<PresentationPage> pages,
@@ -77,22 +78,28 @@ Future<Map<String, String>> _embeddedModelSources(
   final sources = <String, String>{};
 
   for (final modelId in modelIds) {
-    final model = findPresentation3DModelAsset(modelId);
-    if (model == null) {
-      continue;
-    }
-    final cached = _embeddedModelSourceCache[model.id];
+    final cached = _embeddedModelSourceCache[modelId];
     if (cached != null) {
-      sources[model.id] = cached;
+      sources[modelId] = cached;
       continue;
     }
-    final data = await rootBundle.load(model.assetPath);
-    final bytes =
-        data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes);
-    await Future<void>.delayed(Duration.zero);
-    final source = 'data:model/gltf-binary;base64,${base64Encode(bytes)}';
-    _embeddedModelSourceCache[model.id] = source;
-    sources[model.id] = source;
+    final source = RemoteModelSources.sourceFor(modelId);
+    if (source == null || !source.startsWith('http')) {
+      continue;
+    }
+    try {
+      final response = await http.get(Uri.parse(source));
+      if (response.statusCode != 200) {
+        continue;
+      }
+      await Future<void>.delayed(Duration.zero);
+      final embedded =
+          'data:model/gltf-binary;base64,${base64Encode(response.bodyBytes)}';
+      _embeddedModelSourceCache[modelId] = embedded;
+      sources[modelId] = embedded;
+    } catch (_) {
+      continue;
+    }
   }
 
   return sources;

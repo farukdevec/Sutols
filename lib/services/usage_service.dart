@@ -5,8 +5,7 @@ class UsageService {
 
   Future<bool> tryConsumeDailyQuota(String uid, int dailyLimit) async {
     final today = DateTime.now().toIso8601String().substring(0, 10);
-    final docId = '${uid}_$today';
-    final ref = _db.collection('usage').doc(docId);
+    final ref = _db.collection('users').doc(uid).collection('usage').doc(today);
 
     try {
       return await _db.runTransaction((transaction) async {

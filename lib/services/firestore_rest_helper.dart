@@ -113,6 +113,20 @@ class FirestoreRestHelper {
     return jsonDecode(response.body) as Map<String, dynamic>;
   }
 
+  /// Dokümanı siler (DELETE .../{path}).
+  static Future<void> deleteDocument(String path) async {
+    final token = await authToken();
+    final response = await http.delete(
+      Uri.parse('$apiBase/$path'),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception(
+          'Firestore silme hatası (HTTP ${response.statusCode}): ${response.body}');
+    }
+  }
+
   /// REST API için geçerli RFC3339 UTC zaman damgası üretir.
   /// (Firestore REST, server timestamp sentinel desteklemez; timestampValue
   /// yalnızca "2014-10-02T15:01:23Z" formatını kabul eder.)
@@ -120,11 +134,34 @@ class FirestoreRestHelper {
 
   /// structuredQuery çalıştırır (POST .../documents:runQuery).
   /// Sonucu doküman map listesi olarak döndürür.
+  ///
+  /// Alt koleksiyon sorguları REST'te URL yoluyla verilir ("from" yalnızca
+  /// collectionId + allDescendants destekler). [from] girdisindeki göreli
+  /// `parent` (örn. "presentations/{id}") + `collectionId` ("slides") birlikte
+  /// sorgu URL'sine taşınır: .../documents/presentations/{id}/slides:runQuery.
   static Future<List<Map<String, dynamic>>> runQuery(
       Map<String, dynamic> structuredQuery) async {
+    String? subcollectionPath;
+    final from = structuredQuery['from'] as List?;
+    if (from != null) {
+      for (final entry in from) {
+        if (entry is Map<String, dynamic> &&
+            entry['parent'] is String &&
+            entry['collectionId'] is String) {
+          subcollectionPath =
+              '${entry['parent']}/${entry['collectionId']}';
+          entry.remove('parent');
+        }
+      }
+    }
     final token = await authToken();
+    final url = Uri.parse(
+      subcollectionPath == null
+          ? '$apiBase:runQuery'
+          : '$apiBase/$subcollectionPath:runQuery',
+    );
     final response = await http.post(
-      Uri.parse('$apiBase:runQuery'),
+      url,
       headers: {
         'Authorization': 'Bearer $token',
         'Content-Type': 'application/json',

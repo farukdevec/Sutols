@@ -6,8 +6,10 @@ import '../design/design_system.dart';
 import 'admin_access_denied_page.dart';
 import 'admin_page.dart';
 
-/// /admin route'unu korur: admins/{uid} dokümanı varsa [AdminPage],
-/// değilse [AdminAccessDeniedPage] gösterir.
+/// /admin route'unu korur. Yetki iki yoldan biriyle doğrulanır:
+/// 1) admins/{uid} dokümanı mevcutsa (güncel yöntem),
+/// 2) users/{uid}.role == 'admin' ise (eski yöntem).
+/// İkisi de geçerli değilse [AdminAccessDeniedPage] gösterilir.
 class AdminGate extends StatefulWidget {
   const AdminGate({super.key});
 
@@ -28,9 +30,19 @@ class _AdminGateState extends State<AdminGate> {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return false;
 
+    // 1) Güncel yol: admins/{uid} dokümanı (rules: yalnız admin okuyabilir).
     try {
-      final doc = await FirestoreRestHelper.getDocument('admins/$uid');
-      return doc != null;
+      final adminDoc = await FirestoreRestHelper.getDocument('admins/$uid');
+      if (adminDoc != null) return true;
+    } catch (_) {
+      // Eski canlı kurallar admins okumasını reddedebilir; role yoluna düş.
+    }
+
+    // 2) Eski yol: users/{uid}.role == 'admin'.
+    try {
+      final userDoc = await FirestoreRestHelper.getDocument('users/$uid');
+      final fields = userDoc?['fields'] as Map<String, dynamic>? ?? {};
+      return FirestoreRestHelper.stringField(fields, 'role') == 'admin';
     } catch (_) {
       // Best-effort: hata durumunda erişim kapalı kalsın.
       return false;

@@ -4,7 +4,10 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
+import '../services/firestore_rest_helper.dart';
+import '../services/presentation_project_codec.dart';
 import 'design/design_system.dart';
+import 'widgets/share_presentation_dialog.dart';
 
 class PresentationViewPage extends StatefulWidget {
   const PresentationViewPage({super.key, required this.presentationId});
@@ -19,7 +22,8 @@ class _PresentationViewPageState extends State<PresentationViewPage> {
   static const String _apiBase =
       'https://firestore.googleapis.com/v1/projects/sutols/databases/(default)/documents';
 
-  late final Future<Map<String, dynamic>> _future;
+  late Future<Map<String, dynamic>> _future;
+  Map<String, dynamic>? _shareInfo;
 
   @override
   void initState() {
@@ -46,10 +50,108 @@ class _PresentationViewPageState extends State<PresentationViewPage> {
     final doc = jsonDecode(response.body) as Map<String, dynamic>;
     final fields = doc['fields'] as Map<String, dynamic>? ?? {};
 
+    _shareInfo = {
+      'userId': _stringField(fields, 'userId'),
+      'shared': fields['shared']?['booleanValue'] as bool? ?? false,
+    };
+
+    String? updatedByName;
+
+    // Editör deck'i varsa (cloud kayıtlı/paylaşılan sunum) onu göster.
+    final projectDoc = await FirestoreRestHelper.getDocument(
+      'presentations/$presentationId/project/data',
+    );
+    var slides = <Map<String, dynamic>>[];
+    if (projectDoc != null) {
+      final projectFields =
+          projectDoc['fields'] as Map<String, dynamic>? ?? {};
+      final projectJson =
+          FirestoreRestHelper.stringField(projectFields, 'json');
+      updatedByName =
+          FirestoreRestHelper.stringField(projectFields, 'updatedByName');
+      if (projectJson.isNotEmpty) {
+        try {
+          final decoded = PresentationProjectCodec.decodeProject(projectJson);
+          for (final page in decoded.pages) {
+            final title = page.textBlocks.isNotEmpty
+                ? page.textBlocks.first.text
+                : '';
+            final content = page.textBlocks
+                .skip(1)
+                .map((b) => b.text)
+                .where((t) => t.isNotEmpty)
+                .join('\n');
+            final modelIds = page.componentBlocks
+                .map((b) => b.modelAssetId)
+                .whereType<String>()
+                .toList();
+            slides.add({
+              'title': title,
+              'content': content,
+              'layout': page.backgroundKind.name,
+              'modelIds': modelIds,
+            });
+          }
+        } catch (_) {
+          slides = [];
+        }
+      }
+    }
+
+    // Eski sunumlar için yedek 1: ana belgedeki slides dizisi.
+    if (slides.isEmpty && fields['slides'] != null) {
+      slides = _slidesField(fields['slides']);
+    }
+
+    // Yedek 2: slides alt koleksiyonu (order alanıyla).
+    if (slides.isEmpty) {
+      final slideDocs = await FirestoreRestHelper.runQuery({
+        'from': [
+          {
+            'parent': 'presentations/$presentationId',
+            'collectionId': 'slides',
+          },
+        ],
+        'orderBy': [
+          {'field': {'fieldPath': 'order'}, 'direction': 'ASCENDING'},
+        ],
+      });
+      slides = slideDocs.map<Map<String, dynamic>>((slideDoc) {
+        final slideFields =
+            slideDoc['fields'] as Map<String, dynamic>? ?? {};
+        return {
+          'title': FirestoreRestHelper.stringField(slideFields, 'title'),
+          'content': FirestoreRestHelper.stringField(slideFields, 'content'),
+          'layout': FirestoreRestHelper.stringField(slideFields, 'layout'),
+          'modelIds': FirestoreRestHelper.arrayField(slideFields, 'modelIds'),
+        };
+      }).toList();
+    }
+
     return {
       'topic': _stringField(fields, 'topic'),
-      'slides': _slidesField(fields['slides']),
+      'slides': slides,
+      'updatedByName': updatedByName ?? '',
     };
+  }
+
+  Future<void> _openShareDialog() async {
+    final user = FirebaseAuth.instance.currentUser;
+    final info = _shareInfo;
+    if (user == null || info == null) return;
+
+    await showDialog<void>(
+      context: context,
+      builder: (_) => SharePresentationDialog(
+        presentationId: widget.presentationId,
+        isOwner: info['userId'] == user.uid,
+        initialShared: info['shared'] == true,
+      ),
+    );
+    if (!mounted) return;
+    setState(() {
+      _future = _fetchPresentation(widget.presentationId);
+    });
   }
 
   static List<Map<String, dynamic>> _slidesField(dynamic field) {
@@ -87,6 +189,14 @@ class _PresentationViewPageState extends State<PresentationViewPage> {
       appBar: AppBar(
         title: const Text('Sunum'),
         backgroundColor: colors.surface,
+        actions: [
+          if (_shareInfo != null)
+            IconButton(
+              tooltip: 'Paylaş',
+              icon: const Icon(Icons.share_outlined),
+              onPressed: _openShareDialog,
+            ),
+        ],
       ),
       body: FutureBuilder<Map<String, dynamic>>(
         future: _future,
@@ -135,7 +245,12 @@ class _PresentationViewPageState extends State<PresentationViewPage> {
               ),
               const SizedBox(height: AppSpacing.s8),
               Text(
-                '${slides.length} slayt • ${widget.presentationId}',
+                [
+                  '${slides.length} slayt',
+                  '• ${widget.presentationId}',
+                  if ((data['updatedByName'] as String? ?? '').isNotEmpty)
+                    '• Son düzenleme: ${data['updatedByName']}',
+                ].join(' '),
                 style: AppTypography.bodyMedium.copyWith(
                   color: colors.textSecondary,
                 ),

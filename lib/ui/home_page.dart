@@ -7,6 +7,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../services/auth_service.dart';
 import '../services/firestore_rest_helper.dart';
 import '../services/presentation_service.dart';
+import '../state/presentation_controller.dart';
 import '../state/theme_controller.dart';
 import 'html_presentation_editor_page.dart';
 import 'widgets/ai_load_animation.dart';
@@ -34,6 +35,75 @@ class _SutolHomePageState extends State<SutolHomePage> {
     _titleController.dispose();
     _promptController.dispose();
     super.dispose();
+  }
+
+  Widget _buildLogo(AppColors colors) {
+    return GestureDetector(
+      onTap: () {
+        Navigator.of(context).popUntil((route) => route.isFirst);
+      },
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Image.asset('assets/images/logo.png', height: 32),
+          const SizedBox(width: 10),
+          Text(
+            'Sutol',
+            style: AppTypography.headline.copyWith(
+              color: colors.textPrimary,
+              letterSpacing: -0.5,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Geniş ekran (>= 720px): tüm öğeler tek satırda.
+  Widget _buildWideNavbar(BuildContext context) {
+    final colors = context.colors;
+    return Row(
+      children: [
+        _buildLogo(colors),
+        const Spacer(),
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _TierBadge(),
+            const SizedBox(width: AppSpacing.s12),
+            const _ThemeToggleButton(),
+            const SizedBox(width: AppSpacing.s8),
+            const _MyPresentationsButton(),
+            const SizedBox(width: AppSpacing.s8),
+            const _AdminEditorButton(),
+            const SizedBox(width: AppSpacing.s8),
+            _UserAvatar(),
+          ],
+        ),
+      ],
+    );
+  }
+
+  /// Dar ekran (< 720px): ikonlar üst satırda, tier rozeti/buton alt satırda.
+  Widget _buildNarrowNavbar(BuildContext context) {
+    final colors = context.colors;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            _buildLogo(colors),
+            const Spacer(),
+            const _ThemeToggleButton(),
+            const _MyPresentationsButton(),
+            const _AdminEditorButton(),
+            _UserAvatar(),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.s4),
+        _TierBadge(),
+      ],
+    );
   }
 
   Future<void> _generatePresentation() async {
@@ -78,7 +148,10 @@ class _SutolHomePageState extends State<SutolHomePage> {
 
       Navigator.of(context).push(
         MaterialPageRoute<void>(
-          builder: (_) => HtmlPresentationEditorPage(controller: result.controller),
+          builder: (_) => HtmlPresentationEditorPage(
+            controller: result.controller,
+            presentationId: result.presentationId,
+          ),
         ),
       );
     } catch (e, stackTrace) {
@@ -113,95 +186,79 @@ class _SutolHomePageState extends State<SutolHomePage> {
           Column(
             children: [
               // Navbar
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s32, vertical: AppSpacing.s24),
-                child: Row(
-                  children: [
-                    GestureDetector(
-                      onTap: () {
-                        Navigator.of(context)
-                            .popUntil((route) => route.isFirst);
-                      },
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Image.asset('assets/images/logo.png', height: 32),
-                          const SizedBox(width: 10),
-                          Text(
-                            'Sutol',
-                            style: AppTypography.headline.copyWith(
-                              color: colors.textPrimary,
-                              letterSpacing: -0.5,
-                            ),
-                          ),
-                        ],
-                      ),
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final narrow = constraints.maxWidth < 720;
+                  return Padding(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: narrow ? AppSpacing.s16 : AppSpacing.s32,
+                      vertical: narrow ? AppSpacing.s12 : AppSpacing.s24,
                     ),
-                    const Spacer(),
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        _TierBadge(),
-                        const SizedBox(width: AppSpacing.s12),
-                        const _ThemeToggleButton(),
-                        const SizedBox(width: AppSpacing.s8),
-                        const _MyPresentationsButton(),
-                        const SizedBox(width: AppSpacing.s8),
-                        _UserAvatar(),
-                      ],
-                    ),
-                  ],
-                ),
+                    child: narrow
+                        ? _buildNarrowNavbar(context)
+                        : _buildWideNavbar(context),
+                  );
+                },
               ),
               
               // Main centered card
               Expanded(
-                child: Center(
-                  child: SingleChildScrollView(
-                    child: Padding(
-                      padding: const EdgeInsets.all(AppSpacing.s32),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            'Fikirden sunuma, tek cümlede.',
-                            textAlign: TextAlign.center,
-                            style: AppTypography.display.copyWith(
-                              color: colors.textPrimary,
-                            ),
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final narrow = constraints.maxWidth < 600;
+                    return Center(
+                      child: SingleChildScrollView(
+                        child: Padding(
+                          padding: EdgeInsets.all(
+                            narrow ? AppSpacing.s16 : AppSpacing.s32,
                           ),
-                          const SizedBox(height: AppSpacing.s16),
-                          Text(
-                            'Anlatmak istediğinizi yazın. Sutol, sizin için tasarlanmış bir sunumu saniyeler içinde hazırlasın.',
-                            textAlign: TextAlign.center,
-                            style: AppTypography.bodyLarge.copyWith(
-                              color: colors.textSecondary,
-                            ),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                'Fikirden sunuma, tek cümlede.',
+                                textAlign: TextAlign.center,
+                                style: AppTypography.display.copyWith(
+                                  color: colors.textPrimary,
+                                  fontSize: narrow ? 34 : null,
+                                  letterSpacing: narrow ? -0.5 : null,
+                                ),
+                              ),
+                              const SizedBox(height: AppSpacing.s16),
+                              Text(
+                                'Anlatmak istediğinizi yazın. Sutol, sizin için tasarlanmış bir sunumu saniyeler içinde hazırlasın.',
+                                textAlign: TextAlign.center,
+                                style: AppTypography.bodyLarge.copyWith(
+                                  color: colors.textSecondary,
+                                ),
+                              ),
+                              const SizedBox(height: AppSpacing.s48),
+
+                              // The Card
+                              ConstrainedBox(
+                                constraints: const BoxConstraints(maxWidth: 700),
+                                child: AnimatedSwitcher(
+                                  duration: AppMotion.standard,
+                                  child: _isGenerating
+                                      ? _LoadingState(
+                                          title: _loadingStepTitle,
+                                          description:
+                                              _loadingStepDescription,
+                                        )
+                                      : _InputCard(
+                                          titleController: _titleController,
+                                          promptController:
+                                              _promptController,
+                                          onGenerate: _generatePresentation,
+                                        ),
+                                ),
+                              ),
+                            ],
                           ),
-                          const SizedBox(height: AppSpacing.s48),
-                          
-                          // The Card
-                          ConstrainedBox(
-                            constraints: const BoxConstraints(maxWidth: 700),
-                            child: AnimatedSwitcher(
-                              duration: AppMotion.standard,
-                              child: _isGenerating
-                                  ? _LoadingState(
-                                      title: _loadingStepTitle,
-                                      description: _loadingStepDescription,
-                                    )
-                                  : _InputCard(
-                                      titleController: _titleController,
-                                      promptController:
-                                          _promptController,
-                                      onGenerate: _generatePresentation,
-                                    ),
-                            ),
-                          ),
-                        ],
+                        ),
                       ),
-                    ),
-                  ),
+                    );
+                  },
                 ),
               ),
             ],
@@ -266,9 +323,10 @@ class _InputCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    
+    final narrow = MediaQuery.sizeOf(context).width < 600;
+
     return Container(
-      padding: const EdgeInsets.all(AppSpacing.s32),
+      padding: EdgeInsets.all(narrow ? AppSpacing.s16 : AppSpacing.s32),
       decoration: BoxDecoration(
         color: colors.surfaceElevated.withValues(alpha: 0.8),
         borderRadius: BorderRadius.circular(AppRadius.xl),
@@ -328,9 +386,10 @@ class _LoadingState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final narrow = MediaQuery.sizeOf(context).width < 600;
 
     return Container(
-      padding: const EdgeInsets.all(AppSpacing.s48),
+      padding: EdgeInsets.all(narrow ? AppSpacing.s24 : AppSpacing.s48),
       decoration: BoxDecoration(
         color: colors.surfaceElevated.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(AppRadius.xl),
@@ -634,6 +693,78 @@ class _MyPresentationsButtonState extends State<_MyPresentationsButton> {
         },
         icon: const Icon(Icons.folder_outlined),
       ),
+    );
+  }
+}
+
+class _AdminEditorButton extends StatefulWidget {
+  const _AdminEditorButton();
+
+  @override
+  State<_AdminEditorButton> createState() => _AdminEditorButtonState();
+}
+
+class _AdminEditorButtonState extends State<_AdminEditorButton> {
+  User? _user;
+  bool _isAdmin = false;
+  late final StreamSubscription<User?> _authSub;
+
+  @override
+  void initState() {
+    super.initState();
+    _user = AuthService.instance.currentUser;
+    if (_user != null) _checkAdmin();
+    _authSub = AuthService.instance.authStateChanges.listen((u) {
+      if (!mounted) return;
+      setState(() {
+        _user = u;
+        _isAdmin = false;
+      });
+      if (u != null) _checkAdmin();
+    });
+  }
+
+  @override
+  void dispose() {
+    _authSub.cancel();
+    super.dispose();
+  }
+
+  Future<void> _checkAdmin() async {
+    final uid = _user?.uid;
+    if (uid == null) return;
+    try {
+      // AdminGate ile aynı doğrulama: admins/{uid} dokümanı veya role fallback.
+      final adminDoc = await FirestoreRestHelper.getDocument('admins/$uid');
+      var allowed = adminDoc != null;
+      if (!allowed) {
+        final userDoc = await FirestoreRestHelper.getDocument('users/$uid');
+        final fields = userDoc?['fields'] as Map<String, dynamic>? ?? {};
+        allowed = FirestoreRestHelper.stringField(fields, 'role') == 'admin';
+      }
+      if (!mounted) return;
+      setState(() => _isAdmin = allowed);
+    } catch (_) {
+      // Best-effort: doğrulanamazsa buton gizli kalır.
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!_isAdmin) return const SizedBox.shrink();
+
+    return IconButton(
+      tooltip: 'Editör',
+      onPressed: () {
+        Navigator.of(context).push(
+          MaterialPageRoute<void>(
+            builder: (_) => HtmlPresentationEditorPage(
+              controller: PresentationController(),
+            ),
+          ),
+        );
+      },
+      icon: const Icon(Icons.edit_rounded),
     );
   }
 }

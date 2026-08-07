@@ -1,6 +1,5 @@
 import 'package:flutter/widgets.dart';
 
-import '../models/local_model_files.dart';
 import '../models/slide_model.dart';
 import '../state/presentation_controller.dart';
 import 'model_matching_service.dart';
@@ -19,7 +18,7 @@ class PresentationDeckBuilder {
     final sources = <String, String>{};
     for (final slide in slides) {
       for (final model in slide.models) {
-        sources[model.id] = _sourceFor(model);
+        sources[model.id] = model.modelUrl;
       }
     }
     RemoteModelSources.registerAll(sources);
@@ -98,15 +97,6 @@ class PresentationDeckBuilder {
     }
 
     return pages;
-  }
-
-  /// Yerel asset varsa yerelden, yoksa R2 URL'sinden yükle.
-  static String _sourceFor(ModelMatch model) {
-    final localFile = '${model.id}.glb';
-    if (hasLocalModelFile(localFile)) {
-      return 'assets/assets/models/$localFile';
-    }
-    return model.modelUrl;
   }
 
   static List<(Offset, Size)> _modelPlacements(int count) {

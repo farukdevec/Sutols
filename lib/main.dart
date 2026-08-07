@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -9,6 +10,7 @@ import 'state/theme_controller.dart';
 import 'ui/admin/admin_gate.dart';
 import 'ui/design/design_system.dart';
 import 'ui/home_page.dart';
+import 'ui/presentation_open_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -38,7 +40,12 @@ class SutolApp extends StatelessWidget {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return const _SplashScreen();
               }
-              return const SutolHomePage();
+              final user = snapshot.data;
+              if (user == null) {
+                return const SutolHomePage();
+              }
+              // Giriş yapıldıysa paylaşım bağlantılarını (/p/{id}) yakala.
+              return _DeepLinkHost(child: const SutolHomePage());
             },
           ),
           routes: {
@@ -61,4 +68,40 @@ class _SplashScreen extends StatelessWidget {
       body: const Center(child: CircularProgressIndicator()),
     );
   }
+}
+
+/// Paylaşım bağlantısı (/p/{presentationId}) ile gelen kullanıcıyı
+/// sunum açılış sayfasına yönlendirir.
+class _DeepLinkHost extends StatefulWidget {
+  const _DeepLinkHost({required this.child});
+
+  final Widget child;
+
+  @override
+  State<_DeepLinkHost> createState() => _DeepLinkHostState();
+}
+
+class _DeepLinkHostState extends State<_DeepLinkHost> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _handleDeepLink());
+  }
+
+  void _handleDeepLink() {
+    if (!kIsWeb) return;
+    final segments =
+        Uri.base.pathSegments.where((s) => s.isNotEmpty).toList();
+    if (segments.length == 2 && segments[0] == 'p') {
+      final presentationId = segments[1];
+      Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (_) => PresentationOpenPage(presentationId: presentationId),
+        ),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.child;
 }

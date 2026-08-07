@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../services/firestore_rest_helper.dart';
 import '../design/design_system.dart';
+import 'admin_user_detail_page.dart';
 
 class AdminUsersPage extends StatefulWidget {
   const AdminUsersPage({super.key});
@@ -17,6 +18,8 @@ class _AdminUser {
     required this.displayName,
     required this.email,
     required this.role,
+    required this.tier,
+    required this.status,
     required this.createdAt,
     required this.lastActiveAt,
   });
@@ -26,8 +29,14 @@ class _AdminUser {
   final String displayName;
   final String email;
   final String role;
+  final String tier;
+  final String status;
   final DateTime? createdAt;
   final DateTime? lastActiveAt;
+
+  String get effectiveStatus => status.isEmpty ? 'active' : status;
+
+  bool get isSuspended => effectiveStatus == 'suspended';
 }
 
 class _AdminUsersPageState extends State<AdminUsersPage> {
@@ -66,6 +75,8 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
         displayName: FirestoreRestHelper.stringField(fields, 'displayName'),
         email: FirestoreRestHelper.stringField(fields, 'email'),
         role: FirestoreRestHelper.stringField(fields, 'role'),
+        tier: FirestoreRestHelper.stringField(fields, 'tier'),
+        status: FirestoreRestHelper.stringField(fields, 'status'),
         createdAt: _parseDate(FirestoreRestHelper.timestampField(fields, 'createdAt')),
         lastActiveAt:
             _parseDate(FirestoreRestHelper.timestampField(fields, 'lastActiveAt')),
@@ -180,11 +191,21 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
                       DataColumn(label: Text('Ad')),
                       DataColumn(label: Text('E-posta')),
                       DataColumn(label: Text('Role')),
+                      DataColumn(label: Text('Plan')),
+                      DataColumn(label: Text('Durum')),
                       DataColumn(label: Text('Kayıt Tarihi')),
                       DataColumn(label: Text('Son Giriş')),
                     ],
                     rows: filtered.map((user) {
                       return DataRow(
+                        onSelectChanged: (_) {
+                          Navigator.of(context).push(
+                            MaterialPageRoute<void>(
+                              builder: (_) =>
+                                  AdminUserDetailPage(userId: user.id),
+                            ),
+                          );
+                        },
                         cells: [
                           DataCell(_Avatar(user: user)),
                           DataCell(
@@ -206,6 +227,12 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
                           ),
                           DataCell(
                             _RoleBadge(role: user.role),
+                          ),
+                          DataCell(
+                            _TierBadge(tier: user.tier),
+                          ),
+                          DataCell(
+                            _StatusBadge(isSuspended: user.isSuspended),
                           ),
                           DataCell(
                             Text(
@@ -288,6 +315,72 @@ class _InitialAvatar extends StatelessWidget {
         style: AppTypography.labelMedium.copyWith(
           color: colors.primary,
           fontWeight: FontWeight.w700,
+        ),
+      ),
+    );
+  }
+}
+
+class _TierBadge extends StatelessWidget {
+  const _TierBadge({required this.tier});
+
+  final String tier;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    final normalized = tier.toLowerCase();
+    final color = switch (normalized) {
+      'premium' => colors.primary,
+      'plus' => const Color(0xFF8E44AD),
+      _ => colors.textSecondary,
+    };
+    final label = switch (normalized) {
+      'premium' => 'Premium',
+      'plus' => 'Plus',
+      _ => 'Ücretsiz',
+    };
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s8, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        border: Border.all(color: color.withValues(alpha: 0.5)),
+        borderRadius: BorderRadius.circular(AppRadius.full),
+      ),
+      child: Text(
+        label,
+        style: AppTypography.labelMedium.copyWith(
+          color: color,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
+  }
+}
+
+class _StatusBadge extends StatelessWidget {
+  const _StatusBadge({required this.isSuspended});
+
+  final bool isSuspended;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    final color = isSuspended ? colors.danger : colors.success;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s8, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        border: Border.all(color: color.withValues(alpha: 0.5)),
+        borderRadius: BorderRadius.circular(AppRadius.full),
+      ),
+      child: Text(
+        isSuspended ? 'Askıda' : 'Aktif',
+        style: AppTypography.labelMedium.copyWith(
+          color: color,
+          fontWeight: FontWeight.w600,
         ),
       ),
     );

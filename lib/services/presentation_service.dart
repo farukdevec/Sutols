@@ -119,29 +119,9 @@ class PresentationService {
         },
         'slideCount': {'integerValue': '${slidesData.length}'},
         'topic': {'stringValue': topic},
+        'title': {'stringValue': topic},
         'createdAt': {'timestampValue': DateTime.now().toUtc().toIso8601String()},
-        'slides': {
-          'arrayValue': {
-            'values': slidesData.map((slide) {
-              return {
-                'mapValue': {
-                  'fields': {
-                    'title': {'stringValue': slide['title'] as String},
-                    'content': {'stringValue': slide['content'] as String},
-                    'layout': {'stringValue': slide['layout'] as String},
-                    'modelIds': {
-                      'arrayValue': {
-                        'values': (slide['modelIds'] as List)
-                            .map((id) => {'stringValue': id as String})
-                            .toList(),
-                      },
-                    },
-                  },
-                },
-              };
-            }).toList(),
-          },
-        },
+        'updatedAt': {'timestampValue': DateTime.now().toUtc().toIso8601String()},
       },
     });
 
@@ -160,13 +140,47 @@ class PresentationService {
 
     final result = jsonDecode(response.body) as Map<String, dynamic>;
     final docName = result['name'] as String;
+    final presentationId = docName.split('/').last;
+
+    // 3b. Slaytları alt koleksiyona yaz (her slayt ayrı doküman, order alanıyla)
+    for (var i = 0; i < slidesData.length; i++) {
+      final slide = slidesData[i];
+      final slideBody = jsonEncode({
+        'fields': {
+          'order': {'integerValue': '$i'},
+          'title': {'stringValue': slide['title'] as String},
+          'content': {'stringValue': slide['content'] as String},
+          'layout': {'stringValue': slide['layout'] as String},
+          'modelIds': {
+            'arrayValue': {
+              'values': (slide['modelIds'] as List)
+                  .map((id) => {'stringValue': id as String})
+                  .toList(),
+            },
+          },
+        },
+      });
+
+      final slideResponse = await http.post(
+        Uri.parse('$_apiBase/presentations/$presentationId/slides?documentId=slide_$i'),
+        headers: {
+          'Authorization': 'Bearer $idToken',
+          'Content-Type': 'application/json',
+        },
+        body: slideBody,
+      );
+
+      if (slideResponse.statusCode != 200) {
+        throw Exception('Slayt kaydedilemedi (HTTP ${slideResponse.statusCode}): ${slideResponse.body}');
+      }
+    }
     // ignore: avoid_print
     print('ADIM 3 TAMAM');
 
     await _incrementPresentationCount(userId);
 
     return PresentationGenerationResult(
-      presentationId: docName.split('/').last,
+      presentationId: presentationId,
       controller: controller,
       usedFallback: usedFallback,
     );
