@@ -43,6 +43,21 @@ enum PresentationTextStyle {
   openBungee,
   openCaveat,
   openUnbounded,
+  klasikTinos,
+  klasikArimo,
+  klasikCousine,
+  klasikCarlito,
+  klasikCaladea,
+  klasikEBGaramond,
+  klasikLibreBaskerville,
+  klasikAlegreya,
+  klasikPTSerif,
+  klasikMerriweather,
+  klasikLora,
+  klasikGreatVibes,
+  klasikDancingScript,
+  klasikPacifico,
+  klasikLobster,
 }
 
 enum PresentationTextAnimation {

@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -75,7 +75,7 @@ class _SutolHomePageState extends State<SutolHomePage> {
             const SizedBox(width: AppSpacing.s8),
             const _MyPresentationsButton(),
             const SizedBox(width: AppSpacing.s8),
-            const _AdminEditorButton(),
+            const _EditorButton(),
             const SizedBox(width: AppSpacing.s8),
             _UserAvatar(),
           ],
@@ -96,7 +96,7 @@ class _SutolHomePageState extends State<SutolHomePage> {
             const Spacer(),
             const _ThemeToggleButton(),
             const _MyPresentationsButton(),
-            const _AdminEditorButton(),
+            const _EditorButton(),
             _UserAvatar(),
           ],
         ),
@@ -697,30 +697,23 @@ class _MyPresentationsButtonState extends State<_MyPresentationsButton> {
   }
 }
 
-class _AdminEditorButton extends StatefulWidget {
-  const _AdminEditorButton();
+class _EditorButton extends StatefulWidget {
+  const _EditorButton();
 
   @override
-  State<_AdminEditorButton> createState() => _AdminEditorButtonState();
+  State<_EditorButton> createState() => _EditorButtonState();
 }
 
-class _AdminEditorButtonState extends State<_AdminEditorButton> {
+class _EditorButtonState extends State<_EditorButton> {
   User? _user;
-  bool _isAdmin = false;
   late final StreamSubscription<User?> _authSub;
 
   @override
   void initState() {
     super.initState();
     _user = AuthService.instance.currentUser;
-    if (_user != null) _checkAdmin();
     _authSub = AuthService.instance.authStateChanges.listen((u) {
-      if (!mounted) return;
-      setState(() {
-        _user = u;
-        _isAdmin = false;
-      });
-      if (u != null) _checkAdmin();
+      if (mounted) setState(() => _user = u);
     });
   }
 
@@ -730,28 +723,9 @@ class _AdminEditorButtonState extends State<_AdminEditorButton> {
     super.dispose();
   }
 
-  Future<void> _checkAdmin() async {
-    final uid = _user?.uid;
-    if (uid == null) return;
-    try {
-      // AdminGate ile aynı doğrulama: admins/{uid} dokümanı veya role fallback.
-      final adminDoc = await FirestoreRestHelper.getDocument('admins/$uid');
-      var allowed = adminDoc != null;
-      if (!allowed) {
-        final userDoc = await FirestoreRestHelper.getDocument('users/$uid');
-        final fields = userDoc?['fields'] as Map<String, dynamic>? ?? {};
-        allowed = FirestoreRestHelper.stringField(fields, 'role') == 'admin';
-      }
-      if (!mounted) return;
-      setState(() => _isAdmin = allowed);
-    } catch (_) {
-      // Best-effort: doğrulanamazsa buton gizli kalır.
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
-    if (!_isAdmin) return const SizedBox.shrink();
+    if (_user == null) return const SizedBox.shrink();
 
     return IconButton(
       tooltip: 'Editör',

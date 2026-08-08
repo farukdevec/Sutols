@@ -3263,6 +3263,36 @@ String _textStyleLabel(PresentationTextStyle style) {
       return 'Caveat';
     case PresentationTextStyle.openUnbounded:
       return 'Unbounded';
+    case PresentationTextStyle.klasikTinos:
+      return 'Tinos (Times New Roman)';
+    case PresentationTextStyle.klasikArimo:
+      return 'Arimo (Arial)';
+    case PresentationTextStyle.klasikCousine:
+      return 'Cousine (Courier New)';
+    case PresentationTextStyle.klasikCarlito:
+      return 'Carlito (Calibri)';
+    case PresentationTextStyle.klasikCaladea:
+      return 'Caladea (Cambria)';
+    case PresentationTextStyle.klasikEBGaramond:
+      return 'EB Garamond';
+    case PresentationTextStyle.klasikLibreBaskerville:
+      return 'Libre Baskerville';
+    case PresentationTextStyle.klasikAlegreya:
+      return 'Alegreya';
+    case PresentationTextStyle.klasikPTSerif:
+      return 'PT Serif';
+    case PresentationTextStyle.klasikMerriweather:
+      return 'Merriweather';
+    case PresentationTextStyle.klasikLora:
+      return 'Lora';
+    case PresentationTextStyle.klasikGreatVibes:
+      return 'Great Vibes';
+    case PresentationTextStyle.klasikDancingScript:
+      return 'Dancing Script';
+    case PresentationTextStyle.klasikPacifico:
+      return 'Pacifico';
+    case PresentationTextStyle.klasikLobster:
+      return 'Lobster';
   }
 }
 

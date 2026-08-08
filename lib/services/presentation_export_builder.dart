@@ -9,6 +9,7 @@ String buildPresentationExportHtml({
       const PresentationEffectSettings(),
   String? title,
   Map<String, String> modelSourcesById = const <String, String>{},
+  Map<String, String> imageSourcesById = const <String, String>{},
   bool compact = true,
 }) {
   final documentTitle = title ?? _resolvePresentationTitle(pages);
@@ -40,6 +41,7 @@ String buildPresentationExportHtml({
               ? HtmlStageRenderMode.snapshot
               : HtmlStageRenderMode.full,
           modelSourcesById: modelSourcesById,
+          imageSourcesById: imageSourcesById,
           deferEmbeddedAssets: true,
         ),
       )

@@ -806,6 +806,30 @@ void updateAllPageBackgrounds(PresentationBackgroundKind value) {
     notifyListeners();
   }
 
+  void addUploadedImageBlock(String imageAssetId) {
+    final page = selectedPage;
+    final blockCount = page.componentBlocks.length;
+    final nextX = (0.50 + (blockCount % 3) * 0.04).clamp(0.08, 0.58);
+    final nextY = (0.16 + (blockCount % 4) * 0.08).clamp(0.08, 0.54);
+    final componentBlock = PresentationComponentBlock(
+      id: 'component-$_componentBlockCounter',
+      modelAssetId: imageAssetId,
+      position: Offset(nextX.toDouble(), nextY.toDouble()),
+      size: const Size(0.38, 0.26),
+    );
+    _componentBlockCounter += 1;
+    _replaceSelectedPage(
+      page.copyWith(
+        componentBlocks: <PresentationComponentBlock>[
+          ...page.componentBlocks,
+          componentBlock,
+        ],
+      ),
+    );
+    _setSingleSelection(componentBlockId: componentBlock.id);
+    notifyListeners();
+  }
+
   void removeSelectedTextBlock() {
     if (_selectedTextBlockIds.isEmpty) {
       return;

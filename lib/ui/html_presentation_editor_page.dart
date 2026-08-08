@@ -6,12 +6,14 @@ import 'package:flutter/services.dart';
 
 import '../models/slide_model.dart';
 import '../services/firestore_rest_helper.dart';
+import '../services/local_image_picker.dart';
 import '../services/presentation_export_service.dart';
 import '../services/presentation_auto_builder.dart';
 import '../services/presentation_fullscreen_service.dart';
 import '../services/presentation_project_codec.dart';
 import '../services/presentation_project_io.dart';
 import '../services/presentation_project_store.dart';
+import '../services/remote_image_sources.dart';
 import '../services/remote_model_sources.dart';
 import '../state/presentation_controller.dart';
 import '../state/theme_controller.dart';
@@ -35,6 +37,7 @@ enum _HtmlToolTab {
   components,
   text,
   models3d,
+  photo,
   transitions,
 }
 
@@ -1310,6 +1313,13 @@ class _HtmlToolRail extends StatelessWidget {
             ),
             const SizedBox(height: 10),
             _RailButton(
+              label: 'Fotoğraf',
+              icon: Icons.add_photo_alternate_rounded,
+              isSelected: activeTab == _HtmlToolTab.photo,
+              onTap: () => onTabChanged(_HtmlToolTab.photo),
+            ),
+            const SizedBox(height: 10),
+            _RailButton(
               label: 'Geçişler',
               icon: Icons.animation_rounded,
               isSelected: activeTab == _HtmlToolTab.transitions,
@@ -2124,6 +2134,13 @@ class _HtmlTabStrip extends StatelessWidget {
             ),
             const SizedBox(width: 6),
             _HtmlTabButton(
+              label: 'Fotoğraf',
+              icon: Icons.add_photo_alternate_rounded,
+              isSelected: activeTab == _HtmlToolTab.photo,
+              onTap: () => onTabChanged(_HtmlToolTab.photo),
+            ),
+            const SizedBox(width: 6),
+            _HtmlTabButton(
               label: 'Geçişler',
               icon: Icons.animation_rounded,
               isSelected: activeTab == _HtmlToolTab.transitions,
@@ -2215,6 +2232,8 @@ class _HtmlControlPanel extends StatelessWidget {
         );
       case _HtmlToolTab.models3d:
         return _Html3DModelControls(controller: controller);
+      case _HtmlToolTab.photo:
+        return _HtmlPhotoControls(controller: controller);
       case _HtmlToolTab.transitions:
         return _HtmlTransitionControls(controller: controller);
     }
@@ -2494,11 +2513,13 @@ class _ModelSearchField extends StatelessWidget {
     required this.controller,
     required this.onChanged,
     required this.onClear,
+    this.hintText = 'Model ara: isim, etiket, kategori...',
   });
 
   final TextEditingController controller;
   final ValueChanged<String> onChanged;
   final VoidCallback onClear;
+  final String hintText;
 
   @override
   Widget build(BuildContext context) {
@@ -2522,7 +2543,7 @@ class _ModelSearchField extends StatelessWidget {
                     fontWeight: FontWeight.w600,
                   ),
               decoration: InputDecoration(
-                hintText: 'Model ara: isim, etiket, kategori...',
+                hintText: hintText,
                 hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: context._htmlMuted,
                       fontWeight: FontWeight.w500,
@@ -2540,6 +2561,261 @@ class _ModelSearchField extends StatelessWidget {
               onPressed: onClear,
               icon: const Icon(Icons.close_rounded),
             ),
+        ],
+      ),
+    );
+  }
+}
+
+class _HtmlPhotoControls extends StatefulWidget {
+  const _HtmlPhotoControls({required this.controller});
+
+  final PresentationController controller;
+
+  @override
+  State<_HtmlPhotoControls> createState() => _HtmlPhotoControlsState();
+}
+
+class _HtmlPhotoControlsState extends State<_HtmlPhotoControls> {
+  final List<_UploadedPhotoEntry> _photos = <_UploadedPhotoEntry>[];
+  bool _picking = false;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    RemoteImageSources.all.forEach((id, dataUrl) {
+      _photos.add(
+        _UploadedPhotoEntry(id: id, dataUrl: dataUrl, name: id),
+      );
+    });
+  }
+
+  Future<void> _pickPhoto() async {
+    if (_picking) return;
+    setState(() {
+      _picking = true;
+      _error = null;
+    });
+    try {
+      final picked = await pickLocalImage();
+      if (picked == null) return;
+      final sourceId = 'photo-${DateTime.now().millisecondsSinceEpoch}';
+      RemoteImageSources.register(sourceId, picked.dataUrl);
+      widget.controller.addUploadedImageBlock(sourceId);
+      if (!mounted) return;
+      setState(() {
+        _photos.add(
+          _UploadedPhotoEntry(
+            id: sourceId,
+            name: picked.name,
+            dataUrl: picked.dataUrl,
+            sizeBytes: picked.sizeBytes,
+          ),
+        );
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _error = '$e');
+    } finally {
+      if (mounted) setState(() => _picking = false);
+    }
+  }
+
+  void _removePhoto(_UploadedPhotoEntry photo) {
+    RemoteImageSources.remove(photo.id);
+    setState(() {
+      _photos.removeWhere((entry) => entry.id == photo.id);
+      if (_error != null && !_photos.any((e) => e.id == photo.id)) {
+        _error = null;
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: <Widget>[
+        Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: context.sutolColors.surface,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: context.sutolColors.outline),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: <Widget>[
+              _ToolbarBadge(
+                icon: Icons.add_photo_alternate_rounded,
+                label: 'Fotoğraf Yükle',
+              ),
+              const SizedBox(height: 12),
+              OutlinedButton.icon(
+                onPressed: _picking ? null : _pickPhoto,
+                icon: _picking
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : Icon(
+                        Icons.upload_rounded,
+                        size: 18,
+                        color: context._htmlAccent,
+                      ),
+                label: Text(_picking ? 'Yükleniyor...' : 'Cihazdan Fotoğraf Yükle'),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'PNG, JPG, WebP, GIF. En fazla 6 MB.',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: context._htmlMuted,
+                      fontWeight: FontWeight.w600,
+                    ),
+              ),
+if (_error != null) ...<Widget>[
+                const SizedBox(height: 8),
+                Text(
+                  _error!,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: context._htmlAccent,
+                        fontWeight: FontWeight.w700,
+                      ),
+                ),
+              ],
+            ],
+          ),
+        ),
+        const SizedBox(height: 14),
+        _ToolbarBadge(
+          icon: Icons.photo_library_rounded,
+          label: 'Yüklenen Fotoğraflar (${_photos.length})',
+        ),
+        const SizedBox(height: 10),
+        if (_photos.isEmpty)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 18),
+            child: Text(
+              'Henüz fotoğraf yüklemedin. Bir fotoğraf seç, otomatik olarak slayta eklenir.',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: context._htmlMuted,
+                    fontWeight: FontWeight.w600,
+                  ),
+            ),
+          )
+        else
+          for (final photo in _photos)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: _UploadedPhotoCard(
+                photo: photo,
+                onAdd: () =>
+                    widget.controller.addUploadedImageBlock(photo.id),
+                onRemove: () => _removePhoto(photo),
+              ),
+            ),
+      ],
+    );
+  }
+}
+
+class _UploadedPhotoEntry {
+  const _UploadedPhotoEntry({
+    required this.id,
+    required this.name,
+    required this.dataUrl,
+    this.sizeBytes = 0,
+  });
+
+  final String id;
+  final String name;
+  final String dataUrl;
+  final int sizeBytes;
+}
+
+class _UploadedPhotoCard extends StatelessWidget {
+  const _UploadedPhotoCard({
+    required this.photo,
+    required this.onAdd,
+    required this.onRemove,
+  });
+
+  final _UploadedPhotoEntry photo;
+  final VoidCallback onAdd;
+  final VoidCallback onRemove;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: context.sutolColors.surface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: context.sutolColors.outline),
+      ),
+      child: Row(
+        children: <Widget>[
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: Image.network(
+              photo.dataUrl,
+              width: 56,
+              height: 56,
+              fit: BoxFit.cover,
+              errorBuilder: (errorContext, error, stackTrace) => Container(
+                width: 56,
+                height: 56,
+                color: context.sutolColors.surfaceSubtle,
+                child: const Icon(Icons.image_not_supported_rounded),
+              ),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Text(
+                  photo.name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: context._htmlInk,
+                        fontWeight: FontWeight.w800,
+                      ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  photo.sizeBytes > 0
+                      ? '${(photo.sizeBytes / 1024).toStringAsFixed(0)} KB'
+                      : 'Oturum fotografı',
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: context._htmlMuted,
+                        fontWeight: FontWeight.w700,
+                      ),
+                ),
+              ],
+            ),
+          ),
+          IconButton(
+            tooltip: 'Slayta Ekle',
+            onPressed: onAdd,
+            visualDensity: VisualDensity.compact,
+            icon: const Icon(Icons.add_circle_outline_rounded),
+          ),
+          IconButton(
+            tooltip: 'Kaldır',
+            onPressed: onRemove,
+            visualDensity: VisualDensity.compact,
+            icon: const Icon(Icons.delete_outline_rounded),
+          ),
         ],
       ),
     );
@@ -2932,7 +3208,7 @@ class _TemplatePresetCard extends StatelessWidget {
   }
 }
 
-class _HtmlBackgroundControls extends StatelessWidget {
+class _HtmlBackgroundControls extends StatefulWidget {
   const _HtmlBackgroundControls({
     required this.controller,
   });
@@ -2940,8 +3216,41 @@ class _HtmlBackgroundControls extends StatelessWidget {
   final PresentationController controller;
 
   @override
+  State<_HtmlBackgroundControls> createState() => _HtmlBackgroundControlsState();
+}
+
+class _HtmlBackgroundControlsState extends State<_HtmlBackgroundControls> {
+  final TextEditingController _searchController = TextEditingController();
+  String _query = '';
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _clearSearch() {
+    _searchController.clear();
+    setState(() => _query = '');
+  }
+
+  bool _matches(
+    PresentationBackgroundDefinition definition,
+    String query,
+  ) {
+    return presentationBackgroundLabel(definition.kind)
+            .toLowerCase()
+            .contains(query) ||
+        presentationBackgroundCategory(definition.kind)
+            .toLowerCase()
+            .contains(query);
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final controller = widget.controller;
     final selected = controller.selectedPage.backgroundKind;
+    final query = _query.trim().toLowerCase();
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -2959,10 +3268,14 @@ class _HtmlBackgroundControls extends StatelessWidget {
         final lightDefinitions = presentationBackgroundLibrary
             .where(
                 (definition) => !presentationBackgroundIsDark(definition.kind))
+            .where((definition) =>
+                query.isEmpty || _matches(definition, query))
             .toList(growable: false);
         final topicDefinitions = presentationBackgroundLibrary
             .where(
                 (definition) => presentationBackgroundIsDark(definition.kind))
+            .where((definition) =>
+                query.isEmpty || _matches(definition, query))
             .toList(growable: false);
 
         Widget backgroundGroup(
@@ -3003,17 +3316,40 @@ class _HtmlBackgroundControls extends StatelessWidget {
               label: 'Arka Plan Kütüphanesi',
             ),
             const SizedBox(height: 14),
-            backgroundGroup(
-              'Açık ve Ferah',
-              Icons.light_mode_rounded,
-              lightDefinitions,
+            _ModelSearchField(
+              controller: _searchController,
+              hintText: 'Arka plan ara: isim, kategori...',
+              onChanged: (value) => setState(() => _query = value),
+              onClear: _clearSearch,
             ),
-            const SizedBox(height: 18),
-            backgroundGroup(
-              'Koyu Konu Temaları',
-              Icons.dark_mode_rounded,
-              topicDefinitions,
-            ),
+            const SizedBox(height: 14),
+            if (lightDefinitions.isEmpty && topicDefinitions.isEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                child: Text(
+                  'Eşleşen arka plan bulunamadı.',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: context._htmlMuted,
+                        fontWeight: FontWeight.w700,
+                      ),
+                ),
+              )
+            else ...<Widget>[
+              if (lightDefinitions.isNotEmpty) ...[
+                backgroundGroup(
+                  'Açık ve Ferah',
+                  Icons.light_mode_rounded,
+                  lightDefinitions,
+                ),
+                const SizedBox(height: 18),
+              ],
+              if (topicDefinitions.isNotEmpty)
+                backgroundGroup(
+                  'Koyu Konu Temaları',
+                  Icons.dark_mode_rounded,
+                  topicDefinitions,
+                ),
+            ],
           ],
         );
       },
@@ -3279,7 +3615,7 @@ class _BackgroundPreviewPainter extends CustomPainter {
   }
 }
 
-class _HtmlComponentControls extends StatelessWidget {
+class _HtmlComponentControls extends StatefulWidget {
   const _HtmlComponentControls({
     required this.controller,
   });
@@ -3287,8 +3623,46 @@ class _HtmlComponentControls extends StatelessWidget {
   final PresentationController controller;
 
   @override
+  State<_HtmlComponentControls> createState() => _HtmlComponentControlsState();
+}
+
+class _HtmlComponentControlsState extends State<_HtmlComponentControls> {
+  final TextEditingController _searchController = TextEditingController();
+  String _query = '';
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _clearSearch() {
+    _searchController.clear();
+    setState(() => _query = '');
+  }
+
+  bool _matches(PresentationComponentDefinition definition, String query) {
+    return definition.label.toLowerCase().contains(query) ||
+        definition.category.toLowerCase().contains(query) ||
+        definition.description.toLowerCase().contains(query) ||
+        definition.tags.any(
+          (tag) => tag.toLowerCase().contains(query),
+        );
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final controller = widget.controller;
     final categories = presentationComponentCategories();
+    final query = _query.trim().toLowerCase();
+
+    final searchResults = query.isEmpty
+        ? null
+        : <PresentationComponentDefinition>[
+            for (final category in categories)
+              ...presentationComponentDefinitionsForCategory(category)
+                  .where((definition) => _matches(definition, query)),
+          ];
 
     return Container(
       width: double.infinity,
@@ -3302,24 +3676,75 @@ class _HtmlComponentControls extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          SizedBox(
-            height: 420,
-            child: ListView.separated(
-              itemCount: categories.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 8),
-              itemBuilder: (context, index) {
-                final category = categories[index];
-                final definitions =
-                    presentationComponentDefinitionsForCategory(category);
-                return _ComponentCategorySection(
-                  category: category,
-                  definitions: definitions,
-                  controller: controller,
-                  initiallyExpanded: index == 0,
-                );
-              },
-            ),
+          _ModelSearchField(
+            controller: _searchController,
+            hintText: 'Bileşen ara: isim, etiket, kategori...',
+            onChanged: (value) => setState(() => _query = value),
+            onClear: _clearSearch,
           ),
+          const SizedBox(height: 12),
+          if (searchResults == null)
+            SizedBox(
+              height: 420,
+              child: ListView.separated(
+                itemCount: categories.length,
+                separatorBuilder: (_, __) => const SizedBox(height: 8),
+                itemBuilder: (context, index) {
+                  final category = categories[index];
+                  final definitions =
+                      presentationComponentDefinitionsForCategory(category);
+                  return _ComponentCategorySection(
+                    category: category,
+                    definitions: definitions,
+                    controller: controller,
+                    initiallyExpanded: index == 0,
+                  );
+                },
+              ),
+            )
+          else if (searchResults.isEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              child: Text(
+                'Eşleşen bileşen bulunamadı.',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: context._htmlMuted,
+                      fontWeight: FontWeight.w700,
+                    ),
+              ),
+            )
+          else
+            SizedBox(
+              height: 420,
+              child: ListView.separated(
+                itemCount: searchResults.length,
+                separatorBuilder: (_, __) => const SizedBox(height: 8),
+                itemBuilder: (context, index) {
+                  final definition = searchResults[index];
+                  return LayoutBuilder(
+                    builder: (context, constraints) {
+                      final cardWidth = constraints.maxWidth >= 640
+                          ? (constraints.maxWidth - 10) / 2
+                          : constraints.maxWidth;
+                      return Wrap(
+                        spacing: 10,
+                        runSpacing: 10,
+                        children: <Widget>[
+                          SizedBox(
+                            width: cardWidth,
+                            child: _ComponentLibraryCard(
+                              definition: definition,
+                              onAdd: () => controller
+                                  .addComponentBlock(definition.kind),
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                  );
+                },
+              ),
+            ),
         ],
       ),
     );
@@ -3644,7 +4069,7 @@ class _TextColorOption {
   final Color color;
 }
 
-class _HtmlTextControls extends StatelessWidget {
+class _HtmlTextControls extends StatefulWidget {
   const _HtmlTextControls({
     required this.controller,
     required this.textController,
@@ -3654,9 +4079,39 @@ class _HtmlTextControls extends StatelessWidget {
   final TextEditingController textController;
 
   @override
+  State<_HtmlTextControls> createState() => _HtmlTextControlsState();
+}
+
+class _HtmlTextControlsState extends State<_HtmlTextControls> {
+  final TextEditingController _fontSearchController = TextEditingController();
+  String _fontQuery = '';
+
+  @override
+  void dispose() {
+    _fontSearchController.dispose();
+    super.dispose();
+  }
+
+  void _clearFontSearch() {
+    _fontSearchController.clear();
+    setState(() => _fontQuery = '');
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final controller = widget.controller;
+    final textController = widget.textController;
     final selectedTextBlock = controller.selectedTextBlock;
     final selectedTextCount = controller.selectedTextSelectionCount;
+    final fontQuery = _fontQuery.trim().toLowerCase();
+    final fontStyles = fontQuery.isEmpty
+        ? PresentationTextStyle.values
+        : PresentationTextStyle.values
+            .where(
+              (style) =>
+                  _htmlTextStyleLabel(style).toLowerCase().contains(fontQuery),
+            )
+            .toList(growable: false);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -3696,13 +4151,32 @@ class _HtmlTextControls extends StatelessWidget {
               ),
         ),
         const SizedBox(height: 12),
-        for (final style in PresentationTextStyle.values)
-          _FontListTile(
-            label: _htmlTextStyleLabel(style),
-            selected: selectedTextBlock?.textStyle == style,
-            enabled: selectedTextBlock != null,
-            onTap: () => controller.updateSelectedTextStyle(style),
-          ),
+        _ModelSearchField(
+          controller: _fontSearchController,
+          hintText: 'Yazı tipi ara: klasik, serif, kaligrafi...',
+          onChanged: (value) => setState(() => _fontQuery = value),
+          onClear: _clearFontSearch,
+        ),
+        const SizedBox(height: 12),
+        if (fontStyles.isEmpty)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            child: Text(
+              'Eşleşen yazı tipi bulunamadı.',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: context._htmlMuted,
+                    fontWeight: FontWeight.w700,
+                  ),
+            ),
+          )
+        else
+          for (final style in fontStyles)
+            _FontListTile(
+              label: _htmlTextStyleLabel(style),
+              selected: selectedTextBlock?.textStyle == style,
+              enabled: selectedTextBlock != null,
+              onTap: () => controller.updateSelectedTextStyle(style),
+            ),
       ],
     );
   }
@@ -4678,6 +5152,8 @@ String _studioPanelTitle(_HtmlToolTab tab) {
       return 'Metin Duzenleme';
     case _HtmlToolTab.models3d:
       return '3D Modeller';
+    case _HtmlToolTab.photo:
+      return 'Fotoğraflar';
     case _HtmlToolTab.transitions:
       return 'Geçişler';
   }
@@ -4700,6 +5176,8 @@ String _studioPanelSubtitle(
           : 'Metin araçları sunum sahnesinin üst bölümüne taşındı.';
     case _HtmlToolTab.models3d:
       return 'GLB modellerini sahneye ekle, taşı ve çerçevesinden boyutlandır.';
+    case _HtmlToolTab.photo:
+      return 'Cihazindan fotograf yukle ve slayta yerlesin.';
     case _HtmlToolTab.transitions:
       return 'Slayt değişimini hissettirmeyen akıcı sahne geçişlerini uygula.';
   }
@@ -4784,6 +5262,36 @@ String _htmlTextStyleLabel(PresentationTextStyle style) {
       return 'Caveat';
     case PresentationTextStyle.openUnbounded:
       return 'Unbounded';
+    case PresentationTextStyle.klasikTinos:
+      return 'Tinos (Times New Roman)';
+    case PresentationTextStyle.klasikArimo:
+      return 'Arimo (Arial)';
+    case PresentationTextStyle.klasikCousine:
+      return 'Cousine (Courier New)';
+    case PresentationTextStyle.klasikCarlito:
+      return 'Carlito (Calibri)';
+    case PresentationTextStyle.klasikCaladea:
+      return 'Caladea (Cambria)';
+    case PresentationTextStyle.klasikEBGaramond:
+      return 'EB Garamond';
+    case PresentationTextStyle.klasikLibreBaskerville:
+      return 'Libre Baskerville';
+    case PresentationTextStyle.klasikAlegreya:
+      return 'Alegreya';
+    case PresentationTextStyle.klasikPTSerif:
+      return 'PT Serif';
+    case PresentationTextStyle.klasikMerriweather:
+      return 'Merriweather';
+    case PresentationTextStyle.klasikLora:
+      return 'Lora';
+    case PresentationTextStyle.klasikGreatVibes:
+      return 'Great Vibes';
+    case PresentationTextStyle.klasikDancingScript:
+      return 'Dancing Script';
+    case PresentationTextStyle.klasikPacifico:
+      return 'Pacifico';
+    case PresentationTextStyle.klasikLobster:
+      return 'Lobster';
   }
 }
 

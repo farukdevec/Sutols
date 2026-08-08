@@ -8,6 +8,7 @@ import 'package:http/http.dart' as http;
 
 import '../models/slide_model.dart';
 import 'presentation_export_builder.dart';
+import 'remote_image_sources.dart';
 import 'remote_model_sources.dart';
 
 Future<void> exportPresentationAsHtml({
@@ -23,6 +24,7 @@ Future<void> exportPresentationAsHtml({
     effectSettings: effectSettings,
     title: title,
     modelSourcesById: modelSourcesById,
+    imageSourcesById: RemoteImageSources.all,
   );
   final blob = html.Blob(<Object>[htmlDocument], 'text/html;charset=utf-8');
   final url = html.Url.createObjectUrlFromBlob(blob);
@@ -47,6 +49,7 @@ Future<void> exportPresentationAsPdfViaPrint({
     effectSettings: effectSettings,
     title: title,
     modelSourcesById: modelSourcesById,
+    imageSourcesById: RemoteImageSources.all,
   ).replaceFirst(
     '</body>',
     '''

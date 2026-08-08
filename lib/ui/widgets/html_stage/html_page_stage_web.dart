@@ -7,6 +7,7 @@ import 'dart:ui_web' as ui_web;
 import 'package:flutter/widgets.dart';
 
 import '../../../models/slide_model.dart';
+import '../../../services/remote_image_sources.dart';
 import '../../../services/remote_model_sources.dart';
 import 'html_stage_document.dart';
 
@@ -88,6 +89,7 @@ class _HtmlPageStageState extends State<HtmlPageStage> {
       showBadge: widget.showBadge,
       renderMode: widget.renderMode,
       modelSourcesById: RemoteModelSources.all,
+      imageSourcesById: RemoteImageSources.all,
     );
   }
 
@@ -105,39 +107,48 @@ class _HtmlPageStageState extends State<HtmlPageStage> {
       'type': 'sutol-stage-patch',
       'components': widget.page.componentBlocks
           .map(
-            (block) => <String, Object?>{
-              'id': block.id,
-              'className': <String>[
-                'sutol-html-component',
-                if (block.modelAssetId == null)
-                  'component-${_componentDomKindName(block.kind)}',
-                if (block.modelAssetId != null) 'component-3d-model',
-                if (block.modelAssetId != null ||
-                    presentationComponentHasHtml(block.kind))
-                  'has-html-component',
-                if (block.id == widget.selectedComponentBlockId) 'is-selected',
-              ].join(' '),
-              'revealStep': block.revealStep,
-              'hotspotTargetPageId': block.hotspotTargetPageId,
-              'left': '${_pct(block.position.dx)}%',
-              'top': '${_pct(block.position.dy)}%',
-              'width': '${_pct(block.size.width)}%',
-              'height': '${_pct(block.size.height)}%',
-              'modelOrbitTheta': block.modelAssetId == null
-                  ? null
-                  : block.modelOrbitTheta.toStringAsFixed(2),
-              'modelOrbitPhi': block.modelAssetId == null
-                  ? null
-                  : block.modelOrbitPhi.toStringAsFixed(2),
-              'modelAutoRotate': block.modelAssetId == null
-                  ? null
-                  : block.modelAutoRotate,
-              'modelOrbitEnabled': block.modelAssetId == null
-                  ? null
-                  : block.modelOrbitEnabled,
-              'modelAnimationEnabled': block.modelAssetId == null
-                  ? null
-                  : block.modelAnimationEnabled,
+            (block) {
+              final assetId = block.modelAssetId;
+              final isImage =
+                  assetId != null && RemoteImageSources.sourceFor(assetId) != null;
+              return <String, Object?>{
+                'id': block.id,
+                'className': <String>[
+                  'sutol-html-component',
+                  if (isImage) 'component-uploaded-image',
+                  if (block.modelAssetId == null)
+                    'component-${_componentDomKindName(block.kind)}',
+                  if (block.modelAssetId != null &&
+                      !isImage &&
+                      RemoteModelSources.sourceFor(assetId!) != null)
+                    'component-3d-model',
+                  if (block.modelAssetId != null ||
+                      presentationComponentHasHtml(block.kind))
+                    'has-html-component',
+                  if (block.id == widget.selectedComponentBlockId) 'is-selected',
+                ].join(' '),
+                'revealStep': block.revealStep,
+                'hotspotTargetPageId': block.hotspotTargetPageId,
+                'left': '${_pct(block.position.dx)}%',
+                'top': '${_pct(block.position.dy)}%',
+                'width': '${_pct(block.size.width)}%',
+                'height': '${_pct(block.size.height)}%',
+                'modelOrbitTheta': isImage || assetId == null
+                    ? null
+                    : block.modelOrbitTheta.toStringAsFixed(2),
+                'modelOrbitPhi': isImage || assetId == null
+                    ? null
+                    : block.modelOrbitPhi.toStringAsFixed(2),
+                'modelAutoRotate': isImage || assetId == null
+                    ? null
+                    : block.modelAutoRotate,
+                'modelOrbitEnabled': isImage || assetId == null
+                    ? null
+                    : block.modelOrbitEnabled,
+                'modelAnimationEnabled': isImage || assetId == null
+                    ? null
+                    : block.modelAnimationEnabled,
+              };
             },
           )
           .toList(growable: false),
@@ -287,6 +298,36 @@ String _textStyleDomClass(PresentationTextStyle style) {
       return 'text-style-open-caveat';
     case PresentationTextStyle.openUnbounded:
       return 'text-style-open-unbounded';
+    case PresentationTextStyle.klasikTinos:
+      return 'text-style-klasik-tinos';
+    case PresentationTextStyle.klasikArimo:
+      return 'text-style-klasik-arimo';
+    case PresentationTextStyle.klasikCousine:
+      return 'text-style-klasik-cousine';
+    case PresentationTextStyle.klasikCarlito:
+      return 'text-style-klasik-carlito';
+    case PresentationTextStyle.klasikCaladea:
+      return 'text-style-klasik-caladea';
+    case PresentationTextStyle.klasikEBGaramond:
+      return 'text-style-klasik-eb-garamond';
+    case PresentationTextStyle.klasikLibreBaskerville:
+      return 'text-style-klasik-libre-baskerville';
+    case PresentationTextStyle.klasikAlegreya:
+      return 'text-style-klasik-alegreya';
+    case PresentationTextStyle.klasikPTSerif:
+      return 'text-style-klasik-pt-serif';
+    case PresentationTextStyle.klasikMerriweather:
+      return 'text-style-klasik-merriweather';
+    case PresentationTextStyle.klasikLora:
+      return 'text-style-klasik-lora';
+    case PresentationTextStyle.klasikGreatVibes:
+      return 'text-style-klasik-great-vibes';
+    case PresentationTextStyle.klasikDancingScript:
+      return 'text-style-klasik-dancing-script';
+    case PresentationTextStyle.klasikPacifico:
+      return 'text-style-klasik-pacifico';
+    case PresentationTextStyle.klasikLobster:
+      return 'text-style-klasik-lobster';
   }
 }
 

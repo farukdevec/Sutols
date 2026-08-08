@@ -32,6 +32,7 @@ String buildHtmlStageDocument({
   bool showBadge = true,
   HtmlStageRenderMode renderMode = HtmlStageRenderMode.full,
   Map<String, String> modelSourcesById = const <String, String>{},
+  Map<String, String> imageSourcesById = const <String, String>{},
 }) {
   final buffer = StringBuffer()
     ..writeln('<!DOCTYPE html>')
@@ -59,6 +60,7 @@ String buildHtmlStageDocument({
         showBadge: showBadge,
         renderMode: renderMode,
         modelSourcesById: modelSourcesById,
+        imageSourcesById: imageSourcesById,
       ),
     )
     ..writeln('<script>')
@@ -81,6 +83,7 @@ String buildHtmlStageMarkup({
   String? extraStageClass,
   HtmlStageRenderMode renderMode = HtmlStageRenderMode.full,
   Map<String, String> modelSourcesById = const <String, String>{},
+  Map<String, String> imageSourcesById = const <String, String>{},
   bool deferEmbeddedAssets = false,
 }) {
   final renderModeName = _renderModeName(renderMode);
@@ -135,16 +138,18 @@ String buildHtmlStageMarkup({
     if (!_isVisibleAtRevealStep(block.revealStep, visibleRevealStep)) {
       continue;
     }
-    final is3D = block.modelAssetId != null;
-    final remoteSource = is3D ? modelSourcesById[block.modelAssetId!] : null;
+    final assetId = block.modelAssetId;
+    final is3D = assetId != null && imageSourcesById[assetId] == null;
+    final isImage = assetId != null && imageSourcesById[assetId] != null;
+    final remoteSource = is3D ? modelSourcesById[assetId] : null;
     final resolvableSource = remoteSource;
     final has3D = resolvableSource != null;
-    final componentHtml =
-        has3D ? '' : presentationComponentHtml(block.kind);
-    final hasHtmlComponent = has3D || componentHtml.trim().isNotEmpty;
+    final componentHtml = has3D ? '' : presentationComponentHtml(block.kind);
+    final hasHtmlComponent = has3D || isImage || componentHtml.trim().isNotEmpty;
     final classes = <String>[
       'sutol-html-component',
-      if (!is3D) 'component-${_componentDomKindName(block.kind)}',
+      if (isImage) 'component-uploaded-image',
+      if (!is3D && !isImage) 'component-${_componentDomKindName(block.kind)}',
       if (is3D) 'component-3d-model',
       if (hasHtmlComponent) 'has-html-component',
       if (block.id == selectedComponentBlockId) 'is-selected',
@@ -152,29 +157,31 @@ String buildHtmlStageMarkup({
     final hotspotAttr = block.hotspotTargetPageId == null
         ? ''
         : ' data-hotspot-target="${_escapeAttribute(block.hotspotTargetPageId!)}"';
-    final componentInner = has3D
-        ? _model3DMarkup(
-            block.modelAssetId!,
-            resolvableSource,
-            id: block.modelAssetId!,
-            hasAnimations:
-                findPresentation3DModelAsset(block.modelAssetId!)
-                    ?.hasAnimations ??
-                true,
-            animationEnabled: block.modelAnimationEnabled,
-            autoRotate: block.modelAutoRotate,
-            orbitEnabled: block.modelOrbitEnabled,
-            orbitTheta: block.modelOrbitTheta,
-            orbitPhi: block.modelOrbitPhi,
-            deferSource: deferEmbeddedAssets,
-          )
-        : componentHtml.trim().isEmpty
-            ? '<span class="sutol-component-shape"></span>'
-            : '<div class="sutol-html-component-inner">$componentHtml</div>';
-    final label = block.modelAssetId ?? '';
+    final componentInner = isImage
+        ? _uploadedImageMarkup(assetId, imageSourcesById[assetId]!)
+        : has3D
+            ? _model3DMarkup(
+                assetId ??
+                    '',
+                resolvableSource,
+                id: assetId ?? '',
+                hasAnimations: findPresentation3DModelAsset(assetId ?? '')
+                        ?.hasAnimations ??
+                    true,
+                animationEnabled: block.modelAnimationEnabled,
+                autoRotate: block.modelAutoRotate,
+                orbitEnabled: block.modelOrbitEnabled,
+                orbitTheta: block.modelOrbitTheta,
+                orbitPhi: block.modelOrbitPhi,
+                deferSource: deferEmbeddedAssets,
+              )
+            : componentHtml.trim().isEmpty
+                ? '<span class="sutol-component-shape"></span>'
+                : '<div class="sutol-html-component-inner">$componentHtml</div>';
+    final label = assetId ?? '';
     final modelAttr = !is3D
         ? ''
-        : ' data-sutol-model-id="${_escapeAttribute(block.modelAssetId!)}" data-sutol-orbit-theta="${block.modelOrbitTheta.toStringAsFixed(2)}" data-sutol-orbit-phi="${block.modelOrbitPhi.toStringAsFixed(2)}"';
+        : ' data-sutol-model-id="${_escapeAttribute(assetId)}" data-sutol-orbit-theta="${block.modelOrbitTheta.toStringAsFixed(2)}" data-sutol-orbit-phi="${block.modelOrbitPhi.toStringAsFixed(2)}"';
     buffer.writeln(
       '<div class="$classes" data-sutol-component-id="${_escapeAttribute(block.id)}"$modelAttr data-reveal-step="${block.revealStep}" aria-label="${_escapeAttribute(label)}"$hotspotAttr style="left:${_pct(block.position.dx)}%;top:${_pct(block.position.dy)}%;width:${_pct(block.size.width)}%;height:${_pct(block.size.height)}%;">$componentInner</div>',
     );
@@ -211,6 +218,14 @@ String _model3DMarkup(
   return '''
 <div class="sutol-html-component-inner sutol-3d-model-inner">
   <model-viewer class="sutol-3d-model-viewer" $sourceMarkup alt="${_escapeAttribute(label)}"$cameraControlsMarkup$animationMarkup$autoRotateMarkup camera-orbit="$cameraOrbit" interaction-prompt="none" shadow-intensity="1" shadow-softness="0.8" exposure="1" loading="eager" reveal="auto"></model-viewer>
+</div>
+''';
+}
+
+String _uploadedImageMarkup(String sourceId, String dataUrl) {
+  return '''
+<div class="sutol-html-component-inner sutol-uploaded-image-inner">
+  <img class="sutol-uploaded-image-element" data-sutol-image-id="${_escapeAttribute(sourceId)}" src="${_escapeAttribute(dataUrl)}" alt="Yuklenen gorsel" draggable="false">
 </div>
 ''';
 }
@@ -341,6 +356,36 @@ String _textStyleClass(PresentationTextStyle style) {
       return 'text-style-open-caveat';
     case PresentationTextStyle.openUnbounded:
       return 'text-style-open-unbounded';
+    case PresentationTextStyle.klasikTinos:
+      return 'text-style-klasik-tinos';
+    case PresentationTextStyle.klasikArimo:
+      return 'text-style-klasik-arimo';
+    case PresentationTextStyle.klasikCousine:
+      return 'text-style-klasik-cousine';
+    case PresentationTextStyle.klasikCarlito:
+      return 'text-style-klasik-carlito';
+    case PresentationTextStyle.klasikCaladea:
+      return 'text-style-klasik-caladea';
+    case PresentationTextStyle.klasikEBGaramond:
+      return 'text-style-klasik-eb-garamond';
+    case PresentationTextStyle.klasikLibreBaskerville:
+      return 'text-style-klasik-libre-baskerville';
+    case PresentationTextStyle.klasikAlegreya:
+      return 'text-style-klasik-alegreya';
+    case PresentationTextStyle.klasikPTSerif:
+      return 'text-style-klasik-pt-serif';
+    case PresentationTextStyle.klasikMerriweather:
+      return 'text-style-klasik-merriweather';
+    case PresentationTextStyle.klasikLora:
+      return 'text-style-klasik-lora';
+    case PresentationTextStyle.klasikGreatVibes:
+      return 'text-style-klasik-great-vibes';
+    case PresentationTextStyle.klasikDancingScript:
+      return 'text-style-klasik-dancing-script';
+    case PresentationTextStyle.klasikPacifico:
+      return 'text-style-klasik-pacifico';
+    case PresentationTextStyle.klasikLobster:
+      return 'text-style-klasik-lobster';
   }
 }
 
@@ -405,7 +450,7 @@ final Map<PresentationBackgroundKind, String> _escapedBackgroundScenes =
     <PresentationBackgroundKind, String>{};
 
 const String _stageStyles = '''
-@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Bungee&family=Caveat:wght@400;600;700&family=Chakra+Petch:wght@600;700&family=Cinzel:wght@600;700;800;900&family=Cormorant+Garamond:wght@400;600&family=Exo+2:wght@700;900&family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400;500;600;700;800&family=Manrope:wght@400;500&family=Marcellus&family=Michroma&family=Mulish:wght@400;500&family=Nunito+Sans:wght@400;500&family=Orbitron:wght@500;700;900&family=Oswald:wght@400;700&family=Playfair+Display:wght@400;700;800&family=Poppins:wght@500;600;700&family=Rajdhani:wght@400;600&family=Righteous&family=Share+Tech+Mono&family=Sora:wght@500;700&family=Space+Grotesk:wght@400;500;700&family=Space+Mono:wght@400;700&family=Syne:wght@700;800&family=Titillium+Web:wght@400;600&family=Unbounded:wght@400;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Bungee&family=Caveat:wght@400;600;700&family=Chakra+Petch:wght@600;700&family=Cinzel:wght@600;700;800;900&family=Cormorant+Garamond:wght@400;600&family=Exo+2:wght@700;900&family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400;500;600;700;800&family=Manrope:wght@400;500&family=Marcellus&family=Michroma&family=Mulish:wght@400;500&family=Nunito+Sans:wght@400;500&family=Orbitron:wght@500;700;900&family=Oswald:wght@400;700&family=Playfair+Display:wght@400;700;800&family=Poppins:wght@500;600;700&family=Rajdhani:wght@400;600&family=Righteous&family=Share+Tech+Mono&family=Sora:wght@500;700&family=Space+Grotesk:wght@400;500;700&family=Space+Mono:wght@400;700&family=Syne:wght@700;800&family=Titillium+Web:wght@400;600&family=Tinos:wght@400;700&family=Arimo:wght@400;700&family=Cousine:wght@400;700&family=Carlito:wght@400;700&family=Caladea:wght@400;700&family=EB+Garamond:wght@400;700&family=Libre+Baskerville:wght@400;700&family=Alegreya:wght@400;700&family=PT+Serif:wght@400;700&family=Merriweather:wght@400;900&family=Lora:wght@400;700&family=Great+Vibes&family=Dancing+Script:wght@400;700&family=Pacifico&family=Lobster&family=Unbounded:wght@400;700&display=swap');
 
 html, body {
   margin: 0;
@@ -1119,6 +1164,162 @@ body {
 .sutol-html-block.text-style-open-unbounded.is-title {
   font-weight: 700;
   letter-spacing: 0.025em;
+}
+
+/* Classic metric-compatible typography additions.
+   Source: Google Fonts. License: Apache 2.0 / OFL 1.1. */
+.sutol-html-block.text-style-klasik-tinos {
+  font-family: 'Tinos', serif;
+  font-weight: 400;
+  letter-spacing: 0.005em;
+}
+
+.sutol-html-block.text-style-klasik-tinos.is-title {
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.sutol-html-block.text-style-klasik-arimo {
+  font-family: 'Arimo', sans-serif;
+  font-weight: 400;
+  letter-spacing: 0.005em;
+}
+
+.sutol-html-block.text-style-klasik-arimo.is-title {
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.sutol-html-block.text-style-klasik-cousine {
+  font-family: 'Cousine', monospace;
+  font-weight: 400;
+  letter-spacing: 0.005em;
+}
+
+.sutol-html-block.text-style-klasik-cousine.is-title {
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.sutol-html-block.text-style-klasik-carlito {
+  font-family: 'Carlito', sans-serif;
+  font-weight: 400;
+  letter-spacing: 0.005em;
+}
+
+.sutol-html-block.text-style-klasik-carlito.is-title {
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.sutol-html-block.text-style-klasik-caladea {
+  font-family: 'Caladea', serif;
+  font-weight: 400;
+  letter-spacing: 0.005em;
+}
+
+.sutol-html-block.text-style-klasik-caladea.is-title {
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.sutol-html-block.text-style-klasik-eb-garamond {
+  font-family: 'EB Garamond', serif;
+  font-weight: 400;
+  letter-spacing: 0.005em;
+}
+
+.sutol-html-block.text-style-klasik-eb-garamond.is-title {
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.sutol-html-block.text-style-klasik-libre-baskerville {
+  font-family: 'Libre Baskerville', serif;
+  font-weight: 400;
+  letter-spacing: 0.005em;
+}
+
+.sutol-html-block.text-style-klasik-libre-baskerville.is-title {
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.sutol-html-block.text-style-klasik-alegreya {
+  font-family: 'Alegreya', serif;
+  font-weight: 400;
+  letter-spacing: 0.005em;
+}
+
+.sutol-html-block.text-style-klasik-alegreya.is-title {
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.sutol-html-block.text-style-klasik-pt-serif {
+  font-family: 'PT Serif', serif;
+  font-weight: 400;
+  letter-spacing: 0.005em;
+}
+
+.sutol-html-block.text-style-klasik-pt-serif.is-title {
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.sutol-html-block.text-style-klasik-merriweather {
+  font-family: 'Merriweather', serif;
+  font-weight: 400;
+  letter-spacing: 0.005em;
+}
+
+.sutol-html-block.text-style-klasik-merriweather.is-title {
+  font-weight: 900;
+  letter-spacing: 0.01em;
+}
+
+.sutol-html-block.text-style-klasik-lora {
+  font-family: 'Lora', serif;
+  font-weight: 400;
+  letter-spacing: 0.005em;
+}
+
+.sutol-html-block.text-style-klasik-lora.is-title {
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.sutol-html-block.text-style-klasik-great-vibes {
+  font-family: 'Great Vibes', cursive;
+  font-weight: 400;
+  letter-spacing: 0.015em;
+}
+
+.sutol-html-block.text-style-klasik-great-vibes.is-title {
+  letter-spacing: 0.025em;
+}
+
+.sutol-html-block.text-style-klasik-dancing-script {
+  font-family: 'Dancing Script', cursive;
+  font-weight: 400;
+  letter-spacing: 0.01em;
+}
+
+.sutol-html-block.text-style-klasik-dancing-script.is-title {
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.sutol-html-block.text-style-klasik-pacifico {
+  font-family: 'Pacifico', cursive;
+  font-weight: 400;
+  letter-spacing: 0.01em;
+}
+
+.sutol-html-block.text-style-klasik-lobster {
+  font-family: 'Lobster', cursive;
+  font-weight: 400;
+  letter-spacing: 0.01em;
 }
 
 /* Font presets above define typography only. Color, glow and motion are
@@ -1910,6 +2111,35 @@ body {
 @keyframes sutolBgSpin {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
+}
+
+/* Yuklenen yerel gorseller (data URL). */
+.sutol-uploaded-image-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.sutol-uploaded-image-inner:empty {
+  background: rgba(128, 128, 128, 0.08);
+  border: 1px dashed rgba(128, 128, 128, 0.45);
+  border-radius: 12px;
+}
+
+.sutol-uploaded-image-element {
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  border-radius: 10px;
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.20);
+  user-select: none;
+  -webkit-user-drag: none;
 }
 
 ''';
