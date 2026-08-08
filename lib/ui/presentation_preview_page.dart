@@ -359,36 +359,16 @@ class _PreviewDeckStage extends StatelessWidget {
                             ? SutolMotion.instant
                             : SutolMotion.moderate,
                         curve: SutolMotion.easeOut,
-                        child: Stack(
-                          fit: StackFit.expand,
-                          children: <Widget>[
-                            if (effectSettings.transitionKind ==
-                                    PresentationTransitionKind.smooth &&
-                                transitionFromPage != null &&
-                                !reduceMotion)
-                              _SmoothModelMorphStage(
-                                key: ValueKey<String>(
-                                  'smooth-morph-${page.id}',
-                                ),
-                                fromPage: transitionFromPage!,
-                                toPage: page,
-                                visibleRevealStep: currentRevealStep,
-                                duration: duration,
-                              )
-                            else
-                              HtmlPageStage(
-                                page: page,
-                                visibleRevealStep: currentRevealStep,
-                                showBadge: false,
-                                renderMode: HtmlStageRenderMode.preview,
-                              ),
-                            if (showHotspots)
-                              _PreviewHotspotOverlay(
-                                page: page,
-                                currentRevealStep: currentRevealStep,
-                                onHotspot: onHotspot,
-                              ),
-                          ],
+                        child: _PreviewStageWithOrbit(
+                          key: ValueKey<String>('orbit-${page.id}'),
+                          page: page,
+                          transitionFromPage: transitionFromPage,
+                          currentRevealStep: currentRevealStep,
+                          effectSettings: effectSettings,
+                          reduceMotion: reduceMotion,
+                          duration: duration,
+                          showHotspots: showHotspots,
+                          onHotspot: onHotspot,
                         ),
                       ),
                     ),
@@ -397,6 +377,151 @@ class _PreviewDeckStage extends StatelessWidget {
               ),
             ),
           ),
+        );
+      },
+    );
+  }
+}
+
+/// Sunum sırasında sahneyi gösterir ve "Manuel Kontrol" açık olan 3B
+/// modellerin sürüklenerek döndürülmesini sağlar. Sürükleme ile güncellenen
+/// kamera açıları yerel state'te tutulur ve sahne yeni değerlerle yamalır.
+class _PreviewStageWithOrbit extends StatefulWidget {
+  const _PreviewStageWithOrbit({
+    super.key,
+    required this.page,
+    required this.transitionFromPage,
+    required this.currentRevealStep,
+    required this.effectSettings,
+    required this.reduceMotion,
+    required this.duration,
+    required this.showHotspots,
+    required this.onHotspot,
+  });
+
+  final PresentationPage page;
+  final PresentationPage? transitionFromPage;
+  final int currentRevealStep;
+  final PresentationEffectSettings effectSettings;
+  final bool reduceMotion;
+  final Duration duration;
+  final bool showHotspots;
+  final ValueChanged<String> onHotspot;
+
+  @override
+  State<_PreviewStageWithOrbit> createState() => _PreviewStageWithOrbitState();
+}
+
+class _OrbitPose {
+  const _OrbitPose(this.theta, this.phi);
+
+  final double theta;
+  final double phi;
+}
+
+class _PreviewStageWithOrbitState extends State<_PreviewStageWithOrbit> {
+  final Map<String, _OrbitPose> _orbitOverrides = <String, _OrbitPose>{};
+
+  PresentationPage get _effectivePage {
+    if (_orbitOverrides.isEmpty) {
+      return widget.page;
+    }
+    var changed = false;
+    final components = widget.page.componentBlocks.map((block) {
+      final pose = _orbitOverrides[block.id];
+      if (pose == null) {
+        return block;
+      }
+      changed = true;
+      return block.copyWith(
+        modelOrbitTheta: pose.theta,
+        modelOrbitPhi: pose.phi,
+      );
+    }).toList(growable: false);
+    return changed
+        ? widget.page.copyWith(componentBlocks: components)
+        : widget.page;
+  }
+
+  void _handleOrbitDrag(PresentationComponentBlock block, Offset delta) {
+    final current = _orbitOverrides[block.id] ??
+        _OrbitPose(block.modelOrbitTheta, block.modelOrbitPhi);
+    setState(() {
+      _orbitOverrides[block.id] = _OrbitPose(
+        (current.theta - delta.dx * 0.55) % 360,
+        (current.phi + delta.dy * 0.45).clamp(10.0, 170.0).toDouble(),
+      );
+    });
+  }
+
+  Widget _orbitOverlay(PresentationComponentBlock block, Size stageSize) {
+    final width = (block.size.width * stageSize.width)
+        .clamp(54.0, stageSize.width)
+        .toDouble();
+    final height = (block.size.height * stageSize.height)
+        .clamp(44.0, stageSize.height)
+        .toDouble();
+    final left = (block.position.dx * stageSize.width)
+        .clamp(0.0, math.max(0.0, stageSize.width - width))
+        .toDouble();
+    final top = (block.position.dy * stageSize.height)
+        .clamp(0.0, math.max(0.0, stageSize.height - height))
+        .toDouble();
+    return Positioned(
+      left: left,
+      top: top,
+      width: width,
+      height: height,
+      child: MouseRegion(
+        cursor: SystemMouseCursors.move,
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onPanUpdate: (details) => _handleOrbitDrag(block, details.delta),
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final orbitBlocks = widget.page.componentBlocks
+        .where(
+          (block) => block.modelAssetId != null && block.modelOrbitEnabled,
+        )
+        .toList(growable: false);
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final stageSize = Size(constraints.maxWidth, constraints.maxHeight);
+        return Stack(
+          fit: StackFit.expand,
+          children: <Widget>[
+            if (widget.effectSettings.transitionKind ==
+                    PresentationTransitionKind.smooth &&
+                widget.transitionFromPage != null &&
+                !widget.reduceMotion)
+              _SmoothModelMorphStage(
+                key: ValueKey<String>('smooth-morph-${widget.page.id}'),
+                fromPage: widget.transitionFromPage!,
+                toPage: _effectivePage,
+                visibleRevealStep: widget.currentRevealStep,
+                duration: widget.duration,
+              )
+            else
+              HtmlPageStage(
+                page: _effectivePage,
+                visibleRevealStep: widget.currentRevealStep,
+                showBadge: false,
+                renderMode: HtmlStageRenderMode.preview,
+              ),
+            for (final block in orbitBlocks) _orbitOverlay(block, stageSize),
+            if (widget.showHotspots)
+              _PreviewHotspotOverlay(
+                page: widget.page,
+                currentRevealStep: widget.currentRevealStep,
+                onHotspot: widget.onHotspot,
+              ),
+          ],
         );
       },
     );

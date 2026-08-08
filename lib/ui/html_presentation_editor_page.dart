@@ -18,6 +18,7 @@ import '../state/theme_controller.dart';
 import 'presentation_preview_page.dart';
 import 'widgets/editor_shell.dart';
 import 'widgets/html_stage/html_page_stage.dart';
+import 'widgets/selection_mini_toolbar.dart';
 
 import 'design/design_system.dart';
 
@@ -74,6 +75,7 @@ class _HtmlPresentationEditorPageState
   void initState() {
     super.initState();
     widget.controller.addListener(_syncTextField);
+    widget.controller.addListener(_syncTabWithSelection);
     _textController = TextEditingController(
       text: widget.controller.selectedTextBlock?.text ?? '',
     );
@@ -86,6 +88,7 @@ class _HtmlPresentationEditorPageState
   @override
   void dispose() {
     widget.controller.removeListener(_syncTextField);
+    widget.controller.removeListener(_syncTabWithSelection);
     _textController.dispose();
     super.dispose();
   }
@@ -100,6 +103,41 @@ class _HtmlPresentationEditorPageState
       text: nextText,
       selection: TextSelection.collapsed(offset: nextText.length),
     );
+  }
+
+  /// Tekli seçim değiştiğinde sol paneli seçili öğenin türüne göre
+  /// ilgili sekmeye otomatik geçirir (Canva tarzı bağlamsal panel).
+  String? _lastAutoTabSelectionKey;
+
+  void _syncTabWithSelection() {
+    final controller = widget.controller;
+    String? selectionKey;
+    _HtmlToolTab? targetTab;
+    final textBlock = controller.selectedTextBlock;
+    final componentBlock = controller.selectedComponentBlock;
+    if (textBlock != null) {
+      selectionKey = 'text:${textBlock.id}';
+      targetTab = _HtmlToolTab.text;
+    } else if (componentBlock != null) {
+      selectionKey = 'component:${componentBlock.id}';
+      targetTab = componentBlock.modelAssetId != null
+          ? _HtmlToolTab.models3d
+          : _HtmlToolTab.components;
+    }
+    if (selectionKey == null) {
+      _lastAutoTabSelectionKey = null;
+      return;
+    }
+    if (selectionKey == _lastAutoTabSelectionKey) {
+      return;
+    }
+    _lastAutoTabSelectionKey = selectionKey;
+    if (targetTab != _activeTab || !_inspectorOpen) {
+      setState(() {
+        _activeTab = targetTab!;
+        _inspectorOpen = true;
+      });
+    }
   }
 
   void _setTab(_HtmlToolTab tab) {
@@ -1453,18 +1491,9 @@ class _HtmlInspectorPanel extends StatelessWidget {
           Expanded(
             child: activeTab == _HtmlToolTab.text
                 ? SingleChildScrollView(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        _HtmlTextControls(
-                          controller: controller,
-                          textController: textController,
-                        ),
-                        const SizedBox(height: 24),
-                        const Divider(height: 1),
-                        const SizedBox(height: 16),
-                        _HtmlTextEffectControls(controller: controller),
-                      ],
+                    child: _HtmlTextControls(
+                      controller: controller,
+                      textController: textController,
                     ),
                   )
                 : SingleChildScrollView(
@@ -1547,6 +1576,7 @@ class _HtmlStageWorkspace extends StatelessWidget {
             ),
             child: Column(
               children: <Widget>[
+                _SelectionContextBarSection(controller: controller),
                 Expanded(
                   child: _HtmlStageCard(
                     controller: controller,
@@ -1950,6 +1980,7 @@ class _HtmlWorkbench extends StatelessWidget {
             onTabChanged: onTabChanged,
           ),
           const SizedBox(height: 12),
+          _SelectionContextBarSection(controller: controller),
           Expanded(
             child: _HtmlStageCard(
               controller: controller,
@@ -3585,162 +3616,21 @@ class _ToolbarAction extends StatelessWidget {
   }
 }
 
-class _HtmlTextEffectControls extends StatelessWidget {
-  const _HtmlTextEffectControls({required this.controller});
-
-  final PresentationController controller;
-
-  static const List<_TextColorOption> _colors = <_TextColorOption>[
-    _TextColorOption(label: 'Otomatik', hex: null, color: Color(0xFFFFFFFF)),
-    _TextColorOption(label: 'Beyaz', hex: '#F8FBFF', color: Color(0xFFF8FBFF)),
-    _TextColorOption(
-        label: 'Camgöbeği', hex: '#67E8F9', color: Color(0xFF67E8F9)),
-    _TextColorOption(label: 'Mavi', hex: '#3B82F6', color: Color(0xFF3B82F6)),
-    _TextColorOption(label: 'Mor', hex: '#A855F7', color: Color(0xFFA855F7)),
-    _TextColorOption(label: 'Sarı', hex: '#FBBF24', color: Color(0xFFFBBF24)),
-    _TextColorOption(
-        label: 'Turuncu', hex: '#FB923C', color: Color(0xFFFB923C)),
-    _TextColorOption(
-        label: 'Kırmızı', hex: '#F87171', color: Color(0xFFF87171)),
-    _TextColorOption(label: 'Yeşil', hex: '#22C55E', color: Color(0xFF22C55E)),
-    _TextColorOption(label: 'Nane', hex: '#34D399', color: Color(0xFF34D399)),
-  ];
-
-  @override
-  Widget build(BuildContext context) {
-    final block = controller.selectedTextBlock;
-    final enabled = block != null;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
-        const _ToolbarBadge(
-          icon: Icons.auto_awesome_rounded,
-          label: 'Metin Efektleri',
-        ),
-        const SizedBox(height: 18),
-        _ControlFieldShell(
-          label: 'Animasyon',
-          child: DropdownButtonFormField<PresentationTextAnimation>(
-            key: ValueKey<String>(
-              'animation-${block?.textAnimation.name ?? 'none'}',
-            ),
-            initialValue: block?.textAnimation,
-            onChanged: !enabled
-                ? null
-                : (value) {
-                    if (value != null) {
-                      controller.updateSelectedTextAnimation(value);
-                    }
-                  },
-            dropdownColor: context.sutolColors.surface,
-            borderRadius: BorderRadius.circular(14),
-            isExpanded: true,
-            icon: const Icon(Icons.keyboard_arrow_down_rounded),
-            style: TextStyle(
-              color: context._htmlInk,
-              fontWeight: FontWeight.w700,
-            ),
-            decoration: _inputDecoration('Animasyon seç'),
-            items: PresentationTextAnimation.values
-                .map(
-                  (animation) => DropdownMenuItem<PresentationTextAnimation>(
-                    value: animation,
-                    child: Text(
-                      _textAnimationLabel(animation),
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        color: context._htmlInk,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-                )
-                .toList(growable: false),
-          ),
-        ),
-        const SizedBox(height: 20),
-        Text(
-          'Renk',
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: context._htmlInk,
-                fontWeight: FontWeight.w800,
-              ),
-        ),
-        const SizedBox(height: 10),
-        Wrap(
-          spacing: 9,
-          runSpacing: 9,
-          children: _colors
-              .map(
-                (option) => _TextColorSwatch(
-                  option: option,
-                  isSelected: enabled && block.textColorHex == option.hex,
-                  enabled: enabled,
-                  onTap: () => controller.updateSelectedTextColor(option.hex),
-                ),
-              )
-              .toList(growable: false),
-        ),
-        const SizedBox(height: 20),
-        Container(
-          padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
-          decoration: BoxDecoration(
-            color: context.sutolColors.surfaceSubtle,
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: context.sutolColors.outline),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Row(
-                children: <Widget>[
-                  Icon(
-                    Icons.brightness_7_rounded,
-                    size: 18,
-                    color: context._htmlAccent,
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      'Parlaklık',
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: context._htmlInk,
-                            fontWeight: FontWeight.w800,
-                          ),
-                    ),
-                  ),
-                  Text(
-                    enabled ? '${(block.glowIntensity * 100).round()}%' : '—',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: context._htmlMuted,
-                          fontWeight: FontWeight.w800,
-                        ),
-                  ),
-                ],
-              ),
-              Slider(
-                value: block?.glowIntensity ?? 0,
-                min: 0,
-                max: 2,
-                divisions: 20,
-                onChanged:
-                    enabled ? controller.updateSelectedGlowIntensity : null,
-              ),
-              Text(
-                '0% parlama olmadan, 200% en güçlü parlama ile gösterir.',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: context._htmlMuted,
-                      fontWeight: FontWeight.w600,
-                    ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-}
+const List<_TextColorOption> _textColorOptions = <_TextColorOption>[
+  _TextColorOption(label: 'Otomatik', hex: null, color: Color(0xFFFFFFFF)),
+  _TextColorOption(label: 'Beyaz', hex: '#F8FBFF', color: Color(0xFFF8FBFF)),
+  _TextColorOption(
+      label: 'Camgöbeği', hex: '#67E8F9', color: Color(0xFF67E8F9)),
+  _TextColorOption(label: 'Mavi', hex: '#3B82F6', color: Color(0xFF3B82F6)),
+  _TextColorOption(label: 'Mor', hex: '#A855F7', color: Color(0xFFA855F7)),
+  _TextColorOption(label: 'Sarı', hex: '#FBBF24', color: Color(0xFFFBBF24)),
+  _TextColorOption(
+      label: 'Turuncu', hex: '#FB923C', color: Color(0xFFFB923C)),
+  _TextColorOption(
+      label: 'Kırmızı', hex: '#F87171', color: Color(0xFFF87171)),
+  _TextColorOption(label: 'Yeşil', hex: '#22C55E', color: Color(0xFF22C55E)),
+  _TextColorOption(label: 'Nane', hex: '#34D399', color: Color(0xFF34D399)),
+];
 
 class _TextColorOption {
   const _TextColorOption({
@@ -3752,70 +3642,6 @@ class _TextColorOption {
   final String label;
   final String? hex;
   final Color color;
-}
-
-class _TextColorSwatch extends StatelessWidget {
-  const _TextColorSwatch({
-    required this.option,
-    required this.isSelected,
-    required this.enabled,
-    required this.onTap,
-  });
-
-  final _TextColorOption option;
-  final bool isSelected;
-  final bool enabled;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Tooltip(
-      message: option.label,
-      child: Opacity(
-        opacity: enabled ? 1 : 0.42,
-        child: InkWell(
-          onTap: enabled ? onTap : null,
-          borderRadius: BorderRadius.circular(14),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 160),
-            width: 42,
-            height: 42,
-            decoration: BoxDecoration(
-              color: option.color,
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(
-                color: isSelected ? context._htmlAccent : context.sutolColors.outline,
-                width: isSelected ? 3 : 1,
-              ),
-              boxShadow: isSelected
-                  ? const <BoxShadow>[
-                      BoxShadow(
-                        color: Color(0x330B7BFF),
-                        blurRadius: 10,
-                      ),
-                    ]
-                  : null,
-            ),
-            child: option.hex == null
-                ? Icon(
-                    Icons.auto_awesome_rounded,
-                    color: context._htmlInk,
-                    size: 18,
-                  )
-                : isSelected
-                    ? Icon(
-                        Icons.check_rounded,
-                        color: option.color.computeLuminance() > 0.55
-                            ? context._htmlInk
-                            : Colors.white,
-                        size: 20,
-                      )
-                    : null,
-          ),
-        ),
-      ),
-    );
-  }
 }
 
 class _HtmlTextControls extends StatelessWidget {
@@ -3853,42 +3679,96 @@ class _HtmlTextControls extends StatelessWidget {
           enabled: selectedTextBlock != null,
           onChanged: controller.updateSelectedText,
         ),
-        const SizedBox(height: 12),
-        Row(
-          children: [
-            Expanded(
-              flex: 3,
-              child: _TypeDropdownControl(
-                value: selectedTextBlock?.textStyle,
-                onChanged: selectedTextBlock == null
-                    ? null
-                    : (value) {
-                        if (value != null) {
-                          controller.updateSelectedTextStyle(value);
-                        }
-                      },
+        const SizedBox(height: 18),
+        Text(
+          'Yazı Tipleri',
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                color: context._htmlInk,
+                fontWeight: FontWeight.w800,
               ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              flex: 2,
-              child: _SizeStepperControl(
-                value: selectedTextBlock?.fontSize.round(),
-                onDecrease: selectedTextBlock == null
-                    ? null
-                    : () => controller.updateSelectedFontSize(
-                          math.max(18, selectedTextBlock.fontSize - 2),
-                        ),
-                onIncrease: selectedTextBlock == null
-                    ? null
-                    : () => controller.updateSelectedFontSize(
-                          math.min(120, selectedTextBlock.fontSize + 2),
-                        ),
-              ),
-            ),
-          ],
         ),
+        const SizedBox(height: 4),
+        Text(
+          'Boyut, biçim, renk ve animasyon ayarları üst çubukta.',
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: context._htmlMuted,
+                fontWeight: FontWeight.w600,
+              ),
+        ),
+        const SizedBox(height: 12),
+        for (final style in PresentationTextStyle.values)
+          _FontListTile(
+            label: _htmlTextStyleLabel(style),
+            selected: selectedTextBlock?.textStyle == style,
+            enabled: selectedTextBlock != null,
+            onTap: () => controller.updateSelectedTextStyle(style),
+          ),
       ],
+    );
+  }
+}
+
+/// Sol paneldeki büyük font liste satırı.
+class _FontListTile extends StatelessWidget {
+  const _FontListTile({
+    required this.label,
+    required this.selected,
+    required this.enabled,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final bool enabled;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Opacity(
+        opacity: enabled ? 1 : 0.45,
+        child: InkWell(
+          onTap: enabled ? onTap : null,
+          borderRadius: BorderRadius.circular(16),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 160),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
+            decoration: BoxDecoration(
+              color: selected
+                  ? context._htmlAccent.withValues(alpha: 0.10)
+                  : context.sutolColors.surfaceSubtle,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: selected
+                    ? context._htmlAccent
+                    : context.sutolColors.outline,
+                width: selected ? 2 : 1,
+              ),
+            ),
+            child: Row(
+              children: <Widget>[
+                Expanded(
+                  child: Text(
+                    label,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontSize: 18,
+                          color: context._htmlInk,
+                          fontWeight: FontWeight.w700,
+                        ),
+                  ),
+                ),
+                if (selected)
+                  Icon(
+                    Icons.check_circle_rounded,
+                    size: 20,
+                    color: context._htmlAccent,
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
@@ -3917,103 +3797,6 @@ class _TextFieldControl extends StatelessWidget {
           fontWeight: FontWeight.w700,
         ),
         decoration: _inputDecoration('Buraya metin yazin'),
-      ),
-    );
-  }
-}
-
-class _TypeDropdownControl extends StatelessWidget {
-  const _TypeDropdownControl({
-    required this.value,
-    required this.onChanged,
-  });
-
-  final PresentationTextStyle? value;
-  final ValueChanged<PresentationTextStyle?>? onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return _ControlFieldShell(
-      label: 'Yazı Stili',
-      child: DropdownButtonFormField<PresentationTextStyle>(
-        key: ValueKey<String>('text-style-${value?.name ?? 'none'}'),
-        initialValue: value,
-        onChanged: onChanged,
-        isDense: true,
-        dropdownColor: context.sutolColors.surface,
-        borderRadius: BorderRadius.circular(14),
-        icon: const Icon(Icons.keyboard_arrow_down_rounded),
-        style: TextStyle(
-          color: context._htmlInk,
-          fontWeight: FontWeight.w700,
-        ),
-        decoration: _inputDecoration('Yazı stili'),
-        items: PresentationTextStyle.values
-            .map(
-              (style) => DropdownMenuItem<PresentationTextStyle>(
-                value: style,
-                child: Text(
-                  _htmlTextStyleLabel(style),
-                  style: TextStyle(
-                    color: context._htmlInk,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-            )
-            .toList(growable: false),
-      ),
-    );
-  }
-}
-
-class _SizeStepperControl extends StatelessWidget {
-  const _SizeStepperControl({
-    required this.value,
-    this.onDecrease,
-    this.onIncrease,
-  });
-
-  final int? value;
-  final VoidCallback? onDecrease;
-  final VoidCallback? onIncrease;
-
-  @override
-  Widget build(BuildContext context) {
-    return _ControlFieldShell(
-      label: 'Boyut',
-      child: Container(
-        height: 48,
-        decoration: BoxDecoration(
-          color: context.sutolColors.surfaceSubtle,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: context.sutolColors.outline),
-        ),
-        child: Row(
-          children: <Widget>[
-            IconButton(
-              onPressed: onDecrease,
-              visualDensity: VisualDensity.compact,
-              icon: Icon(Icons.remove_rounded, color: context._htmlInk, size: 20),
-            ),
-            Expanded(
-              child: Center(
-                child: Text(
-                  value?.toString() ?? '-',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: context._htmlInk,
-                        fontWeight: FontWeight.w800,
-                      ),
-                ),
-              ),
-            ),
-            IconButton(
-              onPressed: onIncrease,
-              visualDensity: VisualDensity.compact,
-              icon: Icon(Icons.add_rounded, color: context._htmlInk, size: 20),
-            ),
-          ],
-        ),
       ),
     );
   }
@@ -4207,6 +3990,344 @@ class _HtmlStageCard extends StatelessWidget {
           );
         },
       ),
+    );
+  }
+
+}
+
+/// Seçime bağlı bağlamsal araç çubuğu (Canva tarzı yatay üst bar).
+/// Tekli seçimde seçili öğenin türüne göre hızlı ayarları gösterir;
+/// seçim yoksa ya da çoklu seçimde gizlenir.
+class _SelectionContextBarSection extends StatelessWidget {
+  const _SelectionContextBarSection({required this.controller});
+
+  final PresentationController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    final textBlock = controller.selectedTextBlock;
+    final componentBlock = controller.selectedComponentBlock;
+    List<Widget>? children;
+    String? contentKey;
+    if (textBlock != null) {
+      contentKey = 'text:${textBlock.id}';
+      children = _textChildren(context, textBlock);
+    } else if (componentBlock != null) {
+      contentKey = 'component:${componentBlock.id}';
+      children = componentBlock.modelAssetId != null
+          ? _modelChildren(componentBlock)
+          : _componentChildren();
+    }
+
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 180),
+      transitionBuilder: (child, animation) => FadeTransition(
+        opacity: animation,
+        child: SizeTransition(
+          sizeFactor: animation,
+          axisAlignment: -1,
+          child: child,
+        ),
+      ),
+      child: children == null
+          ? const SizedBox.shrink()
+          : Padding(
+              key: ValueKey<String>(contentKey!),
+              padding: const EdgeInsets.only(bottom: 10),
+              child: SelectionContextBar(children: children),
+            ),
+    );
+  }
+
+  List<Widget> _textChildren(
+    BuildContext context,
+    PresentationTextBlock block,
+  ) {
+    return <Widget>[
+      MiniToolAction(
+        icon: Icons.remove_rounded,
+        tooltip: 'Yazı Boyutunu Küçült',
+        onTap: block.fontSize > 18
+            ? () => controller.updateSelectedFontSize(
+                  math.max(18, block.fontSize - 2),
+                )
+            : null,
+      ),
+      SizedBox(
+        width: 32,
+        child: Center(
+          child: Tooltip(
+            message: 'Yazı Boyutu',
+            child: Text(
+              '${block.fontSize.round()}',
+              style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                    color: context._htmlInk,
+                    fontWeight: FontWeight.w800,
+                  ),
+            ),
+          ),
+        ),
+      ),
+      MiniToolAction(
+        icon: Icons.add_rounded,
+        tooltip: 'Yazı Boyutunu Büyüt',
+        onTap: block.fontSize < 120
+            ? () => controller.updateSelectedFontSize(
+                  math.min(120, block.fontSize + 2),
+                )
+            : null,
+      ),
+      const MiniToolDivider(),
+      MiniToolToggle(
+        icon: Icons.format_bold_rounded,
+        tooltip: 'Kalın',
+        active: block.textBold,
+        onTap: () => controller.updateSelectedTextBold(!block.textBold),
+      ),
+      MiniToolToggle(
+        icon: Icons.format_italic_rounded,
+        tooltip: 'İtalik',
+        active: block.textItalic,
+        onTap: () => controller.updateSelectedTextItalic(!block.textItalic),
+      ),
+      MiniToolToggle(
+        icon: Icons.format_underline_rounded,
+        tooltip: 'Altı Çizili',
+        active: block.textUnderline,
+        onTap: () =>
+            controller.updateSelectedTextUnderline(!block.textUnderline),
+      ),
+      const MiniToolDivider(),
+      MiniToolToggle(
+        icon: Icons.format_align_left_rounded,
+        tooltip: 'Sola Hizala',
+        active: block.textAlign == PresentationTextAlign.left,
+        onTap: () =>
+            controller.updateSelectedTextAlign(PresentationTextAlign.left),
+      ),
+      MiniToolToggle(
+        icon: Icons.format_align_center_rounded,
+        tooltip: 'Ortala',
+        active: block.textAlign == PresentationTextAlign.center,
+        onTap: () =>
+            controller.updateSelectedTextAlign(PresentationTextAlign.center),
+      ),
+      MiniToolToggle(
+        icon: Icons.format_align_right_rounded,
+        tooltip: 'Sağa Hizala',
+        active: block.textAlign == PresentationTextAlign.right,
+        onTap: () =>
+            controller.updateSelectedTextAlign(PresentationTextAlign.right),
+      ),
+      const MiniToolDivider(),
+      _MiniTextAnimationDropdown(controller: controller, block: block),
+      _MiniTextColorButton(controller: controller),
+      MiniToolAction(
+        icon: Icons.brightness_7_rounded,
+        tooltip: 'Parlaklık',
+        onTap: () => _showGlowDialog(context),
+      ),
+    ];
+  }
+
+  void _showGlowDialog(BuildContext context) {
+    showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        return AnimatedBuilder(
+          animation: controller,
+          builder: (context, _) {
+            final block = controller.selectedTextBlock;
+            return AlertDialog(
+              title: const Text('Parlaklık'),
+              content: block == null
+                  ? const Text('Metin seçili değil.')
+                  : Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: <Widget>[
+                        Slider(
+                          value: block.glowIntensity,
+                          min: 0,
+                          max: 2,
+                          divisions: 20,
+                          onChanged: controller.updateSelectedGlowIntensity,
+                        ),
+                        Text(
+                          '%${(block.glowIntensity * 100).round()}',
+                          style:
+                              Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                        ),
+                      ],
+                    ),
+              actions: <Widget>[
+                TextButton(
+                  onPressed: () => Navigator.of(dialogContext).pop(),
+                  child: const Text('Kapat'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  List<Widget> _modelChildren(PresentationComponentBlock block) {
+    return <Widget>[
+      MiniToolLabeledToggle(
+        icon: Icons.autorenew_rounded,
+        label: 'Kendi Etrafında Dönme',
+        active: block.modelAutoRotate,
+        onTap: () =>
+            controller.updateSelectedModelAutoRotate(!block.modelAutoRotate),
+      ),
+      const SizedBox(width: 4),
+      MiniToolLabeledToggle(
+        icon: Icons.movie_rounded,
+        label: 'Model Animasyonu',
+        active: block.modelAnimationEnabled,
+        onTap: () => controller
+            .updateSelectedModelAnimationEnabled(!block.modelAnimationEnabled),
+      ),
+      const SizedBox(width: 4),
+      MiniToolLabeledToggle(
+        icon: Icons.open_with_rounded,
+        label: 'Manuel Kontrol',
+        active: block.modelOrbitEnabled,
+        onTap: () =>
+            controller.updateSelectedModelOrbitEnabled(!block.modelOrbitEnabled),
+      ),
+    ];
+  }
+
+  List<Widget> _componentChildren() {
+    return <Widget>[
+      MiniToolAction(
+        icon: Icons.flip_to_front_rounded,
+        tooltip: 'Öne Getir',
+        onTap: () => controller.moveSelectedComponentLayer(forward: true),
+      ),
+      MiniToolAction(
+        icon: Icons.flip_to_back_rounded,
+        tooltip: 'Arkaya Gönder',
+        onTap: () => controller.moveSelectedComponentLayer(forward: false),
+      ),
+      const MiniToolDivider(),
+      MiniToolAction(
+        icon: Icons.delete_outline_rounded,
+        tooltip: 'Sil',
+        onTap: controller.removeSelectedComponentBlock,
+      ),
+    ];
+  }
+}
+
+/// Üst bardaki kompakt metin animasyonu seçici.
+class _MiniTextAnimationDropdown extends StatelessWidget {
+  const _MiniTextAnimationDropdown({
+    required this.controller,
+    required this.block,
+  });
+
+  final PresentationController controller;
+  final PresentationTextBlock block;
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: 'Metin Animasyonu',
+      child: Container(
+        height: 34,
+        constraints: const BoxConstraints(maxWidth: 150),
+        padding: const EdgeInsets.symmetric(horizontal: 8),
+        child: DropdownButtonHideUnderline(
+          child: DropdownButton<PresentationTextAnimation>(
+            value: block.textAnimation,
+            isDense: true,
+            isExpanded: true,
+            icon: Icon(
+              Icons.keyboard_arrow_down_rounded,
+              size: 18,
+              color: context.sutolColors.onSurfaceVariant,
+            ),
+            dropdownColor: context.sutolColors.surface,
+            borderRadius: BorderRadius.circular(14),
+            style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                  color: context._htmlInk,
+                  fontWeight: FontWeight.w700,
+                ),
+            onChanged: (value) {
+              if (value != null) {
+                controller.updateSelectedTextAnimation(value);
+              }
+            },
+            items: PresentationTextAnimation.values
+                .map(
+                  (animation) => DropdownMenuItem<PresentationTextAnimation>(
+                    value: animation,
+                    child: Text(
+                      _textAnimationLabel(animation),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                )
+                .toList(growable: false),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Mini araç çubuğundaki yazı rengi düğmesi; açılır menüden renk seçtirir.
+class _MiniTextColorButton extends StatelessWidget {
+  const _MiniTextColorButton({required this.controller});
+
+  final PresentationController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    final currentHex = controller.selectedTextBlock?.textColorHex;
+    return PopupMenuButton<String?>(
+      tooltip: 'Yazı Rengi',
+      padding: EdgeInsets.zero,
+      constraints: const BoxConstraints.tightFor(width: 32, height: 32),
+      iconSize: 17,
+      icon: Icon(
+        Icons.palette_rounded,
+        color: context.sutolColors.onSurfaceVariant,
+      ),
+      onSelected: controller.updateSelectedTextColor,
+      itemBuilder: (context) => _textColorOptions
+          .map(
+            (option) => PopupMenuItem<String?>(
+              value: option.hex,
+              height: 36,
+              child: Row(
+                children: <Widget>[
+                  Container(
+                    width: 18,
+                    height: 18,
+                    decoration: BoxDecoration(
+                      color: option.color,
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(
+                        color: currentHex == option.hex
+                            ? context._htmlAccent
+                            : context.sutolColors.outline,
+                        width: currentHex == option.hex ? 2.4 : 1,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Text(option.label),
+                ],
+              ),
+            ),
+          )
+          .toList(growable: false),
     );
   }
 }

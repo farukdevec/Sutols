@@ -24,6 +24,10 @@ void main() {
             glowIntensity: 1.6,
             revealStep: 1,
             hotspotTargetPageId: 'page-5',
+            textBold: true,
+            textItalic: true,
+            textUnderline: true,
+            textAlign: PresentationTextAlign.center,
           ),
         ],
         componentBlocks: <PresentationComponentBlock>[
@@ -34,6 +38,17 @@ void main() {
             size: Size(0.25, 0.32),
             revealStep: 2,
             hotspotTargetPageId: 'page-5',
+          ),
+          PresentationComponentBlock(
+            id: 'component-4',
+            modelAssetId: 'gercekci-dunya',
+            modelAnimationEnabled: false,
+            modelAutoRotate: true,
+            modelOrbitEnabled: true,
+            modelOrbitTheta: 45,
+            modelOrbitPhi: 60,
+            position: Offset(0.1, 0.5),
+            size: Size(0.2, 0.3),
           ),
         ],
       ),
@@ -69,14 +84,29 @@ void main() {
     );
     expect(project.pages.single.textBlocks.single.textColorHex, '#A855F7');
     expect(project.pages.single.textBlocks.single.glowIntensity, 1.6);
-    expect(project.pages.single.componentBlocks, hasLength(1));
-    expect(project.pages.single.componentBlocks.single.id, 'component-3');
+    expect(project.pages.single.textBlocks.single.textBold, isTrue);
+    expect(project.pages.single.textBlocks.single.textItalic, isTrue);
+    expect(project.pages.single.textBlocks.single.textUnderline, isTrue);
     expect(
-      project.pages.single.componentBlocks.single.kind,
+      project.pages.single.textBlocks.single.textAlign,
+      PresentationTextAlign.center,
+    );
+    expect(project.pages.single.componentBlocks, hasLength(2));
+    expect(project.pages.single.componentBlocks.first.id, 'component-3');
+    expect(
+      project.pages.single.componentBlocks.first.kind,
       PresentationComponentKind.fizik01,
     );
-    expect(project.pages.single.componentBlocks.single.size.width, 0.25);
-    expect(project.pages.single.componentBlocks.single.revealStep, 2);
+    expect(project.pages.single.componentBlocks.first.size.width, 0.25);
+    expect(project.pages.single.componentBlocks.first.revealStep, 2);
+    final modelBlock = project.pages.single.componentBlocks.last;
+    expect(modelBlock.id, 'component-4');
+    expect(modelBlock.modelAssetId, 'gercekci-dunya');
+    expect(modelBlock.modelAnimationEnabled, isFalse);
+    expect(modelBlock.modelAutoRotate, isTrue);
+    expect(modelBlock.modelOrbitEnabled, isTrue);
+    expect(modelBlock.modelOrbitTheta, 45);
+    expect(modelBlock.modelOrbitPhi, 60);
     expect(
       project.effectSettings.transitionKind,
       PresentationTransitionKind.zoom,
@@ -131,7 +161,14 @@ void main() {
           "widthFactor": 0.4
         }
       ],
-      "componentBlocks": []
+      "componentBlocks": [
+        {
+          "id": "legacy-model",
+          "modelAssetId": "yolcu-ucagi",
+          "position": {"dx": 0.2, "dy": 0.2},
+          "size": {"width": 0.3, "height": 0.3}
+        }
+      ]
     }
   ]
 }
@@ -146,6 +183,17 @@ void main() {
       PresentationTextAnimation.none,
     );
     expect(project.pages.single.textBlocks.single.textColorHex, isNull);
+    expect(project.pages.single.textBlocks.single.textBold, isFalse);
+    expect(project.pages.single.textBlocks.single.textItalic, isFalse);
+    expect(project.pages.single.textBlocks.single.textUnderline, isFalse);
+    expect(
+      project.pages.single.textBlocks.single.textAlign,
+      PresentationTextAlign.left,
+    );
+    final legacyModel = project.pages.single.componentBlocks.single;
+    expect(legacyModel.modelAnimationEnabled, isTrue);
+    expect(legacyModel.modelAutoRotate, isFalse);
+    expect(legacyModel.modelOrbitEnabled, isFalse);
   });
 
   test('migrates a legacy background to the new topic library', () {

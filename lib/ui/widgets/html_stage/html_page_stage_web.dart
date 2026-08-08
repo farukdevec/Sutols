@@ -129,6 +129,15 @@ class _HtmlPageStageState extends State<HtmlPageStage> {
               'modelOrbitPhi': block.modelAssetId == null
                   ? null
                   : block.modelOrbitPhi.toStringAsFixed(2),
+              'modelAutoRotate': block.modelAssetId == null
+                  ? null
+                  : block.modelAutoRotate,
+              'modelOrbitEnabled': block.modelAssetId == null
+                  ? null
+                  : block.modelOrbitEnabled,
+              'modelAnimationEnabled': block.modelAssetId == null
+                  ? null
+                  : block.modelAnimationEnabled,
             },
           )
           .toList(growable: false),
@@ -152,6 +161,10 @@ class _HtmlPageStageState extends State<HtmlPageStage> {
               'baseFontSize': '${(block.fontSize / 10).toStringAsFixed(2)}cqw',
               'glowIntensity': block.glowIntensity.toStringAsFixed(2),
               'textColor': block.textColorHex,
+              'textBold': block.textBold,
+              'textItalic': block.textItalic,
+              'textUnderline': block.textUnderline,
+              'textAlign': block.textAlign.name,
               'isTypewriter':
                   block.textAnimation == PresentationTextAnimation.daktilo,
               'text': block.text.trim().isEmpty ? 'Metin kutusu' : block.text,
@@ -188,7 +201,6 @@ bool _canPatchInPlace(HtmlPageStage oldWidget, HtmlPageStage nextWidget) {
     if (oldBlock.id != nextBlock.id ||
         oldBlock.kind != nextBlock.kind ||
         oldBlock.modelAssetId != nextBlock.modelAssetId ||
-        oldBlock.modelAnimationEnabled != nextBlock.modelAnimationEnabled ||
         oldBlock.revealStep != nextBlock.revealStep ||
         oldBlock.hotspotTargetPageId != nextBlock.hotspotTargetPageId) {
       return false;

@@ -127,7 +127,7 @@ String buildHtmlStageMarkup({
     final displayText = block.text.trim().isEmpty ? 'Metin kutusu' : block.text;
     final typewriterCycle = _typewriterCycleSeconds(displayText);
     buffer.writeln(
-      '<div class="$classes" data-sutol-text-id="${_escapeAttribute(block.id)}" data-reveal-step="${block.revealStep}"$hotspotAttr style="left:${_pct(block.position.dx)}%;top:${_pct(block.position.dy)}%;width:${_pct(block.widthFactor)}%;--sutol-left:${_pct(block.position.dx)}%;--sutol-top:${_pct(block.position.dy)}%;--base-font-size:${(block.fontSize / 10).toStringAsFixed(2)}cqw;--sutol-glow:${block.glowIntensity.toStringAsFixed(2)};--sutol-type-cycle:${typewriterCycle.toStringAsFixed(2)}s;${block.textColorHex == null ? '' : 'color:${_escapeAttribute(block.textColorHex!)};--sutol-text-color:${_escapeAttribute(block.textColorHex!)};'}">${_textBlockMarkup(displayText, block.textAnimation)}</div>',
+      '<div class="$classes" data-sutol-text-id="${_escapeAttribute(block.id)}" data-reveal-step="${block.revealStep}"$hotspotAttr style="left:${_pct(block.position.dx)}%;top:${_pct(block.position.dy)}%;width:${_pct(block.widthFactor)}%;--sutol-left:${_pct(block.position.dx)}%;--sutol-top:${_pct(block.position.dy)}%;--base-font-size:${(block.fontSize / 10).toStringAsFixed(2)}cqw;--sutol-glow:${block.glowIntensity.toStringAsFixed(2)};--sutol-type-cycle:${typewriterCycle.toStringAsFixed(2)}s;${_textFormatStyles(block)}${block.textColorHex == null ? '' : 'color:${_escapeAttribute(block.textColorHex!)};--sutol-text-color:${_escapeAttribute(block.textColorHex!)};'}">${_textBlockMarkup(displayText, block.textAnimation)}</div>',
     );
   }
 
@@ -157,8 +157,13 @@ String buildHtmlStageMarkup({
             block.modelAssetId!,
             resolvableSource,
             id: block.modelAssetId!,
-            hasAnimations: false,
+            hasAnimations:
+                findPresentation3DModelAsset(block.modelAssetId!)
+                    ?.hasAnimations ??
+                true,
             animationEnabled: block.modelAnimationEnabled,
+            autoRotate: block.modelAutoRotate,
+            orbitEnabled: block.modelOrbitEnabled,
             orbitTheta: block.modelOrbitTheta,
             orbitPhi: block.modelOrbitPhi,
             deferSource: deferEmbeddedAssets,
@@ -189,11 +194,15 @@ String _model3DMarkup(
   required String id,
   required bool hasAnimations,
   required bool animationEnabled,
+  required bool autoRotate,
+  required bool orbitEnabled,
   required double orbitTheta,
   required double orbitPhi,
   bool deferSource = false,
 }) {
   final animationMarkup = hasAnimations && animationEnabled ? ' autoplay' : '';
+  final autoRotateMarkup = autoRotate ? ' auto-rotate' : '';
+  final cameraControlsMarkup = orbitEnabled ? ' camera-controls' : '';
   final cameraOrbit =
       '${orbitTheta.toStringAsFixed(2)}deg ${orbitPhi.toStringAsFixed(2)}deg auto';
   final sourceMarkup = deferSource
@@ -201,13 +210,35 @@ String _model3DMarkup(
       : 'src="${_escapeAttribute(source)}"';
   return '''
 <div class="sutol-html-component-inner sutol-3d-model-inner">
-  <model-viewer class="sutol-3d-model-viewer" $sourceMarkup alt="${_escapeAttribute(label)}" camera-controls$animationMarkup camera-orbit="$cameraOrbit" interaction-prompt="none" shadow-intensity="1" shadow-softness="0.8" exposure="1" loading="eager" reveal="auto"></model-viewer>
+  <model-viewer class="sutol-3d-model-viewer" $sourceMarkup alt="${_escapeAttribute(label)}"$cameraControlsMarkup$animationMarkup$autoRotateMarkup camera-orbit="$cameraOrbit" interaction-prompt="none" shadow-intensity="1" shadow-softness="0.8" exposure="1" loading="eager" reveal="auto"></model-viewer>
 </div>
 ''';
 }
 
 String _escape(String value) =>
     const HtmlEscape(HtmlEscapeMode.element).convert(value);
+
+String _textFormatStyles(PresentationTextBlock block) {
+  final buffer = StringBuffer();
+  if (block.textBold) {
+    buffer.write('font-weight:700;');
+  }
+  if (block.textItalic) {
+    buffer.write('font-style:italic;');
+  }
+  if (block.textUnderline) {
+    buffer.write('text-decoration:underline;');
+  }
+  switch (block.textAlign) {
+    case PresentationTextAlign.left:
+      break;
+    case PresentationTextAlign.center:
+      buffer.write('text-align:center;');
+    case PresentationTextAlign.right:
+      buffer.write('text-align:right;');
+  }
+  return buffer.toString();
+}
 
 String _escapeAttribute(String value) =>
     const HtmlEscape(HtmlEscapeMode.attribute).convert(value);
@@ -1970,6 +2001,49 @@ const String _stagePatchScript = r'''
             String(item.modelOrbitPhi) + 'deg auto'
         );
       }
+    }
+    if (item.modelAutoRotate !== null && item.modelAutoRotate !== undefined) {
+      const modelViewer = element.querySelector('model-viewer');
+      if (modelViewer) {
+        if (item.modelAutoRotate) {
+          modelViewer.setAttribute('auto-rotate', '');
+        } else {
+          modelViewer.removeAttribute('auto-rotate');
+        }
+      }
+    }
+    if (item.modelOrbitEnabled !== null && item.modelOrbitEnabled !== undefined) {
+      const modelViewer = element.querySelector('model-viewer');
+      if (modelViewer) {
+        if (item.modelOrbitEnabled) {
+          modelViewer.setAttribute('camera-controls', '');
+        } else {
+          modelViewer.removeAttribute('camera-controls');
+        }
+      }
+    }
+    if (item.modelAnimationEnabled !== null &&
+        item.modelAnimationEnabled !== undefined) {
+      const modelViewer = element.querySelector('model-viewer');
+      if (modelViewer) {
+        if (item.modelAnimationEnabled) {
+          modelViewer.setAttribute('autoplay', '');
+        } else {
+          modelViewer.removeAttribute('autoplay');
+        }
+      }
+    }
+    if (item.textBold !== undefined) {
+      element.style.fontWeight = item.textBold ? '700' : '';
+    }
+    if (item.textItalic !== undefined) {
+      element.style.fontStyle = item.textItalic ? 'italic' : '';
+    }
+    if (item.textUnderline !== undefined) {
+      element.style.textDecoration = item.textUnderline ? 'underline' : '';
+    }
+    if (item.textAlign !== undefined) {
+      element.style.textAlign = item.textAlign || '';
     }
     if (item.baseFontSize !== undefined) {
       element.style.setProperty('--base-font-size', item.baseFontSize);

@@ -172,6 +172,10 @@ class PresentationProjectCodec {
       'glowIntensity': block.glowIntensity,
       'revealStep': block.revealStep,
       'hotspotTargetPageId': block.hotspotTargetPageId,
+      'textBold': block.textBold,
+      'textItalic': block.textItalic,
+      'textUnderline': block.textUnderline,
+      'textAlign': block.textAlign.name,
     };
   }
 
@@ -205,6 +209,18 @@ class PresentationProjectCodec {
       hotspotTargetPageId: json['hotspotTargetPageId'] is String
           ? json['hotspotTargetPageId']! as String
           : null,
+      textBold:
+          json['textBold'] is bool ? json['textBold']! as bool : false,
+      textItalic:
+          json['textItalic'] is bool ? json['textItalic']! as bool : false,
+      textUnderline: json['textUnderline'] is bool
+          ? json['textUnderline']! as bool
+          : false,
+      textAlign: _enumValue(
+        PresentationTextAlign.values,
+        json['textAlign'],
+        PresentationTextAlign.left,
+      ),
     );
   }
 
@@ -216,6 +232,7 @@ class PresentationProjectCodec {
       'kind': block.kind.name,
       'modelAssetId': block.modelAssetId,
       'modelAnimationEnabled': block.modelAnimationEnabled,
+      'modelAutoRotate': block.modelAutoRotate,
       'modelOrbitEnabled': block.modelOrbitEnabled,
       'modelOrbitTheta': block.modelOrbitTheta,
       'modelOrbitPhi': block.modelOrbitPhi,
@@ -242,6 +259,9 @@ class PresentationProjectCodec {
       modelAnimationEnabled: json['modelAnimationEnabled'] is bool
           ? json['modelAnimationEnabled']! as bool
           : true,
+      modelAutoRotate: json['modelAutoRotate'] is bool
+          ? json['modelAutoRotate']! as bool
+          : false,
       modelOrbitEnabled: json['modelOrbitEnabled'] is bool
           ? json['modelOrbitEnabled']! as bool
           : false,

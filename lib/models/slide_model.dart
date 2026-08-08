@@ -11,6 +11,12 @@ enum PresentationTextType {
   body,
 }
 
+enum PresentationTextAlign {
+  left,
+  center,
+  right,
+}
+
 enum PresentationTextStyle {
   standard,
   bilimDramatik,
@@ -168,6 +174,10 @@ class PresentationTextBlock {
     this.glowIntensity = 1,
     this.revealStep = 0,
     this.hotspotTargetPageId,
+    this.textBold = false,
+    this.textItalic = false,
+    this.textUnderline = false,
+    this.textAlign = PresentationTextAlign.left,
   });
 
   final String id;
@@ -182,6 +192,10 @@ class PresentationTextBlock {
   final double glowIntensity;
   final int revealStep;
   final String? hotspotTargetPageId;
+  final bool textBold;
+  final bool textItalic;
+  final bool textUnderline;
+  final PresentationTextAlign textAlign;
 
   PresentationTextBlock copyWith({
     String? id,
@@ -196,6 +210,10 @@ class PresentationTextBlock {
     double? glowIntensity,
     int? revealStep,
     Object? hotspotTargetPageId = _copySentinel,
+    bool? textBold,
+    bool? textItalic,
+    bool? textUnderline,
+    PresentationTextAlign? textAlign,
   }) {
     return PresentationTextBlock(
       id: id ?? this.id,
@@ -214,6 +232,10 @@ class PresentationTextBlock {
       hotspotTargetPageId: identical(hotspotTargetPageId, _copySentinel)
           ? this.hotspotTargetPageId
           : hotspotTargetPageId as String?,
+      textBold: textBold ?? this.textBold,
+      textItalic: textItalic ?? this.textItalic,
+      textUnderline: textUnderline ?? this.textUnderline,
+      textAlign: textAlign ?? this.textAlign,
     );
   }
 }
@@ -225,6 +247,7 @@ class PresentationComponentBlock {
     this.kind = PresentationComponentKind.edebiyat01,
     this.modelAssetId,
     this.modelAnimationEnabled = true,
+    this.modelAutoRotate = false,
     this.modelOrbitEnabled = false,
     this.modelOrbitTheta = 0,
     this.modelOrbitPhi = 75,
@@ -238,6 +261,7 @@ class PresentationComponentBlock {
   final PresentationComponentKind kind;
   final String? modelAssetId;
   final bool modelAnimationEnabled;
+  final bool modelAutoRotate;
   final bool modelOrbitEnabled;
   final double modelOrbitTheta;
   final double modelOrbitPhi;
@@ -251,6 +275,7 @@ class PresentationComponentBlock {
     PresentationComponentKind? kind,
     Object? modelAssetId = _copySentinel,
     bool? modelAnimationEnabled,
+    bool? modelAutoRotate,
     bool? modelOrbitEnabled,
     double? modelOrbitTheta,
     double? modelOrbitPhi,
@@ -267,6 +292,7 @@ class PresentationComponentBlock {
           : modelAssetId as String?,
       modelAnimationEnabled:
           modelAnimationEnabled ?? this.modelAnimationEnabled,
+      modelAutoRotate: modelAutoRotate ?? this.modelAutoRotate,
       modelOrbitEnabled: modelOrbitEnabled ?? this.modelOrbitEnabled,
       modelOrbitTheta: modelOrbitTheta ?? this.modelOrbitTheta,
       modelOrbitPhi: modelOrbitPhi ?? this.modelOrbitPhi,

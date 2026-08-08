@@ -250,6 +250,77 @@ class PresentationController extends ChangeNotifier {
     );
   }
 
+  void updateSelectedTextBold(bool value) {
+    _replaceSelectedTextBlock(
+      selectedTextBlock?.copyWith(textBold: value),
+    );
+  }
+
+  void updateSelectedTextItalic(bool value) {
+    _replaceSelectedTextBlock(
+      selectedTextBlock?.copyWith(textItalic: value),
+    );
+  }
+
+  void updateSelectedTextUnderline(bool value) {
+    _replaceSelectedTextBlock(
+      selectedTextBlock?.copyWith(textUnderline: value),
+    );
+  }
+
+  void updateSelectedTextAlign(PresentationTextAlign value) {
+    _replaceSelectedTextBlock(
+      selectedTextBlock?.copyWith(textAlign: value),
+    );
+  }
+
+  void updateSelectedModelAutoRotate(bool value) {
+    final current = selectedComponentBlock;
+    if (current == null ||
+        current.modelAssetId == null ||
+        current.modelAutoRotate == value) {
+      return;
+    }
+
+    final nextComponents = selectedPage.componentBlocks
+        .map(
+          (block) => block.id == current.id
+              ? block.copyWith(modelAutoRotate: value)
+              : block,
+        )
+        .toList(growable: false);
+    _replaceSelectedPage(
+      selectedPage.copyWith(componentBlocks: nextComponents),
+    );
+    notifyListeners();
+  }
+
+  /// Seçili bileşeni çizim sırasında bir adım öne/arkaya taşır (z-order).
+  /// [forward] true ise listenin sonuna (en üste) doğru kayar.
+  void moveSelectedComponentLayer({required bool forward}) {
+    final current = selectedComponentBlock;
+    if (current == null) {
+      return;
+    }
+    final components = List<PresentationComponentBlock>.of(
+      selectedPage.componentBlocks,
+    );
+    final index = components.indexWhere((block) => block.id == current.id);
+    if (index < 0) {
+      return;
+    }
+    final target = forward ? index + 1 : index - 1;
+    if (target < 0 || target >= components.length) {
+      return;
+    }
+    final moved = components.removeAt(index);
+    components.insert(target, moved);
+    _replaceSelectedPage(
+      selectedPage.copyWith(componentBlocks: components),
+    );
+    notifyListeners();
+  }
+
   void updateSelectedModelAnimationEnabled(bool value) {
     final current = selectedComponentBlock;
     if (current == null ||
