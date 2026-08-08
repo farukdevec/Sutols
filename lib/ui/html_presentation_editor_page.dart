@@ -64,6 +64,12 @@ class _HtmlPresentationEditorPageState
   _HtmlToolTab _activeTab = _HtmlToolTab.text;
   String? _lastEditorLabel;
 
+  /// Studio (geniş) düzende detay paneli açık mı? (Canva tarzı aç/kapat.)
+  bool _inspectorOpen = true;
+
+  /// Geniş studio düzeni aktif mi? (Toggle davranışı için build sırasında güncellenir.)
+  bool _studioWide = false;
+
   @override
   void initState() {
     super.initState();
@@ -97,11 +103,16 @@ class _HtmlPresentationEditorPageState
   }
 
   void _setTab(_HtmlToolTab tab) {
-    if (_activeTab == tab) {
+    if (tab == _activeTab) {
+      // Aynı ikona tekrar tıklandı: studio modunda panel açılır/kapanır.
+      if (_studioWide) {
+        setState(() => _inspectorOpen = !_inspectorOpen);
+      }
       return;
     }
     setState(() {
       _activeTab = tab;
+      _inspectorOpen = true;
     });
   }
 
@@ -277,6 +288,8 @@ class _HtmlPresentationEditorPageState
                   child: LayoutBuilder(
                     builder: (context, constraints) {
                       final isStudioWide = constraints.maxWidth >= 1320;
+                      // Toggle davranışı için mevcut düzen bilgisini sakla.
+                      _studioWide = isStudioWide;
 
                       if (isStudioWide) {
                         return Padding(
@@ -306,6 +319,7 @@ class _HtmlPresentationEditorPageState
                                   controller: widget.controller,
                                   textController: _textController,
                                   activeTab: _activeTab,
+                                  panelOpen: _inspectorOpen,
                                   onTabChanged: _setTab,
                                   onPreview: _openPresentationPreview,
                                   onExport: _exportPresentation,
@@ -1131,6 +1145,7 @@ class _HtmlStudioLayout extends StatelessWidget {
     required this.controller,
     required this.textController,
     required this.activeTab,
+    required this.panelOpen,
     required this.onTabChanged,
     required this.onPreview,
     required this.onExport,
@@ -1140,6 +1155,9 @@ class _HtmlStudioLayout extends StatelessWidget {
   final PresentationController controller;
   final TextEditingController textController;
   final _HtmlToolTab activeTab;
+
+  /// Detay paneli açık mı? (Kapalıyken tuval tüm genişliği kullanır.)
+  final bool panelOpen;
   final ValueChanged<_HtmlToolTab> onTabChanged;
   final VoidCallback onPreview;
   final VoidCallback onExport;
@@ -1157,18 +1175,29 @@ class _HtmlStudioLayout extends StatelessWidget {
           onExport: onExport,
           onExportPdf: onExportPdf,
         ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: _HtmlStageWorkspace(
-            controller: controller,
-            textController: textController,
-            activeTab: activeTab,
+        const SizedBox(width: 12),
+        // Detay paneli: ikon şeridinin hemen yanında açılır/kapanır.
+        // Kapalıyken genişlik 0'a iner (tuval genişler), açıkken 300px.
+        ClipRect(
+          child: AnimatedSize(
+            duration: const Duration(milliseconds: 220),
+            curve: Curves.ease,
+            alignment: Alignment.centerLeft,
+            child: panelOpen
+                ? SizedBox(
+                    width: 300,
+                    child: _HtmlInspectorPanel(
+                      controller: controller,
+                      textController: textController,
+                      activeTab: activeTab,
+                    ),
+                  )
+                : const SizedBox(width: 0, height: double.infinity),
           ),
         ),
-        const SizedBox(width: 16),
-        SizedBox(
-          width: 320,
-          child: _HtmlInspectorPanel(
+        const SizedBox(width: 12),
+        Expanded(
+          child: _HtmlStageWorkspace(
             controller: controller,
             textController: textController,
             activeTab: activeTab,
@@ -1197,8 +1226,8 @@ class _HtmlToolRail extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 108,
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 14),
+      width: 80,
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 14),
       decoration: BoxDecoration(
         color: context.colors.surfaceElevated,
         borderRadius: BorderRadius.circular(12),
@@ -1340,7 +1369,7 @@ class _RailButton extends StatelessWidget {
         borderRadius: BorderRadius.circular(22),
         child: Container(
           width: double.infinity,
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 12),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(22),
             border: Border.all(color: borderColor),
@@ -1356,6 +1385,7 @@ class _RailButton extends StatelessWidget {
                       color: isSelected ? context._htmlInk : context._htmlMuted,
                       fontWeight:
                           isSelected ? FontWeight.w800 : FontWeight.w700,
+                      fontSize: 11,
                     ),
               ),
             ],
@@ -2160,14 +2190,130 @@ class _HtmlControlPanel extends StatelessWidget {
   }
 }
 
-class _Html3DModelControls extends StatelessWidget {
+class _CloudModelEntry {
+  const _CloudModelEntry({
+    required this.id,
+    required this.name,
+    required this.modelUrl,
+    required this.tags,
+    required this.category,
+  });
+
+  final String id;
+  final String name;
+  final String modelUrl;
+  final List<String> tags;
+  final String category;
+}
+
+class _Html3DModelControls extends StatefulWidget {
   const _Html3DModelControls({required this.controller});
 
   final PresentationController controller;
 
   @override
+  State<_Html3DModelControls> createState() => _Html3DModelControlsState();
+}
+
+class _Html3DModelControlsState extends State<_Html3DModelControls> {
+  final TextEditingController _searchController = TextEditingController();
+  List<_CloudModelEntry> _models = const <_CloudModelEntry>[];
+  bool _loading = true;
+  String? _error;
+  String _query = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _load() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      // Buluttaki tüm modeller: models koleksiyonu (rules: herkes okuyabilir).
+      final docs = await FirestoreRestHelper.listDocuments('models');
+      final models = <_CloudModelEntry>[];
+      for (final doc in docs) {
+        final id = (doc['name'] as String? ?? '').split('/').last;
+        final fields = doc['fields'] as Map<String, dynamic>? ?? {};
+        final name = FirestoreRestHelper.stringField(fields, 'name');
+        final modelUrl = FirestoreRestHelper.stringField(fields, 'modelUrl');
+        if (id.isEmpty || modelUrl.isEmpty) {
+          continue;
+        }
+        models.add(_CloudModelEntry(
+          id: id,
+          name: name.isEmpty ? id : name,
+          modelUrl: modelUrl,
+          tags: FirestoreRestHelper.arrayField(fields, 'tags'),
+          category: FirestoreRestHelper.stringField(fields, 'category'),
+        ));
+      }
+      models.sort(
+        (a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()),
+      );
+      if (!mounted) return;
+      setState(() {
+        _models = models;
+        _loading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _error = 'Modeller yüklenemedi: $e';
+        _loading = false;
+      });
+    }
+  }
+
+  List<_CloudModelEntry> get _filtered {
+    final query = _query.trim().toLowerCase();
+    if (query.isEmpty) {
+      return _models;
+    }
+    return _models.where((model) {
+      if (model.name.toLowerCase().contains(query)) return true;
+      if (model.id.toLowerCase().contains(query)) return true;
+      if (model.category.toLowerCase().contains(query)) return true;
+      for (final tag in model.tags) {
+        if (tag.toLowerCase().contains(query)) return true;
+      }
+      return false;
+    }).toList(growable: false);
+  }
+
+  void _add(_CloudModelEntry model) {
+    // Sahnenin çözebilmesi için R2 kaynağını kayıt defterine işle,
+    // ardından tuval üzerine 3B blok olarak ekle.
+    RemoteModelSources.registerAll(<String, String>{model.id: model.modelUrl});
+    widget.controller.add3DModelBlock(
+      Presentation3DModelAsset(
+        id: model.id,
+        label: model.name,
+        assetPath: model.modelUrl,
+        category: model.category.isEmpty ? '3B Model' : model.category,
+        tags: model.tags,
+        byteSize: 0,
+        sha256: '',
+      ),
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final selectedModelId = controller.selectedComponentBlock?.modelAssetId;
+    final selectedModelId =
+        widget.controller.selectedComponentBlock?.modelAssetId;
+    final filtered = _filtered;
 
     return Container(
       width: double.infinity,
@@ -2181,35 +2327,191 @@ class _Html3DModelControls extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          for (final model in presentation3DModelCatalog)
-            _Model3DLibraryCard(
-              model: model,
-              isSelected: selectedModelId == model.id,
-              onAdd: () => _addCatalogModel(controller, model),
-            ),
+          _ModelSearchField(
+            controller: _searchController,
+            onChanged: (value) => setState(() => _query = value),
+            onClear: () {
+              _searchController.clear();
+              setState(() => _query = '');
+            },
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: <Widget>[
+              Text(
+                _loading
+                    ? 'Yükleniyor...'
+                    : '${filtered.length} model${_query.isNotEmpty ? ' bulundu' : ''}',
+                style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                      color: context._htmlMuted,
+                      fontWeight: FontWeight.w700,
+                    ),
+              ),
+              const Spacer(),
+              IconButton(
+                tooltip: 'Yenile',
+                iconSize: 18,
+                onPressed: _loading ? null : _load,
+                icon: const Icon(Icons.refresh_rounded),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxHeight: 360),
+            child: _buildBody(context, filtered, selectedModelId),
+          ),
         ],
       ),
     );
   }
 
-  /// Katalog modellerinin kaynak URL'si buluttadır (R2); sahnenin
-  /// çözebilmesi için Firestore'daki modelUrl'i kayıt defterine işler.
-  static Future<void> _addCatalogModel(
-    PresentationController controller,
-    Presentation3DModelAsset model,
-  ) async {
-    if (RemoteModelSources.sourceFor(model.id) == null) {
-      final doc =
-          await FirestoreRestHelper.getDocument('models/${model.id}');
-      final fields = doc?['fields'] as Map<String, dynamic>?;
-      final url = fields == null
-          ? ''
-          : FirestoreRestHelper.stringField(fields, 'modelUrl');
-      if (url.isNotEmpty) {
-        RemoteModelSources.registerAll(<String, String>{model.id: url});
-      }
+  Widget _buildBody(
+    BuildContext context,
+    List<_CloudModelEntry> filtered,
+    String? selectedModelId,
+  ) {
+    if (_loading) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(24),
+          child: CircularProgressIndicator(),
+        ),
+      );
     }
-    controller.add3DModelBlock(model);
+
+    if (_error != null) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              Icon(Icons.cloud_off_rounded,
+                  color: context._htmlMuted, size: 28),
+              const SizedBox(height: 8),
+              Text(
+                _error!,
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: context._htmlMuted,
+                      fontWeight: FontWeight.w600,
+                    ),
+              ),
+              const SizedBox(height: 10),
+              OutlinedButton.icon(
+                onPressed: _load,
+                icon: const Icon(Icons.refresh_rounded, size: 16),
+                label: const Text('Tekrar Dene'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    if (filtered.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          children: <Widget>[
+            Icon(Icons.search_off_rounded,
+                color: context._htmlMuted, size: 28),
+            const SizedBox(height: 8),
+            Text(
+              _query.isEmpty
+                  ? 'Bulutta model bulunamadı.'
+                  : '"$_query" için model bulunamadı.',
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: context._htmlMuted,
+                    fontWeight: FontWeight.w600,
+                  ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return SingleChildScrollView(
+      child: Column(
+        children: <Widget>[
+          for (final model in filtered) ...<Widget>[
+            _Model3DLibraryCard(
+              model: Presentation3DModelAsset(
+                id: model.id,
+                label: model.name,
+                assetPath: model.modelUrl,
+                category: model.category.isEmpty ? '3B Model' : model.category,
+                tags: model.tags,
+                byteSize: 0,
+                sha256: '',
+              ),
+              isSelected: selectedModelId == model.id,
+              onAdd: () => _add(model),
+            ),
+            const SizedBox(height: 10),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _ModelSearchField extends StatelessWidget {
+  const _ModelSearchField({
+    required this.controller,
+    required this.onChanged,
+    required this.onClear,
+  });
+
+  final TextEditingController controller;
+  final ValueChanged<String> onChanged;
+  final VoidCallback onClear;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10),
+      decoration: BoxDecoration(
+        color: context.sutolColors.surfaceSubtle,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: context.sutolColors.outline),
+      ),
+      child: Row(
+        children: <Widget>[
+          Icon(Icons.search_rounded, size: 18, color: context._htmlMuted),
+          const SizedBox(width: 8),
+          Expanded(
+            child: TextField(
+              controller: controller,
+              onChanged: onChanged,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: context._htmlInk,
+                    fontWeight: FontWeight.w600,
+                  ),
+              decoration: InputDecoration(
+                hintText: 'Model ara: isim, etiket, kategori...',
+                hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: context._htmlMuted,
+                      fontWeight: FontWeight.w500,
+                    ),
+                isCollapsed: true,
+                border: InputBorder.none,
+              ),
+            ),
+          ),
+          if (controller.text.isNotEmpty)
+            IconButton(
+              tooltip: 'Temizle',
+              iconSize: 16,
+              visualDensity: VisualDensity.compact,
+              onPressed: onClear,
+              icon: const Icon(Icons.close_rounded),
+            ),
+        ],
+      ),
+    );
   }
 }
 
@@ -2438,7 +2740,9 @@ class _Model3DLibraryCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 3),
                     Text(
-                      '${model.category} · ${(model.byteSize / (1024 * 1024)).toStringAsFixed(1)} MB',
+                      model.byteSize > 0
+                          ? '${model.category} · ${(model.byteSize / (1024 * 1024)).toStringAsFixed(1)} MB'
+                          : model.category,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                             color: context._htmlMuted,
                             fontWeight: FontWeight.w700,

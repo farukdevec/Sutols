@@ -40,22 +40,38 @@ class FirestoreRestHelper {
     return jsonDecode(response.body) as Map<String, dynamic>;
   }
 
-  /// Bir koleksiyondaki tüm dokümanları getirir (GET .../{collectionId}).
+  /// Bir koleksiyondaki TÜM dokümanları getirir (GET .../{collectionId}).
+  /// REST API sayfa başına en fazla 100-300 doküman döndürür; nextPageToken
+  /// takip edilerek sonuna kadar sayfalanır.
   static Future<List<Map<String, dynamic>>> listDocuments(
       String collectionId) async {
     final token = await authToken();
-    final response = await http.get(
-      Uri.parse('$apiBase/$collectionId'),
-      headers: {'Authorization': 'Bearer $token'},
-    );
+    final docs = <Map<String, dynamic>>[];
+    String? pageToken;
+    do {
+      final uri = Uri.parse('$apiBase/$collectionId').replace(
+        queryParameters: <String, String>{
+          'pageSize': '300',
+          if (pageToken != null) 'pageToken': pageToken,
+        },
+      );
+      final response = await http.get(
+        uri,
+        headers: {'Authorization': 'Bearer $token'},
+      );
 
-    if (response.statusCode != 200) {
-      throw Exception(
-          'Firestore okuma hatası (HTTP ${response.statusCode}): ${response.body}');
-    }
+      if (response.statusCode != 200) {
+        throw Exception(
+            'Firestore okuma hatası (HTTP ${response.statusCode}): ${response.body}');
+      }
 
-    final body = jsonDecode(response.body) as Map<String, dynamic>;
-    return (body['documents'] as List? ?? const []).cast<Map<String, dynamic>>();
+      final body = jsonDecode(response.body) as Map<String, dynamic>;
+      docs.addAll(
+        (body['documents'] as List? ?? const []).cast<Map<String, dynamic>>(),
+      );
+      pageToken = body['nextPageToken'] as String?;
+    } while (pageToken != null && pageToken.isNotEmpty);
+    return docs;
   }
 
   /// Yeni doküman oluşturur (POST .../{collectionId}?documentId={id}).
