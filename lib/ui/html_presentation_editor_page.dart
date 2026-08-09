@@ -23,6 +23,7 @@ import 'widgets/html_stage/html_page_stage.dart';
 import 'widgets/selection_mini_toolbar.dart';
 
 import 'design/design_system.dart';
+import 'design/sutol_widgets.dart';
 
 extension on BuildContext {
   Color get _htmlInk => sutolColors.onSurface;
@@ -2245,15 +2246,21 @@ class _CloudModelEntry {
     required this.id,
     required this.name,
     required this.modelUrl,
+    required this.thumbnailUrl,
     required this.tags,
     required this.category,
+    required this.tier,
   });
 
   final String id;
   final String name;
   final String modelUrl;
+  final String thumbnailUrl;
   final List<String> tags;
   final String category;
+
+  /// Kullanıcı planı: "free" | "plus" | "premium". Boşsa "free" sayılır.
+  final String tier;
 }
 
 class _Html3DModelControls extends StatefulWidget {
@@ -2271,6 +2278,17 @@ class _Html3DModelControlsState extends State<_Html3DModelControls> {
   bool _loading = true;
   String? _error;
   String _query = '';
+  String _category = '';
+  String _userTier = 'free';
+
+  static int _tierRank(String tier) => switch (tier) {
+        'premium' => 2,
+        'plus' => 1,
+        _ => 0,
+      };
+
+  bool _isLocked(_CloudModelEntry model) =>
+      _tierRank(_userTier) < _tierRank(model.tier);
 
   @override
   void initState() {
@@ -2290,7 +2308,25 @@ class _Html3DModelControlsState extends State<_Html3DModelControls> {
       _error = null;
     });
     try {
+      // Kullanıcının planını best-effort oku; hata olsa bile model yükleme
+      // akışını bozmamalı (kilit kontrolü "free" varsayımıyla çalışır).
+      var userTier = 'free';
+      final uid = FirebaseAuth.instance.currentUser?.uid;
+      if (uid != null) {
+        try {
+          final userDoc = await FirestoreRestHelper.getDocument('users/$uid');
+          final userFields =
+              userDoc?['fields'] as Map<String, dynamic>? ?? {};
+          final tier = FirestoreRestHelper.stringField(userFields, 'tier');
+          if (tier.isNotEmpty) userTier = tier;
+        } catch (_) {
+          // Best-effort: tier okunamadıysa "free" varsayılır.
+        }
+      }
+
       // Buluttaki tüm modeller: models koleksiyonu (rules: herkes okuyabilir).
+      // .where/.orderBy kullanılmaz (Int64 dartify riski) — tümü tek seferde
+      // çekilir, filtre/arama/sıralama Dart tarafında yapılır.
       final docs = await FirestoreRestHelper.listDocuments('models');
       final models = <_CloudModelEntry>[];
       for (final doc in docs) {
@@ -2305,8 +2341,11 @@ class _Html3DModelControlsState extends State<_Html3DModelControls> {
           id: id,
           name: name.isEmpty ? id : name,
           modelUrl: modelUrl,
+          thumbnailUrl:
+              FirestoreRestHelper.stringField(fields, 'thumbnailUrl'),
           tags: FirestoreRestHelper.arrayField(fields, 'tags'),
           category: FirestoreRestHelper.stringField(fields, 'category'),
+          tier: FirestoreRestHelper.stringField(fields, 'tier'),
         ));
       }
       models.sort(
@@ -2315,6 +2354,7 @@ class _Html3DModelControlsState extends State<_Html3DModelControls> {
       if (!mounted) return;
       setState(() {
         _models = models;
+        _userTier = userTier;
         _loading = false;
       });
     } catch (e) {
@@ -2328,21 +2368,27 @@ class _Html3DModelControlsState extends State<_Html3DModelControls> {
 
   List<_CloudModelEntry> get _filtered {
     final query = _query.trim().toLowerCase();
-    if (query.isEmpty) {
-      return _models;
-    }
     return _models.where((model) {
-      if (model.name.toLowerCase().contains(query)) return true;
-      if (model.id.toLowerCase().contains(query)) return true;
-      if (model.category.toLowerCase().contains(query)) return true;
-      for (final tag in model.tags) {
-        if (tag.toLowerCase().contains(query)) return true;
+      if (_category.isNotEmpty && model.category != _category) {
+        return false;
       }
-      return false;
+      if (query.isEmpty) {
+        return true;
+      }
+      return model.name.toLowerCase().contains(query);
     }).toList(growable: false);
   }
 
   void _add(_CloudModelEntry model) {
+    if (_isLocked(model)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Bu model planınızda dahil değil'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
     // Sahnenin çözebilmesi için R2 kaynağını kayıt defterine işle,
     // ardından tuval üzerine 3B blok olarak ekle.
     RemoteModelSources.registerAll(<String, String>{model.id: model.modelUrl});
@@ -2364,6 +2410,15 @@ class _Html3DModelControlsState extends State<_Html3DModelControls> {
     final selectedModelId =
         widget.controller.selectedComponentBlock?.modelAssetId;
     final filtered = _filtered;
+    const categories = <(String, String)>[
+      ('', 'Tümü'),
+      ('analiz-modeli', 'Analiz Modeli'),
+      ('grafik', 'Grafik'),
+      ('diyagram', 'Diyagram'),
+      ('sembol', 'Sembol'),
+      ('ikon-3d', 'İkon 3D'),
+      ('diger', 'Diğer'),
+    ];
 
     return Container(
       width: double.infinity,
@@ -2385,7 +2440,23 @@ class _Html3DModelControlsState extends State<_Html3DModelControls> {
               setState(() => _query = '');
             },
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 10),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: <Widget>[
+                for (final (value, label) in categories) ...<Widget>[
+                  SutolChip(
+                    label: label,
+                    isSelected: _category == value,
+                    onTap: () => setState(() => _category = value),
+                  ),
+                  const SizedBox(width: 8),
+                ],
+              ],
+            ),
+          ),
+          const SizedBox(height: 10),
           Row(
             children: <Widget>[
               Text(
@@ -2408,7 +2479,7 @@ class _Html3DModelControlsState extends State<_Html3DModelControls> {
           ),
           const SizedBox(height: 8),
           ConstrainedBox(
-            constraints: const BoxConstraints(maxHeight: 360),
+            constraints: const BoxConstraints(maxHeight: 400),
             child: _buildBody(context, filtered, selectedModelId),
           ),
         ],
@@ -2422,11 +2493,35 @@ class _Html3DModelControlsState extends State<_Html3DModelControls> {
     String? selectedModelId,
   ) {
     if (_loading) {
-      return const Center(
-        child: Padding(
-          padding: EdgeInsets.all(24),
-          child: CircularProgressIndicator(),
-        ),
+      return LayoutBuilder(
+        builder: (context, constraints) {
+          final columns = _gridColumns(constraints.maxWidth);
+          return GridView.builder(
+            padding: const EdgeInsets.only(bottom: 8),
+            shrinkWrap: true,
+            physics: const ClampingScrollPhysics(),
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: columns,
+              mainAxisSpacing: 10,
+              crossAxisSpacing: 10,
+              childAspectRatio: 0.82,
+            ),
+            itemCount: 9,
+            itemBuilder: (context, index) {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  const AspectRatio(
+                    aspectRatio: 1,
+                    child: SutolShimmer(borderRadius: 12),
+                  ),
+                  const SizedBox(height: 6),
+                  SutolShimmer(height: 10, borderRadius: 4),
+                ],
+              );
+            },
+          );
+        },
       );
     }
 
@@ -2469,9 +2564,9 @@ class _Html3DModelControlsState extends State<_Html3DModelControls> {
                 color: context._htmlMuted, size: 28),
             const SizedBox(height: 8),
             Text(
-              _query.isEmpty
+              _query.isEmpty && _category.isEmpty
                   ? 'Bulutta model bulunamadı.'
-                  : '"$_query" için model bulunamadı.',
+                  : 'Bu filtrelerle model bulunamadı.',
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: context._htmlMuted,
@@ -2483,11 +2578,23 @@ class _Html3DModelControlsState extends State<_Html3DModelControls> {
       );
     }
 
-    return SingleChildScrollView(
-      child: Column(
-        children: <Widget>[
-          for (final model in filtered) ...<Widget>[
-            _Model3DLibraryCard(
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final columns = _gridColumns(constraints.maxWidth);
+        return GridView.builder(
+          padding: const EdgeInsets.only(bottom: 8),
+          shrinkWrap: true,
+          physics: const ClampingScrollPhysics(),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: columns,
+            mainAxisSpacing: 10,
+            crossAxisSpacing: 10,
+            childAspectRatio: 0.82,
+          ),
+          itemCount: filtered.length,
+          itemBuilder: (context, index) {
+            final model = filtered[index];
+            return _Model3DLibraryCard(
               model: Presentation3DModelAsset(
                 id: model.id,
                 label: model.name,
@@ -2497,14 +2604,23 @@ class _Html3DModelControlsState extends State<_Html3DModelControls> {
                 byteSize: 0,
                 sha256: '',
               ),
+              thumbnailUrl: model.thumbnailUrl.isEmpty
+                  ? 'https://assets.sutols.com/thumbnails/${model.id}.webp'
+                  : model.thumbnailUrl,
               isSelected: selectedModelId == model.id,
-              onAdd: () => _add(model),
-            ),
-            const SizedBox(height: 10),
-          ],
-        ],
-      ),
+              locked: _isLocked(model),
+              onTap: () => _add(model),
+            );
+          },
+        );
+      },
     );
+  }
+
+  static int _gridColumns(double width) {
+    if (width >= 560) return 4;
+    if (width >= 400) return 3;
+    return 2;
   }
 }
 
@@ -2988,93 +3104,192 @@ class _TransitionLibraryCard extends StatelessWidget {
   }
 }
 
-class _Model3DLibraryCard extends StatelessWidget {
+class _Model3DLibraryCard extends StatefulWidget {
   const _Model3DLibraryCard({
     required this.model,
+    required this.thumbnailUrl,
     required this.isSelected,
-    required this.onAdd,
+    required this.locked,
+    required this.onTap,
   });
 
   final Presentation3DModelAsset model;
+  final String thumbnailUrl;
   final bool isSelected;
-  final VoidCallback onAdd;
+  final bool locked;
+  final VoidCallback onTap;
+
+  @override
+  State<_Model3DLibraryCard> createState() => _Model3DLibraryCardState();
+}
+
+class _Model3DLibraryCardState extends State<_Model3DLibraryCard> {
+  bool _hovered = false;
+
+  static const List<Color> _fallbackPalette = <Color>[
+    Color(0xFF1565C0),
+    Color(0xFF00897B),
+    Color(0xFF6A1B9A),
+    Color(0xFFC62828),
+    Color(0xFF2E7D32),
+    Color(0xFFEF6C00),
+  ];
+
+  Color _fallbackColor() {
+    final hue = widget.model.label.hashCode & 0x7FFFFFFF;
+    return _fallbackPalette[hue % _fallbackPalette.length];
+  }
+
+  /// Thumbnail yüklenemezse model adının ilk harfini renkli kutuda gösterir.
+  Widget _letterBox(BuildContext context) {
+    final color = _fallbackColor();
+    final label = widget.model.label.trim();
+    return Container(
+      color: color.withValues(alpha: 0.14),
+      alignment: Alignment.center,
+      child: Text(
+        label.isNotEmpty ? label.characters.first.toUpperCase() : '?',
+        style: TextStyle(
+          color: color,
+          fontWeight: FontWeight.w900,
+          fontSize: 30,
+        ),
+      ),
+    );
+  }
+
+  Widget _thumbnail(BuildContext context) {
+    // Thumbnail boşsa doğrudan harf kutusuna düş (network hatası UI'ı
+    // bozmasın).
+    if (widget.thumbnailUrl.isEmpty) {
+      return _letterBox(context);
+    }
+    return Image.network(
+      widget.thumbnailUrl,
+      fit: BoxFit.cover,
+      width: double.infinity,
+      height: double.infinity,
+      loadingBuilder: (context, child, progress) {
+        if (progress == null) {
+          return child;
+        }
+        return Container(
+          color: Theme.of(context).brightness == Brightness.dark
+              ? SutolDarkColors.surfaceSubtle
+              : SutolLightColors.surfaceSubtle,
+          alignment: Alignment.center,
+          child: const SizedBox(
+            width: 18,
+            height: 18,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          ),
+        );
+      },
+      errorBuilder: (context, error, stackTrace) => _letterBox(context),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: isSelected ? context.sutolColors.primaryLight : context.sutolColors.surface,
-      borderRadius: BorderRadius.circular(16),
-      child: InkWell(
-        onTap: onAdd,
-        borderRadius: BorderRadius.circular(16),
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      child: AnimatedScale(
+        scale: _hovered ? 1.045 : 1.0,
+        duration: const Duration(milliseconds: 150),
+        curve: Curves.easeOut,
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 180),
-          padding: const EdgeInsets.all(12),
+          duration: const Duration(milliseconds: 150),
+          curve: Curves.easeOut,
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
+            color: context.sutolColors.surface,
+            borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: isSelected ? context.sutolColors.primary : context.sutolColors.outline,
-              width: isSelected ? 1.5 : 1,
+              color: widget.isSelected
+                  ? context.sutolColors.primary
+                  : context.sutolColors.outline,
+              width: widget.isSelected ? 1.5 : 1,
             ),
+            boxShadow: _hovered ? SutolElevation.md : SutolElevation.none,
           ),
-          child: Row(
-            children: <Widget>[
-              Container(
-                width: 68,
-                height: 58,
-                decoration: BoxDecoration(
-                  color: context.sutolColors.surfaceSubtle,
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: context.sutolColors.outlineVariant),
-                ),
-                child: Icon(
-                  model.icon,
-                  color: context.sutolColors.primary,
-                  size: 34,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    Text(
-                      model.label,
-                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                            color: context._htmlInk,
-                            fontWeight: FontWeight.w900,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: InkWell(
+              onTap: widget.onTap,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  AspectRatio(
+                    aspectRatio: 1,
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: <Widget>[
+                        _thumbnail(context),
+                        if (widget.isSelected)
+                          Positioned(
+                            top: 6,
+                            right: 6,
+                            child: Container(
+                              padding: const EdgeInsets.all(3),
+                              decoration: const BoxDecoration(
+                                color: Color(0xFF22C55E),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.check_rounded,
+                                size: 12,
+                                color: Colors.white,
+                              ),
+                            ),
                           ),
-                    ),
-                    const SizedBox(height: 3),
-                    Text(
-                      model.byteSize > 0
-                          ? '${model.category} · ${(model.byteSize / (1024 * 1024)).toStringAsFixed(1)} MB'
-                          : model.category,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: context._htmlMuted,
-                            fontWeight: FontWeight.w700,
+                        if (widget.locked)
+                          Positioned(
+                            top: 6,
+                            left: 6,
+                            child: Container(
+                              padding: const EdgeInsets.all(4),
+                              decoration: BoxDecoration(
+                                color: Colors.black.withValues(alpha: 0.55),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.lock_rounded,
+                                size: 12,
+                                color: Colors.white,
+                              ),
+                            ),
                           ),
+                      ],
                     ),
-                    const SizedBox(height: 3),
-                    Text(
-                      model.hasAnimations
-                          ? 'Animasyonlu GLB'
-                          : 'Etkileşimli, otomatik dönen GLB',
-                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                            color: const Color(0xFF247BCE),
-                            fontWeight: FontWeight.w800,
-                          ),
+                  ),
+                  const SizedBox(height: 6),
+                  Tooltip(
+                    message: widget.model.label,
+                    waitDuration: const Duration(milliseconds: 500),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 6),
+                      child: Text(
+                        widget.model.label,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context)
+                            .textTheme
+                            .labelSmall
+                            ?.copyWith(
+                              color: widget.locked
+                                  ? context._htmlMuted
+                                  : context._htmlInk,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 11,
+                            ),
+                      ),
                     ),
-                  ],
-                ),
+                  ),
+                  const SizedBox(height: 4),
+                ],
               ),
-              const SizedBox(width: 8),
-              Icon(
-                Icons.add_circle_rounded,
-                color: context._htmlAccent,
-                size: 26,
-              ),
-            ],
+            ),
           ),
         ),
       ),

@@ -1,0 +1,1822 @@
+[
+  {
+    "fileName": "110_megafon.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/110_megafon.glb"
+  },
+  {
+    "fileName": "111_reklam_panosu.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/111_reklam_panosu.glb"
+  },
+  {
+    "fileName": "112_dijital_reklam_ekrani.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/112_dijital_reklam_ekrani.glb"
+  },
+  {
+    "fileName": "113_marka_etiketi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/113_marka_etiketi.glb"
+  },
+  {
+    "fileName": "114_fiyat_etiketi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/114_fiyat_etiketi.glb"
+  },
+  {
+    "fileName": "115_indirim_rozeti.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/115_indirim_rozeti.glb"
+  },
+  {
+    "fileName": "116_kupon_bileti.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/116_kupon_bileti.glb"
+  },
+  {
+    "fileName": "117_alisveris_sepeti.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/117_alisveris_sepeti.glb"
+  },
+  {
+    "fileName": "118_alisveris_cantalari.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/118_alisveris_cantalari.glb"
+  },
+  {
+    "fileName": "214_endustriyel_robot_kolu.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/214_endustriyel_robot_kolu.glb"
+  },
+  {
+    "fileName": "215_cnc_freze_tezgahi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/215_cnc_freze_tezgahi.glb"
+  },
+  {
+    "fileName": "216_cnc_torna_tezgahi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/216_cnc_torna_tezgahi.glb"
+  },
+  {
+    "fileName": "217_lazer_kesim_makinesi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/217_lazer_kesim_makinesi.glb"
+  },
+  {
+    "fileName": "218_su_jeti_kesim_makinesi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/218_su_jeti_kesim_makinesi.glb"
+  },
+  {
+    "fileName": "219_enjeksiyon_kalplama_makinesi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/219_enjeksiyon_kalplama_makinesi.glb"
+  },
+  {
+    "fileName": "220_metal_dokum_pota.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/220_metal_dokum_pota.glb"
+  },
+  {
+    "fileName": "221_yuksek_firin_kesiti.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/221_yuksek_firin_kesiti.glb"
+  },
+  {
+    "fileName": "222_haddleme_makinesi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/222_haddleme_makinesi.glb"
+  },
+  {
+    "fileName": "223_kaynak_robotu.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/223_kaynak_robotu.glb"
+  },
+  {
+    "fileName": "224_konveyor_bant.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/224_konveyor_bant.glb"
+  },
+  {
+    "fileName": "225_paketleme_hatti.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/225_paketleme_hatti.glb"
+  },
+  {
+    "fileName": "226_paletleme_robotu.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/226_paletleme_robotu.glb"
+  },
+  {
+    "fileName": "227_kalite_kontrol_kamerasi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/227_kalite_kontrol_kamerasi.glb"
+  },
+  {
+    "fileName": "228_kumpas.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/228_kumpas.glb"
+  },
+  {
+    "fileName": "229_mikrometre.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/229_mikrometre.glb"
+  },
+  {
+    "fileName": "230_tork_anahtari.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/230_tork_anahtari.glb"
+  },
+  {
+    "fileName": "231_rulman_kesiti.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/231_rulman_kesiti.glb"
+  },
+  {
+    "fileName": "250_depo_raf_sistemi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/250_depo_raf_sistemi.glb"
+  },
+  {
+    "fileName": "251_fabrika_uretim_hucresi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/251_fabrika_uretim_hucresi.glb"
+  },
+  {
+    "fileName": "252_yalin_uretim_deger_akisi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/252_yalin_uretim_deger_akisi.glb"
+  },
+  {
+    "fileName": "253_otomatik_yonlendirmeli_arac.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/253_otomatik_yonlendirmeli_arac.glb"
+  },
+  {
+    "fileName": "254_endustriyel_guvenlik_bareti.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/254_endustriyel_guvenlik_bareti.glb"
+  },
+  {
+    "fileName": "255_teknik_cizim_masasi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/255_teknik_cizim_masasi.glb"
+  },
+  {
+    "fileName": "256_muhendislik_cetvel_pergel_seti.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/256_muhendislik_cetvel_pergel_seti.glb"
+  },
+  {
+    "fileName": "257_gunes_paneli_cati_sistemi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/257_gunes_paneli_cati_sistemi.glb"
+  },
+  {
+    "fileName": "258_gunes_takip_mekanizmasi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/258_gunes_takip_mekanizmasi.glb"
+  },
+  {
+    "fileName": "306_serum_askisi_ve_torbasi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/306_serum_askisi_ve_torbasi.glb"
+  },
+  {
+    "fileName": "308_ilac_kapsulu_kesiti.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/308_ilac_kapsulu_kesiti.glb"
+  },
+  {
+    "fileName": "309_tablet_ilac_blisteri.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/309_tablet_ilac_blisteri.glb"
+  },
+  {
+    "fileName": "310_ilk_yardim_cantasi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/310_ilk_yardim_cantasi.glb"
+  },
+  {
+    "fileName": "311_ambulans_ic_duzeni.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/311_ambulans_ic_duzeni.glb"
+  },
+  {
+    "fileName": "312_hastane_yatagi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/312_hastane_yatagi.glb"
+  },
+  {
+    "fileName": "313_tekerlekli_sandalye.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/313_tekerlekli_sandalye.glb"
+  },
+  {
+    "fileName": "314_koltuk_degnegi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/314_koltuk_degnegi.glb"
+  },
+  {
+    "fileName": "315_protez_bacak.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/315_protez_bacak.glb"
+  },
+  {
+    "fileName": "316_isitme_cihazi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/316_isitme_cihazi.glb"
+  },
+  {
+    "fileName": "317_kontakt_lens_goz_kesiti.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/317_kontakt_lens_goz_kesiti.glb"
+  },
+  {
+    "fileName": "318_burun_sinus_anatomisi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/318_burun_sinus_anatomisi.glb"
+  },
+  {
+    "fileName": "319_girtlak_ses_telleri.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/319_girtlak_ses_telleri.glb"
+  },
+  {
+    "fileName": "333_rna_tek_sarmali.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/333_rna_tek_sarmali.glb"
+  },
+  {
+    "fileName": "334_dna_replikasyon_catali.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/334_dna_replikasyon_catali.glb"
+  },
+  {
+    "fileName": "335_crispr_gen_duzenleme_kompleksi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/335_crispr_gen_duzenleme_kompleksi.glb"
+  },
+  {
+    "fileName": "336_protein_katlanma_modeli.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/336_protein_katlanma_modeli.glb"
+  },
+  {
+    "fileName": "337_enzim_substrat_kilit_anahtar.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/337_enzim_substrat_kilit_anahtar.glb"
+  },
+  {
+    "fileName": "338_hucre_bolunmesi_ig_iplikleri.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/338_hucre_bolunmesi_ig_iplikleri.glb"
+  },
+  {
+    "fileName": "339_golgi_aygiti.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/339_golgi_aygiti.glb"
+  },
+  {
+    "fileName": "340_endoplazmik_retikulum.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/340_endoplazmik_retikulum.glb"
+  },
+  {
+    "fileName": "341_lizozom_organeli.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/341_lizozom_organeli.glb"
+  },
+  {
+    "fileName": "342_sentrozom_organeli.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/342_sentrozom_organeli.glb"
+  },
+  {
+    "fileName": "343_bitki_hucresi_vakuolu.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/343_bitki_hucresi_vakuolu.glb"
+  },
+  {
+    "fileName": "344_okaryot_prokaryot_karsilastirmasi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/344_okaryot_prokaryot_karsilastirmasi.glb"
+  },
+  {
+    "fileName": "ABD_Eyalet_Haritasi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/ABD_Eyalet_Haritasi.glb"
+  },
+  {
+    "fileName": "Ahtapot.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Ahtapot.glb"
+  },
+  {
+    "fileName": "Akdeniz_Haritasi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Akdeniz_Haritasi.glb"
+  },
+  {
+    "fileName": "Akilli_Fabrika_Maketi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Akilli_Fabrika_Maketi.glb"
+  },
+  {
+    "fileName": "Akilli_Gozluk.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Akilli_Gozluk.glb"
+  },
+  {
+    "fileName": "Albert_Einstein.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Albert_Einstein.glb"
+  },
+  {
+    "fileName": "Ambulans.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Ambulans.glb"
+  },
+  {
+    "fileName": "Amonyak Molekülü.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Amonyak Molekülü.glb"
+  },
+  {
+    "fileName": "Armut.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Armut.glb"
+  },
+  {
+    "fileName": "Asker.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Asker.glb"
+  },
+  {
+    "fileName": "Atwood Makinesi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Atwood Makinesi.glb"
+  },
+  {
+    "fileName": "Avrupa_Siyasi_Haritasi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Avrupa_Siyasi_Haritasi.glb"
+  },
+  {
+    "fileName": "Balistik Sarkaç.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Balistik Sarkaç.glb"
+  },
+  {
+    "fileName": "Balon Joje.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Balon Joje.glb"
+  },
+  {
+    "fileName": "Benzin Halkası Modeli.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Benzin Halkası Modeli.glb"
+  },
+  {
+    "fileName": "Bernoulli Hava Akımı Düzeneği.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Bernoulli Hava Akımı Düzeneği.glb"
+  },
+  {
+    "fileName": "Beslenme_Tabagi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Beslenme_Tabagi.glb"
+  },
+  {
+    "fileName": "Bilim_Fuari_Standi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Bilim_Fuari_Standi.glb"
+  },
+  {
+    "fileName": "Bulut Odası.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Bulut Odası.glb"
+  },
+  {
+    "fileName": "Bulut_Sunucu_Kumesi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Bulut_Sunucu_Kumesi.glb"
+  },
+  {
+    "fileName": "Butce_Planlama_Masasi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Butce_Planlama_Masasi.glb"
+  },
+  {
+    "fileName": "Büchner Hunisi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Büchner Hunisi.glb"
+  },
+  {
+    "fileName": "Büst.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Büst.glb"
+  },
+  {
+    "fileName": "Cevre_Dostu_Urun_Paketi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Cevre_Dostu_Urun_Paketi.glb"
+  },
+  {
+    "fileName": "Crookes Radyometresi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Crookes Radyometresi.glb"
+  },
+  {
+    "fileName": "Dairesel Hareket Platformu.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Dairesel Hareket Platformu.glb"
+  },
+  {
+    "fileName": "Dean-Stark Su Tutucu.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Dean-Stark Su Tutucu.glb"
+  },
+  {
+    "fileName": "Depo_Raf_Sistemi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Depo_Raf_Sistemi.glb"
+  },
+  {
+    "fileName": "Ders_Programi_Takvimi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Ders_Programi_Takvimi.glb"
+  },
+  {
+    "fileName": "Desikatör Kabı.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Desikatör Kabı.glb"
+  },
+  {
+    "fileName": "Dijital_Bankacilik_Ekrani.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Dijital_Bankacilik_Ekrani.glb"
+  },
+  {
+    "fileName": "Dijital_Kimlik_Karti.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Dijital_Kimlik_Karti.glb"
+  },
+  {
+    "fileName": "Dijital_Reklam_Panosu.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Dijital_Reklam_Panosu.glb"
+  },
+  {
+    "fileName": "Diyapazon Seti.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Diyapazon Seti.glb"
+  },
+  {
+    "fileName": "Dongusel_Ekonomi_Halkasi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Dongusel_Ekonomi_Halkasi.glb"
+  },
+  {
+    "fileName": "Döner Buharlaştırıcı.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Döner Buharlaştırıcı.glb"
+  },
+  {
+    "fileName": "Eddy Akımı Freni.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Eddy Akımı Freni.glb"
+  },
+  {
+    "fileName": "Egitim_Icerik_Kartlari.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Egitim_Icerik_Kartlari.glb"
+  },
+  {
+    "fileName": "Egitim_Teknolojileri_Masasi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Egitim_Teknolojileri_Masasi.glb"
+  },
+  {
+    "fileName": "Elektrikli_Otobus.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Elektrikli_Otobus.glb"
+  },
+  {
+    "fileName": "Elektrokimyasal Hücre.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Elektrokimyasal Hücre.glb"
+  },
+  {
+    "fileName": "Elektrot Potansiyel Düzeneği.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Elektrot Potansiyel Düzeneği.glb"
+  },
+  {
+    "fileName": "Elma.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Elma.glb"
+  },
+  {
+    "fileName": "Endoplazmik Retikulum.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Endoplazmik Retikulum.glb"
+  },
+  {
+    "fileName": "Erlenmayer Şişesi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Erlenmayer Şişesi.glb"
+  },
+  {
+    "fileName": "Eylemsizlik Tekerleği.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Eylemsizlik Tekerleği.glb"
+  },
+  {
+    "fileName": "Eğik Atış Düzeneği.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Eğik Atış Düzeneği.glb"
+  },
+  {
+    "fileName": "Faraday Kafesi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Faraday Kafesi.glb"
+  },
+  {
+    "fileName": "Faz Diyagramı Platformu.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Faz Diyagramı Platformu.glb"
+  },
+  {
+    "fileName": "Fiber Optik Işık İletimi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Fiber Optik Işık İletimi.glb"
+  },
+  {
+    "fileName": "Finansal_Hedef_Dagi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Finansal_Hedef_Dagi.glb"
+  },
+  {
+    "fileName": "Foucault Sarkacı.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Foucault Sarkacı.glb"
+  },
+  {
+    "fileName": "Fulleren Molekülü.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Fulleren Molekülü.glb"
+  },
+  {
+    "fileName": "Galvanik Hücre.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Galvanik Hücre.glb"
+  },
+  {
+    "fileName": "Gauss Topu.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Gauss Topu.glb"
+  },
+  {
+    "fileName": "Gaz Kromatografı.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Gaz Kromatografı.glb"
+  },
+  {
+    "fileName": "Geiger Sayacı.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Geiger Sayacı.glb"
+  },
+  {
+    "fileName": "Geri Soğutucu.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Geri Soğutucu.glb"
+  },
+  {
+    "fileName": "Geri_Donusum_Kutulari_Seti.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Geri_Donusum_Kutulari_Seti.glb"
+  },
+  {
+    "fileName": "Golgi Aygıtı.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Golgi Aygıtı.glb"
+  },
+  {
+    "fileName": "Hastane_Binasi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Hastane_Binasi.glb"
+  },
+  {
+    "fileName": "Havan ve Tokmak.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Havan ve Tokmak.glb"
+  },
+  {
+    "fileName": "Helmholtz Bobinleri.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Helmholtz Bobinleri.glb"
+  },
+  {
+    "fileName": "Hemsire.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Hemsire.glb"
+  },
+  {
+    "fileName": "Heron Çeşmesi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Heron Çeşmesi.glb"
+  },
+  {
+    "fileName": "Hz_Alinin_Kilici.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Hz_Alinin_Kilici.glb"
+  },
+  {
+    "fileName": "Hücre Çekirdeği Kesiti.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Hücre Çekirdeği Kesiti.glb"
+  },
+  {
+    "fileName": "Insansiz_Hava_Araci.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Insansiz_Hava_Araci.glb"
+  },
+  {
+    "fileName": "Insansiz_Kara_Araci.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Insansiz_Kara_Araci.glb"
+  },
+  {
+    "fileName": "Internet_Hiz_Gostergesi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Internet_Hiz_Gostergesi.glb"
+  },
+  {
+    "fileName": "Jiroskop.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Jiroskop.glb"
+  },
+  {
+    "fileName": "Kalite_Kontrol_Masasi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Kalite_Kontrol_Masasi.glb"
+  },
+  {
+    "fileName": "Kalorimetre Bombası.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Kalorimetre Bombası.glb"
+  },
+  {
+    "fileName": "Kalın Kenarlı Mercek Işınları.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Kalın Kenarlı Mercek Işınları.glb"
+  },
+  {
+    "fileName": "Kar_ve_Zarar_Bloklari.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Kar_ve_Zarar_Bloklari.glb"
+  },
+  {
+    "fileName": "Karbon_Ayak_Izi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Karbon_Ayak_Izi.glb"
+  },
+  {
+    "fileName": "Karbondioksit Molekülü.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Karbondioksit Molekülü.glb"
+  },
+  {
+    "fileName": "Kargo_Dagitim_Merkezi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Kargo_Dagitim_Merkezi.glb"
+  },
+  {
+    "fileName": "Kartezyen Dalgıç.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Kartezyen Dalgıç.glb"
+  },
+  {
+    "fileName": "Katalizör Yüzey Modeli.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Katalizör Yüzey Modeli.glb"
+  },
+  {
+    "fileName": "Katlanabilir_Akilli_Telefon.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Katlanabilir_Akilli_Telefon.glb"
+  },
+  {
+    "fileName": "Katot Işını Tüpü.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Katot Işını Tüpü.glb"
+  },
+  {
+    "fileName": "Kilic.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Kilic.glb"
+  },
+  {
+    "fileName": "Kimyasal Denge Terazisi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Kimyasal Denge Terazisi.glb"
+  },
+  {
+    "fileName": "Kimyasal Reaksiyon Enerji Profili.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Kimyasal Reaksiyon Enerji Profili.glb"
+  },
+  {
+    "fileName": "Kjeldahl Azot Tayin Düzeneği.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Kjeldahl Azot Tayin Düzeneği.glb"
+  },
+  {
+    "fileName": "Kloroplast Kesiti.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Kloroplast Kesiti.glb"
+  },
+  {
+    "fileName": "Kodlama_Terminali.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Kodlama_Terminali.glb"
+  },
+  {
+    "fileName": "Konteyner_Limani.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Konteyner_Limani.glb"
+  },
+  {
+    "fileName": "Kredi_Karti_ve_POS_Cihazi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Kredi_Karti_ve_POS_Cihazi.glb"
+  },
+  {
+    "fileName": "Kristal Büyütme Kabı.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Kristal Büyütme Kabı.glb"
+  },
+  {
+    "fileName": "Kundt Tüpü.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Kundt Tüpü.glb"
+  },
+  {
+    "fileName": "Kuraklik_ve_Catlamis_Toprak.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Kuraklik_ve_Catlamis_Toprak.glb"
+  },
+  {
+    "fileName": "Kütle Spektrometresi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Kütle Spektrometresi.glb"
+  },
+  {
+    "fileName": "Laboratuvar Gaz Yıkama Şişesi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Laboratuvar Gaz Yıkama Şişesi.glb"
+  },
+  {
+    "fileName": "Laboratuvar Santrifüjü.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Laboratuvar Santrifüjü.glb"
+  },
+  {
+    "fileName": "Laboratuvar Statifi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Laboratuvar Statifi.glb"
+  },
+  {
+    "fileName": "Lazer Kırınım Izgarası.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Lazer Kırınım Izgarası.glb"
+  },
+  {
+    "fileName": "Leiden Kavanozu.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Leiden Kavanozu.glb"
+  },
+  {
+    "fileName": "Lenz Yasası Bakır Borusu.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Lenz Yasası Bakır Borusu.glb"
+  },
+  {
+    "fileName": "Limon_Agaci.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Limon_Agaci.glb"
+  },
+  {
+    "fileName": "Lizozom Kesiti.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Lizozom Kesiti.glb"
+  },
+  {
+    "fileName": "Manyetik Alan Çizgileri Platformu.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Manyetik Alan Çizgileri Platformu.glb"
+  },
+  {
+    "fileName": "Marka_Kimligi_Seti.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Marka_Kimligi_Seti.glb"
+  },
+  {
+    "fileName": "Masaustu_Bilgisayar_Seti.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Masaustu_Bilgisayar_Seti.glb"
+  },
+  {
+    "fileName": "Megafonlu_Pazarlamaci.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Megafonlu_Pazarlamaci.glb"
+  },
+  {
+    "fileName": "Metan Molekülü.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Metan Molekülü.glb"
+  },
+  {
+    "fileName": "Mezür Seti.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Mezür Seti.glb"
+  },
+  {
+    "fileName": "Michelson İnterferometresi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Michelson İnterferometresi.glb"
+  },
+  {
+    "fileName": "Mitokondri Kesiti.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Mitokondri Kesiti.glb"
+  },
+  {
+    "fileName": "Mobil_Reklam_Ekrani.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Mobil_Reklam_Ekrani.glb"
+  },
+  {
+    "fileName": "Mobil_Uygulama_Arayuzu.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Mobil_Uygulama_Arayuzu.glb"
+  },
+  {
+    "fileName": "Moleküler Geometri Seti.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Moleküler Geometri Seti.glb"
+  },
+  {
+    "fileName": "Musteri_Karsilama_Noktasi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Musteri_Karsilama_Noktasi.glb"
+  },
+  {
+    "fileName": "NMR Spektrometresi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/NMR Spektrometresi.glb"
+  },
+  {
+    "fileName": "Newton Renk Çarkı.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Newton Renk Çarkı.glb"
+  },
+  {
+    "fileName": "Nikola_Tesla.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Nikola_Tesla.glb"
+  },
+  {
+    "fileName": "Odev_Teslim_Kutusu.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Odev_Teslim_Kutusu.glb"
+  },
+  {
+    "fileName": "Ogrenme_Hedefi_Tahtasi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Ogrenme_Hedefi_Tahtasi.glb"
+  },
+  {
+    "fileName": "Ogretmen.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Ogretmen.glb"
+  },
+  {
+    "fileName": "Okul.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Okul.glb"
+  },
+  {
+    "fileName": "Okuma_Kosesi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Okuma_Kosesi.glb"
+  },
+  {
+    "fileName": "Optik Tezgâh.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Optik Tezgâh.glb"
+  },
+  {
+    "fileName": "Orman_Yenileme_Asamalari.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Orman_Yenileme_Asamalari.glb"
+  },
+  {
+    "fileName": "Ortadogu_Siyasi_Harita.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Ortadogu_Siyasi_Harita.glb"
+  },
+  {
+    "fileName": "Orumcek.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Orumcek.glb"
+  },
+  {
+    "fileName": "Otomatik Mikropipet.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Otomatik Mikropipet.glb"
+  },
+  {
+    "fileName": "Otonom_Teslimat_Robotu.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Otonom_Teslimat_Robotu.glb"
+  },
+  {
+    "fileName": "Para_Akis_Boru_Hatti.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Para_Akis_Boru_Hatti.glb"
+  },
+  {
+    "fileName": "Parçacık Hızlandırıcı Halkası.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Parçacık Hızlandırıcı Halkası.glb"
+  },
+  {
+    "fileName": "Pascal Küresi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Pascal Küresi.glb"
+  },
+  {
+    "fileName": "Pastör Pipeti.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Pastör Pipeti.glb"
+  },
+  {
+    "fileName": "Periyodik Tablo Blokları.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Periyodik Tablo Blokları.glb"
+  },
+  {
+    "fileName": "Petri Kabı.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Petri Kabı.glb"
+  },
+  {
+    "fileName": "Pitot Tüpü.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Pitot Tüpü.glb"
+  },
+  {
+    "fileName": "Polarizasyon Filtresi Düzeneği.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Polarizasyon Filtresi Düzeneği.glb"
+  },
+  {
+    "fileName": "Polimer Zincir Modeli.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Polimer Zincir Modeli.glb"
+  },
+  {
+    "fileName": "Polis.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Polis.glb"
+  },
+  {
+    "fileName": "Porselen Kroze.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Porselen Kroze.glb"
+  },
+  {
+    "fileName": "Prenses.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Prenses.glb"
+  },
+  {
+    "fileName": "Prizma Spektrometresi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Prizma Spektrometresi.glb"
+  },
+  {
+    "fileName": "Protein Kristalizasyon Plakası.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Protein Kristalizasyon Plakası.glb"
+  },
+  {
+    "fileName": "RLC Rezonans Devresi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/RLC Rezonans Devresi.glb"
+  },
+  {
+    "fileName": "Ribozom Yapısı.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Ribozom Yapısı.glb"
+  },
+  {
+    "fileName": "Robot_Kol_ve_Insan_Eli.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Robot_Kol_ve_Insan_Eli.glb"
+  },
+  {
+    "fileName": "Robot_Supurge.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Robot_Supurge.glb"
+  },
+  {
+    "fileName": "Robotik_Uretim_Hatti.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Robotik_Uretim_Hatti.glb"
+  },
+  {
+    "fileName": "Saat Camı.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Saat Camı.glb"
+  },
+  {
+    "fileName": "Saglik_Sigortasi_Karti.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Saglik_Sigortasi_Karti.glb"
+  },
+  {
+    "fileName": "Sanal_Sunucu_Kupleri.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Sanal_Sunucu_Kupleri.glb"
+  },
+  {
+    "fileName": "Schlenk Hattı.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Schlenk Hattı.glb"
+  },
+  {
+    "fileName": "Sentrozom ve Sentriyoller.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Sentrozom ve Sentriyoller.glb"
+  },
+  {
+    "fileName": "Ses Rezonans Tüpü.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Ses Rezonans Tüpü.glb"
+  },
+  {
+    "fileName": "Sifir_Atik_Marketi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Sifir_Atik_Marketi.glb"
+  },
+  {
+    "fileName": "Siklotron Kesiti.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Siklotron Kesiti.glb"
+  },
+  {
+    "fileName": "Silahli_Insansiz_Hava_Araci.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Silahli_Insansiz_Hava_Araci.glb"
+  },
+  {
+    "fileName": "Sinav_Basari_Gostergesi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Sinav_Basari_Gostergesi.glb"
+  },
+  {
+    "fileName": "Sodyum Hidroksit Kristali.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Sodyum Hidroksit Kristali.glb"
+  },
+  {
+    "fileName": "Sovalye.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Sovalye.glb"
+  },
+  {
+    "fileName": "Soxhlet Ekstraktörü.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Soxhlet Ekstraktörü.glb"
+  },
+  {
+    "fileName": "Spektrofotometre.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Spektrofotometre.glb"
+  },
+  {
+    "fileName": "Spor_ve_Egzersiz_Seti.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Spor_ve_Egzersiz_Seti.glb"
+  },
+  {
+    "fileName": "Stirling Motoru.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Stirling Motoru.glb"
+  },
+  {
+    "fileName": "Surdurulebilir_Ofis.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Surdurulebilir_Ofis.glb"
+  },
+  {
+    "fileName": "Sülfürik Asit Molekülü.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Sülfürik Asit Molekülü.glb"
+  },
+  {
+    "fileName": "Süperiletken Manyetik Levhası.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Süperiletken Manyetik Levhası.glb"
+  },
+  {
+    "fileName": "Tank.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Tank.glb"
+  },
+  {
+    "fileName": "Teknoloji_Destek_Masasi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Teknoloji_Destek_Masasi.glb"
+  },
+  {
+    "fileName": "Termoelektrik Jeneratör Modülü.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Termoelektrik Jeneratör Modülü.glb"
+  },
+  {
+    "fileName": "Tesla Bobini.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Tesla Bobini.glb"
+  },
+  {
+    "fileName": "Teslimat_Kamyoneti.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Teslimat_Kamyoneti.glb"
+  },
+  {
+    "fileName": "Torsiyon Sarkacı.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Torsiyon Sarkacı.glb"
+  },
+  {
+    "fileName": "Tuz Köprülü Pil Düzeneği.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Tuz Köprülü Pil Düzeneği.glb"
+  },
+  {
+    "fileName": "Urun_Ambalaji_Maketi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Urun_Ambalaji_Maketi.glb"
+  },
+  {
+    "fileName": "Uyku_Dongusu_Yatagi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Uyku_Dongusu_Yatagi.glb"
+  },
+  {
+    "fileName": "Uzaktan_Egitim_Studyosu.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Uzaktan_Egitim_Studyosu.glb"
+  },
+  {
+    "fileName": "Vakum Filtrasyon Düzeneği.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Vakum Filtrasyon Düzeneği.glb"
+  },
+  {
+    "fileName": "Vakum Çanı Düzeneği.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Vakum Çanı Düzeneği.glb"
+  },
+  {
+    "fileName": "Van de Graaff Jeneratörü.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Van de Graaff Jeneratörü.glb"
+  },
+  {
+    "fileName": "Venturi Tüpü.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Venturi Tüpü.glb"
+  },
+  {
+    "fileName": "Veri_Senkronizasyon_Kureleri.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Veri_Senkronizasyon_Kureleri.glb"
+  },
+  {
+    "fileName": "Wheatstone Köprüsü.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Wheatstone Köprüsü.glb"
+  },
+  {
+    "fileName": "Yagmur_Suyu_Toplama_Sistemi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Yagmur_Suyu_Toplama_Sistemi.glb"
+  },
+  {
+    "fileName": "Yakıt Hücresi Kesiti.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Yakıt Hücresi Kesiti.glb"
+  },
+  {
+    "fileName": "Yapay_Zeka_Asistani.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Yapay_Zeka_Asistani.glb"
+  },
+  {
+    "fileName": "Yaylı Kuvvet Ölçer.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Yaylı Kuvvet Ölçer.glb"
+  },
+  {
+    "fileName": "Yazilim_Gelistirici_Masasi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Yazilim_Gelistirici_Masasi.glb"
+  },
+  {
+    "fileName": "Yesil_Bina_Kesiti.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Yesil_Bina_Kesiti.glb"
+  },
+  {
+    "fileName": "Yesil_Sehir_Maketi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Yesil_Sehir_Maketi.glb"
+  },
+  {
+    "fileName": "Yilan.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Yilan.glb"
+  },
+  {
+    "fileName": "Yuvarlak Tabanlı Balon.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Yuvarlak Tabanlı Balon.glb"
+  },
+  {
+    "fileName": "abakus.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/abakus.glb"
+  },
+  {
+    "fileName": "acil_durum_yonetim_merkezi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/acil_durum_yonetim_merkezi.glb"
+  },
+  {
+    "fileName": "adalet_terazisi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/adalet_terazisi.glb"
+  },
+  {
+    "fileName": "agile_sprint_pisti.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/agile_sprint_pisti.glb"
+  },
+  {
+    "fileName": "akilli_depo_robotu.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/akilli_depo_robotu.glb"
+  },
+  {
+    "fileName": "akilli_kargo_dolabi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/akilli_kargo_dolabi.glb"
+  },
+  {
+    "fileName": "akilli_otopark_binasi_kesiti.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/akilli_otopark_binasi_kesiti.glb"
+  },
+  {
+    "fileName": "akilli_saat.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/akilli_saat.glb"
+  },
+  {
+    "fileName": "akuaponik_uretim_sistemi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/akuaponik_uretim_sistemi.glb"
+  },
+  {
+    "fileName": "almanya_topografik_harita.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/almanya_topografik_harita.glb"
+  },
+  {
+    "fileName": "amerika_bayragi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/amerika_bayragi.glb"
+  },
+  {
+    "fileName": "amerika_topografik_harita.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/amerika_topografik_harita.glb"
+  },
+  {
+    "fileName": "anayasa_kitabi_ve_devlet_muhru.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/anayasa_kitabi_ve_devlet_muhru.glb"
+  },
+  {
+    "fileName": "andorra_topografik_harita.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/andorra_topografik_harita.glb"
+  },
+  {
+    "fileName": "ari_kovani_kesiti.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/ari_kovani_kesiti.glb"
+  },
+  {
+    "fileName": "arkeolojik_kazi_alani_mini_sahnesi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/arkeolojik_kazi_alani_mini_sahnesi.glb"
+  },
+  {
+    "fileName": "arnavutluk_topografik_harita.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/arnavutluk_topografik_harita.glb"
+  },
+  {
+    "fileName": "arsiv_depolama_raflari.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/arsiv_depolama_raflari.glb"
+  },
+  {
+    "fileName": "artirilmis_gerceklik_gozlugu.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/artirilmis_gerceklik_gozlugu.glb"
+  },
+  {
+    "fileName": "asya_topografik_harita.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/asya_topografik_harita.glb"
+  },
+  {
+    "fileName": "avrupa_birligi_sembolu.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/avrupa_birligi_sembolu.glb"
+  },
+  {
+    "fileName": "avrupa_topografik_harita.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/avrupa_topografik_harita.glb"
+  },
+  {
+    "fileName": "avusturya_topografik_harita.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/avusturya_topografik_harita.glb"
+  },
+  {
+    "fileName": "ay_inis_araci.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/ay_inis_araci.glb"
+  },
+  {
+    "fileName": "basin_toplantisi_kursusu_ve_mikrofonlar.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/basin_toplantisi_kursusu_ve_mikrofonlar.glb"
+  },
+  {
+    "fileName": "belarus_topografik_harita.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/belarus_topografik_harita.glb"
+  },
+  {
+    "fileName": "belcika_topografik_harita.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/belcika_topografik_harita.glb"
+  },
+  {
+    "fileName": "belediye_hizmet_binasi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/belediye_hizmet_binasi.glb"
+  },
+  {
+    "fileName": "bicerdover.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/bicerdover.glb"
+  },
+  {
+    "fileName": "bilgi_kutusu.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/bilgi_kutusu.glb"
+  },
+  {
+    "fileName": "bilgisayar_laboratuvari.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/bilgisayar_laboratuvari.glb"
+  },
+  {
+    "fileName": "birlesik_krallik_topografik_harita.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/birlesik_krallik_topografik_harita.glb"
+  },
+  {
+    "fileName": "bisiklet_paylasim_istasyonu.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/bisiklet_paylasim_istasyonu.glb"
+  },
+  {
+    "fileName": "bosna_hersek_topografik_harita.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/bosna_hersek_topografik_harita.glb"
+  },
+  {
+    "fileName": "braille_alfabesi_egitim_panosu.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/braille_alfabesi_egitim_panosu.glb"
+  },
+  {
+    "fileName": "bulgaristan_topografik_harita.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/bulgaristan_topografik_harita.glb"
+  },
+  {
+    "fileName": "calisan_oryantasyon_kiti.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/calisan_oryantasyon_kiti.glb"
+  },
+  {
+    "fileName": "calisan_tukenmisligi_pil_gostergesi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/calisan_tukenmisligi_pil_gostergesi.glb"
+  },
+  {
+    "fileName": "cam_sise.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/cam_sise.glb"
+  },
+  {
+    "fileName": "canli_yayin_kontrol_odasi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/canli_yayin_kontrol_odasi.glb"
+  },
+  {
+    "fileName": "cekya_topografik_harita.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/cekya_topografik_harita.glb"
+  },
+  {
+    "fileName": "cesitlilik_kapsayicilik_figur_halkasi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/cesitlilik_kapsayicilik_figur_halkasi.glb"
+  },
+  {
+    "fileName": "cevrimici_ders_ogrencisi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/cevrimici_ders_ogrencisi.glb"
+  },
+  {
+    "fileName": "ciftci_pazari_tezgahi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/ciftci_pazari_tezgahi.glb"
+  },
+  {
+    "fileName": "cpap_solunum_cihazi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/cpap_solunum_cihazi.glb"
+  },
+  {
+    "fileName": "dagitim_rota_haritasi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/dagitim_rota_haritasi.glb"
+  },
+  {
+    "fileName": "damla_sulama_kesiti.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/damla_sulama_kesiti.glb"
+  },
+  {
+    "fileName": "danimarka_topografik_harita.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/danimarka_topografik_harita.glb"
+  },
+  {
+    "fileName": "demiryolu_sinyal_sistemi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/demiryolu_sinyal_sistemi.glb"
+  },
+  {
+    "fileName": "deniz_suyu_aritma_tesisi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/deniz_suyu_aritma_tesisi.glb"
+  },
+  {
+    "fileName": "denizalti_kesiti.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/denizalti_kesiti.glb"
+  },
+  {
+    "fileName": "depo_yukleme_rampasi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/depo_yukleme_rampasi.glb"
+  },
+  {
+    "fileName": "deprem_taban_yalitimli_bina_kesiti.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/deprem_taban_yalitimli_bina_kesiti.glb"
+  },
+  {
+    "fileName": "dijital_icerik_uretici_masasi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/dijital_icerik_uretici_masasi.glb"
+  },
+  {
+    "fileName": "dijital_ikiz_fabrikasi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/dijital_ikiz_fabrikasi.glb"
+  },
+  {
+    "fileName": "diplomatik_muzakere_masasi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/diplomatik_muzakere_masasi.glb"
+  },
+  {
+    "fileName": "dis_hekimi_koltugu.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/dis_hekimi_koltugu.glb"
+  },
+  {
+    "fileName": "diyaliz_makinesi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/diyaliz_makinesi.glb"
+  },
+  {
+    "fileName": "doktor_hasta_gorusmesi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/doktor_hasta_gorusmesi.glb"
+  },
+  {
+    "fileName": "donusum_tuneli.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/donusum_tuneli.glb"
+  },
+  {
+    "fileName": "erisilebilir_bina_rampasi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/erisilebilir_bina_rampasi.glb"
+  },
+  {
+    "fileName": "ermenistan_topografik_harita.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/ermenistan_topografik_harita.glb"
+  },
+  {
+    "fileName": "estonya_topografik_harita.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/estonya_topografik_harita.glb"
+  },
+  {
+    "fileName": "fen_bilimleri_sinifi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/fen_bilimleri_sinifi.glb"
+  },
+  {
+    "fileName": "film_klaketi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/film_klaketi.glb"
+  },
+  {
+    "fileName": "finlandiya_topografik_harita.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/finlandiya_topografik_harita.glb"
+  },
+  {
+    "fileName": "fizik_tedavi_sahnesi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/fizik_tedavi_sahnesi.glb"
+  },
+  {
+    "fileName": "fransa_topografik_harita.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/fransa_topografik_harita.glb"
+  },
+  {
+    "fileName": "gazete_yigini_ve_manset.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/gazete_yigini_ve_manset.glb"
+  },
+  {
+    "fileName": "gelecek_vizyonu_teleskobu.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/gelecek_vizyonu_teleskobu.glb"
+  },
+  {
+    "fileName": "geri_donusum_ayristirma_bandi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/geri_donusum_ayristirma_bandi.glb"
+  },
+  {
+    "fileName": "gida_isleme_uretim_hatti.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/gida_isleme_uretim_hatti.glb"
+  },
+  {
+    "fileName": "gorme_engelli_bastonu.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/gorme_engelli_bastonu.glb"
+  },
+  {
+    "fileName": "gurcistan_topografik_harita.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/gurcistan_topografik_harita.glb"
+  },
+  {
+    "fileName": "hakim_tokmagi_ve_ses_blogu.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/hakim_tokmagi_ve_ses_blogu.glb"
+  },
+  {
+    "fileName": "halefiyet_planlama_satranc_tahtasi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/halefiyet_planlama_satranc_tahtasi.glb"
+  },
+  {
+    "fileName": "hastane_hasta_odasi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/hastane_hasta_odasi.glb"
+  },
+  {
+    "fileName": "hastane_sedyesi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/hastane_sedyesi.glb"
+  },
+  {
+    "fileName": "hata_ayiklama_buyuteci.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/hata_ayiklama_buyuteci.glb"
+  },
+  {
+    "fileName": "hava_kalitesi_izleme_istasyonu.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/hava_kalitesi_izleme_istasyonu.glb"
+  },
+  {
+    "fileName": "hava_trafik_kontrol_kulesi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/hava_trafik_kontrol_kulesi.glb"
+  },
+  {
+    "fileName": "havalimani_bagaj_bandi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/havalimani_bagaj_bandi.glb"
+  },
+  {
+    "fileName": "havalimani_terminali_kesiti.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/havalimani_terminali_kesiti.glb"
+  },
+  {
+    "fileName": "hedefe_giden_basamaklar.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/hedefe_giden_basamaklar.glb"
+  },
+  {
+    "fileName": "hidroponik_yetistirme_kulesi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/hidroponik_yetistirme_kulesi.glb"
+  },
+  {
+    "fileName": "hijyenik_el_yikama_istasyonu.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/hijyenik_el_yikama_istasyonu.glb"
+  },
+  {
+    "fileName": "hirvatistan_topografik_harita.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/hirvatistan_topografik_harita.glb"
+  },
+  {
+    "fileName": "hollanda_topografik_harita.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/hollanda_topografik_harita.glb"
+  },
+  {
+    "fileName": "icme_suyu_aritma_tesisi_kesiti.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/icme_suyu_aritma_tesisi_kesiti.glb"
+  },
+  {
+    "fileName": "ilk_yardim_cantasi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/ilk_yardim_cantasi.glb"
+  },
+  {
+    "fileName": "irlanda_topografik_harita.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/irlanda_topografik_harita.glb"
+  },
+  {
+    "fileName": "is_gorusmesi_masasi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/is_gorusmesi_masasi.glb"
+  },
+  {
+    "fileName": "is_yasam_dengesi_terazisi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/is_yasam_dengesi_terazisi.glb"
+  },
+  {
+    "fileName": "isaret_dili_el_hareketleri_seti.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/isaret_dili_el_hareketleri_seti.glb"
+  },
+  {
+    "fileName": "ispanya_topografik_harita.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/ispanya_topografik_harita.glb"
+  },
+  {
+    "fileName": "isvec_topografik_harita.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/isvec_topografik_harita.glb"
+  },
+  {
+    "fileName": "isvicre_topografik_harita.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/isvicre_topografik_harita.glb"
+  },
+  {
+    "fileName": "italya_topografik_harita.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/italya_topografik_harita.glb"
+  },
+  {
+    "fileName": "itfaiye_istasyonu_ic_duzeni.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/itfaiye_istasyonu_ic_duzeni.glb"
+  },
+  {
+    "fileName": "izlanda_topografik_harita.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/izlanda_topografik_harita.glb"
+  },
+  {
+    "fileName": "kan_bagisi_koltugu.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/kan_bagisi_koltugu.glb"
+  },
+  {
+    "fileName": "karadag_topografik_harita.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/karadag_topografik_harita.glb"
+  },
+  {
+    "fileName": "karbon_yakalama_tesisi_kesiti.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/karbon_yakalama_tesisi_kesiti.glb"
+  },
+  {
+    "fileName": "kargo_ucagi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/kargo_ucagi.glb"
+  },
+  {
+    "fileName": "kentsel_dikey_tarim_kulesi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/kentsel_dikey_tarim_kulesi.glb"
+  },
+  {
+    "fileName": "kibris_topografik_harita.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/kibris_topografik_harita.glb"
+  },
+  {
+    "fileName": "kompost_kutusu_kesiti.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/kompost_kutusu_kesiti.glb"
+  },
+  {
+    "fileName": "konteyner_gemisi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/konteyner_gemisi.glb"
+  },
+  {
+    "fileName": "kosova_topografik_harita.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/kosova_topografik_harita.glb"
+  },
+  {
+    "fileName": "kuraklik_catlamis_toprak.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/kuraklik_catlamis_toprak.glb"
+  },
+  {
+    "fileName": "kutup_arastirma_istasyonu.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/kutup_arastirma_istasyonu.glb"
+  },
+  {
+    "fileName": "kutuphane_rafi_ve_okuma_merdiveni.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/kutuphane_rafi_ve_okuma_merdiveni.glb"
+  },
+  {
+    "fileName": "kuzey_makedonya_topografik_harita.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/kuzey_makedonya_topografik_harita.glb"
+  },
+  {
+    "fileName": "letonya_topografik_harita.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/letonya_topografik_harita.glb"
+  },
+  {
+    "fileName": "lihtenstayn_topografik_harita.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/lihtenstayn_topografik_harita.glb"
+  },
+  {
+    "fileName": "litvanya_topografik_harita.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/litvanya_topografik_harita.glb"
+  },
+  {
+    "fileName": "luksemburg_topografik_harita.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/luksemburg_topografik_harita.glb"
+  },
+  {
+    "fileName": "macaristan_topografik_harita.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/macaristan_topografik_harita.glb"
+  },
+  {
+    "fileName": "mahkeme_salonu_mini_sahnesi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/mahkeme_salonu_mini_sahnesi.glb"
+  },
+  {
+    "fileName": "malta_topografik_harita.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/malta_topografik_harita.glb"
+  },
+  {
+    "fileName": "malzeme_tasima_bandi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/malzeme_tasima_bandi.glb"
+  },
+  {
+    "fileName": "mars_kesif_araci.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/mars_kesif_araci.glb"
+  },
+  {
+    "fileName": "merkez_pivot_sulama_sistemi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/merkez_pivot_sulama_sistemi.glb"
+  },
+  {
+    "fileName": "metro_istasyonu_kesiti.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/metro_istasyonu_kesiti.glb"
+  },
+  {
+    "fileName": "mobil_saglik_klinigi_araci.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/mobil_saglik_klinigi_araci.glb"
+  },
+  {
+    "fileName": "moduler_bina_montaj_sahnesi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/moduler_bina_montaj_sahnesi.glb"
+  },
+  {
+    "fileName": "moldova_topografik_harita.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/moldova_topografik_harita.glb"
+  },
+  {
+    "fileName": "monako_topografik_harita.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/monako_topografik_harita.glb"
+  },
+  {
+    "fileName": "muze_sergileme_vitrini.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/muze_sergileme_vitrini.glb"
+  },
+  {
+    "fileName": "nato_sembolu.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/nato_sembolu.glb"
+  },
+  {
+    "fileName": "nesnelerin_interneti_ev_agi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/nesnelerin_interneti_ev_agi.glb"
+  },
+  {
+    "fileName": "norvec_topografik_harita.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/norvec_topografik_harita.glb"
+  },
+  {
+    "fileName": "ogretmen_ve_ogrenci_figurleri.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/ogretmen_ve_ogrenci_figurleri.glb"
+  },
+  {
+    "fileName": "okul_servisi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/okul_servisi.glb"
+  },
+  {
+    "fileName": "okul_sirasi_ve_sandalye.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/okul_sirasi_ve_sandalye.glb"
+  },
+  {
+    "fileName": "okyanus_arastirma_samandirasi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/okyanus_arastirma_samandirasi.glb"
+  },
+  {
+    "fileName": "okyanus_plastik_toplama_bariyeri.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/okyanus_plastik_toplama_bariyeri.glb"
+  },
+  {
+    "fileName": "orkestra_sefi_kursusu_ve_nota_sehpasi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/orkestra_sefi_kursusu_ve_nota_sehpasi.glb"
+  },
+  {
+    "fileName": "orman_yangini_yayilim_dioramasi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/orman_yangini_yayilim_dioramasi.glb"
+  },
+  {
+    "fileName": "osinografi_arastirma_gemisi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/osinografi_arastirma_gemisi.glb"
+  },
+  {
+    "fileName": "otomasyon_kontrol_paneli.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/otomasyon_kontrol_paneli.glb"
+  },
+  {
+    "fileName": "otomatik_meteoroloji_istasyonu.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/otomatik_meteoroloji_istasyonu.glb"
+  },
+  {
+    "fileName": "otomatik_sulama.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/otomatik_sulama.glb"
+  },
+  {
+    "fileName": "otoyol_kavsagi_maketi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/otoyol_kavsagi_maketi.glb"
+  },
+  {
+    "fileName": "paket_takip_barkodu.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/paket_takip_barkodu.glb"
+  },
+  {
+    "fileName": "parlamento_genel_kurul_salonu.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/parlamento_genel_kurul_salonu.glb"
+  },
+  {
+    "fileName": "pasaport_ve_vize_damgasi_seti.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/pasaport_ve_vize_damgasi_seti.glb"
+  },
+  {
+    "fileName": "performans_degerlendirme_panosu.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/performans_degerlendirme_panosu.glb"
+  },
+  {
+    "fileName": "personel_kimlik_karti_ve_yaka_ipi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/personel_kimlik_karti_ve_yaka_ipi.glb"
+  },
+  {
+    "fileName": "pet_sise.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/pet_sise.glb"
+  },
+  {
+    "fileName": "polonya_topografik_harita.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/polonya_topografik_harita.glb"
+  },
+  {
+    "fileName": "portekiz_topografik_harita.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/portekiz_topografik_harita.glb"
+  },
+  {
+    "fileName": "profesyonel_sinema_kamerasi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/profesyonel_sinema_kamerasi.glb"
+  },
+  {
+    "fileName": "protez_kol.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/protez_kol.glb"
+  },
+  {
+    "fileName": "psikolog_gorusme_odasi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/psikolog_gorusme_odasi.glb"
+  },
+  {
+    "fileName": "radyo_teleskop_dizisi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/radyo_teleskop_dizisi.glb"
+  },
+  {
+    "fileName": "radyo_yayin_studyosu.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/radyo_yayin_studyosu.glb"
+  },
+  {
+    "fileName": "regulatorlu_tibbi_oksijen_tupu.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/regulatorlu_tibbi_oksijen_tupu.glb"
+  },
+  {
+    "fileName": "rehber_kopek_ve_kosum_takimi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/rehber_kopek_ve_kosum_takimi.glb"
+  },
+  {
+    "fileName": "ressam_paleti_ve_firca_seti.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/ressam_paleti_ve_firca_seti.glb"
+  },
+  {
+    "fileName": "roket_firlatma_rampasi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/roket_firlatma_rampasi.glb"
+  },
+  {
+    "fileName": "ruh_sagligi_destek_figuru.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/ruh_sagligi_destek_figuru.glb"
+  },
+  {
+    "fileName": "saglik_calisanlari_ekibi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/saglik_calisanlari_ekibi.glb"
+  },
+  {
+    "fileName": "saglikli_yasam_kontrol_listesi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/saglikli_yasam_kontrol_listesi.glb"
+  },
+  {
+    "fileName": "sanal_gerceklik_egitimi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/sanal_gerceklik_egitimi.glb"
+  },
+  {
+    "fileName": "sarap_sisesi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/sarap_sisesi.glb"
+  },
+  {
+    "fileName": "seffaf_oy_sandigi_ve_oy_pusulasi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/seffaf_oy_sandigi_ve_oy_pusulasi.glb"
+  },
+  {
+    "fileName": "sera_yetistirme.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/sera_yetistirme.glb"
+  },
+  {
+    "fileName": "ses_kayit_mikseri.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/ses_kayit_mikseri.glb"
+  },
+  {
+    "fileName": "sismograf_cihazi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/sismograf_cihazi.glb"
+  },
+  {
+    "fileName": "soguk_hava_deposu_kesiti.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/soguk_hava_deposu_kesiti.glb"
+  },
+  {
+    "fileName": "soguk_zincir_araci.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/soguk_zincir_araci.glb"
+  },
+  {
+    "fileName": "son_kilometre_teslimati.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/son_kilometre_teslimati.glb"
+  },
+  {
+    "fileName": "stadyum_tribun_kesiti.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/stadyum_tribun_kesiti.glb"
+  },
+  {
+    "fileName": "stratejik_yol_ayrimi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/stratejik_yol_ayrimi.glb"
+  },
+  {
+    "fileName": "studyo_isik_seti.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/studyo_isik_seti.glb"
+  },
+  {
+    "fileName": "sut_pastorizasyon_tanki.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/sut_pastorizasyon_tanki.glb"
+  },
+  {
+    "fileName": "sut_sagim_makinesi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/sut_sagim_makinesi.glb"
+  },
+  {
+    "fileName": "tahil_silosu_kesiti.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/tahil_silosu_kesiti.glb"
+  },
+  {
+    "fileName": "tarim_dronu.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/tarim_dronu.glb"
+  },
+  {
+    "fileName": "tele_saglik_gorusme_ekrani.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/tele_saglik_gorusme_ekrani.glb"
+  },
+  {
+    "fileName": "televizyon_haber_studyosu.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/televizyon_haber_studyosu.glb"
+  },
+  {
+    "fileName": "test_otomasyonu_robotu.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/test_otomasyonu_robotu.glb"
+  },
+  {
+    "fileName": "tibbi_atik_ayristirma_kutulari.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/tibbi_atik_ayristirma_kutulari.glb"
+  },
+  {
+    "fileName": "tohum_bankasi_kasasi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/tohum_bankasi_kasasi.glb"
+  },
+  {
+    "fileName": "toprak_nemi_izleme_istasyonu.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/toprak_nemi_izleme_istasyonu.glb"
+  },
+  {
+    "fileName": "tozlasma_sureci.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/tozlasma_sureci.glb"
+  },
+  {
+    "fileName": "trafik_isikli_akilli_kavsak.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/trafik_isikli_akilli_kavsak.glb"
+  },
+  {
+    "fileName": "traktor.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/traktor.glb"
+  },
+  {
+    "fileName": "tunel_acma_makinesi_kesiti.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/tunel_acma_makinesi_kesiti.glb"
+  },
+  {
+    "fileName": "turkiye_bayragi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/turkiye_bayragi.glb"
+  },
+  {
+    "fileName": "uzaktan_calisma_ev_ofisi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/uzaktan_calisma_ev_ofisi.glb"
+  },
+  {
+    "fileName": "veri_analisti_calisma_masasi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/veri_analisti_calisma_masasi.glb"
+  },
+  {
+    "fileName": "yenidogan_kuvozu.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/yenidogan_kuvozu.glb"
+  },
+  {
+    "fileName": "yenilik_laboratuvari.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/yenilik_laboratuvari.glb"
+  },
+  {
+    "fileName": "yesil_cati_katmanlari_kesiti.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/yesil_cati_katmanlari_kesiti.glb"
+  },
+  {
+    "fileName": "yetenek_havuzu_aday_secme_elegi.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/yetenek_havuzu_aday_secme_elegi.glb"
+  },
+  {
+    "fileName": "yuk_treni_vagonu.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/yuk_treni_vagonu.glb"
+  },
+  {
+    "fileName": "Çeker Ocak.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Çeker Ocak.glb"
+  },
+  {
+    "fileName": "Çift Yarık Deney Düzeneği.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/Çift Yarık Deney Düzeneği.glb"
+  },
+  {
+    "fileName": "İletişimli Kaplar Düzeneği.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/İletişimli Kaplar Düzeneği.glb"
+  },
+  {
+    "fileName": "İletkenlik Ölçer.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/İletkenlik Ölçer.glb"
+  },
+  {
+    "fileName": "İnce Kenarlı Mercek Işınları.glb",
+    "modelUrl": "https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/sutols-models/İnce Kenarlı Mercek Işınları.glb"
+  }
+]

@@ -1,10 +1,14 @@
 /**
- * Cloudflare R2 bucket'ındaki tüm .glb dosyalarını listeler ve
- * functions/scripts/models-raw.json dosyasına yazar.
+ * Cloudflare R2 bucket'ındaki .glb dosyalarını listeler ve Firestore
+ * "models" koleksiyonunda HENÜZ karşılığı bulunmayanları
+ * functions/scripts/models-raw-new.json dosyasına yazar
+ * (mevcut models-raw.json'a dokunulmaz).
+ *
+ * Eşleştirme: Firestore doküman ID'si, dosya adının ".glb" uzantısız
+ * haliyle karşılaştırılır (örn. "01_SWOT_Analiz_Kupu.glb" <-> "01_SWOT_Analiz_Kupu").
  *
  * Kullanım:
- *   1) functions/.env dosyasını .env.example'a göre oluşturun.
- *   2) npm run list:models
+ *   node scripts/list-r2-models.js
  *
  * Çıktı formatı:
  *   [
@@ -16,6 +20,8 @@
 const fs = require("fs");
 const path = require("path");
 const {S3Client, ListObjectsV2Command} = require("@aws-sdk/client-s3");
+const {initializeApp, cert} = require("firebase-admin/app");
+const {getFirestore} = require("firebase-admin/firestore");
 
 function loadEnv() {
   // process.env'de değer varsa .env okumaya gerek yok.
@@ -76,6 +82,15 @@ const s3 = new S3Client({
   },
 });
 
+function resolveCredentials() {
+  const keyPath = path.join(__dirname, "..", "sutols-firebase-adminsdk-fbsvc-1d50cda9f7.json");
+  if (fs.existsSync(keyPath)) {
+    return JSON.parse(fs.readFileSync(keyPath, "utf8"));
+  }
+  console.error("HATA: servis hesabi anahtari bulunamadi (sutols-firebase-adminsdk-fbsvc-1d50cda9f7.json).");
+  process.exit(1);
+}
+
 async function listGlbModels() {
   const models = [];
   let continuationToken;
@@ -102,14 +117,37 @@ async function listGlbModels() {
       : undefined;
   } while (continuationToken);
 
-  const outPath = path.join(__dirname, "models-raw.json");
-  fs.writeFileSync(outPath, JSON.stringify(models, null, 2) + "\n", "utf8");
-  console.log(`✓ ${models.length} .glb model bulundu: ${outPath}`);
+  return models;
 }
 
-listGlbModels()
+async function fetchFirestoreModelIds() {
+  const app = initializeApp({credential: cert(resolveCredentials())});
+  const db = getFirestore(app);
+  const snapshot = await db.collection("models").get();
+  await app.delete();
+  return new Set(snapshot.docs.map((doc) => doc.id));
+}
+
+async function main() {
+  const r2Models = await listGlbModels();
+  const firestoreIds = await fetchFirestoreModelIds();
+
+  const newModels = r2Models.filter((model) => {
+    const baseName = model.fileName.split("/").pop().replace(/\.glb$/i, "");
+    return !firestoreIds.has(baseName);
+  });
+
+  const outPath = path.join(__dirname, "models-raw-new.json");
+  fs.writeFileSync(outPath, JSON.stringify(newModels, null, 2) + "\n", "utf8");
+  console.log(
+    `✓ R2'de ${r2Models.length} .glb dosya, Firestore'da ${firestoreIds.size} model kaydı var.`
+  );
+  console.log(`✓ Firestore'da kaydı OLMAYAN ${newModels.length} yeni dosya: ${outPath}`);
+}
+
+main()
     .then(() => process.exit(0))
     .catch((err) => {
-      console.error("R2 listeleme başarısız:", err);
+      console.error("Listeleme başarısız:", err);
       process.exit(1);
     });

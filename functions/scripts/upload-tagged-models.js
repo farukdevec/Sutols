@@ -1,14 +1,15 @@
 /**
- * models-tagged.json'daki etiketlenmiş 3D modelleri Firestore "models"
- * koleksiyonuna yazar.
+ * Etiketlenmiş 3D modelleri Firestore "models" koleksiyonuna yazar.
  *
  * Kullanım:
  *   $env:GOOGLE_APPLICATION_CREDENTIALS="<hizmet-hesabi-anahtar.json>"
- *   npm run upload:tagged
+ *   npm run upload:tagged                               (varsayılan: models-tagged.json)
+ *   node scripts/upload-tagged-models.js scripts/models-tagged-new.json
  *
  * Doküman id'si olarak dosya adı kullanılır (uzantısız ve nokta/özel
  * karakterler temizlenmiş haliyle). Batch yazım Firestore'un 500 işlem
- * limitine göre parçalara bölünür.
+ * limitine göre parçalara bölünür. thumbnailUrl verilmezse
+ * https://assets.sutols.com/thumbnails/<dosya>.webp olarak türetilir.
  */
 
 const fs = require("fs");
@@ -21,7 +22,8 @@ admin.initializeApp({
 
 const db = admin.firestore();
 
-const TAGGED_PATH = path.join(__dirname, "models-tagged.json");
+const DEFAULT_TAGGED_PATH = path.join(__dirname, "models-tagged.json");
+const THUMB_BASE_URL = "https://assets.sutols.com/thumbnails/";
 const BATCH_LIMIT = 500;
 
 function toDocId(fileName) {
@@ -31,11 +33,19 @@ function toDocId(fileName) {
       .replace(/[.]/g, "-");
 }
 
+function toThumbnailUrl(fileName) {
+  const base = fileName.replace(/\.glb$/i, "").split("/").pop();
+  return `${THUMB_BASE_URL}${base}.webp`;
+}
+
 async function uploadModels() {
-  const items = JSON.parse(fs.readFileSync(TAGGED_PATH, "utf8"));
+  const argPath = process.argv[2];
+  const taggedPath = argPath ? path.resolve(process.cwd(), argPath) : DEFAULT_TAGGED_PATH;
+
+  const items = JSON.parse(fs.readFileSync(taggedPath, "utf8"));
 
   if (!Array.isArray(items) || items.length === 0) {
-    throw new Error("models-tagged.json boş veya geçersiz.");
+    throw new Error(`${path.basename(taggedPath)} boş veya geçersiz.`);
   }
 
   let written = 0;
@@ -55,7 +65,7 @@ async function uploadModels() {
       const data = {
         name: item.name,
         modelUrl: item.modelUrl,
-        thumbnailUrl: item.thumbnailUrl || item.modelUrl,
+        thumbnailUrl: item.thumbnailUrl || toThumbnailUrl(item.fileName),
         tags: item.tags,
         category: item.category,
         tier: item.tier,
@@ -69,7 +79,7 @@ async function uploadModels() {
     console.log(`✓ Batch ${i + 1}/${batches} tamamlandı.`);
   }
 
-  console.log(`\n✓ "models" koleksiyonuna toplam ${written} doküman yazıldı.`);
+  console.log(`\n✓ "models" koleksiyonuna "${path.basename(taggedPath)}" dosyasından toplam ${written} doküman yazıldı.`);
 }
 
 uploadModels()
