@@ -75,6 +75,10 @@ class _HtmlPresentationEditorPageState
   /// Geniş studio düzeni aktif mi? (Toggle davranışı için build sırasında güncellenir.)
   bool _studioWide = false;
 
+  /// Mobil (<600) düzende sayfa filmstrip'i açık mı? (Varsayılan kapalı —
+  /// tuvalin dikey alanını korumak için.)
+  bool _mobileFilmstripOpen = false;
+
   @override
   void initState() {
     super.initState();
@@ -330,6 +334,8 @@ class _HtmlPresentationEditorPageState
                   child: LayoutBuilder(
                     builder: (context, constraints) {
                       final isStudioWide = constraints.maxWidth >= 1320;
+                      final isMobile =
+                          constraints.maxWidth < AppBreakpoints.mobile;
                       // Toggle davranışı için mevcut düzen bilgisini sakla.
                       _studioWide = isStudioWide;
 
@@ -374,7 +380,7 @@ class _HtmlPresentationEditorPageState
                       }
 
                       return Padding(
-                        padding: const EdgeInsets.all(14),
+                        padding: EdgeInsets.all(isMobile ? 8 : 14),
                         child: Column(
                           children: <Widget>[
                             _HtmlHeader(
@@ -404,7 +410,10 @@ class _HtmlPresentationEditorPageState
                                           CrossAxisAlignment.stretch,
                                       children: <Widget>[
                                         SizedBox(
-                                          width: 238,
+                                          width:
+                                              innerConstraints.maxWidth >= 1320
+                                                  ? 238
+                                                  : 200,
                                           child: _HtmlPageSidebar(
                                             controller: widget.controller,
                                           ),
@@ -422,25 +431,89 @@ class _HtmlPresentationEditorPageState
                                     );
                                   }
 
-                                  return Column(
-                                    children: <Widget>[
-                                      SizedBox(
-                                        height: 214,
-                                        child: _HtmlPageSidebar(
-                                          controller: widget.controller,
-                                          compact: true,
-                                        ),
+                                  // Mobil: filmstrip açılır/kapanır ve
+                                  // varsayılan kapalı (tuval alanı için).
+                                  // Sayfa dikey kaydırılabilir — dar/kısa
+                                  // pencerede hiçbir bölüm taşmaz.
+                                  if (isMobile) {
+                                    return SingleChildScrollView(
+                                      child: Column(
+                                        children: <Widget>[
+                                          Align(
+                                            alignment: Alignment.centerLeft,
+                                            child: TextButton.icon(
+                                              onPressed: () => setState(() =>
+                                                  _mobileFilmstripOpen =
+                                                      !_mobileFilmstripOpen),
+                                              icon: Icon(
+                                                _mobileFilmstripOpen
+                                                    ? Icons.expand_less_rounded
+                                                    : Icons.expand_more_rounded,
+                                                size: 18,
+                                              ),
+                                              label: Text(
+                                                _mobileFilmstripOpen
+                                                    ? 'Sayfaları Gizle'
+                                                    : 'Sayfalar ($pageCount)',
+                                              ),
+                                            ),
+                                          ),
+                                          ClipRect(
+                                            child: AnimatedSize(
+                                              duration: const Duration(
+                                                  milliseconds: 200),
+                                              curve: Curves.ease,
+                                              alignment: Alignment.topCenter,
+                                              child: _mobileFilmstripOpen
+                                                  ? SizedBox(
+                                                      height: 168,
+                                                      child: _HtmlPageSidebar(
+                                                        controller:
+                                                            widget.controller,
+                                                        compact: true,
+                                                      ),
+                                                    )
+                                                  : const SizedBox(
+                                                      width: double.infinity,
+                                                      height: 0,
+                                                    ),
+                                            ),
+                                          ),
+                                          const SizedBox(height: 8),
+                                          _HtmlWorkbench(
+                                            controller: widget.controller,
+                                            textController: _textController,
+                                            activeTab: _activeTab,
+                                            onTabChanged: _setTab,
+                                            scrollable: true,
+                                          ),
+                                        ],
                                       ),
-                                      const SizedBox(height: 12),
-                                      Expanded(
-                                        child: _HtmlWorkbench(
+                                    );
+                                  }
+
+                                  // Tablet / dar pencere: 160px filmstrip,
+                                  // sayfa dikey kaydırılabilir.
+                                  return SingleChildScrollView(
+                                    child: Column(
+                                      children: <Widget>[
+                                        SizedBox(
+                                          height: 160,
+                                          child: _HtmlPageSidebar(
+                                            controller: widget.controller,
+                                            compact: true,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 12),
+                                        _HtmlWorkbench(
                                           controller: widget.controller,
                                           textController: _textController,
                                           activeTab: _activeTab,
                                           onTabChanged: _setTab,
+                                          scrollable: true,
                                         ),
-                                      ),
-                                    ],
+                                      ],
+                                    ),
                                   );
                                 },
                               ),
@@ -556,7 +629,63 @@ class _HtmlHeader extends StatelessWidget {
 
     return LayoutBuilder(
       builder: (context, constraints) {
+        final mobile = constraints.maxWidth < AppBreakpoints.mobile;
         final compact = constraints.maxWidth < 980;
+
+        // Mobil (<600): rozetleri gizle, aksiyonları ikonlara indirge.
+        if (mobile) {
+          return Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+            decoration: BoxDecoration(
+              color: context.colors.surfaceElevated,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: context.colors.border),
+            ),
+            child: Row(
+              children: <Widget>[
+                IconButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  icon: Icon(
+                    Icons.arrow_back_rounded,
+                    color: context._htmlInk,
+                  ),
+                ),
+                Expanded(
+                  child: Text(
+                    'Sunum Düzenleme',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          color: context._htmlInk,
+                          fontWeight: FontWeight.w800,
+                        ),
+                  ),
+                ),
+                _HistoryButtons(
+                  onUndo: onUndo,
+                  onRedo: onRedo,
+                  canUndo: canUndo,
+                  canRedo: canRedo,
+                ),
+                IconButton(
+                  tooltip: 'Sunum Modu',
+                  onPressed: onPreview,
+                  icon: Icon(
+                    Icons.slideshow_rounded,
+                    color: context._htmlAccent,
+                  ),
+                ),
+                _FileMenuButton(
+                  onSave: onSave,
+                  onLoad: onLoad,
+                  onExportHtml: onExport,
+                  onExportPdf: onExportPdf,
+                ),
+              ],
+            ),
+          );
+        }
+
         return Container(
           padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
           decoration: BoxDecoration(
@@ -607,10 +736,14 @@ class _HtmlHeader extends StatelessWidget {
                     ),
                     const SizedBox(width: 8),
                     Expanded(child: title),
-                    Wrap(
-                      spacing: 10,
-                      runSpacing: 10,
-                      children: actions,
+                    // Aksiyonlar genişliği aşarsa alt satıra düşebilmeli;
+                    // Flexible olmadan Row yatayda taşar.
+                    Flexible(
+                      child: Wrap(
+                        spacing: 10,
+                        runSpacing: 10,
+                        children: actions,
+                      ),
                     ),
                   ],
                 ),
@@ -1359,7 +1492,9 @@ class _HtmlToolRail extends StatelessWidget {
             ),
           ];
 
-          if (constraints.maxHeight < 760) {
+          // Birincil + ikincil butonlar toplamda ~1060px tutar; bu
+          // yüksekliğin altında Spacer yerine kaydırılabilir düzen kullan.
+          if (constraints.maxHeight < 1080) {
             return SingleChildScrollView(
               child: Column(
                 children: <Widget>[
@@ -1791,7 +1926,7 @@ class _HtmlPageSidebar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(compact ? 10 : 16),
       decoration: BoxDecoration(
         color: context._htmlPanel,
         borderRadius: BorderRadius.circular(30),
@@ -1842,6 +1977,7 @@ class _HtmlPageSidebar extends StatelessWidget {
                           index: index,
                           isSelected: index == controller.selectedIndex,
                           onTap: () => controller.selectPage(index),
+                          compact: true,
                         ),
                       );
                     },
@@ -1904,12 +2040,17 @@ class _HtmlPageCard extends StatelessWidget {
     required this.index,
     required this.isSelected,
     required this.onTap,
+    this.compact = false,
   });
 
   final PresentationPage page;
   final int index;
   final bool isSelected;
   final VoidCallback onTap;
+
+  /// Yatay filmstrip içinde mi? `true` ise önizleme kalan dikey alana
+  /// büzülür (sabit 16:9 yerine) — dar şeritte taşmayı önler.
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
@@ -1938,7 +2079,21 @@ class _HtmlPageCard extends StatelessWidget {
                   ),
             ),
             const SizedBox(height: 8),
-            AspectRatio(
+            if (compact)
+              Expanded(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(16),
+                  child: IgnorePointer(
+                    child: PresentationPageCanvas(
+                      page: page,
+                      showHint: false,
+                      showSelectionBorder: false,
+                    ),
+                  ),
+                ),
+              )
+            else
+              AspectRatio(
               aspectRatio: 16 / 9,
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(16),
@@ -1964,6 +2119,7 @@ class _HtmlWorkbench extends StatelessWidget {
     required this.textController,
     required this.activeTab,
     required this.onTabChanged,
+    this.scrollable = false,
   });
 
   final PresentationController controller;
@@ -1971,8 +2127,14 @@ class _HtmlWorkbench extends StatelessWidget {
   final _HtmlToolTab activeTab;
   final ValueChanged<_HtmlToolTab> onTabChanged;
 
+  /// `true` ise workbench, sayfa seviyesindeki bir kaydırma alanının içinde
+  /// doğal yüksekliğiyle render edilir; tuval genişlikten 16:9 türetilir.
+  /// (Kompakt/mobil düzen için.)
+  final bool scrollable;
+
   @override
   Widget build(BuildContext context) {
+    final stage = _HtmlStageCard(controller: controller);
     return Container(
       padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
       decoration: BoxDecoration(
@@ -1983,6 +2145,8 @@ class _HtmlWorkbench extends StatelessWidget {
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize:
+            scrollable ? MainAxisSize.min : MainAxisSize.max,
         children: <Widget>[
           _HtmlTopToolbar(
             controller: controller,
@@ -1992,11 +2156,13 @@ class _HtmlWorkbench extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           _SelectionContextBarSection(controller: controller),
-          Expanded(
-            child: _HtmlStageCard(
-              controller: controller,
-            ),
-          ),
+          if (scrollable)
+            AspectRatio(
+              aspectRatio: 16 / 9,
+              child: stage,
+            )
+          else
+            Expanded(child: stage),
         ],
       ),
     );
@@ -2055,7 +2221,14 @@ class _HtmlTopToolbar extends StatelessWidget {
                   color: context.sutolColors.outline,
                 ),
                 const SizedBox(width: 12),
-                Expanded(child: controls),
+                // Kontrol listeleri (örn. şablonlar) çok uzun olabilir;
+                // yüksekliği sınırlayıp dikey kaydırılabilir yap.
+                Expanded(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxHeight: 220),
+                    child: SingleChildScrollView(child: controls),
+                  ),
+                ),
               ],
             );
           }
@@ -2068,7 +2241,12 @@ class _HtmlTopToolbar extends StatelessWidget {
                 onTabChanged: onTabChanged,
               ),
               const SizedBox(height: 10),
-              controls,
+              // Dar ekranda kontrol paneli tuvali ezdirmemeli: sınırlı
+              // yükseklik + dikey kaydırma.
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxHeight: 260),
+                child: SingleChildScrollView(child: controls),
+              ),
             ],
           );
         },

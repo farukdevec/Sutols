@@ -31,9 +31,14 @@ class SelectionContextBar extends StatelessWidget {
           border: Border.all(color: colors.border),
           boxShadow: AppShadows.md,
         ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: children,
+        // Dar ekranda taşmaması için yatay kaydırılabilir; geniş ekranda
+        // içerik sığdığında scroll devre dışı kalır.
+        child: SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: children,
+          ),
         ),
       ),
     );

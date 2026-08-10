@@ -105,7 +105,11 @@ class _SutolDialogWidget extends StatelessWidget {
         color: Colors.transparent,
         child: Container(
           width: 400,
-          constraints: const BoxConstraints(maxWidth: 400),
+          constraints: BoxConstraints(
+            maxWidth: MediaQuery.sizeOf(context).width - 32 < 400
+                ? MediaQuery.sizeOf(context).width - 32
+                : 400,
+          ),
           decoration: BoxDecoration(
             color: bgColor,
             borderRadius: BorderRadius.circular(SutolRadius.xl),

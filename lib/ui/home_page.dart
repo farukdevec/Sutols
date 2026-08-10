@@ -1,4 +1,4 @@
-﻿import 'dart:async';
+import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -467,8 +467,12 @@ class _TierBadgeState extends State<_TierBadge> {
       _ => ('Ücretsiz', const Color(0xFF616161), Icons.circle_outlined),
     };
 
-    return Row(
-      mainAxisSize: MainAxisSize.min,
+    // Dar ekranda taşmaması için Wrap; geniş ekranda Row gibi içerik
+    // genişliğine büzülür (unbounded constraints'te tek satır).
+    return Wrap(
+      spacing: AppSpacing.s8,
+      runSpacing: AppSpacing.s4,
+      crossAxisAlignment: WrapCrossAlignment.center,
       children: [
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -493,10 +497,8 @@ class _TierBadgeState extends State<_TierBadge> {
             ],
           ),
         ),
-        if (_tier == 'free' || _tier == 'plus') ...[
-          const SizedBox(width: AppSpacing.s8),
+        if (_tier == 'free' || _tier == 'plus')
           _UpgradeButton(highlighted: _tier == 'free', onReturn: _loadTier),
-        ],
       ],
     );
   }

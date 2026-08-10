@@ -12,7 +12,9 @@
     "seed:models": "node scripts/seed-models.js",
     "add:admin": "node scripts/add-admin.js",
     "list:models": "node scripts/list-r2-models.js",
-    "upload:tagged": "node scripts/upload-tagged-models.js"
+    "upload:tagged": "node scripts/upload-tagged-models.js",
+    "delete:r2-models": "node scripts/delete-r2-models.js",
+    "delete:firestore-models": "node scripts/delete-firestore-models.js"
   },
   "engines": {
     "node": "24"

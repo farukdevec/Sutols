@@ -264,6 +264,36 @@ class AppShadows {
   ];
 }
 
+// ── Responsive Breakpoints ─────────────────────
+
+/// Merkezi responsive eşikler. Tüm ekranlar bu sabitleri kullanmalı;
+/// ekran bazlı ad-hoc eşik eklemeyin.
+class AppBreakpoints {
+  const AppBreakpoints._();
+
+  /// Telefon (<600).
+  static const double mobile = 600;
+
+  /// Tablet / dar pencere (600–1080).
+  static const double tablet = 1080;
+
+  /// Geniş masaüstü / studio düzeni (≥1320).
+  static const double desktop = 1320;
+}
+
+/// Ekran genişliğine göre responsive yardımcılar.
+extension ResponsiveContext on BuildContext {
+  double get screenWidth => MediaQuery.sizeOf(this).width;
+
+  bool get isMobile => screenWidth < AppBreakpoints.mobile;
+
+  bool get isTablet =>
+      screenWidth >= AppBreakpoints.mobile &&
+      screenWidth < AppBreakpoints.tablet;
+
+  bool get isDesktop => screenWidth >= AppBreakpoints.tablet;
+}
+
 // ── Motion ──────────────────────────────────────
 
 class AppMotion {
