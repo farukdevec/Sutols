@@ -15,6 +15,7 @@ import 'design/design_system.dart';
 import 'auth_page.dart';
 import 'membership_page.dart';
 import 'my_presentations_page.dart';
+import 'presentation_view_page.dart';
 
 class SutolHomePage extends StatefulWidget {
   const SutolHomePage({super.key});
@@ -30,11 +31,82 @@ class _SutolHomePageState extends State<SutolHomePage> {
   String _loadingStepTitle = '';
   String _loadingStepDescription = '';
 
+  User? _user;
+  late final StreamSubscription<User?> _authSub;
+
+  /// Giriş yapan kullanıcının son sunumları (en fazla 3).
+  /// null = yükleniyor/bilinmiyor, boş liste = henüz sunum yok.
+  List<_RecentPresentation>? _recentPresentations;
+
+  @override
+  void initState() {
+    super.initState();
+    _user = AuthService.instance.currentUser;
+    _authSub = AuthService.instance.authStateChanges.listen((u) {
+      if (!mounted) return;
+      setState(() {
+        _user = u;
+        _recentPresentations = null;
+      });
+      if (u != null) {
+        _fetchRecentPresentations();
+      }
+    });
+    if (_user != null) {
+      _fetchRecentPresentations();
+    }
+  }
+
   @override
   void dispose() {
+    _authSub.cancel();
     _titleController.dispose();
     _promptController.dispose();
     super.dispose();
+  }
+
+  Future<void> _fetchRecentPresentations() async {
+    final uid = _user?.uid;
+    if (uid == null) return;
+
+    try {
+      final docs = await FirestoreRestHelper.runQuery({
+        'from': [
+          {'collectionId': 'presentations'},
+        ],
+        'where': {
+          'fieldFilter': {
+            'field': {'fieldPath': 'userId'},
+            'op': 'EQUAL',
+            'value': {'stringValue': uid},
+          },
+        },
+        'orderBy': [
+          {'field': {'fieldPath': 'createdAt'}, 'direction': 'DESCENDING'},
+        ],
+        'limit': 3,
+      });
+      final items = docs.map((doc) {
+        final fields = doc['fields'] as Map<String, dynamic>? ?? {};
+        final id = (doc['name'] as String? ?? '').split('/').last;
+        return _RecentPresentation(
+          id: id,
+          topic: FirestoreRestHelper.stringField(fields, 'topic'),
+          slideCount:
+              int.tryParse(
+                    FirestoreRestHelper.integerField(fields, 'slideCount'),
+                  ) ??
+                  0,
+          createdAt: FirestoreRestHelper.timestampField(fields, 'createdAt'),
+        );
+      }).toList();
+      if (!mounted) return;
+      setState(() => _recentPresentations = items);
+    } catch (_) {
+      // Best-effort: listeleme hatası ana akışı bozmamalı.
+      if (!mounted) return;
+      setState(() => _recentPresentations = const []);
+    }
   }
 
   Widget _buildLogo(AppColors colors) {
@@ -48,7 +120,7 @@ class _SutolHomePageState extends State<SutolHomePage> {
           Image.asset('assets/images/logo.png', height: 32),
           const SizedBox(width: 10),
           Text(
-            'Sutol',
+            'Sutols',
             style: AppTypography.headline.copyWith(
               color: colors.textPrimary,
               letterSpacing: -0.5,
@@ -84,24 +156,24 @@ class _SutolHomePageState extends State<SutolHomePage> {
     );
   }
 
-  /// Dar ekran (< 720px): ikonlar üst satırda, tier rozeti/buton alt satırda.
+  /// Dar ekran (< 720px): logo + tema + profil tek satırda, kompakt plan
+  /// durumu hemen altında. Sunumlarım/Editör kısayolları yalnız geniş
+  /// ekranda gösterilir.
   Widget _buildNarrowNavbar(BuildContext context) {
     final colors = context.colors;
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Row(
           children: [
             _buildLogo(colors),
             const Spacer(),
             const _ThemeToggleButton(),
-            const _MyPresentationsButton(),
-            const _EditorButton(),
             _UserAvatar(),
           ],
         ),
-        const SizedBox(height: AppSpacing.s4),
-        _TierBadge(),
+        const SizedBox(height: AppSpacing.s8),
+        const _PlanStatusBar(),
       ],
     );
   }
@@ -154,6 +226,7 @@ class _SutolHomePageState extends State<SutolHomePage> {
           ),
         ),
       );
+      _fetchRecentPresentations();
     } catch (e, stackTrace) {
       // ignore: avoid_print
       print('SUNUM HATASI: $e');
@@ -192,7 +265,7 @@ class _SutolHomePageState extends State<SutolHomePage> {
                   return Padding(
                     padding: EdgeInsets.symmetric(
                       horizontal: narrow ? AppSpacing.s16 : AppSpacing.s32,
-                      vertical: narrow ? AppSpacing.s12 : AppSpacing.s24,
+                      vertical: narrow ? AppSpacing.s8 : AppSpacing.s24,
                     ),
                     child: narrow
                         ? _buildNarrowNavbar(context)
@@ -201,11 +274,125 @@ class _SutolHomePageState extends State<SutolHomePage> {
                 },
               ),
               
-              // Main centered card
+              // Main content
               Expanded(
                 child: LayoutBuilder(
                   builder: (context, constraints) {
                     final narrow = constraints.maxWidth < 600;
+                    final dashboard = narrow && _user != null;
+
+                    Widget heroColumn({
+                      required String description,
+                      required double gapAfter,
+                    }) {
+                      return Column(
+                        children: [
+                          Text(
+                            narrow
+                                ? 'Fikirden sunuma,\ntek cümlede.'
+                                : 'Fikirden sunuma, tek cümlede.',
+                            textAlign: TextAlign.center,
+                            style: AppTypography.display.copyWith(
+                              color: colors.textPrimary,
+                              fontSize: narrow ? 34 : null,
+                              letterSpacing: narrow ? -0.5 : null,
+                            ),
+                          ),
+                          const SizedBox(height: AppSpacing.s16),
+                          Text(
+                            description,
+                            textAlign: TextAlign.center,
+                            style: AppTypography.bodyLarge.copyWith(
+                              color: colors.textSecondary,
+                            ),
+                          ),
+                          SizedBox(height: gapAfter),
+                        ],
+                      );
+                    }
+
+                    Widget inputCard() {
+                      return ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 700),
+                        child: AnimatedSwitcher(
+                          duration: AppMotion.standard,
+                          child: _isGenerating
+                              ? _LoadingState(
+                                  title: _loadingStepTitle,
+                                  description: _loadingStepDescription,
+                                )
+                              : _InputCard(
+                                  titleController: _titleController,
+                                  promptController: _promptController,
+                                  onGenerate: _generatePresentation,
+                                  isDashboard: dashboard,
+                                ),
+                        ),
+                      );
+                    }
+
+                    if (dashboard) {
+                      final recent = _recentPresentations;
+                      return SingleChildScrollView(
+                        child: Padding(
+                          padding: const EdgeInsets.all(AppSpacing.s16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              Text(
+                                'Fikirden sunuma,\ntek cümlede.',
+                                textAlign: TextAlign.center,
+                                style: AppTypography.display.copyWith(
+                                  color: colors.textPrimary,
+                                  fontSize: 32,
+                                  letterSpacing: -0.5,
+                                ),
+                              ),
+                              const SizedBox(height: AppSpacing.s8),
+                              Text(
+                                'Yeni sunumunu saniyeler içinde oluştur.',
+                                textAlign: TextAlign.center,
+                                style: AppTypography.bodyLarge.copyWith(
+                                  color: colors.textSecondary,
+                                ),
+                              ),
+                              const SizedBox(height: AppSpacing.s24),
+                              inputCard(),
+                              if (recent != null && recent.isNotEmpty) ...[
+                                const SizedBox(height: AppSpacing.s32),
+                                Row(
+                                  children: [
+                                    Text(
+                                      'Son sunumların',
+                                      style: AppTypography.titleMedium.copyWith(
+                                        color: colors.textPrimary,
+                                      ),
+                                    ),
+                                    const Spacer(),
+                                    TextButton(
+                                      onPressed: () {
+                                        Navigator.of(context).push(
+                                          MaterialPageRoute<void>(
+                                            builder: (_) =>
+                                                const MyPresentationsPage(),
+                                          ),
+                                        );
+                                      },
+                                      child: const Text('Tümünü gör'),
+                                    ),
+                                  ],
+                                ),
+                                ...recent.map(
+                                  (item) =>
+                                      _RecentPresentationTile(item: item),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                      );
+                    }
+
                     return Center(
                       child: SingleChildScrollView(
                         child: Padding(
@@ -215,44 +402,14 @@ class _SutolHomePageState extends State<SutolHomePage> {
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Text(
-                                'Fikirden sunuma, tek cümlede.',
-                                textAlign: TextAlign.center,
-                                style: AppTypography.display.copyWith(
-                                  color: colors.textPrimary,
-                                  fontSize: narrow ? 34 : null,
-                                  letterSpacing: narrow ? -0.5 : null,
-                                ),
+                              heroColumn(
+                                description:
+                                    'Anlatmak istediğinizi yazın. Sutols, sizin için tasarlanmış bir sunumu saniyeler içinde hazırlasın.',
+                                gapAfter: narrow
+                                    ? AppSpacing.s24
+                                    : AppSpacing.s48,
                               ),
-                              const SizedBox(height: AppSpacing.s16),
-                              Text(
-                                'Anlatmak istediğinizi yazın. Sutol, sizin için tasarlanmış bir sunumu saniyeler içinde hazırlasın.',
-                                textAlign: TextAlign.center,
-                                style: AppTypography.bodyLarge.copyWith(
-                                  color: colors.textSecondary,
-                                ),
-                              ),
-                              const SizedBox(height: AppSpacing.s48),
-
-                              // The Card
-                              ConstrainedBox(
-                                constraints: const BoxConstraints(maxWidth: 700),
-                                child: AnimatedSwitcher(
-                                  duration: AppMotion.standard,
-                                  child: _isGenerating
-                                      ? _LoadingState(
-                                          title: _loadingStepTitle,
-                                          description:
-                                              _loadingStepDescription,
-                                        )
-                                      : _InputCard(
-                                          titleController: _titleController,
-                                          promptController:
-                                              _promptController,
-                                          onGenerate: _generatePresentation,
-                                        ),
-                                ),
-                              ),
+                              inputCard(),
                             ],
                           ),
                         ),
@@ -261,7 +418,47 @@ class _SutolHomePageState extends State<SutolHomePage> {
                   },
                 ),
               ),
+
+              // Footer
+              const _FooterBar(),
             ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _FooterBar extends StatelessWidget {
+  const _FooterBar();
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.s16,
+        vertical: AppSpacing.s12,
+      ),
+      child: Wrap(
+        alignment: WrapAlignment.center,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        spacing: AppSpacing.s8,
+        runSpacing: AppSpacing.s4,
+        children: [
+          Text(
+            '© ${DateTime.now().year} Sutols',
+            style: AppTypography.labelSmall.copyWith(
+              color: colors.textSecondary,
+            ),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pushNamed('/gizlilik'),
+            child: const Text('Gizlilik Politikası'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pushNamed('/sartlar'),
+            child: const Text('Kullanım Şartları'),
           ),
         ],
       ),
@@ -314,11 +511,16 @@ class _InputCard extends StatelessWidget {
     required this.titleController,
     required this.promptController,
     required this.onGenerate,
+    this.isDashboard = false,
   });
 
   final TextEditingController titleController;
   final TextEditingController promptController;
   final VoidCallback onGenerate;
+
+  /// Giriş yapmış kullanıcının özet dashboard kartı: daha kısa ve
+  /// eyleme odaklı ipuçları.
+  final bool isDashboard;
 
   @override
   Widget build(BuildContext context) {
@@ -340,7 +542,7 @@ class _InputCard extends StatelessWidget {
             controller: titleController,
             style: AppTypography.titleMedium.copyWith(color: colors.textPrimary),
             decoration: InputDecoration(
-              hintText: 'Sunum Başlığı',
+              hintText: isDashboard ? 'Sunum başlığı' : 'Sunum Başlığı',
               filled: true,
               fillColor: colors.surface,
             ),
@@ -348,16 +550,20 @@ class _InputCard extends StatelessWidget {
           const SizedBox(height: AppSpacing.s16),
           TextField(
             controller: promptController,
-            maxLines: 5,
+            maxLines: narrow ? 4 : 5,
             minLines: 3,
             style: AppTypography.bodyLarge.copyWith(color: colors.textPrimary),
             decoration: InputDecoration(
-              hintText: 'Bu sunum ne hakkında? Konuyu, ana fikirleri ve kitleyi kısaca anlatın...',
+              hintText: isDashboard
+                  ? 'Sunum hakkında'
+                  : 'Bu sunum ne hakkında? Konuyu, ana fikirleri ve kitleyi kısaca anlatın...',
               filled: true,
               fillColor: colors.surface,
             ),
           ),
-          const SizedBox(height: AppSpacing.s24),
+          SizedBox(
+            height: narrow ? AppSpacing.s16 : AppSpacing.s24,
+          ),
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
@@ -420,6 +626,90 @@ class _LoadingState extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _RecentPresentation {
+  const _RecentPresentation({
+    required this.id,
+    required this.topic,
+    required this.slideCount,
+    required this.createdAt,
+  });
+
+  final String id;
+  final String topic;
+  final int slideCount;
+  final String createdAt;
+}
+
+class _RecentPresentationTile extends StatelessWidget {
+  const _RecentPresentationTile({required this.item});
+
+  final _RecentPresentation item;
+
+  static const List<String> _months = [
+    'Ocak',
+    'Şubat',
+    'Mart',
+    'Nisan',
+    'Mayıs',
+    'Haziran',
+    'Temmuz',
+    'Ağustos',
+    'Eylül',
+    'Ekim',
+    'Kasım',
+    'Aralık',
+  ];
+
+  String _formatDate(String iso) {
+    final date = DateTime.tryParse(iso);
+    if (date == null) return '';
+    final local = date.toLocal();
+    return '${local.day} ${_months[local.month - 1]} ${local.year}';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    final createdAt = _formatDate(item.createdAt);
+
+    return Card(
+      margin: const EdgeInsets.only(bottom: AppSpacing.s8),
+      child: ListTile(
+        leading: const Icon(Icons.description_outlined),
+        title: Text(
+          item.topic,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: AppTypography.titleMedium.copyWith(
+            color: colors.textPrimary,
+          ),
+        ),
+        subtitle: Padding(
+          padding: const EdgeInsets.only(top: 4),
+          child: Text(
+            [
+              if (createdAt.isNotEmpty) createdAt,
+              '${item.slideCount} slayt',
+            ].join(' • '),
+            style: AppTypography.bodyMedium.copyWith(
+              color: colors.textSecondary,
+            ),
+          ),
+        ),
+        trailing: const Icon(Icons.chevron_right_rounded),
+        onTap: () {
+          Navigator.of(context).push(
+            MaterialPageRoute<void>(
+              builder: (_) =>
+                  PresentationViewPage(presentationId: item.id),
+            ),
+          );
+        },
       ),
     );
   }
@@ -500,6 +790,114 @@ class _TierBadgeState extends State<_TierBadge> {
         if (_tier == 'free' || _tier == 'plus')
           _UpgradeButton(highlighted: _tier == 'free', onReturn: _loadTier),
       ],
+    );
+  }
+}
+
+class _PlanStatusBar extends StatefulWidget {
+  const _PlanStatusBar();
+
+  @override
+  State<_PlanStatusBar> createState() => _PlanStatusBarState();
+}
+
+class _PlanStatusBarState extends State<_PlanStatusBar> {
+  static const Color _gold = Color(0xFFC9A227);
+
+  String _tier = 'free';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadTier();
+  }
+
+  Future<void> _loadTier() async {
+    final uid = AuthService.instance.currentUser?.uid;
+    if (uid == null) return;
+
+    try {
+      final snapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .get();
+      final tier = snapshot.data()?['tier'];
+      if (mounted && tier is String) {
+        setState(() => _tier = tier);
+      }
+    } catch (_) {
+      // Best-effort: Firestore hatası plan durumunu bozmamalı.
+    }
+  }
+
+  Future<void> _openMembership() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(builder: (_) => const MembershipPage()),
+    );
+    if (mounted) _loadTier();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    final isPremium = _tier == 'premium';
+    final isPlus = _tier == 'plus';
+    final withUpgrade = !isPremium;
+    final upgradeColor = isPlus ? colors.primary : _gold;
+
+    return GestureDetector(
+      onTap: withUpgrade ? _openMembership : null,
+      child: Container(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.s12,
+          vertical: 6,
+        ),
+        decoration: BoxDecoration(
+          color: colors.surfaceElevated.withValues(alpha: 0.5),
+          borderRadius: BorderRadius.circular(AppRadius.full),
+          border: Border.all(color: colors.border.withValues(alpha: 0.7)),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              isPremium
+                  ? Icons.workspace_premium_rounded
+                  : Icons.circle_outlined,
+              size: 14,
+              color: isPremium ? _gold : colors.textSecondary,
+            ),
+            const SizedBox(width: 6),
+            Text(
+              isPremium
+                  ? 'Premium plan'
+                  : isPlus
+                      ? 'Plus plan'
+                      : 'Ücretsiz plan',
+              style: AppTypography.labelMedium.copyWith(
+                color: colors.textSecondary,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const Spacer(),
+            if (withUpgrade)
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.auto_awesome_rounded, size: 14, color: upgradeColor),
+                  const SizedBox(width: 4),
+                  Text(
+                    'Yükselt',
+                    style: AppTypography.labelMedium.copyWith(
+                      color: upgradeColor,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 13,
+                    ),
+                  ),
+                ],
+              ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -608,6 +1006,11 @@ class _ThemeToggleButton extends StatelessWidget {
       builder: (context, mode, _) {
         final isDark = mode == ThemeMode.dark;
         return IconButton(
+          style: IconButton.styleFrom(
+            iconSize: 22,
+            padding: const EdgeInsets.all(8),
+            minimumSize: const Size(40, 40),
+          ),
           tooltip: isDark ? 'Açık Tema' : 'Koyu Tema',
           onPressed: ThemeController.instance.toggle,
           icon: Icon(isDark ? Icons.light_mode_outlined : Icons.dark_mode_outlined),

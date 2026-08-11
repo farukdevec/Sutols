@@ -10,9 +10,17 @@ import 'design/design_system.dart';
 import 'widgets/share_presentation_dialog.dart';
 
 class PresentationViewPage extends StatefulWidget {
-  const PresentationViewPage({super.key, required this.presentationId});
+  const PresentationViewPage({
+    super.key,
+    required this.presentationId,
+    this.adminView = false,
+  });
 
   final String presentationId;
+
+  /// Admin panelinden açıldığında true: yazma/işlem amaçlı kontroller
+  /// (paylaşım gibi) gizlenir, sayfa salt okunur görüntülenir.
+  final bool adminView;
 
   @override
   State<PresentationViewPage> createState() => _PresentationViewPageState();
@@ -190,7 +198,7 @@ class _PresentationViewPageState extends State<PresentationViewPage> {
         title: const Text('Sunum'),
         backgroundColor: colors.surface,
         actions: [
-          if (_shareInfo != null)
+          if (_shareInfo != null && !widget.adminView)
             IconButton(
               tooltip: 'Paylaş',
               icon: const Icon(Icons.share_outlined),

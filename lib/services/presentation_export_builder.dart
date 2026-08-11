@@ -111,7 +111,7 @@ String _resolvePresentationTitle(List<PresentationPage> pages) {
       }
     }
   }
-  return 'Sutol Demo Sunumu';
+  return 'Sutols Demo Sunumu';
 }
 
 String _revealCountsJson(List<PresentationPage> pages) {

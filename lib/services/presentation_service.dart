@@ -122,6 +122,11 @@ class PresentationService {
         'title': {'stringValue': topic},
         'createdAt': {'timestampValue': DateTime.now().toUtc().toIso8601String()},
         'updatedAt': {'timestampValue': DateTime.now().toUtc().toIso8601String()},
+        'wasEdited': {'booleanValue': false},
+        'wasExported': {'booleanValue': false},
+        'editCount': {'integerValue': '0'},
+        'timeSpentSeconds': {'integerValue': '0'},
+        'lastOpenedAt': {'timestampValue': 'request_time'},
       },
     });
 

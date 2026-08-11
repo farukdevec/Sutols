@@ -10,7 +10,10 @@ import 'state/theme_controller.dart';
 import 'ui/admin/admin_gate.dart';
 import 'ui/design/design_system.dart';
 import 'ui/home_page.dart';
+import 'ui/legal_pages.dart';
 import 'ui/presentation_open_page.dart';
+import 'ui/widgets/cookie_consent_banner.dart';
+import 'ui/widgets/terms_consent_dialog.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -29,27 +32,32 @@ class SutolApp extends StatelessWidget {
       valueListenable: ThemeController.instance.mode,
       builder: (context, themeMode, _) {
         return MaterialApp(
-          title: 'Sutol',
+          title: 'Sutols',
           debugShowCheckedModeBanner: false,
+          navigatorKey: appNavigatorKey,
           theme: sutolLightTheme,
           darkTheme: sutolDarkTheme,
           themeMode: themeMode,
-          home: StreamBuilder<User?>(
-            stream: AuthService.instance.authStateChanges,
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const _SplashScreen();
-              }
-              final user = snapshot.data;
-              if (user == null) {
-                return const SutolHomePage();
-              }
-              // Giriş yapıldıysa paylaşım bağlantılarını (/p/{id}) yakala.
-              return _DeepLinkHost(child: const SutolHomePage());
-            },
+          home: CookieConsentHost(
+            child: StreamBuilder<User?>(
+              stream: AuthService.instance.authStateChanges,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const _SplashScreen();
+                }
+                final user = snapshot.data;
+                if (user == null) {
+                  return const SutolHomePage();
+                }
+                // Giriş yapıldıysa paylaşım bağlantılarını (/p/{id}) yakala.
+                return _DeepLinkHost(child: const SutolHomePage());
+              },
+            ),
           ),
           routes: {
             '/admin': (_) => const AdminGate(),
+            '/gizlilik': (_) => const PrivacyPolicyPage(),
+            '/sartlar': (_) => const TermsOfServicePage(),
           },
         );
       },

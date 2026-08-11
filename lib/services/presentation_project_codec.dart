@@ -37,7 +37,7 @@ class PresentationProjectCodec {
   static PresentationProject decodeProject(String source) {
     final decoded = jsonDecode(source);
     if (decoded is! Map<String, Object?>) {
-      throw const FormatException('Gecersiz Sutol proje dosyasi.');
+      throw const FormatException('Gecersiz Sutols proje dosyasi.');
     }
 
     final pagesJson = decoded['pages'];

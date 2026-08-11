@@ -35,7 +35,7 @@ class _PresentationPreviewPageState extends State<PresentationPreviewPage> {
   @override
   void initState() {
     super.initState();
-    _focusNode = FocusNode(debugLabel: 'Sutol presentation preview');
+    _focusNode = FocusNode(debugLabel: 'Sutols presentation preview');
     _index = widget.controller.selectedIndex;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) {

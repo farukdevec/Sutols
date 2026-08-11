@@ -91,7 +91,7 @@ String _buildLightScene({
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Sutol — $title</title>
+<title>Sutols — $title</title>
 <style>
 :root{--bg:$background;--surface:$surface;--accent:$accent;--accent-soft:$accentSoft}
 *{box-sizing:border-box}html,body{width:100%;height:100%;margin:0;overflow:hidden;background:var(--bg)}

@@ -50,6 +50,10 @@ class _AuthPageState extends State<AuthPage> {
         }
       }
       if (mounted) Navigator.of(context).pop();
+    } on TermsConsentNotApprovedException {
+      setState(() {
+        _error = 'Kullanım Şartları onaylanmadan kayıt tamamlanamaz.';
+      });
     } on FirebaseAuthException catch (e) {
       setState(() {
         _error = _mapError(e.code);
@@ -162,7 +166,7 @@ class _AuthPageState extends State<AuthPage> {
             children: [
               Image.asset('assets/images/logo.png', height: 28),
               const SizedBox(width: 8),
-              Text('Sutol',
+              Text('Sutols',
                   style: AppTypography.titleLarge
                       .copyWith(color: colors.textPrimary)),
             ],

@@ -22,7 +22,12 @@ service cloud.firestore {
                     && (isAdmin() || (
                          (request.auth.uid == resource.data.userId
                           || resource.data.shared == true)
-                         && request.resource.data.userId == resource.data.userId));
+                         && request.resource.data.userId == resource.data.userId
+                         // Yalnızca izleme/analiz alanları güncellenebilir;
+                         // userId, topic, createdAt vb. değiştirilemez.
+                         && request.resource.data.diff(resource.data).affectedKeys()
+                              .hasOnly(['wasEdited', 'wasExported', 'editCount',
+                                        'timeSpentSeconds', 'lastOpenedAt', 'slides'])));
       allow delete: if request.auth != null && isNotSuspended(request.auth.uid)
                     && (isAdmin() || request.auth.uid == resource.data.userId);
     }
@@ -74,7 +79,8 @@ service cloud.firestore {
                            // Normal sınırlı alan güncellemeleri (tier değişmez)
                            (request.resource.data.tier == resource.data.tier
                             && request.resource.data.diff(resource.data).affectedKeys()
-                                 .hasOnly(['lastActiveAt', 'presentationCount', 'displayName', 'email']))
+                                 .hasOnly(['lastActiveAt', 'presentationCount', 'displayName', 'email', 'cookieConsent',
+                                           'termsAcceptedAt', 'termsVersion']))
                            ||
                            // Promosyon kodu ile anında tier yükseltme
                            (request.resource.data.diff(resource.data).affectedKeys()

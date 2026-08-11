@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:firebase_auth/firebase_auth.dart';
@@ -13,6 +14,7 @@ import '../services/presentation_fullscreen_service.dart';
 import '../services/presentation_project_codec.dart';
 import '../services/presentation_project_io.dart';
 import '../services/presentation_project_store.dart';
+import '../services/presentation_tracking_service.dart';
 import '../services/remote_image_sources.dart';
 import '../services/remote_model_sources.dart';
 import '../state/presentation_controller.dart';
@@ -69,21 +71,78 @@ class _HtmlPresentationEditorPageState
   _HtmlToolTab _activeTab = _HtmlToolTab.text;
   String? _lastEditorLabel;
 
+  final PresentationTrackingService _tracking =
+      PresentationTrackingService();
+
+  /// Editörün açıldığı an (sayfada geçirilen süreyi ölçmek için).
+  DateTime _openedAt = DateTime.now();
+
+  /// Son izlenen deck içerik imzası: gerçek düzenlemeleri seçim
+  /// değişikliklerinden ayırt etmek için kullanılır.
+  String _trackedSignature = '';
+
   /// Studio (geniş) düzende detay paneli açık mı? (Canva tarzı aç/kapat.)
   bool _inspectorOpen = true;
 
   /// Geniş studio düzeni aktif mi? (Toggle davranışı için build sırasında güncellenir.)
   bool _studioWide = false;
 
-  /// Mobil (<600) düzende sayfa filmstrip'i açık mı? (Varsayılan kapalı —
-  /// tuvalin dikey alanını korumak için.)
-  bool _mobileFilmstripOpen = false;
+  /// Mobil tuval: kıstırma ile yakınlaştırma (1..3) ve yakınlaştırınca kaydırma.
+  double _mobileCanvasZoom = 1.0;
+  Offset _mobileCanvasPan = Offset.zero;
+  double _mobileZoomStartScale = 1.0;
+  String? _lastMobilePageId;
+
+  /// Çoklu dokunma sırasında tuval içi jestler kapatılır (kıstırma sahne
+  /// katmanına geçer); parmaklar kalkınca tekrar açılır.
+  bool _multiTouchActive = false;
+
+  /// Mobil tuvaldeki "boş alanda sürükle" ipucu: ilk açılışta kısa süre
+  /// görünür, etkileşimle ya da süre dolunca kaybolur.
+  bool _showMobileHint = true;
+  Timer? _hintTimer;
+
+  void _onMobileScaleStart(ScaleStartDetails details) {
+    _mobileZoomStartScale = _mobileCanvasZoom;
+    _dismissMobileHint();
+  }
+
+  void _onMobileScaleUpdate(ScaleUpdateDetails details) {
+    setState(() {
+      _mobileCanvasZoom =
+          (_mobileZoomStartScale * details.scale).clamp(1.0, 3.0);
+      _mobileCanvasPan += details.focalPointDelta / _mobileCanvasZoom;
+    });
+  }
+
+  void _dismissMobileHint() {
+    _hintTimer?.cancel();
+    if (_showMobileHint) {
+      setState(() => _showMobileHint = false);
+    }
+  }
+
+  void _onMobileScaleEnd(ScaleEndDetails details) {
+    _hintTimer?.cancel();
+  }
+
+  void _onMobileMultiTouchChanged(bool multi) {
+    if (_multiTouchActive == multi) {
+      return;
+    }
+    setState(() => _multiTouchActive = multi);
+  }
 
   @override
   void initState() {
     super.initState();
+    _openedAt = DateTime.now();
+    _trackedSignature = _deckSignature();
     widget.controller.addListener(_syncTextField);
     widget.controller.addListener(_syncTabWithSelection);
+    widget.controller.addListener(_onMobilePageChanged);
+    widget.controller.addListener(_trackEdits);
+    _lastMobilePageId = widget.controller.selectedPage.id;
     _textController = TextEditingController(
       text: widget.controller.selectedTextBlock?.text ?? '',
     );
@@ -91,14 +150,96 @@ class _HtmlPresentationEditorPageState
     if (initial != null && initial.trim().isNotEmpty) {
       _lastEditorLabel = initial.trim();
     }
+    _hintTimer = Timer(const Duration(seconds: 6), _dismissMobileHint);
   }
 
   @override
   void dispose() {
+    _hintTimer?.cancel();
     widget.controller.removeListener(_syncTextField);
     widget.controller.removeListener(_syncTabWithSelection);
+    widget.controller.removeListener(_onMobilePageChanged);
+    widget.controller.removeListener(_trackEdits);
     _textController.dispose();
+    final presentationId = widget.presentationId;
+    if (presentationId != null) {
+      final seconds = DateTime.now().difference(_openedAt).inSeconds;
+      if (seconds > 0) {
+        _tracking.addTimeSpent(presentationId, seconds);
+      }
+    }
     super.dispose();
+  }
+
+  /// Deck içeriğinin imzasını üretir: gerçek düzenlemeler (metin, stil,
+  /// model, yerleşim, arka plan, geçiş vb.) imzayı değiştirir, seçim gibi
+  /// salt görünüm olayları değiştirmez.
+  String _deckSignature() {
+    final controller = widget.controller;
+    final buf = StringBuffer();
+    buf.write(controller.pages.length);
+    final settings = controller.effectSettings;
+    buf
+      ..write('|${settings.transitionKind.index}|${settings.transitionDurationMs}')
+      ..write('|${settings.zoomEnabled}|${settings.zoomScale.toStringAsFixed(3)}')
+      ..write('|${settings.reducedMotion}');
+    for (final page in controller.pages) {
+      buf
+        ..write('\n${page.id}|${page.backgroundKind.index}|${page.speakerNotes}');
+      for (final text in page.textBlocks) {
+        buf
+          ..write('\nT:${text.id}|${text.text}|${text.position.dx.toStringAsFixed(3)}')
+          ..write('|${text.position.dy.toStringAsFixed(3)}|${text.fontSize}')
+          ..write('|${text.type.index}|${text.widthFactor}|${text.textStyle.index}')
+          ..write('|${text.textAnimation.index}|${text.textColorHex}')
+          ..write('|${text.glowIntensity}|${text.revealStep}')
+          ..write('|${text.hotspotTargetPageId}|${text.textBold}')
+          ..write('|${text.textItalic}|${text.textUnderline}|${text.textAlign.index}');
+      }
+      for (final block in page.componentBlocks) {
+        buf
+          ..write('\nC:${block.id}|${block.kind.index}|${block.modelAssetId}')
+          ..write('|${block.modelAnimationEnabled}|${block.modelAutoRotate}')
+          ..write('|${block.modelOrbitEnabled}'
+              '|${block.modelOrbitTheta.toStringAsFixed(3)}|${block.modelOrbitPhi.toStringAsFixed(3)}')
+          ..write('|${block.position.dx.toStringAsFixed(3)}|${block.position.dy.toStringAsFixed(3)}')
+          ..write('|${block.size.width.toStringAsFixed(3)}|${block.size.height.toStringAsFixed(3)}')
+          ..write('|${block.revealStep}|${block.hotspotTargetPageId}');
+      }
+    }
+    return buf.toString();
+  }
+
+  /// Kullanıcı sunumu gerçekten düzenlediğinde Firebase'e işler
+  /// (wasEdited: true, editCount: +1). presentationId yoksa (yerel proje)
+  /// hiçbir şey yapmaz.
+  void _trackEdits() {
+    final presentationId = widget.presentationId;
+    if (presentationId == null) {
+      return;
+    }
+    final signature = _deckSignature();
+    if (signature == _trackedSignature) {
+      return;
+    }
+    _trackedSignature = signature;
+    _tracking.markEdited(presentationId);
+  }
+
+  /// Slayt değişince mobil tuvali yeniden sığdırma görünümüne döndürür.
+  void _onMobilePageChanged() {
+    final controller = widget.controller;
+    final pageId = controller.selectedPage.id;
+    if (pageId == _lastMobilePageId) {
+      return;
+    }
+    _lastMobilePageId = pageId;
+    if (_mobileCanvasZoom != 1.0 || _mobileCanvasPan != Offset.zero) {
+      setState(() {
+        _mobileCanvasZoom = 1.0;
+        _mobileCanvasPan = Offset.zero;
+      });
+    }
   }
 
   void _syncTextField() {
@@ -162,6 +303,23 @@ class _HtmlPresentationEditorPageState
     });
   }
 
+  /// Mobil/tablet: alt araç iskelesinden seçilen aracın panelini alttan
+  /// açılan sheet içinde gösterir. Tuval arka planda korunur.
+  void _openMobileToolSheet(_HtmlToolTab tab) {
+    setState(() => _activeTab = tab);
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) => _HtmlMobileToolSheet(
+        controller: widget.controller,
+        textController: _textController,
+        tab: tab,
+        onClose: () => Navigator.of(sheetContext).pop(),
+      ),
+    );
+  }
+
   void _showSnack(String message) {
     if (!mounted) {
       return;
@@ -171,7 +329,46 @@ class _HtmlPresentationEditorPageState
     );
   }
 
+  /// Dock'taki "Fotoğraf" kısayolu: cihazdan seçim ya da daha önce yüklenen
+  /// fotoğraf kütüphanesi (Medya paneli) arasında hızlı aksiyon sunar.
+  Future<void> _openMobilePhotoActions() async {
+    final action = await showModalBottomSheet<_MobilePhotoQuickAction>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) => _MobilePhotoQuickSheet(
+        onPicked: () =>
+            Navigator.of(sheetContext).pop(_MobilePhotoQuickAction.pick),
+        onLibrary: () =>
+            Navigator.of(sheetContext).pop(_MobilePhotoQuickAction.library),
+      ),
+    );
+    switch (action) {
+      case _MobilePhotoQuickAction.pick:
+        await _pickPhotoFromDevice();
+      case _MobilePhotoQuickAction.library:
+        _openMobileToolSheet(_HtmlToolTab.photo);
+      case null:
+        break;
+    }
+  }
+
+  /// Cihazdan bir fotoğraf seçip slayta ekler.
+  Future<void> _pickPhotoFromDevice() async {
+    try {
+      final entry = await pickLocalPhotoIntoController(widget.controller);
+      if (entry != null) {
+        _showSnack('Fotoğraf slayta eklendi.');
+      }
+    } catch (e) {
+      _showSnack('Fotoğraf yüklenemedi: $e');
+    }
+  }
+
   Future<void> _exportPresentation() async {
+    final presentationId = widget.presentationId;
+    if (presentationId != null) {
+      _tracking.markExported(presentationId);
+    }
     await exportPresentationAsHtml(
       pages: widget.controller.pages.toList(growable: false),
       effectSettings: widget.controller.effectSettings,
@@ -218,7 +415,7 @@ class _HtmlPresentationEditorPageState
       pages: widget.controller.pages.toList(growable: false),
       effectSettings: widget.controller.effectSettings,
     );
-    _showSnack('Sutol proje dosyasi indirildi.');
+    _showSnack('Sutols proje dosyasi indirildi.');
   }
 
   Future<void> _loadProject() async {
@@ -231,7 +428,7 @@ class _HtmlPresentationEditorPageState
         project.pages,
         effectSettings: project.effectSettings,
       );
-      _showSnack('Sutol proje dosyasi yuklendi.');
+      _showSnack('Sutols proje dosyasi yuklendi.');
     } catch (_) {
       _showSnack('Proje dosyasi okunamadi.');
     }
@@ -380,7 +577,7 @@ class _HtmlPresentationEditorPageState
                       }
 
                       return Padding(
-                        padding: EdgeInsets.all(isMobile ? 8 : 14),
+                        padding: EdgeInsets.all(isMobile ? 4 : 14),
                         child: Column(
                           children: <Widget>[
                             _HtmlHeader(
@@ -397,7 +594,7 @@ class _HtmlPresentationEditorPageState
                               canRedo: widget.controller.canRedo,
                               lastEditorLabel: _lastEditorLabel,
                             ),
-                            const SizedBox(height: 14),
+                            SizedBox(height: isMobile ? 8 : 14),
                             Expanded(
                               child: LayoutBuilder(
                                 builder: (context, innerConstraints) {
@@ -431,89 +628,27 @@ class _HtmlPresentationEditorPageState
                                     );
                                   }
 
-                                  // Mobil: filmstrip açılır/kapanır ve
-                                  // varsayılan kapalı (tuval alanı için).
-                                  // Sayfa dikey kaydırılabilir — dar/kısa
-                                  // pencerede hiçbir bölüm taşmaz.
-                                  if (isMobile) {
-                                    return SingleChildScrollView(
-                                      child: Column(
-                                        children: <Widget>[
-                                          Align(
-                                            alignment: Alignment.centerLeft,
-                                            child: TextButton.icon(
-                                              onPressed: () => setState(() =>
-                                                  _mobileFilmstripOpen =
-                                                      !_mobileFilmstripOpen),
-                                              icon: Icon(
-                                                _mobileFilmstripOpen
-                                                    ? Icons.expand_less_rounded
-                                                    : Icons.expand_more_rounded,
-                                                size: 18,
-                                              ),
-                                              label: Text(
-                                                _mobileFilmstripOpen
-                                                    ? 'Sayfaları Gizle'
-                                                    : 'Sayfalar ($pageCount)',
-                                              ),
-                                            ),
-                                          ),
-                                          ClipRect(
-                                            child: AnimatedSize(
-                                              duration: const Duration(
-                                                  milliseconds: 200),
-                                              curve: Curves.ease,
-                                              alignment: Alignment.topCenter,
-                                              child: _mobileFilmstripOpen
-                                                  ? SizedBox(
-                                                      height: 168,
-                                                      child: _HtmlPageSidebar(
-                                                        controller:
-                                                            widget.controller,
-                                                        compact: true,
-                                                      ),
-                                                    )
-                                                  : const SizedBox(
-                                                      width: double.infinity,
-                                                      height: 0,
-                                                    ),
-                                            ),
-                                          ),
-                                          const SizedBox(height: 8),
-                                          _HtmlWorkbench(
-                                            controller: widget.controller,
-                                            textController: _textController,
-                                            activeTab: _activeTab,
-                                            onTabChanged: _setTab,
-                                            scrollable: true,
-                                          ),
-                                        ],
-                                      ),
-                                    );
-                                  }
-
-                                  // Tablet / dar pencere: 160px filmstrip,
-                                  // sayfa dikey kaydırılabilir.
-                                  return SingleChildScrollView(
-                                    child: Column(
-                                      children: <Widget>[
-                                        SizedBox(
-                                          height: 160,
-                                          child: _HtmlPageSidebar(
-                                            controller: widget.controller,
-                                            compact: true,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 12),
-                                        _HtmlWorkbench(
-                                          controller: widget.controller,
-                                          textController: _textController,
-                                          activeTab: _activeTab,
-                                          onTabChanged: _setTab,
-                                          scrollable: true,
-                                        ),
-                                      ],
-                                    ),
+                                  // <1080 (telefon + tablet): mobil-first
+                                  // kompozisyon. Tuval ana odaktır; tüm
+                                  // seçim panelleri alt iskeleden açılan
+                                  // bottom sheet'lerde yaşar.
+                                  return _HtmlMobileLayout(
+                                    controller: widget.controller,
+                                    textController: _textController,
+                                    activeTab: _activeTab,
+                                    onOpenTool: _openMobileToolSheet,
+                                    onOpenPhotoQuick: _openMobilePhotoActions,
+                                    canvasZoom: _mobileCanvasZoom,
+                                    canvasPan: _mobileCanvasPan,
+                                    onScaleStart: _onMobileScaleStart,
+                                    onScaleUpdate: _onMobileScaleUpdate,
+                                    onScaleEnd: _onMobileScaleEnd,
+                                    onMultiTouchChanged:
+                                        _onMobileMultiTouchChanged,
+                                    canvasInteractive: !_multiTouchActive,
+                                    showHint:
+                                        _showMobileHint &&
+                                        _mobileCanvasZoom <= 1.0001,
                                   );
                                 },
                               ),
@@ -632,10 +767,39 @@ class _HtmlHeader extends StatelessWidget {
         final mobile = constraints.maxWidth < AppBreakpoints.mobile;
         final compact = constraints.maxWidth < 980;
 
-        // Mobil (<600): rozetleri gizle, aksiyonları ikonlara indirge.
+        // Mobil (<600): marka header'ı — geri, Sutols logosu + adı; ardından
+        // geri al/yinele, sunum modu (▶), dışa aktarma (↓) ve diğer işlemler
+        // (⋮: görünüm, kaydet, yükle). Çok dar ekranlarda (<340) ikonlar
+        // kompakt boyuta iner; kritik aksiyonlar (sunum, dışa aktarma,
+        // geri al) hep doğrudan görünür kalır.
         if (mobile) {
+          void handleAction(_MobileHeaderAction action) {
+            switch (action) {
+              case _MobileHeaderAction.preview:
+                onPreview();
+              case _MobileHeaderAction.theme:
+                ThemeController.instance.toggle();
+              case _MobileHeaderAction.save:
+                onSave();
+              case _MobileHeaderAction.load:
+                onLoad();
+              case _MobileHeaderAction.exportHtml:
+                onExport();
+              case _MobileHeaderAction.exportPdf:
+                onExportPdf();
+            }
+          }
+
+          final compact = constraints.maxWidth < 340;
+          final iconSize = compact ? 36.0 : 40.0;
+          final popupConstraints = BoxConstraints.tightFor(
+            width: iconSize,
+            height: iconSize,
+          );
+
           return Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+            key: const ValueKey<String>('mobile-editor-header'),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
             decoration: BoxDecoration(
               color: context.colors.surfaceElevated,
               borderRadius: BorderRadius.circular(12),
@@ -643,43 +807,109 @@ class _HtmlHeader extends StatelessWidget {
             ),
             child: Row(
               children: <Widget>[
-                IconButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  icon: Icon(
-                    Icons.arrow_back_rounded,
-                    color: context._htmlInk,
-                  ),
+                _MobileHeaderIconButton(
+                  tooltip: 'Geri',
+                  icon: Icons.arrow_back_rounded,
+                  size: compact ? 40 : 44,
+                  onTap: () => Navigator.of(context).pop(),
                 ),
+                SizedBox(width: compact ? 0 : 2),
+                Image.asset(
+                  'assets/images/logo.png',
+                  height: compact ? 22 : 24,
+                ),
+                SizedBox(width: compact ? 5 : 7),
                 Expanded(
-                  child: Text(
-                    'Sunum Düzenleme',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          color: context._htmlInk,
-                          fontWeight: FontWeight.w800,
-                        ),
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      'Sutols',
+                      maxLines: 1,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            color: context._htmlInk,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: -0.3,
+                          ),
+                    ),
                   ),
                 ),
-                _HistoryButtons(
+                _MobileHistoryButtons(
                   onUndo: onUndo,
                   onRedo: onRedo,
                   canUndo: canUndo,
                   canRedo: canRedo,
+                  size: iconSize,
                 ),
-                IconButton(
+                _MobileHeaderIconButton(
                   tooltip: 'Sunum Modu',
-                  onPressed: onPreview,
-                  icon: Icon(
-                    Icons.slideshow_rounded,
-                    color: context._htmlAccent,
-                  ),
+                  icon: Icons.slideshow_rounded,
+                  size: iconSize,
+                  onTap: onPreview,
                 ),
-                _FileMenuButton(
-                  onSave: onSave,
-                  onLoad: onLoad,
-                  onExportHtml: onExport,
-                  onExportPdf: onExportPdf,
+                PopupMenuButton<_MobileHeaderAction>(
+                  tooltip: 'Dışa Aktar',
+                  padding: EdgeInsets.zero,
+                  constraints: popupConstraints,
+                  iconSize: 20,
+                  icon: Icon(
+                    Icons.download_rounded,
+                    color: context._htmlInk,
+                  ),
+                  onSelected: handleAction,
+                  itemBuilder: (context) =>
+                      <PopupMenuEntry<_MobileHeaderAction>>[
+                        PopupMenuItem<_MobileHeaderAction>(
+                          value: _MobileHeaderAction.exportHtml,
+                          child: const ListTile(
+                            leading: Icon(Icons.html_rounded),
+                            title: Text('HTML Dışa Aktar'),
+                          ),
+                        ),
+                        PopupMenuItem<_MobileHeaderAction>(
+                          value: _MobileHeaderAction.exportPdf,
+                          child: const ListTile(
+                            leading: Icon(Icons.picture_as_pdf_rounded),
+                            title: Text('PDF Olarak Yazdır'),
+                          ),
+                        ),
+                      ],
+                ),
+                PopupMenuButton<_MobileHeaderAction>(
+                  tooltip: 'Diğer işlemler',
+                  padding: EdgeInsets.zero,
+                  constraints: popupConstraints,
+                  iconSize: 20,
+                  icon: Icon(
+                    Icons.more_vert_rounded,
+                    color: context._htmlInk,
+                  ),
+                  onSelected: handleAction,
+                  itemBuilder: (context) =>
+                      <PopupMenuEntry<_MobileHeaderAction>>[
+                        PopupMenuItem<_MobileHeaderAction>(
+                          value: _MobileHeaderAction.theme,
+                          child: const ListTile(
+                            leading: Icon(Icons.dark_mode_rounded),
+                            title: Text('Görünümü Değiştir'),
+                          ),
+                        ),
+                        const PopupMenuDivider(),
+                        PopupMenuItem<_MobileHeaderAction>(
+                          value: _MobileHeaderAction.save,
+                          child: const ListTile(
+                            leading: Icon(Icons.save_alt_rounded),
+                            title: Text('Projeyi Kaydet'),
+                          ),
+                        ),
+                        PopupMenuItem<_MobileHeaderAction>(
+                          value: _MobileHeaderAction.load,
+                          child: const ListTile(
+                            leading: Icon(Icons.upload_file_rounded),
+                            title: Text('Proje Yükle'),
+                          ),
+                        ),
+                      ],
                 ),
               ],
             ),
@@ -753,6 +983,959 @@ class _HtmlHeader extends StatelessWidget {
   }
 }
 
+/// Çoklu dokunma kapısı: ikinci parmak inince [onMultiTouch] true bildirilir
+/// (tuval içi jestler kapatılır, kıstırma sahne katmanındaki scale tanıyıcıya
+/// geçer); parmaklar kalkınca false ile eski haline döner.
+class _MultiTouchGate extends StatefulWidget {
+  const _MultiTouchGate({
+    required this.onMultiTouch,
+    required this.child,
+  });
+
+  final ValueChanged<bool> onMultiTouch;
+  final Widget child;
+
+  @override
+  State<_MultiTouchGate> createState() => _MultiTouchGateState();
+}
+
+class _MultiTouchGateState extends State<_MultiTouchGate> {
+  final Set<int> _activePointers = <int>{};
+
+  void _sync(bool multi) {
+    if (mounted) {
+      widget.onMultiTouch(multi);
+    }
+  }
+
+  void _track(PointerEvent event, {required bool down}) {
+    final before = _activePointers.length >= 2;
+    if (down) {
+      _activePointers.add(event.pointer);
+    } else {
+      _activePointers.remove(event.pointer);
+    }
+    final after = _activePointers.length >= 2;
+    if (before != after) {
+      _sync(after);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Listener(
+      behavior: HitTestBehavior.opaque,
+      onPointerDown: (e) => _track(e, down: true),
+      onPointerUp: (e) => _track(e, down: false),
+      onPointerCancel: (e) => _track(e, down: false),
+      child: widget.child,
+    );
+  }
+}
+
+/// Mobil-first çalışma alanı (telefon + tablet, <1080).
+///
+/// Hiyerarşi: başlık → bağlamsal formatlama barı (yalnızca seçimde, sahnenin
+/// üstünde yüzer) → tuval → slayt küçük resim şeridi → alt araç iskelesi.
+/// Bağlamsal bar ve ipucu tuvali asla kalıcı olarak küçültmez; panel içerikleri
+/// yalnızca alt iskeleden açılan bottom sheet'lerde yaşar.
+class _HtmlMobileLayout extends StatelessWidget {
+  const _HtmlMobileLayout({
+    required this.controller,
+    required this.textController,
+    required this.activeTab,
+    required this.onOpenTool,
+    required this.onOpenPhotoQuick,
+    required this.canvasZoom,
+    required this.canvasPan,
+    required this.onScaleStart,
+    required this.onScaleUpdate,
+    required this.onScaleEnd,
+    required this.onMultiTouchChanged,
+    required this.canvasInteractive,
+    required this.showHint,
+  });
+
+  final PresentationController controller;
+  final TextEditingController textController;
+  final _HtmlToolTab activeTab;
+  final ValueChanged<_HtmlToolTab> onOpenTool;
+
+  /// Dock'taki "Fotoğraf" kısayolunun hızlı aksiyon sheet'ini açması.
+  final VoidCallback onOpenPhotoQuick;
+  final double canvasZoom;
+  final Offset canvasPan;
+  final GestureScaleStartCallback onScaleStart;
+  final GestureScaleUpdateCallback onScaleUpdate;
+  final GestureScaleEndCallback onScaleEnd;
+  final ValueChanged<bool> onMultiTouchChanged;
+  final bool canvasInteractive;
+  final bool showHint;
+
+  @override
+  Widget build(BuildContext context) {
+    final isTablet = MediaQuery.sizeOf(context).width >= AppBreakpoints.mobile;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: <Widget>[
+        Expanded(
+          child: Stack(
+            children: <Widget>[
+              Positioned.fill(
+                child: Padding(
+                  padding: EdgeInsets.fromLTRB(
+                    isTablet ? 8 : 2,
+                    isTablet ? 6 : 2,
+                    isTablet ? 8 : 2,
+                    0,
+                  ),
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onScaleStart: onScaleStart,
+                    onScaleUpdate: onScaleUpdate,
+                    onScaleEnd: onScaleEnd,
+                    child: _MultiTouchGate(
+                      onMultiTouch: onMultiTouchChanged,
+                      child: ClipRect(
+                        child: _HtmlStageCard(
+                          controller: controller,
+                          canvasZoom: canvasZoom,
+                          canvasPan: canvasPan,
+                          showHint: showHint,
+                          interactive: canvasInteractive,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              Positioned(
+                left: 12,
+                right: 12,
+                top: 10,
+                child: IgnorePointer(
+                  ignoring: canvasZoom > 1.0001,
+                  child: _SelectionContextBarSection(controller: controller),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 8),
+        _HtmlMobileSlideStrip(controller: controller),
+        const SizedBox(height: 8),
+        _HtmlMobileToolDock(
+          activeTab: activeTab,
+          onOpenTool: onOpenTool,
+          onOpenPhotoQuick: onOpenPhotoQuick,
+        ),
+      ],
+    );
+  }
+}
+
+/// Tuvalin altındaki kalıcı slayt şeridi: yatay kaydırılabilir kompakt
+/// önizlemeler; seçili slayt vurgulanır ve otomatik olarak görünüme getirilir.
+/// Normal slayt gezinmesi buradan yapılır (alt iskelede "Slaytlar" yoktur).
+class _HtmlMobileSlideStrip extends StatefulWidget {
+  const _HtmlMobileSlideStrip({required this.controller});
+
+  final PresentationController controller;
+
+  @override
+  State<_HtmlMobileSlideStrip> createState() => _HtmlMobileSlideStripState();
+}
+
+class _HtmlMobileSlideStripState extends State<_HtmlMobileSlideStrip> {
+  static const double _thumbWidth = 64;
+  static const double _gap = 8;
+
+  final ScrollController _scrollController = ScrollController();
+  late int _lastSelectedIndex;
+
+  @override
+  void initState() {
+    super.initState();
+    _lastSelectedIndex = widget.controller.selectedIndex;
+  }
+
+  @override
+  void didUpdateWidget(covariant _HtmlMobileSlideStrip oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final selected = widget.controller.selectedIndex;
+    if (selected == _lastSelectedIndex) {
+      return;
+    }
+    _lastSelectedIndex = selected;
+    if (!_scrollController.hasClients) {
+      return;
+    }
+    final viewport = _scrollController.position.viewportDimension;
+    final target = (selected * (_thumbWidth + _gap) -
+            (viewport - _thumbWidth) / 2)
+        .clamp(0.0, _scrollController.position.maxScrollExtent);
+    _scrollController.animateTo(
+      target,
+      duration: const Duration(milliseconds: 240),
+      curve: Curves.easeOutCubic,
+    );
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      key: const ValueKey<String>('mobile-slide-strip'),
+      height: 48,
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 5),
+      decoration: BoxDecoration(
+        color: context.colors.surfaceElevated,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: context.colors.border),
+      ),
+      child: Row(
+        children: <Widget>[
+          Expanded(
+            child: ListView.separated(
+              controller: _scrollController,
+              scrollDirection: Axis.horizontal,
+              itemCount: widget.controller.pages.length,
+              separatorBuilder: (_, __) => const SizedBox(width: _gap),
+              itemBuilder: (context, index) {
+                final page = widget.controller.pages[index];
+                return _SlideStripThumb(
+                  page: page,
+                  index: index,
+                  isSelected: index == widget.controller.selectedIndex,
+                  onTap: () => widget.controller.selectPage(index),
+                );
+              },
+            ),
+          ),
+          const SizedBox(width: 6),
+          IconButton(
+            key: const ValueKey<String>('mobile-slide-strip-add'),
+            tooltip: 'Yeni Slayt',
+            onPressed: widget.controller.addPage,
+            style: IconButton.styleFrom(
+              backgroundColor: context.colors.primary,
+              foregroundColor: context.colors.onPrimary,
+              minimumSize: const Size(36, 36),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+            icon: const Icon(Icons.add_rounded, size: 20),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Şeritteki tek bir slayt küçük resmi: 16:9 önizleme + numara rozeti.
+/// İçerik, gerçek tuval ile aynı oranda küçültülür (dev metin bindirmesi
+/// olmaz); seçili slayt belirgin border, gölge ve arka plan farkıyla ayrılır.
+class _SlideStripThumb extends StatelessWidget {
+  const _SlideStripThumb({
+    required this.page,
+    required this.index,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  static const double _width = 64;
+  static const double _height = 36;
+
+  /// Küçük resmin oluşturulduğu mantıksal 16:9 tuval boyutu; gerçek tuvaldeki
+  /// piksel tabanlı yazı boyutlarının önizlemede aynı oranda küçülmesini sağlar.
+  static const Size _logicalCanvasSize = Size(360, 202.5);
+
+  final PresentationPage page;
+  final int index;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      key: ValueKey<String>('mobile-slide-strip-thumb-$index'),
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 160),
+        curve: Curves.easeOutCubic,
+        width: _width,
+        height: _height,
+        padding: EdgeInsets.all(isSelected ? 1 : 0),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? context.colors.primary.withValues(alpha: 0.10)
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: isSelected ? context.colors.primary : context.colors.border,
+            width: isSelected ? 2 : 1,
+          ),
+          boxShadow: isSelected
+              ? <BoxShadow>[
+                  BoxShadow(
+                    color: context.colors.primary.withValues(alpha: 0.30),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : null,
+        ),
+        child: Stack(
+          fit: StackFit.expand,
+          children: <Widget>[
+            ClipRRect(
+              borderRadius: BorderRadius.circular(5),
+              child: IgnorePointer(
+                child: FittedBox(
+                  fit: BoxFit.contain,
+                  child: SizedBox(
+                    width: _logicalCanvasSize.width,
+                    height: _logicalCanvasSize.height,
+                    child: PresentationPageCanvas(
+                      page: page,
+                      showHint: false,
+                      showSelectionBorder: false,
+                      showEmptyState: false,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            Positioned(
+              left: 2,
+              bottom: 2,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 4,
+                  vertical: 1,
+                ),
+                decoration: BoxDecoration(
+                  color: isSelected
+                      ? context.colors.primary
+                      : Colors.black.withValues(alpha: 0.55),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Text(
+                  '${index + 1}',
+                  style: TextStyle(
+                    color: isSelected
+                        ? context.colors.onPrimary
+                        : Colors.white,
+                    fontSize: 9,
+                    fontWeight: FontWeight.w800,
+                    height: 1.2,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Alt araç iskelesi: Metin, Medya, 3B Modeller, Şekil ve "Daha fazla"
+/// (fotoğraf yükle, şablon, arka plan, geçiş, ses vb.).
+/// Dar ekranlarda sığmayan araçlar öncelik sırasına göre "Daha fazla"
+/// menüsüne taşınır; yatay kaydırma yoktur. Slayt gezinmesi tuvalin altındaki
+/// kalıcı küçük resim şeridinde yapılır.
+class _HtmlMobileToolDock extends StatelessWidget {
+  const _HtmlMobileToolDock({
+    required this.activeTab,
+    required this.onOpenTool,
+    required this.onOpenPhotoQuick,
+  });
+
+  final _HtmlToolTab activeTab;
+  final ValueChanged<_HtmlToolTab> onOpenTool;
+
+  /// "Daha fazla" menüsündeki "Fotoğraf Yükle" kısayolunun hızlı aksiyon
+  /// sheet'ini açması (cihazdan seçim ya da Medya kütüphanesi).
+  final VoidCallback onOpenPhotoQuick;
+
+  @override
+  Widget build(BuildContext context) {
+    final tools = <_MobileDockTool>[
+      _MobileDockTool(
+        icon: Icons.text_fields_rounded,
+        label: 'Metin',
+        selected: activeTab == _HtmlToolTab.text,
+        onTap: () => onOpenTool(_HtmlToolTab.text),
+      ),
+      _MobileDockTool(
+        icon: Icons.add_photo_alternate_rounded,
+        label: 'Medya',
+        selected: activeTab == _HtmlToolTab.photo,
+        onTap: () => onOpenTool(_HtmlToolTab.photo),
+      ),
+      _MobileDockTool(
+        icon: Icons.view_in_ar_rounded,
+        label: '3B Modeller',
+        selected: activeTab == _HtmlToolTab.models3d,
+        onTap: () => onOpenTool(_HtmlToolTab.models3d),
+      ),
+      _MobileDockTool(
+        icon: Icons.widgets_rounded,
+        label: 'Şekil',
+        selected: activeTab == _HtmlToolTab.components,
+        onTap: () => onOpenTool(_HtmlToolTab.components),
+      ),
+    ];
+    final moreSelected = const <_HtmlToolTab>{
+      _HtmlToolTab.templates,
+      _HtmlToolTab.backgrounds,
+      _HtmlToolTab.transitions,
+    }.contains(activeTab);
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final available = constraints.maxWidth;
+        final gap = _MobileDockButton.chipGap;
+        final compactMoreWidth = _MobileDockButton.compactWidth;
+        final fullMoreWidth = _dockChipWidth(context, 'Daha fazla');
+        final widths =
+            <double>[for (final t in tools) _dockChipWidth(context, t.label)];
+        final toolsWidth =
+            widths.fold<double>(0, (sum, w) => sum + w + gap);
+        final fullFits = toolsWidth + fullMoreWidth <= available;
+        final compactFits = toolsWidth + compactMoreWidth <= available;
+        final visible = <int>[];
+        if (fullFits || compactFits) {
+          visible.addAll(List<int>.generate(tools.length, (i) => i));
+        } else {
+          double used = 0;
+          for (var i = 0; i < tools.length; i++) {
+            if (used + widths[i] + gap + compactMoreWidth <= available) {
+              visible.add(i);
+              used += widths[i] + gap;
+            } else {
+              break;
+            }
+          }
+        }
+        return Container(
+          key: const ValueKey<String>('mobile-tool-dock'),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 7),
+          decoration: BoxDecoration(
+            color: context.colors.surfaceElevated,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: context.colors.border),
+            boxShadow: context.elevation2,
+          ),
+          child: Row(
+            // Araçlar dar ekranda azalsa bile iskele boyunca eşit dağılır;
+            // solda "devasa boşluk" oluşmaz.
+            mainAxisSize: MainAxisSize.max,
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: <Widget>[
+              for (final i in visible)
+                Padding(
+                  padding: EdgeInsets.only(right: gap),
+                  child: _MobileDockButton(
+                    icon: tools[i].icon,
+                    label: tools[i].label,
+                    selected: tools[i].selected,
+                    onTap: tools[i].onTap,
+                  ),
+                ),
+              PopupMenuButton<_MobileMoreTool>(
+                tooltip: 'Daha fazla araç',
+                onSelected: _handleMore,
+                itemBuilder: (context) {
+                  // Dar ekranda dock'a sığmayan araçlar (öncelik sırasıyla)
+                  // menünün başına düşer; böylece hiçbir araç kaybolmaz.
+                  final hiddenLabels =
+                      tools.asMap().entries
+                          .where((e) => !visible.contains(e.key))
+                          .map((e) => e.value.label)
+                          .toSet();
+                  final entries = <PopupMenuEntry<_MobileMoreTool>>[];
+                  for (final entry in tools.asMap().entries) {
+                    if (!visible.contains(entry.key)) {
+                      final tool = entry.value;
+                      entries.add(PopupMenuItem<_MobileMoreTool>(
+                        value: switch (tool.label) {
+                          'Metin' => _MobileMoreTool.text,
+                          'Medya' => _MobileMoreTool.media,
+                          '3B Modeller' => _MobileMoreTool.models3d,
+                          _ => _MobileMoreTool.components,
+                        },
+                        child: ListTile(
+                          leading: Icon(tool.icon),
+                          title: Text(tool.label),
+                        ),
+                      ));
+                    }
+                  }
+                  void add(
+                    _MobileMoreTool value,
+                    IconData icon,
+                    String label,
+                  ) {
+                    entries.add(PopupMenuItem<_MobileMoreTool>(
+                      value: value,
+                      child: ListTile(
+                        leading: Icon(icon),
+                        title: Text(label),
+                      ),
+                    ));
+                  }
+
+                  add(
+                    _MobileMoreTool.templates,
+                    Icons.dashboard_customize_rounded,
+                    'Şablonlar',
+                  );
+                  add(
+                    _MobileMoreTool.backgrounds,
+                    Icons.wallpaper_rounded,
+                    'Arka Planlar',
+                  );
+                  // "Şekil" dock'ta görünüyorsa "Bileşenler" menüde ayrıca
+                  // yer alır; gizliyse aynı panel zaten menüdeki "Şekil"dir.
+                  if (!hiddenLabels.contains('Şekil')) {
+                    add(
+                      _MobileMoreTool.components,
+                      Icons.widgets_rounded,
+                      'Bileşenler',
+                    );
+                  }
+                  // "3B Modeller" dock'ta görünmüyorsa menüde yer alır.
+                  if (!hiddenLabels.contains('3B Modeller')) {
+                    add(
+                      _MobileMoreTool.models3d,
+                      Icons.view_in_ar_rounded,
+                      '3B Modeller',
+                    );
+                  }
+                  add(
+                    _MobileMoreTool.transitions,
+                    Icons.animation_rounded,
+                    'Geçişler',
+                  );
+                  add(
+                    _MobileMoreTool.photoUpload,
+                    Icons.add_a_photo_rounded,
+                    'Fotoğraf Yükle',
+                  );
+                  add(
+                    _MobileMoreTool.audio,
+                    Icons.music_note_rounded,
+                    'Ses',
+                  );
+                  add(
+                    _MobileMoreTool.animations,
+                    Icons.auto_awesome_rounded,
+                    'Animasyonlar',
+                  );
+                  return entries;
+                },
+                child: _MobileDockButton(
+                  icon: Icons.more_horiz_rounded,
+                  label: fullFits ? 'Daha fazla' : '',
+                  selected: moreSelected,
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _handleMore(_MobileMoreTool tool) {
+    switch (tool) {
+      case _MobileMoreTool.photoUpload:
+        onOpenPhotoQuick();
+      case _MobileMoreTool.text:
+        onOpenTool(_HtmlToolTab.text);
+      case _MobileMoreTool.media:
+        onOpenTool(_HtmlToolTab.photo);
+      case _MobileMoreTool.components:
+        onOpenTool(_HtmlToolTab.components);
+      case _MobileMoreTool.templates:
+        onOpenTool(_HtmlToolTab.templates);
+      case _MobileMoreTool.backgrounds:
+        onOpenTool(_HtmlToolTab.backgrounds);
+      case _MobileMoreTool.models3d:
+        onOpenTool(_HtmlToolTab.models3d);
+      case _MobileMoreTool.transitions:
+        onOpenTool(_HtmlToolTab.transitions);
+      case _MobileMoreTool.audio:
+        onOpenTool(_HtmlToolTab.backgrounds);
+      case _MobileMoreTool.animations:
+        onOpenTool(_HtmlToolTab.transitions);
+    }
+  }
+}
+
+/// Label'lı bir dock chip'inin tahmini genişliği (ölçüm tabanlı).
+double _dockChipWidth(BuildContext context, String label) {
+  final painter = TextPainter(
+    text: TextSpan(text: label, style: _dockLabelStyle(context)),
+    textDirection: TextDirection.ltr,
+    textScaler: MediaQuery.textScalerOf(context),
+  )..layout();
+  return math.max(
+    _MobileDockButton.miniWidth,
+    _MobileDockButton.paddingH * 2 +
+        _MobileDockButton.iconSize +
+        _MobileDockButton.iconGap +
+        painter.width,
+  );
+}
+
+/// Dock label'leri için ortak tipografi (ölçüm ile görsel tutarlı).
+TextStyle _dockLabelStyle(BuildContext context) {
+  return (Theme.of(context).textTheme.labelSmall ??
+          const TextStyle(fontSize: _MobileDockButton.labelFontSize))
+      .copyWith(
+    color: context.sutolColors.onSurfaceVariant,
+    fontWeight: FontWeight.w800,
+    fontSize: _MobileDockButton.labelFontSize,
+  );
+}
+
+class _MobileDockTool {
+  const _MobileDockTool({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+    this.selected = false,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+  final bool selected;
+}
+
+class _MobileDockButton extends StatelessWidget {
+  const _MobileDockButton({
+    required this.icon,
+    required this.label,
+    this.onTap,
+    this.selected = false,
+  });
+
+  final IconData icon;
+  final String label;
+
+  /// `null` ise dokunuş tüketilmez (örn. PopupMenuButton'ın çocuğu olarak
+  /// kullanıldığında menünün açılması için dokunuş üst elemana iletilir).
+  final VoidCallback? onTap;
+  final bool selected;
+
+  static const double iconSize = 19;
+  static const double iconGap = 3;
+  static const double paddingH = 8;
+  static const double paddingV = 8;
+  static const double miniWidth = 56;
+  static const double compactWidth = 44;
+  static const double chipGap = 4;
+  static const double labelFontSize = 10;
+
+  @override
+  Widget build(BuildContext context) {
+    final iconOnly = label.isEmpty;
+    final foreground = selected
+        ? context._htmlAccent
+        : context.sutolColors.onSurfaceVariant;
+    final background =
+        selected ? const Color(0xFFEDF4FF) : Colors.transparent;
+    final borderColor = selected ? const Color(0xFFD4E4FF) : Colors.transparent;
+    return Material(
+      color: background,
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          constraints: BoxConstraints(
+            minWidth: iconOnly ? compactWidth : miniWidth,
+          ),
+          padding: const EdgeInsets.symmetric(
+            horizontal: paddingH,
+            vertical: paddingV,
+          ),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: borderColor),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              Icon(icon, size: iconOnly ? 20 : iconSize, color: foreground),
+              if (!iconOnly) ...<Widget>[
+                const SizedBox(height: iconGap),
+                Text(
+                  label,
+                  maxLines: 1,
+                  style: _dockLabelStyle(context),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Dock'taki "Fotoğraf" kısayolu için hızlı aksiyon sheet'i: cihazdan seçim
+/// ya da daha önce yüklenen fotoğraf kütüphanesi arasında seçim sunar.
+/// (Kamera desteği yoktur; fotoğraflar sistem dosya/galeri seçiciyle alınır.)
+class _MobilePhotoQuickSheet extends StatelessWidget {
+  const _MobilePhotoQuickSheet({
+    required this.onPicked,
+    required this.onLibrary,
+  });
+
+  final VoidCallback onPicked;
+  final VoidCallback onLibrary;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.fromLTRB(14, 0, 14, 14),
+      padding: const EdgeInsets.fromLTRB(18, 18, 18, 14),
+      decoration: BoxDecoration(
+        color: context.colors.surface,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: context.colors.border),
+        boxShadow: context.elevation2,
+      ),
+      child: SafeArea(
+        top: false,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: <Widget>[
+            Text(
+              'Fotoğraf Ekle',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    color: context._htmlInk,
+                    fontWeight: FontWeight.w900,
+                  ),
+            ),
+            const SizedBox(height: 14),
+            _MobilePhotoQuickOption(
+              icon: Icons.photo_library_rounded,
+              title: 'Galeriden / Dosyadan',
+              subtitle: 'Cihazından fotoğraf seç, slayta eklensin',
+              onTap: onPicked,
+            ),
+            const SizedBox(height: 8),
+            _MobilePhotoQuickOption(
+              icon: Icons.collections_rounded,
+              title: 'Fotoğraf Kütüphanem',
+              subtitle: 'Daha önce yüklediğin fotoğraflar',
+              onTap: onLibrary,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _MobilePhotoQuickOption extends StatelessWidget {
+  const _MobilePhotoQuickOption({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: context.sutolColors.surfaceSubtle,
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Row(
+            children: <Widget>[
+              Icon(icon, size: 22, color: context._htmlAccent),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Text(
+                      title,
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                            color: context._htmlInk,
+                            fontWeight: FontWeight.w800,
+                          ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      subtitle,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: context._htmlMuted,
+                            fontWeight: FontWeight.w500,
+                          ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(
+                Icons.chevron_right_rounded,
+                size: 20,
+                color: context.sutolColors.onSurfaceVariant,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Alt iskeleden açılan alet paneli bottom sheet'i.
+/// Ekranın en fazla ~%70'ini kaplar; başlık + kapatma ve kendi içinde
+/// kaydırılabilen içerik taşır. Tuval arka planda görünür kalır.
+class _HtmlMobileToolSheet extends StatelessWidget {
+  const _HtmlMobileToolSheet({
+    required this.controller,
+    required this.textController,
+    required this.tab,
+    required this.onClose,
+  });
+
+  final PresentationController controller;
+  final TextEditingController textController;
+  final _HtmlToolTab tab;
+  final VoidCallback onClose;
+
+  @override
+  Widget build(BuildContext context) {
+    final sheetHeight = MediaQuery.sizeOf(context).height * 0.72;
+    return Align(
+      alignment: Alignment.bottomCenter,
+      child: ConstrainedBox(
+        constraints: BoxConstraints(maxWidth: 720, maxHeight: sheetHeight),
+        child: Container(
+          decoration: BoxDecoration(
+            color: context.colors.surface,
+            borderRadius:
+                const BorderRadius.vertical(top: Radius.circular(26)),
+            boxShadow: context.elevation2,
+          ),
+          child: SafeArea(
+            top: false,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: <Widget>[
+                Center(
+                  child: Container(
+                    width: 36,
+                    height: 4,
+                    margin: const EdgeInsets.only(top: 10, bottom: 4),
+                    decoration: BoxDecoration(
+                      color: context.colors.border,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(18, 4, 8, 4),
+                  child: Row(
+                    children: <Widget>[
+                      Icon(
+                        _toolSheetIcon(tab),
+                        size: 20,
+                        color: context._htmlAccent,
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          _studioPanelTitle(tab),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style:
+                              Theme.of(context).textTheme.titleMedium?.copyWith(
+                                    color: context._htmlInk,
+                                    fontWeight: FontWeight.w900,
+                                  ),
+                        ),
+                      ),
+                      IconButton(
+                        tooltip: 'Kapat',
+                        onPressed: onClose,
+                        icon: Icon(
+                          Icons.close_rounded,
+                          color: context.sutolColors.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Flexible(
+                  child: AnimatedBuilder(
+                    animation: controller,
+                    builder: (context, _) => SingleChildScrollView(
+                      padding: const EdgeInsets.fromLTRB(20, 4, 20, 32),
+                      child: _HtmlControlPanel(
+                        key: ValueKey<_HtmlToolTab>(tab),
+                        controller: controller,
+                        textController: textController,
+                        activeTab: tab,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  static IconData _toolSheetIcon(_HtmlToolTab tab) {
+    switch (tab) {
+      case _HtmlToolTab.templates:
+        return Icons.dashboard_customize_rounded;
+      case _HtmlToolTab.backgrounds:
+        return Icons.wallpaper_rounded;
+      case _HtmlToolTab.components:
+        return Icons.widgets_rounded;
+      case _HtmlToolTab.text:
+        return Icons.text_fields_rounded;
+      case _HtmlToolTab.models3d:
+        return Icons.view_in_ar_rounded;
+      case _HtmlToolTab.photo:
+        return Icons.add_photo_alternate_rounded;
+      case _HtmlToolTab.transitions:
+        return Icons.animation_rounded;
+    }
+  }
+}
+
+/// Slayt listesi bottom sheet'i: yatay küçük önizlemeler + ekle/sil.
 class _HeaderBadge extends StatelessWidget {
   const _HeaderBadge({
     required this.icon,
@@ -836,6 +2019,37 @@ enum _FileMenuAction {
   exportHtml,
   exportPdf,
 }
+
+/// Mobil başlıktaki "⋯" overflow menüsünün eylemleri.
+enum _MobileHeaderAction {
+  preview,
+  theme,
+  save,
+  load,
+  exportHtml,
+  exportPdf,
+}
+
+/// Mobil alt iskeledeki "Daha fazla" menüsünün aletleri.
+enum _MobileMoreTool {
+  photoUpload,
+  text,
+  media,
+  components,
+  templates,
+  backgrounds,
+  models3d,
+  transitions,
+
+  /// "Ses" → Arka Planlar (Müzik ve Ses kategorisi).
+  audio,
+
+  /// "Animasyonlar" → Geçişler (slayt animasyonları) paneli.
+  animations,
+}
+
+/// Mobil "Fotoğraf" hızlı aksiyonunun seçenekleri.
+enum _MobilePhotoQuickAction { pick, library }
 
 class _ThemeToggleButton extends StatelessWidget {
   const _ThemeToggleButton();
@@ -1036,6 +2250,84 @@ class _HistoryButtons extends StatelessWidget {
   }
 }
 
+/// Mobil header'daki kompakt ikon düğmesi (40px hedef alanı; header yüksekliği
+/// 56-60px bandında kalır).
+class _MobileHeaderIconButton extends StatelessWidget {
+  const _MobileHeaderIconButton({
+    required this.icon,
+    required this.tooltip,
+    required this.onTap,
+    this.enabled = true,
+    this.size = 40,
+  });
+
+  final IconData icon;
+  final String tooltip;
+  final VoidCallback onTap;
+  final bool enabled;
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(
+      tooltip: tooltip,
+      onPressed: enabled ? onTap : null,
+      padding: EdgeInsets.zero,
+      constraints: BoxConstraints.tightFor(width: size, height: size),
+      visualDensity: VisualDensity.compact,
+      icon: Icon(
+        icon,
+        size: 20,
+        color: enabled
+            ? context._htmlInk
+            : context._htmlMuted.withValues(alpha: 0.45),
+      ),
+    );
+  }
+}
+
+/// Mobil header'daki kompakt geri al / yinele çifti (doğrudan erişilebilir).
+class _MobileHistoryButtons extends StatelessWidget {
+  const _MobileHistoryButtons({
+    required this.onUndo,
+    required this.onRedo,
+    required this.canUndo,
+    required this.canRedo,
+    this.size = 40,
+  });
+
+  final VoidCallback onUndo;
+  final VoidCallback onRedo;
+  final bool canUndo;
+  final bool canRedo;
+
+  /// Çok dar ekranlarda (<340) kompakt boyut.
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: <Widget>[
+        _MobileHeaderIconButton(
+          icon: Icons.undo_rounded,
+          tooltip: 'Geri al',
+          enabled: canUndo,
+          onTap: onUndo,
+          size: size,
+        ),
+        _MobileHeaderIconButton(
+          icon: Icons.redo_rounded,
+          tooltip: 'Yinele',
+          enabled: canRedo,
+          onTap: onRedo,
+          size: size,
+        ),
+      ],
+    );
+  }
+}
+
 class _HtmlStudioHeader extends StatelessWidget {
   const _HtmlStudioHeader({
     required this.pageCount,
@@ -1090,7 +2382,7 @@ class _HtmlStudioHeader extends StatelessWidget {
           Image.asset('assets/images/logo.png', height: 28),
           const SizedBox(width: 10),
           Text(
-            'Sutol',
+            'Sutols',
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                   color: context._htmlInk,
                   fontWeight: FontWeight.w900,
@@ -1917,16 +3209,14 @@ class _HtmlStudioPageThumb extends StatelessWidget {
 class _HtmlPageSidebar extends StatelessWidget {
   const _HtmlPageSidebar({
     required this.controller,
-    this.compact = false,
   });
 
   final PresentationController controller;
-  final bool compact;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.all(compact ? 10 : 16),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: context._htmlPanel,
         borderRadius: BorderRadius.circular(30),
@@ -1963,38 +3253,19 @@ class _HtmlPageSidebar extends StatelessWidget {
           ),
           const SizedBox(height: 14),
           Expanded(
-            child: compact
-                ? ListView.separated(
-                    scrollDirection: Axis.horizontal,
-                    itemCount: controller.pages.length,
-                    separatorBuilder: (_, __) => const SizedBox(width: 12),
-                    itemBuilder: (context, index) {
-                      final page = controller.pages[index];
-                      return SizedBox(
-                        width: 194,
-                        child: _HtmlPageCard(
-                          page: page,
-                          index: index,
-                          isSelected: index == controller.selectedIndex,
-                          onTap: () => controller.selectPage(index),
-                          compact: true,
-                        ),
-                      );
-                    },
-                  )
-                : ListView.separated(
-                    itemCount: controller.pages.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 14),
-                    itemBuilder: (context, index) {
-                      final page = controller.pages[index];
-                      return _HtmlPageCard(
-                        page: page,
-                        index: index,
-                        isSelected: index == controller.selectedIndex,
-                        onTap: () => controller.selectPage(index),
-                      );
-                    },
-                  ),
+            child: ListView.separated(
+              itemCount: controller.pages.length,
+              separatorBuilder: (_, __) => const SizedBox(height: 14),
+              itemBuilder: (context, index) {
+                final page = controller.pages[index];
+                return _HtmlPageCard(
+                  page: page,
+                  index: index,
+                  isSelected: index == controller.selectedIndex,
+                  onTap: () => controller.selectPage(index),
+                );
+              },
+            ),
           ),
         ],
       ),
@@ -2040,17 +3311,12 @@ class _HtmlPageCard extends StatelessWidget {
     required this.index,
     required this.isSelected,
     required this.onTap,
-    this.compact = false,
   });
 
   final PresentationPage page;
   final int index;
   final bool isSelected;
   final VoidCallback onTap;
-
-  /// Yatay filmstrip içinde mi? `true` ise önizleme kalan dikey alana
-  /// büzülür (sabit 16:9 yerine) — dar şeritte taşmayı önler.
-  final bool compact;
 
   @override
   Widget build(BuildContext context) {
@@ -2079,21 +3345,7 @@ class _HtmlPageCard extends StatelessWidget {
                   ),
             ),
             const SizedBox(height: 8),
-            if (compact)
-              Expanded(
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(16),
-                  child: IgnorePointer(
-                    child: PresentationPageCanvas(
-                      page: page,
-                      showHint: false,
-                      showSelectionBorder: false,
-                    ),
-                  ),
-                ),
-              )
-            else
-              AspectRatio(
+            AspectRatio(
               aspectRatio: 16 / 9,
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(16),
@@ -2119,18 +3371,12 @@ class _HtmlWorkbench extends StatelessWidget {
     required this.textController,
     required this.activeTab,
     required this.onTabChanged,
-    this.scrollable = false,
   });
 
   final PresentationController controller;
   final TextEditingController textController;
   final _HtmlToolTab activeTab;
   final ValueChanged<_HtmlToolTab> onTabChanged;
-
-  /// `true` ise workbench, sayfa seviyesindeki bir kaydırma alanının içinde
-  /// doğal yüksekliğiyle render edilir; tuval genişlikten 16:9 türetilir.
-  /// (Kompakt/mobil düzen için.)
-  final bool scrollable;
 
   @override
   Widget build(BuildContext context) {
@@ -2145,8 +3391,7 @@ class _HtmlWorkbench extends StatelessWidget {
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize:
-            scrollable ? MainAxisSize.min : MainAxisSize.max,
+        mainAxisSize: MainAxisSize.max,
         children: <Widget>[
           _HtmlTopToolbar(
             controller: controller,
@@ -2156,13 +3401,7 @@ class _HtmlWorkbench extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           _SelectionContextBarSection(controller: controller),
-          if (scrollable)
-            AspectRatio(
-              aspectRatio: 16 / 9,
-              child: stage,
-            )
-          else
-            Expanded(child: stage),
+          Expanded(child: stage),
         ],
       ),
     );
@@ -2861,6 +4100,24 @@ class _ModelSearchField extends StatelessWidget {
   }
 }
 
+/// Cihazdan bir fotoğraf seçer, kaynaklara kaydeder, slayta blok olarak ekler
+/// ve yüklenen fotoğraf kaydını döner. Seçim iptal edilirse `null` döner.
+Future<_UploadedPhotoEntry?> pickLocalPhotoIntoController(
+  PresentationController controller,
+) async {
+  final picked = await pickLocalImage();
+  if (picked == null) return null;
+  final sourceId = 'photo-${DateTime.now().millisecondsSinceEpoch}';
+  RemoteImageSources.register(sourceId, picked.dataUrl);
+  controller.addUploadedImageBlock(sourceId);
+  return _UploadedPhotoEntry(
+    id: sourceId,
+    name: picked.name,
+    dataUrl: picked.dataUrl,
+    sizeBytes: picked.sizeBytes,
+  );
+}
+
 class _HtmlPhotoControls extends StatefulWidget {
   const _HtmlPhotoControls({required this.controller});
 
@@ -2892,22 +4149,10 @@ class _HtmlPhotoControlsState extends State<_HtmlPhotoControls> {
       _error = null;
     });
     try {
-      final picked = await pickLocalImage();
-      if (picked == null) return;
-      final sourceId = 'photo-${DateTime.now().millisecondsSinceEpoch}';
-      RemoteImageSources.register(sourceId, picked.dataUrl);
-      widget.controller.addUploadedImageBlock(sourceId);
+      final entry = await pickLocalPhotoIntoController(widget.controller);
+      if (entry == null) return;
       if (!mounted) return;
-      setState(() {
-        _photos.add(
-          _UploadedPhotoEntry(
-            id: sourceId,
-            name: picked.name,
-            dataUrl: picked.dataUrl,
-            sizeBytes: picked.sizeBytes,
-          ),
-        );
-      });
+      setState(() => _photos.add(entry));
     } catch (e) {
       if (!mounted) return;
       setState(() => _error = '$e');
@@ -3252,17 +4497,19 @@ class _TransitionLibraryCard extends StatelessWidget {
                             fontWeight: FontWeight.w900,
                           ),
                     ),
-                    const SizedBox(height: 2),
-                    Text(
-                      presentationTransitionSubtitle(kind),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: context._htmlMuted,
-                            fontWeight: FontWeight.w600,
-                            height: 1.25,
-                          ),
-                    ),
+                    if (MediaQuery.sizeOf(context).width >= 480) ...<Widget>[
+                      const SizedBox(height: 2),
+                      Text(
+                        presentationTransitionSubtitle(kind),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: context._htmlMuted,
+                              fontWeight: FontWeight.w600,
+                              height: 1.25,
+                            ),
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -3576,14 +4823,18 @@ class _TemplatePresetCard extends StatelessWidget {
                             fontWeight: FontWeight.w900,
                           ),
                     ),
-                    const SizedBox(height: 3),
-                    Text(
-                      presentationTemplateDescription(template),
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: context._htmlMuted,
-                            fontWeight: FontWeight.w600,
-                          ),
-                    ),
+                    // Dar ekranlarda (telefon) açıklamayı gizle: mobil kartlar
+                    // öncelikle küçük ve okunaklı olmalı.
+                    if (MediaQuery.sizeOf(context).width >= 480) ...<Widget>[
+                      const SizedBox(height: 3),
+                      Text(
+                        presentationTemplateDescription(template),
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: context._htmlMuted,
+                              fontWeight: FontWeight.w600,
+                            ),
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -4299,17 +5550,19 @@ class _ComponentLibraryCard extends StatelessWidget {
                             fontWeight: FontWeight.w900,
                           ),
                     ),
-                    const SizedBox(height: 3),
-                    Text(
-                      subtitle,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: context._htmlMuted,
-                            fontWeight: FontWeight.w700,
-                            height: 1.2,
-                          ),
-                    ),
+                    if (MediaQuery.sizeOf(context).width >= 480) ...<Widget>[
+                      const SizedBox(height: 3),
+                      Text(
+                        subtitle,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: context._htmlMuted,
+                              fontWeight: FontWeight.w700,
+                              height: 1.2,
+                            ),
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -4346,16 +5599,19 @@ class _ToolbarBadge extends StatelessWidget {
         border: Border.all(color: context.sutolColors.outlineVariant),
       ),
       child: Row(
-        mainAxisSize: MainAxisSize.min,
         children: <Widget>[
           Icon(icon, size: 16, color: context.sutolColors.primary),
           const SizedBox(width: 8),
-          Text(
-            label,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: context._htmlInk,
-                  fontWeight: FontWeight.w800,
-                ),
+          Flexible(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: context._htmlInk,
+                    fontWeight: FontWeight.w800,
+                  ),
+            ),
           ),
         ],
       ),
@@ -4381,6 +5637,8 @@ class _ToolbarChip extends StatelessWidget {
       ),
       child: Text(
         label,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
               color: context._htmlInk,
               fontWeight: FontWeight.w700,
@@ -4702,9 +5960,26 @@ class _ControlFieldShell extends StatelessWidget {
 class _HtmlStageCard extends StatelessWidget {
   const _HtmlStageCard({
     required this.controller,
+    this.canvasZoom = 1,
+    this.canvasPan = Offset.zero,
+    this.showHint = false,
+    this.interactive = true,
   });
 
   final PresentationController controller;
+
+  /// Mobil kıstırma yakınlaştırması (1 = sığdır). Yalnızca mobil düzende 1'den
+  /// büyüktür; geniş düzenlerde varsayılan 1 kalır.
+  final double canvasZoom;
+
+  /// Yakınlaştırınca kaydırma uzaklığı (tuval yerel koordinatında).
+  final Offset canvasPan;
+
+  final bool showHint;
+
+  /// Tuval içi düzenleme jestleri (sürükleme, çoklu seçim, dokunma). Çoklu
+  /// dokunma sırasında kapatılıp kıstırmanın sahne katmanına geçmesi sağlanır.
+  final bool interactive;
 
   @override
   Widget build(BuildContext context) {
@@ -4712,9 +5987,17 @@ class _HtmlStageCard extends StatelessWidget {
       context,
       controller.effectSettings,
     );
+    final zoom = math.max(1.0, canvasZoom);
+
+    // Yakınlaşınca tuvali sabitleyen çağrıların sürükleme deltalarını
+    // görsel ölçekle böler; parmak 1:1 takip etmeye devam eder. Seçim
+    // dikdörtgeni localPosition tabanlıdır ve dönüşüm altında otomatik
+    // doğru kalır (burada değiştirilmez).
+    Offset localDelta(Offset delta) =>
+        zoom > 1.0001 ? delta / zoom : delta;
 
     return Container(
-      padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
+      padding: const EdgeInsets.fromLTRB(4, 4, 4, 6),
       decoration: BoxDecoration(
         color: context.sutolColors.surfaceSubtle,
         borderRadius: BorderRadius.circular(28),
@@ -4722,19 +6005,38 @@ class _HtmlStageCard extends StatelessWidget {
       ),
       child: LayoutBuilder(
         builder: (context, constraints) {
-          final availableWidth = math.max(0.0, constraints.maxWidth - 8);
-          final availableHeight = math.max(0.0, constraints.maxHeight - 8);
+          final availableWidth = math.max(0.0, constraints.maxWidth);
+          final availableHeight = math.max(0.0, constraints.maxHeight);
           final stageWidth = math.min(
             availableWidth,
             availableHeight * (16 / 9),
           );
           final stageHeight = stageWidth / (16 / 9);
 
+          // Yakınlaşınca tuvali kutu içinde tutacak şekilde kaydırmayı sınırla.
+          final maxPanX = math.max(
+            0.0,
+            (stageWidth * zoom - constraints.maxWidth) / 2,
+          );
+          final maxPanY = math.max(
+            0.0,
+            (stageHeight * zoom - constraints.maxHeight) / 2,
+          );
+          final pan = Offset(
+            canvasPan.dx.clamp(-maxPanX, maxPanX),
+            canvasPan.dy.clamp(-maxPanY, maxPanY),
+          );
+
           return Center(
-            child: SizedBox(
-              width: stageWidth,
-              height: stageHeight,
-              child: AnimatedSwitcher(
+            child: Transform.translate(
+              offset: pan,
+              child: Transform.scale(
+                scale: zoom,
+                alignment: Alignment.center,
+                child: SizedBox(
+                  width: stageWidth,
+                  height: stageHeight,
+                  child: AnimatedSwitcher(
                 duration: reduceMotion
                     ? Duration.zero
                     : Duration(
@@ -4774,20 +6076,38 @@ class _HtmlStageCard extends StatelessWidget {
                               controller.selectedComponentBlockId,
                           selectedComponentBlockIds:
                               controller.selectedComponentBlockIds,
-                          interactive: true,
-                          showHint: true,
+                          interactive: interactive,
+                          showHint: showHint,
                           showSurface: false,
                           showEmptyState: false,
                           textOpacity: 0,
                           onSelectTextBlock: controller.selectTextBlock,
                           onSelectComponentBlock:
                               controller.selectComponentBlock,
-                          onDragSelectedText: controller.moveSelectedText,
+                          onDragSelectedText: (delta, size) =>
+                              controller.moveSelectedText(
+                            localDelta(delta),
+                            size,
+                          ),
                           onInlineTextChanged: controller.updateSelectedText,
-                          onResizeSelectedTextWidth:
-                              controller.resizeSelectedTextWidth,
-                          onResizeSelectedComponent:
-                              controller.resizeSelectedComponentByHandle,
+                          onResizeSelectedTextWidth: (deltaX, size) =>
+                              controller.resizeSelectedTextWidth(
+                            localDelta(Offset(deltaX, 0)).dx,
+                            size,
+                          ),
+                          onResizeSelectedComponent: (delta, size,
+                                  {required fromLeft,
+                                  required fromTop,
+                                  required fromRight,
+                                  required fromBottom}) =>
+                              controller.resizeSelectedComponentByHandle(
+                            localDelta(delta),
+                            size,
+                            fromLeft: fromLeft,
+                            fromTop: fromTop,
+                            fromRight: fromRight,
+                            fromBottom: fromBottom,
+                          ),
                           onMarqueeSelectionChanged: ({
                             required textBlockIds,
                             required componentBlockIds,
@@ -4837,7 +6157,7 @@ class _HtmlStageCard extends StatelessWidget {
                             if (controller.selectedComponentBlockId != itemId) {
                               controller.selectComponentBlock(itemId);
                             }
-                            controller.rotateSelectedModel(delta);
+                            controller.rotateSelectedModel(localDelta(delta));
                           },
                           onBeginModelOrbit: (itemId) {
                             if (controller.selectedComponentBlockId != itemId) {
@@ -4854,12 +6174,13 @@ class _HtmlStageCard extends StatelessWidget {
                 ),
               ),
             ),
-          );
-        },
-      ),
-    );
-  }
-
+          ),
+        ),
+      );
+    },
+  ),
+);
+}
 }
 
 /// Seçime bağlı bağlamsal araç çubuğu (Canva tarzı yatay üst bar).
@@ -4987,14 +6308,37 @@ class _SelectionContextBarSection extends StatelessWidget {
             controller.updateSelectedTextAlign(PresentationTextAlign.right),
       ),
       const MiniToolDivider(),
-      _MiniTextAnimationDropdown(controller: controller, block: block),
-      _MiniTextColorButton(controller: controller),
-      MiniToolAction(
-        icon: Icons.brightness_7_rounded,
-        tooltip: 'Parlaklık',
-        onTap: () => _showGlowDialog(context),
+      _MiniTextMoreButton(
+        controller: controller,
+        onAnimation: () => _showTextAnimationSheet(context),
+        onColor: () => _showTextColorSheet(context),
+        onGlow: () => _showGlowDialog(context),
       ),
     ];
+  }
+
+  /// Animasyon seçici: ikincil ayarlar "⋮" menüsünden açılır; birincil
+  /// formatlama barını kalabalıklaştırmaz.
+  void _showTextAnimationSheet(BuildContext context) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) => _HtmlTextAnimationSheet(
+        controller: controller,
+      ),
+    );
+  }
+
+  void _showTextColorSheet(BuildContext context) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) => _HtmlTextColorSheet(
+        controller: controller,
+      ),
+    );
   }
 
   void _showGlowDialog(BuildContext context) {
@@ -5091,110 +6435,241 @@ class _SelectionContextBarSection extends StatelessWidget {
   }
 }
 
-/// Üst bardaki kompakt metin animasyonu seçici.
-class _MiniTextAnimationDropdown extends StatelessWidget {
-  const _MiniTextAnimationDropdown({
+/// Bağlamsal metin barındaki "⋮": animasyon, renk ve parlaklık gibi ikincil
+/// ayarlar buradan açılır (birincil barı kalabalıklaştırmaz).
+class _MiniTextMoreButton extends StatelessWidget {
+  const _MiniTextMoreButton({
     required this.controller,
-    required this.block,
+    required this.onAnimation,
+    required this.onColor,
+    required this.onGlow,
   });
 
   final PresentationController controller;
-  final PresentationTextBlock block;
+  final VoidCallback onAnimation;
+  final VoidCallback onColor;
+  final VoidCallback onGlow;
 
   @override
   Widget build(BuildContext context) {
-    return Tooltip(
-      message: 'Metin Animasyonu',
-      child: Container(
-        height: 34,
-        constraints: const BoxConstraints(maxWidth: 150),
-        padding: const EdgeInsets.symmetric(horizontal: 8),
-        child: DropdownButtonHideUnderline(
-          child: DropdownButton<PresentationTextAnimation>(
-            value: block.textAnimation,
-            isDense: true,
-            isExpanded: true,
-            icon: Icon(
-              Icons.keyboard_arrow_down_rounded,
-              size: 18,
-              color: context.sutolColors.onSurfaceVariant,
-            ),
-            dropdownColor: context.sutolColors.surface,
-            borderRadius: BorderRadius.circular(14),
-            style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                  color: context._htmlInk,
-                  fontWeight: FontWeight.w700,
-                ),
-            onChanged: (value) {
-              if (value != null) {
-                controller.updateSelectedTextAnimation(value);
-              }
-            },
-            items: PresentationTextAnimation.values
-                .map(
-                  (animation) => DropdownMenuItem<PresentationTextAnimation>(
-                    value: animation,
-                    child: Text(
-                      _textAnimationLabel(animation),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                )
-                .toList(growable: false),
+    return PopupMenuButton<_MiniTextMoreAction>(
+      tooltip: 'Diğer metin ayarları',
+      padding: EdgeInsets.zero,
+      constraints: const BoxConstraints.tightFor(width: 32, height: 32),
+      iconSize: 17,
+      icon: Icon(
+        Icons.more_horiz_rounded,
+        color: context.sutolColors.onSurfaceVariant,
+      ),
+      onSelected: (action) {
+        switch (action) {
+          case _MiniTextMoreAction.animation:
+            onAnimation();
+          case _MiniTextMoreAction.color:
+            onColor();
+          case _MiniTextMoreAction.glow:
+            onGlow();
+        }
+      },
+      itemBuilder: (context) => const <PopupMenuEntry<_MiniTextMoreAction>>[
+        PopupMenuItem<_MiniTextMoreAction>(
+          value: _MiniTextMoreAction.animation,
+          height: 46,
+          child: ListTile(
+            dense: true,
+            leading: Icon(Icons.animation_rounded),
+            title: Text('Animasyon'),
           ),
+        ),
+        PopupMenuItem<_MiniTextMoreAction>(
+          value: _MiniTextMoreAction.color,
+          height: 46,
+          child: ListTile(
+            dense: true,
+            leading: Icon(Icons.palette_rounded),
+            title: Text('Renk'),
+          ),
+        ),
+        PopupMenuItem<_MiniTextMoreAction>(
+          value: _MiniTextMoreAction.glow,
+          height: 46,
+          child: ListTile(
+            dense: true,
+            leading: Icon(Icons.brightness_7_rounded),
+            title: Text('Parlaklık'),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+enum _MiniTextMoreAction {
+  animation,
+  color,
+  glow,
+}
+
+/// "⋮" menüsündeki Animasyon seçici: seçili metnin giriş animasyonu.
+class _HtmlTextAnimationSheet extends StatelessWidget {
+  const _HtmlTextAnimationSheet({required this.controller});
+
+  final PresentationController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Container(
+        constraints: const BoxConstraints(maxHeight: 380),
+        margin: const EdgeInsets.all(12),
+        padding: const EdgeInsets.fromLTRB(16, 14, 16, 10),
+        decoration: BoxDecoration(
+          color: context.colors.surface,
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: context.colors.border),
+          boxShadow: context.elevation2,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Text(
+              'Metin Animasyonu',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    color: context._htmlInk,
+                    fontWeight: FontWeight.w900,
+                  ),
+            ),
+            const SizedBox(height: 8),
+            Flexible(
+              child: AnimatedBuilder(
+                animation: controller,
+                builder: (context, _) {
+                  final current =
+                      controller.selectedTextBlock?.textAnimation;
+                  return ListView(
+                    shrinkWrap: true,
+                    children: <Widget>[
+                      for (final animation
+                          in PresentationTextAnimation.values)
+                        ListTile(
+                          dense: true,
+                          leading: Icon(
+                            animation == current
+                                ? Icons.check_circle_rounded
+                                : Icons.circle_outlined,
+                            size: 20,
+                            color: animation == current
+                                ? context.colors.primary
+                                : context.sutolColors.onSurfaceVariant,
+                          ),
+                          title: Text(
+                            _textAnimationLabel(animation),
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodyMedium
+                                ?.copyWith(
+                                  color: context._htmlInk,
+                                  fontWeight: animation == current
+                                      ? FontWeight.w800
+                                      : FontWeight.w600,
+                                ),
+                          ),
+                          onTap: () {
+                            controller.updateSelectedTextAnimation(animation);
+                            Navigator.of(context).pop();
+                          },
+                        ),
+                    ],
+                  );
+                },
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
 }
 
-/// Mini araç çubuğundaki yazı rengi düğmesi; açılır menüden renk seçtirir.
-class _MiniTextColorButton extends StatelessWidget {
-  const _MiniTextColorButton({required this.controller});
+/// "⋮" menüsündeki Renk seçici: seçili metin için renk paleti.
+class _HtmlTextColorSheet extends StatelessWidget {
+  const _HtmlTextColorSheet({required this.controller});
 
   final PresentationController controller;
 
   @override
   Widget build(BuildContext context) {
-    final currentHex = controller.selectedTextBlock?.textColorHex;
-    return PopupMenuButton<String?>(
-      tooltip: 'Yazı Rengi',
-      padding: EdgeInsets.zero,
-      constraints: const BoxConstraints.tightFor(width: 32, height: 32),
-      iconSize: 17,
-      icon: Icon(
-        Icons.palette_rounded,
-        color: context.sutolColors.onSurfaceVariant,
-      ),
-      onSelected: controller.updateSelectedTextColor,
-      itemBuilder: (context) => _textColorOptions
-          .map(
-            (option) => PopupMenuItem<String?>(
-              value: option.hex,
-              height: 36,
-              child: Row(
-                children: <Widget>[
-                  Container(
-                    width: 18,
-                    height: 18,
-                    decoration: BoxDecoration(
-                      color: option.color,
-                      borderRadius: BorderRadius.circular(6),
-                      border: Border.all(
-                        color: currentHex == option.hex
-                            ? context._htmlAccent
-                            : context.sutolColors.outline,
-                        width: currentHex == option.hex ? 2.4 : 1,
+    return SafeArea(
+      child: Container(
+        margin: const EdgeInsets.all(12),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: context.colors.surface,
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: context.colors.border),
+          boxShadow: context.elevation2,
+        ),
+        child: AnimatedBuilder(
+          animation: controller,
+          builder: (context, _) {
+            final currentHex = controller.selectedTextBlock?.textColorHex;
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Text(
+                  'Yazı Rengi',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        color: context._htmlInk,
+                        fontWeight: FontWeight.w900,
                       ),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Text(option.label),
-                ],
-              ),
-            ),
-          )
-          .toList(growable: false),
+                ),
+                const SizedBox(height: 14),
+                Wrap(
+                  spacing: 12,
+                  runSpacing: 12,
+                  children: <Widget>[
+                    for (final option in _textColorOptions)
+                      GestureDetector(
+                        key: ValueKey<String>(
+                          'text-color-${option.hex ?? 'auto'}',
+                        ),
+                        onTap: () {
+                          controller.updateSelectedTextColor(option.hex);
+                          Navigator.of(context).pop();
+                        },
+                        child: Container(
+                          width: 42,
+                          height: 42,
+                          decoration: BoxDecoration(
+                            color: option.color,
+                            borderRadius: BorderRadius.circular(13),
+                            border: Border.all(
+                              color: currentHex == option.hex
+                                  ? context.colors.primary
+                                  : context.sutolColors.outline,
+                              width: currentHex == option.hex ? 3 : 1,
+                            ),
+                          ),
+                          child: currentHex == option.hex
+                              ? Icon(
+                                  Icons.check_rounded,
+                                  size: 20,
+                                  color: option.hex == null
+                                      ? context._htmlInk
+                                      : const Color(0xFF1A2233),
+                                )
+                              : null,
+                        ),
+                      ),
+                  ],
+                ),
+              ],
+            );
+          },
+        ),
+      ),
     );
   }
 }

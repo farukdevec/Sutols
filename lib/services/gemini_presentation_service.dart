@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_ai/firebase_ai.dart';
 
 /// Gemini'nin response_schema ile zorladığı tek slayt yapısı.
@@ -38,10 +39,25 @@ class GeminiPresentation {
   }
 }
 
+/// Geçmişte dışa aktarılmış (başarılı bulunmuş) bir sunumun prompt
+/// referansı için yalnızca yapı bilgisi: slayt başlıkları + yerleşimler.
+class _PastExample {
+  const _PastExample({
+    required this.topic,
+    required this.titles,
+    required this.layouts,
+  });
+
+  final String topic;
+  final List<String> titles;
+  final List<String> layouts;
+}
+
 class GeminiPresentationService {
   GeminiPresentationService({FirebaseAI? ai}) : _ai = ai ?? FirebaseAI.googleAI();
 
   final FirebaseAI _ai;
+  final _db = FirebaseFirestore.instance;
 
   // Güncel model listesi: https://firebase.google.com/docs/ai-logic/models
   static const String modelName = 'gemini-3.6-flash';
@@ -61,6 +77,9 @@ class GeminiPresentationService {
   /// [slideCount] kadar slayt istenir; [language] ile çıktı dili belirlenir.
   /// Yanıt, response_schema ile { slides: [{title, content, keywords}] }
   /// biçimine zorlanır.
+  ///
+  /// İstekten önce, konuya en yakın geçmiş dışa aktarılmış sunumlar (en fazla
+  /// 2) aranır; bulunursa prompt'un başına referans yapısı eklenir.
   Future<GeminiPresentation> generatePresentation(
     String topic, {
     int slideCount = 5,
@@ -82,8 +101,13 @@ class GeminiPresentationService {
       ),
     );
 
+    final references = await _findSimilarExported(topic);
+    final referenceBlock = references.isEmpty
+        ? ''
+        : _buildReferenceBlock(references);
+
     final prompt = '''
-Kullanıcının verdiği konu hakkında $slideCount slaytlık bir sunum yapısı oluştur.
+${referenceBlock}Kullanıcının verdiği konu hakkında $slideCount slaytlık bir sunum yapısı oluştur.
 
 Kurallar:
 - Tam olarak $slideCount slayt üret.
@@ -111,6 +135,125 @@ Konu: $topic
 
     final json = jsonDecode(_stripCodeFence(text)) as Map<String, dynamic>;
     return GeminiPresentation.fromJson(json);
+  }
+
+  /// Konuyla en yakın eşleşen (basit keyword eşleşmesi) ve `wasExported ==
+  /// true` olan en fazla 2 geçmiş sunumu döndürür. Sorgu .where/.orderBy
+  /// kullanmaz (Int64 riski), tüm koleksiyon .get() ile çekilir ve Dart'ta
+  /// filtrelenir. Hata durumunda boş liste döner (üretim bozulmaz).
+  Future<List<_PastExample>> _findSimilarExported(String topic) async {
+    try {
+      final snapshot = await _db.collection('presentations').get();
+      final topicTokens = _tokens(topic);
+      final scored = <(int, DocumentSnapshot<Map<String, dynamic>>)>[];
+      for (final doc in snapshot.docs) {
+        final data = doc.data();
+        if (data['wasExported'] != true) {
+          continue;
+        }
+        final score = _tokenOverlap(topicTokens, _tokens(data['topic'] as String? ?? ''));
+        if (score > 0) {
+          scored.add((score, doc));
+        }
+      }
+      scored.sort((a, b) => b.$1.compareTo(a.$1));
+
+      final examples = <_PastExample>[];
+      for (final entry in scored.take(2)) {
+        final example = await _exampleFromDoc(entry.$2);
+        if (example.titles.isEmpty) {
+          continue;
+        }
+        examples.add(example);
+      }
+      return examples;
+    } catch (_) {
+      return const [];
+    }
+  }
+
+  /// Referans blok metnini üretir: başlıklar (ve yerleşimler) prompt'un
+  /// başına eklenir.
+  static String _buildReferenceBlock(List<_PastExample> examples) {
+    final parts = examples.map((e) {
+      final titles = e.titles.join(', ');
+      final layouts = e.layouts.toSet().where((l) => l.isNotEmpty).join(', ');
+      return layouts.isEmpty ? '[$titles]' : '[$titles — yerleşim: $layouts]';
+    }).join(', ');
+    return '''Referans olarak, geçmişte başarılı bulunan benzer sunumların yapısı: $parts. Buna benzer kalitede ve yapıda bir sunum üret, ama konuyu birebir kopyalama, yeni ve özgün içerik oluştur.
+
+''';
+  }
+
+  /// Bir sunum dokümanından yalnızca slayt başlıklarını ve yerleşimlerini
+  /// okur: önce ana belgedeki `slides` dizisi, yoksa `slides` alt koleksiyonu
+  /// (order ile). Tam içerik çekilmez.
+  Future<_PastExample> _exampleFromDoc(
+    DocumentSnapshot<Map<String, dynamic>> doc,
+  ) async {
+    final data = doc.data()!;
+    final embedded = data['slides'];
+    List<Map<String, dynamic>> slides;
+    if (embedded is List) {
+      slides = embedded
+          .whereType<Map<dynamic, dynamic>>()
+          .map((slide) => {
+                'title': slide['title'] as String? ?? '',
+                'layout': slide['layout'] as String? ?? '',
+              })
+          .toList();
+    } else {
+      try {
+        final slideDocs = await _db
+            .collection('presentations')
+            .doc(doc.id)
+            .collection('slides')
+            .orderBy('order')
+            .get();
+        slides = slideDocs.docs.map((slideDoc) {
+          final slideData = slideDoc.data();
+          return {
+            'title': slideData['title'] as String? ?? '',
+            'layout': slideData['layout'] as String? ?? '',
+          };
+        }).toList();
+      } catch (_) {
+        slides = const [];
+      }
+    }
+    return _PastExample(
+      topic: data['topic'] as String? ?? '',
+      titles: slides
+          .map((s) => s['title'] as String)
+          .where((t) => t.isNotEmpty)
+          .toList(),
+      layouts: slides
+          .map((s) => s['layout'] as String)
+          .where((l) => l.isNotEmpty)
+          .toList(),
+    );
+  }
+
+  /// Metni küçük harfli kelime tokene'larına böler (2 harften kısa bağlaç
+  /// benzeri sözcükler elenir).
+  static List<String> _tokens(String text) {
+    return RegExp(r'[a-zçğıöşü0-9]+')
+        .allMatches(text.toLowerCase())
+        .map((m) => m.group(0)!)
+        .where((t) => t.length > 2)
+        .toList();
+  }
+
+  /// [a]'daki tokene'ların kaç tanesi [b]'de geçiyor (basit eşleşme skoru).
+  static int _tokenOverlap(List<String> a, List<String> b) {
+    final set = b.toSet();
+    var count = 0;
+    for (final token in a.toSet()) {
+      if (set.contains(token)) {
+        count++;
+      }
+    }
+    return count;
   }
 
   static String _stripCodeFence(String text) {

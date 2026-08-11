@@ -24,12 +24,11 @@ class SelectionContextBar extends StatelessWidget {
       onTap: () {},
       child: Container(
         width: double.infinity,
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         decoration: BoxDecoration(
           color: colors.surfaceElevated,
           borderRadius: BorderRadius.circular(AppRadius.full),
           border: Border.all(color: colors.border),
-          boxShadow: AppShadows.md,
         ),
         // Dar ekranda taşmaması için yatay kaydırılabilir; geniş ekranda
         // içerik sığdığında scroll devre dışı kalır.

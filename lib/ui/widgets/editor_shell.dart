@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 
 import '../../models/slide_model.dart';
 import '../../state/presentation_controller.dart';
@@ -287,7 +288,7 @@ class _EditorStudioHeader extends StatelessWidget {
           ),
           const SizedBox(width: 12),
           Text(
-            'Sutol',
+            'Sutols',
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                   color: context.onSurface,
                   fontWeight: FontWeight.w900,
@@ -1945,7 +1946,7 @@ class _PresentationPageCanvasState extends State<PresentationPageCanvas> {
       return;
     }
 
-    setState(() {
+    _deferredSetState(() {
       _selectionDragStart = details.localPosition;
       _selectionDragCurrent = details.localPosition;
     });
@@ -1956,9 +1957,25 @@ class _PresentationPageCanvasState extends State<PresentationPageCanvas> {
       return;
     }
 
-    setState(() {
+    _deferredSetState(() {
       _selectionDragCurrent = details.localPosition;
     });
+  }
+
+  /// Jest iptalleri (ör. çoklu dokunmada tuval etkileşimi kapatılırken)
+  /// build kilidi sırasında gelebilir; o durumda güncelleme sonraki kareye
+  /// ertelenir.
+  void _deferredSetState(VoidCallback fn) {
+    if (WidgetsBinding.instance.schedulerPhase ==
+        SchedulerPhase.persistentCallbacks) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          setState(fn);
+        }
+      });
+      return;
+    }
+    setState(fn);
   }
 
   void _endSelectionDrag(Size canvasSize) {
@@ -1975,7 +1992,7 @@ class _PresentationPageCanvasState extends State<PresentationPageCanvas> {
       );
     }
 
-    setState(() {
+    _deferredSetState(() {
       _selectionDragStart = null;
       _selectionDragCurrent = null;
     });
