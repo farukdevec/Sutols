@@ -295,6 +295,29 @@ class PresentationController extends ChangeNotifier {
     notifyListeners();
   }
 
+  void updateSelectedModelRotationSpeed(double value) {
+    final current = selectedComponentBlock;
+    if (current == null || current.modelAssetId == null) {
+      return;
+    }
+    final clamped = value.clamp(5.0, 120.0).toDouble();
+    if (current.modelRotationSpeed == clamped) {
+      return;
+    }
+
+    final nextComponents = selectedPage.componentBlocks
+        .map(
+          (block) => block.id == current.id
+              ? block.copyWith(modelRotationSpeed: clamped)
+              : block,
+        )
+        .toList(growable: false);
+    _replaceSelectedPage(
+      selectedPage.copyWith(componentBlocks: nextComponents),
+    );
+    notifyListeners();
+  }
+
   /// Seçili bileşeni çizim sırasında bir adım öne/arkaya taşır (z-order).
   /// [forward] true ise listenin sonuna (en üste) doğru kayar.
   void moveSelectedComponentLayer({required bool forward}) {

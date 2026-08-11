@@ -142,6 +142,9 @@ class _HtmlPageStageState extends State<HtmlPageStage> {
                 'modelAutoRotate': isImage || assetId == null
                     ? null
                     : block.modelAutoRotate,
+                'modelRotationSpeed': isImage || assetId == null
+                    ? null
+                    : block.modelRotationSpeed,
                 'modelOrbitEnabled': isImage || assetId == null
                     ? null
                     : block.modelOrbitEnabled,

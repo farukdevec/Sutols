@@ -263,6 +263,7 @@ class PresentationComponentBlock {
     this.modelAssetId,
     this.modelAnimationEnabled = true,
     this.modelAutoRotate = false,
+    this.modelRotationSpeed = 30,
     this.modelOrbitEnabled = false,
     this.modelOrbitTheta = 0,
     this.modelOrbitPhi = 75,
@@ -277,6 +278,7 @@ class PresentationComponentBlock {
   final String? modelAssetId;
   final bool modelAnimationEnabled;
   final bool modelAutoRotate;
+  final double modelRotationSpeed;
   final bool modelOrbitEnabled;
   final double modelOrbitTheta;
   final double modelOrbitPhi;
@@ -291,6 +293,7 @@ class PresentationComponentBlock {
     Object? modelAssetId = _copySentinel,
     bool? modelAnimationEnabled,
     bool? modelAutoRotate,
+    double? modelRotationSpeed,
     bool? modelOrbitEnabled,
     double? modelOrbitTheta,
     double? modelOrbitPhi,
@@ -308,6 +311,7 @@ class PresentationComponentBlock {
       modelAnimationEnabled:
           modelAnimationEnabled ?? this.modelAnimationEnabled,
       modelAutoRotate: modelAutoRotate ?? this.modelAutoRotate,
+      modelRotationSpeed: modelRotationSpeed ?? this.modelRotationSpeed,
       modelOrbitEnabled: modelOrbitEnabled ?? this.modelOrbitEnabled,
       modelOrbitTheta: modelOrbitTheta ?? this.modelOrbitTheta,
       modelOrbitPhi: modelOrbitPhi ?? this.modelOrbitPhi,

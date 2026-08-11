@@ -170,6 +170,7 @@ String buildHtmlStageMarkup({
                     true,
                 animationEnabled: block.modelAnimationEnabled,
                 autoRotate: block.modelAutoRotate,
+                rotationSpeed: block.modelRotationSpeed,
                 orbitEnabled: block.modelOrbitEnabled,
                 orbitTheta: block.modelOrbitTheta,
                 orbitPhi: block.modelOrbitPhi,
@@ -202,13 +203,19 @@ String _model3DMarkup(
   required bool hasAnimations,
   required bool animationEnabled,
   required bool autoRotate,
+  required double rotationSpeed,
   required bool orbitEnabled,
   required double orbitTheta,
   required double orbitPhi,
   bool deferSource = false,
 }) {
   final animationMarkup = hasAnimations && animationEnabled ? ' autoplay' : '';
-  final autoRotateMarkup = autoRotate ? ' auto-rotate' : '';
+  // auto-rotate-delay="0": model-viewer'ın varsayılan 3000 ms başlangıç
+  // gecikmesini kaldırır; sunum modunda dönme anında başlar.
+  final autoRotateMarkup = autoRotate
+      ? ' auto-rotate auto-rotate-delay="0"'
+          ' rotation-per-second="${rotationSpeed.toStringAsFixed(1)}deg"'
+      : '';
   final cameraControlsMarkup = orbitEnabled ? ' camera-controls' : '';
   final cameraOrbit =
       '${orbitTheta.toStringAsFixed(2)}deg ${orbitPhi.toStringAsFixed(2)}deg auto';
@@ -2237,9 +2244,19 @@ const String _stagePatchScript = r'''
       if (modelViewer) {
         if (item.modelAutoRotate) {
           modelViewer.setAttribute('auto-rotate', '');
+          modelViewer.setAttribute('auto-rotate-delay', '0');
         } else {
           modelViewer.removeAttribute('auto-rotate');
         }
+      }
+    }
+    if (item.modelRotationSpeed !== null && item.modelRotationSpeed !== undefined) {
+      const modelViewer = element.querySelector('model-viewer');
+      if (modelViewer) {
+        modelViewer.setAttribute(
+          'rotation-per-second',
+          String(item.modelRotationSpeed) + 'deg'
+        );
       }
     }
     if (item.modelOrbitEnabled !== null && item.modelOrbitEnabled !== undefined) {

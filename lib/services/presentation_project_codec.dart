@@ -233,6 +233,7 @@ class PresentationProjectCodec {
       'modelAssetId': block.modelAssetId,
       'modelAnimationEnabled': block.modelAnimationEnabled,
       'modelAutoRotate': block.modelAutoRotate,
+      'modelRotationSpeed': block.modelRotationSpeed,
       'modelOrbitEnabled': block.modelOrbitEnabled,
       'modelOrbitTheta': block.modelOrbitTheta,
       'modelOrbitPhi': block.modelOrbitPhi,
@@ -262,6 +263,7 @@ class PresentationProjectCodec {
       modelAutoRotate: json['modelAutoRotate'] is bool
           ? json['modelAutoRotate']! as bool
           : false,
+      modelRotationSpeed: _double(json['modelRotationSpeed'], 30),
       modelOrbitEnabled: json['modelOrbitEnabled'] is bool
           ? json['modelOrbitEnabled']! as bool
           : false,

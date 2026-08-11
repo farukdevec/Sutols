@@ -6530,7 +6530,7 @@ class _SelectionContextBarSection extends StatelessWidget {
     } else if (componentBlock != null) {
       contentKey = 'component:${componentBlock.id}';
       children = componentBlock.modelAssetId != null
-          ? _modelChildren(componentBlock)
+          ? _modelChildren(context, componentBlock)
           : _componentChildren();
     }
 
@@ -6712,7 +6712,10 @@ class _SelectionContextBarSection extends StatelessWidget {
     );
   }
 
-  List<Widget> _modelChildren(PresentationComponentBlock block) {
+  List<Widget> _modelChildren(
+    BuildContext context,
+    PresentationComponentBlock block,
+  ) {
     return <Widget>[
       MiniToolLabeledToggle(
         icon: Icons.autorenew_rounded,
@@ -6721,6 +6724,63 @@ class _SelectionContextBarSection extends StatelessWidget {
         onTap: () =>
             controller.updateSelectedModelAutoRotate(!block.modelAutoRotate),
       ),
+      // Dönme hızı çubuğu: yalnızca dönme aktifken görünür; model-viewer'ın
+      // rotation-per-second değeri (°/sn).
+      if (block.modelAutoRotate) ...<Widget>[
+        const SizedBox(width: 4),
+        Tooltip(
+          message: 'Dönme Hızı',
+          child: Container(
+            height: 34,
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(999),
+              border: Border.all(color: context.colors.border),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                Icon(
+                  Icons.speed_rounded,
+                  size: 16,
+                  color: context.colors.onSurfaceVariant,
+                ),
+                const SizedBox(width: 8),
+                SizedBox(
+                  width: 120,
+                  child: SliderTheme(
+                    data: SliderTheme.of(context).copyWith(
+                      trackHeight: 2,
+                      thumbShape:
+                          const RoundSliderThumbShape(enabledThumbRadius: 6),
+                      overlayShape:
+                          const RoundSliderOverlayShape(overlayRadius: 12),
+                    ),
+                    child: Slider(
+                      value: block.modelRotationSpeed,
+                      min: 5,
+                      max: 120,
+                      onChanged: controller.updateSelectedModelRotationSpeed,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                SizedBox(
+                  width: 44,
+                  child: Text(
+                    '${block.modelRotationSpeed.round()}°/sn',
+                    textAlign: TextAlign.end,
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                          fontWeight: FontWeight.w700,
+                          color: context.colors.onSurfaceVariant,
+                        ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
       const SizedBox(width: 4),
       MiniToolLabeledToggle(
         icon: Icons.movie_rounded,
