@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 import '../services/auth_service.dart';
 import 'design/design_system.dart';
+import 'widgets/terms_consent_dialog.dart';
 
 class AuthPage extends StatefulWidget {
   const AuthPage({super.key});
@@ -17,6 +18,7 @@ class _AuthPageState extends State<AuthPage> {
   final _nameController = TextEditingController();
   bool _isLogin = true;
   bool _isLoading = false;
+  bool _termsAgreed = false;
   String? _error;
 
   @override
@@ -43,6 +45,7 @@ class _AuthPageState extends State<AuthPage> {
         await AuthService.instance.createUserWithEmailAndPassword(
           _emailController.text.trim(),
           _passwordController.text,
+          termsAccepted: _termsAgreed,
         );
         if (_nameController.text.trim().isNotEmpty) {
           await AuthService.instance.currentUser
@@ -74,7 +77,12 @@ class _AuthPageState extends State<AuthPage> {
     });
 
     try {
-      await AuthService.instance.signInWithGoogle();
+      await AuthService.instance.signInWithGoogle(
+        // "Kayıt Ol" sekmesindeyken onay formdaki kutucukla alındı;
+        // "Giriş Yap" sekmesinden ilk kez giriş yapan yeni hesapta onay,
+        // servis içindeki yedek dialog ile alınır.
+        termsAccepted: !_isLogin && _termsAgreed,
+      );
       if (mounted) Navigator.of(context).pop();
     } on FirebaseAuthException catch (e) {
       setState(() {
@@ -195,6 +203,15 @@ class _AuthPageState extends State<AuthPage> {
             decoration: const InputDecoration(hintText: 'Şifre'),
             obscureText: true,
           ),
+          // Kayıt modunda onay kutucuğu butonlara tıklamadan önce görünür;
+          // işaretlenmeden "Kayıt Ol" ve "Google ile Devam Et" pasiftir.
+          if (!_isLogin) ...[
+            const SizedBox(height: AppSpacing.s16),
+            TermsConsentBox(
+              agreed: _termsAgreed,
+              onChanged: (value) => setState(() => _termsAgreed = value),
+            ),
+          ],
           const SizedBox(height: AppSpacing.s24),
           if (_error != null)
             Padding(
@@ -206,7 +223,8 @@ class _AuthPageState extends State<AuthPage> {
           SizedBox(
             width: double.infinity,
             child: FilledButton(
-              onPressed: _isLoading ? null : _submit,
+              onPressed:
+                  _isLoading || (!_isLogin && !_termsAgreed) ? null : _submit,
               child: _isLoading
                   ? const SizedBox(
                       width: 20,
@@ -233,7 +251,9 @@ class _AuthPageState extends State<AuthPage> {
           SizedBox(
             width: double.infinity,
             child: OutlinedButton.icon(
-              onPressed: _isLoading ? null : _signInWithGoogle,
+              onPressed: _isLoading || (!_isLogin && !_termsAgreed)
+                  ? null
+                  : _signInWithGoogle,
               icon: const Icon(Icons.g_mobiledata_rounded, size: 24),
               label: const Text('Google ile Devam Et'),
             ),
@@ -254,7 +274,12 @@ class _AuthPageState extends State<AuthPage> {
         children: [
           Expanded(
             child: GestureDetector(
-              onTap: () => setState(() => _isLogin = true),
+              onTap: () {
+                setState(() {
+                  _isLogin = true;
+                  _termsAgreed = false;
+                });
+              },
               child: Container(
                 padding: const EdgeInsets.symmetric(vertical: AppSpacing.s12),
                 decoration: BoxDecoration(
@@ -273,7 +298,12 @@ class _AuthPageState extends State<AuthPage> {
           ),
           Expanded(
             child: GestureDetector(
-              onTap: () => setState(() => _isLogin = false),
+              onTap: () {
+                setState(() {
+                  _isLogin = false;
+                  _termsAgreed = false;
+                });
+              },
               child: Container(
                 padding: const EdgeInsets.symmetric(vertical: AppSpacing.s12),
                 decoration: BoxDecoration(

@@ -11,6 +11,7 @@ import 'ui/admin/admin_gate.dart';
 import 'ui/design/design_system.dart';
 import 'ui/home_page.dart';
 import 'ui/legal_pages.dart';
+import 'ui/faq_page.dart';
 import 'ui/presentation_open_page.dart';
 import 'ui/widgets/cookie_consent_banner.dart';
 import 'ui/widgets/terms_consent_dialog.dart';
@@ -58,6 +59,7 @@ class SutolApp extends StatelessWidget {
             '/admin': (_) => const AdminGate(),
             '/gizlilik': (_) => const PrivacyPolicyPage(),
             '/sartlar': (_) => const TermsOfServicePage(),
+            '/sss': (_) => const FaqPage(),
           },
         );
       },
@@ -98,8 +100,7 @@ class _DeepLinkHostState extends State<_DeepLinkHost> {
 
   void _handleDeepLink() {
     if (!kIsWeb) return;
-    final segments =
-        Uri.base.pathSegments.where((s) => s.isNotEmpty).toList();
+    final segments = Uri.base.pathSegments.where((s) => s.isNotEmpty).toList();
     if (segments.length == 2 && segments[0] == 'p') {
       final presentationId = segments[1];
       Navigator.of(context).push(

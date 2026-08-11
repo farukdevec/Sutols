@@ -82,7 +82,10 @@ class _SutolHomePageState extends State<SutolHomePage> {
           },
         },
         'orderBy': [
-          {'field': {'fieldPath': 'createdAt'}, 'direction': 'DESCENDING'},
+          {
+            'field': {'fieldPath': 'createdAt'},
+            'direction': 'DESCENDING'
+          },
         ],
         'limit': 3,
       });
@@ -92,11 +95,10 @@ class _SutolHomePageState extends State<SutolHomePage> {
         return _RecentPresentation(
           id: id,
           topic: FirestoreRestHelper.stringField(fields, 'topic'),
-          slideCount:
-              int.tryParse(
-                    FirestoreRestHelper.integerField(fields, 'slideCount'),
-                  ) ??
-                  0,
+          slideCount: int.tryParse(
+                FirestoreRestHelper.integerField(fields, 'slideCount'),
+              ) ??
+              0,
           createdAt: FirestoreRestHelper.timestampField(fields, 'createdAt'),
         );
       }).toList();
@@ -169,6 +171,7 @@ class _SutolHomePageState extends State<SutolHomePage> {
             _buildLogo(colors),
             const Spacer(),
             const _ThemeToggleButton(),
+            const _EditorButton(),
             _UserAvatar(),
           ],
         ),
@@ -185,7 +188,8 @@ class _SutolHomePageState extends State<SutolHomePage> {
     setState(() {
       _isGenerating = true;
       _loadingStepTitle = 'Sunum Oluşturuluyor...';
-      _loadingStepDescription = 'Yapay zeka konunuzu analiz edip slaytları hazırlıyor.';
+      _loadingStepDescription =
+          'Yapay zeka konunuzu analiz edip slaytları hazırlıyor.';
     });
 
     try {
@@ -254,7 +258,7 @@ class _SutolHomePageState extends State<SutolHomePage> {
           const Positioned.fill(
             child: _AmbientGlowBackground(),
           ),
-          
+
           // Content
           Column(
             children: [
@@ -273,7 +277,7 @@ class _SutolHomePageState extends State<SutolHomePage> {
                   );
                 },
               ),
-              
+
               // Main content
               Expanded(
                 child: LayoutBuilder(
@@ -281,11 +285,17 @@ class _SutolHomePageState extends State<SutolHomePage> {
                     final narrow = constraints.maxWidth < 600;
                     final dashboard = narrow && _user != null;
 
+                    // Kısa ekranlarda (mobil, yatay telefon vb.) içeriği
+                    // kompaktlaştırıp ekrana sığdırırız.
+                    final compact = constraints.maxHeight < 620;
+                    final showFooter = constraints.maxHeight >= 460;
+
                     Widget heroColumn({
                       required String description,
                       required double gapAfter,
                     }) {
                       return Column(
+                        mainAxisSize: MainAxisSize.min,
                         children: [
                           Text(
                             narrow
@@ -331,23 +341,33 @@ class _SutolHomePageState extends State<SutolHomePage> {
                       );
                     }
 
+                    // Ekrana sığması için kısa ekranlarda daha az
+                    // son sunum gösterilir.
+                    final recent = _recentPresentations;
+                    final maxRecent = compact
+                        ? 1
+                        : (constraints.maxHeight < 760 ? 2 : 3);
+
+                    final Widget mainContent;
                     if (dashboard) {
-                      final recent = _recentPresentations;
-                      return SingleChildScrollView(
-                        child: Padding(
-                          padding: const EdgeInsets.all(AppSpacing.s16),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              Text(
-                                'Fikirden sunuma,\ntek cümlede.',
-                                textAlign: TextAlign.center,
-                                style: AppTypography.display.copyWith(
-                                  color: colors.textPrimary,
-                                  fontSize: 32,
-                                  letterSpacing: -0.5,
-                                ),
+                      mainContent = Padding(
+                        padding: EdgeInsets.all(
+                          compact ? AppSpacing.s12 : AppSpacing.s16,
+                        ),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Text(
+                              'Fikirden sunuma,\ntek cümlede.',
+                              textAlign: TextAlign.center,
+                              style: AppTypography.display.copyWith(
+                                color: colors.textPrimary,
+                                fontSize: compact ? 26 : 32,
+                                letterSpacing: -0.5,
                               ),
+                            ),
+                            if (!compact) ...[
                               const SizedBox(height: AppSpacing.s8),
                               Text(
                                 'Yeni sunumunu saniyeler içinde oluştur.',
@@ -356,71 +376,93 @@ class _SutolHomePageState extends State<SutolHomePage> {
                                   color: colors.textSecondary,
                                 ),
                               ),
-                              const SizedBox(height: AppSpacing.s24),
-                              inputCard(),
-                              if (recent != null && recent.isNotEmpty) ...[
-                                const SizedBox(height: AppSpacing.s32),
-                                Row(
-                                  children: [
-                                    Text(
-                                      'Son sunumların',
-                                      style: AppTypography.titleMedium.copyWith(
-                                        color: colors.textPrimary,
-                                      ),
-                                    ),
-                                    const Spacer(),
-                                    TextButton(
-                                      onPressed: () {
-                                        Navigator.of(context).push(
-                                          MaterialPageRoute<void>(
-                                            builder: (_) =>
-                                                const MyPresentationsPage(),
-                                          ),
-                                        );
-                                      },
-                                      child: const Text('Tümünü gör'),
-                                    ),
-                                  ],
-                                ),
-                                ...recent.map(
-                                  (item) =>
-                                      _RecentPresentationTile(item: item),
-                                ),
-                              ],
                             ],
-                          ),
+                            SizedBox(
+                              height: compact
+                                  ? AppSpacing.s16
+                                  : AppSpacing.s24,
+                            ),
+                            inputCard(),
+                            if (recent != null && recent.isNotEmpty) ...[
+                              SizedBox(
+                                height: compact
+                                    ? AppSpacing.s12
+                                    : AppSpacing.s24,
+                              ),
+                              Row(
+                                children: [
+                                  Text(
+                                    'Son sunumların',
+                                    style: AppTypography.titleMedium.copyWith(
+                                      color: colors.textPrimary,
+                                    ),
+                                  ),
+                                  const Spacer(),
+                                  TextButton(
+                                    onPressed: () {
+                                      Navigator.of(context).push(
+                                        MaterialPageRoute<void>(
+                                          builder: (_) =>
+                                              const MyPresentationsPage(),
+                                        ),
+                                      );
+                                    },
+                                    child: const Text('Tümünü gör'),
+                                  ),
+                                ],
+                              ),
+                              ...recent
+                                  .take(maxRecent)
+                                  .map((item) =>
+                                      _RecentPresentationTile(item: item)),
+                            ],
+                          ],
+                        ),
+                      );
+                    } else {
+                      mainContent = Padding(
+                        padding: EdgeInsets.all(
+                          narrow ? AppSpacing.s16 : AppSpacing.s32,
+                        ),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            heroColumn(
+                              description:
+                                  'Anlatmak istediğinizi yazın. Sutols, sizin için tasarlanmış bir sunumu saniyeler içinde hazırlasın.',
+                              gapAfter: narrow
+                                  ? (compact
+                                      ? AppSpacing.s16
+                                      : AppSpacing.s24)
+                                  : AppSpacing.s48,
+                            ),
+                            inputCard(),
+                          ],
                         ),
                       );
                     }
 
-                    return Center(
-                      child: SingleChildScrollView(
-                        child: Padding(
-                          padding: EdgeInsets.all(
-                            narrow ? AppSpacing.s16 : AppSpacing.s32,
-                          ),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              heroColumn(
-                                description:
-                                    'Anlatmak istediğinizi yazın. Sutols, sizin için tasarlanmış bir sunumu saniyeler içinde hazırlasın.',
-                                gapAfter: narrow
-                                    ? AppSpacing.s24
-                                    : AppSpacing.s48,
+                    // Kaydırma yok: içerik alana sığarsa ortalanır,
+                    // sığmazsa ekrana ölçeklenir. Footer sabit kalır.
+                    return Column(
+                      children: [
+                        Expanded(
+                          child: Center(
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: SizedBox(
+                                width: constraints.maxWidth,
+                                child: mainContent,
                               ),
-                              inputCard(),
-                            ],
+                            ),
                           ),
                         ),
-                      ),
+                        if (showFooter) const _FooterBar(),
+                      ],
                     );
                   },
                 ),
               ),
-
-              // Footer
-              const _FooterBar(),
             ],
           ),
         ],
@@ -459,6 +501,10 @@ class _FooterBar extends StatelessWidget {
           TextButton(
             onPressed: () => Navigator.of(context).pushNamed('/sartlar'),
             child: const Text('Kullanım Şartları'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pushNamed('/sss'),
+            child: const Text('SSS'),
           ),
         ],
       ),
@@ -540,7 +586,8 @@ class _InputCard extends StatelessWidget {
         children: [
           TextField(
             controller: titleController,
-            style: AppTypography.titleMedium.copyWith(color: colors.textPrimary),
+            style:
+                AppTypography.titleMedium.copyWith(color: colors.textPrimary),
             decoration: InputDecoration(
               hintText: isDashboard ? 'Sunum başlığı' : 'Sunum Başlığı',
               filled: true,
@@ -604,14 +651,16 @@ class _LoadingState extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const AiLoadAnimation(size: 80, style: AiLoadStyle.spinningLight, message: ''),
+          const AiLoadAnimation(
+              size: 80, style: AiLoadStyle.spinningLight, message: ''),
           const SizedBox(height: AppSpacing.s32),
           AnimatedSwitcher(
             duration: const Duration(milliseconds: 300),
             child: Text(
               title,
               key: ValueKey<String>('title_$title'),
-              style: AppTypography.titleMedium.copyWith(color: colors.textPrimary),
+              style:
+                  AppTypography.titleMedium.copyWith(color: colors.textPrimary),
               textAlign: TextAlign.center,
             ),
           ),
@@ -621,7 +670,8 @@ class _LoadingState extends StatelessWidget {
             child: Text(
               description,
               key: ValueKey<String>('desc_$description'),
-              style: AppTypography.bodyMedium.copyWith(color: colors.textSecondary),
+              style: AppTypography.bodyMedium
+                  .copyWith(color: colors.textSecondary),
               textAlign: TextAlign.center,
             ),
           ),
@@ -705,8 +755,7 @@ class _RecentPresentationTile extends StatelessWidget {
         onTap: () {
           Navigator.of(context).push(
             MaterialPageRoute<void>(
-              builder: (_) =>
-                  PresentationViewPage(presentationId: item.id),
+              builder: (_) => PresentationViewPage(presentationId: item.id),
             ),
           );
         },
@@ -736,10 +785,8 @@ class _TierBadgeState extends State<_TierBadge> {
     if (uid == null) return;
 
     try {
-      final snapshot = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(uid)
-          .get();
+      final snapshot =
+          await FirebaseFirestore.instance.collection('users').doc(uid).get();
       final tier = snapshot.data()?['tier'];
       if (mounted && tier is String) {
         setState(() => _tier = tier);
@@ -753,7 +800,11 @@ class _TierBadgeState extends State<_TierBadge> {
   Widget build(BuildContext context) {
     final (label, color, icon) = switch (_tier) {
       'plus' => ('Plus', const Color(0xFF1565C0), Icons.star_outline),
-      'premium' => ('Premium', const Color(0xFFC9A227), Icons.workspace_premium),
+      'premium' => (
+          'Premium',
+          const Color(0xFFC9A227),
+          Icons.workspace_premium
+        ),
       _ => ('Ücretsiz', const Color(0xFF616161), Icons.circle_outlined),
     };
 
@@ -817,10 +868,8 @@ class _PlanStatusBarState extends State<_PlanStatusBar> {
     if (uid == null) return;
 
     try {
-      final snapshot = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(uid)
-          .get();
+      final snapshot =
+          await FirebaseFirestore.instance.collection('users').doc(uid).get();
       final tier = snapshot.data()?['tier'];
       if (mounted && tier is String) {
         setState(() => _tier = tier);
@@ -883,7 +932,8 @@ class _PlanStatusBarState extends State<_PlanStatusBar> {
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.auto_awesome_rounded, size: 14, color: upgradeColor),
+                  Icon(Icons.auto_awesome_rounded,
+                      size: 14, color: upgradeColor),
                   const SizedBox(width: 4),
                   Text(
                     'Yükselt',
@@ -1013,7 +1063,8 @@ class _ThemeToggleButton extends StatelessWidget {
           ),
           tooltip: isDark ? 'Açık Tema' : 'Koyu Tema',
           onPressed: ThemeController.instance.toggle,
-          icon: Icon(isDark ? Icons.light_mode_outlined : Icons.dark_mode_outlined),
+          icon: Icon(
+              isDark ? Icons.light_mode_outlined : Icons.dark_mode_outlined),
         );
       },
     );
@@ -1065,8 +1116,8 @@ class _MyPresentationsButtonState extends State<_MyPresentationsButton> {
     try {
       final doc = await FirestoreRestHelper.getDocument('users/$uid');
       final fields = doc?['fields'] as Map<String, dynamic>? ?? {};
-      final count =
-          int.tryParse(FirestoreRestHelper.integerField(fields, 'presentationCount'));
+      final count = int.tryParse(
+          FirestoreRestHelper.integerField(fields, 'presentationCount'));
       if (!mounted) return;
       setState(() => _presentationCount = count);
     } catch (_) {
@@ -1230,7 +1281,8 @@ class _UserAvatarState extends State<_UserAvatar> {
         .toUpperCase();
     return Center(
       child: Text(initial,
-          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+          style: const TextStyle(
+              color: Colors.white, fontWeight: FontWeight.w600)),
     );
   }
 

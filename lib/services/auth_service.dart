@@ -109,12 +109,13 @@ class AuthService {
 
   /// Email/şifre ile YENİ KAYIT akışı.
   ///
-  /// Hesap oluşturulmadan HEMEN ÖNCE şartlar onay dialogu gösterilir;
-  /// kullanıcı "Devam Et" demeden kayıt işlemi tamamlanmaz.
+  /// Onay, kayıt formundaki kutucuk (TermsConsentBox) ile satır içi alınır;
+  /// `termsAccepted` doğru değilse hesap oluşturulmaz. Hesap oluşturulduktan
+  /// sonra onay kaydı users/{uid} dokümanına yazılır.
   Future<UserCredential> createUserWithEmailAndPassword(
-      String email, String password) async {
-    final accepted = await showTermsConsentDialog();
-    if (!accepted) {
+      String email, String password,
+      {bool termsAccepted = false}) async {
+    if (!termsAccepted) {
       throw const TermsConsentNotApprovedException();
     }
 
@@ -128,16 +129,21 @@ class AuthService {
 
   /// Google ile giriş akışı.
   ///
-  /// Giriş başarılı olduktan sonra hesap İLK KEZ açıldıysa (yeni kullanıcı)
-  /// şartlar onay dialogu gösterilir. Onaylanmazsa oluşturulan hesap silinir
-  /// ve oturum kapatılarak giriş ekranına dönülür. Zaten kayıtlı, tekrar
-  /// giriş yapan kullanıcılara (users dokümanı oluşmuş) dialog hiç
-  /// gösterilmez.
-  Future<UserCredential> signInWithGoogle() async {
+  /// Onay normalde kayıt formundaki kutucukla satır içi alınır
+  /// (`termsAccepted: true`). Formda onay alınmamışsa (ör. "Giriş Yap"
+  /// sekmesinden ilk kez giriş yapan yeni Google hesabı) yedek olarak onay
+  /// dialogu gösterilir; onaylanmazsa oluşturulan hesap silinir ve oturum
+  /// kapatılarak giriş ekranına dönülür. Zaten kayıtlı kullanıcılara hiçbir
+  /// onay adımı gösterilmez.
+  Future<UserCredential> signInWithGoogle(
+      {bool termsAccepted = false}) async {
+    var accepted = termsAccepted;
     final credential = await _auth.signInWithPopup(GoogleAuthProvider());
     final user = credential.user;
     if (user != null && _isFirstSignIn(user)) {
-      final accepted = await showTermsConsentDialog();
+      if (!accepted) {
+        accepted = await showTermsConsentDialog();
+      }
       if (accepted) {
         await _recordTermsAcceptance(user.uid);
       } else {

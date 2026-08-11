@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
 import '../design/design_system.dart';
@@ -7,11 +8,123 @@ import '../design/design_system.dart';
 /// için `MaterialApp`'e `navigatorKey` olarak verilir.
 final GlobalKey<NavigatorState> appNavigatorKey = GlobalKey<NavigatorState>();
 
+/// Kayıt formunda ve onay dialogunda kullanılan tıklanabilir çerçeveli
+/// onay kutucuğu. Kutucuğun herhangi bir yerine tıklayınca tik
+/// işaretlenir/bozulur; "Kullanım Şartları" ve "Gizlilik Politikası"
+/// linkleri aynı satırda (hizalı), kalın + altı çizili ve tıklanabilirdir.
+class TermsConsentBox extends StatefulWidget {
+  const TermsConsentBox({
+    super.key,
+    required this.agreed,
+    required this.onChanged,
+  });
+
+  final bool agreed;
+  final ValueChanged<bool> onChanged;
+
+  @override
+  State<TermsConsentBox> createState() => _TermsConsentBoxState();
+}
+
+class _TermsConsentBoxState extends State<TermsConsentBox> {
+  late final TapGestureRecognizer _termsRecognizer =
+      TapGestureRecognizer()..onTap = () => _openRoute('/sartlar');
+  late final TapGestureRecognizer _privacyRecognizer =
+      TapGestureRecognizer()..onTap = () => _openRoute('/gizlilik');
+
+  void _openRoute(String route) {
+    if (!mounted) return;
+    Navigator.of(context, rootNavigator: true).pushNamed(route);
+  }
+
+  @override
+  void dispose() {
+    _termsRecognizer.dispose();
+    _privacyRecognizer.dispose();
+    super.dispose();
+  }
+
+  /// Aynı paragrafın içinde, metinle aynı hizada duran tıklanabilir link.
+  TextSpan _linkSpan(
+    String text,
+    TapGestureRecognizer recognizer,
+  ) {
+    final primary = context.colors.primary;
+    return TextSpan(
+      text: text,
+      recognizer: recognizer,
+      style: TextStyle(
+        color: primary,
+        fontWeight: FontWeight.w700,
+        decoration: TextDecoration.underline,
+        decorationColor: primary.withValues(alpha: 0.8),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () => widget.onChanged(!widget.agreed),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        child: Container(
+          padding: const EdgeInsets.all(AppSpacing.s12),
+          decoration: BoxDecoration(
+            color: colors.surface,
+            borderRadius: BorderRadius.circular(AppRadius.lg),
+            border: Border.all(
+              color: widget.agreed ? colors.primary : colors.border,
+              width: widget.agreed ? 1.5 : 1,
+            ),
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Checkbox(
+                value: widget.agreed,
+                onChanged: (value) => widget.onChanged(value ?? false),
+                activeColor: colors.primary,
+              ),
+              const SizedBox(width: AppSpacing.s4),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 10),
+                  child: Text.rich(
+                    TextSpan(
+                      style: AppTypography.bodyMedium.copyWith(
+                        color: colors.textPrimary,
+                      ),
+                      children: [
+                        _linkSpan('Kullanım Şartları', _termsRecognizer),
+                        const TextSpan(text: "'nı ve "),
+                        _linkSpan('Gizlilik Politikası', _privacyRecognizer),
+                        const TextSpan(text: "'nı okudum, kabul ediyorum"),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 /// Kayıt öncesi Kullanım Şartları / Gizlilik Politikası onay dialogunu
 /// gösterir. Kullanıcı "Devam Et" butonuna basana kadar dialog
 /// kapatılamaz (barrier dismissible değil, geri tuşu engelli).
 ///
 /// Onaylandığında `true` döner; gösterim mümkün olmazsa `false`.
+///
+/// Not: kayıt formunda onay artık kutu (TermsConsentBox) ile satır içi
+/// alındığı için bu dialog yalnızca "Giriş Yap" sekmesinden Google ile
+/// ilk kez giriş yapan kullanıcılar için güvenlik ağı olarak kalır.
 Future<bool> showTermsConsentDialog() async {
   final navigator = appNavigatorKey.currentState;
   if (navigator == null) return false;
@@ -36,21 +149,34 @@ class TermsConsentDialog extends StatefulWidget {
 class _TermsConsentDialogState extends State<TermsConsentDialog> {
   bool _agreed = false;
 
-  void _openRoute(BuildContext context, String route) {
+  late final TapGestureRecognizer _termsRecognizer =
+      TapGestureRecognizer()..onTap = () => _openRoute('/sartlar');
+  late final TapGestureRecognizer _privacyRecognizer =
+      TapGestureRecognizer()..onTap = () => _openRoute('/gizlilik');
+
+  void _openRoute(String route) {
+    if (!mounted) return;
     Navigator.of(context, rootNavigator: true).pushNamed(route);
   }
 
-  Widget _inlineLink(BuildContext context, String text, String route) {
-    return TextButton(
-      onPressed: () => _openRoute(context, route),
-      style: TextButton.styleFrom(
-        foregroundColor: context.colors.primary,
-        padding: EdgeInsets.zero,
-        minimumSize: const Size(0, 0),
-        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-        visualDensity: VisualDensity.compact,
+  @override
+  void dispose() {
+    _termsRecognizer.dispose();
+    _privacyRecognizer.dispose();
+    super.dispose();
+  }
+
+  TextSpan _linkSpan(String text, TapGestureRecognizer recognizer) {
+    final primary = context.colors.primary;
+    return TextSpan(
+      text: text,
+      recognizer: recognizer,
+      style: TextStyle(
+        color: primary,
+        fontWeight: FontWeight.w600,
+        decoration: TextDecoration.underline,
+        decorationColor: primary.withValues(alpha: 0.5),
       ),
-      child: Text(text),
     );
   }
 
@@ -82,48 +208,18 @@ class _TermsConsentDialogState extends State<TermsConsentDialog> {
                     color: colors.textSecondary,
                   ),
                   children: [
-                    const TextSpan(
-                      text:
-                          "Sutols'u kullanmaya başlamak için ",
-                    ),
-                    WidgetSpan(
-                      alignment: PlaceholderAlignment.middle,
-                      child: _inlineLink(
-                        context,
-                        "Kullanım Şartları'nı",
-                        '/sartlar',
-                      ),
-                    ),
+                    const TextSpan(text: "Sutols'u kullanmaya başlamak için "),
+                    _linkSpan("Kullanım Şartları'nı", _termsRecognizer),
                     const TextSpan(text: ' ve '),
-                    WidgetSpan(
-                      alignment: PlaceholderAlignment.middle,
-                      child: _inlineLink(
-                        context,
-                        "Gizlilik Politikası'nı",
-                        '/gizlilik',
-                      ),
-                    ),
-                    const TextSpan(
-                      text: ' kabul etmeniz gerekiyor.',
-                    ),
+                    _linkSpan("Gizlilik Politikası'nı", _privacyRecognizer),
+                    const TextSpan(text: ' kabul etmeniz gerekiyor.'),
                   ],
                 ),
               ),
               const SizedBox(height: AppSpacing.s16),
-              CheckboxListTile(
-                value: _agreed,
-                onChanged: (value) =>
-                    setState(() => _agreed = value ?? false),
-                controlAffinity: ListTileControlAffinity.leading,
-                contentPadding: EdgeInsets.zero,
-                activeColor: colors.primary,
-                title: Text(
-                  "Kullanım Şartları'nı ve Gizlilik Politikası'nı "
-                  'okudum, kabul ediyorum',
-                  style: AppTypography.bodyMedium.copyWith(
-                    color: colors.textPrimary,
-                  ),
-                ),
+              TermsConsentBox(
+                agreed: _agreed,
+                onChanged: (value) => setState(() => _agreed = value),
               ),
             ],
           ),
