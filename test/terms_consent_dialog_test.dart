@@ -128,8 +128,19 @@ void main() {
 
         // Kutucuk metnindeki "Gizlilik Politikası" linki de /gizlilik
         // sayfasını açar (baştaki linkin hemen ardındadır).
+        final boxWidget = tester.widget<RichText>(boxText);
+        final measurePainter = TextPainter(
+          text: TextSpan(
+            text: "Kullanım Şartları'nı ve ",
+            style: boxWidget.text.style,
+          ),
+          textDirection: TextDirection.ltr,
+        )..layout();
         final boxRect2 = tester.getRect(boxText);
-        await tester.tapAt(Offset(boxRect2.left + 150, boxRect2.top + 12));
+        await tester.tapAt(Offset(
+          boxRect2.left + measurePainter.width + 5,
+          boxRect2.top + 12,
+        ));
         await tester.pumpAndSettle();
         expect(find.text('gizlilik-sayfasi'), findsOneWidget);
         await tester.pageBack();

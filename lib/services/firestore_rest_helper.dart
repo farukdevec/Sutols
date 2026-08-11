@@ -151,38 +151,42 @@ class FirestoreRestHelper {
   /// structuredQuery çalıştırır (POST .../documents:runQuery).
   /// Sonucu doküman map listesi olarak döndürür.
   ///
-  /// Alt koleksiyon sorguları REST'te URL yoluyla verilir ("from" yalnızca
-  /// collectionId + allDescendants destekler). [from] girdisindeki göreli
-  /// `parent` (örn. "presentations/{id}") + `collectionId` ("slides") birlikte
-  /// sorgu URL'sine taşınır: .../documents/presentations/{id}/slides:runQuery.
+  /// Alt koleksiyon sorgularında ("from" girdisindeki göreli `parent`,
+  /// örn. "presentations/{id}") parent, tam kaynak adı olarak istek
+  /// gövdesine taşınır; URL her zaman .../documents:runQuery olur.
+  /// (REST API alt koleksiyon yolunu URL'de kabul etmez: .../presentations/
+  /// {id}/slides:runQuery HTTP 400 INVALID_ARGUMENT "lacks /" hatası döner.)
   static Future<List<Map<String, dynamic>>> runQuery(
       Map<String, dynamic> structuredQuery) async {
-    String? subcollectionPath;
+    final token = await authToken();
+
+    String? parent;
     final from = structuredQuery['from'] as List?;
     if (from != null) {
       for (final entry in from) {
-        if (entry is Map<String, dynamic> &&
-            entry['parent'] is String &&
-            entry['collectionId'] is String) {
-          subcollectionPath =
-              '${entry['parent']}/${entry['collectionId']}';
-          entry.remove('parent');
+        if (entry is Map<String, dynamic>) {
+          final entryParent = entry.remove('parent') as String?;
+          if (entryParent != null && entryParent.isNotEmpty) {
+            parent = entryParent;
+          }
         }
       }
     }
-    final token = await authToken();
-    final url = Uri.parse(
-      subcollectionPath == null
-          ? '$apiBase:runQuery'
-          : '$apiBase/$subcollectionPath:runQuery',
-    );
+
+    final url = Uri.parse('$apiBase:runQuery');
+    final body = parent == null
+        ? {'structuredQuery': structuredQuery}
+        : {
+            'parent': '$apiBase/$parent',
+            'structuredQuery': structuredQuery,
+          };
     final response = await http.post(
       url,
       headers: {
         'Authorization': 'Bearer $token',
         'Content-Type': 'application/json',
       },
-      body: jsonEncode({'structuredQuery': structuredQuery}),
+      body: jsonEncode(body),
     );
 
     if (response.statusCode != 200) {
@@ -190,8 +194,8 @@ class FirestoreRestHelper {
           'Firestore sorgu hatası (HTTP ${response.statusCode}): ${response.body}');
     }
 
-    final body = jsonDecode(response.body) as List;
-    return body
+    final decoded = jsonDecode(response.body) as List;
+    return decoded
         .whereType<Map<String, dynamic>>()
         .where((e) => e.containsKey('document'))
         .map((e) => e['document'] as Map<String, dynamic>)

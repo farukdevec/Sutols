@@ -11,6 +11,7 @@ import '../services/local_image_picker.dart';
 import '../services/presentation_export_service.dart';
 import '../services/presentation_auto_builder.dart';
 import '../services/presentation_fullscreen_service.dart';
+import '../services/presentation_loader.dart';
 import '../services/presentation_project_codec.dart';
 import '../services/presentation_project_io.dart';
 import '../services/presentation_project_store.dart';
@@ -50,6 +51,7 @@ class HtmlPresentationEditorPage extends StatefulWidget {
     required this.controller,
     this.presentationId,
     this.initialUpdatedByName,
+    this.adminReadOnly = false,
   });
 
   final PresentationController controller;
@@ -59,6 +61,12 @@ class HtmlPresentationEditorPage extends StatefulWidget {
 
   /// Açılışta gösterilecek "son düzenleyen" adı.
   final String? initialUpdatedByName;
+
+  /// `true` ise sayfa salt okunur "Görüntüleme Modu"nda açılır:
+  /// sunum [presentationId] ile Firestore'dan yüklenir (yükleme tamamlanana
+  /// kadar sayfa yükleme ekranı gösterir), tüm düzenleme araçları gizlenir ve
+  /// tuval etkileşimsizdir. Dışa aktarma (HTML/PDF) ve sunum modu kullanılabilir.
+  final bool adminReadOnly;
 
   @override
   State<HtmlPresentationEditorPage> createState() =>
@@ -101,6 +109,10 @@ class _HtmlPresentationEditorPageState
   /// görünür, etkileşimle ya da süre dolunca kaybolur.
   bool _showMobileHint = true;
   Timer? _hintTimer;
+
+  /// Salt okunur (admin) mod: Firestore'dan yükleme durumu.
+  bool _adminLoading = false;
+  String? _adminLoadError;
 
   void _onMobileScaleStart(ScaleStartDetails details) {
     _mobileZoomStartScale = _mobileCanvasZoom;
@@ -151,6 +163,44 @@ class _HtmlPresentationEditorPageState
       _lastEditorLabel = initial.trim();
     }
     _hintTimer = Timer(const Duration(seconds: 6), _dismissMobileHint);
+    if (widget.adminReadOnly) {
+      _adminLoading = true;
+      _loadAdminPresentation();
+    }
+  }
+
+  /// Salt okunur (admin) mod: sunumu verilen presentationId ile Firestore'dan
+  /// mevcut yükleme mantığını kullanarak mevcut controller'a yükler.
+  Future<void> _loadAdminPresentation() async {
+    final presentationId = widget.presentationId;
+    if (presentationId == null) {
+      setState(() {
+        _adminLoading = false;
+        _adminLoadError = 'Sunum kimliği (presentationId) belirtilmedi.';
+      });
+      return;
+    }
+    try {
+      final result = await loadPresentationForEdit(
+        presentationId,
+        controller: widget.controller,
+      );
+      if (!mounted) return;
+      setState(() {
+        _adminLoading = false;
+        _adminLoadError = null;
+        if (result.updatedByName != null &&
+            result.updatedByName!.trim().isNotEmpty) {
+          _lastEditorLabel = result.updatedByName!.trim();
+        }
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _adminLoading = false;
+        _adminLoadError = 'Sunum yüklenemedi: $e';
+      });
+    }
   }
 
   @override
@@ -162,7 +212,7 @@ class _HtmlPresentationEditorPageState
     widget.controller.removeListener(_trackEdits);
     _textController.dispose();
     final presentationId = widget.presentationId;
-    if (presentationId != null) {
+    if (presentationId != null && !widget.adminReadOnly) {
       final seconds = DateTime.now().difference(_openedAt).inSeconds;
       if (seconds > 0) {
         _tracking.addTimeSpent(presentationId, seconds);
@@ -214,6 +264,9 @@ class _HtmlPresentationEditorPageState
   /// (wasEdited: true, editCount: +1). presentationId yoksa (yerel proje)
   /// hiçbir şey yapmaz.
   void _trackEdits() {
+    if (widget.adminReadOnly) {
+      return;
+    }
     final presentationId = widget.presentationId;
     if (presentationId == null) {
       return;
@@ -366,7 +419,7 @@ class _HtmlPresentationEditorPageState
 
   Future<void> _exportPresentation() async {
     final presentationId = widget.presentationId;
-    if (presentationId != null) {
+    if (presentationId != null && !widget.adminReadOnly) {
       _tracking.markExported(presentationId);
     }
     await exportPresentationAsHtml(
@@ -385,6 +438,10 @@ class _HtmlPresentationEditorPageState
   }
 
   Future<void> _saveProject() async {
+    if (widget.adminReadOnly) {
+      _showSnack('Salt okunur görüntüleme modunda kayıt yapılamaz.');
+      return;
+    }
     final presentationId = widget.presentationId;
     if (presentationId != null) {
       final json = PresentationProjectCodec.encodeProject(
@@ -419,6 +476,10 @@ class _HtmlPresentationEditorPageState
   }
 
   Future<void> _loadProject() async {
+    if (widget.adminReadOnly) {
+      _showSnack('Salt okunur görüntüleme modunda proje yükleme yapılamaz.');
+      return;
+    }
     try {
       final project = await loadPresentationProjectFromJson();
       if (project == null) {
@@ -451,10 +512,20 @@ class _HtmlPresentationEditorPageState
 
   @override
   Widget build(BuildContext context) {
+    if (widget.adminReadOnly && (_adminLoading || _adminLoadError != null)) {
+      return _AdminReadOnlyStatusPage(
+        loading: _adminLoading,
+        error: _adminLoadError,
+        onRetry: _adminLoading ? null : _loadAdminPresentation,
+      );
+    }
+
     return Focus(
       autofocus: true,
       child: CallbackShortcuts(
-        bindings: <ShortcutActivator, VoidCallback>{
+        bindings: widget.adminReadOnly
+            ? const <ShortcutActivator, VoidCallback>{}
+            : <ShortcutActivator, VoidCallback>{
           // Undo / Redo
           const SingleActivator(LogicalKeyboardKey.keyZ, control: true):
               widget.controller.undo,
@@ -557,6 +628,7 @@ class _HtmlPresentationEditorPageState
                                 onRemoveText: widget.controller.removeSelectedTextBlock,
                                 canRemoveText: widget.controller.canRemoveTextBlock,
                                 lastEditorLabel: _lastEditorLabel,
+                                adminReadOnly: widget.adminReadOnly,
                               ),
                               const SizedBox(height: 12),
                               Expanded(
@@ -569,6 +641,7 @@ class _HtmlPresentationEditorPageState
                                   onPreview: _openPresentationPreview,
                                   onExport: _exportPresentation,
                                   onExportPdf: _exportPdfPresentation,
+                                  adminReadOnly: widget.adminReadOnly,
                                 ),
                               ),
                             ],
@@ -593,6 +666,7 @@ class _HtmlPresentationEditorPageState
                               canUndo: widget.controller.canUndo,
                               canRedo: widget.controller.canRedo,
                               lastEditorLabel: _lastEditorLabel,
+                              adminReadOnly: widget.adminReadOnly,
                             ),
                             SizedBox(height: isMobile ? 8 : 14),
                             Expanded(
@@ -613,6 +687,7 @@ class _HtmlPresentationEditorPageState
                                                   : 200,
                                           child: _HtmlPageSidebar(
                                             controller: widget.controller,
+                                            readOnly: widget.adminReadOnly,
                                           ),
                                         ),
                                         const SizedBox(width: 14),
@@ -622,6 +697,7 @@ class _HtmlPresentationEditorPageState
                                             textController: _textController,
                                             activeTab: _activeTab,
                                             onTabChanged: _setTab,
+                                            readOnly: widget.adminReadOnly,
                                           ),
                                         ),
                                       ],
@@ -645,10 +721,13 @@ class _HtmlPresentationEditorPageState
                                     onScaleEnd: _onMobileScaleEnd,
                                     onMultiTouchChanged:
                                         _onMobileMultiTouchChanged,
-                                    canvasInteractive: !_multiTouchActive,
+                                    canvasInteractive:
+                                        !_multiTouchActive &&
+                                        !widget.adminReadOnly,
                                     showHint:
                                         _showMobileHint &&
                                         _mobileCanvasZoom <= 1.0001,
+                                    readOnly: widget.adminReadOnly,
                                   );
                                 },
                               ),
@@ -682,6 +761,7 @@ class _HtmlHeader extends StatelessWidget {
     required this.canUndo,
     required this.canRedo,
     this.lastEditorLabel,
+    this.adminReadOnly = false,
   });
 
   final int pageCount;
@@ -696,6 +776,10 @@ class _HtmlHeader extends StatelessWidget {
   final bool canUndo;
   final bool canRedo;
   final String? lastEditorLabel;
+
+  /// Salt okunur (admin) mod: düzenleme araçları gizlenir, yerine kırmızı
+  /// "GÖRÜNTÜLEME MODU (Admin)" rozeti gösterilir.
+  final bool adminReadOnly;
 
   @override
   Widget build(BuildContext context) {
@@ -742,24 +826,33 @@ class _HtmlHeader extends StatelessWidget {
           label: 'Son düzenleme: $lastEditorLabel',
         ),
       _ThemeToggleButton(),
-      _HistoryButtons(
-        onUndo: onUndo,
-        onRedo: onRedo,
-        canUndo: canUndo,
-        canRedo: canRedo,
-      ),
+      if (!adminReadOnly)
+        _HistoryButtons(
+          onUndo: onUndo,
+          onRedo: onRedo,
+          canUndo: canUndo,
+          canRedo: canRedo,
+        ),
       _HeaderAction(
         icon: Icons.slideshow_rounded,
         label: 'Sunum Modu',
         onTap: onPreview,
       ),
-      _FileMenuButton(
-        onSave: onSave,
-        onLoad: onLoad,
-        onExportHtml: onExport,
-        onExportPdf: onExportPdf,
-        
-      ),
+      if (adminReadOnly)
+        _HeaderAction(
+          icon: Icons.html_rounded,
+          label: 'HTML Disa Aktar',
+          onTap: onExport,
+        ),
+      if (adminReadOnly)
+        const _AdminReadOnlyBadge()
+      else
+        _FileMenuButton(
+          onSave: onSave,
+          onLoad: onLoad,
+          onExportHtml: onExport,
+          onExportPdf: onExportPdf,
+        ),
     ];
 
     return LayoutBuilder(
@@ -834,13 +927,16 @@ class _HtmlHeader extends StatelessWidget {
                     ),
                   ),
                 ),
-                _MobileHistoryButtons(
-                  onUndo: onUndo,
-                  onRedo: onRedo,
-                  canUndo: canUndo,
-                  canRedo: canRedo,
-                  size: iconSize,
-                ),
+                if (adminReadOnly)
+                  const SizedBox.shrink()
+                else
+                  _MobileHistoryButtons(
+                    onUndo: onUndo,
+                    onRedo: onRedo,
+                    canUndo: canUndo,
+                    canRedo: canRedo,
+                    size: iconSize,
+                  ),
                 _MobileHeaderIconButton(
                   tooltip: 'Sunum Modu',
                   icon: Icons.slideshow_rounded,
@@ -875,42 +971,45 @@ class _HtmlHeader extends StatelessWidget {
                         ),
                       ],
                 ),
-                PopupMenuButton<_MobileHeaderAction>(
-                  tooltip: 'Diğer işlemler',
-                  padding: EdgeInsets.zero,
-                  constraints: popupConstraints,
-                  iconSize: 20,
-                  icon: Icon(
-                    Icons.more_vert_rounded,
-                    color: context._htmlInk,
+                if (adminReadOnly)
+                  const _AdminReadOnlyBadge(compact: true)
+                else
+                  PopupMenuButton<_MobileHeaderAction>(
+                    tooltip: 'Diğer işlemler',
+                    padding: EdgeInsets.zero,
+                    constraints: popupConstraints,
+                    iconSize: 20,
+                    icon: Icon(
+                      Icons.more_vert_rounded,
+                      color: context._htmlInk,
+                    ),
+                    onSelected: handleAction,
+                    itemBuilder: (context) =>
+                        <PopupMenuEntry<_MobileHeaderAction>>[
+                          PopupMenuItem<_MobileHeaderAction>(
+                            value: _MobileHeaderAction.theme,
+                            child: const ListTile(
+                              leading: Icon(Icons.dark_mode_rounded),
+                              title: Text('Görünümü Değiştir'),
+                            ),
+                          ),
+                          const PopupMenuDivider(),
+                          PopupMenuItem<_MobileHeaderAction>(
+                            value: _MobileHeaderAction.save,
+                            child: const ListTile(
+                              leading: Icon(Icons.save_alt_rounded),
+                              title: Text('Projeyi Kaydet'),
+                            ),
+                          ),
+                          PopupMenuItem<_MobileHeaderAction>(
+                            value: _MobileHeaderAction.load,
+                            child: const ListTile(
+                              leading: Icon(Icons.upload_file_rounded),
+                              title: Text('Proje Yükle'),
+                            ),
+                          ),
+                        ],
                   ),
-                  onSelected: handleAction,
-                  itemBuilder: (context) =>
-                      <PopupMenuEntry<_MobileHeaderAction>>[
-                        PopupMenuItem<_MobileHeaderAction>(
-                          value: _MobileHeaderAction.theme,
-                          child: const ListTile(
-                            leading: Icon(Icons.dark_mode_rounded),
-                            title: Text('Görünümü Değiştir'),
-                          ),
-                        ),
-                        const PopupMenuDivider(),
-                        PopupMenuItem<_MobileHeaderAction>(
-                          value: _MobileHeaderAction.save,
-                          child: const ListTile(
-                            leading: Icon(Icons.save_alt_rounded),
-                            title: Text('Projeyi Kaydet'),
-                          ),
-                        ),
-                        PopupMenuItem<_MobileHeaderAction>(
-                          value: _MobileHeaderAction.load,
-                          child: const ListTile(
-                            leading: Icon(Icons.upload_file_rounded),
-                            title: Text('Proje Yükle'),
-                          ),
-                        ),
-                      ],
-                ),
               ],
             ),
           );
@@ -979,6 +1078,131 @@ class _HtmlHeader extends StatelessWidget {
                 ),
         );
       },
+    );
+  }
+}
+
+/// Kırmızı "GÖRÜNTÜLEME MODU (Admin)" rozeti. Üst barda "Kaydet" yerine
+/// gösterilir; salt okunur modun düzenlenemez olduğunu vurgular.
+class _AdminReadOnlyBadge extends StatelessWidget {
+  const _AdminReadOnlyBadge({this.compact = false});
+
+  /// Dar ekranlar için: kısa metin ve ince dolgu.
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context) {
+    final label = compact
+        ? 'GÖRÜNTÜLEME'
+        : 'GÖRÜNTÜLEME MODU (Admin)';
+    return Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: compact ? 10 : 14,
+        vertical: compact ? 8 : 11,
+      ),
+      decoration: BoxDecoration(
+        color: const Color(0xFFD32F2F),
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: <BoxShadow>[
+          BoxShadow(
+            color: const Color(0xFFD32F2F).withValues(alpha: 0.35),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          Icon(
+            Icons.visibility_rounded,
+            size: compact ? 16 : 18,
+            color: Colors.white,
+          ),
+          SizedBox(width: compact ? 5 : 8),
+          Text(
+            label,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w800,
+                  fontSize: compact ? 11 : 13,
+                ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Salt okunur (admin) modun yükleme / hata ekranı. Yükleme tamamlanana kadar
+/// spinner, hata durumunda yeniden dene + geri dön eylemleri gösterir.
+class _AdminReadOnlyStatusPage extends StatelessWidget {
+  const _AdminReadOnlyStatusPage({
+    required this.loading,
+    required this.error,
+    required this.onRetry,
+  });
+
+  final bool loading;
+  final String? error;
+  final VoidCallback? onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: context.colors.surface,
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: loading
+              ? const Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    CircularProgressIndicator(),
+                    SizedBox(height: 16),
+                    Text('Sunum yükleniyor...'),
+                  ],
+                )
+              : Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    const Icon(
+                      Icons.error_outline_rounded,
+                      size: 48,
+                      color: Color(0xFFD32F2F),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      error ?? 'Sunum yüklenemedi.',
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                            color: context._htmlInk,
+                            fontWeight: FontWeight.w600,
+                          ),
+                    ),
+                    const SizedBox(height: 20),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: <Widget>[
+                        OutlinedButton.icon(
+                          onPressed: () => Navigator.of(context).pop(),
+                          icon: const Icon(Icons.arrow_back_rounded, size: 18),
+                          label: const Text('Geri Dön'),
+                        ),
+                        if (onRetry != null) ...<Widget>[
+                          const SizedBox(width: 12),
+                          FilledButton.icon(
+                            onPressed: onRetry,
+                            icon: const Icon(Icons.refresh_rounded, size: 18),
+                            label: const Text('Yeniden Dene'),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ],
+                ),
+        ),
+      ),
     );
   }
 }
@@ -1054,6 +1278,7 @@ class _HtmlMobileLayout extends StatelessWidget {
     required this.onMultiTouchChanged,
     required this.canvasInteractive,
     required this.showHint,
+    this.readOnly = false,
   });
 
   final PresentationController controller;
@@ -1071,6 +1296,10 @@ class _HtmlMobileLayout extends StatelessWidget {
   final ValueChanged<bool> onMultiTouchChanged;
   final bool canvasInteractive;
   final bool showHint;
+
+  /// Salt okunur (admin) mod: alt araç iskelesi ve bağlamsal bar gizlenir,
+  /// tuval etkileşimsiz olur ve şeritte sayfa ekle kapatılır.
+  final bool readOnly;
 
   @override
   Widget build(BuildContext context) {
@@ -1103,32 +1332,40 @@ class _HtmlMobileLayout extends StatelessWidget {
                           canvasPan: canvasPan,
                           showHint: showHint,
                           interactive: canvasInteractive,
+                          readOnly: readOnly,
                         ),
                       ),
                     ),
                   ),
                 ),
               ),
-              Positioned(
-                left: 12,
-                right: 12,
-                top: 10,
-                child: IgnorePointer(
-                  ignoring: canvasZoom > 1.0001,
-                  child: _SelectionContextBarSection(controller: controller),
+              if (!readOnly)
+                Positioned(
+                  left: 12,
+                  right: 12,
+                  top: 10,
+                  child: IgnorePointer(
+                    ignoring: canvasZoom > 1.0001,
+                    child:
+                        _SelectionContextBarSection(controller: controller),
+                  ),
                 ),
-              ),
             ],
           ),
         ),
         const SizedBox(height: 8),
-        _HtmlMobileSlideStrip(controller: controller),
-        const SizedBox(height: 8),
-        _HtmlMobileToolDock(
-          activeTab: activeTab,
-          onOpenTool: onOpenTool,
-          onOpenPhotoQuick: onOpenPhotoQuick,
+        _HtmlMobileSlideStrip(
+          controller: controller,
+          readOnly: readOnly,
         ),
+        if (!readOnly) ...<Widget>[
+          const SizedBox(height: 8),
+          _HtmlMobileToolDock(
+            activeTab: activeTab,
+            onOpenTool: onOpenTool,
+            onOpenPhotoQuick: onOpenPhotoQuick,
+          ),
+        ],
       ],
     );
   }
@@ -1138,9 +1375,15 @@ class _HtmlMobileLayout extends StatelessWidget {
 /// önizlemeler; seçili slayt vurgulanır ve otomatik olarak görünüme getirilir.
 /// Normal slayt gezinmesi buradan yapılır (alt iskelede "Slaytlar" yoktur).
 class _HtmlMobileSlideStrip extends StatefulWidget {
-  const _HtmlMobileSlideStrip({required this.controller});
+  const _HtmlMobileSlideStrip({
+    required this.controller,
+    this.readOnly = false,
+  });
 
   final PresentationController controller;
+
+  /// Salt okunur (admin) mod: "Yeni Slayt" butonu gizlenir.
+  final bool readOnly;
 
   @override
   State<_HtmlMobileSlideStrip> createState() => _HtmlMobileSlideStripState();
@@ -1218,20 +1461,21 @@ class _HtmlMobileSlideStripState extends State<_HtmlMobileSlideStrip> {
             ),
           ),
           const SizedBox(width: 6),
-          IconButton(
-            key: const ValueKey<String>('mobile-slide-strip-add'),
-            tooltip: 'Yeni Slayt',
-            onPressed: widget.controller.addPage,
-            style: IconButton.styleFrom(
-              backgroundColor: context.colors.primary,
-              foregroundColor: context.colors.onPrimary,
-              minimumSize: const Size(36, 36),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
+          if (!widget.readOnly)
+            IconButton(
+              key: const ValueKey<String>('mobile-slide-strip-add'),
+              tooltip: 'Yeni Slayt',
+              onPressed: widget.controller.addPage,
+              style: IconButton.styleFrom(
+                backgroundColor: context.colors.primary,
+                foregroundColor: context.colors.onPrimary,
+                minimumSize: const Size(36, 36),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
               ),
+              icon: const Icon(Icons.add_rounded, size: 20),
             ),
-            icon: const Icon(Icons.add_rounded, size: 20),
-          ),
         ],
       ),
     );
@@ -2345,6 +2589,7 @@ class _HtmlStudioHeader extends StatelessWidget {
     required this.onRemoveText,
     required this.canRemoveText,
     this.lastEditorLabel,
+    this.adminReadOnly = false,
   });
 
   final int pageCount;
@@ -2362,6 +2607,10 @@ class _HtmlStudioHeader extends StatelessWidget {
   final VoidCallback onRemoveText;
   final bool canRemoveText;
   final String? lastEditorLabel;
+
+  /// Salt okunur (admin) mod: düzenleme araçları gizlenir, yerine kırmızı
+  /// "GÖRÜNTÜLEME MODU (Admin)" rozeti gösterilir.
+  final bool adminReadOnly;
 
   @override
   Widget build(BuildContext context) {
@@ -2390,21 +2639,23 @@ class _HtmlStudioHeader extends StatelessWidget {
                 ),
           ),
           const SizedBox(width: 18),
-          _FileMenuButton(
-            onSave: onSave,
-            onLoad: onLoad,
-            onExportHtml: onExport,
-            onExportPdf: onExportPdf,
-            
-          ),
+          if (adminReadOnly)
+            const _AdminReadOnlyBadge()
+          else
+            _FileMenuButton(
+              onSave: onSave,
+              onLoad: onLoad,
+              onExportHtml: onExport,
+              onExportPdf: onExportPdf,
+            ),
           const SizedBox(width: 8),
-          _HistoryButtons(
-            onUndo: onUndo,
-            onRedo: onRedo,
-            canUndo: canUndo,
-            canRedo: canRedo,
-            
-          ),
+          if (!adminReadOnly)
+            _HistoryButtons(
+              onUndo: onUndo,
+              onRedo: onRedo,
+              canUndo: canUndo,
+              canRedo: canRedo,
+            ),
           const Spacer(),
           if (lastEditorLabel != null && lastEditorLabel!.isNotEmpty) ...[
             _StudioHeaderInfoChip(
@@ -2414,17 +2665,19 @@ class _HtmlStudioHeader extends StatelessWidget {
             const SizedBox(width: 8),
           ],
           _ThemeToggleButton(),
-          const SizedBox(width: 8),
-          _ToolbarAction(
-            icon: Icons.add_rounded,
-            onTap: onAddText,
-          ),
-          const SizedBox(width: 8),
-          _ToolbarAction(
-            icon: Icons.delete_outline_rounded,
-            onTap: canRemoveText ? onRemoveText : null,
-            destructive: true,
-          ),
+          if (!adminReadOnly) ...<Widget>[
+            const SizedBox(width: 8),
+            _ToolbarAction(
+              icon: Icons.add_rounded,
+              onTap: onAddText,
+            ),
+            const SizedBox(width: 8),
+            _ToolbarAction(
+              icon: Icons.delete_outline_rounded,
+              onTap: canRemoveText ? onRemoveText : null,
+              destructive: true,
+            ),
+          ],
           const SizedBox(width: 12),
           _StudioPreviewButton(onTap: onPreview),
           const SizedBox(width: 8),
@@ -2617,6 +2870,7 @@ class _HtmlStudioLayout extends StatelessWidget {
     required this.onPreview,
     required this.onExport,
     required this.onExportPdf,
+    this.adminReadOnly = false,
   });
 
   final PresentationController controller;
@@ -2630,8 +2884,28 @@ class _HtmlStudioLayout extends StatelessWidget {
   final VoidCallback onExport;
   final VoidCallback onExportPdf;
 
+  /// Salt okunur (admin) mod: ikon şeridi ve detay paneli gizlenir,
+  /// tuval tam genişlikte salt okunur gösterilir.
+  final bool adminReadOnly;
+
   @override
   Widget build(BuildContext context) {
+    if (adminReadOnly) {
+      return Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          Expanded(
+            child: _HtmlStageWorkspace(
+              controller: controller,
+              textController: textController,
+              activeTab: activeTab,
+              readOnly: true,
+            ),
+          ),
+        ],
+      );
+    }
+
     return Row(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
@@ -2993,17 +3267,21 @@ class _HtmlStageWorkspace extends StatelessWidget {
     required this.controller,
     required this.textController,
     required this.activeTab,
+    this.readOnly = false,
   });
 
   final PresentationController controller;
   final TextEditingController textController;
   final _HtmlToolTab activeTab;
 
+  /// Salt okunur (admin) mod: bağlamsal araç çubuğu gizlenir, tuval
+  /// etkileşimsiz olur ve filmşeritte sayfa ekle/sil kapatılır.
+  final bool readOnly;
+
   @override
   Widget build(BuildContext context) {
     return Column(
       children: <Widget>[
-
         Expanded(
           child: Container(
             padding: const EdgeInsets.all(14),
@@ -3014,15 +3292,18 @@ class _HtmlStageWorkspace extends StatelessWidget {
             ),
             child: Column(
               children: <Widget>[
-                _SelectionContextBarSection(controller: controller),
+                if (!readOnly)
+                  _SelectionContextBarSection(controller: controller),
                 Expanded(
                   child: _HtmlStageCard(
                     controller: controller,
+                    readOnly: readOnly,
                   ),
                 ),
                 const SizedBox(height: 14),
                 _HtmlPageFilmstrip(
                   controller: controller,
+                  readOnly: readOnly,
                 ),
               ],
             ),
@@ -3036,9 +3317,13 @@ class _HtmlStageWorkspace extends StatelessWidget {
 class _HtmlPageFilmstrip extends StatelessWidget {
   const _HtmlPageFilmstrip({
     required this.controller,
+    this.readOnly = false,
   });
 
   final PresentationController controller;
+
+  /// Salt okunur (admin) mod: sayfa ekle/sil butonları gizlenir.
+  final bool readOnly;
 
   @override
   Widget build(BuildContext context) {
@@ -3101,23 +3386,24 @@ class _HtmlPageFilmstrip extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 12),
-          Column(
-            children: <Widget>[
-              _SidebarAction(
-                icon: Icons.add_rounded,
-                onTap: controller.addPage,
-              ),
-              const SizedBox(height: 8),
-              _SidebarAction(
-                icon: Icons.remove_rounded,
-                onTap: controller.canRemovePage
-                    ? controller.removeSelectedPage
-                    : null,
-                subtle: true,
-              ),
-            ],
-          ),
-          const SizedBox(width: 12),
+          if (!readOnly)
+            Column(
+              children: <Widget>[
+                _SidebarAction(
+                  icon: Icons.add_rounded,
+                  onTap: controller.addPage,
+                ),
+                const SizedBox(height: 8),
+                _SidebarAction(
+                  icon: Icons.remove_rounded,
+                  onTap: controller.canRemovePage
+                      ? controller.removeSelectedPage
+                      : null,
+                  subtle: true,
+                ),
+              ],
+            ),
+          if (!readOnly) const SizedBox(width: 12),
           Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -3209,9 +3495,13 @@ class _HtmlStudioPageThumb extends StatelessWidget {
 class _HtmlPageSidebar extends StatelessWidget {
   const _HtmlPageSidebar({
     required this.controller,
+    this.readOnly = false,
   });
 
   final PresentationController controller;
+
+  /// Salt okunur (admin) mod: sayfa ekle/sil butonları gizlenir.
+  final bool readOnly;
 
   @override
   Widget build(BuildContext context) {
@@ -3237,18 +3527,20 @@ class _HtmlPageSidebar extends StatelessWidget {
                       ),
                 ),
               ),
-              _SidebarAction(
-                icon: Icons.add_rounded,
-                onTap: controller.addPage,
-              ),
-              const SizedBox(width: 8),
-              _SidebarAction(
-                icon: Icons.remove_rounded,
-                onTap: controller.canRemovePage
-                    ? controller.removeSelectedPage
-                    : null,
-                subtle: true,
-              ),
+              if (!readOnly) ...<Widget>[
+                _SidebarAction(
+                  icon: Icons.add_rounded,
+                  onTap: controller.addPage,
+                ),
+                const SizedBox(width: 8),
+                _SidebarAction(
+                  icon: Icons.remove_rounded,
+                  onTap: controller.canRemovePage
+                      ? controller.removeSelectedPage
+                      : null,
+                  subtle: true,
+                ),
+              ],
             ],
           ),
           const SizedBox(height: 14),
@@ -3371,6 +3663,7 @@ class _HtmlWorkbench extends StatelessWidget {
     required this.textController,
     required this.activeTab,
     required this.onTabChanged,
+    this.readOnly = false,
   });
 
   final PresentationController controller;
@@ -3378,9 +3671,16 @@ class _HtmlWorkbench extends StatelessWidget {
   final _HtmlToolTab activeTab;
   final ValueChanged<_HtmlToolTab> onTabChanged;
 
+  /// Salt okunur (admin) mod: sekmeli araç çubuğu ve bağlamsal bar gizlenir,
+  /// tuval salt okunur gösterilir.
+  final bool readOnly;
+
   @override
   Widget build(BuildContext context) {
-    final stage = _HtmlStageCard(controller: controller);
+    final stage = _HtmlStageCard(
+      controller: controller,
+      readOnly: readOnly,
+    );
     return Container(
       padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
       decoration: BoxDecoration(
@@ -3393,14 +3693,16 @@ class _HtmlWorkbench extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.max,
         children: <Widget>[
-          _HtmlTopToolbar(
-            controller: controller,
-            textController: textController,
-            activeTab: activeTab,
-            onTabChanged: onTabChanged,
-          ),
-          const SizedBox(height: 12),
-          _SelectionContextBarSection(controller: controller),
+          if (!readOnly) ...<Widget>[
+            _HtmlTopToolbar(
+              controller: controller,
+              textController: textController,
+              activeTab: activeTab,
+              onTabChanged: onTabChanged,
+            ),
+            const SizedBox(height: 12),
+            _SelectionContextBarSection(controller: controller),
+          ],
           Expanded(child: stage),
         ],
       ),
@@ -5964,6 +6266,7 @@ class _HtmlStageCard extends StatelessWidget {
     this.canvasPan = Offset.zero,
     this.showHint = false,
     this.interactive = true,
+    this.readOnly = false,
   });
 
   final PresentationController controller;
@@ -5972,7 +6275,7 @@ class _HtmlStageCard extends StatelessWidget {
   /// büyüktür; geniş düzenlerde varsayılan 1 kalır.
   final double canvasZoom;
 
-  /// Yakınlaştırınca kaydırma uzaklığı (tuval yerel koordinatında).
+  /// Yakınlaşınca kaydırma uzaklığı (tuval yerel koordinatında).
   final Offset canvasPan;
 
   final bool showHint;
@@ -5980,6 +6283,10 @@ class _HtmlStageCard extends StatelessWidget {
   /// Tuval içi düzenleme jestleri (sürükleme, çoklu seçim, dokunma). Çoklu
   /// dokunma sırasında kapatılıp kıstırmanın sahne katmanına geçmesi sağlanır.
   final bool interactive;
+
+  /// Salt okunur (admin) mod: tuval katmanı tüm jestlere (seçim, sürükleme,
+  /// çoklu seçim, bağlam menüleri) kapatılır; yalnızca görüntüleme kalır.
+  final bool readOnly;
 
   @override
   Widget build(BuildContext context) {
@@ -6068,7 +6375,27 @@ class _HtmlStageCard extends StatelessWidget {
                               ? HtmlStageRenderMode.snapshot
                               : HtmlStageRenderMode.preview,
                         ),
-                        PresentationPageCanvas(
+                        if (readOnly)
+                          IgnorePointer(
+                            child: PresentationPageCanvas(
+                              page: controller.selectedPage,
+                              selectedTextBlockId:
+                                  controller.selectedTextBlockId,
+                              selectedTextBlockIds:
+                                  controller.selectedTextBlockIds,
+                              selectedComponentBlockId:
+                                  controller.selectedComponentBlockId,
+                              selectedComponentBlockIds:
+                                  controller.selectedComponentBlockIds,
+                              interactive: false,
+                              showHint: false,
+                              showSurface: false,
+                              showEmptyState: false,
+                              textOpacity: 0,
+                            ),
+                          )
+                        else
+                          PresentationPageCanvas(
                           page: controller.selectedPage,
                           selectedTextBlockId: controller.selectedTextBlockId,
                           selectedTextBlockIds: controller.selectedTextBlockIds,

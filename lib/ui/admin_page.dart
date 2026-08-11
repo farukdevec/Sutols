@@ -2,9 +2,10 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import '../services/firestore_rest_helper.dart';
+import '../services/presentation_loader.dart';
 import '../services/stats_aggregation_service.dart';
 import 'design/design_system.dart';
-import 'presentation_view_page.dart';
+import 'html_presentation_editor_page.dart';
 
 /// Sadece "admins" koleksiyonunda kendi UID'si bulunan kullanıcıların
 /// görebildiği yönetim sayfası. Sayfa açılışında yetki kontrolü yapılır.
@@ -395,6 +396,10 @@ class _AdminPageState extends State<AdminPage> {
   Widget _buildPresentationsTab(BuildContext context) {
     return Column(
       children: [
+        if (!_loadingPresentations && _presentationsError == null) ...[
+          _buildSummaryCards(context),
+          const SizedBox(height: AppSpacing.s8),
+        ],
         Padding(
           padding: const EdgeInsets.fromLTRB(
             AppSpacing.s32,
@@ -426,6 +431,70 @@ class _AdminPageState extends State<AdminPage> {
         ),
         Expanded(child: _buildPresentationList(context)),
       ],
+    );
+  }
+
+  /// "Tüm Sunumlar" sekmesinin üstündeki özet istatistik kartları: toplam
+  /// sunum/slayt, düzenlenen, dışa aktarılan, toplam düzenleme ve süre.
+  Widget _buildSummaryCards(BuildContext context) {
+    final colors = context.colors;
+    final presentations = _presentations;
+    final totalSlides =
+        presentations.fold<int>(0, (sum, p) => sum + p.slideCount);
+    final totalSeconds =
+        presentations.fold<int>(0, (sum, p) => sum + p.timeSpentSeconds);
+    final totalEdits =
+        presentations.fold<int>(0, (sum, p) => sum + p.editCount);
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.s32,
+        AppSpacing.s16,
+        AppSpacing.s32,
+        0,
+      ),
+      child: Wrap(
+        spacing: AppSpacing.s12,
+        runSpacing: AppSpacing.s12,
+        children: [
+          _SummaryStatCard(
+            icon: Icons.layers_rounded,
+            iconColor: colors.primary,
+            value: '${presentations.length}',
+            label: 'Toplam Sunum',
+          ),
+          _SummaryStatCard(
+            icon: Icons.view_carousel_rounded,
+            iconColor: const Color(0xFF0891B2),
+            value: '$totalSlides',
+            label: 'Toplam Slayt',
+          ),
+          _SummaryStatCard(
+            icon: Icons.edit_rounded,
+            iconColor: colors.success,
+            value: '${presentations.where((p) => p.wasEdited).length}',
+            label: 'Düzenlenen',
+          ),
+          _SummaryStatCard(
+            icon: Icons.download_rounded,
+            iconColor: const Color(0xFFD97706),
+            value: '${presentations.where((p) => p.wasExported).length}',
+            label: 'Dışa Aktarılan',
+          ),
+          _SummaryStatCard(
+            icon: Icons.touch_app_rounded,
+            iconColor: const Color(0xFF7C3AED),
+            value: '$totalEdits',
+            label: 'Toplam Düzenleme',
+          ),
+          _SummaryStatCard(
+            icon: Icons.timer_rounded,
+            iconColor: const Color(0xFFDC2626),
+            value: _formatDurationSeconds(totalSeconds),
+            label: 'Toplam Süre',
+          ),
+        ],
+      ),
     );
   }
 
@@ -470,20 +539,109 @@ class _AdminPageState extends State<AdminPage> {
         final presentation = _presentations[index];
         return _PresentationTile(
           presentation: presentation,
-          onTap: () {
-            Navigator.of(context).push(
-              MaterialPageRoute<void>(
-                builder: (_) => PresentationViewPage(
-                  presentationId: presentation.id,
-                  adminView: true,
-                ),
-              ),
-            );
-          },
+          onTap: () => _openInReadOnlyEditor(presentation.id),
         );
       },
     );
   }
+
+  /// Sunumu salt okunur editörde (Görüntüleme Modu) açar. Geri dönüş oku bu
+  /// sayfaya ("Tüm Sunumlar" listesi) döner.
+  Future<void> _openInReadOnlyEditor(String presentationId) async {
+    try {
+      final result = await loadPresentationForEdit(presentationId);
+      if (!mounted) return;
+      await Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (_) => HtmlPresentationEditorPage(
+            controller: result.controller,
+            presentationId: presentationId,
+            initialUpdatedByName: result.updatedByName,
+            adminReadOnly: true,
+          ),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Sunum yüklenemedi: $e')),
+      );
+    }
+  }
+}
+
+/// Özet istatistik kartı: ikon rozeti + değer ve etiket.
+class _SummaryStatCard extends StatelessWidget {
+  const _SummaryStatCard({
+    required this.icon,
+    required this.iconColor,
+    required this.value,
+    required this.label,
+  });
+
+  final IconData icon;
+  final Color iconColor;
+  final String value;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.s16,
+        vertical: AppSpacing.s12,
+      ),
+      decoration: BoxDecoration(
+        color: colors.surfaceElevated.withValues(alpha: 0.6),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        border: Border.all(color: colors.border.withValues(alpha: 0.4)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 38,
+            height: 38,
+            decoration: BoxDecoration(
+              color: iconColor.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(AppRadius.md),
+            ),
+            child: Icon(icon, size: 20, color: iconColor),
+          ),
+          const SizedBox(width: AppSpacing.s12),
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                value,
+                style: AppTypography.titleMedium.copyWith(
+                  color: colors.textPrimary,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              Text(
+                label,
+                style: AppTypography.labelMedium.copyWith(
+                  color: colors.textSecondary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+String _formatDurationSeconds(int seconds) {
+  if (seconds < 60) return '${seconds}sn';
+  final minutes = seconds ~/ 60;
+  if (minutes < 60) return '${minutes}dk';
+  final hours = minutes ~/ 60;
+  return '${hours}sa ${minutes % 60}dk';
 }
 
 class _UserTile extends StatelessWidget {
@@ -573,7 +731,10 @@ class _UserTile extends StatelessWidget {
 }
 
 class _PresentationTile extends StatelessWidget {
-  const _PresentationTile({required this.presentation, required this.onTap});
+  const _PresentationTile({
+    required this.presentation,
+    required this.onTap,
+  });
 
   final _AdminPresentationItem presentation;
   final VoidCallback onTap;
@@ -657,7 +818,7 @@ class _PresentationTile extends StatelessWidget {
                   ),
                   Chip(
                     label: Text(
-                      'Süre: ${_formatDuration(presentation.timeSpentSeconds)}',
+                      'Süre: ${_formatDurationSeconds(presentation.timeSpentSeconds)}',
                     ),
                     visualDensity: VisualDensity.compact,
                   ),
@@ -674,13 +835,5 @@ class _PresentationTile extends StatelessWidget {
     final local = date.toLocal();
     final minute = local.minute.toString().padLeft(2, '0');
     return '${local.day}.${local.month}.${local.year} ${local.hour}:$minute';
-  }
-
-  static String _formatDuration(int seconds) {
-    if (seconds < 60) return '${seconds}sn';
-    final minutes = seconds ~/ 60;
-    if (minutes < 60) return '${minutes}dk';
-    final hours = minutes ~/ 60;
-    return '${hours}sa ${minutes % 60}dk';
   }
 }

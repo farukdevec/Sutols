@@ -342,6 +342,7 @@ class _AdminUserDetailPageState extends State<AdminUserDetailPage> {
             controller: result.controller,
             presentationId: presentationId,
             initialUpdatedByName: result.updatedByName,
+            adminReadOnly: true,
           ),
         ),
       );

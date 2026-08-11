@@ -6,6 +6,7 @@ import 'admin_analytics_page.dart';
 import 'admin_dashboard_page.dart';
 import 'admin_expenses_page.dart';
 import 'admin_payments_page.dart';
+import 'admin_presentations_page.dart';
 import 'admin_promo_codes_page.dart';
 import 'admin_users_page.dart';
 
@@ -19,6 +20,7 @@ class AdminPage extends StatelessWidget {
     _AdminMenuItem(title: 'Expenses', icon: Icons.receipt_long_outlined),
     _AdminMenuItem(title: 'AI Usage', icon: Icons.smart_toy_outlined),
     _AdminMenuItem(title: 'Analytics', icon: Icons.insights_outlined),
+    _AdminMenuItem(title: 'Sunumlar', icon: Icons.slideshow_outlined),
     _AdminMenuItem(title: 'Promosyon Kodları', icon: Icons.confirmation_number_outlined),
     _AdminMenuItem(title: 'Settings', icon: Icons.settings_outlined),
   ];
@@ -53,6 +55,7 @@ class AdminPage extends StatelessWidget {
                 'Expenses' => const AdminExpensesPage(),
                 'AI Usage' => const AdminAiUsagePage(),
                 'Analytics' => const AdminAnalyticsPage(),
+                'Sunumlar' => const AdminPresentationsPage(),
                 'Promosyon Kodları' => const AdminPromoCodesPage(),
                 _ => _EmptySectionPage(title: item.title),
               };
