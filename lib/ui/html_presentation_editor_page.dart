@@ -183,7 +183,6 @@ class _HtmlPresentationEditorPageState
     }
     _hintTimer = Timer(const Duration(seconds: 6), _dismissMobileHint);
     _resolvePresentationFileName();
-    widget.controller.addListener(_resolvePresentationFileName);
     if (widget.adminReadOnly) {
       _adminLoading = true;
       _loadAdminPresentation();
@@ -231,7 +230,6 @@ class _HtmlPresentationEditorPageState
     widget.controller.removeListener(_syncTabWithSelection);
     widget.controller.removeListener(_onMobilePageChanged);
     widget.controller.removeListener(_trackEdits);
-    widget.controller.removeListener(_resolvePresentationFileName);
     _textController.dispose();
     final presentationId = widget.presentationId;
     if (presentationId != null && !widget.adminReadOnly) {
@@ -476,6 +474,7 @@ class _HtmlPresentationEditorPageState
   }
 
   Future<void> _exportPresentation() async {
+    _resolvePresentationFileName();
     final presentationId = widget.presentationId;
     if (presentationId != null && !widget.adminReadOnly) {
       _tracking.markExported(presentationId);
