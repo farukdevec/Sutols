@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:math' as math;
 
 import '../../../models/slide_model.dart';
+import '../../../services/local_google_fonts_css.dart';
 import 'background_scene_sources.dart';
 
 enum HtmlStageRenderMode {
@@ -24,9 +25,40 @@ String get sutolHtmlStagePatchScript => _stagePatchScript;
 String sutolHtmlBackgroundScene(PresentationBackgroundKind kind) =>
     presentationBackgroundSceneHtml(kind);
 
+String buildHtmlBackgroundPreviewDocument(PresentationBackgroundKind kind) {
+  var document = sutolHtmlBackgroundScene(kind);
+  const previewStyles = '''
+<style data-sutol-background-preview>
+html, body { width: 100% !important; height: 100% !important; margin: 0 !important; overflow: hidden !important; }
+body { pointer-events: none !important; user-select: none !important; }
+</style>
+''';
+  const freezeScript = '''
+<script data-sutol-background-preview-freeze>
+window.addEventListener('load', function () {
+  window.setTimeout(function () {
+    document.getAnimations().forEach(function (animation) { animation.pause(); });
+    document.querySelectorAll('svg').forEach(function (svg) {
+      if (typeof svg.pauseAnimations === 'function') svg.pauseAnimations();
+    });
+    window.requestAnimationFrame = function () { return 0; };
+  }, 450);
+});
+</script>
+''';
+
+  document = document.contains('</head>')
+      ? document.replaceFirst('</head>', '$previewStyles</head>')
+      : '$previewStyles$document';
+  return document.contains('</body>')
+      ? document.replaceFirst('</body>', '$freezeScript</body>')
+      : '$document$freezeScript';
+}
+
 String buildHtmlStageDocument({
   required PresentationPage page,
   String? selectedTextBlockId,
+  String? inlineEditingTextBlockId,
   String? selectedComponentBlockId,
   int? visibleRevealStep,
   bool showBadge = true,
@@ -55,6 +87,7 @@ String buildHtmlStageDocument({
       buildHtmlStageMarkup(
         page: page,
         selectedTextBlockId: selectedTextBlockId,
+        inlineEditingTextBlockId: inlineEditingTextBlockId,
         selectedComponentBlockId: selectedComponentBlockId,
         visibleRevealStep: visibleRevealStep,
         showBadge: showBadge,
@@ -77,6 +110,7 @@ String buildHtmlStageDocument({
 String buildHtmlStageMarkup({
   required PresentationPage page,
   String? selectedTextBlockId,
+  String? inlineEditingTextBlockId,
   String? selectedComponentBlockId,
   int? visibleRevealStep,
   bool showBadge = true,
@@ -121,8 +155,13 @@ String buildHtmlStageMarkup({
       _typeClass(block.type),
       _textStyleClass(block.textStyle),
       _textAnimationClass(block.textAnimation),
+      if (visibleRevealStep != null &&
+          block.revealStep < visibleRevealStep &&
+          block.textAnimation != PresentationTextAnimation.none)
+        'is-text-animation-complete',
       if (block.glowIntensity <= 0) 'is-glow-off',
       if (block.id == selectedTextBlockId) 'is-selected',
+      if (block.id == inlineEditingTextBlockId) 'is-inline-editing',
     ].join(' ');
     final hotspotAttr = block.hotspotTargetPageId == null
         ? ''
@@ -130,7 +169,7 @@ String buildHtmlStageMarkup({
     final displayText = block.text.trim().isEmpty ? 'Metin kutusu' : block.text;
     final typewriterCycle = _typewriterCycleSeconds(displayText);
     buffer.writeln(
-      '<div class="$classes" data-sutol-text-id="${_escapeAttribute(block.id)}" data-reveal-step="${block.revealStep}"$hotspotAttr style="left:${_pct(block.position.dx)}%;top:${_pct(block.position.dy)}%;width:${_pct(block.widthFactor)}%;--sutol-left:${_pct(block.position.dx)}%;--sutol-top:${_pct(block.position.dy)}%;--base-font-size:${(block.fontSize / 10).toStringAsFixed(2)}cqw;--sutol-glow:${block.glowIntensity.toStringAsFixed(2)};--sutol-type-cycle:${typewriterCycle.toStringAsFixed(2)}s;${_textFormatStyles(block)}${block.textColorHex == null ? '' : 'color:${_escapeAttribute(block.textColorHex!)};--sutol-text-color:${_escapeAttribute(block.textColorHex!)};'}">${_textBlockMarkup(displayText, block.textAnimation)}</div>',
+      '<div class="$classes" data-sutol-text-id="${_escapeAttribute(block.id)}" data-reveal-step="${block.revealStep}"$hotspotAttr style="left:${_pct(block.position.dx)}%;top:${_pct(block.position.dy)}%;width:${_pct(block.widthFactor)}%;${block.heightFactor == null ? '' : 'height:${_pct(block.heightFactor!)}%;'}--sutol-left:${_pct(block.position.dx)}%;--sutol-top:${_pct(block.position.dy)}%;--base-font-size:${(block.fontSize / 10).toStringAsFixed(2)}cqw;--sutol-glow:${block.glowIntensity.toStringAsFixed(2)};--sutol-type-cycle:${typewriterCycle.toStringAsFixed(2)}s;${_textFormatStyles(block)}${block.textColorHex == null ? '' : 'color:${_escapeAttribute(block.textColorHex!)};--sutol-text-color:${_escapeAttribute(block.textColorHex!)};'}">${_textBlockMarkup(displayText, block.textAnimation)}</div>',
     );
   }
 
@@ -145,7 +184,8 @@ String buildHtmlStageMarkup({
     final resolvableSource = remoteSource;
     final has3D = resolvableSource != null;
     final componentHtml = has3D ? '' : presentationComponentHtml(block.kind);
-    final hasHtmlComponent = has3D || isImage || componentHtml.trim().isNotEmpty;
+    final hasHtmlComponent =
+        has3D || isImage || componentHtml.trim().isNotEmpty;
     final classes = <String>[
       'sutol-html-component',
       if (isImage) 'component-uploaded-image',
@@ -161,8 +201,7 @@ String buildHtmlStageMarkup({
         ? _uploadedImageMarkup(assetId, imageSourcesById[assetId]!)
         : has3D
             ? _model3DMarkup(
-                assetId ??
-                    '',
+                assetId ?? '',
                 resolvableSource,
                 id: assetId ?? '',
                 hasAnimations: findPresentation3DModelAsset(assetId ?? '')
@@ -312,6 +351,8 @@ String _typeClass(PresentationTextType type) {
 }
 
 String _textStyleClass(PresentationTextStyle style) {
+  final googleFontClass = presentationGoogleFontClass(style);
+  if (googleFontClass != null) return googleFontClass;
   switch (style) {
     case PresentationTextStyle.standard:
       return 'text-style-standard';
@@ -393,6 +434,8 @@ String _textStyleClass(PresentationTextStyle style) {
       return 'text-style-klasik-pacifico';
     case PresentationTextStyle.klasikLobster:
       return 'text-style-klasik-lobster';
+    default:
+      return 'text-style-standard';
   }
 }
 
@@ -458,6 +501,8 @@ final Map<PresentationBackgroundKind, String> _escapedBackgroundScenes =
 
 const String _stageStyles = '''
 @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Bungee&family=Caveat:wght@400;600;700&family=Chakra+Petch:wght@600;700&family=Cinzel:wght@600;700;800;900&family=Cormorant+Garamond:wght@400;600&family=Exo+2:wght@700;900&family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400;500;600;700;800&family=Manrope:wght@400;500&family=Marcellus&family=Michroma&family=Mulish:wght@400;500&family=Nunito+Sans:wght@400;500&family=Orbitron:wght@500;700;900&family=Oswald:wght@400;700&family=Playfair+Display:wght@400;700;800&family=Poppins:wght@500;600;700&family=Rajdhani:wght@400;600&family=Righteous&family=Share+Tech+Mono&family=Sora:wght@500;700&family=Space+Grotesk:wght@400;500;700&family=Space+Mono:wght@400;700&family=Syne:wght@700;800&family=Titillium+Web:wght@400;600&family=Tinos:wght@400;700&family=Arimo:wght@400;700&family=Cousine:wght@400;700&family=Carlito:wght@400;700&family=Caladea:wght@400;700&family=EB+Garamond:wght@400;700&family=Libre+Baskerville:wght@400;700&family=Alegreya:wght@400;700&family=PT+Serif:wght@400;700&family=Merriweather:wght@400;900&family=Lora:wght@400;700&family=Great+Vibes&family=Dancing+Script:wght@400;700&family=Pacifico&family=Lobster&family=Unbounded:wght@400;700&display=swap');
+
+$sutolLocalGoogleFontsCss
 
 html, body {
   margin: 0;
@@ -616,7 +661,7 @@ body {
   padding: clamp(8px, 1.4cqw, 18px);
   border-radius: 18px;
   color: #142033;
-  font-size: clamp(12px, var(--base-font-size), 96px);
+  font-size: clamp(12px, var(--base-font-size), 320px);
   font-weight: 600;
   line-height: 1.22;
   white-space: pre-wrap;
@@ -1329,12 +1374,47 @@ body {
   letter-spacing: 0.01em;
 }
 
+/* Google Fonts resmi katalog popülerliğine göre seçilen açık kaynak aileler. */
+.sutol-html-block.text-style-google-roboto { font-family: 'Roboto', sans-serif; }
+.sutol-html-block.text-style-google-open-sans { font-family: 'Open Sans', sans-serif; }
+.sutol-html-block.text-style-google-inter { font-family: 'Inter', sans-serif; }
+.sutol-html-block.text-style-google-montserrat { font-family: 'Montserrat', sans-serif; }
+.sutol-html-block.text-style-google-poppins { font-family: 'Poppins', sans-serif; }
+.sutol-html-block.text-style-google-noto-sans-jp { font-family: 'Noto Sans JP', sans-serif; }
+.sutol-html-block.text-style-google-lato { font-family: 'Lato', sans-serif; }
+.sutol-html-block.text-style-google-arimo { font-family: 'Arimo', sans-serif; }
+.sutol-html-block.text-style-google-roboto-condensed { font-family: 'Roboto Condensed', sans-serif; }
+.sutol-html-block.text-style-google-roboto-mono { font-family: 'Roboto Mono', monospace; }
+.sutol-html-block.text-style-google-noto-sans { font-family: 'Noto Sans', sans-serif; }
+.sutol-html-block.text-style-google-oswald { font-family: 'Oswald', sans-serif; }
+.sutol-html-block.text-style-google-dm-sans { font-family: 'DM Sans', sans-serif; }
+.sutol-html-block.text-style-google-nunito { font-family: 'Nunito', sans-serif; }
+.sutol-html-block.text-style-google-raleway { font-family: 'Raleway', sans-serif; }
+.sutol-html-block.text-style-google-nunito-sans { font-family: 'Nunito Sans', sans-serif; }
+.sutol-html-block.text-style-google-playfair-display { font-family: 'Playfair Display', serif; }
+.sutol-html-block.text-style-google-roboto-slab { font-family: 'Roboto Slab', serif; }
+.sutol-html-block.text-style-google-rubik { font-family: 'Rubik', sans-serif; }
+.sutol-html-block.text-style-google-archivo-black { font-family: 'Archivo Black', sans-serif; }
+.sutol-html-block.text-style-google-ubuntu { font-family: 'Ubuntu', sans-serif; }
+.sutol-html-block.text-style-google-noto-sans-kr { font-family: 'Noto Sans KR', sans-serif; }
+.sutol-html-block.text-style-google-kanit { font-family: 'Kanit', sans-serif; }
+.sutol-html-block.text-style-google-manrope { font-family: 'Manrope', sans-serif; }
+.sutol-html-block.text-style-google-outfit { font-family: 'Outfit', sans-serif; }
+.sutol-html-block.text-style-google-merriweather { font-family: 'Merriweather', serif; }
+.sutol-html-block.text-style-google-work-sans { font-family: 'Work Sans', sans-serif; }
+.sutol-html-block.text-style-google-lora { font-family: 'Lora', serif; }
+.sutol-html-block.text-style-google-noto-sans-tc { font-family: 'Noto Sans TC', sans-serif; }
+.sutol-html-block.text-style-google-prompt { font-family: 'Prompt', sans-serif; }
+
+.sutol-html-block[class*="text-style-google-"] { font-weight: 400; letter-spacing: normal; }
+.sutol-html-block[class*="text-style-google-"].is-title { font-weight: 700; }
+
 /* Font presets above define typography only. Color, glow and motion are
    applied independently by the optional text effect controls below. */
 .sutol-html-stage .sutol-html-block[class*="text-style-"] {
   color: #142033;
   text-shadow: none;
-  animation: none;
+  animation: none !important;
   filter: none;
   background: none;
   -webkit-text-fill-color: currentColor;
@@ -1350,17 +1430,17 @@ body {
   will-change: transform, opacity, filter, text-shadow, background-position;
 }
 
-.sutol-html-block.text-animation-bilim-dramatik { animation: sutolEffectDeepGlow 3.2s ease-in-out infinite alternate !important; }
-.sutol-html-block.text-animation-bilim-temiz { animation: sutolEffectSoftPulse 4s ease-in-out infinite !important; }
-.sutol-html-block.text-animation-bilim-deneysel { animation: sutolEffectGlitch 2.6s steps(12) infinite !important; }
-.sutol-html-block.text-animation-gunes-dramatik { animation: sutolEffectSolarFlare 2.8s cubic-bezier(.22, 1, .36, 1) infinite !important; }
-.sutol-html-block.text-animation-gunes-temiz { animation: sutolEffectSolarBreath 2.2s ease-in-out infinite !important; }
-.sutol-html-block.text-animation-gunes-deneysel { animation: sutolEffectFlicker 1.35s steps(6) infinite !important; }
-.sutol-html-block.text-animation-uzay-dramatik { animation: sutolEffectCosmicBloom 3.6s ease-in-out infinite alternate !important; }
-.sutol-html-block.text-animation-uzay-temiz { animation: sutolEffectOrbitPulse 2.8s ease-in-out infinite !important; }
-.sutol-html-block.text-animation-uzay-deneysel { animation: sutolEffectDrift 4.2s ease-in-out infinite !important; }
-.sutol-html-block.text-animation-optik-dramatik { animation: sutolEffectMirrorFlash 2.8s ease-in-out infinite !important; }
-.sutol-html-block.text-animation-optik-temiz { animation: sutolEffectShimmer 3.2s ease-in-out infinite !important; }
+.sutol-html-block.text-animation-bilim-dramatik { animation: sutolEffectDeepGlow 3.2s ease-in-out 1 forwards !important; }
+.sutol-html-block.text-animation-bilim-temiz { animation: sutolEffectSoftPulse 4s ease-in-out 1 forwards !important; }
+.sutol-html-block.text-animation-bilim-deneysel { animation: sutolEffectGlitch 2.6s steps(12) 1 forwards !important; }
+.sutol-html-block.text-animation-gunes-dramatik { animation: sutolEffectSolarFlare 2.8s cubic-bezier(.22, 1, .36, 1) 1 forwards !important; }
+.sutol-html-block.text-animation-gunes-temiz { animation: sutolEffectSolarBreath 2.2s ease-in-out 1 forwards !important; }
+.sutol-html-block.text-animation-gunes-deneysel { animation: sutolEffectFlicker 1.35s steps(6) 1 forwards !important; }
+.sutol-html-block.text-animation-uzay-dramatik { animation: sutolEffectCosmicBloom 3.6s ease-in-out 1 forwards !important; }
+.sutol-html-block.text-animation-uzay-temiz { animation: sutolEffectOrbitPulse 2.8s ease-in-out 1 forwards !important; }
+.sutol-html-block.text-animation-uzay-deneysel { animation: sutolEffectDrift 4.2s ease-in-out 1 forwards !important; }
+.sutol-html-block.text-animation-optik-dramatik { animation: sutolEffectMirrorFlash 2.8s ease-in-out 1 forwards !important; }
+.sutol-html-block.text-animation-optik-temiz { animation: sutolEffectShimmer 3.2s ease-in-out 1 forwards !important; }
 .sutol-html-block.text-animation-optik-deneysel {
   background: linear-gradient(90deg, var(--sutol-text-color, #60a5fa), #ffffff, var(--sutol-text-color, #60a5fa)) !important;
   background-size: 300% 100% !important;
@@ -1368,14 +1448,14 @@ body {
   background-clip: text !important;
   color: transparent !important;
   -webkit-text-fill-color: transparent !important;
-  animation: sutolEffectPrism 5s linear infinite !important;
+  animation: sutolEffectPrism 5s linear 1 forwards !important;
 }
-.sutol-html-block.text-animation-fizik-dramatik { animation: sutolEffectElectricFlicker 2.2s linear infinite !important; }
-.sutol-html-block.text-animation-fizik-temiz { animation: sutolEffectEnergyWave 2.8s ease-in-out infinite !important; }
-.sutol-html-block.text-animation-fizik-deneysel { animation: sutolEffectScalePulse 2.6s ease-in-out infinite !important; }
-.sutol-html-block.text-animation-teknoloji-dramatik { animation: sutolEffectMatrixGlow 2.8s ease-in-out infinite alternate !important; }
-.sutol-html-block.text-animation-teknoloji-temiz { animation: sutolEffectCircuitScan 2s steps(10) infinite !important; }
-.sutol-html-block.text-animation-teknoloji-deneysel { animation: sutolEffectDataGlitch 1.25s steps(8) infinite !important; }
+.sutol-html-block.text-animation-fizik-dramatik { animation: sutolEffectElectricFlicker 2.2s linear 1 forwards !important; }
+.sutol-html-block.text-animation-fizik-temiz { animation: sutolEffectEnergyWave 2.8s ease-in-out 1 forwards !important; }
+.sutol-html-block.text-animation-fizik-deneysel { animation: sutolEffectScalePulse 2.6s ease-in-out 1 forwards !important; }
+.sutol-html-block.text-animation-teknoloji-dramatik { animation: sutolEffectMatrixGlow 2.8s ease-in-out 1 forwards !important; }
+.sutol-html-block.text-animation-teknoloji-temiz { animation: sutolEffectCircuitScan 2s steps(10) 1 forwards !important; }
+.sutol-html-block.text-animation-teknoloji-deneysel { animation: sutolEffectDataGlitch 1.25s steps(8) 1 forwards !important; }
 .sutol-html-block.text-animation-metalik-parlama,
 .sutol-html-block.text-animation-isik-taramasi {
   background-size: 320% 100% !important;
@@ -1397,10 +1477,10 @@ body {
   background-size: 320% 100% !important;
   -webkit-background-clip: text !important;
   background-clip: text !important;
-  animation: sutolEffectMetallicShine 3.2s cubic-bezier(.4, 0, .2, 1) infinite !important;
+  animation: sutolEffectMetallicShine 3.2s cubic-bezier(.4, 0, .2, 1) 1 forwards !important;
 }
 .sutol-html-block.text-animation-yavas-belirme {
-  animation: sutolEffectSlowReveal 5.4s cubic-bezier(.22, 1, .36, 1) infinite !important;
+  animation: sutolEffectSlowReveal 5.4s cubic-bezier(.22, 1, .36, 1) 1 forwards !important;
 }
 .sutol-html-block.text-animation-daktilo {
   animation: none !important;
@@ -1410,18 +1490,18 @@ body {
   opacity: 0;
   clip-path: inset(0 100% 0 0);
   border-right: 0.07em solid transparent;
-  animation: sutolEffectTypewriterWord var(--sutol-type-cycle) ease-in-out infinite both;
+  animation: sutolEffectTypewriterWord var(--sutol-type-cycle) ease-in-out 1 both;
   animation-delay: calc(var(--sutol-word-index) * 0.46s);
 }
 .sutol-html-block.text-animation-bulaniktan-net {
-  animation: sutolEffectBlurFocus 4.8s cubic-bezier(.22, 1, .36, 1) infinite !important;
+  animation: sutolEffectBlurFocus 4.8s cubic-bezier(.22, 1, .36, 1) 1 forwards !important;
 }
 .sutol-html-block.text-animation-uc-boyutlu-donus {
   transform-origin: center top;
-  animation: sutolEffectFlip3d 4.6s cubic-bezier(.22, 1, .36, 1) infinite !important;
+  animation: sutolEffectFlip3d 4.6s cubic-bezier(.22, 1, .36, 1) 1 forwards !important;
 }
 .sutol-html-block.text-animation-ziplayarak-giris {
-  animation: sutolEffectBounceIn 4.4s cubic-bezier(.2, .9, .3, 1.2) infinite !important;
+  animation: sutolEffectBounceIn 4.4s cubic-bezier(.2, .9, .3, 1.2) 1 forwards !important;
 }
 .sutol-html-block.text-animation-isik-taramasi {
   background-image: linear-gradient(
@@ -1436,31 +1516,31 @@ body {
   background-size: 320% 100% !important;
   -webkit-background-clip: text !important;
   background-clip: text !important;
-  animation: sutolEffectSpotlightSweep 2.8s linear infinite !important;
+  animation: sutolEffectSpotlightSweep 2.8s linear 1 forwards !important;
 }
 .sutol-html-block.text-animation-perde-acilisi {
-  animation: sutolEffectCurtainReveal 4.8s cubic-bezier(.22, 1, .36, 1) infinite !important;
+  animation: sutolEffectCurtainReveal 4.8s cubic-bezier(.22, 1, .36, 1) 1 forwards !important;
 }
 .sutol-html-block.text-animation-sinematik-yaklasma {
-  animation: sutolEffectCinematicZoom 5.2s cubic-bezier(.16, 1, .3, 1) infinite !important;
+  animation: sutolEffectCinematicZoom 5.2s cubic-bezier(.16, 1, .3, 1) 1 forwards !important;
 }
 .sutol-html-block.text-animation-yercekimsiz-suzulme {
-  animation: sutolEffectZeroGravity 5.6s ease-in-out infinite !important;
+  animation: sutolEffectZeroGravity 5.6s ease-in-out 1 forwards !important;
 }
 .sutol-html-block.text-animation-neon-kontur {
   color: transparent !important;
   -webkit-text-fill-color: transparent !important;
   -webkit-text-stroke: 1.5px var(--sutol-text-color, #f8fbff);
-  animation: sutolEffectNeonOutline 2.6s steps(8) infinite !important;
+  animation: sutolEffectNeonOutline 2.6s steps(8) 1 forwards !important;
 }
 .sutol-html-block.text-animation-golge-ekstruzyonu {
-  animation: sutolEffectLongShadow 3.8s ease-in-out infinite !important;
+  animation: sutolEffectLongShadow 3.8s ease-in-out 1 forwards !important;
 }
 .sutol-html-block.text-animation-sivi-dalga {
-  animation: sutolEffectLiquidWave 3.6s cubic-bezier(.45, .05, .55, .95) infinite !important;
+  animation: sutolEffectLiquidWave 3.6s cubic-bezier(.45, .05, .55, .95) 1 forwards !important;
 }
 .sutol-html-block.text-animation-kesik-sinyal {
-  animation: sutolEffectSignalCut 2.2s steps(12) infinite !important;
+  animation: sutolEffectSignalCut 2.2s steps(12) 1 forwards !important;
 }
 .sutol-html-block.text-animation-holografik-dalga {
   background-image: linear-gradient(
@@ -1478,7 +1558,27 @@ body {
   background-clip: text !important;
   color: transparent !important;
   -webkit-text-fill-color: transparent !important;
-  animation: sutolEffectHolographicWave 4s ease-in-out infinite !important;
+  animation: sutolEffectHolographicWave 4s ease-in-out 1 forwards !important;
+}
+
+/* Bir sonraki gösterim adımında sahne yeniden kurulduğunda daha önce
+   görünmüş metinler animasyona tekrar girmez. Animasyonu kaldırmak yerine
+   son karesinde dondururuz; böylece parlama/gölge/renk etkisi korunur. */
+.sutol-html-block.is-text-animation-complete {
+  animation-delay: -9999s !important;
+  animation-iteration-count: 1 !important;
+  animation-fill-mode: forwards !important;
+  animation-play-state: paused !important;
+  opacity: 1 !important;
+}
+
+.sutol-html-block.is-text-animation-complete .sutol-typewriter-word {
+  animation-delay: -9999s !important;
+  animation-iteration-count: 1 !important;
+  animation-fill-mode: both !important;
+  animation-play-state: paused !important;
+  opacity: 1 !important;
+  border-right-color: transparent !important;
 }
 
 @keyframes sutolEffectDeepGlow {
@@ -1487,13 +1587,14 @@ body {
 }
 
 @keyframes sutolEffectSoftPulse {
-  0%, 100% { text-shadow: 0 0 calc(3px * var(--sutol-glow)) currentColor, 0 0 calc(10px * var(--sutol-glow)) currentColor; transform: scale(0.99); opacity: 0.86; }
+  0% { text-shadow: 0 0 calc(3px * var(--sutol-glow)) currentColor, 0 0 calc(10px * var(--sutol-glow)) currentColor; transform: scale(0.99); opacity: 0; }
   50% { text-shadow: 0 0 calc(9px * var(--sutol-glow)) currentColor, 0 0 calc(30px * var(--sutol-glow)) currentColor, 0 0 calc(52px * var(--sutol-glow)) currentColor; transform: scale(1.025); opacity: 1; }
+  100% { text-shadow: 0 0 calc(3px * var(--sutol-glow)) currentColor, 0 0 calc(10px * var(--sutol-glow)) currentColor; transform: scale(1); opacity: 1; }
 }
 
 @keyframes sutolEffectGlitch {
   0%, 72%, 100% { text-shadow: 0 0 calc(7px * var(--sutol-glow)) currentColor, 0 0 calc(22px * var(--sutol-glow)) currentColor; transform: translate(0, 0) skewX(0); opacity: 1; }
-  76% { text-shadow: -5px 0 calc(4px * var(--sutol-glow)) currentColor, 5px 0 calc(12px * var(--sutol-glow)) #ffffff; transform: translate(-4px, 1px) skewX(-4deg); opacity: 0.72; }
+  76% { text-shadow: -5px 0 calc(4px * var(--sutol-glow)) currentColor, 5px 0 calc(12px * var(--sutol-glow)) #ffffff; transform: translate(-4px, 1px) skewX(-4deg); opacity: 1; }
   80% { text-shadow: 6px 0 calc(6px * var(--sutol-glow)) currentColor, -4px 0 calc(14px * var(--sutol-glow)) #ffffff; transform: translate(5px, -1px) skewX(5deg); opacity: 1; }
   84% { transform: translate(-2px, 0) skewX(-2deg); }
   88% { transform: translate(0, 0) skewX(0); }
@@ -1501,19 +1602,21 @@ body {
 
 @keyframes sutolEffectFlicker {
   0%, 14%, 20%, 42%, 48%, 74%, 100% { text-shadow: 0 0 calc(9px * var(--sutol-glow)) currentColor, 0 0 calc(30px * var(--sutol-glow)) currentColor, 0 0 calc(58px * var(--sutol-glow)) currentColor; transform: scale(1.02); opacity: 1; }
-  16%, 44%, 76% { text-shadow: none; transform: scale(0.985); opacity: 0.38; }
-  18%, 46% { text-shadow: 0 0 calc(16px * var(--sutol-glow)) currentColor, 0 0 calc(64px * var(--sutol-glow)) currentColor; opacity: 0.9; }
+  16%, 44%, 76% { text-shadow: none; transform: scale(0.985); opacity: 1; }
+  18%, 46% { text-shadow: 0 0 calc(16px * var(--sutol-glow)) currentColor, 0 0 calc(64px * var(--sutol-glow)) currentColor; opacity: 1; }
 }
 
 @keyframes sutolEffectDrift {
-  0%, 100% { text-shadow: -8px 0 calc(16px * var(--sutol-glow)) currentColor, 0 0 calc(30px * var(--sutol-glow)) currentColor; transform: translateX(-4px) perspective(500px) rotateY(-2deg); opacity: 0.82; }
+  0% { text-shadow: -8px 0 calc(16px * var(--sutol-glow)) currentColor, 0 0 calc(30px * var(--sutol-glow)) currentColor; transform: translateX(-4px) perspective(500px) rotateY(-2deg); opacity: 0; }
   50% { text-shadow: 8px 0 calc(34px * var(--sutol-glow)) currentColor, 0 0 calc(58px * var(--sutol-glow)) currentColor; transform: translateX(4px) perspective(500px) rotateY(2deg); opacity: 1; }
+  100% { text-shadow: -8px 0 calc(16px * var(--sutol-glow)) currentColor, 0 0 calc(30px * var(--sutol-glow)) currentColor; transform: translateX(0) perspective(500px) rotateY(0); opacity: 1; }
 }
 
 @keyframes sutolEffectScalePulse {
-  0%, 100% { text-shadow: 0 0 calc(5px * var(--sutol-glow)) currentColor, 0 0 calc(16px * var(--sutol-glow)) currentColor; transform: scale(0.975); opacity: 0.8; }
+  0% { text-shadow: 0 0 calc(5px * var(--sutol-glow)) currentColor, 0 0 calc(16px * var(--sutol-glow)) currentColor; transform: scale(0.975); opacity: 0; }
   45% { text-shadow: 0 0 calc(14px * var(--sutol-glow)) currentColor, 0 0 calc(46px * var(--sutol-glow)) currentColor, 0 0 calc(76px * var(--sutol-glow)) currentColor; transform: scale(1.045); opacity: 1; }
   55% { transform: scale(1.015); }
+  100% { text-shadow: 0 0 calc(5px * var(--sutol-glow)) currentColor, 0 0 calc(16px * var(--sutol-glow)) currentColor; transform: scale(1); opacity: 1; }
 }
 
 @keyframes sutolEffectPrism {
@@ -1523,9 +1626,10 @@ body {
 }
 
 @keyframes sutolEffectSolarFlare {
-  0%, 100% { text-shadow: -8px 0 calc(12px * var(--sutol-glow)) currentColor, 0 0 calc(24px * var(--sutol-glow)) currentColor; transform: scale(0.98); opacity: 0.8; }
+  0% { text-shadow: -8px 0 calc(12px * var(--sutol-glow)) currentColor, 0 0 calc(24px * var(--sutol-glow)) currentColor; transform: scale(0.98); opacity: 0; }
   40% { text-shadow: 0 0 calc(18px * var(--sutol-glow)) #ffffff, 0 0 calc(48px * var(--sutol-glow)) currentColor, 12px 0 calc(82px * var(--sutol-glow)) currentColor; transform: scale(1.05); opacity: 1; }
   55% { transform: scale(1.015); }
+  100% { text-shadow: -8px 0 calc(12px * var(--sutol-glow)) currentColor, 0 0 calc(24px * var(--sutol-glow)) currentColor; transform: scale(1); opacity: 1; }
 }
 
 @keyframes sutolEffectSolarBreath {
@@ -1544,25 +1648,28 @@ body {
 }
 
 @keyframes sutolEffectMirrorFlash {
-  0%, 100% { text-shadow: -10px 0 calc(10px * var(--sutol-glow)) currentColor; transform: skewX(-1deg); opacity: 0.78; }
+  0% { text-shadow: -10px 0 calc(10px * var(--sutol-glow)) currentColor; transform: skewX(-1deg); opacity: 0; }
   45% { text-shadow: 0 0 calc(16px * var(--sutol-glow)) #ffffff, 0 0 calc(42px * var(--sutol-glow)) currentColor; transform: skewX(1deg) scale(1.035); opacity: 1; }
   55% { text-shadow: 10px 0 calc(20px * var(--sutol-glow)) currentColor; }
+  100% { text-shadow: -10px 0 calc(10px * var(--sutol-glow)) currentColor; transform: none; opacity: 1; }
 }
 
 @keyframes sutolEffectShimmer {
-  0%, 100% { text-shadow: -6px 0 calc(8px * var(--sutol-glow)) currentColor; opacity: 0.75; transform: translateX(-2px); }
+  0% { text-shadow: -6px 0 calc(8px * var(--sutol-glow)) currentColor; opacity: 0; transform: translateX(-2px); }
   50% { text-shadow: 6px 0 calc(26px * var(--sutol-glow)) #ffffff, 0 0 calc(38px * var(--sutol-glow)) currentColor; opacity: 1; transform: translateX(2px); }
+  100% { text-shadow: -6px 0 calc(8px * var(--sutol-glow)) currentColor; opacity: 1; transform: none; }
 }
 
 @keyframes sutolEffectElectricFlicker {
   0%, 12%, 18%, 52%, 58%, 100% { text-shadow: -3px 0 calc(8px * var(--sutol-glow)) currentColor, 3px 0 calc(24px * var(--sutol-glow)) #ffffff, 0 0 calc(44px * var(--sutol-glow)) currentColor; transform: skewX(0); opacity: 1; }
-  14%, 54% { text-shadow: none; transform: skewX(-5deg) translateX(-3px); opacity: 0.3; }
-  16%, 56% { text-shadow: 5px 0 calc(34px * var(--sutol-glow)) currentColor; transform: skewX(4deg) translateX(3px); opacity: 0.92; }
+  14%, 54% { text-shadow: none; transform: skewX(-5deg) translateX(-3px); opacity: 1; }
+  16%, 56% { text-shadow: 5px 0 calc(34px * var(--sutol-glow)) currentColor; transform: skewX(4deg) translateX(3px); opacity: 1; }
 }
 
 @keyframes sutolEffectEnergyWave {
-  0%, 100% { text-shadow: 0 5px calc(10px * var(--sutol-glow)) currentColor; transform: translateY(2px) scale(0.99); opacity: 0.78; }
+  0% { text-shadow: 0 5px calc(10px * var(--sutol-glow)) currentColor; transform: translateY(2px) scale(0.99); opacity: 0; }
   50% { text-shadow: 0 -5px calc(32px * var(--sutol-glow)) currentColor, 0 0 calc(52px * var(--sutol-glow)) currentColor; transform: translateY(-3px) scale(1.035); opacity: 1; }
+  100% { text-shadow: 0 5px calc(10px * var(--sutol-glow)) currentColor; transform: none; opacity: 1; }
 }
 
 @keyframes sutolEffectMatrixGlow {
@@ -1571,13 +1678,14 @@ body {
 }
 
 @keyframes sutolEffectCircuitScan {
-  0%, 100% { text-shadow: -8px 0 calc(8px * var(--sutol-glow)) currentColor; transform: translateX(-2px); opacity: 0.72; }
+  0% { text-shadow: -8px 0 calc(8px * var(--sutol-glow)) currentColor; transform: translateX(-2px); opacity: 0; }
   50% { text-shadow: 8px 0 calc(30px * var(--sutol-glow)) currentColor, 0 0 calc(48px * var(--sutol-glow)) currentColor; transform: translateX(2px); opacity: 1; }
+  100% { text-shadow: -8px 0 calc(8px * var(--sutol-glow)) currentColor; transform: none; opacity: 1; }
 }
 
 @keyframes sutolEffectDataGlitch {
   0%, 62%, 100% { text-shadow: 0 0 calc(9px * var(--sutol-glow)) currentColor, 0 0 calc(26px * var(--sutol-glow)) currentColor; transform: translate(0, 0) skewX(0); opacity: 1; }
-  66% { text-shadow: -7px 0 calc(4px * var(--sutol-glow)) #ffffff, 5px 0 calc(16px * var(--sutol-glow)) currentColor; transform: translate(-5px, 2px) skewX(-7deg); opacity: 0.58; }
+  66% { text-shadow: -7px 0 calc(4px * var(--sutol-glow)) #ffffff, 5px 0 calc(16px * var(--sutol-glow)) currentColor; transform: translate(-5px, 2px) skewX(-7deg); opacity: 1; }
   72% { text-shadow: 7px 0 calc(8px * var(--sutol-glow)) currentColor, -5px 0 calc(18px * var(--sutol-glow)) #ffffff; transform: translate(6px, -2px) skewX(7deg); opacity: 1; }
   78% { transform: translate(-3px, 0) skewX(-3deg); }
   84% { transform: translate(0, 0) skewX(0); }
@@ -1592,7 +1700,7 @@ body {
 @keyframes sutolEffectSlowReveal {
   0%, 12% { clip-path: inset(0 100% 0 0); transform: translateY(24px); filter: blur(12px); opacity: 0; }
   55%, 84% { clip-path: inset(0 0 0 0); transform: translateY(0); filter: blur(0); opacity: 1; text-shadow: 0 0 calc(18px * var(--sutol-glow)) currentColor; }
-  100% { clip-path: inset(0 0 0 0); transform: translateY(-8px); filter: blur(3px); opacity: 0; }
+  100% { clip-path: inset(0 0 0 0); transform: translateY(0); filter: blur(0); opacity: 1; text-shadow: 0 0 calc(10px * var(--sutol-glow)) currentColor; }
 }
 
 @keyframes sutolEffectTypewriterWord {
@@ -1616,21 +1724,22 @@ body {
   88%, 100% {
     clip-path: inset(0 0 0 0);
     border-right-color: transparent;
-    opacity: 0;
+    transform: translateY(0);
+    opacity: 1;
   }
 }
 
 @keyframes sutolEffectBlurFocus {
   0%, 12% { filter: blur(16px); letter-spacing: 0.22em; transform: scale(1.12); opacity: 0; }
   48%, 82% { filter: blur(0); letter-spacing: 0.02em; transform: scale(1); opacity: 1; text-shadow: 0 0 calc(16px * var(--sutol-glow)) currentColor; }
-  100% { filter: blur(8px); letter-spacing: 0.1em; transform: scale(0.96); opacity: 0; }
+  100% { filter: blur(0); letter-spacing: 0.02em; transform: scale(1); opacity: 1; text-shadow: 0 0 calc(8px * var(--sutol-glow)) currentColor; }
 }
 
 @keyframes sutolEffectFlip3d {
   0%, 10% { transform: perspective(700px) rotateX(-92deg) translateY(-22px); filter: blur(6px); opacity: 0; }
   42% { transform: perspective(700px) rotateX(12deg) translateY(3px); filter: blur(0); opacity: 1; text-shadow: 0 0 calc(24px * var(--sutol-glow)) currentColor; }
   56%, 84% { transform: perspective(700px) rotateX(0) translateY(0); opacity: 1; }
-  100% { transform: perspective(700px) rotateX(78deg) translateY(16px); opacity: 0; }
+  100% { transform: perspective(700px) rotateX(0) translateY(0); filter: blur(0); opacity: 1; }
 }
 
 @keyframes sutolEffectBounceIn {
@@ -1639,7 +1748,7 @@ body {
   44% { transform: translateY(-7px) scale(0.96); }
   54% { transform: translateY(3px) scale(1.025); }
   64%, 86% { transform: translateY(0) scale(1); opacity: 1; }
-  100% { transform: translateY(28px) scale(0.86); opacity: 0; }
+  100% { transform: translateY(0) scale(1); opacity: 1; }
 }
 
 @keyframes sutolEffectSpotlightSweep {
@@ -1651,24 +1760,25 @@ body {
 @keyframes sutolEffectCurtainReveal {
   0%, 10% { clip-path: inset(0 50% 0 50%); transform: scaleX(0.82); filter: blur(7px); opacity: 0; }
   48%, 84% { clip-path: inset(0 0 0 0); transform: scaleX(1); filter: blur(0); opacity: 1; text-shadow: 0 0 calc(18px * var(--sutol-glow)) currentColor; }
-  100% { clip-path: inset(0 50% 0 50%); transform: scaleX(0.9); opacity: 0; }
+  100% { clip-path: inset(0 0 0 0); transform: scaleX(1); filter: blur(0); opacity: 1; }
 }
 
 @keyframes sutolEffectCinematicZoom {
   0%, 10% { transform: perspective(800px) translateZ(260px) scale(1.55); filter: blur(18px); opacity: 0; letter-spacing: 0.18em; }
   48%, 84% { transform: perspective(800px) translateZ(0) scale(1); filter: blur(0); opacity: 1; letter-spacing: 0.02em; text-shadow: 0 0 calc(20px * var(--sutol-glow)) currentColor; }
-  100% { transform: perspective(800px) translateZ(-120px) scale(0.82); filter: blur(8px); opacity: 0; }
+  100% { transform: perspective(800px) translateZ(0) scale(1); filter: blur(0); opacity: 1; letter-spacing: 0.02em; }
 }
 
 @keyframes sutolEffectZeroGravity {
-  0%, 100% { transform: translate(-5px, 7px) rotate(-1.4deg) scale(0.99); text-shadow: -6px 8px calc(16px * var(--sutol-glow)) currentColor; opacity: 0.8; }
+  0% { transform: translate(-5px, 7px) rotate(-1.4deg) scale(0.99); text-shadow: -6px 8px calc(16px * var(--sutol-glow)) currentColor; opacity: 0; }
   35% { transform: translate(3px, -6px) rotate(1deg) scale(1.025); text-shadow: 4px -8px calc(28px * var(--sutol-glow)) currentColor; opacity: 1; }
   68% { transform: translate(6px, 3px) rotate(-0.5deg) scale(1.01); text-shadow: 8px 4px calc(22px * var(--sutol-glow)) currentColor; }
+  100% { transform: none; text-shadow: -6px 8px calc(16px * var(--sutol-glow)) currentColor; opacity: 1; }
 }
 
 @keyframes sutolEffectNeonOutline {
   0%, 14%, 20%, 52%, 58%, 100% { -webkit-text-stroke-width: 1.5px; text-shadow: 0 0 calc(7px * var(--sutol-glow)) var(--sutol-text-color, #f8fbff), 0 0 calc(24px * var(--sutol-glow)) var(--sutol-text-color, #f8fbff); opacity: 1; }
-  16%, 54% { -webkit-text-stroke-width: 0.5px; text-shadow: none; opacity: 0.28; }
+  16%, 54% { -webkit-text-stroke-width: 0.5px; text-shadow: none; opacity: 1; }
   18%, 56% { -webkit-text-stroke-width: 2.4px; text-shadow: 0 0 calc(15px * var(--sutol-glow)) #ffffff, 0 0 calc(42px * var(--sutol-glow)) var(--sutol-text-color, #f8fbff); opacity: 1; }
 }
 
@@ -1687,7 +1797,7 @@ body {
 @keyframes sutolEffectSignalCut {
   0%, 58%, 100% { clip-path: inset(0 0 0 0); transform: translate(0, 0) skewX(0); filter: contrast(1); opacity: 1; }
   62% { clip-path: polygon(0 0, 100% 0, 100% 35%, 4% 35%, 4% 58%, 100% 58%, 100% 100%, 0 100%); transform: translate(-6px, 0) skewX(-5deg); filter: contrast(1.8); text-shadow: 7px 0 calc(12px * var(--sutol-glow)) currentColor; }
-  68% { clip-path: polygon(0 0, 96% 0, 96% 42%, 0 42%, 0 65%, 96% 65%, 96% 100%, 0 100%); transform: translate(7px, -1px) skewX(6deg); opacity: 0.62; }
+  68% { clip-path: polygon(0 0, 96% 0, 96% 42%, 0 42%, 0 65%, 96% 65%, 96% 100%, 0 100%); transform: translate(7px, -1px) skewX(6deg); opacity: 1; }
   74% { clip-path: inset(0 0 0 0); transform: translate(-2px, 1px); opacity: 1; }
 }
 
@@ -1723,6 +1833,11 @@ body {
 .sutol-html-stage.theme-dark .sutol-html-block.is-selected {
   outline-color: rgba(103, 232, 249, 0.86);
   background: rgba(103, 232, 249, 0.10);
+}
+
+.sutol-html-block.is-inline-editing {
+  opacity: 0 !important;
+  animation: none !important;
 }
 
 .sutol-html-component {

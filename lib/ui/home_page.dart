@@ -111,34 +111,27 @@ class _SutolHomePageState extends State<SutolHomePage> {
     }
   }
 
-  Widget _buildLogo(AppColors colors) {
+  Widget _buildLogo() {
     return GestureDetector(
       onTap: () {
         Navigator.of(context).popUntil((route) => route.isFirst);
       },
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Image.asset('assets/images/logo.png', height: 32),
-          const SizedBox(width: 10),
-          Text(
-            'Sutols',
-            style: AppTypography.headline.copyWith(
-              color: colors.textPrimary,
-              letterSpacing: -0.5,
-            ),
-          ),
-        ],
+      child: Semantics(
+        image: true,
+        label: 'Sutols',
+        child: Image.asset(
+          'assets/images/sutols_wordmark.png',
+          height: 38,
+        ),
       ),
     );
   }
 
   /// Geniş ekran (>= 720px): tüm öğeler tek satırda.
   Widget _buildWideNavbar(BuildContext context) {
-    final colors = context.colors;
     return Row(
       children: [
-        _buildLogo(colors),
+        _buildLogo(),
         const Spacer(),
         Row(
           mainAxisSize: MainAxisSize.min,
@@ -162,13 +155,12 @@ class _SutolHomePageState extends State<SutolHomePage> {
   /// durumu hemen altında. Sunumlarım/Editör kısayolları yalnız geniş
   /// ekranda gösterilir.
   Widget _buildNarrowNavbar(BuildContext context) {
-    final colors = context.colors;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Row(
           children: [
-            _buildLogo(colors),
+            _buildLogo(),
             const Spacer(),
             const _ThemeToggleButton(),
             const _EditorButton(),
@@ -344,9 +336,8 @@ class _SutolHomePageState extends State<SutolHomePage> {
                     // Ekrana sığması için kısa ekranlarda daha az
                     // son sunum gösterilir.
                     final recent = _recentPresentations;
-                    final maxRecent = compact
-                        ? 1
-                        : (constraints.maxHeight < 760 ? 2 : 3);
+                    final maxRecent =
+                        compact ? 1 : (constraints.maxHeight < 760 ? 2 : 3);
 
                     final Widget mainContent;
                     if (dashboard) {
@@ -378,16 +369,13 @@ class _SutolHomePageState extends State<SutolHomePage> {
                               ),
                             ],
                             SizedBox(
-                              height: compact
-                                  ? AppSpacing.s16
-                                  : AppSpacing.s24,
+                              height: compact ? AppSpacing.s16 : AppSpacing.s24,
                             ),
                             inputCard(),
                             if (recent != null && recent.isNotEmpty) ...[
                               SizedBox(
-                                height: compact
-                                    ? AppSpacing.s12
-                                    : AppSpacing.s24,
+                                height:
+                                    compact ? AppSpacing.s12 : AppSpacing.s24,
                               ),
                               Row(
                                 children: [
@@ -411,10 +399,8 @@ class _SutolHomePageState extends State<SutolHomePage> {
                                   ),
                                 ],
                               ),
-                              ...recent
-                                  .take(maxRecent)
-                                  .map((item) =>
-                                      _RecentPresentationTile(item: item)),
+                              ...recent.take(maxRecent).map((item) =>
+                                  _RecentPresentationTile(item: item)),
                             ],
                           ],
                         ),
@@ -431,9 +417,7 @@ class _SutolHomePageState extends State<SutolHomePage> {
                               description:
                                   'Anlatmak istediğinizi yazın. Sutols, sizin için tasarlanmış bir sunumu saniyeler içinde hazırlasın.',
                               gapAfter: narrow
-                                  ? (compact
-                                      ? AppSpacing.s16
-                                      : AppSpacing.s24)
+                                  ? (compact ? AppSpacing.s16 : AppSpacing.s24)
                                   : AppSpacing.s48,
                             ),
                             inputCard(),
@@ -541,7 +525,7 @@ class _AmbientGlowBackgroundState extends State<_AmbientGlowBackground> {
             ),
             radius: 0.8,
             colors: [
-              colors.accent.withValues(alpha: 0.06),
+              const Color(0xFF0A7E82).withValues(alpha: 0.06),
               colors.surface,
             ],
             stops: const [0.0, 1.0],

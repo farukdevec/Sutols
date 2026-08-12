@@ -1,11 +1,48 @@
+import 'dart:io';
+
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sutol/models/slide_model.dart';
 import 'package:sutol/services/presentation_auto_builder.dart';
 import 'package:sutol/services/presentation_export_builder.dart';
 import 'package:sutol/ui/widgets/html_stage/background_scene_sources.dart';
+import 'package:sutol/ui/widgets/html_stage/html_page_stage.dart';
 import 'package:sutol/ui/widgets/html_stage/html_stage_document.dart';
 
 void main() {
+  test('popular Google Fonts catalog exposes exactly 30 unique families', () {
+    expect(popularGoogleFontFamilies.length, 30);
+    expect(popularGoogleFontFamilies.values.toSet().length, 30);
+    expect(popularGoogleFontFamilies.values.first, 'Roboto');
+    expect(popularGoogleFontFamilies.values, contains('Open Sans'));
+    expect(popularGoogleFontFamilies.values, contains('Montserrat'));
+    expect(popularGoogleFontFamilies.values, contains('Poppins'));
+
+    for (final entry in popularGoogleFontFamilies.entries) {
+      final cssClass = presentationGoogleFontClass(entry.key)!;
+      expect(sutolHtmlStageStyles, contains('.sutol-html-block.$cssClass'));
+      expect(sutolHtmlStageStyles, contains("font-family: '${entry.value}'"));
+    }
+
+    final localAssets = RegExp(
+      r"assets/assets/fonts/google_fonts/([^')]+)",
+    ).allMatches(sutolHtmlStageStyles);
+    expect(localAssets.length, 124);
+    for (final match in localAssets) {
+      expect(
+        File('assets/fonts/google_fonts/${match.group(1)}').existsSync(),
+        isTrue,
+      );
+    }
+    expect(
+      Directory('assets/fonts/google_fonts/licenses')
+          .listSync()
+          .whereType<File>()
+          .length,
+      30,
+    );
+  });
+
   test('library exposes the 19 topic and 6 light backgrounds', () {
     expect(presentationBackgroundLibrary, hasLength(25));
     expect(
@@ -33,6 +70,42 @@ void main() {
       expect(markup, contains('sutol-bg-scene-frame'));
       expect(markup, contains('srcdoc='));
     }
+  });
+
+  test('background thumbnails embed each real scene and freeze after render',
+      () {
+    for (final definition in presentationBackgroundLibrary) {
+      final scene = sutolHtmlBackgroundScene(definition.kind);
+      final preview = buildHtmlBackgroundPreviewDocument(definition.kind);
+      final fragmentEnd = scene.length < 160 ? scene.length : 160;
+      final sceneFragment = scene.substring(0, fragmentEnd);
+
+      expect(preview, contains('data-sutol-background-preview'));
+      expect(preview, contains(sceneFragment), reason: definition.label);
+      expect(preview.length, greaterThan(scene.length));
+      expect(preview, contains('document.getAnimations()'));
+      expect(preview, contains('svg.pauseAnimations'));
+    }
+  });
+
+  testWidgets('background thumbnail forwards taps to selection callback',
+      (tester) async {
+    var tapCount = 0;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: SizedBox(
+          width: 320,
+          height: 180,
+          child: HtmlBackgroundPreview(
+            kind: PresentationBackgroundKind.science,
+            onTap: () => tapCount += 1,
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.byType(HtmlBackgroundPreview));
+    expect(tapCount, 1);
   });
 
   test('light backgrounds are categorized, animated and marked as light', () {
@@ -297,6 +370,32 @@ void main() {
     expect(document, contains('will-change: transform, opacity'));
   });
 
+  test('inline editing hides only the duplicated HTML text layer', () {
+    const page = PresentationPage(
+      id: 'inline-editing',
+      textBlocks: <PresentationTextBlock>[
+        PresentationTextBlock(
+          id: 'editing-text',
+          text: 'Düzenlenen metin',
+          position: Offset(0.1, 0.1),
+          fontSize: 48,
+          type: PresentationTextType.title,
+          widthFactor: 0.6,
+        ),
+      ],
+    );
+
+    final document = buildHtmlStageDocument(
+      page: page,
+      selectedTextBlockId: 'editing-text',
+      inlineEditingTextBlockId: 'editing-text',
+    );
+
+    expect(document, contains('is-selected is-inline-editing'));
+    expect(document, contains('.sutol-html-block.is-inline-editing {'));
+    expect(document, contains('opacity: 0 !important;'));
+  });
+
   test('popular reveal and display animations are available independently', () {
     const page = PresentationPage(
       id: 'display-animations',
@@ -345,6 +444,109 @@ void main() {
       document,
       contains(
         '.sutol-html-block.text-animation-isik-taramasi {\n  background-image: linear-gradient(',
+      ),
+    );
+  });
+
+  test('text animations run once and remain visible after revealing', () {
+    const page = PresentationPage(
+      id: 'one-shot-text-animation',
+      textBlocks: <PresentationTextBlock>[
+        PresentationTextBlock(
+          id: 'animated-text',
+          text: 'Kalıcı metin',
+          position: Offset(0.1, 0.1),
+          fontSize: 48,
+          type: PresentationTextType.title,
+          widthFactor: 0.7,
+          textAnimation: PresentationTextAnimation.yavasBelirme,
+        ),
+      ],
+    );
+
+    final document = buildHtmlStageDocument(page: page);
+    final effectsStart = document.indexOf(
+      '.sutol-html-block[class*="text-animation-"]',
+    );
+    final effectsEnd = document.indexOf(
+      '.sutol-html-block.is-glow-off',
+      effectsStart,
+    );
+    final effectsCss = document.substring(effectsStart, effectsEnd);
+
+    expect(effectsCss, isNot(contains('infinite')));
+    expect(effectsCss, contains('1 forwards !important'));
+    expect(effectsCss, contains('ease-in-out 1 both'));
+    expect(
+      effectsCss,
+      contains('.sutol-html-block.is-text-animation-complete {'),
+    );
+    expect(effectsCss, contains('animation-delay: -9999s !important'));
+    expect(effectsCss, contains('animation-play-state: paused !important'));
+    expect(
+      effectsCss,
+      isNot(
+        contains(
+          '.sutol-html-block.is-text-animation-complete {\n  animation: none',
+        ),
+      ),
+    );
+    expect(effectsCss, isNot(contains('opacity: 0.38')));
+    expect(effectsCss, isNot(contains('opacity: 0.3;')));
+    expect(effectsCss, isNot(contains('opacity: 0.28')));
+    expect(effectsCss, isNot(contains('opacity: 0.58')));
+    expect(effectsCss, isNot(contains('opacity: 0.62')));
+    expect(
+      effectsCss,
+      contains(
+        '100% { clip-path: inset(0 0 0 0); transform: translateY(0); filter: blur(0); opacity: 1;',
+      ),
+    );
+  });
+
+  test('previously revealed text does not animate again on the next step', () {
+    const page = PresentationPage(
+      id: 'reveal-animation-once',
+      textBlocks: <PresentationTextBlock>[
+        PresentationTextBlock(
+          id: 'first-text',
+          text: 'İlk metin',
+          position: Offset(0.1, 0.1),
+          fontSize: 48,
+          type: PresentationTextType.title,
+          widthFactor: 0.7,
+          textAnimation: PresentationTextAnimation.yavasBelirme,
+        ),
+        PresentationTextBlock(
+          id: 'second-text',
+          text: 'İkinci metin',
+          position: Offset(0.1, 0.3),
+          fontSize: 40,
+          type: PresentationTextType.body,
+          widthFactor: 0.7,
+          revealStep: 1,
+          textAnimation: PresentationTextAnimation.bulaniktanNet,
+        ),
+      ],
+    );
+
+    final document = buildHtmlStageDocument(
+      page: page,
+      visibleRevealStep: 1,
+    );
+
+    expect(
+      document,
+      contains(
+        'text-animation-yavas-belirme is-text-animation-complete',
+      ),
+    );
+    expect(
+      document,
+      isNot(
+        contains(
+          'text-animation-bulaniktan-net is-text-animation-complete',
+        ),
       ),
     );
   });
@@ -584,6 +786,42 @@ void main() {
     expect(document, contains('id="sutolNextBtn"'));
     expect(
       RegExp('class="sutol-export-dot(?: is-active)?"').allMatches(document),
+      hasLength(2),
+    );
+  });
+
+  test('PDF print export renders every slide as a static landscape page', () {
+    final document = buildPresentationExportHtml(
+      pages: const <PresentationPage>[
+        PresentationPage(
+          id: 'print-1',
+          textBlocks: <PresentationTextBlock>[],
+        ),
+        PresentationPage(
+          id: 'print-2',
+          textBlocks: <PresentationTextBlock>[],
+        ),
+      ],
+      printMode: true,
+    );
+
+    expect(
+      document,
+      matches(RegExp('class="sutol-export-shell [^"]*print-mode"')),
+    );
+    expect(document, contains('size: 13.333in 7.5in'));
+    expect(document, contains('width: 13.333in'));
+    expect(document, contains('height: 7.5in'));
+    expect(document, contains('page-break-after: always'));
+    expect(document, contains('print-color-adjust: exact'));
+    expect(document, contains('data-sutol-print-static'));
+    expect(document, contains("model.removeAttribute('autoplay')"));
+    expect(
+      RegExp('data-sutol-render-mode="snapshot"').allMatches(document),
+      hasLength(2),
+    );
+    expect(
+      RegExp('class="sutol-export-slide(?: is-active)?"').allMatches(document),
       hasLength(2),
     );
   });

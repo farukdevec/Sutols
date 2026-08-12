@@ -7,6 +7,8 @@ import '../models/slide_model.dart';
 import '../services/presentation_auto_builder.dart';
 
 class PresentationController extends ChangeNotifier {
+  static const double minTextFontSize = 18;
+  static const double maxTextFontSize = 320;
   static const double _minTextWidthFactor = 0.18;
   static const double _maxTextRightPaddingFactor = 0.06;
   static const int _minTransitionDurationMs = 120;
@@ -216,7 +218,9 @@ class PresentationController extends ChangeNotifier {
 
   void updateSelectedFontSize(double value) {
     _replaceSelectedTextBlock(
-      selectedTextBlock?.copyWith(fontSize: value),
+      selectedTextBlock?.copyWith(
+        fontSize: value.clamp(minTextFontSize, maxTextFontSize).toDouble(),
+      ),
     );
   }
 
@@ -445,7 +449,7 @@ class PresentationController extends ChangeNotifier {
     notifyListeners();
   }
 
-void updateAllPageBackgrounds(PresentationBackgroundKind value) {
+  void updateAllPageBackgrounds(PresentationBackgroundKind value) {
     if (_pages.every((page) => page.backgroundKind == value)) {
       return;
     }
@@ -1108,8 +1112,16 @@ void updateAllPageBackgrounds(PresentationBackgroundKind value) {
     notifyListeners();
   }
 
-  void resizeSelectedTextWidth(double deltaX, Size canvasSize) {
-    if (canvasSize.width <= 0) {
+  void resizeSelectedTextByHandle(
+    Offset delta,
+    Size canvasSize, {
+    required double renderedHeightFactor,
+    required bool fromLeft,
+    required bool fromTop,
+    required bool fromRight,
+    required bool fromBottom,
+  }) {
+    if (canvasSize.width <= 0 || canvasSize.height <= 0) {
       return;
     }
 
@@ -1118,10 +1130,73 @@ void updateAllPageBackgrounds(PresentationBackgroundKind value) {
       return;
     }
 
-    final nextWidth = current.widthFactor + deltaX / canvasSize.width;
+    final deltaX = delta.dx / canvasSize.width;
+    final deltaY = delta.dy / canvasSize.height;
+    var left = current.position.dx;
+    var top = current.position.dy;
+    var right = left + current.widthFactor;
+    final currentHeight = current.heightFactor ?? renderedHeightFactor;
+    var bottom = top + currentHeight;
+
+    if (fromLeft) left += deltaX;
+    if (fromRight) right += deltaX;
+    if (fromTop) top += deltaY;
+    if (fromBottom) bottom += deltaY;
+
+    const minLeft = 0.04;
+    const minTop = 0.05;
+    const minHeight = 0.06;
+    const maxHeight = 0.86;
+    const maxRight = 1 - _maxTextRightPaddingFactor;
+    const maxBottom = 0.95;
+
+    if (fromLeft) {
+      left = left
+          .clamp(
+            math.max(minLeft, right - 0.82),
+            right - _minTextWidthFactor,
+          )
+          .toDouble();
+    }
+    if (fromRight) {
+      right = right
+          .clamp(
+            left + _minTextWidthFactor,
+            math.min(maxRight, left + 0.82),
+          )
+          .toDouble();
+    }
+    if (fromTop) {
+      top = top
+          .clamp(
+            math.max(minTop, bottom - maxHeight),
+            bottom - minHeight,
+          )
+          .toDouble();
+    }
+    if (fromBottom) {
+      bottom = bottom
+          .clamp(
+            top + minHeight,
+            math.min(maxBottom, top + maxHeight),
+          )
+          .toDouble();
+    }
+
+    final nextHeight = bottom - top;
+    final resizeVertically = fromTop || fromBottom;
+    final nextFontSize = resizeVertically && currentHeight > 0
+        ? (current.fontSize * (nextHeight / currentHeight))
+            .clamp(minTextFontSize, maxTextFontSize)
+            .toDouble()
+        : current.fontSize;
+
     _replaceSelectedTextBlock(
       current.copyWith(
-        widthFactor: _clampWidthFactor(nextWidth, current.position.dx),
+        position: Offset(left, top),
+        widthFactor: right - left,
+        heightFactor: resizeVertically ? nextHeight : current.heightFactor,
+        fontSize: nextFontSize,
       ),
     );
   }
@@ -1474,7 +1549,8 @@ void updateAllPageBackgrounds(PresentationBackgroundKind value) {
   Offset _componentPositionForTemplate(int index, int existingCount) {
     final startX = 0.65 + (existingCount % 3) * 0.04;
     final startY = 0.18 + (index % 4) * 0.12;
-    return Offset(startX.clamp(0.08, 0.70).toDouble(), startY.clamp(0.08, 0.68).toDouble());
+    return Offset(startX.clamp(0.08, 0.70).toDouble(),
+        startY.clamp(0.08, 0.68).toDouble());
   }
 }
 

@@ -22,5 +22,146 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  fonts:
+    - family: Roboto
+      fonts:
+        - asset: assets/fonts/google_fonts/roboto-400-latin.woff2
+    - family: Open Sans
+      fonts:
+        - asset: assets/fonts/google_fonts/open-sans-400-latin.woff2
+    - family: Inter
+      fonts:
+        - asset: assets/fonts/google_fonts/inter-400-latin.woff2
+    - family: Montserrat
+      fonts:
+        - asset: assets/fonts/google_fonts/montserrat-400-latin.woff2
+    - family: Poppins
+      fonts:
+        - asset: assets/fonts/google_fonts/poppins-400-latin.woff2
+    - family: Noto Sans JP
+      fonts:
+        - asset: assets/fonts/google_fonts/noto-sans-jp-400-latin.woff2
+    - family: Lato
+      fonts:
+        - asset: assets/fonts/google_fonts/lato-400-latin.woff2
+    - family: Arimo
+      fonts:
+        - asset: assets/fonts/google_fonts/arimo-400-latin.woff2
+    - family: Roboto Condensed
+      fonts:
+        - asset: assets/fonts/google_fonts/roboto-condensed-400-latin.woff2
+    - family: Roboto Mono
+      fonts:
+        - asset: assets/fonts/google_fonts/roboto-mono-400-latin.woff2
+    - family: Noto Sans
+      fonts:
+        - asset: assets/fonts/google_fonts/noto-sans-400-latin.woff2
+    - family: Oswald
+      fonts:
+        - asset: assets/fonts/google_fonts/oswald-400-latin.woff2
+    - family: DM Sans
+      fonts:
+        - asset: assets/fonts/google_fonts/dm-sans-400-latin.woff2
+    - family: Nunito
+      fonts:
+        - asset: assets/fonts/google_fonts/nunito-400-latin.woff2
+    - family: Raleway
+      fonts:
+        - asset: assets/fonts/google_fonts/raleway-400-latin.woff2
+    - family: Nunito Sans
+      fonts:
+        - asset: assets/fonts/google_fonts/nunito-sans-400-latin.woff2
+    - family: Playfair Display
+      fonts:
+        - asset: assets/fonts/google_fonts/playfair-display-400-latin.woff2
+    - family: Roboto Slab
+      fonts:
+        - asset: assets/fonts/google_fonts/roboto-slab-400-latin.woff2
+    - family: Rubik
+      fonts:
+        - asset: assets/fonts/google_fonts/rubik-400-latin.woff2
+    - family: Archivo Black
+      fonts:
+        - asset: assets/fonts/google_fonts/archivo-black-400-latin.woff2
+    - family: Ubuntu
+      fonts:
+        - asset: assets/fonts/google_fonts/ubuntu-400-latin.woff2
+    - family: Noto Sans KR
+      fonts:
+        - asset: assets/fonts/google_fonts/noto-sans-kr-400-latin.woff2
+    - family: Kanit
+      fonts:
+        - asset: assets/fonts/google_fonts/kanit-400-latin.woff2
+    - family: Manrope
+      fonts:
+        - asset: assets/fonts/google_fonts/manrope-400-latin.woff2
+    - family: Outfit
+      fonts:
+        - asset: assets/fonts/google_fonts/outfit-400-latin.woff2
+    - family: Merriweather
+      fonts:
+        - asset: assets/fonts/google_fonts/merriweather-400-latin.woff2
+    - family: Work Sans
+      fonts:
+        - asset: assets/fonts/google_fonts/work-sans-400-latin.woff2
+    - family: Lora
+      fonts:
+        - asset: assets/fonts/google_fonts/lora-400-latin.woff2
+    - family: Noto Sans TC
+      fonts:
+        - asset: assets/fonts/google_fonts/noto-sans-tc-400-latin.woff2
+    - family: Prompt
+      fonts:
+        - asset: assets/fonts/google_fonts/prompt-400-latin.woff2
+    - family: Bebas Neue
+      fonts:
+        - asset: assets/fonts/google_fonts/bebas-neue-400-latin.woff2
+    - family: Bungee
+      fonts:
+        - asset: assets/fonts/google_fonts/bungee-400-latin.woff2
+    - family: Caveat
+      fonts:
+        - asset: assets/fonts/google_fonts/caveat-400-latin.woff2
+    - family: Unbounded
+      fonts:
+        - asset: assets/fonts/google_fonts/unbounded-400-latin.woff2
+    - family: Tinos
+      fonts:
+        - asset: assets/fonts/google_fonts/tinos-400-latin.woff2
+    - family: Cousine
+      fonts:
+        - asset: assets/fonts/google_fonts/cousine-400-latin.woff2
+    - family: Carlito
+      fonts:
+        - asset: assets/fonts/google_fonts/carlito-400-latin.woff2
+    - family: Caladea
+      fonts:
+        - asset: assets/fonts/google_fonts/caladea-400-latin.woff2
+    - family: EB Garamond
+      fonts:
+        - asset: assets/fonts/google_fonts/eb-garamond-400-latin.woff2
+    - family: Libre Baskerville
+      fonts:
+        - asset: assets/fonts/google_fonts/libre-baskerville-400-latin.woff2
+    - family: Alegreya
+      fonts:
+        - asset: assets/fonts/google_fonts/alegreya-400-latin.woff2
+    - family: PT Serif
+      fonts:
+        - asset: assets/fonts/google_fonts/pt-serif-400-latin.woff2
+    - family: Great Vibes
+      fonts:
+        - asset: assets/fonts/google_fonts/great-vibes-400-latin.woff2
+    - family: Dancing Script
+      fonts:
+        - asset: assets/fonts/google_fonts/dancing-script-400-latin.woff2
+    - family: Pacifico
+      fonts:
+        - asset: assets/fonts/google_fonts/pacifico-400-latin.woff2
+    - family: Lobster
+      fonts:
+        - asset: assets/fonts/google_fonts/lobster-400-latin.woff2
   assets:
     - assets/images/
+    - assets/fonts/google_fonts/
+    - assets/fonts/google_fonts/licenses/

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:sutol/models/slide_model.dart';
 import 'package:sutol/state/presentation_controller.dart';
 import 'package:sutol/ui/html_presentation_editor_page.dart';
 import 'package:sutol/ui/widgets/editor_shell.dart';
@@ -67,7 +68,8 @@ void main() {
       report('header', headerRect);
       report('canvas', canvasRect);
       report('strip', stripRect);
-      report('dock', Rect.fromLTWH(0, size.height - dockH - 6, size.width, dockH));
+      report(
+          'dock', Rect.fromLTWH(0, size.height - dockH - 6, size.width, dockH));
 
       debugPrint(
         'GEOMETRY summary @${size.width.toInt()}x${size.height.toInt()}: '
@@ -97,9 +99,11 @@ void main() {
       expect(dockH, inInclusiveRange(64, 72));
       // 4b) Boşluk ritmi: sahne alanı↔şerit ve şerit↔iskele 8-12px.
       final stageCardRect = tester.getRect(
-        find.byWidgetPredicate(
-          (w) => w.runtimeType.toString() == '_HtmlStageCard',
-        ).first,
+        find
+            .byWidgetPredicate(
+              (w) => w.runtimeType.toString() == '_HtmlStageCard',
+            )
+            .first,
       );
       expect(
         stripRect.top - stageCardRect.bottom,
@@ -151,12 +155,86 @@ void main() {
     );
     expect(barRect.height, lessThan(60));
     expect(barRect.top, lessThan(canvasRect.top));
+    expect(
+      find.byWidgetPredicate(
+        (widget) => widget.runtimeType.toString() == '_ComponentResizeGrip',
+      ),
+      findsNWidgets(8),
+    );
+    expect(
+      find.byKey(
+        const ValueKey<String>('selected-text-animation-control'),
+      ),
+      findsOneWidget,
+    );
+    final textFieldHost = find.byKey(
+      const ValueKey<String>('selected-text-toolbar-field'),
+    );
+    expect(textFieldHost, findsOneWidget);
+    expect(tester.getRect(textFieldHost).left, lessThan(32));
+    expect(find.text('Animasyon yok'), findsOneWidget);
     expect(tester.takeException(), isNull);
 
-    // Seçim temizlenince bar tamamen kaybolur (bağlamsal).
     final controller = tester.widget<HtmlPresentationEditorPage>(
       find.byType(HtmlPresentationEditorPage),
     );
+    await tester.enterText(
+      find.descendant(of: textFieldHost, matching: find.byType(TextField)),
+      'Yeni başlık',
+    );
+    expect(controller.controller.selectedTextBlock!.text, 'Yeni başlık');
+
+    final animationControl = find.byKey(
+      const ValueKey<String>('selected-text-animation-control'),
+    );
+    await tester.ensureVisible(animationControl);
+    await tester.tap(animationControl);
+    await tester.pumpAndSettle();
+    final animationOption = find.byKey(
+      const ValueKey<String>('text-animation-option-bilimDramatik'),
+    );
+    expect(animationOption, findsOneWidget);
+    await tester.tap(animationOption);
+    await tester.pumpAndSettle();
+    expect(
+      controller.controller.selectedTextBlock!.textAnimation,
+      PresentationTextAnimation.bilimDramatik,
+    );
+    expect(find.text('Derin ışıma'), findsOneWidget);
+
+    final colorControl = find.byKey(
+      const ValueKey<String>('selected-text-color-control'),
+    );
+    expect(colorControl, findsOneWidget);
+    await tester.ensureVisible(colorControl);
+    await tester.tap(colorControl);
+    await tester.pumpAndSettle();
+    final blueOption = find.byKey(
+      const ValueKey<String>('text-color-#3B82F6'),
+    );
+    expect(blueOption, findsOneWidget);
+    await tester.tap(blueOption);
+    await tester.pumpAndSettle();
+    expect(controller.controller.selectedTextBlock!.textColorHex, '#3B82F6');
+
+    final glowControl = find.byKey(
+      const ValueKey<String>('selected-text-glow-control'),
+    );
+    expect(glowControl, findsOneWidget);
+    expect(find.byTooltip('Diğer metin ayarları'), findsNothing);
+    await tester.ensureVisible(glowControl);
+    await tester.tap(glowControl);
+    await tester.pumpAndSettle();
+    final strongGlowOption = find.byKey(
+      const ValueKey<String>('text-glow-1.5'),
+    );
+    expect(strongGlowOption, findsOneWidget);
+    await tester.tap(strongGlowOption);
+    await tester.pumpAndSettle();
+    expect(controller.controller.selectedTextBlock!.glowIntensity, 1.5);
+    expect(strongGlowOption, findsNothing, reason: 'açılır menü kapanmalı');
+
+    // Seçim temizlenince bar tamamen kaybolur (bağlamsal).
     controller.controller.clearSelection();
     await tester.pumpAndSettle();
     expect(find.byType(SelectionContextBar), findsNothing);
@@ -186,9 +264,11 @@ void main() {
     tester,
   ) async {
     await pumpAt(tester, const Size(360, 800));
-    final controller = tester.widget<HtmlPresentationEditorPage>(
-      find.byType(HtmlPresentationEditorPage),
-    ).controller;
+    final controller = tester
+        .widget<HtmlPresentationEditorPage>(
+          find.byType(HtmlPresentationEditorPage),
+        )
+        .controller;
     // Yeni sunum tek slaytla başlar; şeritte ikinci küçük resmi görmek için
     // önce bir slayt daha ekleyelim.
     controller.addPage();
@@ -219,7 +299,9 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('kıstırma yakınlaştırır, iki parmak kaydırır, tek parmak tuvali yönetir', (
+  testWidgets(
+      'kıstırma yakınlaştırır, iki parmak kaydırır, tek parmak tuvali yönetir',
+      (
     tester,
   ) async {
     await pumpAt(tester, const Size(360, 800));
@@ -271,7 +353,11 @@ void main() {
       await pumpAt(tester, size);
 
       // Marka: gerçek logo + "Sutols" adı kırpılmadan görünür.
-      expect(find.text('Sutols'), findsOneWidget, reason: 'marka @$size');
+      expect(
+        find.byKey(const ValueKey<String>('sutols-wordmark')),
+        findsOneWidget,
+        reason: 'marka @$size',
+      );
       expect(
         find.byWidgetPredicate((w) => w is Image && w.image is AssetImage),
         findsWidgets,

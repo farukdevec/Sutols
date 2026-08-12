@@ -50,12 +50,33 @@ Future<void> exportPresentationAsPdfViaPrint({
     title: title,
     modelSourcesById: modelSourcesById,
     imageSourcesById: RemoteImageSources.all,
+    printMode: true,
   ).replaceFirst(
     '</body>',
     '''
 <script>
-window.addEventListener('load', function () {
-  setTimeout(function () { window.print(); }, 350);
+window.addEventListener('load', async function () {
+  try {
+    if (document.fonts && document.fonts.ready) await document.fonts.ready;
+  } catch (_) {}
+
+  const frames = Array.from(document.querySelectorAll('iframe'));
+  await Promise.all(frames.map(function (frame) {
+    try {
+      if (frame.contentDocument && frame.contentDocument.readyState === 'complete') {
+        return Promise.resolve();
+      }
+    } catch (_) {}
+    return new Promise(function (resolve) {
+      const timeout = setTimeout(resolve, 1800);
+      frame.addEventListener('load', function () {
+        clearTimeout(timeout);
+        resolve();
+      }, { once: true });
+    });
+  }));
+
+  setTimeout(function () { window.print(); }, 250);
 });
 </script>
 </body>''',

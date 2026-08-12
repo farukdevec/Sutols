@@ -144,7 +144,12 @@ void main() {
     }
   }
 
-  for (final tool in <String>['Şablonlar', 'Arka Planlar', '3B Modeller', 'Geçişler']) {
+  for (final tool in <String>[
+    'Şablonlar',
+    'Arka Planlar',
+    '3B Modeller',
+    'Geçişler'
+  ]) {
     for (final w in <double>[360, 390]) {
       testWidgets(
         '"$tool" (daha fazla) paneli ${w.toInt()}px bottom sheet taşmaz',
@@ -161,12 +166,15 @@ void main() {
   testWidgets('slayt şeridi mobilde taşmaz ve slaytı seçer', (tester) async {
     await pumpAt(tester, const Size(390, 844));
     expect(tester.takeException(), isNull);
-    final controller = tester.widget<HtmlPresentationEditorPage>(
-      find.byType(HtmlPresentationEditorPage),
-    ).controller;
+    final controller = tester
+        .widget<HtmlPresentationEditorPage>(
+          find.byType(HtmlPresentationEditorPage),
+        )
+        .controller;
     controller.addPage();
     await tester.pumpAndSettle();
-    expect(find.byKey(const ValueKey<String>('mobile-slide-strip')), findsOneWidget);
+    expect(find.byKey(const ValueKey<String>('mobile-slide-strip')),
+        findsOneWidget);
     expect(tester.takeException(), isNull);
     await tester.tap(
       find.byKey(const ValueKey<String>('mobile-slide-strip-thumb-1')),
@@ -277,86 +285,89 @@ void main() {
   }
 
   for (final tab in <String>['Şablonlar', 'Bilesenler', 'Geçişler']) {
-  testWidgets('dock dar ekranda araçları "Daha fazla"ya taşır, taşmaz', (
-    tester,
-  ) async {
-    const labels = <String>['Metin', 'Fotoğraf', 'Medya', 'Şekil'];
-    int visibleCount() {
-      var count = 0;
-      for (final l in labels) {
-        if (find.text(l).evaluate().isNotEmpty) count++;
+    testWidgets('dock dar ekranda araçları "Daha fazla"ya taşır, taşmaz', (
+      tester,
+    ) async {
+      const labels = <String>['Metin', 'Fotoğraf', 'Medya', 'Şekil'];
+      int visibleCount() {
+        var count = 0;
+        for (final l in labels) {
+          if (find.text(l).evaluate().isNotEmpty) count++;
+        }
+        return count;
       }
-      return count;
-    }
 
-    await pumpAt(tester, const Size(800, 800));
-    expect(visibleCount(), 4, reason: 'geniş ekranda tüm araçlar dockta');
-    expect(tester.takeException(), isNull);
+      await pumpAt(tester, const Size(800, 800));
+      expect(visibleCount(), 4, reason: 'geniş ekranda tüm araçlar dockta');
+      expect(tester.takeException(), isNull);
 
-    await pumpAt(tester, const Size(320, 800));
-    final narrowCount = visibleCount();
-    expect(narrowCount, lessThan(4), reason: 'dar ekranda taşan araç gizlenir');
-    expect(find.text('Metin'), findsOneWidget, reason: 'Metin hep dockta kalır');
-    expect(tester.takeException(), isNull);
+      await pumpAt(tester, const Size(320, 800));
+      final narrowCount = visibleCount();
+      expect(narrowCount, lessThan(4),
+          reason: 'dar ekranda taşan araç gizlenir');
+      expect(find.text('Metin'), findsOneWidget,
+          reason: 'Metin hep dockta kalır');
+      expect(tester.takeException(), isNull);
 
-    // Kompakt "⋯" butonu ile "Daha fazla" menüsü yine de açılır.
-    await openMoreMenu(tester);
-    expect(find.text('Fotoğraf Yükle'), findsOneWidget);
-    expect(tester.takeException(), isNull);
-  });
+      // Kompakt "⋯" butonu ile "Daha fazla" menüsü yine de açılır.
+      await openMoreMenu(tester);
+      expect(find.text('Fotoğraf Yükle'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
 
-  testWidgets('dock daraldıkça görünür araç sayısı azalır (kademeli)', (
-    tester,
-  ) async {
-    const labels = <String>['Metin', 'Fotoğraf', 'Medya', 'Şekil'];
-    int visibleCount() {
-      var count = 0;
-      for (final l in labels) {
-        if (find.text(l).evaluate().isNotEmpty) count++;
+    testWidgets('dock daraldıkça görünür araç sayısı azalır (kademeli)', (
+      tester,
+    ) async {
+      const labels = <String>['Metin', 'Fotoğraf', 'Medya', 'Şekil'];
+      int visibleCount() {
+        var count = 0;
+        for (final l in labels) {
+          if (find.text(l).evaluate().isNotEmpty) count++;
+        }
+        return count;
       }
-      return count;
-    }
 
-    final counts = <double, int>{};
-    for (final w in <double>[320, 360, 390, 414, 800]) {
-      await pumpAt(tester, Size(w, 800));
-      expect(tester.takeException(), isNull, reason: 'dock @${w.toInt()}px');
-      counts[w] = visibleCount();
-    }
-    expect(counts[320]!, lessThan(counts[800]!));
-    expect(counts[360]!, lessThanOrEqualTo(counts[390]!));
-    expect(counts[390]!, lessThanOrEqualTo(counts[414]!));
-    expect(counts[414]!, lessThanOrEqualTo(counts[800]!));
-  });
+      final counts = <double, int>{};
+      for (final w in <double>[320, 360, 390, 414, 800]) {
+        await pumpAt(tester, Size(w, 800));
+        expect(tester.takeException(), isNull, reason: 'dock @${w.toInt()}px');
+        counts[w] = visibleCount();
+      }
+      expect(counts[320]!, lessThan(counts[800]!));
+      expect(counts[360]!, lessThanOrEqualTo(counts[390]!));
+      expect(counts[390]!, lessThanOrEqualTo(counts[414]!));
+      expect(counts[414]!, lessThanOrEqualTo(counts[800]!));
+    });
 
-  testWidgets('Fotoğraf dock kısayolu hızlı aksiyon sheeti açar', (tester) async {
-    await pumpAt(tester, const Size(390, 844));
-    expect(find.text('Fotoğraf'), findsOneWidget);
-    await openDockTool(tester, 'Fotoğraf');
-    expect(find.text('Fotoğraf Ekle'), findsOneWidget);
-    expect(find.text('Galeriden / Dosyadan'), findsOneWidget);
-    expect(find.text('Fotoğraf Kütüphanem'), findsOneWidget);
+    testWidgets('Fotoğraf dock kısayolu hızlı aksiyon sheeti açar',
+        (tester) async {
+      await pumpAt(tester, const Size(390, 844));
+      expect(find.text('Fotoğraf'), findsOneWidget);
+      await openDockTool(tester, 'Fotoğraf');
+      expect(find.text('Fotoğraf Ekle'), findsOneWidget);
+      expect(find.text('Galeriden / Dosyadan'), findsOneWidget);
+      expect(find.text('Fotoğraf Kütüphanem'), findsOneWidget);
 
-    // "Fotoğraf Kütüphanem" → Medya (fotoğraf) panelini açar.
-    await tester.tap(find.text('Fotoğraf Kütüphanem'));
-    await tester.pumpAndSettle();
-    expect(find.text('Fotoğraf Yükle'), findsOneWidget);
-    expect(tester.takeException(), isNull);
-  });
+      // "Fotoğraf Kütüphanem" → Medya (fotoğraf) panelini açar.
+      await tester.tap(find.text('Fotoğraf Kütüphanem'));
+      await tester.pumpAndSettle();
+      expect(find.text('Fotoğraf Yükle'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
 
-  testWidgets('"Fotoğraf Yükle" menü öğesi hızlı aksiyon sheetini açar', (
-    tester,
-  ) async {
-    await pumpAt(tester, const Size(320, 800));
-    await openMoreMenu(tester);
-    await tester.tap(find.text('Fotoğraf Yükle'));
-    await tester.pumpAndSettle();
-    expect(find.text('Fotoğraf Ekle'), findsOneWidget);
-    expect(find.text('Galeriden / Dosyadan'), findsOneWidget);
-    expect(tester.takeException(), isNull);
-  });
+    testWidgets('"Fotoğraf Yükle" menü öğesi hızlı aksiyon sheetini açar', (
+      tester,
+    ) async {
+      await pumpAt(tester, const Size(320, 800));
+      await openMoreMenu(tester);
+      await tester.tap(find.text('Fotoğraf Yükle'));
+      await tester.pumpAndSettle();
+      expect(find.text('Fotoğraf Ekle'), findsOneWidget);
+      expect(find.text('Galeriden / Dosyadan'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
 
-  for (final size in <Size>[const Size(390, 844), const Size(800, 800)]) {
+    for (final size in <Size>[const Size(390, 844), const Size(800, 800)]) {
       testWidgets(
         '"$tab" sekmesi ${size.width.toInt()}px genişlikte taşmaz',
         (tester) async {
@@ -398,6 +409,251 @@ void main() {
     tester,
   ) async {
     await pumpAt(tester, const Size(1400, 900));
+    final brandedHeader = tester.widget<Container>(
+      find.byKey(const ValueKey<String>('studio-branded-header')),
+    );
+    final brandedDecoration = brandedHeader.decoration! as BoxDecoration;
+    final brandedGradient = brandedDecoration.gradient! as LinearGradient;
+    final headerRect = tester.getRect(
+      find.byKey(const ValueKey<String>('studio-branded-header')),
+    );
+    expect(headerRect.left, 0);
+    expect(headerRect.top, 0);
+    expect(headerRect.right, 1400);
+    expect(find.text('Dosya'), findsNothing);
+    expect(
+      brandedGradient.colors,
+      const <Color>[Color(0xFF0A7E82), Color(0xFF006471)],
+    );
+    expect(brandedDecoration.boxShadow, hasLength(2));
+    expect(
+      brandedDecoration.boxShadow!.last.color,
+      const Color(0x160A7E82),
+    );
+    expect(brandedDecoration.boxShadow!.last.offset.dy, 15);
+    expect(
+      find.descendant(
+        of: find.byKey(const ValueKey<String>('studio-brand-mark')),
+        matching: find.byType(ColorFiltered),
+      ),
+      findsOneWidget,
+    );
+    final logoRect = tester.getRect(
+      find.byKey(const ValueKey<String>('studio-brand-mark')),
+    );
+    final titleRect = tester.getRect(
+      find.byKey(const ValueKey<String>('studio-presentation-title')),
+    );
+    expect(logoRect.width, greaterThanOrEqualTo(58));
+    expect(logoRect.right, lessThan(titleRect.left));
+    expect(find.byKey(const ValueKey<String>('studio-settings-icon')),
+        findsNothing);
+    expect(find.byKey(const ValueKey<String>('studio-profile-icon')),
+        findsNothing);
+    expect(find.byKey(const ValueKey<String>('studio-brand-wordmark')),
+        findsNothing);
+
+    await tester.tap(
+      find.byKey(const ValueKey<String>('studio-brand-mark')),
+    );
+    await tester.pumpAndSettle();
+    expect(
+        find.byKey(const ValueKey<String>('brand-menu-home')), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey<String>('brand-menu-settings')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey<String>('brand-menu-presentations')),
+      findsOneWidget,
+    );
+    expect(find.text('Ana Sayfa'), findsOneWidget);
+    expect(find.text('Ayarlar'), findsOneWidget);
+    expect(find.text('Sunumlarım'), findsOneWidget);
+    await tester.tapAt(const Offset(1390, 890));
+    await tester.pumpAndSettle();
+
+    final rail = find.byKey(const ValueKey<String>('studio-tool-rail'));
+    expect(
+        find.descendant(of: rail, matching: find.text('HTML')), findsNothing);
+    expect(
+        find.descendant(of: rail, matching: find.text('Sunum')), findsNothing);
+    expect(
+      find.descendant(of: rail, matching: find.text('Disa Aktar')),
+      findsNothing,
+    );
+    expect(find.descendant(of: rail, matching: find.text('PDF')), findsNothing);
+
+    expect(find.text('HTML Disa Aktar'), findsNothing);
+    expect(find.text('Kaydet'), findsOneWidget);
+    await tester.tap(
+      find.byKey(const ValueKey<String>('studio-save-button')),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('HTML formatı'), findsOneWidget);
+    expect(
+      find.text('PDF formatı (animasyonlar çalışmaz)'),
+      findsOneWidget,
+    );
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('yarım ekranda üst bar ince ve sade kalır', (tester) async {
+    await pumpAt(tester, const Size(1000, 800));
+
+    final header = find.byKey(
+      const ValueKey<String>('condensed-editor-header'),
+    );
+    expect(header, findsOneWidget);
+    final decoration =
+        tester.widget<Container>(header).decoration! as BoxDecoration;
+    final gradient = decoration.gradient! as LinearGradient;
+    expect(
+      gradient.colors,
+      const <Color>[Color(0xFF0A7E82), Color(0xFF006471)],
+    );
+    expect(decoration.boxShadow, hasLength(2));
+    expect(decoration.boxShadow!.last.color, const Color(0x160A7E82));
+    expect(tester.getSize(header).height, lessThanOrEqualTo(70));
+    expect(
+      find.byKey(const ValueKey<String>('condensed-brand-mark')),
+      findsOneWidget,
+    );
+    expect(find.byIcon(Icons.arrow_back_rounded), findsNothing);
+    expect(find.text('Dosya'), findsNothing);
+    expect(
+      find.text(
+        'Arka plan, metin, akis ve efekt ayarlarini ayni sahnede duzenle.',
+      ),
+      findsNothing,
+    );
+    expect(find.text('HTML / CSS'), findsNothing);
+    expect(find.text('Sunum Modu'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('mobil üst bar marka rengini kullanır', (tester) async {
+    await pumpAt(tester, const Size(390, 844));
+
+    final header = find.byKey(const ValueKey<String>('mobile-editor-header'));
+    final decoration =
+        tester.widget<Container>(header).decoration! as BoxDecoration;
+    final gradient = decoration.gradient! as LinearGradient;
+    expect(
+      gradient.colors,
+      const <Color>[Color(0xFF0A7E82), Color(0xFF006471)],
+    );
+    expect(decoration.boxShadow, hasLength(2));
+    expect(decoration.boxShadow!.last.color, const Color(0x160A7E82));
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('font listesi gerçek eski ve Google fontlarını birlikte gösterir',
+      (
+    tester,
+  ) async {
+    await pumpAt(tester, const Size(1400, 900));
+
+    expect(find.text('Bilim · Dramatik'), findsNothing);
+    expect(find.text('Güneş · Temiz'), findsNothing);
+    expect(find.text('Fizik · Deneysel'), findsNothing);
+    expect(find.text('Teknoloji · Dramatik'), findsNothing);
+    expect(find.text('Oswald'), findsWidgets);
+    expect(tester.widget<Text>(find.text('Great Vibes')).style?.fontFamily,
+        'Great Vibes');
+    expect(tester.widget<Text>(find.text('Dancing Script')).style?.fontFamily,
+        'Dancing Script');
+    expect(
+        tester.widget<Text>(find.text('Lobster')).style?.fontFamily, 'Lobster');
+    expect(
+        tester.widget<Text>(find.text('Roboto')).style?.fontFamily, 'Roboto');
+    await tester.enterText(
+      find.widgetWithText(
+          TextField, 'Yazı tipi ara: klasik, serif, kaligrafi...'),
+      'Roboto',
+    );
+    await tester.pumpAndSettle();
+    expect(
+      find.text('Roboto'),
+      findsNWidgets(2),
+      reason: 'Arama metni ve filtrelenen Roboto font satırı görünmeli',
+    );
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('metin panelinin en üstündeki buton yeni metni ekleyip seçer', (
+    tester,
+  ) async {
+    await pumpAt(tester, const Size(1400, 900));
+    final controller = tester
+        .widget<HtmlPresentationEditorPage>(
+          find.byType(HtmlPresentationEditorPage),
+        )
+        .controller;
+    final initialCount = controller.selectedPage.textBlocks.length;
+    final addButton = find.byKey(
+      const ValueKey<String>('add-text-box-button'),
+    );
+
+    expect(addButton, findsOneWidget);
+    await tester.tap(addButton);
+    await tester.pumpAndSettle();
+
+    expect(controller.selectedPage.textBlocks.length, initialCount + 1);
+    expect(controller.selectedTextBlock, isNotNull);
+    expect(
+      controller.selectedTextBlock,
+      same(controller.selectedPage.textBlocks.last),
+    );
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('bileşen kütüphanesi studio yan panelinin tamamını kullanır', (
+    tester,
+  ) async {
+    await pumpAt(tester, const Size(1400, 900));
+    await tester.tap(find.text('Bilesen').first);
+    await tester.pumpAndSettle();
+
+    final inspectorRect = tester.getRect(
+      find.byKey(const ValueKey<String>('studio-inspector-panel')),
+    );
+    final libraryRect = tester.getRect(
+      find.byKey(const ValueKey<String>('component-library-panel')),
+    );
+    final resultsRect = tester.getRect(
+      find.byKey(const ValueKey<String>('component-library-results')),
+    );
+
+    expect(libraryRect.bottom, closeTo(inspectorRect.bottom - 16, 1));
+    expect(resultsRect.bottom, closeTo(libraryRect.bottom, 1));
+    expect(resultsRect.height, greaterThan(500));
+    expect(
+      find.descendant(
+        of: find.byKey(
+          const ValueKey<String>('component-library-results'),
+        ),
+        matching: find.byType(ExpansionTile),
+      ),
+      findsNothing,
+      reason: 'Bileşenler kategori açılırları olmadan düz listelenmeli',
+    );
+
+    final searchField = find.descendant(
+      of: find.byKey(const ValueKey<String>('component-library-panel')),
+      matching: find.byType(TextField),
+    );
+    await tester.enterText(searchField, 'Mürekkep Akan Kalem');
+    await tester.pumpAndSettle();
+    expect(
+      find.descendant(
+        of: find.byKey(
+          const ValueKey<String>('component-library-results'),
+        ),
+        matching: find.text('Mürekkep Akan Kalem'),
+      ),
+      findsOneWidget,
+    );
     expect(tester.takeException(), isNull);
   });
 
@@ -417,8 +673,12 @@ void main() {
         await pumpAt(tester, size);
         expect(tester.takeException(), isNull, reason: 'ilk yerleşim @$size');
 
-        // Header: Sutols logosu + adı, tüm kritik kontroller doğrudan.
-        expect(find.text('Sutols'), findsOneWidget, reason: 'marka @$size');
+        // Header: yazısız Sutols amblemi ve kritik kontroller doğrudan.
+        expect(
+          find.byKey(const ValueKey<String>('mobile-brand-mark')),
+          findsOneWidget,
+          reason: 'marka @$size',
+        );
         for (final tooltip in <String>[
           'Geri al',
           'Yinele',
@@ -458,9 +718,11 @@ void main() {
         );
         expect(stripRect.height, inInclusiveRange(40, 50));
         final stageCardRect = tester.getRect(
-          find.byWidgetPredicate(
-            (w) => w.runtimeType.toString() == '_HtmlStageCard',
-          ).first,
+          find
+              .byWidgetPredicate(
+                (w) => w.runtimeType.toString() == '_HtmlStageCard',
+              )
+              .first,
         );
         expect(
           stripRect.top - stageCardRect.bottom,
@@ -483,9 +745,7 @@ void main() {
         // Dock araçları: öncelik sırasıyla görünür; gizlenenler menüde.
         const labels = <String>['Metin', 'Fotoğraf', 'Medya', 'Şekil'];
         final visible =
-            labels
-                .where((l) => find.text(l).evaluate().isNotEmpty)
-                .toList();
+            labels.where((l) => find.text(l).evaluate().isNotEmpty).toList();
         expect(visible, isNotEmpty, reason: 'dock boş olmamalı @$size');
         for (final l in labels) {
           if (!visible.contains(l)) {
@@ -522,10 +782,12 @@ void main() {
         }
         // Dock'ta görünen araçlar menüde tekrarlanmaz (aynı işlev iki buton).
         if (visible.contains('Metin')) {
-          expect(find.text('Metin'), findsOneWidget, reason: 'Metin tek @$size');
+          expect(find.text('Metin'), findsOneWidget,
+              reason: 'Metin tek @$size');
         }
         if (visible.contains('Medya')) {
-          expect(find.text('Medya'), findsOneWidget, reason: 'Medya tek @$size');
+          expect(find.text('Medya'), findsOneWidget,
+              reason: 'Medya tek @$size');
         }
         if (visible.contains('Şekil')) {
           expect(

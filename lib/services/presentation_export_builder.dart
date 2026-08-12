@@ -11,6 +11,7 @@ String buildPresentationExportHtml({
   Map<String, String> modelSourcesById = const <String, String>{},
   Map<String, String> imageSourcesById = const <String, String>{},
   bool compact = true,
+  bool printMode = false,
 }) {
   final documentTitle = title ?? _resolvePresentationTitle(pages);
   final escapedDocumentTitle = _escapeHtml(documentTitle);
@@ -18,6 +19,7 @@ String buildPresentationExportHtml({
   final embeddedAssetsScript = _embeddedAssetsBootstrap(
     pages: pages,
     modelSourcesById: modelSourcesById,
+    printMode: printMode,
   );
   final slidesMarkup = StringBuffer();
   final dotsMarkup = StringBuffer();
@@ -37,7 +39,7 @@ String buildPresentationExportHtml({
           page: page,
           showBadge: false,
           extraStageClass: 'sutol-export-stage',
-          renderMode: effectSettings.reducedMotion
+          renderMode: printMode || effectSettings.reducedMotion
               ? HtmlStageRenderMode.snapshot
               : HtmlStageRenderMode.full,
           modelSourcesById: modelSourcesById,
@@ -64,10 +66,11 @@ String buildPresentationExportHtml({
   <style>
   $sutolHtmlStageStyles
   ${_exportStyles(effectSettings)}
+  ${printMode ? _printStyles : ''}
   </style>
 </head>
 <body>
-  <div class="sutol-export-shell ${_transitionShellClass(effectSettings.transitionKind)}${effectSettings.zoomEnabled ? ' allow-zoom' : ''}${effectSettings.reducedMotion ? ' reduce-motion' : ''}" style="--sutol-transition-duration:${effectSettings.transitionDurationMs}ms;--sutol-zoom-scale:${effectSettings.zoomScale.toStringAsFixed(2)};">
+  <div class="sutol-export-shell ${_transitionShellClass(effectSettings.transitionKind)}${effectSettings.zoomEnabled ? ' allow-zoom' : ''}${effectSettings.reducedMotion ? ' reduce-motion' : ''}${printMode ? ' print-mode' : ''}" style="--sutol-transition-duration:${effectSettings.transitionDurationMs}ms;--sutol-zoom-scale:${effectSettings.zoomScale.toStringAsFixed(2)};">
     <main class="sutol-export-deck">
       $slidesMarkup
     </main>
@@ -88,13 +91,13 @@ String buildPresentationExportHtml({
   $sutolHtmlStageBackgroundScript
   $sutolHtmlStageComponentScript
 
-  ${_exportScript(
-    zoomEnabled: effectSettings.zoomEnabled,
-    revealCounts: revealCounts,
-    smoothTransition:
-        effectSettings.transitionKind == PresentationTransitionKind.smooth,
-    transitionDurationMs: effectSettings.transitionDurationMs,
-  )}
+  ${printMode ? '' : _exportScript(
+          zoomEnabled: effectSettings.zoomEnabled,
+          revealCounts: revealCounts,
+          smoothTransition: effectSettings.transitionKind ==
+              PresentationTransitionKind.smooth,
+          transitionDurationMs: effectSettings.transitionDurationMs,
+        )}
   </script>
 </body>
 </html>
@@ -142,11 +145,16 @@ String _escapeAttribute(String value) =>
 String _embeddedAssetsBootstrap({
   required List<PresentationPage> pages,
   required Map<String, String> modelSourcesById,
+  required bool printMode,
 }) {
   final backgroundKinds = pages.map((page) => page.backgroundKind).toSet();
   final backgroundScenes = <String, String>{
     for (final kind in backgroundKinds)
-      kind.name: _compactHtml(sutolHtmlBackgroundScene(kind)),
+      kind.name: _compactHtml(
+        printMode
+            ? _staticSnapshotDocument(sutolHtmlBackgroundScene(kind))
+            : sutolHtmlBackgroundScene(kind),
+      ),
   };
   final usedModelIds = pages
       .expand((page) => page.componentBlocks)
@@ -172,8 +180,49 @@ document.querySelectorAll('[data-sutol-model-source-id]').forEach((model) => {
   const source = sutolModelSources[model.dataset.sutolModelSourceId];
   if (source) model.setAttribute('src', source);
 });
+${printMode ? _freezeAnimatedContentScript : ''}
 ''';
 }
+
+String _staticSnapshotDocument(String source) {
+  const staticStyles = '''
+<style data-sutol-print-static>
+*, *::before, *::after {
+  animation: none !important;
+  transition: none !important;
+  scroll-behavior: auto !important;
+}
+</style>
+''';
+  if (source.contains('</head>')) {
+    return source.replaceFirst('</head>', '$staticStyles</head>');
+  }
+  return '$staticStyles$source';
+}
+
+const String _freezeAnimatedContentScript = '''
+document.getAnimations().forEach((animation) => animation.pause());
+document.querySelectorAll('svg').forEach((svg) => {
+  if (typeof svg.pauseAnimations === 'function') svg.pauseAnimations();
+});
+document.querySelectorAll('model-viewer').forEach((model) => {
+  model.removeAttribute('autoplay');
+  model.removeAttribute('auto-rotate');
+  model.addEventListener('load', () => {
+    if (typeof model.pause === 'function') model.pause();
+  }, { once: true });
+});
+document.querySelectorAll('.sutol-bg-scene-frame').forEach((frame) => {
+  frame.addEventListener('load', () => {
+    try {
+      frame.contentDocument?.getAnimations().forEach((animation) => animation.pause());
+      frame.contentDocument?.querySelectorAll('svg').forEach((svg) => {
+        if (typeof svg.pauseAnimations === 'function') svg.pauseAnimations();
+      });
+    } catch (_) {}
+  }, { once: true });
+});
+''';
 
 String _scriptSafeJson(Object value) => jsonEncode(value)
     .replaceAll('<', r'\u003C')
@@ -580,6 +629,96 @@ body {
   .sutol-export-dot,
   .sutol-export-stage [data-reveal-step] {
     transition: none !important;
+  }
+}
+''';
+
+const String _printStyles = '''
+@page {
+  size: 13.333in 7.5in;
+  margin: 0;
+}
+
+html,
+body {
+  width: auto;
+  height: auto;
+  overflow: visible;
+  background: #ffffff;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+.sutol-export-shell.print-mode {
+  position: static;
+  inset: auto;
+  width: auto;
+  height: auto;
+  overflow: visible;
+  background: #ffffff;
+}
+
+.sutol-export-shell.print-mode .sutol-export-deck {
+  position: static;
+  inset: auto;
+  display: block;
+  overflow: visible;
+  perspective: none;
+}
+
+.sutol-export-shell.print-mode .sutol-export-slide,
+.sutol-export-shell.print-mode .sutol-export-slide.is-active,
+.sutol-export-shell.print-mode .sutol-export-slide.is-leaving {
+  position: relative;
+  inset: auto;
+  z-index: auto;
+  display: block;
+  width: 13.333in;
+  height: 7.5in;
+  overflow: hidden;
+  opacity: 1;
+  transform: none;
+  animation: none;
+  break-after: page;
+  page-break-after: always;
+}
+
+.sutol-export-shell.print-mode .sutol-export-slide:last-child {
+  break-after: auto;
+  page-break-after: auto;
+}
+
+.sutol-export-shell.print-mode .sutol-export-stage-frame {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  transform: none;
+}
+
+.sutol-export-shell.print-mode .sutol-export-nav {
+  display: none;
+}
+
+.sutol-export-shell.print-mode *,
+.sutol-export-shell.print-mode *::before,
+.sutol-export-shell.print-mode *::after {
+  animation: none !important;
+  transition: none !important;
+  scroll-behavior: auto !important;
+}
+
+.sutol-export-shell.print-mode .sutol-export-stage [data-reveal-step] {
+  visibility: visible !important;
+  opacity: 1 !important;
+  transform: none !important;
+  pointer-events: auto !important;
+}
+
+@media print {
+  .sutol-export-shell.print-mode .sutol-export-slide {
+    break-inside: avoid;
+    page-break-inside: avoid;
   }
 }
 ''';
