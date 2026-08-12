@@ -11,6 +11,7 @@ import 'layout_service.dart';
 import 'model_matching_service.dart';
 import 'presentation_deck_builder.dart';
 import 'usage_service.dart';
+import 'firestore_rest_helper.dart';
 
 /// createPresentation sonucu: Firestore doküman ID'si + düzenlenebilir deck.
 class PresentationGenerationResult {
@@ -120,8 +121,8 @@ class PresentationService {
         'slideCount': {'integerValue': '${slidesData.length}'},
         'topic': {'stringValue': topic},
         'title': {'stringValue': topic},
-        'createdAt': {'timestampValue': DateTime.now().toUtc().toIso8601String()},
-        'updatedAt': {'timestampValue': DateTime.now().toUtc().toIso8601String()},
+        'createdAt': {'timestampValue': FirestoreRestHelper.toFirestoreTimestamp(DateTime.now())},
+        'updatedAt': {'timestampValue': FirestoreRestHelper.toFirestoreTimestamp(DateTime.now())},
         'wasEdited': {'booleanValue': false},
         'wasExported': {'booleanValue': false},
         'editCount': {'integerValue': '0'},

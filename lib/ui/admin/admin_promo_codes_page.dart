@@ -477,7 +477,7 @@ class _NewCode {
       final endOfDay =
           DateTime(expiresAt!.year, expiresAt!.month, expiresAt!.day, 23, 59, 59)
               .toUtc();
-      fields['expiresAt'] = {'timestampValue': endOfDay.toIso8601String()};
+      fields['expiresAt'] = {'timestampValue': FirestoreRestHelper.toFirestoreTimestamp(endOfDay)};
     }
     if (maxUses != null) {
       fields['maxUses'] = {'integerValue': '$maxUses'};

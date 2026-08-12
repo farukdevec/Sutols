@@ -146,7 +146,7 @@ class FirestoreRestHelper {
   /// REST API için geçerli RFC3339 UTC zaman damgası üretir.
   /// (Firestore REST, server timestamp sentinel desteklemez; timestampValue
   /// yalnızca "2014-10-02T15:01:23Z" formatını kabul eder.)
-  static String nowTimestamp() => DateTime.now().toUtc().toIso8601String();
+  static String nowTimestamp() => toFirestoreTimestamp(DateTime.now());
 
   /// structuredQuery çalıştırır (POST .../documents:runQuery).
   /// Sonucu doküman map listesi olarak döndürür.
@@ -220,5 +220,13 @@ class FirestoreRestHelper {
         .map((v) => (v as Map<String, dynamic>)['stringValue'] as String? ?? '')
         .where((v) => v.isNotEmpty)
         .toList();
+  }
+
+  /// UTC DateTime'i Firestore REST API'nin kabul ettiği RFC3339 formatına
+  /// (sonunda mutlaka 'Z' olacak şekilde) dönüştürür.
+  static String toFirestoreTimestamp(DateTime dt) {
+    final utc = dt.toUtc();
+    final iso = utc.toIso8601String();
+    return iso.endsWith('Z') ? iso : '${iso}Z';
   }
 }
