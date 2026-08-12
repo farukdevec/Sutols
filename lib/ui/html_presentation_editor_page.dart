@@ -8,6 +8,7 @@ import 'package:flutter/services.dart';
 import '../models/slide_model.dart';
 import '../services/firestore_rest_helper.dart';
 import '../services/local_image_picker.dart';
+import '../services/model_repository.dart';
 import '../services/presentation_export_service.dart';
 import '../services/presentation_auto_builder.dart';
 import '../services/presentation_fullscreen_service.dart';
@@ -79,8 +80,7 @@ class _HtmlPresentationEditorPageState
   _HtmlToolTab _activeTab = _HtmlToolTab.text;
   String? _lastEditorLabel;
 
-  final PresentationTrackingService _tracking =
-      PresentationTrackingService();
+  final PresentationTrackingService _tracking = PresentationTrackingService();
 
   /// Editörün açıldığı an (sayfada geçirilen süreyi ölçmek için).
   DateTime _openedAt = DateTime.now();
@@ -250,21 +250,27 @@ class _HtmlPresentationEditorPageState
     buf.write(controller.pages.length);
     final settings = controller.effectSettings;
     buf
-      ..write('|${settings.transitionKind.index}|${settings.transitionDurationMs}')
-      ..write('|${settings.zoomEnabled}|${settings.zoomScale.toStringAsFixed(3)}')
+      ..write(
+          '|${settings.transitionKind.index}|${settings.transitionDurationMs}')
+      ..write(
+          '|${settings.zoomEnabled}|${settings.zoomScale.toStringAsFixed(3)}')
       ..write('|${settings.reducedMotion}');
     for (final page in controller.pages) {
       buf
-        ..write('\n${page.id}|${page.backgroundKind.index}|${page.speakerNotes}');
+        ..write(
+            '\n${page.id}|${page.backgroundKind.index}|${page.speakerNotes}');
       for (final text in page.textBlocks) {
         buf
-          ..write('\nT:${text.id}|${text.text}|${text.position.dx.toStringAsFixed(3)}')
+          ..write(
+              '\nT:${text.id}|${text.text}|${text.position.dx.toStringAsFixed(3)}')
           ..write('|${text.position.dy.toStringAsFixed(3)}|${text.fontSize}')
-          ..write('|${text.type.index}|${text.widthFactor}|${text.textStyle.index}')
+          ..write(
+              '|${text.type.index}|${text.widthFactor}|${text.textStyle.index}')
           ..write('|${text.textAnimation.index}|${text.textColorHex}')
           ..write('|${text.glowIntensity}|${text.revealStep}')
           ..write('|${text.hotspotTargetPageId}|${text.textBold}')
-          ..write('|${text.textItalic}|${text.textUnderline}|${text.textAlign.index}');
+          ..write(
+              '|${text.textItalic}|${text.textUnderline}|${text.textAlign.index}');
       }
       for (final block in page.componentBlocks) {
         buf
@@ -272,8 +278,10 @@ class _HtmlPresentationEditorPageState
           ..write('|${block.modelAnimationEnabled}|${block.modelAutoRotate}')
           ..write('|${block.modelOrbitEnabled}'
               '|${block.modelOrbitTheta.toStringAsFixed(3)}|${block.modelOrbitPhi.toStringAsFixed(3)}')
-          ..write('|${block.position.dx.toStringAsFixed(3)}|${block.position.dy.toStringAsFixed(3)}')
-          ..write('|${block.size.width.toStringAsFixed(3)}|${block.size.height.toStringAsFixed(3)}')
+          ..write(
+              '|${block.position.dx.toStringAsFixed(3)}|${block.position.dy.toStringAsFixed(3)}')
+          ..write(
+              '|${block.size.width.toStringAsFixed(3)}|${block.size.height.toStringAsFixed(3)}')
           ..write('|${block.revealStep}|${block.hotspotTargetPageId}');
       }
     }
@@ -479,7 +487,9 @@ class _HtmlPresentationEditorPageState
     if (presentationId != null && !widget.adminReadOnly) {
       _tracking.markExported(presentationId);
     }
-    final cleanName = _presentationFileName.trim().isEmpty ? 'Sutols Sunumu' : _presentationFileName.trim();
+    final cleanName = _presentationFileName.trim().isEmpty
+        ? 'Sutols Sunumu'
+        : _presentationFileName.trim();
     final fileName = '$cleanName.html';
     await exportPresentationAsHtml(
       pages: widget.controller.pages.toList(growable: false),
@@ -515,8 +525,7 @@ class _HtmlPresentationEditorPageState
           json: json,
         );
         final user = FirebaseAuth.instance.currentUser;
-        final name = user != null &&
-                (user.displayName ?? '').trim().isNotEmpty
+        final name = user != null && (user.displayName ?? '').trim().isNotEmpty
             ? user.displayName!.trim()
             : (user?.email ?? '');
         if (mounted) {
@@ -587,68 +596,68 @@ class _HtmlPresentationEditorPageState
         bindings: widget.adminReadOnly
             ? const <ShortcutActivator, VoidCallback>{}
             : <ShortcutActivator, VoidCallback>{
-          // Undo / Redo
-          const SingleActivator(LogicalKeyboardKey.keyZ, control: true):
-              widget.controller.undo,
-          const SingleActivator(LogicalKeyboardKey.keyZ, meta: true):
-              widget.controller.undo,
-          const SingleActivator(LogicalKeyboardKey.keyY, control: true):
-              widget.controller.redo,
-          const SingleActivator(LogicalKeyboardKey.keyY, meta: true):
-              widget.controller.redo,
-          const SingleActivator(
-            LogicalKeyboardKey.keyZ,
-            control: true,
-            shift: true,
-          ): widget.controller.redo,
-          const SingleActivator(
-            LogicalKeyboardKey.keyZ,
-            meta: true,
-            shift: true,
-          ): widget.controller.redo,
+                // Undo / Redo
+                const SingleActivator(LogicalKeyboardKey.keyZ, control: true):
+                    widget.controller.undo,
+                const SingleActivator(LogicalKeyboardKey.keyZ, meta: true):
+                    widget.controller.undo,
+                const SingleActivator(LogicalKeyboardKey.keyY, control: true):
+                    widget.controller.redo,
+                const SingleActivator(LogicalKeyboardKey.keyY, meta: true):
+                    widget.controller.redo,
+                const SingleActivator(
+                  LogicalKeyboardKey.keyZ,
+                  control: true,
+                  shift: true,
+                ): widget.controller.redo,
+                const SingleActivator(
+                  LogicalKeyboardKey.keyZ,
+                  meta: true,
+                  shift: true,
+                ): widget.controller.redo,
 
-          // Kopyala / Yapıştır / Kes
-          const SingleActivator(LogicalKeyboardKey.keyC, control: true):
-              widget.controller.copySelectedItems,
-          const SingleActivator(LogicalKeyboardKey.keyC, meta: true):
-              widget.controller.copySelectedItems,
-          const SingleActivator(LogicalKeyboardKey.keyV, control: true):
-              widget.controller.pasteCopiedItems,
-          const SingleActivator(LogicalKeyboardKey.keyV, meta: true):
-              widget.controller.pasteCopiedItems,
-          const SingleActivator(LogicalKeyboardKey.keyX, control: true):
-              widget.controller.cutSelectedItems,
-          const SingleActivator(LogicalKeyboardKey.keyX, meta: true):
-              widget.controller.cutSelectedItems,
+                // Kopyala / Yapıştır / Kes
+                const SingleActivator(LogicalKeyboardKey.keyC, control: true):
+                    widget.controller.copySelectedItems,
+                const SingleActivator(LogicalKeyboardKey.keyC, meta: true):
+                    widget.controller.copySelectedItems,
+                const SingleActivator(LogicalKeyboardKey.keyV, control: true):
+                    widget.controller.pasteCopiedItems,
+                const SingleActivator(LogicalKeyboardKey.keyV, meta: true):
+                    widget.controller.pasteCopiedItems,
+                const SingleActivator(LogicalKeyboardKey.keyX, control: true):
+                    widget.controller.cutSelectedItems,
+                const SingleActivator(LogicalKeyboardKey.keyX, meta: true):
+                    widget.controller.cutSelectedItems,
 
-          // Çoğalt
-          const SingleActivator(LogicalKeyboardKey.keyD, control: true):
-              widget.controller.duplicateSelectedItems,
-          const SingleActivator(LogicalKeyboardKey.keyD, meta: true):
-              widget.controller.duplicateSelectedItems,
+                // Çoğalt
+                const SingleActivator(LogicalKeyboardKey.keyD, control: true):
+                    widget.controller.duplicateSelectedItems,
+                const SingleActivator(LogicalKeyboardKey.keyD, meta: true):
+                    widget.controller.duplicateSelectedItems,
 
-          // Tümünü seç
-          const SingleActivator(LogicalKeyboardKey.keyA, control: true):
-              widget.controller.selectAllItems,
-          const SingleActivator(LogicalKeyboardKey.keyA, meta: true):
-              widget.controller.selectAllItems,
+                // Tümünü seç
+                const SingleActivator(LogicalKeyboardKey.keyA, control: true):
+                    widget.controller.selectAllItems,
+                const SingleActivator(LogicalKeyboardKey.keyA, meta: true):
+                    widget.controller.selectAllItems,
 
-          // Kaydet
-          const SingleActivator(LogicalKeyboardKey.keyS, control: true):
-              _saveProject,
-          const SingleActivator(LogicalKeyboardKey.keyS, meta: true):
-              _saveProject,
+                // Kaydet
+                const SingleActivator(LogicalKeyboardKey.keyS, control: true):
+                    _saveProject,
+                const SingleActivator(LogicalKeyboardKey.keyS, meta: true):
+                    _saveProject,
 
-          // Sil
-          const SingleActivator(LogicalKeyboardKey.delete):
-              widget.controller.removeSelectedItems,
-          const SingleActivator(LogicalKeyboardKey.backspace):
-              widget.controller.removeSelectedItems,
+                // Sil
+                const SingleActivator(LogicalKeyboardKey.delete):
+                    widget.controller.removeSelectedItems,
+                const SingleActivator(LogicalKeyboardKey.backspace):
+                    widget.controller.removeSelectedItems,
 
-          // Seçimi temizle
-          const SingleActivator(LogicalKeyboardKey.escape):
-              widget.controller.clearSelection,
-        },
+                // Seçimi temizle
+                const SingleActivator(LogicalKeyboardKey.escape):
+                    widget.controller.clearSelection,
+              },
         child: AnimatedBuilder(
           animation: widget.controller,
           builder: (context, _) {
@@ -686,8 +695,10 @@ class _HtmlPresentationEditorPageState
                                 canUndo: widget.controller.canUndo,
                                 canRedo: widget.controller.canRedo,
                                 onAddText: widget.controller.addTextBlock,
-                                onRemoveText: widget.controller.removeSelectedTextBlock,
-                                canRemoveText: widget.controller.canRemoveTextBlock,
+                                onRemoveText:
+                                    widget.controller.removeSelectedTextBlock,
+                                canRemoveText:
+                                    widget.controller.canRemoveTextBlock,
                                 lastEditorLabel: _lastEditorLabel,
                                 adminReadOnly: widget.adminReadOnly,
                                 presentationFileName: _presentationFileName,
@@ -786,11 +797,9 @@ class _HtmlPresentationEditorPageState
                                     onScaleEnd: _onMobileScaleEnd,
                                     onMultiTouchChanged:
                                         _onMobileMultiTouchChanged,
-                                    canvasInteractive:
-                                        !_multiTouchActive &&
+                                    canvasInteractive: !_multiTouchActive &&
                                         !widget.adminReadOnly,
-                                    showHint:
-                                        _showMobileHint &&
+                                    showHint: _showMobileHint &&
                                         _mobileCanvasZoom <= 1.0001,
                                     readOnly: widget.adminReadOnly,
                                   );
@@ -1049,21 +1058,21 @@ class _HtmlHeader extends StatelessWidget {
                   onSelected: handleAction,
                   itemBuilder: (context) =>
                       <PopupMenuEntry<_MobileHeaderAction>>[
-                        PopupMenuItem<_MobileHeaderAction>(
-                          value: _MobileHeaderAction.exportHtml,
-                          child: const ListTile(
-                            leading: Icon(Icons.html_rounded),
-                            title: Text('HTML Dışa Aktar'),
-                          ),
-                        ),
-                        PopupMenuItem<_MobileHeaderAction>(
-                          value: _MobileHeaderAction.exportPdf,
-                          child: const ListTile(
-                            leading: Icon(Icons.picture_as_pdf_rounded),
-                            title: Text('PDF Olarak Yazdır'),
-                          ),
-                        ),
-                      ],
+                    PopupMenuItem<_MobileHeaderAction>(
+                      value: _MobileHeaderAction.exportHtml,
+                      child: const ListTile(
+                        leading: Icon(Icons.html_rounded),
+                        title: Text('HTML Dışa Aktar'),
+                      ),
+                    ),
+                    PopupMenuItem<_MobileHeaderAction>(
+                      value: _MobileHeaderAction.exportPdf,
+                      child: const ListTile(
+                        leading: Icon(Icons.picture_as_pdf_rounded),
+                        title: Text('PDF Olarak Yazdır'),
+                      ),
+                    ),
+                  ],
                 ),
                 if (adminReadOnly)
                   const _AdminReadOnlyBadge(compact: true)
@@ -1080,29 +1089,29 @@ class _HtmlHeader extends StatelessWidget {
                     onSelected: handleAction,
                     itemBuilder: (context) =>
                         <PopupMenuEntry<_MobileHeaderAction>>[
-                          PopupMenuItem<_MobileHeaderAction>(
-                            value: _MobileHeaderAction.theme,
-                            child: const ListTile(
-                              leading: Icon(Icons.dark_mode_rounded),
-                              title: Text('Görünümü Değiştir'),
-                            ),
-                          ),
-                          const PopupMenuDivider(),
-                          PopupMenuItem<_MobileHeaderAction>(
-                            value: _MobileHeaderAction.save,
-                            child: const ListTile(
-                              leading: Icon(Icons.save_alt_rounded),
-                              title: Text('Projeyi Kaydet'),
-                            ),
-                          ),
-                          PopupMenuItem<_MobileHeaderAction>(
-                            value: _MobileHeaderAction.load,
-                            child: const ListTile(
-                              leading: Icon(Icons.upload_file_rounded),
-                              title: Text('Proje Yükle'),
-                            ),
-                          ),
-                        ],
+                      PopupMenuItem<_MobileHeaderAction>(
+                        value: _MobileHeaderAction.theme,
+                        child: const ListTile(
+                          leading: Icon(Icons.dark_mode_rounded),
+                          title: Text('Görünümü Değiştir'),
+                        ),
+                      ),
+                      const PopupMenuDivider(),
+                      PopupMenuItem<_MobileHeaderAction>(
+                        value: _MobileHeaderAction.save,
+                        child: const ListTile(
+                          leading: Icon(Icons.save_alt_rounded),
+                          title: Text('Projeyi Kaydet'),
+                        ),
+                      ),
+                      PopupMenuItem<_MobileHeaderAction>(
+                        value: _MobileHeaderAction.load,
+                        child: const ListTile(
+                          leading: Icon(Icons.upload_file_rounded),
+                          title: Text('Proje Yükle'),
+                        ),
+                      ),
+                    ],
                   ),
               ],
             ),
@@ -1186,9 +1195,7 @@ class _AdminReadOnlyBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final label = compact
-        ? 'GÖRÜNTÜLEME'
-        : 'GÖRÜNTÜLEME MODU (Admin)';
+    final label = compact ? 'GÖRÜNTÜLEME' : 'GÖRÜNTÜLEME MODU (Admin)';
     return Container(
       padding: EdgeInsets.symmetric(
         horizontal: compact ? 10 : 14,
@@ -1440,8 +1447,7 @@ class _HtmlMobileLayout extends StatelessWidget {
                   top: 10,
                   child: IgnorePointer(
                     ignoring: canvasZoom > 1.0001,
-                    child:
-                        _SelectionContextBarSection(controller: controller),
+                    child: _SelectionContextBarSection(controller: controller),
                   ),
                 ),
             ],
@@ -1508,9 +1514,9 @@ class _HtmlMobileSlideStripState extends State<_HtmlMobileSlideStrip> {
       return;
     }
     final viewport = _scrollController.position.viewportDimension;
-    final target = (selected * (_thumbWidth + _gap) -
-            (viewport - _thumbWidth) / 2)
-        .clamp(0.0, _scrollController.position.maxScrollExtent);
+    final target =
+        (selected * (_thumbWidth + _gap) - (viewport - _thumbWidth) / 2)
+            .clamp(0.0, _scrollController.position.maxScrollExtent);
     _scrollController.animateTo(
       target,
       duration: const Duration(milliseconds: 240),
@@ -1667,9 +1673,7 @@ class _SlideStripThumb extends StatelessWidget {
                 child: Text(
                   '${index + 1}',
                   style: TextStyle(
-                    color: isSelected
-                        ? context.colors.onPrimary
-                        : Colors.white,
+                    color: isSelected ? context.colors.onPrimary : Colors.white,
                     fontSize: 9,
                     fontWeight: FontWeight.w800,
                     height: 1.2,
@@ -1743,10 +1747,10 @@ class _HtmlMobileToolDock extends StatelessWidget {
         final gap = _MobileDockButton.chipGap;
         final compactMoreWidth = _MobileDockButton.compactWidth;
         final fullMoreWidth = _dockChipWidth(context, 'Daha fazla');
-        final widths =
-            <double>[for (final t in tools) _dockChipWidth(context, t.label)];
-        final toolsWidth =
-            widths.fold<double>(0, (sum, w) => sum + w + gap);
+        final widths = <double>[
+          for (final t in tools) _dockChipWidth(context, t.label)
+        ];
+        final toolsWidth = widths.fold<double>(0, (sum, w) => sum + w + gap);
         final fullFits = toolsWidth + fullMoreWidth <= available;
         final compactFits = toolsWidth + compactMoreWidth <= available;
         final visible = <int>[];
@@ -1794,11 +1798,12 @@ class _HtmlMobileToolDock extends StatelessWidget {
                 itemBuilder: (context) {
                   // Dar ekranda dock'a sığmayan araçlar (öncelik sırasıyla)
                   // menünün başına düşer; böylece hiçbir araç kaybolmaz.
-                  final hiddenLabels =
-                      tools.asMap().entries
-                          .where((e) => !visible.contains(e.key))
-                          .map((e) => e.value.label)
-                          .toSet();
+                  final hiddenLabels = tools
+                      .asMap()
+                      .entries
+                      .where((e) => !visible.contains(e.key))
+                      .map((e) => e.value.label)
+                      .toSet();
                   final entries = <PopupMenuEntry<_MobileMoreTool>>[];
                   for (final entry in tools.asMap().entries) {
                     if (!visible.contains(entry.key)) {
@@ -1988,11 +1993,9 @@ class _MobileDockButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final iconOnly = label.isEmpty;
-    final foreground = selected
-        ? context._htmlAccent
-        : context.sutolColors.onSurfaceVariant;
-    final background =
-        selected ? const Color(0xFFEDF4FF) : Colors.transparent;
+    final foreground =
+        selected ? context._htmlAccent : context.sutolColors.onSurfaceVariant;
+    final background = selected ? const Color(0xFFEDF4FF) : Colors.transparent;
     final borderColor = selected ? const Color(0xFFD4E4FF) : Colors.transparent;
     return Material(
       color: background,
@@ -2177,8 +2180,7 @@ class _HtmlMobileToolSheet extends StatelessWidget {
         child: Container(
           decoration: BoxDecoration(
             color: context.colors.surface,
-            borderRadius:
-                const BorderRadius.vertical(top: Radius.circular(26)),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(26)),
             boxShadow: context.elevation2,
           ),
           child: SafeArea(
@@ -2410,9 +2412,7 @@ class _ThemeToggleButton extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: <Widget>[
                   Icon(
-                    isDark
-                        ? Icons.light_mode_rounded
-                        : Icons.dark_mode_rounded,
+                    isDark ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
                     size: 18,
                     color: context._htmlInk,
                   ),
@@ -3592,7 +3592,9 @@ class _HtmlStudioPageThumb extends StatelessWidget {
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(20),
               border: Border.all(
-                color: isSelected ? context._htmlAccent : context.sutolColors.outline,
+                color: isSelected
+                    ? context._htmlAccent
+                    : context.sutolColors.outline,
                 width: isSelected ? 1.4 : 1,
               ),
             ),
@@ -3717,7 +3719,9 @@ class _SidebarAction extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: subtle ? context.sutolColors.surfaceSubtle : context.sutolColors.surfaceTinted,
+      color: subtle
+          ? context.sutolColors.surfaceSubtle
+          : context.sutolColors.surfaceTinted,
       borderRadius: BorderRadius.circular(18),
       child: InkWell(
         onTap: onTap,
@@ -3760,7 +3764,8 @@ class _HtmlPageCard extends StatelessWidget {
           color: isSelected ? const Color(0xFFF0F6FF) : const Color(0xFFF8FAFD),
           borderRadius: BorderRadius.circular(24),
           border: Border.all(
-            color: isSelected ? context._htmlAccent : context.sutolColors.outline,
+            color:
+                isSelected ? context._htmlAccent : context.sutolColors.outline,
             width: isSelected ? 1.5 : 1,
           ),
         ),
@@ -4098,28 +4103,6 @@ class _HtmlControlPanel extends StatelessWidget {
   }
 }
 
-class _CloudModelEntry {
-  const _CloudModelEntry({
-    required this.id,
-    required this.name,
-    required this.modelUrl,
-    required this.thumbnailUrl,
-    required this.tags,
-    required this.category,
-    required this.tier,
-  });
-
-  final String id;
-  final String name;
-  final String modelUrl;
-  final String thumbnailUrl;
-  final List<String> tags;
-  final String category;
-
-  /// Kullanıcı planı: "free" | "plus" | "premium". Boşsa "free" sayılır.
-  final String tier;
-}
-
 class _Html3DModelControls extends StatefulWidget {
   const _Html3DModelControls({required this.controller});
 
@@ -4131,7 +4114,7 @@ class _Html3DModelControls extends StatefulWidget {
 
 class _Html3DModelControlsState extends State<_Html3DModelControls> {
   final TextEditingController _searchController = TextEditingController();
-  List<_CloudModelEntry> _models = const <_CloudModelEntry>[];
+  List<ModelCatalogEntry> _models = const <ModelCatalogEntry>[];
   bool _loading = true;
   String? _error;
   String _query = '';
@@ -4144,7 +4127,7 @@ class _Html3DModelControlsState extends State<_Html3DModelControls> {
         _ => 0,
       };
 
-  bool _isLocked(_CloudModelEntry model) =>
+  bool _isLocked(ModelCatalogEntry model) =>
       _tierRank(_userTier) < _tierRank(model.tier);
 
   @override
@@ -4172,8 +4155,7 @@ class _Html3DModelControlsState extends State<_Html3DModelControls> {
       if (uid != null) {
         try {
           final userDoc = await FirestoreRestHelper.getDocument('users/$uid');
-          final userFields =
-              userDoc?['fields'] as Map<String, dynamic>? ?? {};
+          final userFields = userDoc?['fields'] as Map<String, dynamic>? ?? {};
           final tier = FirestoreRestHelper.stringField(userFields, 'tier');
           if (tier.isNotEmpty) userTier = tier;
         } catch (_) {
@@ -4181,33 +4163,9 @@ class _Html3DModelControlsState extends State<_Html3DModelControls> {
         }
       }
 
-      // Buluttaki tüm modeller: models koleksiyonu (rules: herkes okuyabilir).
-      // .where/.orderBy kullanılmaz (Int64 dartify riski) — tümü tek seferde
-      // çekilir, filtre/arama/sıralama Dart tarafında yapılır.
-      final docs = await FirestoreRestHelper.listDocuments('models');
-      final models = <_CloudModelEntry>[];
-      for (final doc in docs) {
-        final id = (doc['name'] as String? ?? '').split('/').last;
-        final fields = doc['fields'] as Map<String, dynamic>? ?? {};
-        final name = FirestoreRestHelper.stringField(fields, 'name');
-        final modelUrl = FirestoreRestHelper.stringField(fields, 'modelUrl');
-        if (id.isEmpty || modelUrl.isEmpty) {
-          continue;
-        }
-        models.add(_CloudModelEntry(
-          id: id,
-          name: name.isEmpty ? id : name,
-          modelUrl: modelUrl,
-          thumbnailUrl:
-              FirestoreRestHelper.stringField(fields, 'thumbnailUrl'),
-          tags: FirestoreRestHelper.arrayField(fields, 'tags'),
-          category: FirestoreRestHelper.stringField(fields, 'category'),
-          tier: FirestoreRestHelper.stringField(fields, 'tier'),
-        ));
-      }
-      models.sort(
-        (a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()),
-      );
+      // Katalog uygulama oturumu boyunca repository'de tutulur. Arama,
+      // kategori filtresi ve sıralama bu bellek içi liste üzerinde yapılır.
+      final models = await ModelRepository.instance.getModels();
       if (!mounted) return;
       setState(() {
         _models = models;
@@ -4223,7 +4181,7 @@ class _Html3DModelControlsState extends State<_Html3DModelControls> {
     }
   }
 
-  List<_CloudModelEntry> get _filtered {
+  List<ModelCatalogEntry> get _filtered {
     final query = _query.trim().toLowerCase();
     return _models.where((model) {
       if (_category.isNotEmpty && model.category != _category) {
@@ -4236,7 +4194,7 @@ class _Html3DModelControlsState extends State<_Html3DModelControls> {
     }).toList(growable: false);
   }
 
-  void _add(_CloudModelEntry model) {
+  void _add(ModelCatalogEntry model) {
     if (_isLocked(model)) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -4346,7 +4304,7 @@ class _Html3DModelControlsState extends State<_Html3DModelControls> {
 
   Widget _buildBody(
     BuildContext context,
-    List<_CloudModelEntry> filtered,
+    List<ModelCatalogEntry> filtered,
     String? selectedModelId,
   ) {
     if (_loading) {
@@ -4417,8 +4375,7 @@ class _Html3DModelControlsState extends State<_Html3DModelControls> {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: <Widget>[
-            Icon(Icons.search_off_rounded,
-                color: context._htmlMuted, size: 28),
+            Icon(Icons.search_off_rounded, color: context._htmlMuted, size: 28),
             const SizedBox(height: 8),
             Text(
               _query.isEmpty && _category.isEmpty
@@ -4649,7 +4606,8 @@ class _HtmlPhotoControlsState extends State<_HtmlPhotoControls> {
                         size: 18,
                         color: context._htmlAccent,
                       ),
-                label: Text(_picking ? 'Yükleniyor...' : 'Cihazdan Fotoğraf Yükle'),
+                label: Text(
+                    _picking ? 'Yükleniyor...' : 'Cihazdan Fotoğraf Yükle'),
               ),
               const SizedBox(height: 8),
               Text(
@@ -4659,7 +4617,7 @@ class _HtmlPhotoControlsState extends State<_HtmlPhotoControls> {
                       fontWeight: FontWeight.w600,
                     ),
               ),
-if (_error != null) ...<Widget>[
+              if (_error != null) ...<Widget>[
                 const SizedBox(height: 8),
                 Text(
                   _error!,
@@ -4695,8 +4653,7 @@ if (_error != null) ...<Widget>[
               padding: const EdgeInsets.only(bottom: 10),
               child: _UploadedPhotoCard(
                 photo: photo,
-                onAdd: () =>
-                    widget.controller.addUploadedImageBlock(photo.id),
+                onAdd: () => widget.controller.addUploadedImageBlock(photo.id),
                 onRemove: () => _removePhoto(photo),
               ),
             ),
@@ -4902,7 +4859,9 @@ class _TransitionLibraryCard extends StatelessWidget {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(18),
             border: Border.all(
-              color: isSelected ? context._htmlAccent : context.sutolColors.outline,
+              color: isSelected
+                  ? context._htmlAccent
+                  : context.sutolColors.outline,
               width: isSelected ? 1.6 : 1,
             ),
           ),
@@ -5138,10 +5097,7 @@ class _Model3DLibraryCardState extends State<_Model3DLibraryCard> {
                         widget.model.label,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: Theme.of(context)
-                            .textTheme
-                            .labelSmall
-                            ?.copyWith(
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
                               color: widget.locked
                                   ? context._htmlMuted
                                   : context._htmlInk,
@@ -5194,7 +5150,8 @@ class _HtmlTemplateControls extends StatelessWidget {
             template: template,
             isSelected: controller.pages.every(
               (page) =>
-                  page.backgroundKind == presentationTemplateBackground(template),
+                  page.backgroundKind ==
+                  presentationTemplateBackground(template),
             ),
             onTap: () {
               controller.applyTemplate(template);
@@ -5233,7 +5190,9 @@ class _TemplatePresetCard extends StatelessWidget {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: isSelected ? context._htmlAccent : context.sutolColors.outline,
+              color: isSelected
+                  ? context._htmlAccent
+                  : context.sutolColors.outline,
               width: isSelected ? 1.6 : 1,
             ),
           ),
@@ -5300,7 +5259,8 @@ class _HtmlBackgroundControls extends StatefulWidget {
   final PresentationController controller;
 
   @override
-  State<_HtmlBackgroundControls> createState() => _HtmlBackgroundControlsState();
+  State<_HtmlBackgroundControls> createState() =>
+      _HtmlBackgroundControlsState();
 }
 
 class _HtmlBackgroundControlsState extends State<_HtmlBackgroundControls> {
@@ -5352,14 +5312,12 @@ class _HtmlBackgroundControlsState extends State<_HtmlBackgroundControls> {
         final lightDefinitions = presentationBackgroundLibrary
             .where(
                 (definition) => !presentationBackgroundIsDark(definition.kind))
-            .where((definition) =>
-                query.isEmpty || _matches(definition, query))
+            .where((definition) => query.isEmpty || _matches(definition, query))
             .toList(growable: false);
         final topicDefinitions = presentationBackgroundLibrary
             .where(
                 (definition) => presentationBackgroundIsDark(definition.kind))
-            .where((definition) =>
-                query.isEmpty || _matches(definition, query))
+            .where((definition) => query.isEmpty || _matches(definition, query))
             .toList(growable: false);
 
         Widget backgroundGroup(
@@ -5468,7 +5426,9 @@ class _BackgroundPresetCard extends StatelessWidget {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: isSelected ? context._htmlAccent : context.sutolColors.outline,
+              color: isSelected
+                  ? context._htmlAccent
+                  : context.sutolColors.outline,
               width: isSelected ? 1.5 : 1,
             ),
             boxShadow: isSelected
@@ -5501,7 +5461,8 @@ class _BackgroundPresetCard extends StatelessWidget {
                   Icon(
                     presentationBackgroundIcon(kind),
                     size: 16,
-                    color: isSelected ? context._htmlAccent : context._htmlMuted,
+                    color:
+                        isSelected ? context._htmlAccent : context._htmlMuted,
                   ),
                   const SizedBox(width: 6),
                   Expanded(
@@ -5818,8 +5779,8 @@ class _HtmlComponentControlsState extends State<_HtmlComponentControls> {
                             width: cardWidth,
                             child: _ComponentLibraryCard(
                               definition: definition,
-                              onAdd: () => controller
-                                  .addComponentBlock(definition.kind),
+                              onAdd: () =>
+                                  controller.addComponentBlock(definition.kind),
                             ),
                           ),
                         ],
@@ -6140,10 +6101,8 @@ const List<_TextColorOption> _textColorOptions = <_TextColorOption>[
   _TextColorOption(label: 'Mavi', hex: '#3B82F6', color: Color(0xFF3B82F6)),
   _TextColorOption(label: 'Mor', hex: '#A855F7', color: Color(0xFFA855F7)),
   _TextColorOption(label: 'Sarı', hex: '#FBBF24', color: Color(0xFFFBBF24)),
-  _TextColorOption(
-      label: 'Turuncu', hex: '#FB923C', color: Color(0xFFFB923C)),
-  _TextColorOption(
-      label: 'Kırmızı', hex: '#F87171', color: Color(0xFFF87171)),
+  _TextColorOption(label: 'Turuncu', hex: '#FB923C', color: Color(0xFFFB923C)),
+  _TextColorOption(label: 'Kırmızı', hex: '#F87171', color: Color(0xFFF87171)),
   _TextColorOption(label: 'Yeşil', hex: '#22C55E', color: Color(0xFF22C55E)),
   _TextColorOption(label: 'Nane', hex: '#34D399', color: Color(0xFF34D399)),
 ];
@@ -6438,8 +6397,7 @@ class _HtmlStageCard extends StatelessWidget {
     // görsel ölçekle böler; parmak 1:1 takip etmeye devam eder. Seçim
     // dikdörtgeni localPosition tabanlıdır ve dönüşüm altında otomatik
     // doğru kalır (burada değiştirilmez).
-    Offset localDelta(Offset delta) =>
-        zoom > 1.0001 ? delta / zoom : delta;
+    Offset localDelta(Offset delta) => zoom > 1.0001 ? delta / zoom : delta;
 
     return Container(
       padding: const EdgeInsets.fromLTRB(4, 4, 4, 6),
@@ -6482,170 +6440,180 @@ class _HtmlStageCard extends StatelessWidget {
                   width: stageWidth,
                   height: stageHeight,
                   child: AnimatedSwitcher(
-                duration: reduceMotion
-                    ? Duration.zero
-                    : Duration(
-                        milliseconds:
-                            controller.effectSettings.transitionDurationMs,
-                      ),
-                transitionBuilder: (child, animation) =>
-                    _buildHtmlPreviewTransition(
-                  kind: controller.effectSettings.transitionKind,
-                  animation: animation,
-                  reduceMotion: reduceMotion,
-                  child: child,
-                ),
-                child: KeyedSubtree(
-                  key: ValueKey<String>('stage-${controller.selectedPage.id}'),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(28),
-                    child: Stack(
-                      fit: StackFit.expand,
-                      children: <Widget>[
-                        HtmlPageStage(
-                          key: ValueKey<String>(
-                              'html-${controller.selectedPage.id}'),
-                          page: controller.selectedPage,
-                          selectedTextBlockId: controller.selectedTextBlockId,
-                          selectedComponentBlockId:
-                              controller.selectedComponentBlockId,
-                          renderMode: reduceMotion
-                              ? HtmlStageRenderMode.snapshot
-                              : HtmlStageRenderMode.preview,
-                        ),
-                        if (readOnly)
-                          IgnorePointer(
-                            child: PresentationPageCanvas(
+                    duration: reduceMotion
+                        ? Duration.zero
+                        : Duration(
+                            milliseconds:
+                                controller.effectSettings.transitionDurationMs,
+                          ),
+                    transitionBuilder: (child, animation) =>
+                        _buildHtmlPreviewTransition(
+                      kind: controller.effectSettings.transitionKind,
+                      animation: animation,
+                      reduceMotion: reduceMotion,
+                      child: child,
+                    ),
+                    child: KeyedSubtree(
+                      key: ValueKey<String>(
+                          'stage-${controller.selectedPage.id}'),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(28),
+                        child: Stack(
+                          fit: StackFit.expand,
+                          children: <Widget>[
+                            HtmlPageStage(
+                              key: ValueKey<String>(
+                                  'html-${controller.selectedPage.id}'),
                               page: controller.selectedPage,
                               selectedTextBlockId:
                                   controller.selectedTextBlockId,
-                              selectedTextBlockIds:
-                                  controller.selectedTextBlockIds,
                               selectedComponentBlockId:
                                   controller.selectedComponentBlockId,
-                              selectedComponentBlockIds:
-                                  controller.selectedComponentBlockIds,
-                              interactive: false,
-                              showHint: false,
-                              showSurface: false,
-                              showEmptyState: false,
-                              textOpacity: 0,
+                              renderMode: reduceMotion
+                                  ? HtmlStageRenderMode.snapshot
+                                  : HtmlStageRenderMode.preview,
                             ),
-                          )
-                        else
-                          PresentationPageCanvas(
-                          page: controller.selectedPage,
-                          selectedTextBlockId: controller.selectedTextBlockId,
-                          selectedTextBlockIds: controller.selectedTextBlockIds,
-                          selectedComponentBlockId:
-                              controller.selectedComponentBlockId,
-                          selectedComponentBlockIds:
-                              controller.selectedComponentBlockIds,
-                          interactive: interactive,
-                          showHint: showHint,
-                          showSurface: false,
-                          showEmptyState: false,
-                          textOpacity: 0,
-                          onSelectTextBlock: controller.selectTextBlock,
-                          onSelectComponentBlock:
-                              controller.selectComponentBlock,
-                          onDragSelectedText: (delta, size) =>
-                              controller.moveSelectedText(
-                            localDelta(delta),
-                            size,
-                          ),
-                          onInlineTextChanged: controller.updateSelectedText,
-                          onResizeSelectedTextWidth: (deltaX, size) =>
-                              controller.resizeSelectedTextWidth(
-                            localDelta(Offset(deltaX, 0)).dx,
-                            size,
-                          ),
-                          onResizeSelectedComponent: (delta, size,
-                                  {required fromLeft,
-                                  required fromTop,
-                                  required fromRight,
-                                  required fromBottom}) =>
-                              controller.resizeSelectedComponentByHandle(
-                            localDelta(delta),
-                            size,
-                            fromLeft: fromLeft,
-                            fromTop: fromTop,
-                            fromRight: fromRight,
-                            fromBottom: fromBottom,
-                          ),
-                          onMarqueeSelectionChanged: ({
-                            required textBlockIds,
-                            required componentBlockIds,
-                          }) =>
-                              controller.selectItems(
-                            textBlockIds: textBlockIds,
-                            componentBlockIds: componentBlockIds,
-                          ),
-                          onClearSelection: controller.clearSelection,
-                          onSecondaryTapTextBlock: (itemId, globalPosition) {
-                            if (!controller.selectedTextBlockIds
-                                .contains(itemId)) {
-                              controller.selectTextBlock(itemId);
-                            }
-                            _showStageItemContextMenu(
-                              context,
-                              controller,
-                              globalPosition,
-                            );
-                          },
-                          onSecondaryTapComponentBlock:
-                              (itemId, globalPosition) {
-                            if (!controller.selectedComponentBlockIds
-                                .contains(itemId)) {
-                              controller.selectComponentBlock(itemId);
-                            }
-                            _showStageItemContextMenu(
-                              context,
-                              controller,
-                              globalPosition,
-                            );
-                          },
-                          onSecondaryTapCanvas: (globalPosition) {
-                            _showCanvasContextMenu(
-                              context,
-                              controller,
-                              globalPosition,
-                            );
-                          },
-                          onToggleModelOrbit: (itemId) {
-                            if (controller.selectedComponentBlockId != itemId) {
-                              controller.selectComponentBlock(itemId);
-                            }
-                            controller.toggleSelectedModelOrbit();
-                          },
-                          onRotateModel: (itemId, delta) {
-                            if (controller.selectedComponentBlockId != itemId) {
-                              controller.selectComponentBlock(itemId);
-                            }
-                            controller.rotateSelectedModel(localDelta(delta));
-                          },
-                          onBeginModelOrbit: (itemId) {
-                            if (controller.selectedComponentBlockId != itemId) {
-                              controller.selectComponentBlock(itemId);
-                            }
-                            controller.beginSelectedModelOrbitGesture();
-                          },
-                          onEndModelOrbit:
-                              controller.endSelectedModelOrbitGesture,
+                            if (readOnly)
+                              IgnorePointer(
+                                child: PresentationPageCanvas(
+                                  page: controller.selectedPage,
+                                  selectedTextBlockId:
+                                      controller.selectedTextBlockId,
+                                  selectedTextBlockIds:
+                                      controller.selectedTextBlockIds,
+                                  selectedComponentBlockId:
+                                      controller.selectedComponentBlockId,
+                                  selectedComponentBlockIds:
+                                      controller.selectedComponentBlockIds,
+                                  interactive: false,
+                                  showHint: false,
+                                  showSurface: false,
+                                  showEmptyState: false,
+                                  textOpacity: 0,
+                                ),
+                              )
+                            else
+                              PresentationPageCanvas(
+                                page: controller.selectedPage,
+                                selectedTextBlockId:
+                                    controller.selectedTextBlockId,
+                                selectedTextBlockIds:
+                                    controller.selectedTextBlockIds,
+                                selectedComponentBlockId:
+                                    controller.selectedComponentBlockId,
+                                selectedComponentBlockIds:
+                                    controller.selectedComponentBlockIds,
+                                interactive: interactive,
+                                showHint: showHint,
+                                showSurface: false,
+                                showEmptyState: false,
+                                textOpacity: 0,
+                                onSelectTextBlock: controller.selectTextBlock,
+                                onSelectComponentBlock:
+                                    controller.selectComponentBlock,
+                                onDragSelectedText: (delta, size) =>
+                                    controller.moveSelectedText(
+                                  localDelta(delta),
+                                  size,
+                                ),
+                                onInlineTextChanged:
+                                    controller.updateSelectedText,
+                                onResizeSelectedTextWidth: (deltaX, size) =>
+                                    controller.resizeSelectedTextWidth(
+                                  localDelta(Offset(deltaX, 0)).dx,
+                                  size,
+                                ),
+                                onResizeSelectedComponent: (delta, size,
+                                        {required fromLeft,
+                                        required fromTop,
+                                        required fromRight,
+                                        required fromBottom}) =>
+                                    controller.resizeSelectedComponentByHandle(
+                                  localDelta(delta),
+                                  size,
+                                  fromLeft: fromLeft,
+                                  fromTop: fromTop,
+                                  fromRight: fromRight,
+                                  fromBottom: fromBottom,
+                                ),
+                                onMarqueeSelectionChanged: ({
+                                  required textBlockIds,
+                                  required componentBlockIds,
+                                }) =>
+                                    controller.selectItems(
+                                  textBlockIds: textBlockIds,
+                                  componentBlockIds: componentBlockIds,
+                                ),
+                                onClearSelection: controller.clearSelection,
+                                onSecondaryTapTextBlock:
+                                    (itemId, globalPosition) {
+                                  if (!controller.selectedTextBlockIds
+                                      .contains(itemId)) {
+                                    controller.selectTextBlock(itemId);
+                                  }
+                                  _showStageItemContextMenu(
+                                    context,
+                                    controller,
+                                    globalPosition,
+                                  );
+                                },
+                                onSecondaryTapComponentBlock:
+                                    (itemId, globalPosition) {
+                                  if (!controller.selectedComponentBlockIds
+                                      .contains(itemId)) {
+                                    controller.selectComponentBlock(itemId);
+                                  }
+                                  _showStageItemContextMenu(
+                                    context,
+                                    controller,
+                                    globalPosition,
+                                  );
+                                },
+                                onSecondaryTapCanvas: (globalPosition) {
+                                  _showCanvasContextMenu(
+                                    context,
+                                    controller,
+                                    globalPosition,
+                                  );
+                                },
+                                onToggleModelOrbit: (itemId) {
+                                  if (controller.selectedComponentBlockId !=
+                                      itemId) {
+                                    controller.selectComponentBlock(itemId);
+                                  }
+                                  controller.toggleSelectedModelOrbit();
+                                },
+                                onRotateModel: (itemId, delta) {
+                                  if (controller.selectedComponentBlockId !=
+                                      itemId) {
+                                    controller.selectComponentBlock(itemId);
+                                  }
+                                  controller
+                                      .rotateSelectedModel(localDelta(delta));
+                                },
+                                onBeginModelOrbit: (itemId) {
+                                  if (controller.selectedComponentBlockId !=
+                                      itemId) {
+                                    controller.selectComponentBlock(itemId);
+                                  }
+                                  controller.beginSelectedModelOrbitGesture();
+                                },
+                                onEndModelOrbit:
+                                    controller.endSelectedModelOrbitGesture,
+                              ),
+                          ],
                         ),
-                      ],
+                      ),
                     ),
                   ),
                 ),
               ),
             ),
-          ),
-        ),
-      );
-    },
-  ),
-);
-}
+          );
+        },
+      ),
+    );
+  }
 }
 
 /// Seçime bağlı bağlamsal araç çubuğu (Canva tarzı yatay üst bar).
@@ -6932,8 +6900,8 @@ class _SelectionContextBarSection extends StatelessWidget {
         icon: Icons.open_with_rounded,
         label: 'Manuel Kontrol',
         active: block.modelOrbitEnabled,
-        onTap: () =>
-            controller.updateSelectedModelOrbitEnabled(!block.modelOrbitEnabled),
+        onTap: () => controller
+            .updateSelectedModelOrbitEnabled(!block.modelOrbitEnabled),
       ),
     ];
   }
@@ -7070,13 +7038,11 @@ class _HtmlTextAnimationSheet extends StatelessWidget {
               child: AnimatedBuilder(
                 animation: controller,
                 builder: (context, _) {
-                  final current =
-                      controller.selectedTextBlock?.textAnimation;
+                  final current = controller.selectedTextBlock?.textAnimation;
                   return ListView(
                     shrinkWrap: true,
                     children: <Widget>[
-                      for (final animation
-                          in PresentationTextAnimation.values)
+                      for (final animation in PresentationTextAnimation.values)
                         ListTile(
                           dense: true,
                           leading: Icon(
