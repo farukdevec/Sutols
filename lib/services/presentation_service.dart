@@ -127,7 +127,7 @@ class PresentationService {
         'wasExported': {'booleanValue': false},
         'editCount': {'integerValue': '0'},
         'timeSpentSeconds': {'integerValue': '0'},
-        'lastOpenedAt': {'timestampValue': 'request_time'},
+        'lastOpenedAt': {'timestampValue': FirestoreRestHelper.toFirestoreTimestamp(DateTime.now())},
       },
     });
 
