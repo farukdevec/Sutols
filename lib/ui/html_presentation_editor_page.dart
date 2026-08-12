@@ -114,6 +114,25 @@ class _HtmlPresentationEditorPageState
   bool _adminLoading = false;
   String? _adminLoadError;
 
+  /// İndirilecek sunumun konu / dosya adı (kullanıcı düzenleyebilir).
+  String _presentationFileName = 'Sutols Sunumu';
+
+  /// Sunum sayfalarındaki ilk metin bloğundan konu / dosya adını çözer.
+  void _resolvePresentationFileName() {
+    for (final page in widget.controller.pages) {
+      for (final block in page.textBlocks) {
+        final value = block.text.trim();
+        if (value.isNotEmpty) {
+          final name = value.length > 64 ? value.substring(0, 64) : value;
+          if (name != _presentationFileName) {
+            setState(() => _presentationFileName = name);
+          }
+          return;
+        }
+      }
+    }
+  }
+
   void _onMobileScaleStart(ScaleStartDetails details) {
     _mobileZoomStartScale = _mobileCanvasZoom;
     _dismissMobileHint();
@@ -163,6 +182,8 @@ class _HtmlPresentationEditorPageState
       _lastEditorLabel = initial.trim();
     }
     _hintTimer = Timer(const Duration(seconds: 6), _dismissMobileHint);
+    _resolvePresentationFileName();
+    widget.controller.addListener(_resolvePresentationFileName);
     if (widget.adminReadOnly) {
       _adminLoading = true;
       _loadAdminPresentation();
@@ -210,6 +231,7 @@ class _HtmlPresentationEditorPageState
     widget.controller.removeListener(_syncTabWithSelection);
     widget.controller.removeListener(_onMobilePageChanged);
     widget.controller.removeListener(_trackEdits);
+    widget.controller.removeListener(_resolvePresentationFileName);
     _textController.dispose();
     final presentationId = widget.presentationId;
     if (presentationId != null && !widget.adminReadOnly) {
@@ -417,14 +439,54 @@ class _HtmlPresentationEditorPageState
     }
   }
 
+  /// Konu / sunum adını kullanıcıdan alıp günceller.
+  Future<void> _editPresentationFileName() async {
+    final controller = TextEditingController(text: _presentationFileName);
+    final result = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Sunum Konusu'),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          decoration: const InputDecoration(
+            labelText: 'Konu / Sunum Adı',
+            hintText: 'Örn: Tarih ve Arkeoloji',
+          ),
+          onSubmitted: (value) => Navigator.of(dialogContext).pop(value),
+        ),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('İptal'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(
+              controller.text.trim(),
+            ),
+            child: const Text('Kaydet'),
+          ),
+        ],
+      ),
+    );
+    controller.dispose();
+    if (result != null && result.isNotEmpty && mounted) {
+      setState(() => _presentationFileName = result);
+    }
+  }
+
   Future<void> _exportPresentation() async {
     final presentationId = widget.presentationId;
     if (presentationId != null && !widget.adminReadOnly) {
       _tracking.markExported(presentationId);
     }
+    final cleanName = _presentationFileName.trim().isEmpty ? 'Sutols Sunumu' : _presentationFileName.trim();
+    final fileName = '$cleanName.html';
     await exportPresentationAsHtml(
       pages: widget.controller.pages.toList(growable: false),
       effectSettings: widget.controller.effectSettings,
+      fileName: fileName,
+      title: _presentationFileName,
     );
     _showSnack('Sunum tek HTML dosyasi olarak disa aktarildi.');
   }
@@ -629,6 +691,8 @@ class _HtmlPresentationEditorPageState
                                 canRemoveText: widget.controller.canRemoveTextBlock,
                                 lastEditorLabel: _lastEditorLabel,
                                 adminReadOnly: widget.adminReadOnly,
+                                presentationFileName: _presentationFileName,
+                                onEditFileName: _editPresentationFileName,
                               ),
                               const SizedBox(height: 12),
                               Expanded(
@@ -667,6 +731,8 @@ class _HtmlPresentationEditorPageState
                               canRedo: widget.controller.canRedo,
                               lastEditorLabel: _lastEditorLabel,
                               adminReadOnly: widget.adminReadOnly,
+                              presentationFileName: _presentationFileName,
+                              onEditFileName: _editPresentationFileName,
                             ),
                             SizedBox(height: isMobile ? 8 : 14),
                             Expanded(
@@ -762,6 +828,8 @@ class _HtmlHeader extends StatelessWidget {
     required this.canRedo,
     this.lastEditorLabel,
     this.adminReadOnly = false,
+    this.presentationFileName = 'Sutols Sunumu',
+    this.onEditFileName,
   });
 
   final int pageCount;
@@ -776,6 +844,8 @@ class _HtmlHeader extends StatelessWidget {
   final bool canUndo;
   final bool canRedo;
   final String? lastEditorLabel;
+  final String presentationFileName;
+  final VoidCallback? onEditFileName;
 
   /// Salt okunur (admin) mod: düzenleme araçları gizlenir, yerine kırmızı
   /// "GÖRÜNTÜLEME MODU (Admin)" rozeti gösterilir.
@@ -783,29 +853,54 @@ class _HtmlHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final title = Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
-        Text(
-          'HTML Sunum Duzenleme Alani',
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                color: context._htmlInk,
-                fontWeight: FontWeight.w800,
-              ),
+    final title = InkWell(
+      onTap: onEditFileName,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          color: onEditFileName != null
+              ? context.sutolColors.surfaceSubtle
+              : Colors.transparent,
         ),
-        const SizedBox(height: 4),
-        Text(
-          'Arka plan, metin, akis ve efekt ayarlarini ayni sahnede duzenle.',
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: context._htmlMuted,
-                fontWeight: FontWeight.w500,
-              ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Row(
+              children: <Widget>[
+                Expanded(
+                  child: Text(
+                    presentationFileName,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                          color: context._htmlInk,
+                          fontWeight: FontWeight.w800,
+                        ),
+                  ),
+                ),
+                if (onEditFileName != null)
+                  Icon(
+                    Icons.edit_rounded,
+                    size: 16,
+                    color: context._htmlMuted,
+                  ),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Arka plan, metin, akis ve efekt ayarlarini ayni sahnede duzenle.',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: context._htmlMuted,
+                    fontWeight: FontWeight.w500,
+                  ),
+            ),
+          ],
         ),
-      ],
+      ),
     );
     final actions = <Widget>[
       _HeaderBadge(
@@ -2590,6 +2685,8 @@ class _HtmlStudioHeader extends StatelessWidget {
     required this.canRemoveText,
     this.lastEditorLabel,
     this.adminReadOnly = false,
+    this.presentationFileName = 'Sutols Sunumu',
+    this.onEditFileName,
   });
 
   final int pageCount;
@@ -2607,6 +2704,8 @@ class _HtmlStudioHeader extends StatelessWidget {
   final VoidCallback onRemoveText;
   final bool canRemoveText;
   final String? lastEditorLabel;
+  final String presentationFileName;
+  final VoidCallback? onEditFileName;
 
   /// Salt okunur (admin) mod: düzenleme araçları gizlenir, yerine kırmızı
   /// "GÖRÜNTÜLEME MODU (Admin)" rozeti gösterilir.
@@ -2637,6 +2736,46 @@ class _HtmlStudioHeader extends StatelessWidget {
                   fontWeight: FontWeight.w900,
                   letterSpacing: -0.02,
                 ),
+          ),
+          const SizedBox(width: 10),
+          InkWell(
+            onTap: onEditFileName,
+            borderRadius: BorderRadius.circular(18),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(18),
+                color: onEditFileName != null
+                    ? context.sutolColors.surfaceSubtle
+                    : Colors.transparent,
+                border: Border.all(
+                  color: onEditFileName != null
+                      ? context.sutolColors.outline
+                      : Colors.transparent,
+                ),
+              ),
+              child: Row(
+                children: <Widget>[
+                  Expanded(
+                    child: Text(
+                      presentationFileName,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: context._htmlInk,
+                            fontWeight: FontWeight.w700,
+                          ),
+                    ),
+                  ),
+                  if (onEditFileName != null)
+                    Icon(
+                      Icons.edit_rounded,
+                      size: 14,
+                      color: context._htmlMuted,
+                    ),
+                ],
+              ),
+            ),
           ),
           const SizedBox(width: 18),
           if (adminReadOnly)
