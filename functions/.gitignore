@@ -10,6 +10,8 @@ node_modules/
 
 # Firebase service account keys
 *.adminsdk-*.json
+**/*adminsdk*.json
+**/*service-account*.json
 
 # R2 credentials
 .env

@@ -138,12 +138,30 @@ Konu: $topic
   }
 
   /// Konuyla en yakın eşleşen (basit keyword eşleşmesi) ve `wasExported ==
-  /// true` olan en fazla 2 geçmiş sunumu döndürür. Sorgu .where/.orderBy
-  /// kullanmaz (Int64 riski), tüm koleksiyon .get() ile çekilir ve Dart'ta
-  /// filtrelenir. Hata durumunda boş liste döner (üretim bozulmaz).
+  /// true` olan en fazla 2 geçmiş sunumu döndürür.
+  ///
+  /// Ön filtre: konu kelimelerinden basit bir anahtar kelime çıkarılır,
+  /// yalnızca o kelimeyi `topic` alanında içeren dokümanlar çekilir
+  /// (`>=` / `<=` aralık sorgusu ile). En fazla 50 doküman incelenir
+  /// (`.limit(50)`). Tam içerik (`content`) asla prompt'a eklenmez;
+  /// yalnızca slayt başlıkları (`title`) ve yerleşim (`layout`) kullanılır.
+  /// Hata durumunda boş liste döner (üretim bozulmaz).
   Future<List<_PastExample>> _findSimilarExported(String topic) async {
     try {
-      final snapshot = await _db.collection('presentations').get();
+      // Basit anahtar kelime çıkar (ilk anlamlı token)
+      final tokens = _tokens(topic);
+      if (tokens.isEmpty) return const [];
+      final keyword = tokens.first;
+
+      // Ön filtre: keyword'i topic alanında içeren dokümanlar,
+      // en fazla 50 doküman çekilir.
+      final snapshot = await _db
+          .collection('presentations')
+          .where('topic', isGreaterThanOrEqualTo: keyword)
+          .where('topic', isLessThanOrEqualTo: '$keyword\uf8ff')
+          .limit(50)
+          .get();
+
       final topicTokens = _tokens(topic);
       final scored = <(int, DocumentSnapshot<Map<String, dynamic>>)>[];
       for (final doc in snapshot.docs) {
@@ -151,7 +169,10 @@ Konu: $topic
         if (data['wasExported'] != true) {
           continue;
         }
-        final score = _tokenOverlap(topicTokens, _tokens(data['topic'] as String? ?? ''));
+        final score = _tokenOverlap(
+          topicTokens,
+          _tokens(data['topic'] as String? ?? ''),
+        );
         if (score > 0) {
           scored.add((score, doc));
         }
@@ -161,6 +182,7 @@ Konu: $topic
       final examples = <_PastExample>[];
       for (final entry in scored.take(2)) {
         final example = await _exampleFromDoc(entry.$2);
+        // İçerik (`content`) asla eklenmez; yalnızca başlık + layout.
         if (example.titles.isEmpty) {
           continue;
         }
@@ -185,9 +207,10 @@ Konu: $topic
 ''';
   }
 
-  /// Bir sunum dokümanından yalnızca slayt başlıklarını ve yerleşimlerini
-  /// okur: önce ana belgedeki `slides` dizisi, yoksa `slides` alt koleksiyonu
-  /// (order ile). Tam içerik çekilmez.
+  /// Bir sunum dokümanından yalnızca slayt başlıklarını (`title`) ve
+  /// yerleşim türlerini (`layout`) okur. `content` alanı ASLA çekilmez
+  /// veya prompt'a eklenmez; bu, bir kullanıcının özel içeriğinin
+  /// başka bir kullanıcıya sızmasını engeller.
   Future<_PastExample> _exampleFromDoc(
     DocumentSnapshot<Map<String, dynamic>> doc,
   ) async {
@@ -197,6 +220,7 @@ Konu: $topic
     if (embedded is List) {
       slides = embedded
           .whereType<Map<dynamic, dynamic>>()
+          // `content` asla alınmaz; yalnızca başlık + layout.
           .map((slide) => {
                 'title': slide['title'] as String? ?? '',
                 'layout': slide['layout'] as String? ?? '',

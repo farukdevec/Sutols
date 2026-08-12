@@ -708,8 +708,10 @@ class _AdminUserDetailPageState extends State<AdminUserDetailPage> {
                   onTap: () {
                     Navigator.of(context).push(
                       MaterialPageRoute<void>(
-                        builder: (_) =>
-                            PresentationViewPage(presentationId: presentation.id),
+                        builder: (_) => PresentationViewPage(
+                          presentationId: presentation.id,
+                          adminView: true,
+                        ),
                       ),
                     );
                   },

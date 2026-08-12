@@ -20,4 +20,9 @@ coverage/
 *.log
 *.tmp
 *.swp
+# Firebase service account keys (tüm yol ve dosya adları için
+# kapsamlı desen; yalnızca adminsdk desenini hedefler, seed/config
+# JSON'larını etkilemez).
+**/*adminsdk*.json
+**/*service-account*.json
 functions/sutols-firebase-adminsdk-*.json

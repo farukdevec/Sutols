@@ -18,7 +18,7 @@ app = FastAPI(title="Sutol AI Backend", version="1.0.0")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["https://sutols.com"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

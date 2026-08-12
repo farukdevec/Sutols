@@ -86,25 +86,32 @@ Future<List<PresentationPage>> _buildPagesFromFallback(
   }
 
   // 2) Eski sunumlar: slides alt koleksiyonu (order ile).
-  final slideDocs = await FirestoreRestHelper.runQuery({
-    'from': [
-      {
-        'parent': 'presentations/$presentationId',
-        'collectionId': 'slides',
-      },
-    ],
-    'orderBy': [
-      {'field': {'fieldPath': 'order'}, 'direction': 'ASCENDING'},
-    ],
-  });
+  // Admin için kural bazen 403 dönebilir; hata durumunda boş döner ve
+  // çağıran tarafa "düzenlenebilir içerik yok" mesajı gösterilir.
+  List<({String title, String content})> slides;
+  try {
+    final slideDocs = await FirestoreRestHelper.runQuery({
+      'from': [
+        {
+          'parent': 'presentations/$presentationId',
+          'collectionId': 'slides',
+        },
+      ],
+      'orderBy': [
+        {'field': {'fieldPath': 'order'}, 'direction': 'ASCENDING'},
+      ],
+    });
 
-  final slides = <({String title, String content})>[];
-  for (final slideDoc in slideDocs) {
-    final slideFields = slideDoc['fields'] as Map<String, dynamic>? ?? {};
-    slides.add((
-      title: FirestoreRestHelper.stringField(slideFields, 'title'),
-      content: FirestoreRestHelper.stringField(slideFields, 'content'),
-    ));
+    slides = <({String title, String content})>[];
+    for (final slideDoc in slideDocs) {
+      final slideFields = slideDoc['fields'] as Map<String, dynamic>? ?? {};
+      slides.add((
+        title: FirestoreRestHelper.stringField(slideFields, 'title'),
+        content: FirestoreRestHelper.stringField(slideFields, 'content'),
+      ));
+    }
+  } catch (_) {
+    slides = const <({String title, String content})>[];
   }
   return _pagesFromTitleContent(slides);
 }

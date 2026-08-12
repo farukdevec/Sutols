@@ -7,7 +7,8 @@ service cloud.firestore {
 
 
     match /models/{modelId} {
-      allow read: if true;
+      allow read: if resource.data.tier == 'free'
+        || (request.auth != null && userTierAtLeast(resource.data.tier));
       allow write: if false;
     }
 
@@ -206,6 +207,12 @@ service cloud.firestore {
     function dailyLimitFor(uid) {
       let tier = get(/databases/$(database)/documents/users/$(uid)).data.tier;
       return tier == 'premium' ? 999 : (tier == 'plus' ? 15 : 3);
+    }
+
+    function userTierAtLeast(minTier) {
+      let tiers = {'free': 0, 'plus': 1, 'premium': 2};
+      let userTier = get(/databases/$(database)/documents/users/$(request.auth.uid)).data.tier;
+      return tiers[userTier] >= tiers[minTier];
     }
   }
 }

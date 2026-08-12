@@ -112,28 +112,36 @@ class _PresentationViewPageState extends State<PresentationViewPage> {
     }
 
     // Yedek 2: slides alt koleksiyonu (order alanıyla).
+    // Admin için kural bazen 403 dönebilir (rule değişimi geçiş dönemi);
+    // hata durumunda boş listeyle devam et, değilse kullanıcının görmesi
+    // gereken slaytlar yok zaten (ana belge/project doluysa).
     if (slides.isEmpty) {
-      final slideDocs = await FirestoreRestHelper.runQuery({
-        'from': [
-          {
-            'parent': 'presentations/$presentationId',
-            'collectionId': 'slides',
-          },
-        ],
-        'orderBy': [
-          {'field': {'fieldPath': 'order'}, 'direction': 'ASCENDING'},
-        ],
-      });
-      slides = slideDocs.map<Map<String, dynamic>>((slideDoc) {
-        final slideFields =
-            slideDoc['fields'] as Map<String, dynamic>? ?? {};
-        return {
-          'title': FirestoreRestHelper.stringField(slideFields, 'title'),
-          'content': FirestoreRestHelper.stringField(slideFields, 'content'),
-          'layout': FirestoreRestHelper.stringField(slideFields, 'layout'),
-          'modelIds': FirestoreRestHelper.arrayField(slideFields, 'modelIds'),
-        };
-      }).toList();
+      try {
+        final slideDocs = await FirestoreRestHelper.runQuery({
+          'from': [
+            {
+              'parent': 'presentations/$presentationId',
+              'collectionId': 'slides',
+            },
+          ],
+          'orderBy': [
+            {'field': {'fieldPath': 'order'}, 'direction': 'ASCENDING'},
+          ],
+        });
+        slides = slideDocs.map<Map<String, dynamic>>((slideDoc) {
+          final slideFields =
+              slideDoc['fields'] as Map<String, dynamic>? ?? {};
+          return {
+            'title': FirestoreRestHelper.stringField(slideFields, 'title'),
+            'content': FirestoreRestHelper.stringField(slideFields, 'content'),
+            'layout': FirestoreRestHelper.stringField(slideFields, 'layout'),
+            'modelIds': FirestoreRestHelper.arrayField(slideFields, 'modelIds'),
+          };
+        }).toList();
+      } catch (_) {
+        // Kural 403 döndürürse sessizce yut: yukarıdaki yedeklerden
+        // slayt gelmişse onlarla devam edilir, yoksa boş liste gösterilir.
+      }
     }
 
     return {
