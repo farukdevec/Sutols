@@ -10,11 +10,18 @@ class LocalPickedImage {
     required this.name,
     required this.dataUrl,
     required this.sizeBytes,
+    this.pixelWidth = 0,
+    this.pixelHeight = 0,
   });
 
   final String name;
   final String dataUrl;
   final int sizeBytes;
+  final int pixelWidth;
+  final int pixelHeight;
+
+  double get aspectRatio =>
+      pixelWidth > 0 && pixelHeight > 0 ? pixelWidth / pixelHeight : 16 / 9;
 }
 
 Future<LocalPickedImage?> pickLocalImage() => impl.pickLocalImage();

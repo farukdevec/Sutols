@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 import '../services/auth_service.dart';
 import 'design/design_system.dart';
+import 'design/sutol_widgets.dart';
 import 'widgets/terms_consent_dialog.dart';
 
 class AuthPage extends StatefulWidget {
@@ -169,14 +170,7 @@ class _AuthPageState extends State<AuthPage> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Semantics(
-            image: true,
-            label: 'Sutols',
-            child: Image.asset(
-              'assets/images/sutols_wordmark.png',
-              height: 42,
-            ),
-          ),
+          const SutolsBrandLockup(height: 42),
           const SizedBox(height: AppSpacing.s32),
           _buildToggle(colors),
           const SizedBox(height: AppSpacing.s24),

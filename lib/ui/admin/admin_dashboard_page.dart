@@ -71,11 +71,10 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
         if (tier.isNotEmpty && tier != 'free') {
           activeSubscriptions += 1;
         }
-        presentationCountSum +=
-            int.tryParse(
-                  FirestoreRestHelper.integerField(fields, 'presentationCount'),
-                ) ??
-                0;
+        presentationCountSum += int.tryParse(
+              FirestoreRestHelper.integerField(fields, 'presentationCount'),
+            ) ??
+            0;
       }
 
       // Sunumlar listelenebiliyorsa gerçek toplam/bugünkü sayılar,
@@ -232,7 +231,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
     _StatCardData(
       key: 'activeSubscriptions',
       title: 'Aktif Abonelik',
-      icon: Icons.workspace_premium_outlined,
+      icon: Icons.star_rounded,
       color: Color(0xFFC9A227),
     ),
     _StatCardData(

@@ -3,6 +3,7 @@ import 'package:flutter/widgets.dart';
 import '../models/slide_model.dart';
 import '../state/presentation_controller.dart';
 import 'model_matching_service.dart';
+import 'presentation_auto_builder.dart';
 import 'presentation_keyword_catalog.dart';
 import 'remote_model_sources.dart';
 
@@ -17,7 +18,7 @@ class PresentationDeckBuilder {
   }) {
     final sources = <String, String>{};
     for (final slide in slides) {
-      for (final model in slide.models) {
+      for (final model in slide.models.take(1)) {
         sources[model.id] = model.modelUrl;
       }
     }
@@ -35,8 +36,16 @@ class PresentationDeckBuilder {
         continue;
       }
 
-      final models = slide.models.take(4).toList(growable: false);
-      final background = _bestBackground(topic: topic, title: title, content: content);
+      final selectedModel = slide.models.isEmpty ? null : slide.models.first;
+      final fallbackComponent = selectedModel == null
+          ? bestPresentationComponentForSlide(
+              title: title,
+              body: '${slide.keywords.join(' ')} $content',
+            )
+          : null;
+      final hasVisual = selectedModel != null || fallbackComponent != null;
+      final background =
+          _bestBackground(topic: topic, title: title, content: content);
 
       final textBlocks = <PresentationTextBlock>[];
       if (title.isNotEmpty) {
@@ -49,7 +58,7 @@ class PresentationDeckBuilder {
             type: PresentationTextType.title,
             textStyle: PresentationTextStyle.bilimTemiz,
             textAnimation: PresentationTextAnimation.yavasBelirme,
-            widthFactor: models.isEmpty ? 0.84 : 0.58,
+            widthFactor: hasVisual ? 0.58 : 0.84,
           ),
         );
       }
@@ -58,32 +67,40 @@ class PresentationDeckBuilder {
           PresentationTextBlock(
             id: 'text-${textCounter++}',
             text: content,
-            position: title.isEmpty ? const Offset(0.07, 0.22) : const Offset(0.07, 0.34),
+            position: title.isEmpty
+                ? const Offset(0.07, 0.22)
+                : const Offset(0.07, 0.34),
             fontSize: 26,
             type: PresentationTextType.body,
             textStyle: PresentationTextStyle.bilimTemiz,
             textAnimation: PresentationTextAnimation.bulaniktanNet,
-            widthFactor: models.isEmpty ? 0.84 : 0.5,
+            widthFactor: hasVisual ? 0.5 : 0.84,
           ),
         );
       }
 
       final componentBlocks = <PresentationComponentBlock>[];
-      if (models.isNotEmpty) {
-        final placements = _modelPlacements(models.length);
-        for (var i = 0; i < models.length; i += 1) {
-          componentBlocks.add(
-            PresentationComponentBlock(
-              id: 'component-${componentCounter++}',
-              modelAssetId: models[i].id,
-              modelAnimationEnabled: false,
-              modelOrbitTheta: 15,
-              modelOrbitPhi: 70,
-              position: placements[i].$1,
-              size: placements[i].$2,
-            ),
-          );
-        }
+      if (selectedModel != null) {
+        componentBlocks.add(
+          PresentationComponentBlock(
+            id: 'component-${componentCounter++}',
+            modelAssetId: selectedModel.id,
+            modelAnimationEnabled: false,
+            modelOrbitTheta: 15,
+            modelOrbitPhi: 70,
+            position: const Offset(0.68, 0.22),
+            size: const Size(0.29, 0.62),
+          ),
+        );
+      } else if (fallbackComponent != null) {
+        componentBlocks.add(
+          PresentationComponentBlock(
+            id: 'component-${componentCounter++}',
+            kind: fallbackComponent,
+            position: const Offset(0.68, 0.24),
+            size: const Size(0.27, 0.5),
+          ),
+        );
       }
 
       pages.add(
@@ -97,33 +114,6 @@ class PresentationDeckBuilder {
     }
 
     return pages;
-  }
-
-  static List<(Offset, Size)> _modelPlacements(int count) {
-    switch (count) {
-      case 1:
-        return const [
-          (Offset(0.6, 0.24), Size(0.36, 0.6)),
-        ];
-      case 2:
-        return const [
-          (Offset(0.6, 0.14), Size(0.36, 0.32)),
-          (Offset(0.6, 0.52), Size(0.36, 0.32)),
-        ];
-      case 3:
-        return const [
-          (Offset(0.6, 0.1), Size(0.36, 0.22)),
-          (Offset(0.6, 0.4), Size(0.36, 0.22)),
-          (Offset(0.6, 0.7), Size(0.36, 0.22)),
-        ];
-      default:
-        return const [
-          (Offset(0.58, 0.1), Size(0.2, 0.26)),
-          (Offset(0.8, 0.1), Size(0.18, 0.26)),
-          (Offset(0.58, 0.42), Size(0.2, 0.26)),
-          (Offset(0.8, 0.42), Size(0.18, 0.26)),
-        ];
-    }
   }
 
   static PresentationBackgroundKind _bestBackground({
@@ -179,9 +169,11 @@ class DeckSlide {
     required this.title,
     required this.content,
     required this.models,
+    this.keywords = const <String>[],
   });
 
   final String title;
   final String content;
   final List<ModelMatch> models;
+  final List<String> keywords;
 }

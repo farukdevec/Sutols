@@ -77,6 +77,40 @@ void main() {
     expect(controller.selectedPage.componentBlocks, hasLength(1));
   });
 
+  test('uploaded photos are separate from models and use their image ratio',
+      () {
+    final controller = PresentationController();
+    addTearDown(controller.dispose);
+
+    controller.addUploadedImageBlock('photo-portrait', aspectRatio: 0.75);
+    final portrait = controller.selectedComponentBlock!;
+    expect(portrait.imageAssetId, 'photo-portrait');
+    expect(portrait.modelAssetId, isNull);
+    expect(portrait.imageAspectRatio, 0.75);
+    expect(
+      portrait.size.width / portrait.size.height,
+      closeTo(0.75 / (16 / 9), 0.0001),
+    );
+    controller.resizeSelectedComponentByHandle(
+      const Offset(120, 0),
+      const Size(1000, 562.5),
+      fromLeft: false,
+      fromTop: false,
+      fromRight: true,
+      fromBottom: false,
+    );
+    final resizedPortrait = controller.selectedComponentBlock!;
+    expect(
+      resizedPortrait.size.width / resizedPortrait.size.height,
+      closeTo(0.75 / (16 / 9), 0.0001),
+    );
+
+    controller.addUploadedImageBlock('photo-landscape', aspectRatio: 2.0);
+    final landscape = controller.selectedComponentBlock!;
+    expect(landscape.size.width / landscape.size.height,
+        closeTo(2.0 / (16 / 9), 0.0001));
+  });
+
   test('selected text can be resized from every edge', () {
     final controller = PresentationController();
     addTearDown(controller.dispose);

@@ -1,14 +1,62 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
+import '../services/presentation_service.dart';
 import 'design/design_system.dart';
 import 'redeem_code_page.dart';
 
-class MembershipPage extends StatelessWidget {
+class MembershipPage extends StatefulWidget {
   const MembershipPage({super.key});
+
+  @override
+  State<MembershipPage> createState() => _MembershipPageState();
+}
+
+class _MembershipPageState extends State<MembershipPage> {
+  static const Color _plusGold = Color(0xFFC9A227);
+  String _tier = 'free';
+  bool _loadingPlan = true;
+
+  bool get _hasPlus => PresentationService.hasPlusSlideAccess(_tier);
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPlan();
+  }
+
+  Future<void> _loadPlan() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) {
+      if (mounted) setState(() => _loadingPlan = false);
+      return;
+    }
+    try {
+      final snapshot =
+          await FirebaseFirestore.instance.collection('users').doc(uid).get();
+      final tier = snapshot.data()?['tier'] as String? ?? 'free';
+      if (!mounted) return;
+      setState(() {
+        _tier = tier;
+        _loadingPlan = false;
+      });
+    } catch (_) {
+      if (mounted) setState(() => _loadingPlan = false);
+    }
+  }
+
+  Future<void> _openRedeemCode() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(builder: (_) => const RedeemCodePage()),
+    );
+    await _loadPlan();
+  }
 
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final currentPlanLabel = _hasPlus ? 'Plus' : 'Ücretsiz';
 
     return Scaffold(
       appBar: AppBar(title: const Text('Üyelik Planları')),
@@ -39,15 +87,37 @@ class MembershipPage extends StatelessWidget {
                     color: colors.textSecondary,
                   ),
                 ),
-                const SizedBox(height: AppSpacing.s24),
+                const SizedBox(height: AppSpacing.s16),
+                Chip(
+                  backgroundColor: _hasPlus
+                      ? _plusGold.withValues(alpha: 0.14)
+                      : colors.surfaceElevated,
+                  side: BorderSide(
+                    color: _hasPlus ? _plusGold : colors.border,
+                  ),
+                  avatar: _loadingPlan
+                      ? const SizedBox.square(
+                          dimension: 14,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : Icon(
+                          _hasPlus ? Icons.star_rounded : Icons.circle_outlined,
+                          size: 16,
+                          color: _hasPlus ? _plusGold : colors.textSecondary,
+                        ),
+                  label: Text(
+                    _loadingPlan
+                        ? 'Mevcut plan yükleniyor'
+                        : 'Mevcut plan: $currentPlanLabel',
+                    style: AppTypography.labelMedium.copyWith(
+                      color: _hasPlus ? _plusGold : colors.textSecondary,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.s8),
                 TextButton.icon(
-                  onPressed: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute<void>(
-                        builder: (_) => const RedeemCodePage(),
-                      ),
-                    );
-                  },
+                  onPressed: _openRedeemCode,
                   icon: const Icon(Icons.redeem_outlined, size: 18),
                   label: const Text(
                       'Bir promosyon kodunuz mu var? Kodunuzu kullanın'),
@@ -57,41 +127,33 @@ class MembershipPage extends StatelessWidget {
                   child: LayoutBuilder(
                     builder: (context, constraints) {
                       final wide = constraints.maxWidth >= 900;
-                      final freeCard = const _MembershipCard(
+                      final freeCard = _MembershipCard(
                         title: 'Ücretsiz',
                         price: '₺0 / ay',
-                        features: [
+                        features: const [
                           'Günde 5 sunum',
                           'Temel model kütüphanesi',
-                          '5 slaytlık sunumlar',
+                          '1-7 slaytlık sunumlar',
                         ],
-                        buttonLabel: 'Mevcut Planınız',
+                        buttonLabel:
+                            !_loadingPlan && !_hasPlus ? 'Mevcut Planınız' : '',
+                        isCurrent: !_loadingPlan && !_hasPlus,
                       );
-                      final plusCard = const _MembershipCard(
+                      final plusCard = _MembershipCard(
                         title: 'Plus',
                         price: '₺XX / ay',
-                        features: [
+                        features: const [
                           'Günde 15 sunum',
                           'Genişletilmiş model kütüphanesi',
-                          '5/8/12 slaytlık sunumlar',
+                          '1-30 slaytlık sunumlar',
                         ],
-                        buttonLabel: 'Yükselt',
+                        buttonLabel: !_loadingPlan && _hasPlus
+                            ? 'Mevcut Planınız'
+                            : 'Plus’a Geç',
                         highlighted: true,
-                        buttonEnabled: true,
+                        isCurrent: !_loadingPlan && _hasPlus,
+                        buttonEnabled: !_loadingPlan && !_hasPlus,
                       );
-                      final premiumCard = const _MembershipCard(
-                        title: 'Premium',
-                        price: '₺XX / ay',
-                        features: [
-                          'Sınırsız sunum',
-                          'Tüm modellere erişim',
-                          'Tüm slayt seçenekleri',
-                          'Öncelikli destek',
-                        ],
-                        buttonLabel: 'Yükselt',
-                        buttonEnabled: true,
-                      );
-
                       if (wide) {
                         return Row(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -99,8 +161,6 @@ class MembershipPage extends StatelessWidget {
                             Expanded(child: freeCard),
                             const SizedBox(width: AppSpacing.s24),
                             Expanded(child: plusCard),
-                            const SizedBox(width: AppSpacing.s24),
-                            Expanded(child: premiumCard),
                           ],
                         );
                       }
@@ -111,8 +171,6 @@ class MembershipPage extends StatelessWidget {
                             freeCard,
                             const SizedBox(height: AppSpacing.s24),
                             plusCard,
-                            const SizedBox(height: AppSpacing.s24),
-                            premiumCard,
                           ],
                         ),
                       );
@@ -136,6 +194,7 @@ class _MembershipCard extends StatelessWidget {
     required this.buttonLabel,
     this.highlighted = false,
     this.buttonEnabled = false,
+    this.isCurrent = false,
   });
 
   final String title;
@@ -144,6 +203,7 @@ class _MembershipCard extends StatelessWidget {
   final String buttonLabel;
   final bool highlighted;
   final bool buttonEnabled;
+  final bool isCurrent;
 
   @override
   Widget build(BuildContext context) {
@@ -233,16 +293,20 @@ class _MembershipCard extends StatelessWidget {
           SizedBox(
             width: double.infinity,
             child: FilledButton(
-              onPressed: buttonEnabled
-                  ? () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                            content:
-                                Text('Ödeme sistemi yakında aktif olacak')),
-                      );
-                    }
-                  : null,
-              child: Text(buttonLabel),
+              onPressed: isCurrent
+                  ? null
+                  : buttonEnabled
+                      ? () {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                                content:
+                                    Text('Ödeme sistemi yakında aktif olacak')),
+                          );
+                        }
+                      : null,
+              child: Text(
+                buttonLabel.isEmpty ? 'Plan yükleniyor...' : buttonLabel,
+              ),
             ),
           ),
         ],

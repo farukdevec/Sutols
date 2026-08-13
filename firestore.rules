@@ -80,7 +80,8 @@ service cloud.firestore {
                            (request.resource.data.tier == resource.data.tier
                             && request.resource.data.diff(resource.data).affectedKeys()
                                  .hasOnly(['lastActiveAt', 'presentationCount', 'displayName', 'email', 'cookieConsent',
-                                           'termsAcceptedAt', 'termsVersion']))
+                                           'termsAcceptedAt', 'termsVersion', 'lastLoginCity', 'lastLoginRegion',
+                                           'lastLoginCountry', 'lastLoginCountryCode', 'lastLoginLocationAt']))
                            ||
                            // Promosyon kodu ile anında tier yükseltme
                            (request.resource.data.diff(resource.data).affectedKeys()
@@ -107,7 +108,10 @@ service cloud.firestore {
       // böylece kodlar enumerate edilemez.
       allow read: if request.auth != null
                   && (isAdmin() || codeTargets(request.auth.uid));
-      allow create: if isAdmin();
+      allow create: if isAdmin()
+                    && request.resource.data.grantsTier == 'plus'
+                    && request.resource.data.active is bool
+                    && request.resource.data.usedCount == 0;
       // Kullanıcı yalnızca kendi kullanımı sırasında usedCount artırabilir;
       // tier yükseltmesi users/{uid} güncelleme kuralında doğrulanır.
       allow update: if isAdmin()
@@ -205,14 +209,17 @@ service cloud.firestore {
         && (!('maxUses' in get(path).data)
             || (('usedCount' in get(path).data) && get(path).data.usedCount < get(path).data.maxUses))
         && (!('targetUid' in get(path).data) || get(path).data.targetUid == '' || get(path).data.targetUid == uid)
-        && get(path).data.grantsTier == tier;
+        && tier == 'plus'
+        && (get(path).data.grantsTier == 'plus'
+            || get(path).data.grantsTier == 'premium'
+            || get(path).data.grantsTier == 'pro');
     }
 
 
     function dailyLimitFor(uid) {
       let user = get(/databases/$(database)/documents/users/$(uid)).data;
       let tier = 'tier' in user ? user.tier : 'free';
-      return tier == 'premium' ? 999 : (tier == 'plus' ? 15 : 5);
+      return tier == 'plus' || tier == 'premium' || tier == 'pro' ? 15 : 5;
     }
 
 

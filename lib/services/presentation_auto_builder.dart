@@ -347,6 +347,7 @@ class PresentationAutoBuilder {
   List<PresentationPage> buildPages(
     List<PresentationDraftPage> drafts, {
     PresentationTemplate template = PresentationTemplate.automatic,
+    bool enforceTopicVisualPolicy = true,
   }) {
     var pageCounter = 1;
     var textCounter = 1;
@@ -368,16 +369,13 @@ class PresentationAutoBuilder {
       final titleOnly = title.isNotEmpty && body.isEmpty;
       final longBody = body.length >= 170;
       final templateComponentKinds = config.componentKinds;
-      final componentKinds = templateComponentKinds.isNotEmpty
+      final componentKinds = !enforceTopicVisualPolicy &&
+              templateComponentKinds.isNotEmpty
           ? templateComponentKinds
           : _bestComponentKinds(
               title: title,
               body: body,
-              maxComponents: template == PresentationTemplate.minimal
-                  ? 0
-                  : titleOnly || longBody
-                      ? 1
-                      : 2,
+              maxComponents: template == PresentationTemplate.minimal ? 0 : 1,
             );
       final hasComponents = componentKinds.isNotEmpty;
       final textBlocks = <PresentationTextBlock>[];
@@ -699,6 +697,21 @@ class PresentationAutoBuilder {
   }
 }
 
+/// Returns one catalog component only when the slide text has a meaningful
+/// topic match. Automatic presentation generation uses this after the 3D model
+/// lookup fails; a null result intentionally leaves the slide text-only.
+PresentationComponentKind? bestPresentationComponentForSlide({
+  required String title,
+  required String body,
+}) {
+  final matches = const PresentationAutoBuilder()._bestComponentKinds(
+    title: title,
+    body: body,
+    maxComponents: 1,
+  );
+  return matches.isEmpty ? null : matches.single;
+}
+
 final Map<PresentationTemplate, PresentationPage> _templatePreviewPageCache =
     <PresentationTemplate, PresentationPage>{};
 
@@ -715,6 +728,7 @@ PresentationPage presentationTemplatePreviewPage(
         ),
       ],
       template: template,
+      enforceTopicVisualPolicy: false,
     );
     return pages.single.copyWith(id: 'template-preview-${template.name}');
   });

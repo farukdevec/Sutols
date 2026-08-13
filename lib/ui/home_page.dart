@@ -10,8 +10,9 @@ import '../services/presentation_service.dart';
 import '../state/presentation_controller.dart';
 import '../state/theme_controller.dart';
 import 'html_presentation_editor_page.dart';
-import 'widgets/ai_load_animation.dart';
+import 'widgets/looping_loading_video.dart';
 import 'design/design_system.dart';
+import 'design/sutol_widgets.dart';
 import 'auth_page.dart';
 import 'membership_page.dart';
 import 'my_presentations_page.dart';
@@ -28,6 +29,8 @@ class _SutolHomePageState extends State<SutolHomePage> {
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _promptController = TextEditingController();
   bool _isGenerating = false;
+  int _slideCount = 5;
+  String _userTier = 'free';
   String _loadingStepTitle = '';
   String _loadingStepDescription = '';
 
@@ -47,13 +50,39 @@ class _SutolHomePageState extends State<SutolHomePage> {
       setState(() {
         _user = u;
         _recentPresentations = null;
+        _userTier = 'free';
+        if (_slideCount > PresentationService.freeMaxSlideCount) {
+          _slideCount = PresentationService.freeMaxSlideCount;
+        }
       });
       if (u != null) {
+        _loadUserTier();
         _fetchRecentPresentations();
       }
     });
     if (_user != null) {
+      _loadUserTier();
       _fetchRecentPresentations();
+    }
+  }
+
+  Future<void> _loadUserTier() async {
+    final uid = _user?.uid;
+    if (uid == null) return;
+    try {
+      final snapshot =
+          await FirebaseFirestore.instance.collection('users').doc(uid).get();
+      final tier = snapshot.data()?['tier'] as String? ?? 'free';
+      if (!mounted || uid != _user?.uid) return;
+      setState(() {
+        _userTier = tier;
+        if (!PresentationService.hasPlusSlideAccess(tier) &&
+            _slideCount > PresentationService.freeMaxSlideCount) {
+          _slideCount = PresentationService.freeMaxSlideCount;
+        }
+      });
+    } catch (_) {
+      // Plan okunamazsa güvenli biçimde ücretsiz sınırı uygulanır.
     }
   }
 
@@ -116,14 +145,7 @@ class _SutolHomePageState extends State<SutolHomePage> {
       onTap: () {
         Navigator.of(context).popUntil((route) => route.isFirst);
       },
-      child: Semantics(
-        image: true,
-        label: 'Sutols',
-        child: Image.asset(
-          'assets/images/sutols_wordmark.png',
-          height: 38,
-        ),
-      ),
+      child: const SutolsBrandLockup(height: 38),
     );
   }
 
@@ -194,7 +216,7 @@ class _SutolHomePageState extends State<SutolHomePage> {
       final result = await presentationService.createPresentation(
         userId: userId,
         topic: topic,
-        slideCount: 5,
+        slideCount: _slideCount,
       );
 
       if (!mounted) return;
@@ -327,6 +349,14 @@ class _SutolHomePageState extends State<SutolHomePage> {
                                   titleController: _titleController,
                                   promptController: _promptController,
                                   onGenerate: _generatePresentation,
+                                  slideCount: _slideCount,
+                                  hasPlusSlideAccess:
+                                      PresentationService.hasPlusSlideAccess(
+                                    _userTier,
+                                  ),
+                                  onSlideCountChanged: (value) {
+                                    setState(() => _slideCount = value);
+                                  },
                                   isDashboard: dashboard,
                                 ),
                         ),
@@ -541,12 +571,18 @@ class _InputCard extends StatelessWidget {
     required this.titleController,
     required this.promptController,
     required this.onGenerate,
+    required this.slideCount,
+    required this.hasPlusSlideAccess,
+    required this.onSlideCountChanged,
     this.isDashboard = false,
   });
 
   final TextEditingController titleController;
   final TextEditingController promptController;
   final VoidCallback onGenerate;
+  final int slideCount;
+  final bool hasPlusSlideAccess;
+  final ValueChanged<int> onSlideCountChanged;
 
   /// Giriş yapmış kullanıcının özet dashboard kartı: daha kısa ve
   /// eyleme odaklı ipuçları.
@@ -598,14 +634,84 @@ class _InputCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
-              FilledButton.icon(
+              _SlideCountSelector(
+                value: slideCount,
+                hasPlusAccess: hasPlusSlideAccess,
+                onChanged: onSlideCountChanged,
+              ),
+              const SizedBox(width: AppSpacing.s12),
+              FilledButton(
                 onPressed: onGenerate,
-                icon: const Icon(Icons.auto_awesome_rounded),
-                label: const Text('Oluştur'),
+                child: const Text('Oluştur'),
               ),
             ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _SlideCountSelector extends StatelessWidget {
+  const _SlideCountSelector({
+    required this.value,
+    required this.hasPlusAccess,
+    required this.onChanged,
+  });
+
+  final int value;
+  final bool hasPlusAccess;
+  final ValueChanged<int> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    return Container(
+      height: 48,
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s12),
+      decoration: BoxDecoration(
+        color: colors.surface,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(color: colors.border),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<int>(
+          key: const ValueKey<String>('presentation-slide-count'),
+          value: value,
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          icon: const Icon(Icons.keyboard_arrow_down_rounded),
+          items: List<DropdownMenuItem<int>>.generate(
+            PresentationService.maxSlideCount,
+            (index) {
+              final count = index + PresentationService.minSlideCount;
+              final requiresPlus =
+                  count > PresentationService.freeMaxSlideCount;
+              return DropdownMenuItem<int>(
+                value: count,
+                enabled: !requiresPlus || hasPlusAccess,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text('$count sayfa'),
+                    if (requiresPlus) ...[
+                      const SizedBox(width: 8),
+                      Text(
+                        'PLUS',
+                        style: AppTypography.labelSmall.copyWith(
+                          color: const Color(0xFFC9A227),
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              );
+            },
+          ),
+          onChanged: (next) {
+            if (next != null) onChanged(next);
+          },
+        ),
       ),
     );
   }
@@ -635,8 +741,7 @@ class _LoadingState extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const AiLoadAnimation(
-              size: 80, style: AiLoadStyle.spinningLight, message: ''),
+          const LoopingLoadingVideo(size: 120),
           const SizedBox(height: AppSpacing.s32),
           AnimatedSwitcher(
             duration: const Duration(milliseconds: 300),
@@ -756,6 +861,7 @@ class _TierBadge extends StatefulWidget {
 }
 
 class _TierBadgeState extends State<_TierBadge> {
+  static const Color _plusGold = Color(0xFFC9A227);
   String _tier = 'free';
 
   @override
@@ -782,13 +888,9 @@ class _TierBadgeState extends State<_TierBadge> {
 
   @override
   Widget build(BuildContext context) {
+    final hasPlus = PresentationService.hasPlusSlideAccess(_tier);
     final (label, color, icon) = switch (_tier) {
-      'plus' => ('Plus', const Color(0xFF1565C0), Icons.star_outline),
-      'premium' => (
-          'Premium',
-          const Color(0xFFC9A227),
-          Icons.workspace_premium
-        ),
+      'plus' || 'premium' || 'pro' => ('Plus', _plusGold, Icons.star_rounded),
       _ => ('Ücretsiz', const Color(0xFF616161), Icons.circle_outlined),
     };
 
@@ -799,31 +901,51 @@ class _TierBadgeState extends State<_TierBadge> {
       runSpacing: AppSpacing.s4,
       crossAxisAlignment: WrapCrossAlignment.center,
       children: [
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-          decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.1),
-            border: Border.all(color: color, width: 1),
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(icon, size: 12, color: color),
-              const SizedBox(width: 4),
-              Text(
-                label,
-                style: AppTypography.labelMedium.copyWith(
-                  color: color,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 12,
+        MouseRegion(
+          cursor: SystemMouseCursors.click,
+          child: GestureDetector(
+            onTap: () async {
+              await Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => const MembershipPage(),
                 ),
+              );
+              _loadTier();
+            },
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: hasPlus ? 0.16 : 0.1),
+                border: Border.all(color: color, width: hasPlus ? 1.5 : 1),
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: hasPlus
+                    ? [
+                        BoxShadow(
+                          color: color.withValues(alpha: 0.2),
+                          blurRadius: 10,
+                        ),
+                      ]
+                    : null,
               ),
-            ],
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(icon, size: 13, color: color),
+                  const SizedBox(width: 4),
+                  Text(
+                    label,
+                    style: AppTypography.labelMedium.copyWith(
+                      color: color,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
         ),
-        if (_tier == 'free' || _tier == 'plus')
-          _UpgradeButton(highlighted: _tier == 'free', onReturn: _loadTier),
+        if (!hasPlus) _UpgradeButton(highlighted: true, onReturn: _loadTier),
       ],
     );
   }
@@ -837,8 +959,6 @@ class _PlanStatusBar extends StatefulWidget {
 }
 
 class _PlanStatusBarState extends State<_PlanStatusBar> {
-  static const Color _gold = Color(0xFFC9A227);
-
   String _tier = 'free';
 
   @override
@@ -873,10 +993,9 @@ class _PlanStatusBarState extends State<_PlanStatusBar> {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    final isPremium = _tier == 'premium';
-    final isPlus = _tier == 'plus';
-    final withUpgrade = !isPremium;
-    final upgradeColor = isPlus ? colors.primary : _gold;
+    final hasPlus = PresentationService.hasPlusSlideAccess(_tier);
+    final withUpgrade = !hasPlus;
+    final upgradeColor = colors.primary;
 
     return GestureDetector(
       onTap: withUpgrade ? _openMembership : null,
@@ -893,19 +1012,13 @@ class _PlanStatusBarState extends State<_PlanStatusBar> {
         child: Row(
           children: [
             Icon(
-              isPremium
-                  ? Icons.workspace_premium_rounded
-                  : Icons.circle_outlined,
+              hasPlus ? Icons.star_outline_rounded : Icons.circle_outlined,
               size: 14,
-              color: isPremium ? _gold : colors.textSecondary,
+              color: hasPlus ? colors.primary : colors.textSecondary,
             ),
             const SizedBox(width: 6),
             Text(
-              isPremium
-                  ? 'Premium plan'
-                  : isPlus
-                      ? 'Plus plan'
-                      : 'Ücretsiz plan',
+              hasPlus ? 'Plus plan' : 'Ücretsiz plan',
               style: AppTypography.labelMedium.copyWith(
                 color: colors.textSecondary,
                 fontWeight: FontWeight.w500,

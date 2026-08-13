@@ -36,7 +36,7 @@ void main() {
       PresentationBackgroundKind.solarEnergyScene,
     );
     expect(pages.single.componentBlocks, isNotEmpty);
-    expect(pages.single.componentBlocks, hasLength(lessThanOrEqualTo(2)));
+    expect(pages.single.componentBlocks, hasLength(1));
   });
 
   test('uses fallback background when only former component words match', () {

@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 import '../ui/widgets/terms_consent_dialog.dart';
 import 'firestore_rest_helper.dart';
+import 'ip_location_service.dart';
 
 /// Kullanıcı Kullanım Şartları'nı onaylamadan hesap oluşturma tamamlanamaz;
 /// onay verilmediyse bu hata fırlatılır.
@@ -76,7 +77,9 @@ class AuthService {
           'tier': {'stringValue': 'free'},
           'presentationCount': {'integerValue': '0'},
           'createdAt': {'timestampValue': FirestoreRestHelper.nowTimestamp()},
-          'lastActiveAt': {'timestampValue': FirestoreRestHelper.nowTimestamp()},
+          'lastActiveAt': {
+            'timestampValue': FirestoreRestHelper.nowTimestamp()
+          },
         });
         // ignore: avoid_print
         print('PATCH başarılı');
@@ -88,17 +91,45 @@ class AuthService {
         await FirestoreRestHelper.patchDocument(
           path,
           {
-            'lastActiveAt': {'timestampValue': FirestoreRestHelper.nowTimestamp()},
+            'lastActiveAt': {
+              'timestampValue': FirestoreRestHelper.nowTimestamp()
+            },
           },
           updateMask: const ['lastActiveAt'],
         );
         // ignore: avoid_print
         print('PATCH başarılı');
       }
+      await _updateLoginLocation(path);
     } catch (e) {
       // ignore: avoid_print
       print('PATCH hata: $e');
     }
+  }
+
+  Future<void> _updateLoginLocation(String userPath) async {
+    final location = await IpLocationService().lookup();
+    if (location == null) return;
+
+    await FirestoreRestHelper.patchDocument(
+      userPath,
+      {
+        'lastLoginCity': {'stringValue': location.city},
+        'lastLoginRegion': {'stringValue': location.region},
+        'lastLoginCountry': {'stringValue': location.country},
+        'lastLoginCountryCode': {'stringValue': location.countryCode},
+        'lastLoginLocationAt': {
+          'timestampValue': FirestoreRestHelper.nowTimestamp(),
+        },
+      },
+      updateMask: const [
+        'lastLoginCity',
+        'lastLoginRegion',
+        'lastLoginCountry',
+        'lastLoginCountryCode',
+        'lastLoginLocationAt',
+      ],
+    );
   }
 
   Future<UserCredential> signInWithEmailAndPassword(
@@ -135,8 +166,7 @@ class AuthService {
   /// dialogu gösterilir; onaylanmazsa oluşturulan hesap silinir ve oturum
   /// kapatılarak giriş ekranına dönülür. Zaten kayıtlı kullanıcılara hiçbir
   /// onay adımı gösterilmez.
-  Future<UserCredential> signInWithGoogle(
-      {bool termsAccepted = false}) async {
+  Future<UserCredential> signInWithGoogle({bool termsAccepted = false}) async {
     var accepted = termsAccepted;
     final credential = await _auth.signInWithPopup(GoogleAuthProvider());
     final user = credential.user;

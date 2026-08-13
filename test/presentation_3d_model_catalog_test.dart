@@ -121,6 +121,34 @@ void main() {
     expect(document, isNot(contains('auto-rotate')));
   });
 
+  test('uploaded photo is rendered as an image, never as a 3D model', () {
+    const page = PresentationPage(
+      id: 'photo-page',
+      textBlocks: <PresentationTextBlock>[],
+      componentBlocks: <PresentationComponentBlock>[
+        PresentationComponentBlock(
+          id: 'photo-1',
+          imageAssetId: 'photo-source-1',
+          imageAspectRatio: 0.75,
+          position: Offset(0.2, 0.2),
+          size: Size(0.24, 0.32),
+        ),
+      ],
+    );
+
+    final document = buildHtmlStageDocument(
+      page: page,
+      imageSourcesById: const <String, String>{
+        'photo-source-1': 'data:image/png;base64,TEST',
+      },
+    );
+
+    expect(document, contains('component-uploaded-image'));
+    expect(document, contains('data-sutol-image-id="photo-source-1"'));
+    expect(document, isNot(contains('<model-viewer')));
+    expect(document, isNot(contains('data-sutol-model-id')));
+  });
+
   test('animasyonlu dünya modeli sahnede otomatik oynatılır', () {
     const page = PresentationPage(
       id: 'animated-model-page',

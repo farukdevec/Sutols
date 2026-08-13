@@ -30,6 +30,20 @@ class PresentationGenerationResult {
 }
 
 class PresentationService {
+  static const int minSlideCount = 1;
+  static const int freeMaxSlideCount = 7;
+  static const int maxSlideCount = 30;
+
+  static bool hasPlusSlideAccess(String tier) =>
+      tier == 'plus' || tier == 'premium' || tier == 'pro';
+
+  static bool canUseSlideCount(String tier, int slideCount) {
+    if (slideCount < minSlideCount || slideCount > maxSlideCount) {
+      return false;
+    }
+    return slideCount <= freeMaxSlideCount || hasPlusSlideAccess(tier);
+  }
+
   final _nvidia = NvidiaPresentationService();
   final _gemini = GeminiPresentationService();
   final _matcher = ModelMatchingService();
@@ -43,10 +57,20 @@ class PresentationService {
     required String topic,
     int slideCount = 5,
   }) async {
+    if (slideCount < minSlideCount || slideCount > maxSlideCount) {
+      throw Exception('Slayt sayısı 1 ile 30 arasında olmalıdır.');
+    }
+
     // 0. Günlük kota kontrolü (Gemini çağrısından önce)
     final userDoc =
         await FirebaseFirestore.instance.collection('users').doc(userId).get();
     final tier = userDoc.data()?['tier'] as String? ?? 'free';
+    if (!canUseSlideCount(tier, slideCount)) {
+      throw Exception(
+        'Ücretsiz planda en fazla 7 slayt oluşturabilirsiniz. '
+        '8-30 slayt için Plus plana geçin.',
+      );
+    }
     final dailyLimit = UsageService.dailyLimitForTier(tier);
     final allowed =
         await UsageService().tryConsumeDailyQuota(userId, dailyLimit);
@@ -54,7 +78,6 @@ class PresentationService {
       throw Exception(
           'Günlük sunum oluşturma hakkınız doldu. Yarın tekrar deneyin veya planınızı yükseltin.');
     }
-
     // 1. NVIDIA / Cloudflare'dan slayt içeriklerini al
     // Çalışmazsa Gemini'ye, o da çalışmazsa kelime tabanlı yedeğe düş
     // ignore: avoid_print
@@ -90,6 +113,14 @@ class PresentationService {
             slideCount: slideCount);
       }
     }
+    if (resultPresentation.slides.length != slideCount) {
+      // AI sağlayıcısı istenen adedi döndürmezse kullanıcının seçimini koru.
+      usedFallback = true;
+      resultPresentation = FallbackSlideGenerator.generatePresentation(
+        topic,
+        slideCount: slideCount,
+      );
+    }
     // ignore: avoid_print
     print('ADIM 1 TAMAM (yedek: $usedFallback)');
 
@@ -102,11 +133,14 @@ class PresentationService {
       final matches = await _matcher.matchModelsForSlide(slide.keywords);
       // ignore: avoid_print
       print('ADIM 2 TAMAM - ${matches.length} eşleşme');
-      final strongMatches = matches.where((m) => m.score >= 2).toList();
-      final layout = _layout.decideLayout(matches);
+      // Otomatik üretimde slayt başına en fazla bir görsel öğe kullanılır.
+      // Model varsa ilk ve en güçlü eşleşme seçilir; model yoksa deck builder
+      // konuya uygun tek bir bileşen arar, o da yoksa slayt metin olarak kalır.
+      final selectedModels = matches.take(1).toList(growable: false);
+      final layout = _layout.decideLayout(selectedModels);
       final maxShow = _layout.maxModelsToShow(layout);
       final shownModelIds =
-          strongMatches.take(maxShow).map((m) => m.id).toList();
+          selectedModels.take(maxShow).map((m) => m.id).toList();
 
       slidesData.add({
         'title': slide.title,
@@ -118,7 +152,8 @@ class PresentationService {
         DeckSlide(
           title: slide.title,
           content: slide.content,
-          models: matches,
+          models: selectedModels,
+          keywords: slide.keywords,
         ),
       );
     }

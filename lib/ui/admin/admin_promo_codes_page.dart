@@ -54,6 +54,7 @@ class _PromoCodeItem {
 }
 
 class _AdminPromoCodesPageState extends State<AdminPromoCodesPage> {
+  static const Color _plusGold = Color(0xFFC9A227);
   bool _loading = true;
   String? _error;
   List<_PromoCodeItem> _codes = [];
@@ -121,7 +122,7 @@ class _AdminPromoCodesPageState extends State<AdminPromoCodesPage> {
         draft.toFields(),
       );
       if (!mounted) return;
-      _showMessage('Kod oluşturuldu: ${draft.code}', isError: false);
+      _showMessage('Plus kodu oluşturuldu: ${draft.code}', isError: false);
       await _load();
     } catch (e) {
       if (!mounted) return;
@@ -134,7 +135,9 @@ class _AdminPromoCodesPageState extends State<AdminPromoCodesPage> {
     try {
       await FirestoreRestHelper.patchDocument(
         'promoCodes/${item.code}',
-        {'active': {'booleanValue': next}},
+        {
+          'active': {'booleanValue': next}
+        },
         updateMask: const ['active'],
       );
       if (!mounted) return;
@@ -155,7 +158,8 @@ class _AdminPromoCodesPageState extends State<AdminPromoCodesPage> {
       context: context,
       builder: (dialogContext) => AlertDialog(
         title: const Text('Kodu Sil'),
-        content: Text('"${item.code}" kodu silinsin mi? Bu işlem geri alınamaz.'),
+        content:
+            Text('"${item.code}" kodu silinsin mi? Bu işlem geri alınamaz.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(false),
@@ -199,7 +203,7 @@ class _AdminPromoCodesPageState extends State<AdminPromoCodesPage> {
     return Scaffold(
       backgroundColor: colors.surface,
       appBar: AppBar(
-        title: const Text('Promosyon Kodları'),
+        title: const Text('Plus Promosyon Kodları'),
         actions: [
           IconButton(
             tooltip: 'Yenile',
@@ -214,7 +218,7 @@ class _AdminPromoCodesPageState extends State<AdminPromoCodesPage> {
         ],
       ),
       floatingActionButton: FloatingActionButton(
-        tooltip: 'Yeni Kod',
+        tooltip: 'Yeni Plus Kodu',
         onPressed: _createCode,
         child: const Icon(Icons.add_rounded),
       ),
@@ -273,18 +277,54 @@ class _AdminPromoCodesPageState extends State<AdminPromoCodesPage> {
       );
     }
 
-    return ListView.separated(
-      padding: const EdgeInsets.all(AppSpacing.s24),
-      itemCount: _codes.length,
-      separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.s12),
-      itemBuilder: (context, index) {
-        final item = _codes[index];
-        return _CodeTile(
-          item: item,
-          onToggleActive: () => _toggleActive(item),
-          onDelete: () => _delete(item),
-        );
-      },
+    return Column(
+      children: [
+        Container(
+          width: double.infinity,
+          margin: const EdgeInsets.fromLTRB(
+            AppSpacing.s24,
+            AppSpacing.s24,
+            AppSpacing.s24,
+            0,
+          ),
+          padding: const EdgeInsets.all(AppSpacing.s16),
+          decoration: BoxDecoration(
+            color: _plusGold.withValues(alpha: 0.10),
+            borderRadius: BorderRadius.circular(AppRadius.lg),
+            border: Border.all(color: _plusGold.withValues(alpha: 0.45)),
+          ),
+          child: Row(
+            children: [
+              const Icon(Icons.star_rounded, color: _plusGold),
+              const SizedBox(width: AppSpacing.s12),
+              Expanded(
+                child: Text(
+                  'Bu panelden oluşturulan tüm promosyon kodları kullanıcıya Plus planı kazandırır.',
+                  style: AppTypography.bodyMedium.copyWith(
+                    color: colors.textPrimary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        Expanded(
+          child: ListView.separated(
+            padding: const EdgeInsets.all(AppSpacing.s24),
+            itemCount: _codes.length,
+            separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.s12),
+            itemBuilder: (context, index) {
+              final item = _codes[index];
+              return _CodeTile(
+                item: item,
+                onToggleActive: () => _toggleActive(item),
+                onDelete: () => _delete(item),
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 }
@@ -324,11 +364,20 @@ class _CodeTile extends StatelessWidget {
           children: [
             Chip(
               label: Text(
-                item.grantsTier == 'premium'
-                    ? 'Premium'
-                    : item.grantsTier == 'plus'
-                        ? 'Plus'
-                        : 'Tier: ${item.grantsTier.isEmpty ? '-' : item.grantsTier}',
+                item.grantsTier == 'plus' ||
+                        item.grantsTier == 'premium' ||
+                        item.grantsTier == 'pro'
+                    ? 'Plus'
+                    : 'Tier: ${item.grantsTier.isEmpty ? '-' : item.grantsTier}',
+              ),
+              avatar: const Icon(
+                Icons.star_rounded,
+                size: 16,
+                color: Color(0xFFC9A227),
+              ),
+              backgroundColor: const Color(0xFFC9A227).withValues(alpha: 0.10),
+              side: BorderSide(
+                color: const Color(0xFFC9A227).withValues(alpha: 0.45),
               ),
               visualDensity: VisualDensity.compact,
             ),
@@ -338,8 +387,7 @@ class _CodeTile extends StatelessWidget {
                     ? 'Kullanım: ${item.usedCount}/${item.maxUses}'
                     : 'Kullanım: ${item.usedCount}',
                 style: TextStyle(
-                  color: item.maxUses != null &&
-                          item.usedCount >= item.maxUses!
+                  color: item.maxUses != null && item.usedCount >= item.maxUses!
                       ? colors.danger
                       : null,
                   fontWeight: FontWeight.w600,
@@ -401,7 +449,9 @@ class _CodeTile extends StatelessWidget {
         FilledButton.tonalIcon(
           onPressed: onToggleActive,
           icon: Icon(
-            item.active ? Icons.pause_circle_outline : Icons.play_circle_outline,
+            item.active
+                ? Icons.pause_circle_outline
+                : Icons.play_circle_outline,
             size: 18,
           ),
           label: Text(item.active ? 'Pasifleştir' : 'Aktifleştir'),
@@ -474,10 +524,12 @@ class _NewCode {
       'createdAt': {'timestampValue': FirestoreRestHelper.nowTimestamp()},
     };
     if (expiresAt != null) {
-      final endOfDay =
-          DateTime(expiresAt!.year, expiresAt!.month, expiresAt!.day, 23, 59, 59)
-              .toUtc();
-      fields['expiresAt'] = {'timestampValue': FirestoreRestHelper.toFirestoreTimestamp(endOfDay)};
+      final endOfDay = DateTime(
+              expiresAt!.year, expiresAt!.month, expiresAt!.day, 23, 59, 59)
+          .toUtc();
+      fields['expiresAt'] = {
+        'timestampValue': FirestoreRestHelper.toFirestoreTimestamp(endOfDay)
+      };
     }
     if (maxUses != null) {
       fields['maxUses'] = {'integerValue': '$maxUses'};
@@ -517,7 +569,7 @@ class _CreateCodeDialogState extends State<_CreateCodeDialog> {
   final TextEditingController _codeCtrl = TextEditingController();
   final TextEditingController _maxUsesCtrl = TextEditingController();
   final TextEditingController _targetCtrl = TextEditingController();
-  String _tier = 'premium';
+  String _tier = 'plus';
   DateTime? _expiresAt;
 
   List<_UserOption> _users = [];
@@ -549,7 +601,8 @@ class _CreateCodeDialogState extends State<_CreateCodeDialog> {
           email: FirestoreRestHelper.stringField(fields, 'email'),
         );
       }).toList()
-        ..sort((a, b) => a.label.toLowerCase().compareTo(b.label.toLowerCase()));
+        ..sort(
+            (a, b) => a.label.toLowerCase().compareTo(b.label.toLowerCase()));
       if (!mounted) return;
       setState(() {
         _users = users;
@@ -646,7 +699,7 @@ class _CreateCodeDialogState extends State<_CreateCodeDialog> {
     final matches = _matches;
 
     return AlertDialog(
-      title: const Text('Yeni Promosyon Kodu'),
+      title: const Text('Yeni Plus Promosyon Kodu'),
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -668,14 +721,15 @@ class _CreateCodeDialogState extends State<_CreateCodeDialog> {
               ),
             ),
             const SizedBox(height: AppSpacing.s8),
-            SegmentedButton<String>(
-              segments: const [
-                ButtonSegment(value: 'plus', label: Text('Plus')),
-                ButtonSegment(value: 'premium', label: Text('Premium')),
-              ],
-              selected: {_tier},
-              onSelectionChanged: (selection) =>
-                  setState(() => _tier = selection.first),
+            InputDecorator(
+              decoration: const InputDecoration(labelText: 'Plan'),
+              child: Text(
+                'Plus',
+                style: AppTypography.bodyMedium.copyWith(
+                  color: colors.textPrimary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
             ),
             const SizedBox(height: AppSpacing.s16),
             OutlinedButton.icon(
@@ -712,7 +766,8 @@ class _CreateCodeDialogState extends State<_CreateCodeDialog> {
                 decoration: BoxDecoration(
                   color: colors.primary.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(AppRadius.md),
-                  border: Border.all(color: colors.primary.withValues(alpha: 0.4)),
+                  border:
+                      Border.all(color: colors.primary.withValues(alpha: 0.4)),
                 ),
                 child: Row(
                   children: [

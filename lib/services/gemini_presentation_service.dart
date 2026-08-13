@@ -54,7 +54,8 @@ class _PastExample {
 }
 
 class GeminiPresentationService {
-  GeminiPresentationService({FirebaseAI? ai}) : _ai = ai ?? FirebaseAI.googleAI();
+  GeminiPresentationService({FirebaseAI? ai})
+      : _ai = ai ?? FirebaseAI.googleAI();
 
   final FirebaseAI _ai;
   final _db = FirebaseFirestore.instance;
@@ -102,9 +103,8 @@ class GeminiPresentationService {
     );
 
     final references = await _findSimilarExported(topic);
-    final referenceBlock = references.isEmpty
-        ? ''
-        : _buildReferenceBlock(references);
+    final referenceBlock =
+        references.isEmpty ? '' : _buildReferenceBlock(references);
 
     final prompt = '''
 ${referenceBlock}Kullanıcının verdiği konu hakkında $slideCount slaytlık bir sunum yapısı oluştur.
@@ -114,6 +114,9 @@ Kurallar:
 - Her slaytta: title (kısa ve dikkat çekici başlık), content (slaytta gösterilecek
   madde işaretleri veya kısa paragraflar, en fazla 120 kelime), keywords
   (içerikle eşleşen 3-8 anahtar kelime) alanları doldur.
+- keywords alanında slaydın ana fikrini görsel olarak temsil eden somut nesne,
+  kişi, yer veya kavram adlarını kullan. Genel ve ilgisiz kelimeler ekleme;
+  3B model ve bileşen kataloğu bu kelimelerle eşleştirilecektir.
 - Tüm metinler "$language" dilinde olmalı.
 - content alanında her bilgiyi ayrı satıra yaz (madde işaretleri için "- " kullan,
   "- " ile başlayan satırlar sunumda tek tek gösterilecektir).
@@ -284,7 +287,10 @@ Konu: $topic
     final trimmed = text.trim();
     if (trimmed.startsWith('```')) {
       final firstLineEnd = trimmed.indexOf('\n');
-      return trimmed.substring(firstLineEnd + 1).replaceFirst(RegExp(r'```\s*$'), '').trim();
+      return trimmed
+          .substring(firstLineEnd + 1)
+          .replaceFirst(RegExp(r'```\s*$'), '')
+          .trim();
     }
     return trimmed;
   }

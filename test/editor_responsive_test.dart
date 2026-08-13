@@ -7,6 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:sutol/state/presentation_controller.dart';
 import 'package:sutol/ui/html_presentation_editor_page.dart';
 import 'package:sutol/ui/widgets/editor_shell.dart';
+import 'package:sutol/ui/widgets/html_stage/html_page_stage.dart';
 
 void main() {
   // Test ortamının kare Ahem fontu yerine gerçek glif genişlikleriyle ölçüm
@@ -680,6 +681,52 @@ void main() {
         matching: find.text('Mürekkep Akan Kalem'),
       ),
       findsOneWidget,
+    );
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('3B model kütüphanesi studio yan panelini homojen doldurur', (
+    tester,
+  ) async {
+    await pumpAt(tester, const Size(1400, 900));
+    await tester.tap(find.text('3D Modeller').first);
+    await tester.pump();
+
+    final inspectorRect = tester.getRect(
+      find.byKey(const ValueKey<String>('studio-inspector-panel')),
+    );
+    final libraryRect = tester.getRect(
+      find.byKey(const ValueKey<String>('model-library-panel')),
+    );
+    final resultsRect = tester.getRect(
+      find.byKey(const ValueKey<String>('model-library-results')),
+    );
+
+    expect(libraryRect.bottom, closeTo(inspectorRect.bottom - 16, 1));
+    expect(resultsRect.bottom, closeTo(libraryRect.bottom - 14, 1));
+    expect(resultsRect.height, greaterThan(500));
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('şablon kartları canlı sahne yerine statik küçük resim kullanır',
+      (
+    tester,
+  ) async {
+    await pumpAt(tester, const Size(1400, 900));
+    await tester.tap(find.text('Şablon').first);
+    await tester.pumpAndSettle();
+
+    final academicThumbnail = find.byKey(
+      const ValueKey<String>('template-preview-academic'),
+    );
+    expect(academicThumbnail, findsOneWidget);
+    expect(
+      find.descendant(
+        of: academicThumbnail,
+        matching: find.byType(HtmlPageStage),
+      ),
+      findsNothing,
+      reason: 'Şablon thumbnail içinde HTML/iframe sahnesi kurulmamalı',
     );
     expect(tester.takeException(), isNull);
   });

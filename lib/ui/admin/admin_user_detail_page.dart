@@ -67,7 +67,6 @@ class _AdminUserDetailPageState extends State<AdminUserDetailPage> {
   static const List<(String, String)> _tierOptions = [
     ('free', 'Ücretsiz (günde 5 sunum)'),
     ('plus', 'Plus (günde 15 sunum)'),
-    ('premium', 'Premium (sınırsız)'),
   ];
 
   _UserDetailData? _data;
@@ -172,7 +171,8 @@ class _AdminUserDetailPageState extends State<AdminUserDetailPage> {
 
   String get _tier {
     final tier = _stringField('tier');
-    return tier.isEmpty ? 'free' : tier;
+    if (tier == 'plus' || tier == 'premium' || tier == 'pro') return 'plus';
+    return 'free';
   }
 
   String get _status {
@@ -192,6 +192,18 @@ class _AdminUserDetailPageState extends State<AdminUserDetailPage> {
       if (value == _tier) return label;
     }
     return _tier;
+  }
+
+  String get _approximateLocation {
+    final city = _stringField('lastLoginCity');
+    final region = _stringField('lastLoginRegion');
+    final country = _stringField('lastLoginCountry');
+    final parts = <String>[
+      if (city.isNotEmpty) city,
+      if (region.isNotEmpty && region != city) region,
+      if (country.isNotEmpty) country,
+    ];
+    return parts.isEmpty ? '-' : parts.join(', ');
   }
 
   Future<void> _patch(Map<String, dynamic> fields, List<String> mask) async {
@@ -546,6 +558,12 @@ class _AdminUserDetailPageState extends State<AdminUserDetailPage> {
                 context, 'Kayıt', _formatDate(_timestampField('createdAt'))),
             _infoRow(context, 'Son giriş',
                 _formatDate(_timestampField('lastActiveAt'))),
+            _infoRow(context, 'Yaklaşık konum (IP)', _approximateLocation),
+            _infoRow(
+              context,
+              'Konum güncellemesi',
+              _formatDate(_timestampField('lastLoginLocationAt')),
+            ),
             _infoRow(context, 'Sunum sayısı',
                 _intField('presentationCount').toString()),
             _infoRow(

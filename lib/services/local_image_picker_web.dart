@@ -9,8 +9,7 @@ const int _maxImageBytes = 6 * 1024 * 1024;
 
 Future<LocalPickedImage?> pickLocalImage() {
   final completer = Completer<LocalPickedImage?>();
-  final input = html.FileUploadInputElement()
-    ..accept = 'image/*';
+  final input = html.FileUploadInputElement()..accept = 'image/*';
   input.multiple = false;
   input.onChange.listen((_) {
     final file = input.files?.isNotEmpty == true ? input.files![0] : null;
@@ -20,7 +19,8 @@ Future<LocalPickedImage?> pickLocalImage() {
     }
     if (file.size > _maxImageBytes) {
       completer.completeError(
-        StateError('Gorsel 6 MB sinirini asiyor (${file.size.toString()} byte).'),
+        StateError(
+            'Gorsel 6 MB sinirini asiyor (${file.size.toString()} byte).'),
       );
       return;
     }
@@ -28,11 +28,25 @@ Future<LocalPickedImage?> pickLocalImage() {
     reader.onLoad.listen((_) {
       final result = reader.result;
       if (result is String && result.startsWith('data:image/')) {
-        completer.complete(LocalPickedImage(
-          name: file.name,
-          dataUrl: result,
-          sizeBytes: file.size,
-        ));
+        final image = html.ImageElement(src: result);
+        image.onLoad.first.then((_) {
+          if (completer.isCompleted) return;
+          completer.complete(LocalPickedImage(
+            name: file.name,
+            dataUrl: result,
+            sizeBytes: file.size,
+            pixelWidth: image.naturalWidth,
+            pixelHeight: image.naturalHeight,
+          ));
+        });
+        image.onError.first.then((_) {
+          if (completer.isCompleted) return;
+          completer.complete(LocalPickedImage(
+            name: file.name,
+            dataUrl: result,
+            sizeBytes: file.size,
+          ));
+        });
       } else {
         completer.complete(null);
       }

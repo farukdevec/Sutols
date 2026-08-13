@@ -51,6 +51,13 @@ void main() {
             position: Offset(0.1, 0.5),
             size: Size(0.2, 0.3),
           ),
+          PresentationComponentBlock(
+            id: 'photo-5',
+            imageAssetId: 'photo-source-5',
+            imageAspectRatio: 0.75,
+            position: Offset(0.3, 0.2),
+            size: Size(0.24, 0.32),
+          ),
         ],
       ),
     ];
@@ -93,7 +100,7 @@ void main() {
       project.pages.single.textBlocks.single.textAlign,
       PresentationTextAlign.center,
     );
-    expect(project.pages.single.componentBlocks, hasLength(2));
+    expect(project.pages.single.componentBlocks, hasLength(3));
     expect(project.pages.single.componentBlocks.first.id, 'component-3');
     expect(
       project.pages.single.componentBlocks.first.kind,
@@ -101,7 +108,7 @@ void main() {
     );
     expect(project.pages.single.componentBlocks.first.size.width, 0.25);
     expect(project.pages.single.componentBlocks.first.revealStep, 2);
-    final modelBlock = project.pages.single.componentBlocks.last;
+    final modelBlock = project.pages.single.componentBlocks[1];
     expect(modelBlock.id, 'component-4');
     expect(modelBlock.modelAssetId, 'gercekci-dunya');
     expect(modelBlock.modelAnimationEnabled, isFalse);
@@ -109,12 +116,30 @@ void main() {
     expect(modelBlock.modelOrbitEnabled, isTrue);
     expect(modelBlock.modelOrbitTheta, 45);
     expect(modelBlock.modelOrbitPhi, 60);
+    final imageBlock = project.pages.single.componentBlocks.last;
+    expect(imageBlock.modelAssetId, isNull);
+    expect(imageBlock.imageAssetId, 'photo-source-5');
+    expect(imageBlock.imageAspectRatio, 0.75);
     expect(
       project.effectSettings.transitionKind,
       PresentationTransitionKind.zoom,
     );
     expect(project.effectSettings.zoomEnabled, isTrue);
     expect(project.effectSettings.reducedMotion, isTrue);
+  });
+
+  test('migrates legacy photo ids out of the 3D model field', () {
+    const source = '''
+{"format":"sutol.presentation","version":1,"pages":[{"id":"page-1","backgroundKind":"science","textBlocks":[],"componentBlocks":[{"id":"component-1","kind":"edebiyat01","modelAssetId":"photo-123","position":{"x":0.1,"y":0.1},"size":{"width":0.3,"height":0.2}}]}]}
+''';
+
+    final block = PresentationProjectCodec.decodeProject(source)
+        .pages
+        .single
+        .componentBlocks
+        .single;
+    expect(block.modelAssetId, isNull);
+    expect(block.imageAssetId, 'photo-123');
   });
 
   test('round trips the popular presentation transitions', () {

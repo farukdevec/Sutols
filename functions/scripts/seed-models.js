@@ -54,7 +54,7 @@ const models = [
       "https://pub-00000000000000000000000000000000.r2.dev/sutol/thumbnails/pine-tree.webp",
     tags: ["ağaç", "doğa", "bitki", "orman"],
     category: "doğa",
-    tier: "premium",
+    tier: "plus",
   },
 ];
 

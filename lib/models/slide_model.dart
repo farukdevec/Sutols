@@ -406,6 +406,8 @@ class PresentationComponentBlock {
     required this.id,
     this.kind = PresentationComponentKind.edebiyat01,
     this.modelAssetId,
+    this.imageAssetId,
+    this.imageAspectRatio,
     this.modelAnimationEnabled = true,
     this.modelAutoRotate = false,
     this.modelRotationSpeed = 30,
@@ -421,6 +423,8 @@ class PresentationComponentBlock {
   final String id;
   final PresentationComponentKind kind;
   final String? modelAssetId;
+  final String? imageAssetId;
+  final double? imageAspectRatio;
   final bool modelAnimationEnabled;
   final bool modelAutoRotate;
   final double modelRotationSpeed;
@@ -436,6 +440,8 @@ class PresentationComponentBlock {
     String? id,
     PresentationComponentKind? kind,
     Object? modelAssetId = _copySentinel,
+    Object? imageAssetId = _copySentinel,
+    Object? imageAspectRatio = _copySentinel,
     bool? modelAnimationEnabled,
     bool? modelAutoRotate,
     double? modelRotationSpeed,
@@ -453,6 +459,12 @@ class PresentationComponentBlock {
       modelAssetId: identical(modelAssetId, _copySentinel)
           ? this.modelAssetId
           : modelAssetId as String?,
+      imageAssetId: identical(imageAssetId, _copySentinel)
+          ? this.imageAssetId
+          : imageAssetId as String?,
+      imageAspectRatio: identical(imageAspectRatio, _copySentinel)
+          ? this.imageAspectRatio
+          : imageAspectRatio as double?,
       modelAnimationEnabled:
           modelAnimationEnabled ?? this.modelAnimationEnabled,
       modelAutoRotate: modelAutoRotate ?? this.modelAutoRotate,

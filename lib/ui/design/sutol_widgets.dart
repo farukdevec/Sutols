@@ -2,6 +2,69 @@ import 'package:flutter/material.dart';
 
 import 'design_system.dart';
 
+/// High-resolution Sutols brand lockup.
+///
+/// The symbol and custom wordmark stay as separate transparent assets so the
+/// compact layout can show only the symbol without raster cropping.
+class SutolsBrandLockup extends StatelessWidget {
+  const SutolsBrandLockup({
+    super.key,
+    required this.height,
+    this.showWordmark = true,
+    this.color,
+  });
+
+  final double height;
+  final bool showWordmark;
+  final Color? color;
+
+  Widget _tinted(Widget child) {
+    final tint = color;
+    if (tint == null) return child;
+    return ColorFiltered(
+      colorFilter: ColorFilter.mode(tint, BlendMode.srcIn),
+      child: child,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      image: true,
+      label: 'Sutols',
+      child: SizedBox(
+        height: height,
+        child: _tinted(
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              SizedBox.square(
+                dimension: height,
+                child: Image.asset(
+                  'assets/images/logo.png',
+                  fit: BoxFit.contain,
+                  filterQuality: FilterQuality.high,
+                ),
+              ),
+              if (showWordmark) ...<Widget>[
+                SizedBox(width: height * 0.12),
+                SizedBox(
+                  height: height * 0.58,
+                  child: Image.asset(
+                    'assets/images/sutols_wordmark.png',
+                    fit: BoxFit.contain,
+                    filterQuality: FilterQuality.high,
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 // ─────────────────────────────────────────────
 //  Sutol Premium Widget Library — 2026
 //  Reusable, animated, design-system-connected

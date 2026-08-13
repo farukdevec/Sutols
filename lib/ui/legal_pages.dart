@@ -25,7 +25,7 @@ class PrivacyPolicyPage extends StatelessWidget {
           bullets: [
             'Hesap bilgileri: e-posta adresi, ad (Google ile giriş yaptıysanız profil bilgileriniz)',
             'Kullanım verileri: oluşturduğunuz sunumlar, bu sunumlar üzerinde yaptığınız düzenlemeler, sunumları ne sıklıkla dışa aktardığınız, editörde geçirdiğiniz süre',
-            'Teknik veriler: IP adresi, tarayıcı bilgisi (güvenlik ve hizmet kalitesi için)',
+            'Teknik veriler: IP adresinden türetilen yaklaşık şehir, bölge ve ülke bilgisi ile tarayıcı bilgisi (güvenlik ve hizmet kalitesi için). GPS konumu ve kesin adres toplanmaz.',
           ],
         ),
         _Section(
@@ -45,6 +45,7 @@ class PrivacyPolicyPage extends StatelessWidget {
             'Google Firebase (kimlik doğrulama, veritabanı, barındırma)',
             'Google Gemini AI (sunum içeriği üretimi — girdiğiniz konu metni, içerik üretimi için Google\'a iletilir)',
             'Cloudflare (3D model dosyaları ve içerik dağıtım ağı)',
+            'IPWho (IP adresinden yaklaşık şehir, bölge ve ülke tespiti)',
           ],
           paragraphsAfter: [
             'Bu hizmetlerin kendi gizlilik politikaları geçerlidir.',
@@ -216,7 +217,9 @@ class _Section extends StatelessWidget {
         ...paragraphs.map(
           (p) => Padding(
             padding: const EdgeInsets.only(bottom: AppSpacing.s8),
-            child: Text(p, style: AppTypography.bodyMedium.copyWith(color: colors.textSecondary)),
+            child: Text(p,
+                style: AppTypography.bodyMedium
+                    .copyWith(color: colors.textSecondary)),
           ),
         ),
         if (bullets.isNotEmpty)
@@ -250,7 +253,9 @@ class _Section extends StatelessWidget {
         ...paragraphsAfter.map(
           (p) => Padding(
             padding: const EdgeInsets.only(bottom: AppSpacing.s8),
-            child: Text(p, style: AppTypography.bodyMedium.copyWith(color: colors.textSecondary)),
+            child: Text(p,
+                style: AppTypography.bodyMedium
+                    .copyWith(color: colors.textSecondary)),
           ),
         ),
       ],
@@ -327,7 +332,8 @@ class _ContactSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.colors;
     return Padding(
-      padding: const EdgeInsets.only(top: AppSpacing.s32, bottom: AppSpacing.s16),
+      padding:
+          const EdgeInsets.only(top: AppSpacing.s32, bottom: AppSpacing.s16),
       child: Text(
         'Sorularınız için: sutolsofficial@gmail.com',
         style: AppTypography.bodyMedium.copyWith(

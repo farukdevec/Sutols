@@ -7,7 +7,7 @@
   "theme_color": "#050816",
   "description": "Keyword-driven animated presentation MVP for Flutter web.",
   "icons": [
-    { "src": "favicon.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "favicon.png", "sizes": "512x512", "type": "image/png" }
+    { "src": "sutols-symbol-icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "sutols-symbol-favicon.png", "sizes": "512x512", "type": "image/png" }
   ]
 }

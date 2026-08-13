@@ -8,18 +8,10 @@ enum LayoutType {
   gridWithMore,
 }
 
-
 class LayoutService {
   LayoutType decideLayout(List<ModelMatch> matches) {
-    final strongMatches = matches.where((m) => m.score >= 2).toList();
-    final matchedModelCount = strongMatches.length;
-    if (matchedModelCount <= 0) return LayoutType.textOnly;
-    if (matchedModelCount == 1) return LayoutType.singleFocus;
-    if (matchedModelCount == 2) return LayoutType.compare;
-    if (matchedModelCount <= 4) return LayoutType.grid;
-    return LayoutType.gridWithMore;
+    return matches.isEmpty ? LayoutType.textOnly : LayoutType.singleFocus;
   }
-
 
   int maxModelsToShow(LayoutType layout) {
     switch (layout) {
@@ -28,11 +20,11 @@ class LayoutService {
       case LayoutType.singleFocus:
         return 1;
       case LayoutType.compare:
-        return 2;
+        return 1;
       case LayoutType.grid:
-        return 4;
+        return 1;
       case LayoutType.gridWithMore:
-        return 4;
+        return 1;
     }
   }
 }

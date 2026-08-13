@@ -134,7 +134,8 @@ class _AdminPageState extends State<AdminPage> {
           status: FirestoreRestHelper.stringField(fields, 'status'),
         );
       }).toList()
-        ..sort((a, b) => a.email.toLowerCase().compareTo(b.email.toLowerCase()));
+        ..sort(
+            (a, b) => a.email.toLowerCase().compareTo(b.email.toLowerCase()));
 
       if (!mounted) return;
       setState(() {
@@ -175,10 +176,8 @@ class _AdminPageState extends State<AdminPage> {
                 FirestoreRestHelper.integerField(fields, 'slideCount'),
               ) ??
               0,
-          wasEdited:
-              fields['wasEdited']?['booleanValue'] as bool? ?? false,
-          wasExported:
-              fields['wasExported']?['booleanValue'] as bool? ?? false,
+          wasEdited: fields['wasEdited']?['booleanValue'] as bool? ?? false,
+          wasExported: fields['wasExported']?['booleanValue'] as bool? ?? false,
           editCount: int.tryParse(
                 FirestoreRestHelper.integerField(fields, 'editCount'),
               ) ??
@@ -239,7 +238,9 @@ class _AdminPageState extends State<AdminPage> {
     try {
       await FirestoreRestHelper.patchDocument(
         'users/${user.id}',
-        {'status': {'stringValue': next}},
+        {
+          'status': {'stringValue': next}
+        },
         updateMask: const ['status'],
       );
       if (!mounted) return;
@@ -326,7 +327,8 @@ class _AdminPageState extends State<AdminPage> {
             AppSpacing.s8,
           ),
           child: TextField(
-            onChanged: (value) => setState(() => _query = value.trim().toLowerCase()),
+            onChanged: (value) =>
+                setState(() => _query = value.trim().toLowerCase()),
             decoration: InputDecoration(
               hintText: 'E-posta ile ara...',
               prefixIcon: const Icon(Icons.search_rounded),
@@ -367,9 +369,8 @@ class _AdminPageState extends State<AdminPage> {
       );
     }
 
-    final filtered = _users
-        .where((u) => u.email.toLowerCase().contains(_query))
-        .toList();
+    final filtered =
+        _users.where((u) => u.email.toLowerCase().contains(_query)).toList();
 
     if (filtered.isEmpty) {
       return Center(
@@ -418,7 +419,9 @@ class _AdminPageState extends State<AdminPage> {
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
                     : const Icon(Icons.refresh_rounded, size: 18),
-                label: Text(_statsBusy ? 'Güncelleniyor...' : 'İstatistikleri Güncelle'),
+                label: Text(_statsBusy
+                    ? 'Güncelleniyor...'
+                    : 'İstatistikleri Güncelle'),
               ),
               const Spacer(),
               IconButton(
@@ -674,7 +677,9 @@ class _UserTile extends StatelessWidget {
           runSpacing: AppSpacing.s8,
           children: [
             Chip(
-              label: Text('Tier: ${user.tier.isEmpty ? 'free' : user.tier}'),
+              label: Text(
+                'Plan: ${user.tier == 'plus' || user.tier == 'premium' || user.tier == 'pro' ? 'Plus' : 'Ücretsiz'}',
+              ),
               visualDensity: VisualDensity.compact,
             ),
             Chip(
@@ -743,7 +748,8 @@ class _PresentationTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.colors;
     final createdAt = presentation.createdAt;
-    final editedColor = presentation.wasEdited ? colors.success : colors.textSecondary;
+    final editedColor =
+        presentation.wasEdited ? colors.success : colors.textSecondary;
     final exportedColor =
         presentation.wasExported ? colors.success : colors.textSecondary;
 

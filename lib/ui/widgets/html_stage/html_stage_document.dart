@@ -177,10 +177,16 @@ String buildHtmlStageMarkup({
     if (!_isVisibleAtRevealStep(block.revealStep, visibleRevealStep)) {
       continue;
     }
-    final assetId = block.modelAssetId;
-    final is3D = assetId != null && imageSourcesById[assetId] == null;
-    final isImage = assetId != null && imageSourcesById[assetId] != null;
-    final remoteSource = is3D ? modelSourcesById[assetId] : null;
+    final legacyImageId = block.imageAssetId == null &&
+            block.modelAssetId != null &&
+            imageSourcesById[block.modelAssetId] != null
+        ? block.modelAssetId
+        : null;
+    final imageId = block.imageAssetId ?? legacyImageId;
+    final modelId = imageId == null ? block.modelAssetId : null;
+    final is3D = modelId != null;
+    final isImage = imageId != null;
+    final remoteSource = is3D ? modelSourcesById[modelId] : null;
     final resolvableSource = remoteSource;
     final has3D = resolvableSource != null;
     final componentHtml = has3D ? '' : presentationComponentHtml(block.kind);
@@ -198,13 +204,13 @@ String buildHtmlStageMarkup({
         ? ''
         : ' data-hotspot-target="${_escapeAttribute(block.hotspotTargetPageId!)}"';
     final componentInner = isImage
-        ? _uploadedImageMarkup(assetId, imageSourcesById[assetId]!)
+        ? _uploadedImageMarkup(imageId, imageSourcesById[imageId] ?? '')
         : has3D
             ? _model3DMarkup(
-                assetId ?? '',
+                modelId ?? '',
                 resolvableSource,
-                id: assetId ?? '',
-                hasAnimations: findPresentation3DModelAsset(assetId ?? '')
+                id: modelId ?? '',
+                hasAnimations: findPresentation3DModelAsset(modelId ?? '')
                         ?.hasAnimations ??
                     true,
                 animationEnabled: block.modelAnimationEnabled,
@@ -218,10 +224,10 @@ String buildHtmlStageMarkup({
             : componentHtml.trim().isEmpty
                 ? '<span class="sutol-component-shape"></span>'
                 : '<div class="sutol-html-component-inner">$componentHtml</div>';
-    final label = assetId ?? '';
+    final label = imageId ?? modelId ?? '';
     final modelAttr = !is3D
         ? ''
-        : ' data-sutol-model-id="${_escapeAttribute(assetId)}" data-sutol-orbit-theta="${block.modelOrbitTheta.toStringAsFixed(2)}" data-sutol-orbit-phi="${block.modelOrbitPhi.toStringAsFixed(2)}"';
+        : ' data-sutol-model-id="${_escapeAttribute(modelId)}" data-sutol-orbit-theta="${block.modelOrbitTheta.toStringAsFixed(2)}" data-sutol-orbit-phi="${block.modelOrbitPhi.toStringAsFixed(2)}"';
     buffer.writeln(
       '<div class="$classes" data-sutol-component-id="${_escapeAttribute(block.id)}"$modelAttr data-reveal-step="${block.revealStep}" aria-label="${_escapeAttribute(label)}"$hotspotAttr style="left:${_pct(block.position.dx)}%;top:${_pct(block.position.dy)}%;width:${_pct(block.size.width)}%;height:${_pct(block.size.height)}%;">$componentInner</div>',
     );
@@ -2253,13 +2259,10 @@ body {
 }
 
 .sutol-uploaded-image-element {
-  max-width: 100%;
-  max-height: 100%;
-  width: auto;
-  height: auto;
+  width: 100%;
+  height: 100%;
   object-fit: contain;
-  border-radius: 10px;
-  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.20);
+  border-radius: 6px;
   user-select: none;
   -webkit-user-drag: none;
 }

@@ -163,5 +163,6 @@ flutter:
         - asset: assets/fonts/google_fonts/lobster-400-latin.woff2
   assets:
     - assets/images/
+    - assets/videos/
     - assets/fonts/google_fonts/
     - assets/fonts/google_fonts/licenses/

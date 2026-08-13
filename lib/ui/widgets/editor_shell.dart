@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 
 import '../../models/slide_model.dart';
+import '../../services/remote_image_sources.dart';
 import '../../state/presentation_controller.dart';
 import '../design/design_system.dart';
 import '../design/sutol_widgets.dart';
@@ -31,6 +32,12 @@ typedef CanvasItemSecondaryTap = void Function(
   String itemId,
   Offset globalPosition,
 );
+
+bool _isCanvasImageBlock(PresentationComponentBlock block) {
+  return block.imageAssetId != null ||
+      (block.modelAssetId != null &&
+          RemoteImageSources.sourceFor(block.modelAssetId!) != null);
+}
 
 typedef CanvasTextResizeChanged = void Function(
   Offset delta,
@@ -297,14 +304,7 @@ class _EditorStudioHeader extends StatelessWidget {
             onPressed: () => Navigator.of(context).pop(),
           ),
           const SizedBox(width: 12),
-          Semantics(
-            image: true,
-            label: 'Sutols',
-            child: Image.asset(
-              'assets/images/sutols_wordmark.png',
-              height: 34,
-            ),
-          ),
+          const SutolsBrandLockup(height: 34),
           const SizedBox(width: 18),
           const SutolChip(label: 'Dosya'),
           const SizedBox(width: 8),
@@ -2218,6 +2218,7 @@ class _PresentationPageCanvasState extends State<PresentationPageCanvas> {
                     : () => widget.onToggleModelOrbit!(block.id),
                 onOrbitPanStart: widget.interactive &&
                         block.modelAssetId != null &&
+                        !_isCanvasImageBlock(block) &&
                         block.modelOrbitEnabled &&
                         widget.onRotateModel != null
                     ? (_) {
@@ -2229,6 +2230,7 @@ class _PresentationPageCanvasState extends State<PresentationPageCanvas> {
                     : null,
                 onOrbitPanUpdate: widget.interactive &&
                         block.modelAssetId != null &&
+                        !_isCanvasImageBlock(block) &&
                         block.modelOrbitEnabled &&
                         widget.onRotateModel != null
                     ? (details) =>
@@ -2236,6 +2238,7 @@ class _PresentationPageCanvasState extends State<PresentationPageCanvas> {
                     : null,
                 onOrbitPanEnd: widget.interactive &&
                         block.modelAssetId != null &&
+                        !_isCanvasImageBlock(block) &&
                         block.modelOrbitEnabled &&
                         widget.onRotateModel != null
                     ? (_) => widget.onEndModelOrbit?.call()
@@ -2243,6 +2246,7 @@ class _PresentationPageCanvasState extends State<PresentationPageCanvas> {
                 onPanUpdate: widget.interactive &&
                         widget.onDragSelectedText != null &&
                         !(block.modelAssetId != null &&
+                            !_isCanvasImageBlock(block) &&
                             block.modelOrbitEnabled &&
                             widget.onRotateModel != null)
                     ? (details) {
@@ -2636,6 +2640,7 @@ class _PageComponentBlock extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isImage = _isCanvasImageBlock(block);
     final width = (block.size.width * canvasSize.width)
         .clamp(54.0, canvasSize.width)
         .toDouble();
@@ -2693,9 +2698,10 @@ class _PageComponentBlock extends StatelessWidget {
                       : const Duration(milliseconds: 140),
                   decoration: BoxDecoration(
                     color: isSelected && showSelectionBorder
-                        ? context.primary.withValues(alpha: 0.08)
+                        ? context.primary
+                            .withValues(alpha: isImage ? 0.025 : 0.08)
                         : Colors.transparent,
-                    borderRadius: BorderRadius.circular(18),
+                    borderRadius: BorderRadius.circular(isImage ? 8 : 18),
                     border: Border.all(
                       color: showSelectionBorder && isSelected
                           ? context.primary
@@ -2706,34 +2712,36 @@ class _PageComponentBlock extends StatelessWidget {
                   child: Opacity(
                     opacity: visibleOpacity,
                     child: ClipRRect(
-                      borderRadius: BorderRadius.circular(16),
-                      child: block.modelAssetId == null
-                          ? CustomPaint(
-                              painter: ComponentBlockPreviewPainter(
-                                  kind: block.kind),
-                            )
-                          : DecoratedBox(
-                              decoration: const BoxDecoration(
-                                gradient: LinearGradient(
-                                  colors: <Color>[
-                                    Color(0xFF13294B),
-                                    Color(0xFF247BCE),
-                                  ],
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
+                      borderRadius: BorderRadius.circular(isImage ? 6 : 16),
+                      child: isImage
+                          ? const SizedBox.expand()
+                          : block.modelAssetId == null
+                              ? CustomPaint(
+                                  painter: ComponentBlockPreviewPainter(
+                                      kind: block.kind),
+                                )
+                              : DecoratedBox(
+                                  decoration: const BoxDecoration(
+                                    gradient: LinearGradient(
+                                      colors: <Color>[
+                                        Color(0xFF13294B),
+                                        Color(0xFF247BCE),
+                                      ],
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                    ),
+                                  ),
+                                  child: Center(
+                                    child: Icon(
+                                      findPresentation3DModelAsset(
+                                            block.modelAssetId!,
+                                          )?.icon ??
+                                          Icons.view_in_ar_rounded,
+                                      color: Colors.white,
+                                      size: 34,
+                                    ),
+                                  ),
                                 ),
-                              ),
-                              child: Center(
-                                child: Icon(
-                                  findPresentation3DModelAsset(
-                                        block.modelAssetId!,
-                                      )?.icon ??
-                                      Icons.view_in_ar_rounded,
-                                  color: Colors.white,
-                                  size: 34,
-                                ),
-                              ),
-                            ),
                     ),
                   ),
                 ),
@@ -2742,6 +2750,7 @@ class _PageComponentBlock extends StatelessWidget {
           ),
           if (showHandles &&
               block.modelAssetId != null &&
+              !isImage &&
               onToggleOrbit != null)
             Align(
               alignment: Alignment.center,

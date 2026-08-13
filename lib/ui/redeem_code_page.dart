@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import 'design/design_system.dart';
+import '../services/plan_tier_service.dart';
 
 /// Kullanıcının promosyon kodunu anında kullandığı sayfa.
 ///
@@ -33,18 +34,6 @@ class _RedeemCodePageState extends State<RedeemCodePage> {
     super.dispose();
   }
 
-  static int _tierRank(String tier) => switch (tier) {
-        'premium' => 3,
-        'plus' => 2,
-        _ => 1,
-      };
-
-  static String _tierLabel(String tier) => switch (tier) {
-        'premium' => 'Premium',
-        'plus' => 'Plus',
-        _ => 'Ücretsiz',
-      };
-
   Future<void> _redeem() async {
     final code = _codeController.text.trim().toUpperCase();
     if (code.isEmpty) {
@@ -66,7 +55,8 @@ class _RedeemCodePageState extends State<RedeemCodePage> {
         final codeSnap =
             await transaction.get(db.collection('promoCodes').doc(code));
         if (!codeSnap.exists) {
-          throw const _RedeemException('Geçersiz kod. Kontrol edip tekrar deneyin.');
+          throw const _RedeemException(
+              'Geçersiz kod. Kontrol edip tekrar deneyin.');
         }
         final data = codeSnap.data()!;
 
@@ -74,7 +64,12 @@ class _RedeemCodePageState extends State<RedeemCodePage> {
           throw const _RedeemException('Bu kod şu anda aktif değil.');
         }
 
-        final expiresAt = data['expiresAt'] as DateTime?;
+        final expiresAtValue = data['expiresAt'];
+        final expiresAt = expiresAtValue is Timestamp
+            ? expiresAtValue.toDate()
+            : expiresAtValue is DateTime
+                ? expiresAtValue
+                : null;
         if (expiresAt != null && !expiresAt.isAfter(DateTime.now().toUtc())) {
           throw const _RedeemException('Bu kodun süresi dolmuş.');
         }
@@ -93,16 +88,25 @@ class _RedeemCodePageState extends State<RedeemCodePage> {
         }
 
         final grantsTier = data['grantsTier'] as String? ?? '';
-        final userSnap = await transaction.get(db.collection('users').doc(user.uid));
+        final userSnap =
+            await transaction.get(db.collection('users').doc(user.uid));
         final currentTier = (userSnap.data()?['tier'] as String?) ?? 'free';
-        if (grantsTier.isEmpty || _tierRank(grantsTier) <= _tierRank(currentTier)) {
-          throw _RedeemException('Zaten ${_tierLabel(currentTier)} planındasınız.');
+        if (!PlanTierService.isSupportedPromoGrant(grantsTier)) {
+          throw const _RedeemException(
+            'Bu kod güncel Plus planıyla uyumlu değil.',
+          );
+        }
+        if (!PlanTierService.canRedeemPlus(
+          grantsTier: grantsTier,
+          currentTier: currentTier,
+        )) {
+          throw const _RedeemException('Zaten Plus planındasınız.');
         }
 
         transaction.set(
           db.collection('users').doc(user.uid),
           {
-            'tier': grantsTier,
+            'tier': PlanTierService.plus,
             'redeemedCode': code,
             'redeemedAt': FieldValue.serverTimestamp(),
           },

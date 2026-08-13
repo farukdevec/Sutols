@@ -22,6 +22,10 @@ class _AdminUser {
     required this.status,
     required this.createdAt,
     required this.lastActiveAt,
+    required this.lastLoginCity,
+    required this.lastLoginRegion,
+    required this.lastLoginCountry,
+    required this.lastLoginCountryCode,
   });
 
   final String id;
@@ -33,6 +37,20 @@ class _AdminUser {
   final String status;
   final DateTime? createdAt;
   final DateTime? lastActiveAt;
+  final String lastLoginCity;
+  final String lastLoginRegion;
+  final String lastLoginCountry;
+  final String lastLoginCountryCode;
+
+  String get approximateLocation {
+    final parts = <String>[
+      if (lastLoginCity.isNotEmpty) lastLoginCity,
+      if (lastLoginRegion.isNotEmpty && lastLoginRegion != lastLoginCity)
+        lastLoginRegion,
+      if (lastLoginCountry.isNotEmpty) lastLoginCountry,
+    ];
+    return parts.isEmpty ? '-' : parts.join(', ');
+  }
 
   String get effectiveStatus => status.isEmpty ? 'active' : status;
 
@@ -77,9 +95,17 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
         role: FirestoreRestHelper.stringField(fields, 'role'),
         tier: FirestoreRestHelper.stringField(fields, 'tier'),
         status: FirestoreRestHelper.stringField(fields, 'status'),
-        createdAt: _parseDate(FirestoreRestHelper.timestampField(fields, 'createdAt')),
-        lastActiveAt:
-            _parseDate(FirestoreRestHelper.timestampField(fields, 'lastActiveAt')),
+        createdAt:
+            _parseDate(FirestoreRestHelper.timestampField(fields, 'createdAt')),
+        lastActiveAt: _parseDate(
+            FirestoreRestHelper.timestampField(fields, 'lastActiveAt')),
+        lastLoginCity: FirestoreRestHelper.stringField(fields, 'lastLoginCity'),
+        lastLoginRegion:
+            FirestoreRestHelper.stringField(fields, 'lastLoginRegion'),
+        lastLoginCountry:
+            FirestoreRestHelper.stringField(fields, 'lastLoginCountry'),
+        lastLoginCountryCode:
+            FirestoreRestHelper.stringField(fields, 'lastLoginCountryCode'),
       );
     }).toList();
 
@@ -124,7 +150,8 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
               AppSpacing.s8,
             ),
             child: TextField(
-              onChanged: (value) => setState(() => _query = value.trim().toLowerCase()),
+              onChanged: (value) =>
+                  setState(() => _query = value.trim().toLowerCase()),
               decoration: InputDecoration(
                 hintText: 'Kullanıcı ara (ad veya e-posta)...',
                 prefixIcon: const Icon(Icons.search_rounded),
@@ -165,7 +192,8 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
                 final filtered = users.where((u) {
                   if (_query.isEmpty) return true;
                   return u.displayName.toLowerCase().contains(_query) ||
-                      u.email.toLowerCase().contains(_query);
+                      u.email.toLowerCase().contains(_query) ||
+                      u.approximateLocation.toLowerCase().contains(_query);
                 }).toList();
 
                 if (filtered.isEmpty) {
@@ -195,6 +223,7 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
                       DataColumn(label: Text('Durum')),
                       DataColumn(label: Text('Kayıt Tarihi')),
                       DataColumn(label: Text('Son Giriş')),
+                      DataColumn(label: Text('Yaklaşık Konum')),
                     ],
                     rows: filtered.map((user) {
                       return DataRow(
@@ -210,7 +239,9 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
                           DataCell(_Avatar(user: user)),
                           DataCell(
                             Text(
-                              user.displayName.isNotEmpty ? user.displayName : '-',
+                              user.displayName.isNotEmpty
+                                  ? user.displayName
+                                  : '-',
                               style: AppTypography.bodyMedium.copyWith(
                                 color: colors.textPrimary,
                                 fontWeight: FontWeight.w600,
@@ -250,6 +281,35 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
                               ),
                             ),
                           ),
+                          DataCell(
+                            Tooltip(
+                              message: 'IP adresinden tahmini konum',
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  if (user.lastLoginCountryCode.isNotEmpty) ...[
+                                    Text(
+                                      _countryFlag(user.lastLoginCountryCode),
+                                      style: const TextStyle(fontSize: 18),
+                                    ),
+                                    const SizedBox(width: 6),
+                                  ],
+                                  ConstrainedBox(
+                                    constraints:
+                                        const BoxConstraints(maxWidth: 220),
+                                    child: Text(
+                                      user.approximateLocation,
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: AppTypography.bodyMedium.copyWith(
+                                        color: colors.textSecondary,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
                         ],
                       );
                     }).toList(),
@@ -260,6 +320,14 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
           ),
         ],
       ),
+    );
+  }
+
+  static String _countryFlag(String countryCode) {
+    final code = countryCode.trim().toUpperCase();
+    if (code.length != 2) return '';
+    return String.fromCharCodes(
+      code.codeUnits.map((unit) => 0x1F1E6 + unit - 0x41),
     );
   }
 }
@@ -281,7 +349,8 @@ class _Avatar extends StatelessWidget {
           width: 36,
           height: 36,
           fit: BoxFit.cover,
-          errorBuilder: (_, __, ___) => _InitialAvatar(user: user, colors: colors),
+          errorBuilder: (_, __, ___) =>
+              _InitialAvatar(user: user, colors: colors),
         ),
       );
     }
@@ -298,9 +367,10 @@ class _InitialAvatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final initial = (user.displayName.isNotEmpty ? user.displayName : user.email)
-        .substring(0, 1)
-        .toUpperCase();
+    final initial =
+        (user.displayName.isNotEmpty ? user.displayName : user.email)
+            .substring(0, 1)
+            .toUpperCase();
 
     return Container(
       width: 36,
@@ -331,18 +401,17 @@ class _TierBadge extends StatelessWidget {
     final colors = context.colors;
     final normalized = tier.toLowerCase();
     final color = switch (normalized) {
-      'premium' => colors.primary,
-      'plus' => const Color(0xFF8E44AD),
+      'plus' || 'premium' || 'pro' => const Color(0xFF8E44AD),
       _ => colors.textSecondary,
     };
     final label = switch (normalized) {
-      'premium' => 'Premium',
-      'plus' => 'Plus',
+      'plus' || 'premium' || 'pro' => 'Plus',
       _ => 'Ücretsiz',
     };
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s8, vertical: 4),
+      padding:
+          const EdgeInsets.symmetric(horizontal: AppSpacing.s8, vertical: 4),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
         border: Border.all(color: color.withValues(alpha: 0.5)),
@@ -370,7 +439,8 @@ class _StatusBadge extends StatelessWidget {
     final color = isSuspended ? colors.danger : colors.success;
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s8, vertical: 4),
+      padding:
+          const EdgeInsets.symmetric(horizontal: AppSpacing.s8, vertical: 4),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
         border: Border.all(color: color.withValues(alpha: 0.5)),
@@ -400,7 +470,8 @@ class _RoleBadge extends StatelessWidget {
     final color = isAdmin ? colors.success : colors.textSecondary;
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s8, vertical: 4),
+      padding:
+          const EdgeInsets.symmetric(horizontal: AppSpacing.s8, vertical: 4),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
         border: Border.all(color: color.withValues(alpha: 0.5)),

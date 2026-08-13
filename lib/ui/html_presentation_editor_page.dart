@@ -38,6 +38,12 @@ extension on BuildContext {
   Color get _htmlPanel => sutolColors.surface;
 }
 
+bool _isUploadedImageBlock(PresentationComponentBlock block) {
+  return block.imageAssetId != null ||
+      (block.modelAssetId != null &&
+          RemoteImageSources.sourceFor(block.modelAssetId!) != null);
+}
+
 const Color _studioHeaderBrandStart = Color(0xFF0A7E82);
 const Color _studioHeaderBrandEnd = Color(0xFF006471);
 const Color _studioHeaderForeground = Color(0xFFF7FFFF);
@@ -302,7 +308,8 @@ class _HtmlPresentationEditorPageState
       }
       for (final block in page.componentBlocks) {
         buf
-          ..write('\nC:${block.id}|${block.kind.index}|${block.modelAssetId}')
+          ..write(
+              '\nC:${block.id}|${block.kind.index}|${block.modelAssetId}|${block.imageAssetId}|${block.imageAspectRatio}')
           ..write('|${block.modelAnimationEnabled}|${block.modelAutoRotate}')
           ..write('|${block.modelOrbitEnabled}'
               '|${block.modelOrbitTheta.toStringAsFixed(3)}|${block.modelOrbitPhi.toStringAsFixed(3)}')
@@ -378,9 +385,11 @@ class _HtmlPresentationEditorPageState
       targetTab = _HtmlToolTab.text;
     } else if (componentBlock != null) {
       selectionKey = 'component:${componentBlock.id}';
-      targetTab = componentBlock.modelAssetId != null
-          ? _HtmlToolTab.models3d
-          : _HtmlToolTab.components;
+      targetTab = _isUploadedImageBlock(componentBlock)
+          ? _HtmlToolTab.photo
+          : componentBlock.modelAssetId != null
+              ? _HtmlToolTab.models3d
+              : _HtmlToolTab.components;
     }
     if (selectionKey == null) {
       _lastAutoTabSelectionKey = null;
@@ -3056,38 +3065,11 @@ class _HeaderBrandMark extends StatelessWidget {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: <Widget>[
-                SizedBox.square(
-                  dimension: size * 0.84,
-                  child: branded
-                      ? ColorFiltered(
-                          colorFilter: const ColorFilter.mode(
-                            _studioHeaderForeground,
-                            BlendMode.srcIn,
-                          ),
-                          child: Image.asset(
-                            'assets/images/logo.png',
-                            fit: BoxFit.contain,
-                          ),
-                        )
-                      : Image.asset(
-                          'assets/images/logo.png',
-                          fit: BoxFit.contain,
-                        ),
+                SutolsBrandLockup(
+                  height: size * 0.84,
+                  showWordmark: showLabel,
+                  color: branded ? _studioHeaderForeground : null,
                 ),
-                if (showLabel) ...<Widget>[
-                  SizedBox(width: size * 0.08),
-                  Text(
-                    'Sutols',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          color: branded
-                              ? _studioHeaderForeground
-                              : context._htmlInk,
-                          fontSize: size < 50 ? 17 : 20,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: -0.4,
-                        ),
-                  ),
-                ],
               ],
             ),
           ),
@@ -3602,17 +3584,22 @@ class _HtmlInspectorPanel extends StatelessWidget {
                         controller: controller,
                         expandResults: true,
                       )
-                    : SingleChildScrollView(
-                        child: AnimatedSwitcher(
-                          duration: const Duration(milliseconds: 220),
-                          child: _HtmlControlPanel(
-                            key: ValueKey<_HtmlToolTab>(activeTab),
+                    : activeTab == _HtmlToolTab.models3d
+                        ? _Html3DModelControls(
                             controller: controller,
-                            textController: textController,
-                            activeTab: activeTab,
+                            expandResults: true,
+                          )
+                        : SingleChildScrollView(
+                            child: AnimatedSwitcher(
+                              duration: const Duration(milliseconds: 220),
+                              child: _HtmlControlPanel(
+                                key: ValueKey<_HtmlToolTab>(activeTab),
+                                controller: controller,
+                                textController: textController,
+                                activeTab: activeTab,
+                              ),
+                            ),
                           ),
-                        ),
-                      ),
           ),
         ],
       ),
@@ -4339,9 +4326,13 @@ class _HtmlControlPanel extends StatelessWidget {
 }
 
 class _Html3DModelControls extends StatefulWidget {
-  const _Html3DModelControls({required this.controller});
+  const _Html3DModelControls({
+    required this.controller,
+    this.expandResults = false,
+  });
 
   final PresentationController controller;
+  final bool expandResults;
 
   @override
   State<_Html3DModelControls> createState() => _Html3DModelControlsState();
@@ -4357,8 +4348,7 @@ class _Html3DModelControlsState extends State<_Html3DModelControls> {
   String _userTier = 'free';
 
   static int _tierRank(String tier) => switch (tier) {
-        'premium' => 2,
-        'plus' => 1,
+        'plus' || 'premium' || 'pro' => 1,
         _ => 0,
       };
 
@@ -4471,7 +4461,9 @@ class _Html3DModelControlsState extends State<_Html3DModelControls> {
     ];
 
     return Container(
+      key: const ValueKey<String>('model-library-panel'),
       width: double.infinity,
+      height: widget.expandResults ? double.infinity : null,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: context.sutolColors.surface,
@@ -4479,7 +4471,8 @@ class _Html3DModelControlsState extends State<_Html3DModelControls> {
         border: Border.all(color: context.sutolColors.outline),
       ),
       child: Column(
-        mainAxisSize: MainAxisSize.min,
+        mainAxisSize:
+            widget.expandResults ? MainAxisSize.max : MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           _ModelSearchField(
@@ -4528,10 +4521,19 @@ class _Html3DModelControlsState extends State<_Html3DModelControls> {
             ],
           ),
           const SizedBox(height: 8),
-          ConstrainedBox(
-            constraints: const BoxConstraints(maxHeight: 400),
-            child: _buildBody(context, filtered, selectedModelId),
-          ),
+          if (widget.expandResults)
+            Expanded(
+              child: KeyedSubtree(
+                key: const ValueKey<String>('model-library-results'),
+                child: _buildBody(context, filtered, selectedModelId),
+              ),
+            )
+          else
+            ConstrainedBox(
+              key: const ValueKey<String>('model-library-results'),
+              constraints: const BoxConstraints(maxHeight: 400),
+              child: _buildBody(context, filtered, selectedModelId),
+            ),
         ],
       ),
     );
@@ -4546,15 +4548,17 @@ class _Html3DModelControlsState extends State<_Html3DModelControls> {
       return LayoutBuilder(
         builder: (context, constraints) {
           final columns = _gridColumns(constraints.maxWidth);
+          final cellWidth =
+              (constraints.maxWidth - (columns - 1) * 10) / columns;
           return GridView.builder(
             padding: const EdgeInsets.only(bottom: 8),
-            shrinkWrap: true,
+            shrinkWrap: !widget.expandResults,
             physics: const ClampingScrollPhysics(),
             gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: columns,
               mainAxisSpacing: 10,
               crossAxisSpacing: 10,
-              childAspectRatio: 0.82,
+              mainAxisExtent: cellWidth + 28,
             ),
             itemCount: 9,
             itemBuilder: (context, index) {
@@ -4630,15 +4634,16 @@ class _Html3DModelControlsState extends State<_Html3DModelControls> {
     return LayoutBuilder(
       builder: (context, constraints) {
         final columns = _gridColumns(constraints.maxWidth);
+        final cellWidth = (constraints.maxWidth - (columns - 1) * 10) / columns;
         return GridView.builder(
           padding: const EdgeInsets.only(bottom: 8),
-          shrinkWrap: true,
+          shrinkWrap: !widget.expandResults,
           physics: const ClampingScrollPhysics(),
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: columns,
             mainAxisSpacing: 10,
             crossAxisSpacing: 10,
-            childAspectRatio: 0.82,
+            mainAxisExtent: cellWidth + 28,
           ),
           itemCount: filtered.length,
           itemBuilder: (context, index) {
@@ -4741,12 +4746,16 @@ Future<_UploadedPhotoEntry?> pickLocalPhotoIntoController(
   if (picked == null) return null;
   final sourceId = 'photo-${DateTime.now().millisecondsSinceEpoch}';
   RemoteImageSources.register(sourceId, picked.dataUrl);
-  controller.addUploadedImageBlock(sourceId);
+  controller.addUploadedImageBlock(
+    sourceId,
+    aspectRatio: picked.aspectRatio,
+  );
   return _UploadedPhotoEntry(
     id: sourceId,
     name: picked.name,
     dataUrl: picked.dataUrl,
     sizeBytes: picked.sizeBytes,
+    aspectRatio: picked.aspectRatio,
   );
 }
 
@@ -4888,7 +4897,10 @@ class _HtmlPhotoControlsState extends State<_HtmlPhotoControls> {
               padding: const EdgeInsets.only(bottom: 10),
               child: _UploadedPhotoCard(
                 photo: photo,
-                onAdd: () => widget.controller.addUploadedImageBlock(photo.id),
+                onAdd: () => widget.controller.addUploadedImageBlock(
+                  photo.id,
+                  aspectRatio: photo.aspectRatio,
+                ),
                 onRemove: () => _removePhoto(photo),
               ),
             ),
@@ -4903,12 +4915,14 @@ class _UploadedPhotoEntry {
     required this.name,
     required this.dataUrl,
     this.sizeBytes = 0,
+    this.aspectRatio = 16 / 9,
   });
 
   final String id;
   final String name;
   final String dataUrl;
   final int sizeBytes;
+  final double aspectRatio;
 }
 
 class _UploadedPhotoCard extends StatelessWidget {
@@ -5412,7 +5426,6 @@ class _TemplatePresetCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final previewPage = presentationTemplatePreviewPage(template);
     return Material(
       color: isSelected ? const Color(0xFFF0F6FF) : context.sutolColors.surface,
       borderRadius: BorderRadius.circular(16),
@@ -5438,14 +5451,11 @@ class _TemplatePresetCard extends StatelessWidget {
                   aspectRatio: 16 / 9,
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(10),
-                    child: HtmlPageStage(
+                    child: _StaticTemplateThumbnail(
                       key: ValueKey<String>(
                         'template-preview-${template.name}',
                       ),
-                      page: previewPage,
-                      showBadge: false,
-                      renderMode: HtmlStageRenderMode.snapshot,
-                      onTap: onTap,
+                      template: template,
                     ),
                   ),
                 ),
@@ -5488,6 +5498,168 @@ class _TemplatePresetCard extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+/// Lightweight, non-animated template thumbnail.
+///
+/// Template lists previously instantiated one HTML iframe per card. This
+/// Flutter-only snapshot preserves the template's palette and visual identity
+/// without loading background scripts, animations or full slide documents.
+class _StaticTemplateThumbnail extends StatelessWidget {
+  const _StaticTemplateThumbnail({
+    super.key,
+    required this.template,
+  });
+
+  final PresentationTemplate template;
+
+  @override
+  Widget build(BuildContext context) {
+    final backgroundKind = presentationTemplateBackground(template) ??
+        PresentationBackgroundKind.science;
+    final colors = presentationBackgroundPreviewColors(backgroundKind);
+    final isDark = presentationBackgroundIsDark(backgroundKind);
+    final foreground = isDark ? Colors.white : const Color(0xFF172033);
+    final muted = foreground.withValues(alpha: 0.58);
+    final accent = colors.last;
+
+    return Semantics(
+      image: true,
+      label: '${presentationTemplateLabel(template)} şablon önizlemesi',
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: colors,
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+        ),
+        child: CustomPaint(
+          painter: _StaticTemplateThumbnailPainter(
+            lineColor: foreground.withValues(alpha: isDark ? 0.09 : 0.11),
+            accentColor: accent.withValues(alpha: isDark ? 0.34 : 0.24),
+          ),
+          child: Stack(
+            fit: StackFit.expand,
+            children: <Widget>[
+              Positioned(
+                left: 10,
+                top: 10,
+                right: 42,
+                child: Text(
+                  'Yeni Bir\nBakış',
+                  maxLines: 2,
+                  overflow: TextOverflow.clip,
+                  style: TextStyle(
+                    color: foreground,
+                    fontSize: 12,
+                    height: 0.9,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: -0.35,
+                  ),
+                ),
+              ),
+              Positioned(
+                left: 10,
+                bottom: 10,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    _TemplateThumbnailLine(color: muted, width: 42),
+                    const SizedBox(height: 3),
+                    _TemplateThumbnailLine(color: muted, width: 30),
+                  ],
+                ),
+              ),
+              Positioned(
+                right: 9,
+                top: 9,
+                child: Container(
+                  width: 24,
+                  height: 24,
+                  decoration: BoxDecoration(
+                    color: foreground.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(7),
+                    border: Border.all(
+                      color: foreground.withValues(alpha: 0.2),
+                    ),
+                  ),
+                  child: Icon(
+                    presentationBackgroundIcon(backgroundKind),
+                    size: 14,
+                    color: foreground.withValues(alpha: 0.72),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _TemplateThumbnailLine extends StatelessWidget {
+  const _TemplateThumbnailLine({required this.color, required this.width});
+
+  final Color color;
+  final double width;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: width,
+      height: 2,
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(99),
+      ),
+    );
+  }
+}
+
+class _StaticTemplateThumbnailPainter extends CustomPainter {
+  const _StaticTemplateThumbnailPainter({
+    required this.lineColor,
+    required this.accentColor,
+  });
+
+  final Color lineColor;
+  final Color accentColor;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final linePaint = Paint()
+      ..color = lineColor
+      ..strokeWidth = 0.7;
+    for (var x = size.width / 6; x < size.width; x += size.width / 6) {
+      canvas.drawLine(Offset(x, 0), Offset(x, size.height), linePaint);
+    }
+    for (var y = size.height / 4; y < size.height; y += size.height / 4) {
+      canvas.drawLine(Offset(0, y), Offset(size.width, y), linePaint);
+    }
+
+    final accentPaint = Paint()
+      ..color = accentColor
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.4;
+    canvas.drawCircle(
+      Offset(size.width * 0.78, size.height * 0.68),
+      size.height * 0.23,
+      accentPaint,
+    );
+    canvas.drawCircle(
+      Offset(size.width * 0.93, size.height * 0.37),
+      size.height * 0.15,
+      accentPaint,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant _StaticTemplateThumbnailPainter oldDelegate) {
+    return lineColor != oldDelegate.lineColor ||
+        accentColor != oldDelegate.accentColor;
   }
 }
 
@@ -6620,9 +6792,11 @@ class _SelectionContextBarSection extends StatelessWidget {
           children = _textChildren(context, textBlock, compact: compact);
         } else if (componentBlock != null) {
           contentKey = 'component:${componentBlock.id}';
-          children = componentBlock.modelAssetId != null
-              ? _modelChildren(context, componentBlock)
-              : _componentChildren();
+          children = _isUploadedImageBlock(componentBlock)
+              ? _imageChildren()
+              : componentBlock.modelAssetId != null
+                  ? _modelChildren(context, componentBlock)
+                  : _componentChildren();
         }
 
         return AnimatedSwitcher(
@@ -6861,6 +7035,33 @@ class _SelectionContextBarSection extends StatelessWidget {
       MiniToolAction(
         icon: Icons.delete_outline_rounded,
         tooltip: 'Sil',
+        onTap: controller.removeSelectedComponentBlock,
+      ),
+    ];
+  }
+
+  List<Widget> _imageChildren() {
+    return <Widget>[
+      const MiniToolAction(
+        icon: Icons.photo_rounded,
+        tooltip: 'Fotoğraf',
+        onTap: null,
+      ),
+      const MiniToolDivider(),
+      MiniToolAction(
+        icon: Icons.flip_to_front_rounded,
+        tooltip: 'Öne Getir',
+        onTap: () => controller.moveSelectedComponentLayer(forward: true),
+      ),
+      MiniToolAction(
+        icon: Icons.flip_to_back_rounded,
+        tooltip: 'Arkaya Gönder',
+        onTap: () => controller.moveSelectedComponentLayer(forward: false),
+      ),
+      const MiniToolDivider(),
+      MiniToolAction(
+        icon: Icons.delete_outline_rounded,
+        tooltip: 'Fotoğrafı Sil',
         onTap: controller.removeSelectedComponentBlock,
       ),
     ];

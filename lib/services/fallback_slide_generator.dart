@@ -8,27 +8,94 @@ import 'gemini_presentation_service.dart';
 /// slaytlara 3B modeller yerleştirilir.
 class FallbackSlideGenerator {
   static const Set<String> _stopWords = {
-    'ama', 'ancak', 'artik', 'bir', 'bircok', 'bu', 'buna', 'bunlara',
-    'bunlari', 'bunun', 'cok', 'daha', 'da', 'de', 'den', 'diye', 'diyor',
-    'ederek', 'eden', 'en', 'gibi', 'hakkinda', 'her', 'icin', 'ile',
-    'ise', 'kadar', 'ken', 'ki', 'kim', 'nasi', 'nasil', 'ne', 'neden',
-    'nerde', 'nere', 'nereye', 'neyle', 'olarak', 'oldugu', 'oldugunu',
-    'oldukca', 'once', 'sadece', 'seyler', 'sonra', 'uzere', 'uzerine',
-    'uzerinde', 've', 'veya', 'ya', 'yani', 'yapilan', 'yeni', 'zaman',
-    'tum', 'butun', 'tumu', 'nedir',
+    'ama',
+    'ancak',
+    'artik',
+    'bir',
+    'bircok',
+    'bu',
+    'buna',
+    'bunlara',
+    'bunlari',
+    'bunun',
+    'cok',
+    'daha',
+    'da',
+    'de',
+    'den',
+    'diye',
+    'diyor',
+    'ederek',
+    'eden',
+    'en',
+    'gibi',
+    'hakkinda',
+    'her',
+    'icin',
+    'ile',
+    'ise',
+    'kadar',
+    'ken',
+    'ki',
+    'kim',
+    'nasi',
+    'nasil',
+    'ne',
+    'neden',
+    'nerde',
+    'nere',
+    'nereye',
+    'neyle',
+    'olarak',
+    'oldugu',
+    'oldugunu',
+    'oldukca',
+    'once',
+    'sadece',
+    'seyler',
+    'sonra',
+    'uzere',
+    'uzerine',
+    'uzerinde',
+    've',
+    'veya',
+    'ya',
+    'yani',
+    'yapilan',
+    'yeni',
+    'zaman',
+    'tum',
+    'butun',
+    'tumu',
+    'nedir',
   };
 
   /// Konu metninden [slideCount] kadar slayt üretir.
   ///
   /// AI kullanmaz; giriş, bölüm ve özet slaytları şablon içerikle doldurur.
-  /// [slideCount] 2 ile 8 arasına kısıtlanır.
+  /// [slideCount] 1 ile 30 arasına kısıtlanır.
   static GeminiPresentation generatePresentation(
     String topic, {
     int slideCount = 5,
   }) {
     final words = _meaningfulWords(topic);
-    final count = slideCount.clamp(2, 8);
+    final count = slideCount.clamp(1, 30);
     final slides = <GeminiSlide>[];
+
+    if (count == 1) {
+      return GeminiPresentation(
+        slides: [
+          GeminiSlide(
+            title: topic.trim().isEmpty ? 'Sunum' : topic.trim(),
+            content: [
+              '- Bu sunumda "$topic" konusunu ele alacağız.',
+              '- Konunun temel noktalarını ve öne çıkan kavramlarını inceleyeceğiz.',
+            ].join('\n'),
+            keywords: words.take(6).toList(),
+          ),
+        ],
+      );
+    }
 
     slides.add(GeminiSlide(
       title: 'Giriş',

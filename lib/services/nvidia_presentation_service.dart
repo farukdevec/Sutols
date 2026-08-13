@@ -47,13 +47,17 @@ class NvidiaPresentationService {
     int slideCount = 5,
     String language = 'turkish',
   }) async {
-    final prompt = '''Kullanıcının verdiği konu hakkında $slideCount slaytlık bir sunum yapısı oluştur.
+    final prompt =
+        '''Kullanıcının verdiği konu hakkında $slideCount slaytlık bir sunum yapısı oluştur.
 
 Kurallar:
 - Tam olarak $slideCount slayt üret.
 - Her slaytta: title (kısa ve dikkat çekici başlık), content (slaytta gösterilecek
   madde işaretleri veya kısa paragraflar, en fazla 120 kelime), keywords
   (içerikle eşleşen 3-8 anahtar kelime) alanları doldur.
+- keywords alanında slaydın ana fikrini görsel olarak temsil eden somut nesne,
+  kişi, yer veya kavram adlarını kullan. Genel ve ilgisiz kelimeler ekleme;
+  3B model ve bileşen kataloğu bu kelimelerle eşleştirilecektir.
 - Tüm metinler "$language" dilinde olmalı.
 - content alanında her bilgiyi ayrı satıra yaz (madde işaretleri için "- " kullan,
   "- " ile başlayan satırlar sunumda tek tek gösterilecektir).
@@ -98,8 +102,8 @@ Konu: $topic
     }
 
     final responseJson = jsonDecode(response.body) as Map<String, dynamic>;
-    final content = responseJson['choices']?[0]?['message']?['content']
-        as String?;
+    final content =
+        responseJson['choices']?[0]?['message']?['content'] as String?;
 
     if (content == null || content.isEmpty) {
       throw Exception('Nvidia proxy boş yanıt döndürdü.');

@@ -19,7 +19,8 @@ void main() {
     expect(UsageService.dailyLimitForTier('free'), 5);
     expect(UsageService.dailyLimitForTier('unknown'), 5);
     expect(UsageService.dailyLimitForTier('plus'), 15);
-    expect(UsageService.dailyLimitForTier('premium'), 999);
+    expect(UsageService.dailyLimitForTier('premium'), 15);
+    expect(UsageService.dailyLimitForTier('pro'), 15);
   });
 
   test('ilk günlük kullanım kaydını oluşturur', () async {

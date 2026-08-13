@@ -29,15 +29,13 @@ class UsageService {
 
   static const int freeDailyLimit = 5;
   static const int plusDailyLimit = 15;
-  static const int premiumDailyLimit = 999;
 
   final http.Client _client;
   final Future<String> Function() _tokenProvider;
   final DateTime Function() _now;
 
   static int dailyLimitForTier(String tier) => switch (tier) {
-        'premium' => premiumDailyLimit,
-        'plus' => plusDailyLimit,
+        'plus' || 'premium' || 'pro' => plusDailyLimit,
         _ => freeDailyLimit,
       };
 

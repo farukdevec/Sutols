@@ -233,21 +233,26 @@ class _HtmlPageStageState extends State<HtmlPageStage> {
       'type': 'sutol-stage-patch',
       'components': widget.page.componentBlocks.map(
         (block) {
-          final assetId = block.modelAssetId;
-          final isImage =
-              assetId != null && RemoteImageSources.sourceFor(assetId) != null;
+          final legacyImageId = block.imageAssetId == null &&
+                  block.modelAssetId != null &&
+                  RemoteImageSources.sourceFor(block.modelAssetId!) != null
+              ? block.modelAssetId
+              : null;
+          final imageId = block.imageAssetId ?? legacyImageId;
+          final modelId = imageId == null ? block.modelAssetId : null;
+          final isImage = imageId != null;
           return <String, Object?>{
             'id': block.id,
             'className': <String>[
               'sutol-html-component',
               if (isImage) 'component-uploaded-image',
-              if (block.modelAssetId == null)
+              if (modelId == null && !isImage)
                 'component-${_componentDomKindName(block.kind)}',
-              if (block.modelAssetId != null &&
-                  !isImage &&
-                  RemoteModelSources.sourceFor(assetId!) != null)
+              if (modelId != null &&
+                  RemoteModelSources.sourceFor(modelId) != null)
                 'component-3d-model',
-              if (block.modelAssetId != null ||
+              if (modelId != null ||
+                  isImage ||
                   presentationComponentHasHtml(block.kind))
                 'has-html-component',
               if (block.id == widget.selectedComponentBlockId) 'is-selected',
@@ -258,20 +263,20 @@ class _HtmlPageStageState extends State<HtmlPageStage> {
             'top': '${_pct(block.position.dy)}%',
             'width': '${_pct(block.size.width)}%',
             'height': '${_pct(block.size.height)}%',
-            'modelOrbitTheta': isImage || assetId == null
+            'modelOrbitTheta': isImage || modelId == null
                 ? null
                 : block.modelOrbitTheta.toStringAsFixed(2),
-            'modelOrbitPhi': isImage || assetId == null
+            'modelOrbitPhi': isImage || modelId == null
                 ? null
                 : block.modelOrbitPhi.toStringAsFixed(2),
             'modelAutoRotate':
-                isImage || assetId == null ? null : block.modelAutoRotate,
+                isImage || modelId == null ? null : block.modelAutoRotate,
             'modelRotationSpeed':
-                isImage || assetId == null ? null : block.modelRotationSpeed,
+                isImage || modelId == null ? null : block.modelRotationSpeed,
             'modelOrbitEnabled':
-                isImage || assetId == null ? null : block.modelOrbitEnabled,
+                isImage || modelId == null ? null : block.modelOrbitEnabled,
             'modelAnimationEnabled':
-                isImage || assetId == null ? null : block.modelAnimationEnabled,
+                isImage || modelId == null ? null : block.modelAnimationEnabled,
           };
         },
       ).toList(growable: false),
@@ -340,6 +345,8 @@ bool _canPatchInPlace(HtmlPageStage oldWidget, HtmlPageStage nextWidget) {
     if (oldBlock.id != nextBlock.id ||
         oldBlock.kind != nextBlock.kind ||
         oldBlock.modelAssetId != nextBlock.modelAssetId ||
+        oldBlock.imageAssetId != nextBlock.imageAssetId ||
+        oldBlock.imageAspectRatio != nextBlock.imageAspectRatio ||
         oldBlock.revealStep != nextBlock.revealStep ||
         oldBlock.hotspotTargetPageId != nextBlock.hotspotTargetPageId) {
       return false;

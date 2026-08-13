@@ -833,16 +833,37 @@ class PresentationController extends ChangeNotifier {
     notifyListeners();
   }
 
-  void addUploadedImageBlock(String imageAssetId) {
+  void addUploadedImageBlock(
+    String imageAssetId, {
+    double aspectRatio = 16 / 9,
+  }) {
     final page = selectedPage;
     final blockCount = page.componentBlocks.length;
-    final nextX = (0.50 + (blockCount % 3) * 0.04).clamp(0.08, 0.58);
-    final nextY = (0.16 + (blockCount % 4) * 0.08).clamp(0.08, 0.54);
+    const stageAspectRatio = 16 / 9;
+    final safeAspectRatio = aspectRatio.clamp(0.3, 4.0).toDouble();
+    var heightFactor = 0.52;
+    var widthFactor = heightFactor * safeAspectRatio / stageAspectRatio;
+    if (widthFactor > 0.54) {
+      widthFactor = 0.54;
+      heightFactor = widthFactor * stageAspectRatio / safeAspectRatio;
+    }
+    if (heightFactor > 0.62) {
+      heightFactor = 0.62;
+      widthFactor = heightFactor * safeAspectRatio / stageAspectRatio;
+    }
+    final cascadeOffset = (blockCount % 3) * 0.025;
+    final nextX = (0.5 - widthFactor / 2 + cascadeOffset)
+        .clamp(0.04, 0.96 - widthFactor)
+        .toDouble();
+    final nextY = (0.5 - heightFactor / 2 + cascadeOffset)
+        .clamp(0.05, 0.95 - heightFactor)
+        .toDouble();
     final componentBlock = PresentationComponentBlock(
       id: 'component-$_componentBlockCounter',
-      modelAssetId: imageAssetId,
-      position: Offset(nextX.toDouble(), nextY.toDouble()),
-      size: const Size(0.38, 0.26),
+      imageAssetId: imageAssetId,
+      imageAspectRatio: safeAspectRatio,
+      position: Offset(nextX, nextY),
+      size: Size(widthFactor, heightFactor),
     );
     _componentBlockCounter += 1;
     _replaceSelectedPage(
@@ -1311,6 +1332,52 @@ class PresentationController extends ChangeNotifier {
           .toDouble();
     }
 
+    final imageAspectRatio = current.imageAspectRatio;
+    if (current.imageAssetId != null && imageAspectRatio != null) {
+      // Component sizes are normalized against a 16:9 slide. Convert the
+      // photo's pixel aspect ratio to that coordinate system and keep the
+      // selection frame attached to the actual image proportions.
+      final normalizedRatio = imageAspectRatio / (16 / 9);
+      final horizontalResize = fromLeft || fromRight;
+      final verticalResize = fromTop || fromBottom;
+      var targetWidth = horizontalResize && !verticalResize
+          ? right - left
+          : (bottom - top) * normalizedRatio;
+      if (horizontalResize && verticalResize) {
+        final widthDrivenHeight = (right - left) / normalizedRatio;
+        final heightDrivenWidth = (bottom - top) * normalizedRatio;
+        targetWidth = (widthDrivenHeight - current.size.height).abs() >=
+                (heightDrivenWidth - current.size.width).abs()
+            ? right - left
+            : heightDrivenWidth;
+      }
+
+      final maxWidthForAnchor = fromLeft ? right - minLeft : maxRight - left;
+      final maxHeightForAnchor = fromTop ? bottom - minTop : maxBottom - top;
+      final minWidth = math.max(
+        _minComponentWidthFactor,
+        _minComponentHeightFactor * normalizedRatio,
+      );
+      final maxWidth = math.min(
+        math.min(_maxComponentWidthFactor, maxWidthForAnchor),
+        math.min(_maxComponentHeightFactor, maxHeightForAnchor) *
+            normalizedRatio,
+      );
+      targetWidth = targetWidth.clamp(minWidth, maxWidth).toDouble();
+      final targetHeight = targetWidth / normalizedRatio;
+
+      if (fromLeft) {
+        left = right - targetWidth;
+      } else {
+        right = left + targetWidth;
+      }
+      if (fromTop) {
+        top = bottom - targetHeight;
+      } else {
+        bottom = top + targetHeight;
+      }
+    }
+
     final nextSize = Size(
       (right - left).clamp(
         _minComponentWidthFactor,
@@ -1544,13 +1611,6 @@ class PresentationController extends ChangeNotifier {
 
   PresentationTemplateConfig _templateConfig(PresentationTemplate template) {
     return templateConfig(template);
-  }
-
-  Offset _componentPositionForTemplate(int index, int existingCount) {
-    final startX = 0.65 + (existingCount % 3) * 0.04;
-    final startY = 0.18 + (index % 4) * 0.12;
-    return Offset(startX.clamp(0.08, 0.70).toDouble(),
-        startY.clamp(0.08, 0.68).toDouble());
   }
 }
 

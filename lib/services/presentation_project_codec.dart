@@ -234,6 +234,8 @@ class PresentationProjectCodec {
       'id': block.id,
       'kind': block.kind.name,
       'modelAssetId': block.modelAssetId,
+      'imageAssetId': block.imageAssetId,
+      'imageAspectRatio': block.imageAspectRatio,
       'modelAnimationEnabled': block.modelAnimationEnabled,
       'modelAutoRotate': block.modelAutoRotate,
       'modelRotationSpeed': block.modelRotationSpeed,
@@ -250,8 +252,17 @@ class PresentationProjectCodec {
   static PresentationComponentBlock _componentBlockFromJson(
     Map<String, Object?> json,
   ) {
-    final modelAssetId =
+    final rawModelAssetId =
         json['modelAssetId'] is String ? json['modelAssetId']! as String : null;
+    final explicitImageAssetId =
+        json['imageAssetId'] is String ? json['imageAssetId']! as String : null;
+    // v1 projelerinde fotoğraflar modelAssetId alanında tutuluyordu.
+    final legacyImageAssetId = explicitImageAssetId == null &&
+            rawModelAssetId?.startsWith('photo-') == true
+        ? rawModelAssetId
+        : null;
+    final imageAssetId = explicitImageAssetId ?? legacyImageAssetId;
+    final modelAssetId = imageAssetId == null ? rawModelAssetId : null;
     return PresentationComponentBlock(
       id: _string(json['id'], 'component-1'),
       kind: _enumValue(
@@ -260,6 +271,12 @@ class PresentationProjectCodec {
         PresentationComponentKind.edebiyat01,
       ),
       modelAssetId: modelAssetId,
+      imageAssetId: imageAssetId,
+      imageAspectRatio: json['imageAspectRatio'] is num
+          ? (json['imageAspectRatio']! as num).toDouble()
+          : imageAssetId == null
+              ? null
+              : 16 / 9,
       modelAnimationEnabled: json['modelAnimationEnabled'] is bool
           ? json['modelAnimationEnabled']! as bool
           : true,
