@@ -7,6 +7,7 @@ import 'package:http/http.dart' as http;
 import '../state/presentation_controller.dart';
 import 'fallback_slide_generator.dart';
 import 'gemini_presentation_service.dart';
+import 'nvidia_presentation_service.dart';
 import 'layout_service.dart';
 import 'model_matching_service.dart';
 import 'presentation_deck_builder.dart';
@@ -29,6 +30,7 @@ class PresentationGenerationResult {
 }
 
 class PresentationService {
+  final _nvidia = NvidiaPresentationService();
   final _gemini = GeminiPresentationService();
   final _matcher = ModelMatchingService();
   final _layout = LayoutService();
@@ -53,18 +55,25 @@ class PresentationService {
           'Günlük sunum oluşturma hakkınız doldu. Yarın tekrar deneyin veya planınızı yükseltin.');
     }
 
-    // 1. Gemini'den slayt içeriklerini al (çalışmazsa kelime tabanlı yedeğe düş)
+    // 1. NVIDIA / Cloudflare'dan slayt içeriklerini al
+    // Çalışmazsa Gemini'ye, o da çalışmazsa kelime tabanlı yedeğe düş
     // ignore: avoid_print
-    print('ADIM 1: Gemini çağrısı başlıyor');
-    GeminiPresentation geminiResult;
+    print('ADIM 1: NVIDIA çağrısı başlıyor');
+    var resultPresentation;
     var usedFallback = false;
     try {
-      geminiResult = await _gemini.generatePresentation(topic, slideCount: slideCount);
+      resultPresentation = await _nvidia.generatePresentation(topic, slideCount: slideCount);
     } catch (e) {
       // ignore: avoid_print
-      print('AI HATASI (limit vb.): $e — kelime tabanlı yedek kullanılıyor');
-      usedFallback = true;
-      geminiResult = FallbackSlideGenerator.generatePresentation(topic, slideCount: slideCount);
+      print('NVIDIA/Cloudflare HATASI: $e — Gemini deneniyor');
+      try {
+        resultPresentation = await _gemini.generatePresentation(topic, slideCount: slideCount);
+      } catch (e2) {
+        // ignore: avoid_print
+        print('AI HATASI (Gemini vb.): $e2 — kelime tabanlı yedek kullanılıyor');
+        usedFallback = true;
+        resultPresentation = FallbackSlideGenerator.generatePresentation(topic, slideCount: slideCount);
+      }
     }
     // ignore: avoid_print
     print('ADIM 1 TAMAM (yedek: $usedFallback)');
@@ -72,7 +81,7 @@ class PresentationService {
     // 2. Her slayt için model eşleştir ve layout belirle
     final slidesData = <Map<String, dynamic>>[];
     final deckSlides = <DeckSlide>[];
-    for (final slide in geminiResult.slides) {
+    for (final slide in resultPresentation.slides) {
       // ignore: avoid_print
       print('ADIM 2: Model eşleştirme başlıyor - ${slide.title}');
       final matches = await _matcher.matchModelsForSlide(slide.keywords);

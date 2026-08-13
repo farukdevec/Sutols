@@ -88,6 +88,11 @@ class ModelRepository {
       _cachedModels = immutableModels;
       _cachedForUserId = userId;
       return immutableModels;
+    } catch (e) {
+      // Firestore okuma hatası (403 vb.) olursa boş liste döner;
+      // sunum oluşturma akışını bozmaz.
+      print('Model kataloğu okunamadı (403 vb.): $e');
+      return const [];
     } finally {
       if (_loadingForUserId == userId) {
         _loadingModels = null;

@@ -80,7 +80,13 @@ class _HtmlPresentationEditorPageState
   _HtmlToolTab _activeTab = _HtmlToolTab.text;
   String? _lastEditorLabel;
 
-  final PresentationTrackingService _tracking = PresentationTrackingService();
+  PresentationTrackingService? _trackingInstance;
+
+  /// Sunum kaydı servisi: yalnızca bir [presentationId] varsa ve ilk
+  /// kullanımda oluşturulur; sayfanın açılışı Firebase/Firestore'dan
+  /// bağımsızdır (başlatılmamış bir uygulama sayfayı kırmasın).
+  PresentationTrackingService get _tracking =>
+      _trackingInstance ??= PresentationTrackingService();
 
   /// Editörün açıldığı an (sayfada geçirilen süreyi ölçmek için).
   DateTime _openedAt = DateTime.now();
@@ -6430,185 +6436,186 @@ class _HtmlStageCard extends StatelessWidget {
             canvasPan.dy.clamp(-maxPanY, maxPanY),
           );
 
-          return Center(
-            child: Transform.translate(
-              offset: pan,
-              child: Transform.scale(
-                scale: zoom,
-                alignment: Alignment.center,
-                child: SizedBox(
-                  width: stageWidth,
-                  height: stageHeight,
-                  child: AnimatedSwitcher(
-                    duration: reduceMotion
-                        ? Duration.zero
-                        : Duration(
-                            milliseconds:
-                                controller.effectSettings.transitionDurationMs,
-                          ),
-                    transitionBuilder: (child, animation) =>
-                        _buildHtmlPreviewTransition(
-                      kind: controller.effectSettings.transitionKind,
-                      animation: animation,
-                      reduceMotion: reduceMotion,
-                      child: child,
+          final stage = SizedBox(
+            width: stageWidth,
+            height: stageHeight,
+            child: AnimatedSwitcher(
+              duration: reduceMotion
+                  ? Duration.zero
+                  : Duration(
+                      milliseconds:
+                          controller.effectSettings.transitionDurationMs,
                     ),
-                    child: KeyedSubtree(
-                      key: ValueKey<String>(
-                          'stage-${controller.selectedPage.id}'),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(28),
-                        child: Stack(
-                          fit: StackFit.expand,
-                          children: <Widget>[
-                            HtmlPageStage(
-                              key: ValueKey<String>(
-                                  'html-${controller.selectedPage.id}'),
-                              page: controller.selectedPage,
-                              selectedTextBlockId:
-                                  controller.selectedTextBlockId,
-                              selectedComponentBlockId:
-                                  controller.selectedComponentBlockId,
-                              renderMode: reduceMotion
-                                  ? HtmlStageRenderMode.snapshot
-                                  : HtmlStageRenderMode.preview,
-                            ),
-                            if (readOnly)
-                              IgnorePointer(
-                                child: PresentationPageCanvas(
-                                  page: controller.selectedPage,
-                                  selectedTextBlockId:
-                                      controller.selectedTextBlockId,
-                                  selectedTextBlockIds:
-                                      controller.selectedTextBlockIds,
-                                  selectedComponentBlockId:
-                                      controller.selectedComponentBlockId,
-                                  selectedComponentBlockIds:
-                                      controller.selectedComponentBlockIds,
-                                  interactive: false,
-                                  showHint: false,
-                                  showSurface: false,
-                                  showEmptyState: false,
-                                  textOpacity: 0,
-                                ),
-                              )
-                            else
-                              PresentationPageCanvas(
-                                page: controller.selectedPage,
-                                selectedTextBlockId:
-                                    controller.selectedTextBlockId,
-                                selectedTextBlockIds:
-                                    controller.selectedTextBlockIds,
-                                selectedComponentBlockId:
-                                    controller.selectedComponentBlockId,
-                                selectedComponentBlockIds:
-                                    controller.selectedComponentBlockIds,
-                                interactive: interactive,
-                                showHint: showHint,
-                                showSurface: false,
-                                showEmptyState: false,
-                                textOpacity: 0,
-                                onSelectTextBlock: controller.selectTextBlock,
-                                onSelectComponentBlock:
-                                    controller.selectComponentBlock,
-                                onDragSelectedText: (delta, size) =>
-                                    controller.moveSelectedText(
-                                  localDelta(delta),
-                                  size,
-                                ),
-                                onInlineTextChanged:
-                                    controller.updateSelectedText,
-                                onResizeSelectedTextWidth: (deltaX, size) =>
-                                    controller.resizeSelectedTextWidth(
-                                  localDelta(Offset(deltaX, 0)).dx,
-                                  size,
-                                ),
-                                onResizeSelectedComponent: (delta, size,
-                                        {required fromLeft,
-                                        required fromTop,
-                                        required fromRight,
-                                        required fromBottom}) =>
-                                    controller.resizeSelectedComponentByHandle(
-                                  localDelta(delta),
-                                  size,
-                                  fromLeft: fromLeft,
-                                  fromTop: fromTop,
-                                  fromRight: fromRight,
-                                  fromBottom: fromBottom,
-                                ),
-                                onMarqueeSelectionChanged: ({
-                                  required textBlockIds,
-                                  required componentBlockIds,
-                                }) =>
-                                    controller.selectItems(
-                                  textBlockIds: textBlockIds,
-                                  componentBlockIds: componentBlockIds,
-                                ),
-                                onClearSelection: controller.clearSelection,
-                                onSecondaryTapTextBlock:
-                                    (itemId, globalPosition) {
-                                  if (!controller.selectedTextBlockIds
-                                      .contains(itemId)) {
-                                    controller.selectTextBlock(itemId);
-                                  }
-                                  _showStageItemContextMenu(
-                                    context,
-                                    controller,
-                                    globalPosition,
-                                  );
-                                },
-                                onSecondaryTapComponentBlock:
-                                    (itemId, globalPosition) {
-                                  if (!controller.selectedComponentBlockIds
-                                      .contains(itemId)) {
-                                    controller.selectComponentBlock(itemId);
-                                  }
-                                  _showStageItemContextMenu(
-                                    context,
-                                    controller,
-                                    globalPosition,
-                                  );
-                                },
-                                onSecondaryTapCanvas: (globalPosition) {
-                                  _showCanvasContextMenu(
-                                    context,
-                                    controller,
-                                    globalPosition,
-                                  );
-                                },
-                                onToggleModelOrbit: (itemId) {
-                                  if (controller.selectedComponentBlockId !=
-                                      itemId) {
-                                    controller.selectComponentBlock(itemId);
-                                  }
-                                  controller.toggleSelectedModelOrbit();
-                                },
-                                onRotateModel: (itemId, delta) {
-                                  if (controller.selectedComponentBlockId !=
-                                      itemId) {
-                                    controller.selectComponentBlock(itemId);
-                                  }
-                                  controller
-                                      .rotateSelectedModel(localDelta(delta));
-                                },
-                                onBeginModelOrbit: (itemId) {
-                                  if (controller.selectedComponentBlockId !=
-                                      itemId) {
-                                    controller.selectComponentBlock(itemId);
-                                  }
-                                  controller.beginSelectedModelOrbitGesture();
-                                },
-                                onEndModelOrbit:
-                                    controller.endSelectedModelOrbitGesture,
-                              ),
-                          ],
+              transitionBuilder: (child, animation) =>
+                  _buildHtmlPreviewTransition(
+                kind: controller.effectSettings.transitionKind,
+                animation: animation,
+                reduceMotion: reduceMotion,
+                child: child,
+              ),
+              child: KeyedSubtree(
+                key: ValueKey<String>('stage-${controller.selectedPage.id}'),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(28),
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: <Widget>[
+                      // HTML sahnesi web'de bir platform görünümüdür
+                      // (HtmlElementView/iframe) ve yalnızca görsel
+                      // önizlemedir; tüm etkileşim üstteki tuval
+                      // katmanında yapılır. Hit test'e katılması, henüz
+                      // layout edilmemiş platform görünümüne dokunulunca
+                      // "Cannot hit test a render box that has never
+                      // been laid out" hatasına yol açar.
+                      IgnorePointer(
+                        child: HtmlPageStage(
+                          key: ValueKey<String>(
+                              'html-${controller.selectedPage.id}'),
+                          page: controller.selectedPage,
+                          selectedTextBlockId: controller.selectedTextBlockId,
+                          selectedComponentBlockId:
+                              controller.selectedComponentBlockId,
+                          renderMode: reduceMotion
+                              ? HtmlStageRenderMode.snapshot
+                              : HtmlStageRenderMode.preview,
                         ),
                       ),
-                    ),
+                      if (readOnly)
+                        IgnorePointer(
+                          child: PresentationPageCanvas(
+                            page: controller.selectedPage,
+                            selectedTextBlockId: controller.selectedTextBlockId,
+                            selectedTextBlockIds:
+                                controller.selectedTextBlockIds,
+                            selectedComponentBlockId:
+                                controller.selectedComponentBlockId,
+                            selectedComponentBlockIds:
+                                controller.selectedComponentBlockIds,
+                            interactive: false,
+                            showHint: false,
+                            showSurface: false,
+                            showEmptyState: false,
+                            textOpacity: 0,
+                          ),
+                        )
+                      else
+                        PresentationPageCanvas(
+                          page: controller.selectedPage,
+                          selectedTextBlockId: controller.selectedTextBlockId,
+                          selectedTextBlockIds: controller.selectedTextBlockIds,
+                          selectedComponentBlockId:
+                              controller.selectedComponentBlockId,
+                          selectedComponentBlockIds:
+                              controller.selectedComponentBlockIds,
+                          interactive: interactive,
+                          showHint: showHint,
+                          showSurface: false,
+                          showEmptyState: false,
+                          textOpacity: 0,
+                          onSelectTextBlock: controller.selectTextBlock,
+                          onSelectComponentBlock:
+                              controller.selectComponentBlock,
+                          onDragSelectedText: (delta, size) =>
+                              controller.moveSelectedText(
+                            localDelta(delta),
+                            size,
+                          ),
+                          onInlineTextChanged: controller.updateSelectedText,
+                          onResizeSelectedTextWidth: (deltaX, size) =>
+                              controller.resizeSelectedTextWidth(
+                            localDelta(Offset(deltaX, 0)).dx,
+                            size,
+                          ),
+                          onResizeSelectedComponent: (delta, size,
+                                  {required fromLeft,
+                                  required fromTop,
+                                  required fromRight,
+                                  required fromBottom}) =>
+                              controller.resizeSelectedComponentByHandle(
+                            localDelta(delta),
+                            size,
+                            fromLeft: fromLeft,
+                            fromTop: fromTop,
+                            fromRight: fromRight,
+                            fromBottom: fromBottom,
+                          ),
+                          onMarqueeSelectionChanged: ({
+                            required textBlockIds,
+                            required componentBlockIds,
+                          }) =>
+                              controller.selectItems(
+                            textBlockIds: textBlockIds,
+                            componentBlockIds: componentBlockIds,
+                          ),
+                          onClearSelection: controller.clearSelection,
+                          onSecondaryTapTextBlock: (itemId, globalPosition) {
+                            if (!controller.selectedTextBlockIds
+                                .contains(itemId)) {
+                              controller.selectTextBlock(itemId);
+                            }
+                            _showStageItemContextMenu(
+                              context,
+                              controller,
+                              globalPosition,
+                            );
+                          },
+                          onSecondaryTapComponentBlock:
+                              (itemId, globalPosition) {
+                            if (!controller.selectedComponentBlockIds
+                                .contains(itemId)) {
+                              controller.selectComponentBlock(itemId);
+                            }
+                            _showStageItemContextMenu(
+                              context,
+                              controller,
+                              globalPosition,
+                            );
+                          },
+                          onSecondaryTapCanvas: (globalPosition) {
+                            _showCanvasContextMenu(
+                              context,
+                              controller,
+                              globalPosition,
+                            );
+                          },
+                          onToggleModelOrbit: (itemId) {
+                            if (controller.selectedComponentBlockId != itemId) {
+                              controller.selectComponentBlock(itemId);
+                            }
+                            controller.toggleSelectedModelOrbit();
+                          },
+                          onRotateModel: (itemId, delta) {
+                            if (controller.selectedComponentBlockId != itemId) {
+                              controller.selectComponentBlock(itemId);
+                            }
+                            controller.rotateSelectedModel(localDelta(delta));
+                          },
+                          onBeginModelOrbit: (itemId) {
+                            if (controller.selectedComponentBlockId != itemId) {
+                              controller.selectComponentBlock(itemId);
+                            }
+                            controller.beginSelectedModelOrbitGesture();
+                          },
+                          onEndModelOrbit:
+                              controller.endSelectedModelOrbitGesture,
+                        ),
+                    ],
                   ),
                 ),
               ),
-            ),
+            ), // AnimatedSwitcher'ı kapatır
+          );
+          return Center(
+            child: zoom > 1.0001 || pan != Offset.zero
+                ? Transform.translate(
+                    offset: pan,
+                    child: Transform.scale(
+                      scale: zoom,
+                      alignment: Alignment.center,
+                      child: stage,
+                    ),
+                  )
+                : stage,
           );
         },
       ),

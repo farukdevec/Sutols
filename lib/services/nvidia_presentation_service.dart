@@ -3,19 +3,19 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 /// Gemini'nin response_schema ile zorladığı tek slayt yapısı.
-class GeminiSlide {
+class NvidiaSlide {
   final String title;
   final String content;
   final List<String> keywords;
 
-  const GeminiSlide({
+  const NvidiaSlide({
     required this.title,
     required this.content,
     required this.keywords,
   });
 
-  factory GeminiSlide.fromJson(Map<String, dynamic> json) {
-    return GeminiSlide(
+  factory NvidiaSlide.fromJson(Map<String, dynamic> json) {
+    return NvidiaSlide(
       title: json['title'] as String,
       content: json['content'] as String,
       keywords: (json['keywords'] as List).cast<String>(),
@@ -24,15 +24,15 @@ class GeminiSlide {
 }
 
 /// Üst düzey yanıt yapısı: { "slides": [...] }
-class GeminiPresentation {
-  final List<GeminiSlide> slides;
+class NvidiaPresentation {
+  final List<NvidiaSlide> slides;
 
-  const GeminiPresentation({required this.slides});
+  const NvidiaPresentation({required this.slides});
 
-  factory GeminiPresentation.fromJson(Map<String, dynamic> json) {
-    return GeminiPresentation(
+  factory NvidiaPresentation.fromJson(Map<String, dynamic> json) {
+    return NvidiaPresentation(
       slides: (json['slides'] as List)
-          .map((s) => GeminiSlide.fromJson(s as Map<String, dynamic>))
+          .map((s) => NvidiaSlide.fromJson(s as Map<String, dynamic>))
           .toList(),
     );
   }
@@ -42,7 +42,7 @@ class NvidiaPresentationService {
   static const String _proxyUrl =
       'https://sutol-ai-proxy.sutolsofficial.workers.dev';
 
-  Future<GeminiPresentation> generatePresentation(
+  Future<NvidiaPresentation> generatePresentation(
     String topic, {
     int slideCount = 5,
     String language = 'turkish',
@@ -142,6 +142,6 @@ Konu: $topic
       }
     }
 
-    return GeminiPresentation.fromJson(parsed);
+    return NvidiaPresentation.fromJson(parsed);
   }
 }

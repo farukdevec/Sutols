@@ -7,8 +7,7 @@ service cloud.firestore {
 
 
     match /models/{modelId} {
-      allow read: if resource.data.tier == 'free'
-        || (request.auth != null && userTierAtLeast(resource.data.tier));
+      allow read: if request.auth != null;
       allow write: if false;
     }
 

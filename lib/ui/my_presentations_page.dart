@@ -2,7 +2,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import '../services/firestore_rest_helper.dart';
+import '../services/presentation_loader.dart';
 import 'design/design_system.dart';
+import 'html_presentation_editor_page.dart';
 import 'presentation_view_page.dart';
 
 class MyPresentationsPage extends StatefulWidget {
@@ -188,11 +190,16 @@ class _MyPresentationsPageState extends State<MyPresentationsPage> {
                     ),
                   ),
                   trailing: const Icon(Icons.chevron_right_rounded),
-                  onTap: () {
+                  onTap: () async {
+                    final result = await loadPresentationForEdit(item.id);
+                    if (!mounted) return;
                     Navigator.of(context).push(
                       MaterialPageRoute<void>(
-                        builder: (_) =>
-                            PresentationViewPage(presentationId: item.id),
+                        builder: (_) => HtmlPresentationEditorPage(
+                          controller: result.controller,
+                          presentationId: item.id,
+                          initialUpdatedByName: result.updatedByName,
+                        ),
                       ),
                     );
                   },
