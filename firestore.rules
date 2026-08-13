@@ -150,6 +150,7 @@ service cloud.firestore {
       return request.auth != null && (
         exists(/databases/$(database)/documents/admins/$(request.auth.uid)) ||
         (exists(/databases/$(database)/documents/users/$(request.auth.uid))
+         && 'role' in get(/databases/$(database)/documents/users/$(request.auth.uid)).data
          && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin')
       );
     }
@@ -161,6 +162,7 @@ service cloud.firestore {
     function isNotSuspended(uid) {
       return isAdmin()
         || !(exists(/databases/$(database)/documents/users/$(uid))
+             && 'status' in get(/databases/$(database)/documents/users/$(uid)).data
              && get(/databases/$(database)/documents/users/$(uid)).data.status == 'suspended');
     }
 
@@ -208,7 +210,8 @@ service cloud.firestore {
 
 
     function dailyLimitFor(uid) {
-      let tier = get(/databases/$(database)/documents/users/$(uid)).data.tier;
+      let user = get(/databases/$(database)/documents/users/$(uid)).data;
+      let tier = 'tier' in user ? user.tier : 'free';
       return tier == 'premium' ? 999 : (tier == 'plus' ? 15 : 5);
     }
 
