@@ -41,7 +41,7 @@ class SutolsBrandLockup extends StatelessWidget {
               SizedBox.square(
                 dimension: height,
                 child: Image.asset(
-                  'assets/images/logo.png',
+                  'assets/images/logo.webp',
                   fit: BoxFit.contain,
                   filterQuality: FilterQuality.high,
                 ),
@@ -51,7 +51,7 @@ class SutolsBrandLockup extends StatelessWidget {
                 SizedBox(
                   height: height * 0.58,
                   child: Image.asset(
-                    'assets/images/sutols_wordmark.png',
+                    'assets/images/sutols_wordmark.webp',
                     fit: BoxFit.contain,
                     filterQuality: FilterQuality.high,
                   ),
@@ -119,12 +119,8 @@ class _SutolButtonState extends State<SutolButton> {
                 ? (isDark
                     ? SutolDarkColors.primaryHover
                     : SutolLightColors.primaryHover)
-                : (isDark
-                    ? SutolDarkColors.primary
-                    : SutolLightColors.primary);
-        fg = isDark
-            ? SutolDarkColors.onPrimary
-            : SutolLightColors.onPrimary;
+                : (isDark ? SutolDarkColors.primary : SutolLightColors.primary);
+        fg = isDark ? SutolDarkColors.onPrimary : SutolLightColors.onPrimary;
         border = Colors.transparent;
       case SutolButtonVariant.secondary:
         bg = _hovered
@@ -264,18 +260,15 @@ class _SutolIconButtonState extends State<SutolIconButton> {
     final Color iconColor;
 
     if (widget.isSelected) {
-      bgColor = isDark
-          ? SutolDarkColors.primaryLight
-          : SutolLightColors.primaryLight;
-      iconColor =
-          isDark ? SutolDarkColors.primary : SutolLightColors.primary;
+      bgColor =
+          isDark ? SutolDarkColors.primaryLight : SutolLightColors.primaryLight;
+      iconColor = isDark ? SutolDarkColors.primary : SutolLightColors.primary;
     } else if (_hovered && enabled) {
       bgColor = isDark
           ? SutolDarkColors.surfaceElevated
           : SutolLightColors.surfaceSubtle;
-      iconColor = isDark
-          ? SutolDarkColors.onSurface
-          : SutolLightColors.onSurface;
+      iconColor =
+          isDark ? SutolDarkColors.onSurface : SutolLightColors.onSurface;
     } else {
       bgColor = Colors.transparent;
       iconColor = isDark
@@ -361,8 +354,7 @@ class _SutolCardState extends State<SutolCard> {
         child: AnimatedContainer(
           duration: SutolMotion.normal,
           curve: SutolMotion.ease,
-          padding: widget.padding ??
-              const EdgeInsets.all(SutolSpacing.base),
+          padding: widget.padding ?? const EdgeInsets.all(SutolSpacing.base),
           decoration: BoxDecoration(
             color: surfaceColor,
             borderRadius: BorderRadius.circular(SutolRadius.lg),
@@ -408,9 +400,7 @@ class SutolChip extends StatelessWidget {
             : SutolLightColors.surfaceSubtle);
     final textColor = isSelected
         ? (isDark ? SutolDarkColors.primary : SutolLightColors.primary)
-        : (isDark
-            ? SutolDarkColors.onSurface
-            : SutolLightColors.onSurface);
+        : (isDark ? SutolDarkColors.onSurface : SutolLightColors.onSurface);
     final borderColor = isSelected
         ? (isDark
             ? SutolDarkColors.primaryContainer
@@ -690,7 +680,8 @@ class SutolEmptyState extends StatelessWidget {
               width: 64,
               height: 64,
               decoration: BoxDecoration(
-                color: theme.colorScheme.primaryContainer.withValues(alpha: 0.5),
+                color:
+                    theme.colorScheme.primaryContainer.withValues(alpha: 0.5),
                 borderRadius: BorderRadius.circular(SutolRadius.xl),
               ),
               child: Icon(

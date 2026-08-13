@@ -133,8 +133,12 @@ class _HtmlPageStageState extends State<HtmlPageStage> {
 
   late final String _viewType;
   late final html.DivElement _hostElement;
-  late final html.IFrameElement _iframeElement;
+  late html.IFrameElement _iframeElement;
+  html.IFrameElement? _pendingIframeElement;
+  StreamSubscription<html.Event>? _pendingLoadSubscription;
   StreamSubscription<html.MouseEvent>? _tapSubscription;
+  var _renderGeneration = 0;
+  var _hasRendered = false;
 
   @override
   void initState() {
@@ -147,18 +151,7 @@ class _HtmlPageStageState extends State<HtmlPageStage> {
       ..style.position = 'relative'
       ..style.pointerEvents = widget.onTap == null ? 'none' : 'auto'
       ..style.overflow = 'hidden';
-    _iframeElement = html.IFrameElement()
-      ..style.width = '100%'
-      ..style.height = '100%'
-      ..style.position = 'absolute'
-      ..style.top = '0'
-      ..style.left = '0'
-      ..style.border = '0'
-      ..style.pointerEvents = 'none'
-      ..setAttribute('scrolling', 'no');
-    if (widget.onTap != null) {
-      _iframeElement.setAttribute('loading', 'lazy');
-    }
+    _iframeElement = _createIframe();
     _hostElement.children.add(_iframeElement);
     if (widget.onTap != null) {
       final overlay = html.DivElement()
@@ -168,6 +161,7 @@ class _HtmlPageStageState extends State<HtmlPageStage> {
         ..style.right = '0'
         ..style.bottom = '0'
         ..style.left = '0'
+        ..style.zIndex = '2'
         ..style.cursor = 'pointer'
         ..style.backgroundColor = 'transparent';
       _tapSubscription = overlay.onClick.listen((event) {
@@ -187,6 +181,23 @@ class _HtmlPageStageState extends State<HtmlPageStage> {
     _render();
   }
 
+  html.IFrameElement _createIframe() {
+    final iframe = html.IFrameElement()
+      ..style.width = '100%'
+      ..style.height = '100%'
+      ..style.position = 'absolute'
+      ..style.top = '0'
+      ..style.left = '0'
+      ..style.border = '0'
+      ..style.backgroundColor = 'transparent'
+      ..style.pointerEvents = 'none'
+      ..setAttribute('scrolling', 'no');
+    if (widget.onTap != null) {
+      iframe.setAttribute('loading', 'lazy');
+    }
+    return iframe;
+  }
+
   @override
   void didUpdateWidget(covariant HtmlPageStage oldWidget) {
     super.didUpdateWidget(oldWidget);
@@ -197,6 +208,12 @@ class _HtmlPageStageState extends State<HtmlPageStage> {
 
   @override
   void dispose() {
+    _renderGeneration += 1;
+    final pendingLoadSubscription = _pendingLoadSubscription;
+    if (pendingLoadSubscription != null) {
+      unawaited(pendingLoadSubscription.cancel());
+    }
+    _pendingIframeElement?.remove();
     final tapSubscription = _tapSubscription;
     if (tapSubscription != null) {
       unawaited(tapSubscription.cancel());
@@ -206,7 +223,7 @@ class _HtmlPageStageState extends State<HtmlPageStage> {
   }
 
   void _render() {
-    _iframeElement.srcdoc = buildHtmlStageDocument(
+    final document = buildHtmlStageDocument(
       page: widget.page,
       selectedTextBlockId: widget.selectedTextBlockId,
       inlineEditingTextBlockId: widget.inlineEditingTextBlockId,
@@ -217,9 +234,49 @@ class _HtmlPageStageState extends State<HtmlPageStage> {
       modelSourcesById: RemoteModelSources.all,
       imageSourcesById: RemoteImageSources.all,
     );
+
+    // İlk sahnede değiştirecek eski bir kare yoktur; doğrudan yükle.
+    if (!_hasRendered) {
+      _hasRendered = true;
+      _iframeElement.srcdoc = document;
+      return;
+    }
+
+    // Slayt değişiminde mevcut iframe'i boşaltmak gri bir ara kare üretir.
+    // Yeni belgeyi görünmez ikinci iframe'de hazırla; load tamamlandığında
+    // eskisini tek seferde değiştir. Hızlı art arda seçimlerde yalnızca en son
+    // oluşturulan belge sahneye alınır.
+    _renderGeneration += 1;
+    final generation = _renderGeneration;
+    final previousPending = _pendingLoadSubscription;
+    if (previousPending != null) {
+      unawaited(previousPending.cancel());
+    }
+    _pendingIframeElement?.remove();
+
+    final nextIframe = _createIframe()..style.opacity = '0';
+    _pendingIframeElement = nextIframe;
+    _pendingLoadSubscription = nextIframe.onLoad.listen((_) {
+      if (!mounted || generation != _renderGeneration) return;
+      final previousIframe = _iframeElement;
+      nextIframe.style.opacity = '1';
+      _iframeElement = nextIframe;
+      _pendingIframeElement = null;
+      final subscription = _pendingLoadSubscription;
+      _pendingLoadSubscription = null;
+      if (subscription != null) {
+        unawaited(subscription.cancel());
+      }
+      previousIframe.remove();
+    });
+    nextIframe.srcdoc = document;
+    _hostElement.children.add(nextIframe);
   }
 
   bool _patchInPlace(HtmlPageStage oldWidget) {
+    if (_pendingIframeElement != null) {
+      return false;
+    }
     if (!_canPatchInPlace(oldWidget, widget)) {
       return false;
     }

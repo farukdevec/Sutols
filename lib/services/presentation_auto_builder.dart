@@ -2219,6 +2219,14 @@ final List<_AutoTheme> _autoThemes = presentationBackgroundLibrary
     )
     .toList(growable: false);
 
+final Map<String, String> _normalizedCatalogTextCache = <String, String>{};
+
 String _normalize(String value) {
-  return PresentationKeywordCatalog.normalize(value);
+  // Katalog etiketleri ve açıklamaları yüzlerce slaytta tekrar kullanılır.
+  // Normalizasyon saf bir işlem olduğundan sonucu paylaşmak aynı eşleşme
+  // davranışını korurken büyük katalog taramalarındaki tekrarları kaldırır.
+  return _normalizedCatalogTextCache.putIfAbsent(
+    value,
+    () => PresentationKeywordCatalog.normalize(value),
+  );
 }

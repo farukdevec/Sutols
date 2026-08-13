@@ -5,7 +5,6 @@ import '../services/firestore_rest_helper.dart';
 import '../services/presentation_loader.dart';
 import 'design/design_system.dart';
 import 'html_presentation_editor_page.dart';
-import 'presentation_view_page.dart';
 
 class MyPresentationsPage extends StatefulWidget {
   const MyPresentationsPage({super.key});
@@ -68,7 +67,10 @@ class _MyPresentationsPageState extends State<MyPresentationsPage> {
         },
       },
       'orderBy': [
-        {'field': {'fieldPath': 'createdAt'}, 'direction': 'DESCENDING'},
+        {
+          'field': {'fieldPath': 'createdAt'},
+          'direction': 'DESCENDING'
+        },
       ],
     });
 
@@ -182,8 +184,10 @@ class _MyPresentationsPageState extends State<MyPresentationsPage> {
                   subtitle: Padding(
                     padding: const EdgeInsets.only(top: 4),
                     child: Text(
-                      [if (createdAt.isNotEmpty) createdAt, '${item.slideCount} slayt']
-                          .join(' • '),
+                      [
+                        if (createdAt.isNotEmpty) createdAt,
+                        '${item.slideCount} slayt'
+                      ].join(' • '),
                       style: AppTypography.bodyMedium.copyWith(
                         color: colors.textSecondary,
                       ),

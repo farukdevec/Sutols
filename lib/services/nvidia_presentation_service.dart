@@ -2,6 +2,8 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 
+import 'presentation_prompt_builder.dart';
+
 /// Gemini'nin response_schema ile zorladığı tek slayt yapısı.
 class NvidiaSlide {
   final String title;
@@ -47,44 +49,28 @@ class NvidiaPresentationService {
     int slideCount = 5,
     String language = 'turkish',
   }) async {
-    final prompt =
-        '''Kullanıcının verdiği konu hakkında $slideCount slaytlık bir sunum yapısı oluştur.
-
-Kurallar:
-- Tam olarak $slideCount slayt üret.
-- Her slaytta: title (kısa ve dikkat çekici başlık), content (slaytta gösterilecek
-  madde işaretleri veya kısa paragraflar, en fazla 120 kelime), keywords
-  (içerikle eşleşen 3-8 anahtar kelime) alanları doldur.
-- keywords alanında slaydın ana fikrini görsel olarak temsil eden somut nesne,
-  kişi, yer veya kavram adlarını kullan. Genel ve ilgisiz kelimeler ekleme;
-  3B model ve bileşen kataloğu bu kelimelerle eşleştirilecektir.
-- Tüm metinler "$language" dilinde olmalı.
-- content alanında her bilgiyi ayrı satıra yaz (madde işaretleri için "- " kullan,
-  "- " ile başlayan satırlar sunumda tek tek gösterilecektir).
-- Türkçe karakterleri doğru kullan: ç, ğ, ı, ö, ş, ü.
-- ASLA şunları üretme: işletim sistemi bildirimleri, yazılım uyarıları, lisans
-  filigranları, "Windows'u Etkinleştir" benzeri kullanıcı arayüzü metinleri,
-  bozuk/eksik kelimeler. Yalnızca konuya özgü özgün sunum içeriği yaz.
-- Yazım hatalarına dikkat et; her kelime tam ve doğru olmalı.
-- Yalnızca istenen JSON şemasına uygun geçerli bir JSON döndür, başka açıklama yazma.
-
-Konu: $topic
-''';
+    final prompt = PresentationPromptBuilder.build(
+      topic: topic,
+      slideCount: slideCount,
+      language: language,
+    );
 
     final body = {
       'model': 'nvidia/nemotron-3.5-lightning-30b-a3b',
       'messages': [
         {
           'role': 'system',
-          'content':
-              'Sen bir sunum içeriği üreten asistansın. SADECE geçerli JSON döndür, başka hiçbir açıklama veya markdown kod bloğu (```json gibi) ekleme.',
+          'content': 'Sen deneyimli bir sunum editörü ve bilgi mimarısın. Önce anlatı '
+              'akışını planlar, sonra her slayta benzersiz bir görev verirsin. '
+              'Aynı bilgiyi veya cümle kalıbını tekrarlamazsın. SADECE geçerli '
+              'JSON döndürürsün; açıklama ve markdown eklemezsin.',
         },
         {
           'role': 'user',
           'content': prompt,
         },
       ],
-      'temperature': 0.7,
+      'temperature': 0.65,
       'max_tokens': 4096,
       'stream': false,
     };

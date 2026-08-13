@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -10,7 +11,10 @@ import 'gemini_presentation_service.dart';
 import 'nvidia_presentation_service.dart';
 import 'layout_service.dart';
 import 'model_matching_service.dart';
+import 'model_repository.dart';
 import 'presentation_deck_builder.dart';
+import 'presentation_content_quality.dart';
+import 'presentation_project_codec.dart';
 import 'usage_service.dart';
 import 'firestore_rest_helper.dart';
 
@@ -78,6 +82,12 @@ class PresentationService {
       throw Exception(
           'Günlük sunum oluşturma hakkınız doldu. Yarın tekrar deneyin veya planınızı yükseltin.');
     }
+
+    // Model kataloğu AI içeriği üretilirken paralel yüklensin. Normalde bu
+    // ağ isteği AI yanıtından sonra başlıyor ve kullanıcıya ek bekleme olarak
+    // yansıyordu. Repository aynı devam eden isteği paylaştığı için ikinci bir
+    // Firestore okuması oluşturmaz.
+    final modelCatalogWarmup = ModelRepository.instance.getModels();
     // 1. NVIDIA / Cloudflare'dan slayt içeriklerini al
     // Çalışmazsa Gemini'ye, o da çalışmazsa kelime tabanlı yedeğe düş
     // ignore: avoid_print
@@ -98,12 +108,14 @@ class PresentationService {
             )
             .toList(growable: false),
       );
+      _ensureContentQuality(resultPresentation, provider: 'NVIDIA');
     } catch (e) {
       // ignore: avoid_print
       print('NVIDIA/Cloudflare HATASI: $e — Gemini deneniyor');
       try {
         resultPresentation =
             await _gemini.generatePresentation(topic, slideCount: slideCount);
+        _ensureContentQuality(resultPresentation, provider: 'Gemini');
       } catch (e2) {
         // ignore: avoid_print
         print(
@@ -124,19 +136,40 @@ class PresentationService {
     // ignore: avoid_print
     print('ADIM 1 TAMAM (yedek: $usedFallback)');
 
-    // 2. Her slayt için model eşleştir ve layout belirle
+    // 2. Her slayt için model eşleştir ve layout belirle. Bütün slaytlar aynı
+    // normalize edilmiş katalog indeksi üzerinden tek toplu geçişte işlenir.
     final slidesData = <Map<String, dynamic>>[];
     final deckSlides = <DeckSlide>[];
-    for (final slide in resultPresentation.slides) {
+    final usedModelIds = <String>{};
+    await modelCatalogWarmup;
+    final matchesBySlide = await _matcher.matchModelsForSlides(
+      resultPresentation.slides
+          .map((slide) => slide.keywords)
+          .toList(growable: false),
+    );
+    for (var slideIndex = 0;
+        slideIndex < resultPresentation.slides.length;
+        slideIndex += 1) {
+      final slide = resultPresentation.slides[slideIndex];
       // ignore: avoid_print
       print('ADIM 2: Model eşleştirme başlıyor - ${slide.title}');
-      final matches = await _matcher.matchModelsForSlide(slide.keywords);
+      final matches = matchesBySlide[slideIndex];
       // ignore: avoid_print
       print('ADIM 2 TAMAM - ${matches.length} eşleşme');
       // Otomatik üretimde slayt başına en fazla bir görsel öğe kullanılır.
       // Model varsa ilk ve en güçlü eşleşme seçilir; model yoksa deck builder
       // konuya uygun tek bir bileşen arar, o da yoksa slayt metin olarak kalır.
-      final selectedModels = matches.take(1).toList(growable: false);
+      // Aynı genel modelin art arda bütün slaytlara yerleşmesini önle. İlgili
+      // kullanılmamış bir model varsa onu seç; katalogda bu alt konu için tek
+      // seçenek varsa mevcut en güçlü eşleşmeyi yeniden kullanmak mümkündür.
+      final selectedModel = ModelMatchingService.bestMatchPreferUnused(
+        matches,
+        usedModelIds,
+      );
+      final selectedModels = selectedModel == null
+          ? const <ModelMatch>[]
+          : <ModelMatch>[selectedModel];
+      if (selectedModel != null) usedModelIds.add(selectedModel.id);
       final layout = _layout.decideLayout(selectedModels);
       final maxShow = _layout.maxModelsToShow(layout);
       final shownModelIds =
@@ -162,6 +195,10 @@ class PresentationService {
     final controller = PresentationDeckBuilder.buildController(
       topic: topic,
       slides: deckSlides,
+    );
+    final projectJson = PresentationProjectCodec.encodeProject(
+      pages: controller.pages.toList(growable: false),
+      effectSettings: controller.effectSettings,
     );
 
     // 3. Firestore'a kaydet (REST API - Firestore SDK'sını bypass eder)
@@ -218,44 +255,79 @@ class PresentationService {
     final docName = result['name'] as String;
     final presentationId = docName.split('/').last;
 
-    // 3b. Slaytları alt koleksiyona yaz (her slayt ayrı doküman, order alanıyla)
-    for (var i = 0; i < slidesData.length; i++) {
+    // 3b. Slaytları tek atomik commit ile yaz. Önceki uygulama her slayt için
+    // sırayla ayrı HTTP isteği yaptığı için sayfa sayısı arttıkça bekleme de
+    // doğrusal biçimde artıyordu (30 slayt = 30 ardışık ağ turu).
+    final slideWrites = <Map<String, dynamic>>[];
+    for (var i = 0; i < slidesData.length; i += 1) {
       final slide = slidesData[i];
-      final slideBody = jsonEncode({
-        'fields': {
-          'order': {'integerValue': '$i'},
-          'title': {'stringValue': slide['title'] as String},
-          'content': {'stringValue': slide['content'] as String},
-          'layout': {'stringValue': slide['layout'] as String},
-          'modelIds': {
-            'arrayValue': {
-              'values': (slide['modelIds'] as List)
-                  .map((id) => {'stringValue': id as String})
-                  .toList(),
+      slideWrites.add({
+        'update': {
+          'name':
+              'projects/sutols/databases/(default)/documents/presentations/$presentationId/slides/slide_$i',
+          'fields': {
+            'order': {'integerValue': '$i'},
+            'title': {'stringValue': slide['title'] as String},
+            'content': {'stringValue': slide['content'] as String},
+            'layout': {'stringValue': slide['layout'] as String},
+            'modelIds': {
+              'arrayValue': {
+                'values': (slide['modelIds'] as List)
+                    .map((id) => {'stringValue': id as String})
+                    .toList(),
+              },
             },
           },
         },
+        'currentDocument': {'exists': false},
       });
+    }
 
+    // İlk oluşturulan düzeni de aynı atomik commit içinde sakla. Aksi halde
+    // editörde ilk anda görünen 3B model/bileşenler sunum yeniden açıldığında
+    // yalnızca title/content kaydından kuruluyor ve kayboluyordu.
+    final currentUser = FirebaseAuth.instance.currentUser;
+    final updatedByName = (currentUser?.displayName ?? '').trim().isNotEmpty
+        ? currentUser!.displayName!.trim()
+        : (currentUser?.email ?? '');
+    slideWrites.add({
+      'update': {
+        'name':
+            'projects/sutols/databases/(default)/documents/presentations/$presentationId/project/data',
+        'fields': {
+          'json': {'stringValue': projectJson},
+          'updatedAt': {
+            'timestampValue':
+                FirestoreRestHelper.toFirestoreTimestamp(DateTime.now()),
+          },
+          'updatedByUid': {'stringValue': currentUser?.uid ?? userId},
+          'updatedByName': {'stringValue': updatedByName},
+          'updatedByEmail': {'stringValue': currentUser?.email ?? ''},
+        },
+      },
+      'currentDocument': {'exists': false},
+    });
+    if (slideWrites.isNotEmpty) {
       final slideResponse = await http.post(
-        Uri.parse(
-            '$_apiBase/presentations/$presentationId/slides?documentId=slide_$i'),
+        Uri.parse('$_apiBase:commit'),
         headers: {
           'Authorization': 'Bearer $idToken',
           'Content-Type': 'application/json',
         },
-        body: slideBody,
+        body: jsonEncode({'writes': slideWrites}),
       );
 
       if (slideResponse.statusCode != 200) {
         throw Exception(
-            'Slayt kaydedilemedi (HTTP ${slideResponse.statusCode}): ${slideResponse.body}');
+            'Slaytlar kaydedilemedi (HTTP ${slideResponse.statusCode}): ${slideResponse.body}');
       }
     }
     // ignore: avoid_print
     print('ADIM 3 TAMAM');
 
-    await _incrementPresentationCount(userId);
+    // İstatistik sayacı sunumun açılmasını bekletmemeli. Metot zaten
+    // best-effort çalışır ve hata durumunda üretim sonucunu etkilemez.
+    unawaited(_incrementPresentationCount(userId));
 
     return PresentationGenerationResult(
       presentationId: presentationId,
@@ -271,6 +343,25 @@ class PresentationService {
       }, SetOptions(merge: true));
     } catch (_) {
       // Best-effort: sayım hatası sunum oluşturmayı bozmamalı.
+    }
+  }
+
+  static void _ensureContentQuality(
+    GeminiPresentation presentation, {
+    required String provider,
+  }) {
+    final reason = PresentationContentQuality.rejectionReason(
+      presentation.slides
+          .map(
+            (slide) => PresentationContentSample(
+              title: slide.title,
+              content: slide.content,
+            ),
+          )
+          .toList(growable: false),
+    );
+    if (reason != null) {
+      throw FormatException('$provider sunum kalite kontrolü: $reason');
     }
   }
 
