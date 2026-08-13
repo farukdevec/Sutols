@@ -65,7 +65,7 @@ class _AdminUserDetailPageState extends State<AdminUserDetailPage> {
   ];
 
   static const List<(String, String)> _tierOptions = [
-    ('free', 'Ücretsiz (günde 3 sunum)'),
+    ('free', 'Ücretsiz (günde 5 sunum)'),
     ('plus', 'Plus (günde 15 sunum)'),
     ('premium', 'Premium (sınırsız)'),
   ];
@@ -87,7 +87,8 @@ class _AdminUserDetailPageState extends State<AdminUserDetailPage> {
       _error = null;
     });
     try {
-      final doc = await FirestoreRestHelper.getDocument('users/${widget.userId}');
+      final doc =
+          await FirestoreRestHelper.getDocument('users/${widget.userId}');
       if (doc == null) {
         setState(() {
           _loading = false;
@@ -99,13 +100,15 @@ class _AdminUserDetailPageState extends State<AdminUserDetailPage> {
 
       List<_UsageEntry> usage = [];
       try {
-        final usageDocs =
-            await FirestoreRestHelper.listDocuments('users/${widget.userId}/usage');
+        final usageDocs = await FirestoreRestHelper.listDocuments(
+            'users/${widget.userId}/usage');
         usage = usageDocs.map((u) {
           final uf = u['fields'] as Map<String, dynamic>? ?? {};
           return _UsageEntry(
             date: FirestoreRestHelper.stringField(uf, 'date'),
-            count: int.tryParse(FirestoreRestHelper.integerField(uf, 'count')) ?? 0,
+            count:
+                int.tryParse(FirestoreRestHelper.integerField(uf, 'count')) ??
+                    0,
           );
         }).toList()
           ..sort((a, b) => b.date.compareTo(a.date));
@@ -132,8 +135,9 @@ class _AdminUserDetailPageState extends State<AdminUserDetailPage> {
           return _PresentationEntry(
             id: (p['name'] as String? ?? '').split('/').last,
             topic: FirestoreRestHelper.stringField(pf, 'topic'),
-            slideCount:
-                int.tryParse(FirestoreRestHelper.integerField(pf, 'slideCount')) ?? 0,
+            slideCount: int.tryParse(
+                    FirestoreRestHelper.integerField(pf, 'slideCount')) ??
+                0,
             createdAt: FirestoreRestHelper.timestampField(pf, 'createdAt'),
           );
         }).toList()
@@ -143,7 +147,8 @@ class _AdminUserDetailPageState extends State<AdminUserDetailPage> {
       }
 
       setState(() {
-        _data = _UserDetailData(fields: fields, usage: usage, presentations: presentations);
+        _data = _UserDetailData(
+            fields: fields, usage: usage, presentations: presentations);
         _loading = false;
       });
     } catch (e) {
@@ -158,7 +163,9 @@ class _AdminUserDetailPageState extends State<AdminUserDetailPage> {
       FirestoreRestHelper.stringField(_data?.fields ?? const {}, key);
 
   int _intField(String key) =>
-      int.tryParse(FirestoreRestHelper.integerField(_data?.fields ?? const {}, key)) ?? 0;
+      int.tryParse(
+          FirestoreRestHelper.integerField(_data?.fields ?? const {}, key)) ??
+      0;
 
   String _timestampField(String key) =>
       FirestoreRestHelper.timestampField(_data?.fields ?? const {}, key);
@@ -211,12 +218,14 @@ class _AdminUserDetailPageState extends State<AdminUserDetailPage> {
     final confirmed = await _confirm(
       'Plan değiştiriliyor',
       '${_tierLabel} planından '
-      '"${_tierOptions.firstWhere((o) => o.$1 == tier).$2}" planına geçirilsin mi?',
+          '"${_tierOptions.firstWhere((o) => o.$1 == tier).$2}" planına geçirilsin mi?',
       confirmLabel: 'Değiştir',
     );
     if (confirmed != true) return;
     await _patch(
-      {'tier': {'stringValue': tier}},
+      {
+        'tier': {'stringValue': tier}
+      },
       const ['tier'],
     );
   }
@@ -233,16 +242,17 @@ class _AdminUserDetailPageState extends State<AdminUserDetailPage> {
     );
     if (confirmed != true) return;
     await _patch(
-      {'status': {'stringValue': next}},
+      {
+        'status': {'stringValue': next}
+      },
       const ['status'],
     );
   }
 
-  Future<void> _editField(String key, String label, {bool numeric = false}) async {
+  Future<void> _editField(String key, String label,
+      {bool numeric = false}) async {
     final controller = TextEditingController(
-      text: numeric
-          ? _intField(key).toString()
-          : _stringField(key),
+      text: numeric ? _intField(key).toString() : _stringField(key),
     );
     final value = await showDialog<String>(
       context: context,
@@ -276,12 +286,16 @@ class _AdminUserDetailPageState extends State<AdminUserDetailPage> {
         return;
       }
       await _patch(
-        {'presentationCount': {'integerValue': '$count'}},
+        {
+          'presentationCount': {'integerValue': '$count'}
+        },
         const ['presentationCount'],
       );
     } else {
       await _patch(
-        {'displayName': {'stringValue': value}},
+        {
+          'displayName': {'stringValue': value}
+        },
         const ['displayName'],
       );
     }
@@ -298,7 +312,9 @@ class _AdminUserDetailPageState extends State<AdminUserDetailPage> {
     );
     if (confirmed != true) return;
     await _patch(
-      {'role': {'stringValue': next}},
+      {
+        'role': {'stringValue': next}
+      },
       const ['role'],
     );
   }
@@ -480,7 +496,8 @@ class _AdminUserDetailPageState extends State<AdminUserDetailPage> {
           children: [
             Row(
               children: [
-                _Avatar(photoUrl: photoUrl, displayName: displayName, email: email),
+                _Avatar(
+                    photoUrl: photoUrl, displayName: displayName, email: email),
                 const SizedBox(width: AppSpacing.s16),
                 Expanded(
                   child: Column(
@@ -507,7 +524,9 @@ class _AdminUserDetailPageState extends State<AdminUserDetailPage> {
                   children: [
                     _Badge(
                       label: _role == 'admin' ? 'YÖNETİCİ' : 'KULLANICI',
-                      color: _role == 'admin' ? colors.primary : colors.textSecondary,
+                      color: _role == 'admin'
+                          ? colors.primary
+                          : colors.textSecondary,
                     ),
                     const SizedBox(height: 6),
                     _Badge(
@@ -523,15 +542,21 @@ class _AdminUserDetailPageState extends State<AdminUserDetailPage> {
             _infoRow(context, 'E-posta', email.isNotEmpty ? email : '-'),
             _infoRow(context, 'Rol', _role),
             _infoRow(context, 'Durum', _isSuspended ? 'Askıda' : 'Aktif'),
-            _infoRow(context, 'Kayıt', _formatDate(_timestampField('createdAt'))),
-            _infoRow(context, 'Son giriş', _formatDate(_timestampField('lastActiveAt'))),
-            _infoRow(context, 'Sunum sayısı', _intField('presentationCount').toString()),
+            _infoRow(
+                context, 'Kayıt', _formatDate(_timestampField('createdAt'))),
+            _infoRow(context, 'Son giriş',
+                _formatDate(_timestampField('lastActiveAt'))),
+            _infoRow(context, 'Sunum sayısı',
+                _intField('presentationCount').toString()),
             _infoRow(
               context,
               'Kullanılan kod',
-              _stringField('redeemedCode').isEmpty ? '-' : _stringField('redeemedCode'),
+              _stringField('redeemedCode').isEmpty
+                  ? '-'
+                  : _stringField('redeemedCode'),
             ),
-            _infoRow(context, 'Kod tarihi', _formatDate(_timestampField('redeemedAt'))),
+            _infoRow(context, 'Kod tarihi',
+                _formatDate(_timestampField('redeemedAt'))),
           ],
         ),
       ),
@@ -592,16 +617,23 @@ class _AdminUserDetailPageState extends State<AdminUserDetailPage> {
                 ),
                 FilledButton.tonalIcon(
                   onPressed: _saving ? null : _toggleRole,
-                  icon: const Icon(Icons.admin_panel_settings_outlined, size: 18),
-                  label: Text(_role == 'admin' ? 'Yetkiyi Kaldır' : 'Yönetici Yap'),
+                  icon:
+                      const Icon(Icons.admin_panel_settings_outlined, size: 18),
+                  label: Text(
+                      _role == 'admin' ? 'Yetkiyi Kaldır' : 'Yönetici Yap'),
                 ),
                 FilledButton.tonalIcon(
-                  onPressed: _saving ? null : () => _editField('displayName', 'Ad Soyad'),
+                  onPressed: _saving
+                      ? null
+                      : () => _editField('displayName', 'Ad Soyad'),
                   icon: const Icon(Icons.edit_outlined, size: 18),
                   label: const Text('İsmi Düzenle'),
                 ),
                 FilledButton.tonalIcon(
-                  onPressed: _saving ? null : () => _editField('presentationCount', 'Sunum Sayısı', numeric: true),
+                  onPressed: _saving
+                      ? null
+                      : () => _editField('presentationCount', 'Sunum Sayısı',
+                          numeric: true),
                   icon: const Icon(Icons.numbers_rounded, size: 18),
                   label: const Text('Sunum Sayısını Düzenle'),
                 ),
@@ -683,7 +715,9 @@ class _AdminUserDetailPageState extends State<AdminUserDetailPage> {
                   dense: true,
                   leading: const Icon(Icons.description_outlined),
                   title: Text(
-                    presentation.topic.isNotEmpty ? presentation.topic : '(başlıksız)',
+                    presentation.topic.isNotEmpty
+                        ? presentation.topic
+                        : '(başlıksız)',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),

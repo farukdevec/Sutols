@@ -413,7 +413,6 @@ void main() {
       find.byKey(const ValueKey<String>('studio-branded-header')),
     );
     final brandedDecoration = brandedHeader.decoration! as BoxDecoration;
-    final brandedGradient = brandedDecoration.gradient! as LinearGradient;
     final headerRect = tester.getRect(
       find.byKey(const ValueKey<String>('studio-branded-header')),
     );
@@ -421,16 +420,11 @@ void main() {
     expect(headerRect.top, 0);
     expect(headerRect.right, 1400);
     expect(find.text('Dosya'), findsNothing);
+    final brandedGradient = brandedDecoration.gradient! as LinearGradient;
     expect(
       brandedGradient.colors,
       const <Color>[Color(0xFF0A7E82), Color(0xFF006471)],
     );
-    expect(brandedDecoration.boxShadow, hasLength(2));
-    expect(
-      brandedDecoration.boxShadow!.last.color,
-      const Color(0x160A7E82),
-    );
-    expect(brandedDecoration.boxShadow!.last.offset.dy, 15);
     expect(
       find.descendant(
         of: find.byKey(const ValueKey<String>('studio-brand-mark')),
@@ -444,7 +438,7 @@ void main() {
     final titleRect = tester.getRect(
       find.byKey(const ValueKey<String>('studio-presentation-title')),
     );
-    expect(logoRect.width, greaterThanOrEqualTo(58));
+    expect(logoRect.width, greaterThanOrEqualTo(44));
     expect(logoRect.right, lessThan(titleRect.left));
     expect(find.byKey(const ValueKey<String>('studio-settings-icon')),
         findsNothing);
@@ -474,6 +468,23 @@ void main() {
     await tester.pumpAndSettle();
 
     final rail = find.byKey(const ValueKey<String>('studio-tool-rail'));
+    final railRect = tester.getRect(rail);
+    expect(railRect.top, greaterThan(700));
+    expect(railRect.width, greaterThan(railRect.height));
+    expect(find.text('Sahneler'), findsOneWidget);
+    final selectionBar = find.byKey(
+      const ValueKey<String>('selection-context-bar'),
+    );
+    final glowControl = find.byKey(
+      const ValueKey<String>('selected-text-glow-control'),
+    );
+    expect(selectionBar, findsOneWidget);
+    expect(glowControl, findsOneWidget);
+    expect(
+      tester.getRect(glowControl).right,
+      lessThanOrEqualTo(tester.getRect(selectionBar).right - 8),
+      reason: 'Üst düzenleme barının son kontrolü görünür kalmalı',
+    );
     expect(
         find.descendant(of: rail, matching: find.text('HTML')), findsNothing);
     expect(
@@ -519,6 +530,14 @@ void main() {
       find.byKey(const ValueKey<String>('condensed-brand-mark')),
       findsOneWidget,
     );
+    expect(
+      find.descendant(
+        of: find.byKey(const ValueKey<String>('condensed-brand-mark')),
+        matching: find.byType(ColorFiltered),
+      ),
+      findsOneWidget,
+      reason: 'Yarım ekran logosu beyaz marka stilini korumalı',
+    );
     expect(find.byIcon(Icons.arrow_back_rounded), findsNothing);
     expect(find.text('Dosya'), findsNothing);
     expect(
@@ -545,6 +564,14 @@ void main() {
     );
     expect(decoration.boxShadow, hasLength(2));
     expect(decoration.boxShadow!.last.color, const Color(0x160A7E82));
+    expect(
+      find.descendant(
+        of: find.byKey(const ValueKey<String>('mobile-brand-mark')),
+        matching: find.byType(ColorFiltered),
+      ),
+      findsOneWidget,
+      reason: 'Mobil logo beyaz marka stilini korumalı',
+    );
     expect(tester.takeException(), isNull);
   });
 
@@ -612,7 +639,7 @@ void main() {
     tester,
   ) async {
     await pumpAt(tester, const Size(1400, 900));
-    await tester.tap(find.text('Bilesen').first);
+    await tester.tap(find.text('Bileşen').first);
     await tester.pumpAndSettle();
 
     final inspectorRect = tester.getRect(

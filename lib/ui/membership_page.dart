@@ -49,7 +49,8 @@ class MembershipPage extends StatelessWidget {
                     );
                   },
                   icon: const Icon(Icons.redeem_outlined, size: 18),
-                  label: const Text('Bir promosyon kodunuz mu var? Kodunuzu kullanın'),
+                  label: const Text(
+                      'Bir promosyon kodunuz mu var? Kodunuzu kullanın'),
                 ),
                 const SizedBox(height: AppSpacing.s32),
                 Expanded(
@@ -60,7 +61,7 @@ class MembershipPage extends StatelessWidget {
                         title: 'Ücretsiz',
                         price: '₺0 / ay',
                         features: [
-                          'Günde 3 sunum',
+                          'Günde 5 sunum',
                           'Temel model kütüphanesi',
                           '5 slaytlık sunumlar',
                         ],
@@ -167,7 +168,8 @@ class _MembershipCard extends StatelessWidget {
             children: [
               Text(
                 title,
-                style: AppTypography.titleLarge.copyWith(color: colors.textPrimary),
+                style: AppTypography.titleLarge
+                    .copyWith(color: colors.textPrimary),
               ),
               if (highlighted) ...[
                 const Spacer(),
@@ -234,7 +236,9 @@ class _MembershipCard extends StatelessWidget {
               onPressed: buttonEnabled
                   ? () {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Ödeme sistemi yakında aktif olacak')),
+                        const SnackBar(
+                            content:
+                                Text('Ödeme sistemi yakında aktif olacak')),
                       );
                     }
                   : null,

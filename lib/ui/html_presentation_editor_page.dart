@@ -728,11 +728,10 @@ class _HtmlPresentationEditorPageState
                               presentationFileName: _presentationFileName,
                               onEditFileName: _editPresentationFileName,
                             ),
-                            const SizedBox(height: 12),
+                            const SizedBox(height: 8),
                             Expanded(
                               child: Padding(
-                                padding:
-                                    const EdgeInsets.fromLTRB(10, 0, 10, 12),
+                                padding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
                                 child: _HtmlStudioLayout(
                                   controller: widget.controller,
                                   textController: _textController,
@@ -2606,27 +2605,31 @@ Future<void> _showEditorSettings(BuildContext context) {
 }
 
 class _SettingsMenuButton extends StatelessWidget {
-  const _SettingsMenuButton({this.branded = false});
+  const _SettingsMenuButton({this.branded = false, this.compact = false});
 
   final bool branded;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
     final foreground = branded ? _studioHeaderForeground : context._htmlInk;
     return Material(
       color: branded ? _studioHeaderControl : context.sutolColors.surfaceSubtle,
-      borderRadius: BorderRadius.circular(18),
+      borderRadius: BorderRadius.circular(8),
       child: InkWell(
         key: const ValueKey<String>('editor-settings-button'),
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(8),
         onTap: () => _showEditorSettings(context),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+          padding: EdgeInsets.symmetric(
+            horizontal: compact ? 12 : 14,
+            vertical: 11,
+          ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
               Icon(Icons.settings_outlined, size: 18, color: foreground),
-              if (!branded) ...<Widget>[
+              if (!branded && !compact) ...<Widget>[
                 const SizedBox(width: 8),
                 Text(
                   'Ayarlar',
@@ -2671,11 +2674,11 @@ class _HistoryButtons extends StatelessWidget {
         : context._htmlMuted.withValues(alpha: 0.52);
 
     return Container(
-      height: 50,
+      height: 44,
       padding: const EdgeInsets.symmetric(horizontal: 4),
       decoration: BoxDecoration(
         color: background,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(8),
         border: Border.all(color: borderColor),
       ),
       child: Row(
@@ -2835,7 +2838,8 @@ class _HtmlStudioHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       key: const ValueKey<String>('studio-branded-header'),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      height: 64,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           colors: <Color>[
@@ -2845,40 +2849,39 @@ class _HtmlStudioHeader extends StatelessWidget {
           begin: Alignment.centerLeft,
           end: Alignment.centerRight,
         ),
-        borderRadius: const BorderRadius.only(
-          bottomLeft: Radius.circular(12),
-          bottomRight: Radius.circular(12),
-        ),
         border: Border.all(color: _studioHeaderBorder),
         boxShadow: _studioHeaderFadeShadow,
       ),
       child: Row(
         children: <Widget>[
+          IconButton(
+            tooltip: 'Geri',
+            onPressed: () => Navigator.of(context).maybePop(),
+            icon: const Icon(
+              Icons.arrow_back_rounded,
+              color: _studioHeaderForeground,
+            ),
+          ),
+          const SizedBox(width: 4),
           _HeaderBrandMark(
             key: const ValueKey<String>('studio-brand-mark'),
-            size: 60,
+            size: 46,
             branded: true,
           ),
-          const SizedBox(width: 12),
-          ConstrainedBox(
+          const SizedBox(width: 18),
+          SizedBox(
             key: const ValueKey<String>('studio-presentation-title'),
-            constraints: const BoxConstraints(maxWidth: 220),
+            width: 260,
             child: InkWell(
               onTap: onEditFileName,
-              borderRadius: BorderRadius.circular(18),
+              borderRadius: BorderRadius.circular(8),
               child: Container(
                 padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(18),
-                  color: onEditFileName != null
-                      ? _studioHeaderControl
-                      : Colors.transparent,
-                  border: Border.all(
-                    color: onEditFileName != null
-                        ? _studioHeaderBorder
-                        : Colors.transparent,
-                  ),
+                  borderRadius: BorderRadius.circular(8),
+                  color: _studioHeaderControl,
+                  border: Border.all(color: _studioHeaderBorder),
                 ),
                 child: Row(
                   children: <Widget>[
@@ -2889,7 +2892,7 @@ class _HtmlStudioHeader extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                               color: _studioHeaderForeground,
-                              fontWeight: FontWeight.w700,
+                              fontWeight: FontWeight.w800,
                             ),
                       ),
                     ),
@@ -2916,36 +2919,48 @@ class _HtmlStudioHeader extends StatelessWidget {
               branded: true,
             ),
           const Spacer(),
-          if (lastEditorLabel != null && lastEditorLabel!.isNotEmpty) ...[
-            _StudioHeaderInfoChip(
-              icon: Icons.edit_rounded,
-              label: 'Son düzenleme: $lastEditorLabel',
-            ),
-            const SizedBox(width: 8),
-          ],
-          const _SettingsMenuButton(branded: true),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              Text(
+                lastEditorLabel == null || lastEditorLabel!.isEmpty
+                    ? 'Kaydedildi'
+                    : 'Kaydedildi · $lastEditorLabel',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: _studioHeaderMuted,
+                      fontWeight: FontWeight.w700,
+                    ),
+              ),
+              const SizedBox(width: 6),
+              const Icon(
+                Icons.check_rounded,
+                size: 16,
+                color: _studioHeaderMuted,
+              ),
+            ],
+          ),
+          const SizedBox(width: 14),
+          const _SettingsMenuButton(branded: true, compact: true),
           if (!adminReadOnly) ...<Widget>[
             const SizedBox(width: 8),
             _ToolbarAction(
               icon: Icons.add_rounded,
               onTap: onAddText,
-              branded: true,
             ),
             const SizedBox(width: 8),
             _ToolbarAction(
               icon: Icons.delete_outline_rounded,
               onTap: canRemoveText ? onRemoveText : null,
               destructive: true,
-              branded: true,
             ),
           ],
-          const SizedBox(width: 12),
-          _StudioPreviewButton(onTap: onPreview),
           const SizedBox(width: 8),
           _StudioSaveButton(
             onExportHtml: onExport,
             onExportPdf: onExportPdf,
           ),
+          const SizedBox(width: 8),
+          _StudioPreviewButton(onTap: onPreview),
         ],
       ),
     );
@@ -3189,26 +3204,26 @@ class _StudioPreviewButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: _studioHeaderControl,
-      borderRadius: BorderRadius.circular(18),
+      color: _studioHeaderForeground,
+      borderRadius: BorderRadius.circular(8),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(8),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
               Icon(
                 Icons.slideshow_rounded,
-                color: _studioHeaderForeground,
+                color: _studioHeaderBrandEnd,
                 size: 18,
               ),
               const SizedBox(width: 8),
               Text(
                 'Sunum Modu',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: _studioHeaderForeground,
+                      color: _studioHeaderBrandEnd,
                       fontWeight: FontWeight.w800,
                     ),
               ),
@@ -3267,9 +3282,9 @@ class _StudioSaveButton extends StatelessWidget {
       ],
       child: Material(
         color: _studioHeaderControl,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(8),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
@@ -3343,21 +3358,39 @@ class _HtmlStudioLayout extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
-        _HtmlToolRail(
-          activeTab: activeTab,
-          onTabChanged: onTabChanged,
+        SizedBox(
+          width: 244,
+          child: _HtmlPageSidebar(controller: controller),
         ),
-        const SizedBox(width: 12),
-        // Detay paneli: ikon şeridinin hemen yanında açılır/kapanır.
-        // Kapalıyken genişlik 0'a iner (tuval genişler), açıkken 300px.
+        const SizedBox(width: 8),
+        Expanded(
+          child: Column(
+            children: <Widget>[
+              Expanded(
+                child: _HtmlStageWorkspace(
+                  controller: controller,
+                  textController: textController,
+                  activeTab: activeTab,
+                  showFilmstrip: false,
+                ),
+              ),
+              const SizedBox(height: 8),
+              _HtmlToolRail(
+                activeTab: activeTab,
+                onTabChanged: onTabChanged,
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 8),
         ClipRect(
           child: AnimatedSize(
             duration: const Duration(milliseconds: 220),
             curve: Curves.ease,
-            alignment: Alignment.centerLeft,
+            alignment: Alignment.centerRight,
             child: panelOpen
                 ? SizedBox(
-                    width: 300,
+                    width: 292,
                     child: _HtmlInspectorPanel(
                       controller: controller,
                       textController: textController,
@@ -3365,14 +3398,6 @@ class _HtmlStudioLayout extends StatelessWidget {
                     ),
                   )
                 : const SizedBox(width: 0, height: double.infinity),
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: _HtmlStageWorkspace(
-            controller: controller,
-            textController: textController,
-            activeTab: activeTab,
           ),
         ),
       ],
@@ -3393,15 +3418,16 @@ class _HtmlToolRail extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       key: const ValueKey<String>('studio-tool-rail'),
-      width: 80,
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 14),
+      height: 96,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
         color: context.colors.surfaceElevated,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(8),
         border: Border.all(color: context.colors.border),
       ),
       child: SingleChildScrollView(
-        child: Column(
+        scrollDirection: Axis.horizontal,
+        child: Row(
           children: <Widget>[
             _RailButton(
               label: 'Şablon',
@@ -3409,42 +3435,42 @@ class _HtmlToolRail extends StatelessWidget {
               isSelected: activeTab == _HtmlToolTab.templates,
               onTap: () => onTabChanged(_HtmlToolTab.templates),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(width: 8),
             _RailButton(
               label: 'Arka Plan',
               icon: Icons.wallpaper_rounded,
               isSelected: activeTab == _HtmlToolTab.backgrounds,
               onTap: () => onTabChanged(_HtmlToolTab.backgrounds),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(width: 8),
             _RailButton(
-              label: 'Bilesen',
+              label: 'Bileşen',
               icon: Icons.widgets_rounded,
               isSelected: activeTab == _HtmlToolTab.components,
               onTap: () => onTabChanged(_HtmlToolTab.components),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(width: 8),
             _RailButton(
               label: 'Metin',
               icon: Icons.text_fields_rounded,
               isSelected: activeTab == _HtmlToolTab.text,
               onTap: () => onTabChanged(_HtmlToolTab.text),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(width: 8),
             _RailButton(
               label: '3D Modeller',
               icon: Icons.view_in_ar_rounded,
               isSelected: activeTab == _HtmlToolTab.models3d,
               onTap: () => onTabChanged(_HtmlToolTab.models3d),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(width: 8),
             _RailButton(
               label: 'Fotoğraf',
               icon: Icons.add_photo_alternate_rounded,
               isSelected: activeTab == _HtmlToolTab.photo,
               onTap: () => onTabChanged(_HtmlToolTab.photo),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(width: 8),
             _RailButton(
               label: 'Geçişler',
               icon: Icons.animation_rounded,
@@ -3474,37 +3500,39 @@ class _RailButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final backgroundColor =
-        isSelected ? const Color(0xFFEDF4FF) : Colors.transparent;
+        isSelected ? const Color(0xFFEAF7F7) : Colors.transparent;
     final borderColor =
-        isSelected ? const Color(0xFFD4E4FF) : Colors.transparent;
+        isSelected ? const Color(0xFFB9E1E3) : Colors.transparent;
     final effectiveIconColor =
         isSelected ? context._htmlAccent : context._htmlMuted;
 
     return Material(
       color: backgroundColor,
-      borderRadius: BorderRadius.circular(22),
+      borderRadius: BorderRadius.circular(8),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(8),
         child: Container(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 12),
+          width: 94,
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(22),
+            borderRadius: BorderRadius.circular(8),
             border: Border.all(color: borderColor),
           ),
           child: Column(
             children: <Widget>[
-              Icon(icon, color: effectiveIconColor, size: 24),
-              const SizedBox(height: 8),
+              Icon(icon, color: effectiveIconColor, size: 22),
+              const SizedBox(height: 3),
               Text(
                 label,
                 textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: isSelected ? context._htmlInk : context._htmlMuted,
                       fontWeight:
                           isSelected ? FontWeight.w800 : FontWeight.w700,
-                      fontSize: 11,
+                      fontSize: 10.5,
                     ),
               ),
             ],
@@ -3598,6 +3626,7 @@ class _HtmlStageWorkspace extends StatelessWidget {
     required this.textController,
     required this.activeTab,
     this.readOnly = false,
+    this.showFilmstrip = true,
   });
 
   final PresentationController controller;
@@ -3607,6 +3636,7 @@ class _HtmlStageWorkspace extends StatelessWidget {
   /// Salt okunur (admin) mod: bağlamsal araç çubuğu gizlenir, tuval
   /// etkileşimsiz olur ve filmşeritte sayfa ekle/sil kapatılır.
   final bool readOnly;
+  final bool showFilmstrip;
 
   @override
   Widget build(BuildContext context) {
@@ -3633,11 +3663,13 @@ class _HtmlStageWorkspace extends StatelessWidget {
                     readOnly: readOnly,
                   ),
                 ),
-                const SizedBox(height: 14),
-                _HtmlPageFilmstrip(
-                  controller: controller,
-                  readOnly: readOnly,
-                ),
+                if (showFilmstrip) ...<Widget>[
+                  const SizedBox(height: 14),
+                  _HtmlPageFilmstrip(
+                    controller: controller,
+                    readOnly: readOnly,
+                  ),
+                ],
               ],
             ),
           ),
@@ -3841,12 +3873,11 @@ class _HtmlPageSidebar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(12, 14, 12, 12),
       decoration: BoxDecoration(
-        color: context._htmlPanel,
-        borderRadius: BorderRadius.circular(30),
-        border: Border.all(color: context.sutolColors.outline),
-        boxShadow: context.elevation2,
+        color: context.colors.surfaceElevated,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: context.colors.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -3855,34 +3886,21 @@ class _HtmlPageSidebar extends StatelessWidget {
             children: <Widget>[
               Expanded(
                 child: Text(
-                  'Sayfalar',
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                  'Sahneler',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         color: context._htmlInk,
-                        fontWeight: FontWeight.w800,
+                        fontWeight: FontWeight.w900,
                       ),
                 ),
               ),
-              if (!readOnly) ...<Widget>[
-                _SidebarAction(
-                  icon: Icons.add_rounded,
-                  onTap: controller.addPage,
-                ),
-                const SizedBox(width: 8),
-                _SidebarAction(
-                  icon: Icons.remove_rounded,
-                  onTap: controller.canRemovePage
-                      ? controller.removeSelectedPage
-                      : null,
-                  subtle: true,
-                ),
-              ],
+              Icon(Icons.sort_rounded, size: 20, color: context._htmlMuted),
             ],
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 12),
           Expanded(
             child: ListView.separated(
               itemCount: controller.pages.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 14),
+              separatorBuilder: (_, __) => const SizedBox(height: 12),
               itemBuilder: (context, index) {
                 final page = controller.pages[index];
                 return _HtmlPageCard(
@@ -3894,6 +3912,25 @@ class _HtmlPageSidebar extends StatelessWidget {
               },
             ),
           ),
+          if (!readOnly) ...<Widget>[
+            const SizedBox(height: 10),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: controller.addPage,
+                icon: const Icon(Icons.add_rounded, size: 18),
+                label: const Text('Yeni sahne'),
+              ),
+            ),
+            const SizedBox(height: 6),
+            TextButton.icon(
+              onPressed: controller.canRemovePage
+                  ? controller.removeSelectedPage
+                  : null,
+              icon: const Icon(Icons.delete_outline_rounded, size: 17),
+              label: const Text('Seçili sahneyi sil'),
+            ),
+          ],
         ],
       ),
     );
@@ -3951,13 +3988,13 @@ class _HtmlPageCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(24),
+      borderRadius: BorderRadius.circular(8),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 220),
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.all(7),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFFF0F6FF) : const Color(0xFFF8FAFD),
-          borderRadius: BorderRadius.circular(24),
+          color: isSelected ? const Color(0xFFEAF7F7) : const Color(0xFFF8FAFD),
+          borderRadius: BorderRadius.circular(8),
           border: Border.all(
             color:
                 isSelected ? context._htmlAccent : context.sutolColors.outline,
@@ -3968,17 +4005,17 @@ class _HtmlPageCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
             Text(
-              'Sayfa ${index + 1}',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              '${index + 1}'.padLeft(2, '0'),
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: context._htmlInk,
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w900,
                   ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 5),
             AspectRatio(
               aspectRatio: 16 / 9,
               child: ClipRRect(
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(6),
                 child: IgnorePointer(
                   child: PresentationPageCanvas(
                     page: page,
@@ -5954,54 +5991,37 @@ class _ToolbarAction extends StatelessWidget {
     required this.icon,
     required this.onTap,
     this.destructive = false,
-    this.branded = false,
   });
 
   final IconData icon;
   final VoidCallback? onTap;
   final bool destructive;
-  final bool branded;
 
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: branded
-          ? destructive
-              ? const Color(0x36FFD7D7)
-              : _studioHeaderControl
-          : destructive
-              ? const Color(0xFFFFF4F4)
-              : Colors.white,
-      borderRadius: BorderRadius.circular(14),
+      color: destructive ? const Color(0x28FFD7D7) : _studioHeaderControl,
+      borderRadius: BorderRadius.circular(8),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(8),
         child: Opacity(
           opacity: onTap == null ? 0.45 : 1,
           child: Container(
             width: 42,
             height: 42,
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(8),
               border: Border.all(
-                color: branded
-                    ? destructive
-                        ? const Color(0x80FFD7D7)
-                        : _studioHeaderBorder
-                    : destructive
-                        ? const Color(0xFFFFD8D8)
-                        : context.sutolColors.outline,
+                color:
+                    destructive ? const Color(0x70FFD7D7) : _studioHeaderBorder,
               ),
             ),
             child: Icon(
               icon,
-              color: branded
-                  ? destructive
-                      ? const Color(0xFFFFE4E4)
-                      : _studioHeaderForeground
-                  : destructive
-                      ? const Color(0xFFD13A3A)
-                      : context._htmlInk,
+              color: destructive
+                  ? const Color(0xFFFFE4E4)
+                  : _studioHeaderForeground,
               size: 20,
             ),
           ),
@@ -6588,48 +6608,52 @@ class _SelectionContextBarSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textBlock = controller.selectedTextBlock;
-    final componentBlock = controller.selectedComponentBlock;
-    List<Widget>? children;
-    String? contentKey;
-    if (textBlock != null) {
-      contentKey = 'text:${textBlock.id}';
-      children = _textChildren(context, textBlock);
-    } else if (componentBlock != null) {
-      contentKey = 'component:${componentBlock.id}';
-      children = componentBlock.modelAssetId != null
-          ? _modelChildren(context, componentBlock)
-          : _componentChildren();
-    }
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final compact = constraints.maxWidth < 980;
+        final textBlock = controller.selectedTextBlock;
+        final componentBlock = controller.selectedComponentBlock;
+        List<Widget>? children;
+        String? contentKey;
+        if (textBlock != null) {
+          contentKey = 'text:${textBlock.id}:$compact';
+          children = _textChildren(context, textBlock, compact: compact);
+        } else if (componentBlock != null) {
+          contentKey = 'component:${componentBlock.id}';
+          children = componentBlock.modelAssetId != null
+              ? _modelChildren(context, componentBlock)
+              : _componentChildren();
+        }
 
-    return AnimatedSwitcher(
-      duration: const Duration(milliseconds: 180),
-      transitionBuilder: (child, animation) => FadeTransition(
-        opacity: animation,
-        child: SizeTransition(
-          sizeFactor: animation,
-          axisAlignment: -1,
-          child: child,
-        ),
-      ),
-      child: children == null
-          ? const SizedBox.shrink()
-          : Padding(
-              key: ValueKey<String>(contentKey!),
-              padding: const EdgeInsets.only(bottom: 10),
-              child: SelectionContextBar(children: children),
+        return AnimatedSwitcher(
+          duration: const Duration(milliseconds: 180),
+          transitionBuilder: (child, animation) => FadeTransition(
+            opacity: animation,
+            child: SizeTransition(
+              sizeFactor: animation,
+              axisAlignment: -1,
+              child: child,
             ),
+          ),
+          child: children == null
+              ? const SizedBox.shrink()
+              : Padding(
+                  key: ValueKey<String>(contentKey!),
+                  padding: const EdgeInsets.only(bottom: 10),
+                  child: SelectionContextBar(children: children),
+                ),
+        );
+      },
     );
   }
 
-  List<Widget> _textChildren(
-    BuildContext context,
-    PresentationTextBlock block,
-  ) {
+  List<Widget> _textChildren(BuildContext context, PresentationTextBlock block,
+      {required bool compact}) {
     return <Widget>[
       _SelectedTextToolbarField(
         controller: textController,
         onChanged: controller.updateSelectedText,
+        compact: compact,
       ),
       const MiniToolDivider(),
       MiniToolAction(
@@ -6715,6 +6739,7 @@ class _SelectionContextBarSection extends StatelessWidget {
         key: const ValueKey<String>('selected-text-animation-control'),
         controller: controller,
         current: block.textAnimation,
+        compact: compact,
       ),
       const MiniToolDivider(),
       _TextColorPopupButton(
@@ -6727,6 +6752,7 @@ class _SelectionContextBarSection extends StatelessWidget {
         key: const ValueKey<String>('selected-text-glow-control'),
         controller: controller,
         current: block.glowIntensity,
+        compact: compact,
       ),
     ];
   }
@@ -6845,17 +6871,18 @@ class _SelectedTextToolbarField extends StatelessWidget {
   const _SelectedTextToolbarField({
     required this.controller,
     required this.onChanged,
+    required this.compact,
   });
 
   final TextEditingController controller;
   final ValueChanged<String> onChanged;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
-    final compact = MediaQuery.sizeOf(context).width < 600;
     return SizedBox(
       key: const ValueKey<String>('selected-text-toolbar-field'),
-      width: compact ? 160 : 230,
+      width: compact ? 150 : 230,
       height: 36,
       child: TextField(
         controller: controller,
@@ -6898,10 +6925,12 @@ class _TextAnimationPopupButton extends StatelessWidget {
     super.key,
     required this.controller,
     required this.current,
+    required this.compact,
   });
 
   final PresentationController controller;
   final PresentationTextAnimation current;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
@@ -6941,15 +6970,17 @@ class _TextAnimationPopupButton extends StatelessWidget {
               size: 17,
               color: active ? colors.surface : colors.onSurfaceVariant,
             ),
-            const SizedBox(width: 7),
-            Text(
-              _textAnimationLabel(current),
-              style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
-                    color: active ? colors.surface : colors.onSurfaceVariant,
-                  ),
-            ),
-            const SizedBox(width: 5),
+            if (!compact) ...<Widget>[
+              const SizedBox(width: 7),
+              Text(
+                _textAnimationLabel(current),
+                style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                      color: active ? colors.surface : colors.onSurfaceVariant,
+                    ),
+              ),
+              const SizedBox(width: 5),
+            ],
             Icon(
               Icons.arrow_drop_down_rounded,
               size: 18,
@@ -7068,6 +7099,7 @@ class _TextGlowPopupButton extends StatelessWidget {
     super.key,
     required this.controller,
     required this.current,
+    required this.compact,
   });
 
   static final Map<double, String> _options = <double, String>{
@@ -7080,6 +7112,7 @@ class _TextGlowPopupButton extends StatelessWidget {
 
   final PresentationController controller;
   final double current;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
@@ -7118,15 +7151,17 @@ class _TextGlowPopupButton extends StatelessWidget {
               size: 17,
               color: active ? colors.surface : colors.onSurfaceVariant,
             ),
-            const SizedBox(width: 7),
-            Text(
-              'Parlaklık',
-              style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
-                    color: active ? colors.surface : colors.onSurfaceVariant,
-                  ),
-            ),
-            const SizedBox(width: 4),
+            if (!compact) ...<Widget>[
+              const SizedBox(width: 7),
+              Text(
+                'Parlaklık',
+                style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                      color: active ? colors.surface : colors.onSurfaceVariant,
+                    ),
+              ),
+              const SizedBox(width: 4),
+            ],
             Icon(
               Icons.arrow_drop_down_rounded,
               size: 18,

@@ -23,6 +23,7 @@ class SelectionContextBar extends StatelessWidget {
       behavior: HitTestBehavior.opaque,
       onTap: () {},
       child: Container(
+        key: const ValueKey<String>('selection-context-bar'),
         width: double.infinity,
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         decoration: BoxDecoration(

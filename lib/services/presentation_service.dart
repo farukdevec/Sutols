@@ -47,7 +47,7 @@ class PresentationService {
     final userDoc =
         await FirebaseFirestore.instance.collection('users').doc(userId).get();
     final tier = userDoc.data()?['tier'] as String? ?? 'free';
-    final dailyLimit = tier == 'premium' ? 999 : (tier == 'plus' ? 15 : 3);
+    final dailyLimit = UsageService.dailyLimitForTier(tier);
     final allowed =
         await UsageService().tryConsumeDailyQuota(userId, dailyLimit);
     if (!allowed) {
@@ -79,12 +79,15 @@ class PresentationService {
       // ignore: avoid_print
       print('NVIDIA/Cloudflare HATASI: $e — Gemini deneniyor');
       try {
-        resultPresentation = await _gemini.generatePresentation(topic, slideCount: slideCount);
+        resultPresentation =
+            await _gemini.generatePresentation(topic, slideCount: slideCount);
       } catch (e2) {
         // ignore: avoid_print
-        print('AI HATASI (Gemini vb.): $e2 — kelime tabanlı yedek kullanılıyor');
+        print(
+            'AI HATASI (Gemini vb.): $e2 — kelime tabanlı yedek kullanılıyor');
         usedFallback = true;
-        resultPresentation = FallbackSlideGenerator.generatePresentation(topic, slideCount: slideCount);
+        resultPresentation = FallbackSlideGenerator.generatePresentation(topic,
+            slideCount: slideCount);
       }
     }
     // ignore: avoid_print
@@ -102,7 +105,8 @@ class PresentationService {
       final strongMatches = matches.where((m) => m.score >= 2).toList();
       final layout = _layout.decideLayout(matches);
       final maxShow = _layout.maxModelsToShow(layout);
-      final shownModelIds = strongMatches.take(maxShow).map((m) => m.id).toList();
+      final shownModelIds =
+          strongMatches.take(maxShow).map((m) => m.id).toList();
 
       slidesData.add({
         'title': slide.title,
@@ -142,13 +146,22 @@ class PresentationService {
         'slideCount': {'integerValue': '${slidesData.length}'},
         'topic': {'stringValue': topic},
         'title': {'stringValue': topic},
-        'createdAt': {'timestampValue': FirestoreRestHelper.toFirestoreTimestamp(DateTime.now())},
-        'updatedAt': {'timestampValue': FirestoreRestHelper.toFirestoreTimestamp(DateTime.now())},
+        'createdAt': {
+          'timestampValue':
+              FirestoreRestHelper.toFirestoreTimestamp(DateTime.now())
+        },
+        'updatedAt': {
+          'timestampValue':
+              FirestoreRestHelper.toFirestoreTimestamp(DateTime.now())
+        },
         'wasEdited': {'booleanValue': false},
         'wasExported': {'booleanValue': false},
         'editCount': {'integerValue': '0'},
         'timeSpentSeconds': {'integerValue': '0'},
-        'lastOpenedAt': {'timestampValue': FirestoreRestHelper.toFirestoreTimestamp(DateTime.now())},
+        'lastOpenedAt': {
+          'timestampValue':
+              FirestoreRestHelper.toFirestoreTimestamp(DateTime.now())
+        },
       },
     });
 
@@ -162,7 +175,8 @@ class PresentationService {
     );
 
     if (response.statusCode != 200) {
-      throw Exception('Sunum kaydedilemedi (HTTP ${response.statusCode}): ${response.body}');
+      throw Exception(
+          'Sunum kaydedilemedi (HTTP ${response.statusCode}): ${response.body}');
     }
 
     final result = jsonDecode(response.body) as Map<String, dynamic>;
@@ -189,7 +203,8 @@ class PresentationService {
       });
 
       final slideResponse = await http.post(
-        Uri.parse('$_apiBase/presentations/$presentationId/slides?documentId=slide_$i'),
+        Uri.parse(
+            '$_apiBase/presentations/$presentationId/slides?documentId=slide_$i'),
         headers: {
           'Authorization': 'Bearer $idToken',
           'Content-Type': 'application/json',
@@ -198,7 +213,8 @@ class PresentationService {
       );
 
       if (slideResponse.statusCode != 200) {
-        throw Exception('Slayt kaydedilemedi (HTTP ${slideResponse.statusCode}): ${slideResponse.body}');
+        throw Exception(
+            'Slayt kaydedilemedi (HTTP ${slideResponse.statusCode}): ${slideResponse.body}');
       }
     }
     // ignore: avoid_print
@@ -215,12 +231,9 @@ class PresentationService {
 
   Future<void> _incrementPresentationCount(String userId) async {
     try {
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(userId)
-          .set({
-            'presentationCount': FieldValue.increment(1),
-          }, SetOptions(merge: true));
+      await FirebaseFirestore.instance.collection('users').doc(userId).set({
+        'presentationCount': FieldValue.increment(1),
+      }, SetOptions(merge: true));
     } catch (_) {
       // Best-effort: sayım hatası sunum oluşturmayı bozmamalı.
     }

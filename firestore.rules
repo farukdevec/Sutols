@@ -126,9 +126,13 @@ service cloud.firestore {
                   && (isAdmin() || request.auth.uid == uid);
       allow create: if request.auth != null && isNotSuspended(request.auth.uid)
                     && request.auth.uid == uid
+                    && isValidUsage(request.resource.data, uid, date)
                     && request.resource.data.count == 1;
       allow update: if request.auth != null && isNotSuspended(request.auth.uid)
                     && request.auth.uid == uid
+                    && isValidUsage(request.resource.data, uid, date)
+                    && request.resource.data.diff(resource.data).affectedKeys()
+                         .hasOnly(['count'])
                     && request.resource.data.count == resource.data.count + 1
                     && request.resource.data.count <= dailyLimitFor(request.auth.uid);
       allow delete: if false;
@@ -205,13 +209,23 @@ service cloud.firestore {
 
     function dailyLimitFor(uid) {
       let tier = get(/databases/$(database)/documents/users/$(uid)).data.tier;
-      return tier == 'premium' ? 999 : (tier == 'plus' ? 15 : 3);
+      return tier == 'premium' ? 999 : (tier == 'plus' ? 15 : 5);
     }
 
-    function userTierAtLeast(minTier) {
-      let tiers = {'free': 0, 'plus': 1, 'premium': 2};
-      let userTier = get(/databases/$(database)/documents/users/$(request.auth.uid)).data.tier;
-      return tiers[userTier] >= tiers[minTier];
+
+    // users/{uid}/usage/{YYYY-MM-DD}: yalnızca sahibinin günlük sayacı.
+    // uid/date sabittir; count pozitif bir tam sayı ve plan limitini aşamaz.
+    function isValidUsage(data, uid, date) {
+      return data.keys().hasOnly(['uid', 'date', 'count'])
+        && data.uid is string
+        && data.uid == uid
+        && data.date is string
+        && data.date == date
+        && data.date.size() == 10
+        && data.count is int
+        && data.count >= 1
+        && data.count <= dailyLimitFor(uid);
     }
+
   }
 }
