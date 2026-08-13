@@ -189,7 +189,7 @@ String buildHtmlStageMarkup({
     final remoteSource = is3D ? modelSourcesById[modelId] : null;
     final resolvableSource = remoteSource;
     final has3D = resolvableSource != null;
-    final componentHtml = has3D ? '' : presentationComponentHtml(block.kind);
+    final componentHtml = presentationComponentHtml(block.kind);
     final hasHtmlComponent =
         has3D || isImage || componentHtml.trim().isNotEmpty;
     final classes = <String>[
@@ -220,6 +220,7 @@ String buildHtmlStageMarkup({
                 orbitTheta: block.modelOrbitTheta,
                 orbitPhi: block.modelOrbitPhi,
                 deferSource: deferEmbeddedAssets,
+                fallbackHtml: componentHtml,
               )
             : componentHtml.trim().isEmpty
                 ? '<span class="sutol-component-shape"></span>'
@@ -252,6 +253,7 @@ String _model3DMarkup(
   required bool orbitEnabled,
   required double orbitTheta,
   required double orbitPhi,
+  required String fallbackHtml,
   bool deferSource = false,
 }) {
   final animationMarkup = hasAnimations && animationEnabled ? ' autoplay' : '';
@@ -267,10 +269,14 @@ String _model3DMarkup(
   final sourceMarkup = deferSource
       ? 'data-sutol-model-source-id="${_escapeAttribute(id)}"'
       : 'src="${_escapeAttribute(source)}"';
+  final fallbackMarkup = fallbackHtml.trim().isEmpty
+      ? '<span class="sutol-component-shape"></span>'
+      : fallbackHtml;
   return '''
 <div class="sutol-html-component-inner sutol-3d-model-inner">
-  <model-viewer class="sutol-3d-model-viewer" $sourceMarkup alt="${_escapeAttribute(label)}"$cameraControlsMarkup$animationMarkup$autoRotateMarkup camera-orbit="$cameraOrbit" interaction-prompt="none" shadow-intensity="1" shadow-softness="0.8" exposure="1" loading="eager" reveal="auto" onload="this.nextElementSibling.hidden=true" onerror="this.nextElementSibling.textContent='3B model yüklenemedi';this.nextElementSibling.classList.add('is-error')"></model-viewer>
+  <model-viewer class="sutol-3d-model-viewer" data-sutol-model-id="${_escapeAttribute(id)}" $sourceMarkup alt="${_escapeAttribute(label)}"$cameraControlsMarkup$animationMarkup$autoRotateMarkup camera-orbit="$cameraOrbit" interaction-prompt="none" shadow-intensity="1" shadow-softness="0.8" exposure="1" loading="eager" reveal="auto" onload="this.nextElementSibling.hidden=true" onerror="const status=this.nextElementSibling;const fallback=status.nextElementSibling;console.error('Sutols 3B model yüklenemedi',{modelId:this.dataset.sutolModelId,source:this.currentSrc||this.src});this.hidden=true;status.hidden=true;fallback.hidden=false"></model-viewer>
   <span class="sutol-3d-model-status">3B model yükleniyor…</span>
+  <div class="sutol-3d-model-fallback" hidden><div class="sutol-html-component-inner">$fallbackMarkup</div></div>
 </div>
 ''';
 }
@@ -1937,6 +1943,19 @@ body {
 .sutol-3d-model-status.is-error {
   color: #fff;
   background: rgba(153, 27, 27, 0.86);
+}
+
+.sutol-3d-model-fallback {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  border-radius: inherit;
+}
+
+.sutol-3d-model-fallback[hidden] {
+  display: none;
 }
 
 .sutol-export-stage .sutol-html-component.component-3d-model,

@@ -141,7 +141,7 @@ class _MembershipPageState extends State<MembershipPage> {
                       );
                       final plusCard = _MembershipCard(
                         title: 'Plus',
-                        price: '₺XX / ay',
+                        price: '\$2 / ay',
                         features: const [
                           'Günde 15 sunum',
                           'Genişletilmiş model kütüphanesi',

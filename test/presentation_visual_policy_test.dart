@@ -11,15 +11,9 @@ import 'package:sutol/services/presentation_project_codec.dart';
 
 void main() {
   List<ModelCatalogEntry> loadRealModelCatalog() {
-    const catalogPaths = <String>[
-      'functions/scripts/models-tagged.json',
-      'functions/scripts/models-tagged-new.json',
-    ];
-    final decoded = catalogPaths
-        .expand(
-          (path) => jsonDecode(File(path).readAsStringSync()) as List<dynamic>,
-        )
-        .toList(growable: false);
+    final decoded = jsonDecode(
+      File('functions/scripts/models-tagged.json').readAsStringSync(),
+    ) as List<dynamic>;
     final models = decoded.map((value) {
       final json = value as Map<String, dynamic>;
       final fileName = json['fileName'] as String;

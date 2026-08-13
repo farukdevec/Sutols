@@ -3,7 +3,7 @@
  * .glb dosyalarını Cloudflare R2 bucket'ından TEK TEK siler.
  *
  * GÜVENLİK:
- *   - Sadece models-tagged.json'daki 582 dosya silinir.
+ *   - Sadece models-tagged.json'daki 1037 dosya silinir.
  *   - Bucket'taki başka hiçbir nesneye dokunulmaz.
  *   - Bucket'ın kendisi silinmez.
  *

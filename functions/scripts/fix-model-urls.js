@@ -32,6 +32,14 @@ function resolveCredentials() {
 const BASE_URL = "https://assets.sutols.com";
 const BATCH_SIZE = 500;
 
+function decodeFileName(value) {
+  try {
+    return decodeURIComponent(value);
+  } catch (_) {
+    return value;
+  }
+}
+
 (async () => {
   const cred = resolveCredentials();
   const app = initializeApp(cred.applicationDefault
@@ -51,7 +59,8 @@ const BATCH_SIZE = 500;
   for (const doc of snap.docs) {
     const data = doc.data();
     const currentUrl = data.modelUrl || "";
-    const fileName = currentUrl.slice(currentUrl.lastIndexOf("/") + 1);
+    const encodedFileName = currentUrl.slice(currentUrl.lastIndexOf("/") + 1);
+    const fileName = decodeFileName(encodedFileName);
 
     if (!fileName || !currentUrl.includes("/")) {
       skipped++;
@@ -59,7 +68,8 @@ const BATCH_SIZE = 500;
     }
 
     const newUrl = `${BASE_URL}/${fileName}`;
-    const newThumb = `${BASE_URL}/${fileName}`;
+    const thumbnailName = fileName.replace(/\.glb$/i, ".webp");
+    const newThumb = `${BASE_URL}/thumbnails/${thumbnailName}`;
 
     if (currentUrl === newUrl && data.thumbnailUrl === newThumb) {
       unchanged++;

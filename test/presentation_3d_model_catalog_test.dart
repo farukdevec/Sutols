@@ -121,6 +121,35 @@ void main() {
     expect(document, isNot(contains('auto-rotate')));
   });
 
+  test('3B model yüklenemezse konu bileşeni yedek olarak hazırlanır', () {
+    const page = PresentationPage(
+      id: 'fallback-model-page',
+      textBlocks: <PresentationTextBlock>[],
+      componentBlocks: <PresentationComponentBlock>[
+        PresentationComponentBlock(
+          id: 'remote-model',
+          kind: PresentationComponentKind.egitim01,
+          modelAssetId: 'uzak-model',
+          position: Offset(0.2, 0.2),
+          size: Size(0.4, 0.4),
+        ),
+      ],
+    );
+
+    final document = buildHtmlStageDocument(
+      page: page,
+      modelSourcesById: const <String, String>{
+        'uzak-model': 'https://assets.sutols.com/uzak-model.glb',
+      },
+    );
+
+    expect(document, contains('sutol-3d-model-fallback'));
+    expect(document, contains('sutol-edu01-wrap'));
+    expect(document, contains("console.error('Sutols 3B model yüklenemedi'"));
+    expect(document, contains('fallback.hidden=false'));
+    expect(document, isNot(contains("textContent='3B model yüklenemedi'")));
+  });
+
   test('uploaded photo is rendered as an image, never as a 3D model', () {
     const page = PresentationPage(
       id: 'photo-page',

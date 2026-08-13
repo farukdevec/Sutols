@@ -3,8 +3,7 @@
  *
  * Kullanım:
  *   $env:GOOGLE_APPLICATION_CREDENTIALS="<hizmet-hesabi-anahtar.json>"
- *   npm run upload:tagged                               (varsayılan: models-tagged.json)
- *   node scripts/upload-tagged-models.js scripts/models-tagged-new.json
+ *   npm run upload:tagged                               (models-tagged.json)
  *
  * Doküman id'si olarak dosya adı kullanılır (uzantısız ve nokta/özel
  * karakterler temizlenmiş haliyle). Batch yazım Firestore'un 500 işlem
@@ -23,6 +22,7 @@ admin.initializeApp({
 const db = admin.firestore();
 
 const DEFAULT_TAGGED_PATH = path.join(__dirname, "models-tagged.json");
+const MODEL_BASE_URL = "https://assets.sutols.com/";
 const THUMB_BASE_URL = "https://assets.sutols.com/thumbnails/";
 const BATCH_LIMIT = 500;
 
@@ -36,6 +36,10 @@ function toDocId(fileName) {
 function toThumbnailUrl(fileName) {
   const base = fileName.replace(/\.glb$/i, "").split("/").pop();
   return `${THUMB_BASE_URL}${base}.webp`;
+}
+
+function toModelUrl(fileName) {
+  return `${MODEL_BASE_URL}${fileName.split("/").pop()}`;
 }
 
 async function uploadModels() {
@@ -64,8 +68,8 @@ async function uploadModels() {
       const id = toDocId(item.fileName);
       const data = {
         name: item.name,
-        modelUrl: item.modelUrl,
-        thumbnailUrl: item.thumbnailUrl || toThumbnailUrl(item.fileName),
+        modelUrl: toModelUrl(item.fileName),
+        thumbnailUrl: toThumbnailUrl(item.fileName),
         tags: item.tags,
         category: item.category,
         tier: item.tier,

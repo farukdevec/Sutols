@@ -1,6 +1,6 @@
 /**
  * models-raw-new.json'daki ILK 50 dosya icin name/tags/category turetir ve
- * functions/scripts/models-tagged-new.json dosyasina yazar.
+ * functions/scripts/models-tagged.json ana katalog dosyasina ekler.
  *
  * Kullanim:
  *   node scripts/tag-new-models.js
@@ -16,6 +16,7 @@ const raw = JSON.parse(
 const BATCH_START = 450; // 0-indexed; 450 -> 451. oge
 const BATCH_COUNT = 50;
 const APPEND = true;
+const MODEL_BASE_URL = "https://assets.sutols.com/";
 
 // fileName -> { name, tags, category }
 const MAPPING = {
@@ -477,8 +478,9 @@ const MAPPING = {
 };
 
 const COUNT = BATCH_COUNT;
-let output = APPEND && fs.existsSync(path.join(__dirname, "models-tagged-new.json"))
-  ? JSON.parse(fs.readFileSync(path.join(__dirname, "models-tagged-new.json"), "utf8"))
+const taggedPath = path.join(__dirname, "models-tagged.json");
+let output = APPEND && fs.existsSync(taggedPath)
+  ? JSON.parse(fs.readFileSync(taggedPath, "utf8"))
   : [];
 
 if (!Array.isArray(output)) output = [];
@@ -494,7 +496,7 @@ for (const model of raw.slice(BATCH_START, BATCH_START + COUNT)) {
   output.push({
     fileName: model.fileName,
     name: mapping ? mapping.name : fallbackName,
-    modelUrl: model.modelUrl,
+    modelUrl: `${MODEL_BASE_URL}${model.fileName.split("/").pop()}`,
     tags: mapping
       ? mapping.tags
       : ["3d", "model", "görsel", "sahne", "sunum"],
@@ -504,8 +506,8 @@ for (const model of raw.slice(BATCH_START, BATCH_START + COUNT)) {
 }
 
 fs.writeFileSync(
-  path.join(__dirname, "models-tagged-new.json"),
-  JSON.stringify(output, null, 2) + "\n",
+  taggedPath,
+  JSON.stringify(output, null, 1) + "\n",
   "utf8"
 );
 
@@ -517,8 +519,8 @@ const unique = [...seen.values()];
 if (unique.length !== output.length) {
   output = unique;
   fs.writeFileSync(
-    path.join(__dirname, "models-tagged-new.json"),
-    JSON.stringify(output, null, 2) + "\n",
+    taggedPath,
+    JSON.stringify(output, null, 1) + "\n",
     "utf8"
   );
   console.log(`Tekrarlar temizlendi: ${unique.length} benzersiz oge`);

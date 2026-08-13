@@ -56,7 +56,7 @@ class NvidiaPresentationService {
     );
 
     final body = {
-      'model': 'nvidia/nemotron-3.5-lightning-30b-a3b',
+      'model': 'nvidia/nemotron-3.5-nano-30b-a3b',
       'messages': [
         {
           'role': 'system',
