@@ -389,9 +389,9 @@ class PresentationAutoBuilder {
             text: title,
             position:
                 titleOnly ? const Offset(0.08, 0.16) : const Offset(0.08, 0.12),
-            fontSize: (_titleFontSize(title, titleOnly: titleOnly) *
-                    config.fontScale)
-                .roundToDouble(),
+            fontSize:
+                (_titleFontSize(title, titleOnly: titleOnly) * config.fontScale)
+                    .roundToDouble(),
             type: PresentationTextType.title,
             textStyle: config.titleTextStyle,
             textAnimation: config.titleTextAnimation,
@@ -697,6 +697,27 @@ class PresentationAutoBuilder {
       cap: partialCap,
     );
   }
+}
+
+final Map<PresentationTemplate, PresentationPage> _templatePreviewPageCache =
+    <PresentationTemplate, PresentationPage>{};
+
+PresentationPage presentationTemplatePreviewPage(
+  PresentationTemplate template,
+) {
+  assert(template != PresentationTemplate.automatic);
+  return _templatePreviewPageCache.putIfAbsent(template, () {
+    final pages = const PresentationAutoBuilder().buildPages(
+      <PresentationDraftPage>[
+        PresentationDraftPage(
+          title: 'Yeni Bir Bakış',
+          body: 'Fikirleri güçlü ve anlaşılır bir hikâyeye dönüştürün.',
+        ),
+      ],
+      template: template,
+    );
+    return pages.single.copyWith(id: 'template-preview-${template.name}');
+  });
 }
 
 int _partialWordScore(
@@ -2056,7 +2077,8 @@ List<String> _splitText(String text, int maxCharacters) {
   final chunks = <String>[];
   var current = StringBuffer();
   for (final word in words) {
-    final nextLength = current.length == 0 ? word.length : current.length + word.length + 1;
+    final nextLength =
+        current.length == 0 ? word.length : current.length + word.length + 1;
     if (current.length > 0 && nextLength > maxCharacters) {
       chunks.add(current.toString());
       current = StringBuffer(word);

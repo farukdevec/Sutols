@@ -166,6 +166,7 @@ class PresentationProjectCodec {
       'fontSize': block.fontSize,
       'type': block.type.name,
       'widthFactor': block.widthFactor,
+      'heightFactor': block.heightFactor,
       'textStyle': block.textStyle.name,
       'textAnimation': block.textAnimation.name,
       'textColorHex': block.textColorHex,
@@ -191,6 +192,9 @@ class PresentationProjectCodec {
         PresentationTextType.body,
       ),
       widthFactor: _double(json['widthFactor'], 0.34),
+      heightFactor: json['heightFactor'] is num
+          ? (json['heightFactor']! as num).toDouble()
+          : null,
       textStyle: _enumValue(
         PresentationTextStyle.values,
         json['textStyle'],
@@ -209,8 +213,7 @@ class PresentationProjectCodec {
       hotspotTargetPageId: json['hotspotTargetPageId'] is String
           ? json['hotspotTargetPageId']! as String
           : null,
-      textBold:
-          json['textBold'] is bool ? json['textBold']! as bool : false,
+      textBold: json['textBold'] is bool ? json['textBold']! as bool : false,
       textItalic:
           json['textItalic'] is bool ? json['textItalic']! as bool : false,
       textUnderline: json['textUnderline'] is bool

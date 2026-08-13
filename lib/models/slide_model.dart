@@ -58,6 +58,145 @@ enum PresentationTextStyle {
   klasikDancingScript,
   klasikPacifico,
   klasikLobster,
+  googleRoboto,
+  googleOpenSans,
+  googleInter,
+  googleMontserrat,
+  googlePoppins,
+  googleNotoSansJP,
+  googleLato,
+  googleArimo,
+  googleRobotoCondensed,
+  googleRobotoMono,
+  googleNotoSans,
+  googleOswald,
+  googleDMSans,
+  googleNunito,
+  googleRaleway,
+  googleNunitoSans,
+  googlePlayfairDisplay,
+  googleRobotoSlab,
+  googleRubik,
+  googleArchivoBlack,
+  googleUbuntu,
+  googleNotoSansKR,
+  googleKanit,
+  googleManrope,
+  googleOutfit,
+  googleMerriweather,
+  googleWorkSans,
+  googleLora,
+  googleNotoSansTC,
+  googlePrompt,
+}
+
+/// Google Fonts resmi katalog metadata'sındaki popülerlik sırasına göre,
+/// açık kaynak olarak işaretlenen ve CSS API üzerinden sunulan 30 aile.
+const Map<PresentationTextStyle, String> popularGoogleFontFamilies =
+    <PresentationTextStyle, String>{
+  PresentationTextStyle.googleRoboto: 'Roboto',
+  PresentationTextStyle.googleOpenSans: 'Open Sans',
+  PresentationTextStyle.googleInter: 'Inter',
+  PresentationTextStyle.googleMontserrat: 'Montserrat',
+  PresentationTextStyle.googlePoppins: 'Poppins',
+  PresentationTextStyle.googleNotoSansJP: 'Noto Sans JP',
+  PresentationTextStyle.googleLato: 'Lato',
+  PresentationTextStyle.googleArimo: 'Arimo',
+  PresentationTextStyle.googleRobotoCondensed: 'Roboto Condensed',
+  PresentationTextStyle.googleRobotoMono: 'Roboto Mono',
+  PresentationTextStyle.googleNotoSans: 'Noto Sans',
+  PresentationTextStyle.googleOswald: 'Oswald',
+  PresentationTextStyle.googleDMSans: 'DM Sans',
+  PresentationTextStyle.googleNunito: 'Nunito',
+  PresentationTextStyle.googleRaleway: 'Raleway',
+  PresentationTextStyle.googleNunitoSans: 'Nunito Sans',
+  PresentationTextStyle.googlePlayfairDisplay: 'Playfair Display',
+  PresentationTextStyle.googleRobotoSlab: 'Roboto Slab',
+  PresentationTextStyle.googleRubik: 'Rubik',
+  PresentationTextStyle.googleArchivoBlack: 'Archivo Black',
+  PresentationTextStyle.googleUbuntu: 'Ubuntu',
+  PresentationTextStyle.googleNotoSansKR: 'Noto Sans KR',
+  PresentationTextStyle.googleKanit: 'Kanit',
+  PresentationTextStyle.googleManrope: 'Manrope',
+  PresentationTextStyle.googleOutfit: 'Outfit',
+  PresentationTextStyle.googleMerriweather: 'Merriweather',
+  PresentationTextStyle.googleWorkSans: 'Work Sans',
+  PresentationTextStyle.googleLora: 'Lora',
+  PresentationTextStyle.googleNotoSansTC: 'Noto Sans TC',
+  PresentationTextStyle.googlePrompt: 'Prompt',
+};
+
+String? presentationGoogleFontFamily(PresentationTextStyle style) =>
+    popularGoogleFontFamilies[style];
+
+/// Editör kontrollerinde ve Flutter tarafındaki font önizlemelerinde
+/// kullanılacak gerçek font ailesi. HTML sahnesindeki CSS aileleriyle aynıdır.
+String? presentationFontFamily(PresentationTextStyle style) {
+  final googleFamily = presentationGoogleFontFamily(style);
+  if (googleFamily != null) return googleFamily;
+  return switch (style) {
+    PresentationTextStyle.standard => null,
+    PresentationTextStyle.openOswald => 'Oswald',
+    PresentationTextStyle.openPlayfairDisplay => 'Playfair Display',
+    PresentationTextStyle.openBebasNeue => 'Bebas Neue',
+    PresentationTextStyle.openBungee => 'Bungee',
+    PresentationTextStyle.openCaveat => 'Caveat',
+    PresentationTextStyle.openUnbounded => 'Unbounded',
+    PresentationTextStyle.klasikTinos => 'Tinos',
+    PresentationTextStyle.klasikArimo => 'Arimo',
+    PresentationTextStyle.klasikCousine => 'Cousine',
+    PresentationTextStyle.klasikCarlito => 'Carlito',
+    PresentationTextStyle.klasikCaladea => 'Caladea',
+    PresentationTextStyle.klasikEBGaramond => 'EB Garamond',
+    PresentationTextStyle.klasikLibreBaskerville => 'Libre Baskerville',
+    PresentationTextStyle.klasikAlegreya => 'Alegreya',
+    PresentationTextStyle.klasikPTSerif => 'PT Serif',
+    PresentationTextStyle.klasikMerriweather => 'Merriweather',
+    PresentationTextStyle.klasikLora => 'Lora',
+    PresentationTextStyle.klasikGreatVibes => 'Great Vibes',
+    PresentationTextStyle.klasikDancingScript => 'Dancing Script',
+    PresentationTextStyle.klasikPacifico => 'Pacifico',
+    PresentationTextStyle.klasikLobster => 'Lobster',
+    _ => null,
+  };
+}
+
+/// Görsel efekt presetleri font ailesi değildir; yalnızca eski projelerin ve
+/// otomatik şablonların geriye dönük uyumluluğu için modelde tutulurlar.
+bool isPresentationThemeTextStyle(PresentationTextStyle style) {
+  return switch (style) {
+    PresentationTextStyle.bilimDramatik ||
+    PresentationTextStyle.bilimTemiz ||
+    PresentationTextStyle.bilimDeneysel ||
+    PresentationTextStyle.gunesDramatik ||
+    PresentationTextStyle.gunesTemiz ||
+    PresentationTextStyle.gunesDeneysel ||
+    PresentationTextStyle.uzayDramatik ||
+    PresentationTextStyle.uzayTemiz ||
+    PresentationTextStyle.uzayDeneysel ||
+    PresentationTextStyle.optikDramatik ||
+    PresentationTextStyle.optikTemiz ||
+    PresentationTextStyle.optikDeneysel ||
+    PresentationTextStyle.fizikDramatik ||
+    PresentationTextStyle.fizikTemiz ||
+    PresentationTextStyle.fizikDeneysel ||
+    PresentationTextStyle.teknolojiDramatik ||
+    PresentationTextStyle.teknolojiTemiz ||
+    PresentationTextStyle.teknolojiDeneysel =>
+      true,
+    _ => false,
+  };
+}
+
+final List<PresentationTextStyle> presentationFontLibraryStyles =
+    PresentationTextStyle.values
+        .where((style) => !isPresentationThemeTextStyle(style))
+        .toList(growable: false);
+
+String? presentationGoogleFontClass(PresentationTextStyle style) {
+  final family = popularGoogleFontFamilies[style];
+  if (family == null) return null;
+  return 'text-style-google-${family.toLowerCase().replaceAll(' ', '-')}';
 }
 
 enum PresentationTextAnimation {
@@ -183,6 +322,7 @@ class PresentationTextBlock {
     required this.fontSize,
     required this.type,
     required this.widthFactor,
+    this.heightFactor,
     this.textStyle = PresentationTextStyle.standard,
     this.textAnimation = PresentationTextAnimation.none,
     this.textColorHex,
@@ -201,6 +341,7 @@ class PresentationTextBlock {
   final double fontSize;
   final PresentationTextType type;
   final double widthFactor;
+  final double? heightFactor;
   final PresentationTextStyle textStyle;
   final PresentationTextAnimation textAnimation;
   final String? textColorHex;
@@ -219,6 +360,7 @@ class PresentationTextBlock {
     double? fontSize,
     PresentationTextType? type,
     double? widthFactor,
+    Object? heightFactor = _copySentinel,
     PresentationTextStyle? textStyle,
     PresentationTextAnimation? textAnimation,
     Object? textColorHex = _copySentinel,
@@ -237,6 +379,9 @@ class PresentationTextBlock {
       fontSize: fontSize ?? this.fontSize,
       type: type ?? this.type,
       widthFactor: widthFactor ?? this.widthFactor,
+      heightFactor: identical(heightFactor, _copySentinel)
+          ? this.heightFactor
+          : heightFactor as double?,
       textStyle: textStyle ?? this.textStyle,
       textAnimation: textAnimation ?? this.textAnimation,
       textColorHex: identical(textColorHex, _copySentinel)

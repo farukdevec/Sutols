@@ -169,15 +169,13 @@ class _AuthPageState extends State<AuthPage> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Image.asset('assets/images/logo.png', height: 28),
-              const SizedBox(width: 8),
-              Text('Sutols',
-                  style: AppTypography.titleLarge
-                      .copyWith(color: colors.textPrimary)),
-            ],
+          Semantics(
+            image: true,
+            label: 'Sutols',
+            child: Image.asset(
+              'assets/images/sutols_wordmark.png',
+              height: 42,
+            ),
           ),
           const SizedBox(height: AppSpacing.s32),
           _buildToggle(colors),
@@ -185,7 +183,8 @@ class _AuthPageState extends State<AuthPage> {
           if (!_isLogin) ...[
             TextField(
               controller: _nameController,
-              style: AppTypography.bodyLarge.copyWith(color: colors.textPrimary),
+              style:
+                  AppTypography.bodyLarge.copyWith(color: colors.textPrimary),
               decoration: const InputDecoration(hintText: 'Adınız'),
             ),
             const SizedBox(height: AppSpacing.s16),
@@ -217,8 +216,8 @@ class _AuthPageState extends State<AuthPage> {
             Padding(
               padding: const EdgeInsets.only(bottom: AppSpacing.s16),
               child: Text(_error!,
-                  style: AppTypography.bodyMedium
-                      .copyWith(color: colors.danger)),
+                  style:
+                      AppTypography.bodyMedium.copyWith(color: colors.danger)),
             ),
           SizedBox(
             width: double.infinity,
@@ -351,7 +350,7 @@ class _AmbientGlowBackgroundState extends State<_AmbientGlowBackground> {
             ),
             radius: 0.8,
             colors: [
-              colors.accent.withValues(alpha: 0.06),
+              const Color(0xFF0A7E82).withValues(alpha: 0.06),
               colors.surface,
             ],
             stops: const [0.0, 1.0],

@@ -247,4 +247,25 @@ void main() {
     expect(pages.single.componentBlocks, isEmpty);
     expect(pages.single.textBlocks.first.widthFactor, 0.84);
   });
+
+  test('every template exposes a representative real slide preview', () {
+    for (final template in PresentationTemplate.values.where(
+      (template) => template != PresentationTemplate.automatic,
+    )) {
+      final preview = presentationTemplatePreviewPage(template);
+      final config = templateConfig(template);
+
+      expect(preview.id, 'template-preview-${template.name}');
+      expect(preview.backgroundKind, config.backgroundKind);
+      expect(preview.textBlocks, hasLength(2));
+      expect(preview.textBlocks.first.textStyle, config.titleTextStyle);
+      expect(preview.textBlocks.last.textStyle, config.bodyTextStyle);
+      expect(
+        preview.componentBlocks.map((block) => block.kind),
+        config.componentKinds,
+      );
+      expect(identical(preview, presentationTemplatePreviewPage(template)),
+          isTrue);
+    }
+  });
 }

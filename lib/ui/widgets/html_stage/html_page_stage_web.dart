@@ -1,5 +1,6 @@
 // ignore_for_file: avoid_web_libraries_in_flutter, deprecated_member_use
 
+import 'dart:async';
 import 'dart:convert';
 import 'dart:html' as html;
 import 'dart:ui_web' as ui_web;
@@ -16,21 +17,115 @@ class HtmlPageStage extends StatefulWidget {
     super.key,
     required this.page,
     this.selectedTextBlockId,
+    this.inlineEditingTextBlockId,
     this.selectedComponentBlockId,
     this.visibleRevealStep,
     this.showBadge = true,
     this.renderMode = HtmlStageRenderMode.full,
+    this.onTap,
   });
 
   final PresentationPage page;
   final String? selectedTextBlockId;
+  final String? inlineEditingTextBlockId;
   final String? selectedComponentBlockId;
   final int? visibleRevealStep;
   final bool showBadge;
   final HtmlStageRenderMode renderMode;
+  final VoidCallback? onTap;
 
   @override
   State<HtmlPageStage> createState() => _HtmlPageStageState();
+}
+
+class HtmlBackgroundPreview extends StatefulWidget {
+  const HtmlBackgroundPreview({
+    super.key,
+    required this.kind,
+    required this.onTap,
+  });
+
+  final PresentationBackgroundKind kind;
+  final VoidCallback onTap;
+
+  @override
+  State<HtmlBackgroundPreview> createState() => _HtmlBackgroundPreviewState();
+}
+
+class _HtmlBackgroundPreviewState extends State<HtmlBackgroundPreview> {
+  static int _viewCounter = 0;
+
+  late final String _viewType;
+  late final html.DivElement _hostElement;
+  late final html.IFrameElement _iframeElement;
+  late final html.DivElement _tapOverlayElement;
+  late final StreamSubscription<html.MouseEvent> _tapSubscription;
+
+  @override
+  void initState() {
+    super.initState();
+    _viewType = 'sutol-background-preview-${_viewCounter++}';
+    _hostElement = html.DivElement()
+      ..style.width = '100%'
+      ..style.height = '100%'
+      ..style.position = 'relative'
+      ..style.overflow = 'hidden';
+    _iframeElement = html.IFrameElement()
+      ..style.width = '100%'
+      ..style.height = '100%'
+      ..style.position = 'absolute'
+      ..style.top = '0'
+      ..style.left = '0'
+      ..style.border = '0'
+      ..style.pointerEvents = 'none'
+      ..setAttribute('loading', 'lazy')
+      ..setAttribute('scrolling', 'no')
+      ..srcdoc = buildHtmlBackgroundPreviewDocument(widget.kind);
+    _tapOverlayElement = html.DivElement()
+      ..setAttribute('aria-label', 'Arka planı seç')
+      ..style.position = 'absolute'
+      ..style.top = '0'
+      ..style.right = '0'
+      ..style.bottom = '0'
+      ..style.left = '0'
+      ..style.cursor = 'pointer'
+      ..style.backgroundColor = 'transparent';
+    _tapSubscription = _tapOverlayElement.onClick.listen((event) {
+      event
+        ..preventDefault()
+        ..stopPropagation();
+      widget.onTap();
+    });
+    _hostElement.children.addAll(<html.Element>[
+      _iframeElement,
+      _tapOverlayElement,
+    ]);
+
+    ui_web.platformViewRegistry.registerViewFactory(
+      _viewType,
+      (int viewId) => _hostElement,
+    );
+  }
+
+  @override
+  void didUpdateWidget(covariant HtmlBackgroundPreview oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.kind != widget.kind) {
+      _iframeElement.srcdoc = buildHtmlBackgroundPreviewDocument(widget.kind);
+    }
+  }
+
+  @override
+  void dispose() {
+    unawaited(_tapSubscription.cancel());
+    _hostElement.children.clear();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return HtmlElementView(viewType: _viewType);
+  }
 }
 
 class _HtmlPageStageState extends State<HtmlPageStage> {
@@ -39,6 +134,7 @@ class _HtmlPageStageState extends State<HtmlPageStage> {
   late final String _viewType;
   late final html.DivElement _hostElement;
   late final html.IFrameElement _iframeElement;
+  StreamSubscription<html.MouseEvent>? _tapSubscription;
 
   @override
   void initState() {
@@ -48,15 +144,40 @@ class _HtmlPageStageState extends State<HtmlPageStage> {
       ..className = 'sutol-html-host'
       ..style.width = '100%'
       ..style.height = '100%'
-      ..style.pointerEvents = 'none'
+      ..style.position = 'relative'
+      ..style.pointerEvents = widget.onTap == null ? 'none' : 'auto'
       ..style.overflow = 'hidden';
     _iframeElement = html.IFrameElement()
       ..style.width = '100%'
       ..style.height = '100%'
+      ..style.position = 'absolute'
+      ..style.top = '0'
+      ..style.left = '0'
       ..style.border = '0'
       ..style.pointerEvents = 'none'
       ..setAttribute('scrolling', 'no');
+    if (widget.onTap != null) {
+      _iframeElement.setAttribute('loading', 'lazy');
+    }
     _hostElement.children.add(_iframeElement);
+    if (widget.onTap != null) {
+      final overlay = html.DivElement()
+        ..setAttribute('aria-label', 'Şablonu seç')
+        ..style.position = 'absolute'
+        ..style.top = '0'
+        ..style.right = '0'
+        ..style.bottom = '0'
+        ..style.left = '0'
+        ..style.cursor = 'pointer'
+        ..style.backgroundColor = 'transparent';
+      _tapSubscription = overlay.onClick.listen((event) {
+        event
+          ..preventDefault()
+          ..stopPropagation();
+        widget.onTap?.call();
+      });
+      _hostElement.children.add(overlay);
+    }
 
     ui_web.platformViewRegistry.registerViewFactory(
       _viewType,
@@ -76,6 +197,10 @@ class _HtmlPageStageState extends State<HtmlPageStage> {
 
   @override
   void dispose() {
+    final tapSubscription = _tapSubscription;
+    if (tapSubscription != null) {
+      unawaited(tapSubscription.cancel());
+    }
     _hostElement.children.clear();
     super.dispose();
   }
@@ -84,6 +209,7 @@ class _HtmlPageStageState extends State<HtmlPageStage> {
     _iframeElement.srcdoc = buildHtmlStageDocument(
       page: widget.page,
       selectedTextBlockId: widget.selectedTextBlockId,
+      inlineEditingTextBlockId: widget.inlineEditingTextBlockId,
       selectedComponentBlockId: widget.selectedComponentBlockId,
       visibleRevealStep: widget.visibleRevealStep,
       showBadge: widget.showBadge,
@@ -105,56 +231,50 @@ class _HtmlPageStageState extends State<HtmlPageStage> {
 
     final payload = <String, Object?>{
       'type': 'sutol-stage-patch',
-      'components': widget.page.componentBlocks
-          .map(
-            (block) {
-              final assetId = block.modelAssetId;
-              final isImage =
-                  assetId != null && RemoteImageSources.sourceFor(assetId) != null;
-              return <String, Object?>{
-                'id': block.id,
-                'className': <String>[
-                  'sutol-html-component',
-                  if (isImage) 'component-uploaded-image',
-                  if (block.modelAssetId == null)
-                    'component-${_componentDomKindName(block.kind)}',
-                  if (block.modelAssetId != null &&
-                      !isImage &&
-                      RemoteModelSources.sourceFor(assetId!) != null)
-                    'component-3d-model',
-                  if (block.modelAssetId != null ||
-                      presentationComponentHasHtml(block.kind))
-                    'has-html-component',
-                  if (block.id == widget.selectedComponentBlockId) 'is-selected',
-                ].join(' '),
-                'revealStep': block.revealStep,
-                'hotspotTargetPageId': block.hotspotTargetPageId,
-                'left': '${_pct(block.position.dx)}%',
-                'top': '${_pct(block.position.dy)}%',
-                'width': '${_pct(block.size.width)}%',
-                'height': '${_pct(block.size.height)}%',
-                'modelOrbitTheta': isImage || assetId == null
-                    ? null
-                    : block.modelOrbitTheta.toStringAsFixed(2),
-                'modelOrbitPhi': isImage || assetId == null
-                    ? null
-                    : block.modelOrbitPhi.toStringAsFixed(2),
-                'modelAutoRotate': isImage || assetId == null
-                    ? null
-                    : block.modelAutoRotate,
-                'modelRotationSpeed': isImage || assetId == null
-                    ? null
-                    : block.modelRotationSpeed,
-                'modelOrbitEnabled': isImage || assetId == null
-                    ? null
-                    : block.modelOrbitEnabled,
-                'modelAnimationEnabled': isImage || assetId == null
-                    ? null
-                    : block.modelAnimationEnabled,
-              };
-            },
-          )
-          .toList(growable: false),
+      'components': widget.page.componentBlocks.map(
+        (block) {
+          final assetId = block.modelAssetId;
+          final isImage =
+              assetId != null && RemoteImageSources.sourceFor(assetId) != null;
+          return <String, Object?>{
+            'id': block.id,
+            'className': <String>[
+              'sutol-html-component',
+              if (isImage) 'component-uploaded-image',
+              if (block.modelAssetId == null)
+                'component-${_componentDomKindName(block.kind)}',
+              if (block.modelAssetId != null &&
+                  !isImage &&
+                  RemoteModelSources.sourceFor(assetId!) != null)
+                'component-3d-model',
+              if (block.modelAssetId != null ||
+                  presentationComponentHasHtml(block.kind))
+                'has-html-component',
+              if (block.id == widget.selectedComponentBlockId) 'is-selected',
+            ].join(' '),
+            'revealStep': block.revealStep,
+            'hotspotTargetPageId': block.hotspotTargetPageId,
+            'left': '${_pct(block.position.dx)}%',
+            'top': '${_pct(block.position.dy)}%',
+            'width': '${_pct(block.size.width)}%',
+            'height': '${_pct(block.size.height)}%',
+            'modelOrbitTheta': isImage || assetId == null
+                ? null
+                : block.modelOrbitTheta.toStringAsFixed(2),
+            'modelOrbitPhi': isImage || assetId == null
+                ? null
+                : block.modelOrbitPhi.toStringAsFixed(2),
+            'modelAutoRotate':
+                isImage || assetId == null ? null : block.modelAutoRotate,
+            'modelRotationSpeed':
+                isImage || assetId == null ? null : block.modelRotationSpeed,
+            'modelOrbitEnabled':
+                isImage || assetId == null ? null : block.modelOrbitEnabled,
+            'modelAnimationEnabled':
+                isImage || assetId == null ? null : block.modelAnimationEnabled,
+          };
+        },
+      ).toList(growable: false),
       'texts': widget.page.textBlocks
           .map(
             (block) => <String, Object?>{
@@ -166,12 +286,17 @@ class _HtmlPageStageState extends State<HtmlPageStage> {
                 _textAnimationDomClass(block.textAnimation),
                 if (block.glowIntensity <= 0) 'is-glow-off',
                 if (block.id == widget.selectedTextBlockId) 'is-selected',
+                if (block.id == widget.inlineEditingTextBlockId)
+                  'is-inline-editing',
               ].join(' '),
               'revealStep': block.revealStep,
               'hotspotTargetPageId': block.hotspotTargetPageId,
               'left': '${_pct(block.position.dx)}%',
               'top': '${_pct(block.position.dy)}%',
               'width': '${_pct(block.widthFactor)}%',
+              'height': block.heightFactor == null
+                  ? ''
+                  : '${_pct(block.heightFactor!)}%',
               'baseFontSize': '${(block.fontSize / 10).toStringAsFixed(2)}cqw',
               'glowIntensity': block.glowIntensity.toStringAsFixed(2),
               'textColor': block.textColorHex,
@@ -250,6 +375,8 @@ String _textTypeDomClass(PresentationTextType type) {
 }
 
 String _textStyleDomClass(PresentationTextStyle style) {
+  final googleFontClass = presentationGoogleFontClass(style);
+  if (googleFontClass != null) return googleFontClass;
   switch (style) {
     case PresentationTextStyle.standard:
       return 'text-style-standard';
@@ -331,6 +458,8 @@ String _textStyleDomClass(PresentationTextStyle style) {
       return 'text-style-klasik-pacifico';
     case PresentationTextStyle.klasikLobster:
       return 'text-style-klasik-lobster';
+    default:
+      return 'text-style-standard';
   }
 }
 

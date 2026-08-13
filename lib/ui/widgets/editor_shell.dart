@@ -32,6 +32,16 @@ typedef CanvasItemSecondaryTap = void Function(
   Offset globalPosition,
 );
 
+typedef CanvasTextResizeChanged = void Function(
+  Offset delta,
+  Size canvasSize, {
+  required double renderedHeightFactor,
+  required bool fromLeft,
+  required bool fromTop,
+  required bool fromRight,
+  required bool fromBottom,
+});
+
 typedef CanvasSecondaryTap = void Function(Offset globalPosition);
 
 typedef CanvasModelRotate = void Function(String itemId, Offset delta);
@@ -287,13 +297,13 @@ class _EditorStudioHeader extends StatelessWidget {
             onPressed: () => Navigator.of(context).pop(),
           ),
           const SizedBox(width: 12),
-          Text(
-            'Sutols',
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  color: context.onSurface,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: -0.02,
-                ),
+          Semantics(
+            image: true,
+            label: 'Sutols',
+            child: Image.asset(
+              'assets/images/sutols_wordmark.png',
+              height: 34,
+            ),
           ),
           const SizedBox(width: 18),
           const SutolChip(label: 'Dosya'),
@@ -479,9 +489,9 @@ class _EditorRailButton extends StatelessWidget {
             Text(
               label,
               style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                color: fgColor,
-                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-              ),
+                    color: fgColor,
+                    fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                  ),
             ),
           ],
         ),
@@ -738,7 +748,10 @@ class _EditorTextInspectorControls extends StatelessWidget {
           onIncrease: selectedTextBlock == null
               ? null
               : () => controller.updateSelectedFontSize(
-                    math.min(120, selectedTextBlock.fontSize + 2),
+                    math.min(
+                      PresentationController.maxTextFontSize,
+                      selectedTextBlock.fontSize + 2,
+                    ),
                   ),
         ),
         const SizedBox(height: 14),
@@ -1385,7 +1398,10 @@ class _WorkspaceToolbar extends StatelessWidget {
                   onIncrease: selectedTextBlock == null
                       ? null
                       : () => controller.updateSelectedFontSize(
-                            math.min(120, selectedTextBlock.fontSize + 2),
+                            math.min(
+                              PresentationController.maxTextFontSize,
+                              selectedTextBlock.fontSize + 2,
+                            ),
                           ),
                 ),
               ),
@@ -1457,7 +1473,10 @@ class _WorkspaceToolbar extends StatelessWidget {
                     onIncrease: selectedTextBlock == null
                         ? null
                         : () => controller.updateSelectedFontSize(
-                              math.min(120, selectedTextBlock.fontSize + 2),
+                              math.min(
+                                PresentationController.maxTextFontSize,
+                                selectedTextBlock.fontSize + 2,
+                              ),
                             ),
                   ),
                 ),
@@ -1525,7 +1544,8 @@ class _LabeledTextField extends StatelessWidget {
           ),
           disabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(context.radiusMd),
-            borderSide: BorderSide(color: context.outline.withValues(alpha: 0.5)),
+            borderSide:
+                BorderSide(color: context.outline.withValues(alpha: 0.5)),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(context.radiusMd),
@@ -1580,14 +1600,15 @@ class _LabeledDropdown extends StatelessWidget {
           ),
           disabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(context.radiusMd),
-            borderSide: BorderSide(color: context.outline.withValues(alpha: 0.5)),
+            borderSide:
+                BorderSide(color: context.outline.withValues(alpha: 0.5)),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(context.radiusMd),
             borderSide: BorderSide(color: context.primary, width: 1.5),
           ),
         ),
-        items: PresentationTextStyle.values
+        items: presentationFontLibraryStyles
             .map(
               (style) => DropdownMenuItem<PresentationTextStyle>(
                 value: style,
@@ -1766,7 +1787,8 @@ class PresentationPageCanvas extends StatefulWidget {
     this.onSelectTextBlock,
     this.onDragSelectedText,
     this.onInlineTextChanged,
-    this.onResizeSelectedTextWidth,
+    this.onInlineEditingChanged,
+    this.onResizeSelectedText,
     this.onResizeSelectedComponent,
     this.onMarqueeSelectionChanged,
     this.onClearSelection,
@@ -1794,8 +1816,8 @@ class PresentationPageCanvas extends StatefulWidget {
   final ValueChanged<String>? onSelectTextBlock;
   final void Function(Offset delta, Size canvasSize)? onDragSelectedText;
   final ValueChanged<String>? onInlineTextChanged;
-  final void Function(double deltaX, Size canvasSize)?
-      onResizeSelectedTextWidth;
+  final ValueChanged<String?>? onInlineEditingChanged;
+  final CanvasTextResizeChanged? onResizeSelectedText;
   final CanvasComponentResizeChanged? onResizeSelectedComponent;
   final CanvasMultiSelectionChanged? onMarqueeSelectionChanged;
   final VoidCallback? onClearSelection;
@@ -1852,8 +1874,14 @@ class _PresentationPageCanvasState extends State<PresentationPageCanvas> {
     super.didUpdateWidget(oldWidget);
     final editingBlock = widget.page.findTextBlock(_editingBlockId);
     if (editingBlock == null) {
+      final wasEditing = _editingBlockId != null;
       _inlineFocusNode.unfocus();
       _editingBlockId = null;
+      if (wasEditing) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          widget.onInlineEditingChanged?.call(null);
+        });
+      }
       return;
     }
 
@@ -1880,6 +1908,7 @@ class _PresentationPageCanvasState extends State<PresentationPageCanvas> {
       setState(() {
         _editingBlockId = null;
       });
+      widget.onInlineEditingChanged?.call(null);
     }
   }
 
@@ -1893,6 +1922,7 @@ class _PresentationPageCanvasState extends State<PresentationPageCanvas> {
     setState(() {
       _editingBlockId = block.id;
     });
+    widget.onInlineEditingChanged?.call(block.id);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) {
         return;
@@ -1908,6 +1938,7 @@ class _PresentationPageCanvasState extends State<PresentationPageCanvas> {
     setState(() {
       _editingBlockId = null;
     });
+    widget.onInlineEditingChanged?.call(null);
     _inlineFocusNode.unfocus();
   }
 
@@ -2028,7 +2059,7 @@ class _PresentationPageCanvasState extends State<PresentationPageCanvas> {
     final paddingX = math.max(10.0, canvasSize.width * 0.014);
     final paddingY = math.max(8.0, canvasSize.height * 0.016);
     final baseFontSize =
-        (block.fontSize * canvasSize.width / 1000).clamp(14.0, 112.0);
+        (block.fontSize * canvasSize.width / 1000).clamp(14.0, 320.0);
     final adjustedFontSize = _fontSizeForType(block.type, baseFontSize);
     final maxBoxWidth = math.max(72.0, canvasSize.width * 0.82);
     final minBoxWidth = math.min(
@@ -2054,11 +2085,17 @@ class _PresentationPageCanvasState extends State<PresentationPageCanvas> {
       textDirection: Directionality.of(context),
     )..layout(maxWidth: math.max(0, boxWidth - (paddingX * 2)));
 
+    final naturalHeight = textPainter.height + (paddingY * 2);
+    final boxHeight = block.heightFactor == null
+        ? naturalHeight
+        : (block.heightFactor! * canvasSize.height)
+            .clamp(44.0, canvasSize.height * 0.86)
+            .toDouble();
     return Rect.fromLTWH(
       leftPosition,
       block.position.dy * canvasSize.height,
       boxWidth,
-      textPainter.height + (paddingY * 2),
+      boxHeight,
     );
   }
 
@@ -2273,16 +2310,21 @@ class _PresentationPageCanvasState extends State<PresentationPageCanvas> {
                         widget.onDragSelectedText!(details.delta, canvasSize);
                       }
                     : null,
-                onHorizontalResizeUpdate: widget.interactive &&
+                onResizeUpdate: widget.interactive &&
                         _editingBlockId != block.id &&
-                        widget.onResizeSelectedTextWidth != null
-                    ? (details) {
+                        widget.onResizeSelectedText != null
+                    ? (handle, details, renderedHeightFactor) {
                         if (!selectedTextIds.contains(block.id)) {
                           widget.onSelectTextBlock?.call(block.id);
                         }
-                        widget.onResizeSelectedTextWidth!(
-                          details.delta.dx,
+                        widget.onResizeSelectedText!(
+                          details.delta,
                           canvasSize,
+                          renderedHeightFactor: renderedHeightFactor,
+                          fromLeft: _componentResizeFromLeft(handle),
+                          fromTop: _componentResizeFromTop(handle),
+                          fromRight: _componentResizeFromRight(handle),
+                          fromBottom: _componentResizeFromBottom(handle),
                         );
                       }
                     : null,
@@ -2372,7 +2414,7 @@ class _PageTextBlock extends StatelessWidget {
     this.onDoubleTap,
     this.onSecondaryTapDown,
     this.onPanUpdate,
-    this.onHorizontalResizeUpdate,
+    this.onResizeUpdate,
     this.onInlineTextChanged,
     this.onEditingFinished,
   });
@@ -2391,7 +2433,11 @@ class _PageTextBlock extends StatelessWidget {
   final VoidCallback? onDoubleTap;
   final GestureTapDownCallback? onSecondaryTapDown;
   final GestureDragUpdateCallback? onPanUpdate;
-  final GestureDragUpdateCallback? onHorizontalResizeUpdate;
+  final void Function(
+    _ComponentResizeHandle handle,
+    DragUpdateDetails details,
+    double renderedHeightFactor,
+  )? onResizeUpdate;
   final ValueChanged<String>? onInlineTextChanged;
   final VoidCallback? onEditingFinished;
 
@@ -2402,7 +2448,7 @@ class _PageTextBlock extends StatelessWidget {
     final paddingX = math.max(10.0, canvasSize.width * 0.014);
     final paddingY = math.max(8.0, canvasSize.height * 0.016);
     final baseFontSize =
-        (block.fontSize * canvasSize.width / 1000).clamp(14.0, 112.0);
+        (block.fontSize * canvasSize.width / 1000).clamp(14.0, 320.0);
     final adjustedFontSize = _fontSizeForType(block.type, baseFontSize);
     final maxBoxWidth = math.max(72.0, canvasSize.width * 0.82);
     final minBoxWidth = math.min(
@@ -2420,7 +2466,8 @@ class _PageTextBlock extends StatelessWidget {
         : block.text.trim().isEmpty
             ? math.max(0.42, textOpacity * 0.52)
             : textOpacity;
-    final textColor = (darkSurface ? Colors.white : context.onSurface).withValues(
+    final textColor =
+        (darkSurface ? Colors.white : context.onSurface).withValues(
       alpha: effectiveTextAlpha,
     );
     final displayStyle = Theme.of(context).textTheme.headlineSmall?.copyWith(
@@ -2461,99 +2508,91 @@ class _PageTextBlock extends StatelessWidget {
             displayText,
             style: displayStyle,
           );
-    final showResizeHandle = interactive &&
-        isSelected &&
-        !isEditing &&
-        onHorizontalResizeUpdate != null;
+    final textPainter = TextPainter(
+      text: TextSpan(text: displayText, style: displayStyle),
+      textDirection: Directionality.of(context),
+    )..layout(maxWidth: math.max(0, boxWidth - (paddingX * 2)));
+    final naturalHeight = textPainter.height + (paddingY * 2);
+    final boxHeight = block.heightFactor == null
+        ? naturalHeight
+        : (block.heightFactor! * canvasSize.height)
+            .clamp(44.0, canvasSize.height * 0.86)
+            .toDouble();
+    final topPosition = (block.position.dy * canvasSize.height)
+        .clamp(0.0, math.max(0.0, canvasSize.height - boxHeight))
+        .toDouble();
+    final showResizeHandles =
+        interactive && isSelected && !isEditing && onResizeUpdate != null;
+    final gripHitSize = showResizeHandles ? 40.0 : 0.0;
+    final gripInset = gripHitSize / 2;
 
     return Positioned(
-      left: leftPosition,
-      top: block.position.dy * canvasSize.height,
-      child: MouseRegion(
-        cursor: interactive
-            ? (isSelected ? SystemMouseCursors.move : SystemMouseCursors.click)
-            : MouseCursor.defer,
-        child: GestureDetector(
-          behavior: HitTestBehavior.translucent,
-          onTap: onTap,
-          onDoubleTap: onDoubleTap,
-          onSecondaryTapDown: onSecondaryTapDown,
-          onPanUpdate: onPanUpdate,
-          child: SizedBox(
-            width: boxWidth + (showResizeHandle ? 24 : 0),
-            child: Stack(
-              clipBehavior: Clip.none,
-              alignment: Alignment.centerLeft,
-              children: <Widget>[
-                SizedBox(
-                  width: boxWidth,
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 160),
-                    padding: EdgeInsets.symmetric(
-                      horizontal: paddingX,
-                      vertical: paddingY,
-                    ),
-                    decoration: BoxDecoration(
-                      color: showSelectionBorder && isSelected
-                          ? (isEditing && textOpacity <= 0
-                              ? Colors.white.withValues(alpha: 0.96)
-                              : context.primary.withValues(alpha: 0.08))
+      left: leftPosition - gripInset,
+      top: topPosition - gripInset,
+      width: boxWidth + gripHitSize,
+      height: boxHeight + gripHitSize,
+      child: Stack(
+        fit: StackFit.expand,
+        clipBehavior: Clip.none,
+        children: <Widget>[
+          Positioned(
+            left: gripInset,
+            top: gripInset,
+            width: boxWidth,
+            height: boxHeight,
+            child: MouseRegion(
+              cursor: interactive
+                  ? (isSelected
+                      ? SystemMouseCursors.move
+                      : SystemMouseCursors.click)
+                  : MouseCursor.defer,
+              child: GestureDetector(
+                behavior: HitTestBehavior.translucent,
+                onTap: onTap,
+                onDoubleTap: onDoubleTap,
+                onSecondaryTapDown: onSecondaryTapDown,
+                onPanUpdate: onPanUpdate,
+                child: AnimatedContainer(
+                  duration: isSelected
+                      ? Duration.zero
+                      : const Duration(milliseconds: 160),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: paddingX,
+                    vertical: paddingY,
+                  ),
+                  clipBehavior: Clip.hardEdge,
+                  decoration: BoxDecoration(
+                    color: showSelectionBorder && isSelected
+                        ? context.primary.withValues(
+                            alpha: isEditing ? 0.04 : 0.08,
+                          )
+                        : Colors.transparent,
+                    borderRadius: BorderRadius.circular(22),
+                    border: Border.all(
+                      color: showSelectionBorder
+                          ? (isSelected ? context.primary : Colors.transparent)
                           : Colors.transparent,
-                      borderRadius: BorderRadius.circular(22),
-                      border: Border.all(
-                        color: showSelectionBorder
-                            ? (isSelected ? context.primary : Colors.transparent)
-                            : Colors.transparent,
-                        width: isSelected ? 1.6 : 1,
-                      ),
+                      width: isSelected ? 1.6 : 1,
                     ),
-                    child: blockChild,
                   ),
+                  child: blockChild,
                 ),
-                if (showResizeHandle)
-                  Positioned(
-                    left: boxWidth - 12,
-                    child: MouseRegion(
-                      cursor: SystemMouseCursors.resizeLeftRight,
-                      child: GestureDetector(
-                        behavior: HitTestBehavior.opaque,
-                        onHorizontalDragUpdate: onHorizontalResizeUpdate,
-                        child: Container(
-                          width: 24,
-                          height: 64,
-                          alignment: Alignment.center,
-                          child: Container(
-                            width: 12,
-                            height: 40,
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(999),
-                              border:
-                                  Border.all(color: context.primary, width: 1.4),
-                              boxShadow: const <BoxShadow>[
-                                BoxShadow(
-                                  color: Color(0x18000000),
-                                  blurRadius: 10,
-                                  offset: Offset(0, 4),
-                                ),
-                              ],
-                            ),
-                            child: Center(
-                              child: Container(
-                                width: 2,
-                                height: 18,
-                                color: context.primary,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-              ],
+              ),
             ),
           ),
-        ),
+          if (showResizeHandles)
+            for (final handle in _ComponentResizeHandle.values)
+              _ComponentResizeGrip(
+                handle: handle,
+                onPanUpdate: onResizeUpdate == null
+                    ? null
+                    : (details) => onResizeUpdate!(
+                          handle,
+                          details,
+                          boxHeight / canvasSize.height,
+                        ),
+              ),
+        ],
       ),
     );
   }
@@ -3229,6 +3268,8 @@ bool _isDarkCanvasBackground(PresentationBackgroundKind kind) {
 }
 
 String _textStyleLabel(PresentationTextStyle style) {
+  final googleFontFamily = presentationGoogleFontFamily(style);
+  if (googleFontFamily != null) return googleFontFamily;
   switch (style) {
     case PresentationTextStyle.standard:
       return 'Varsayılan';
@@ -3310,6 +3351,8 @@ String _textStyleLabel(PresentationTextStyle style) {
       return 'Pacifico';
     case PresentationTextStyle.klasikLobster:
       return 'Lobster';
+    default:
+      return style.name;
   }
 }
 

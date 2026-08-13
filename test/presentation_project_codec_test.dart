@@ -18,6 +18,7 @@ void main() {
             fontSize: 54,
             type: PresentationTextType.title,
             widthFactor: 0.46,
+            heightFactor: 0.22,
             textStyle: PresentationTextStyle.bilimDramatik,
             textAnimation: PresentationTextAnimation.optikDeneysel,
             textColorHex: '#A855F7',
@@ -84,6 +85,7 @@ void main() {
     );
     expect(project.pages.single.textBlocks.single.textColorHex, '#A855F7');
     expect(project.pages.single.textBlocks.single.glowIntensity, 1.6);
+    expect(project.pages.single.textBlocks.single.heightFactor, 0.22);
     expect(project.pages.single.textBlocks.single.textBold, isTrue);
     expect(project.pages.single.textBlocks.single.textItalic, isTrue);
     expect(project.pages.single.textBlocks.single.textUnderline, isTrue);
@@ -183,6 +185,7 @@ void main() {
       PresentationTextAnimation.none,
     );
     expect(project.pages.single.textBlocks.single.textColorHex, isNull);
+    expect(project.pages.single.textBlocks.single.heightFactor, isNull);
     expect(project.pages.single.textBlocks.single.textBold, isFalse);
     expect(project.pages.single.textBlocks.single.textItalic, isFalse);
     expect(project.pages.single.textBlocks.single.textUnderline, isFalse);

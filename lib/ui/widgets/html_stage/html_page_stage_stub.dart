@@ -3,27 +3,59 @@ import 'package:flutter/material.dart';
 import '../../../models/slide_model.dart';
 import 'html_stage_document.dart';
 
+class HtmlBackgroundPreview extends StatelessWidget {
+  const HtmlBackgroundPreview({
+    super.key,
+    required this.kind,
+    required this.onTap,
+  });
+
+  final PresentationBackgroundKind kind;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onTap,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: presentationBackgroundPreviewColors(kind),
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class HtmlPageStage extends StatelessWidget {
   const HtmlPageStage({
     super.key,
     required this.page,
     this.selectedTextBlockId,
+    this.inlineEditingTextBlockId,
     this.selectedComponentBlockId,
     this.visibleRevealStep,
     this.showBadge = true,
     this.renderMode = HtmlStageRenderMode.full,
+    this.onTap,
   });
 
   final PresentationPage page;
   final String? selectedTextBlockId;
+  final String? inlineEditingTextBlockId;
   final String? selectedComponentBlockId;
   final int? visibleRevealStep;
   final bool showBadge;
   final HtmlStageRenderMode renderMode;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    return DecoratedBox(
+    final stage = DecoratedBox(
       decoration: const BoxDecoration(
         gradient: LinearGradient(
           colors: <Color>[
@@ -43,6 +75,14 @@ class HtmlPageStage extends StatelessWidget {
               ),
         ),
       ),
+    );
+    if (onTap == null) {
+      return stage;
+    }
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onTap,
+      child: stage,
     );
   }
 }
