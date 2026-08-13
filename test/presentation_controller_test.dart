@@ -4,6 +4,28 @@ import 'package:sutol/models/slide_model.dart';
 import 'package:sutol/state/presentation_controller.dart';
 
 void main() {
+  test('newly added 3D models animate and rotate automatically', () {
+    final controller = PresentationController();
+    addTearDown(controller.dispose);
+
+    controller.add3DModelBlock(
+      const Presentation3DModelAsset(
+        id: 'animated-model',
+        label: 'Animated model',
+        assetPath: 'https://example.com/animated-model.glb',
+        category: 'Test',
+        tags: <String>[],
+        byteSize: 0,
+        sha256: '',
+        hasAnimations: true,
+      ),
+    );
+
+    final modelBlock = controller.selectedComponentBlock!;
+    expect(modelBlock.modelAnimationEnabled, isTrue);
+    expect(modelBlock.modelAutoRotate, isTrue);
+  });
+
   test('undo and redo restore deck mutations', () {
     final controller = PresentationController();
     addTearDown(controller.dispose);

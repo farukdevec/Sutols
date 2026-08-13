@@ -13,6 +13,7 @@ import '../services/presentation_export_service.dart';
 import '../services/presentation_auto_builder.dart';
 import '../services/presentation_fullscreen_service.dart';
 import '../services/presentation_loader.dart';
+import '../services/presentation_model_source_resolver.dart';
 import '../services/presentation_project_codec.dart';
 import '../services/presentation_project_io.dart';
 import '../services/presentation_project_store.dart';
@@ -592,6 +593,7 @@ class _HtmlPresentationEditorPageState
       if (project == null) {
         return;
       }
+      await hydratePresentationModelSources(project.pages);
       widget.controller.replaceDeck(
         project.pages,
         effectSettings: project.effectSettings,
@@ -4004,10 +4006,8 @@ class _HtmlPageCard extends StatelessWidget {
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(6),
                 child: IgnorePointer(
-                  child: PresentationPageCanvas(
+                  child: PresentationPageThumbnailCanvas(
                     page: page,
-                    showHint: false,
-                    showSelectionBorder: false,
                   ),
                 ),
               ),

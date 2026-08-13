@@ -36,29 +36,37 @@ class PresentationDeckBuilder {
         continue;
       }
 
-      final selectedModel = slide.models.isEmpty ? null : slide.models.first;
-      final fallbackComponent = selectedModel == null
-          ? bestPresentationComponentForSlide(
-              title: title,
-              body: '${slide.keywords.join(' ')} $content',
-            )
-          : null;
+      // `kind` is also the HTML fallback rendered while a remote 3D source
+      // cannot be resolved. Calculate it for model-backed blocks as well;
+      // otherwise PresentationComponentBlock's historical default
+      // (edebiyat01 / open book) appears for every missing model.
+      final fallbackComponent = bestPresentationComponentForSlide(
+        title: title,
+        body: '${slide.keywords.join(' ')} $content',
+      );
+      final selectedModel =
+          slide.models.isEmpty || slide.models.first.modelUrl.trim().isEmpty
+              ? null
+              : slide.models.first;
       final hasVisual = selectedModel != null || fallbackComponent != null;
       final background =
           _bestBackground(topic: topic, title: title, content: content);
 
       final textBlocks = <PresentationTextBlock>[];
+      final titleLayout = _generatedTitleLayout(title);
+      final bodyTop = title.isEmpty ? 0.16 : titleLayout.bodyTop;
       if (title.isNotEmpty) {
         textBlocks.add(
           PresentationTextBlock(
             id: 'text-${textCounter++}',
             text: title,
-            position: const Offset(0.07, 0.1),
-            fontSize: 52,
+            position: const Offset(0.07, 0.08),
+            fontSize: titleLayout.fontSize,
             type: PresentationTextType.title,
             textStyle: PresentationTextStyle.bilimTemiz,
             textAnimation: PresentationTextAnimation.yavasBelirme,
             widthFactor: hasVisual ? 0.58 : 0.84,
+            heightFactor: titleLayout.heightFactor,
           ),
         );
       }
@@ -67,14 +75,13 @@ class PresentationDeckBuilder {
           PresentationTextBlock(
             id: 'text-${textCounter++}',
             text: content,
-            position: title.isEmpty
-                ? const Offset(0.07, 0.22)
-                : const Offset(0.07, 0.34),
-            fontSize: 26,
+            position: Offset(0.07, bodyTop),
+            fontSize: _generatedBodyFontSize(content),
             type: PresentationTextType.body,
             textStyle: PresentationTextStyle.bilimTemiz,
             textAnimation: PresentationTextAnimation.bulaniktanNet,
             widthFactor: hasVisual ? 0.5 : 0.84,
+            heightFactor: 0.9 - bodyTop,
           ),
         );
       }
@@ -84,8 +91,10 @@ class PresentationDeckBuilder {
         componentBlocks.add(
           PresentationComponentBlock(
             id: 'component-${componentCounter++}',
+            kind: fallbackComponent ?? PresentationComponentKind.edebiyat01,
             modelAssetId: selectedModel.id,
-            modelAnimationEnabled: false,
+            modelAnimationEnabled: true,
+            modelAutoRotate: true,
             modelOrbitTheta: 15,
             modelOrbitPhi: 70,
             position: const Offset(0.68, 0.22),
@@ -161,6 +170,26 @@ class PresentationDeckBuilder {
     );
     return controller;
   }
+}
+
+({double fontSize, double heightFactor, double bodyTop}) _generatedTitleLayout(
+    String title) {
+  final length = title.replaceAll(RegExp(r'\s+'), ' ').trim().length;
+  if (length <= 34) {
+    return (fontSize: 52, heightFactor: 0.18, bodyTop: 0.30);
+  }
+  if (length <= 68) {
+    return (fontSize: 46, heightFactor: 0.24, bodyTop: 0.36);
+  }
+  return (fontSize: 40, heightFactor: 0.30, bodyTop: 0.42);
+}
+
+double _generatedBodyFontSize(String content) {
+  final length = content.replaceAll(RegExp(r'\s+'), ' ').trim().length;
+  if (length >= 360) return 20;
+  if (length >= 260) return 22;
+  if (length >= 180) return 24;
+  return 26;
 }
 
 /// Sunum üretim akışının bir slaydı: başlık, içerik ve eşleşen modeller.

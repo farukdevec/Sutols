@@ -8,10 +8,14 @@ class RemoteModelSources {
 
   static final Map<String, String> _sources = <String, String>{};
 
-  static Map<String, String> get all => Map<String, String>.unmodifiable(_sources);
+  static Map<String, String> get all =>
+      Map<String, String>.unmodifiable(_sources);
 
   static void registerAll(Map<String, String> sources) {
-    _sources.addAll(sources);
+    for (final entry in sources.entries) {
+      if (entry.key.trim().isEmpty || entry.value.trim().isEmpty) continue;
+      _sources[entry.key] = entry.value.trim();
+    }
   }
 
   static String? sourceFor(String modelId) => _sources[modelId];

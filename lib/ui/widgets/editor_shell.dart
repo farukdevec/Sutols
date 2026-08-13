@@ -980,10 +980,8 @@ class _EditorStudioPageThumb extends StatelessWidget {
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(context.radiusMd),
                     child: IgnorePointer(
-                      child: PresentationPageCanvas(
+                      child: PresentationPageThumbnailCanvas(
                         page: page,
-                        showHint: false,
-                        showSelectionBorder: false,
                       ),
                     ),
                   ),
@@ -1228,10 +1226,8 @@ class _PageThumbnail extends StatelessWidget {
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(context.radiusMd),
                 child: IgnorePointer(
-                  child: PresentationPageCanvas(
+                  child: PresentationPageThumbnailCanvas(
                     page: page,
-                    showHint: false,
-                    showSelectionBorder: false,
                   ),
                 ),
               ),
@@ -1832,6 +1828,36 @@ class PresentationPageCanvas extends StatefulWidget {
 
   @override
   State<PresentationPageCanvas> createState() => _PresentationPageCanvasState();
+}
+
+/// Küçük kartlarda tuvali doğrudan dar ölçülerde yeniden düzenlemek yerine
+/// 1000x562.5 referans sahnesini tek parça halinde ölçekler. Böylece yazı,
+/// boşluk ve bileşen oranları ana sahneyle aynı kalır; minimum font/padding
+/// sınırları küçük önizlemede metinleri üst üste bindirmez.
+class PresentationPageThumbnailCanvas extends StatelessWidget {
+  const PresentationPageThumbnailCanvas({
+    super.key,
+    required this.page,
+  });
+
+  final PresentationPage page;
+
+  @override
+  Widget build(BuildContext context) {
+    return FittedBox(
+      fit: BoxFit.fill,
+      clipBehavior: Clip.hardEdge,
+      child: SizedBox(
+        width: 1000,
+        height: 562.5,
+        child: PresentationPageCanvas(
+          page: page,
+          showHint: false,
+          showSelectionBorder: false,
+        ),
+      ),
+    );
+  }
 }
 
 class _CanvasSelectionResult {

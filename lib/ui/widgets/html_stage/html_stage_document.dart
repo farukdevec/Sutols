@@ -269,7 +269,8 @@ String _model3DMarkup(
       : 'src="${_escapeAttribute(source)}"';
   return '''
 <div class="sutol-html-component-inner sutol-3d-model-inner">
-  <model-viewer class="sutol-3d-model-viewer" $sourceMarkup alt="${_escapeAttribute(label)}"$cameraControlsMarkup$animationMarkup$autoRotateMarkup camera-orbit="$cameraOrbit" interaction-prompt="none" shadow-intensity="1" shadow-softness="0.8" exposure="1" loading="eager" reveal="auto"></model-viewer>
+  <model-viewer class="sutol-3d-model-viewer" $sourceMarkup alt="${_escapeAttribute(label)}"$cameraControlsMarkup$animationMarkup$autoRotateMarkup camera-orbit="$cameraOrbit" interaction-prompt="none" shadow-intensity="1" shadow-softness="0.8" exposure="1" loading="eager" reveal="auto" onload="this.nextElementSibling.hidden=true" onerror="this.nextElementSibling.textContent='3B model yüklenemedi';this.nextElementSibling.classList.add('is-error')"></model-viewer>
+  <span class="sutol-3d-model-status">3B model yükleniyor…</span>
 </div>
 ''';
 }
@@ -1915,6 +1916,27 @@ body {
   height: 100%;
   background: transparent;
   --poster-color: transparent;
+}
+
+.sutol-3d-model-status {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: auto;
+  height: auto;
+  padding: 0.55em 0.8em;
+  border-radius: 0.7em;
+  color: rgba(226, 232, 240, 0.82);
+  background: rgba(15, 23, 42, 0.66);
+  font: 600 2.2cqw/1.2 Arial, sans-serif;
+  transform: translate(-50%, -50%);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.sutol-3d-model-status.is-error {
+  color: #fff;
+  background: rgba(153, 27, 27, 0.86);
 }
 
 .sutol-export-stage .sutol-html-component.component-3d-model,

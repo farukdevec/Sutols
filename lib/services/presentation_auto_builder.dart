@@ -379,14 +379,15 @@ class PresentationAutoBuilder {
             );
       final hasComponents = componentKinds.isNotEmpty;
       final textBlocks = <PresentationTextBlock>[];
+      final bodyTop = title.isEmpty ? 0.18 : _bodyTop(title);
+      final titleTop = titleOnly ? 0.16 : 0.10;
 
       if (title.isNotEmpty) {
         textBlocks.add(
           PresentationTextBlock(
             id: 'text-${textCounter++}',
             text: title,
-            position:
-                titleOnly ? const Offset(0.08, 0.16) : const Offset(0.08, 0.12),
+            position: Offset(0.08, titleTop),
             fontSize:
                 (_titleFontSize(title, titleOnly: titleOnly) * config.fontScale)
                     .roundToDouble(),
@@ -404,6 +405,9 @@ class PresentationAutoBuilder {
                     : titleOnly
                         ? 0.78
                         : 0.76,
+            heightFactor: titleOnly
+                ? 0.5
+                : (bodyTop - titleTop - 0.035).clamp(0.16, 0.32).toDouble(),
           ),
         );
       }
@@ -413,9 +417,7 @@ class PresentationAutoBuilder {
           PresentationTextBlock(
             id: 'text-${textCounter++}',
             text: body,
-            position: title.isEmpty
-                ? const Offset(0.08, 0.18)
-                : Offset(0.08, _bodyTop(title)),
+            position: Offset(0.08, bodyTop),
             fontSize: (_bodyFontSize(body, hasComponents: hasComponents) *
                     config.fontScale)
                 .roundToDouble(),
@@ -429,6 +431,7 @@ class PresentationAutoBuilder {
                 : longBody
                     ? 0.78
                     : 0.76,
+            heightFactor: 0.91 - bodyTop,
           ),
         );
       }
@@ -802,9 +805,9 @@ double _bodyFontSize(String body, {required bool hasComponents}) {
 
 double _bodyTop(String title) {
   final length = title.replaceAll(RegExp(r'\s+'), ' ').trim().length;
-  if (length <= 40) return 0.30;
-  if (length <= 72) return 0.35;
-  return 0.42;
+  if (length <= 40) return 0.32;
+  if (length <= 72) return 0.39;
+  return 0.46;
 }
 
 PresentationBackgroundKind? presentationTemplateBackground(

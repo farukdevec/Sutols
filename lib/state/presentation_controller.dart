@@ -816,6 +816,8 @@ class PresentationController extends ChangeNotifier {
     final componentBlock = PresentationComponentBlock(
       id: 'component-$_componentBlockCounter',
       modelAssetId: model.id,
+      modelAnimationEnabled: true,
+      modelAutoRotate: true,
       modelOrbitEnabled: false,
       position: Offset(nextX.toDouble(), nextY.toDouble()),
       size: const Size(0.40, 0.40),

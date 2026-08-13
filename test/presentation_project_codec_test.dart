@@ -2,8 +2,38 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sutol/models/slide_model.dart';
 import 'package:sutol/services/presentation_project_codec.dart';
+import 'package:sutol/services/remote_model_sources.dart';
 
 void main() {
+  test('persists remote model sources used by the project', () {
+    const modelId = 'persisted-model-source';
+    const modelUrl = 'https://assets.sutols.com/persisted-model.glb';
+    RemoteModelSources.registerAll(const <String, String>{modelId: modelUrl});
+
+    final source = PresentationProjectCodec.encodeProject(
+      pages: const <PresentationPage>[
+        PresentationPage(
+          id: 'model-page',
+          textBlocks: <PresentationTextBlock>[],
+          componentBlocks: <PresentationComponentBlock>[
+            PresentationComponentBlock(
+              id: 'model-block',
+              modelAssetId: modelId,
+              position: Offset(0.6, 0.2),
+              size: Size(0.3, 0.5),
+            ),
+          ],
+        ),
+      ],
+      effectSettings: const PresentationEffectSettings(),
+    );
+
+    expect(source, contains('"modelSourcesById"'));
+    expect(source, contains(modelUrl));
+    PresentationProjectCodec.decodeProject(source);
+    expect(RemoteModelSources.sourceFor(modelId), modelUrl);
+  });
+
   test('round trips presentation project json', () {
     const pages = <PresentationPage>[
       PresentationPage(

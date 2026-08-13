@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 
 import '../models/slide_model.dart';
+import 'remote_model_sources.dart';
 
 @immutable
 class PresentationProject {
@@ -24,10 +25,21 @@ class PresentationProjectCodec {
     required List<PresentationPage> pages,
     required PresentationEffectSettings effectSettings,
   }) {
+    final usedModelIds = pages
+        .expand((page) => page.componentBlocks)
+        .map((block) => block.modelAssetId)
+        .whereType<String>()
+        .toSet();
+    final modelSourcesById = <String, String>{
+      for (final modelId in usedModelIds)
+        if (RemoteModelSources.sourceFor(modelId) case final source?)
+          modelId: source,
+    };
     final data = <String, Object?>{
       'format': 'sutol.presentation',
       'version': version,
       'effectSettings': _effectSettingsToJson(effectSettings),
+      'modelSourcesById': modelSourcesById,
       'pages': pages.map(_pageToJson).toList(growable: false),
     };
 
@@ -43,6 +55,14 @@ class PresentationProjectCodec {
     final pagesJson = decoded['pages'];
     if (pagesJson is! List) {
       throw const FormatException('Proje dosyasinda sayfa listesi yok.');
+    }
+
+    final modelSourcesJson = decoded['modelSourcesById'];
+    if (modelSourcesJson is Map<String, Object?>) {
+      RemoteModelSources.registerAll(<String, String>{
+        for (final entry in modelSourcesJson.entries)
+          if (entry.value is String) entry.key: entry.value! as String,
+      });
     }
 
     final pages = pagesJson

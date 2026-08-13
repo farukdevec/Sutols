@@ -1,10 +1,11 @@
-﻿import 'dart:ui' show Offset;
+import 'dart:ui' show Offset;
 
 import '../models/slide_model.dart';
 import '../state/presentation_controller.dart';
 import 'firestore_rest_helper.dart';
 import 'presentation_project_codec.dart';
 import 'presentation_project_store.dart';
+import 'presentation_model_source_resolver.dart';
 
 /// Bir sunumu editÃ¶rde dÃ¼zenlenmek Ã¼zere yÃ¼kler.
 ///
@@ -31,6 +32,7 @@ Future<PresentationLoadResult> loadPresentationForEdit(
   final projectJson = project?['json'] as String? ?? '';
   if (projectJson.isNotEmpty) {
     final decoded = PresentationProjectCodec.decodeProject(projectJson);
+    await hydratePresentationModelSources(decoded.pages);
     ctrl.replaceDeck(
       decoded.pages,
       effectSettings: decoded.effectSettings,
@@ -68,8 +70,7 @@ Future<List<PresentationPage>> _buildPagesFromFallback(
   final doc = await FirestoreRestHelper.getDocument(
     'presentations/$presentationId',
   );
-  final embedded =
-      doc?['fields']?['slides']?['arrayValue']?['values'] as List?;
+  final embedded = doc?['fields']?['slides']?['arrayValue']?['values'] as List?;
   if (embedded != null && embedded.isNotEmpty) {
     final slides = <({String title, String content})>[];
     for (final value in embedded) {
@@ -98,7 +99,10 @@ Future<List<PresentationPage>> _buildPagesFromFallback(
         },
       ],
       'orderBy': [
-        {'field': {'fieldPath': 'order'}, 'direction': 'ASCENDING'},
+        {
+          'field': {'fieldPath': 'order'},
+          'direction': 'ASCENDING'
+        },
       ],
     });
 

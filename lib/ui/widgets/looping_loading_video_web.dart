@@ -24,7 +24,9 @@ class _LoopingLoadingVideoState extends State<LoopingLoadingVideo> {
     super.initState();
     _viewType = 'sutols-loading-video-${identityHashCode(this)}';
     _video = html.VideoElement()
-      ..src = 'assets/assets/videos/sutols_loading_logo.webm'
+      // Sürüm parametresi, tarayıcının önceki düşük çözünürlüklü dosyayı
+      // önbellekten göstermesini engeller.
+      ..src = 'assets/assets/videos/sutols_loading_logo.webm?v=original-hd'
       ..autoplay = true
       ..loop = true
       ..muted = true
