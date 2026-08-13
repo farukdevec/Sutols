@@ -59,10 +59,22 @@ class PresentationService {
     // Çalışmazsa Gemini'ye, o da çalışmazsa kelime tabanlı yedeğe düş
     // ignore: avoid_print
     print('ADIM 1: NVIDIA çağrısı başlıyor');
-    var resultPresentation;
+    GeminiPresentation resultPresentation;
     var usedFallback = false;
     try {
-      resultPresentation = await _nvidia.generatePresentation(topic, slideCount: slideCount);
+      final nvidiaResult =
+          await _nvidia.generatePresentation(topic, slideCount: slideCount);
+      resultPresentation = GeminiPresentation(
+        slides: nvidiaResult.slides
+            .map(
+              (slide) => GeminiSlide(
+                title: slide.title,
+                content: slide.content,
+                keywords: slide.keywords,
+              ),
+            )
+            .toList(growable: false),
+      );
     } catch (e) {
       // ignore: avoid_print
       print('NVIDIA/Cloudflare HATASI: $e — Gemini deneniyor');

@@ -21,6 +21,8 @@ import '../services/remote_image_sources.dart';
 import '../services/remote_model_sources.dart';
 import '../state/presentation_controller.dart';
 import '../state/theme_controller.dart';
+import 'membership_page.dart';
+import 'my_presentations_page.dart';
 import 'presentation_preview_page.dart';
 import 'widgets/editor_shell.dart';
 import 'widgets/html_stage/html_page_stage.dart';
@@ -35,6 +37,27 @@ extension on BuildContext {
   Color get _htmlAccent => sutolColors.primary;
   Color get _htmlPanel => sutolColors.surface;
 }
+
+const Color _studioHeaderBrandStart = Color(0xFF0A7E82);
+const Color _studioHeaderBrandEnd = Color(0xFF006471);
+const Color _studioHeaderForeground = Color(0xFFF7FFFF);
+const Color _studioHeaderMuted = Color(0xCFFFFFFF);
+const Color _studioHeaderControl = Color(0x24FFFFFF);
+const Color _studioHeaderBorder = Color(0x42FFFFFF);
+const List<BoxShadow> _studioHeaderFadeShadow = <BoxShadow>[
+  BoxShadow(
+    color: Color(0x300A7E82),
+    blurRadius: 16,
+    spreadRadius: -2,
+    offset: Offset(0, 7),
+  ),
+  BoxShadow(
+    color: Color(0x160A7E82),
+    blurRadius: 30,
+    spreadRadius: -5,
+    offset: Offset(0, 15),
+  ),
+];
 
 enum _HtmlToolTab {
   templates,
@@ -82,9 +105,8 @@ class _HtmlPresentationEditorPageState
 
   PresentationTrackingService? _trackingInstance;
 
-  /// Sunum kaydı servisi: yalnızca bir [presentationId] varsa ve ilk
-  /// kullanımda oluşturulur; sayfanın açılışı Firebase/Firestore'dan
-  /// bağımsızdır (başlatılmamış bir uygulama sayfayı kırmasın).
+  /// Sunum kaydı servisi yalnızca gerektiğinde oluşturulur; böylece editörün
+  /// açılışı Firebase/Firestore başlangıcına bağlı kalmaz.
   PresentationTrackingService get _tracking =>
       _trackingInstance ??= PresentationTrackingService();
 
@@ -271,7 +293,7 @@ class _HtmlPresentationEditorPageState
               '\nT:${text.id}|${text.text}|${text.position.dx.toStringAsFixed(3)}')
           ..write('|${text.position.dy.toStringAsFixed(3)}|${text.fontSize}')
           ..write(
-              '|${text.type.index}|${text.widthFactor}|${text.textStyle.index}')
+              '|${text.type.index}|${text.widthFactor}|${text.heightFactor}|${text.textStyle.index}')
           ..write('|${text.textAnimation.index}|${text.textColorHex}')
           ..write('|${text.glowIntensity}|${text.revealStep}')
           ..write('|${text.hotspotTargetPageId}|${text.textBold}')
@@ -684,48 +706,44 @@ class _HtmlPresentationEditorPageState
                       _studioWide = isStudioWide;
 
                       if (isStudioWide) {
-                        return Padding(
-                          padding: const EdgeInsets.fromLTRB(10, 10, 10, 12),
-                          child: Column(
-                            children: <Widget>[
-                              _HtmlStudioHeader(
-                                pageCount: pageCount,
-                                blockCount: blockCount,
-                                onPreview: _openPresentationPreview,
-                                onExport: _exportPresentation,
-                                onExportPdf: _exportPdfPresentation,
-                                onSave: _saveProject,
-                                onLoad: _loadProject,
-                                onUndo: widget.controller.undo,
-                                onRedo: widget.controller.redo,
-                                canUndo: widget.controller.canUndo,
-                                canRedo: widget.controller.canRedo,
-                                onAddText: widget.controller.addTextBlock,
-                                onRemoveText:
-                                    widget.controller.removeSelectedTextBlock,
-                                canRemoveText:
-                                    widget.controller.canRemoveTextBlock,
-                                lastEditorLabel: _lastEditorLabel,
-                                adminReadOnly: widget.adminReadOnly,
-                                presentationFileName: _presentationFileName,
-                                onEditFileName: _editPresentationFileName,
-                              ),
-                              const SizedBox(height: 12),
-                              Expanded(
+                        return Column(
+                          children: <Widget>[
+                            _HtmlStudioHeader(
+                              pageCount: pageCount,
+                              blockCount: blockCount,
+                              onPreview: _openPresentationPreview,
+                              onExport: _exportPresentation,
+                              onExportPdf: _exportPdfPresentation,
+                              onUndo: widget.controller.undo,
+                              onRedo: widget.controller.redo,
+                              canUndo: widget.controller.canUndo,
+                              canRedo: widget.controller.canRedo,
+                              onAddText: widget.controller.addTextBlock,
+                              onRemoveText:
+                                  widget.controller.removeSelectedTextBlock,
+                              canRemoveText:
+                                  widget.controller.canRemoveTextBlock,
+                              lastEditorLabel: _lastEditorLabel,
+                              adminReadOnly: widget.adminReadOnly,
+                              presentationFileName: _presentationFileName,
+                              onEditFileName: _editPresentationFileName,
+                            ),
+                            const SizedBox(height: 12),
+                            Expanded(
+                              child: Padding(
+                                padding:
+                                    const EdgeInsets.fromLTRB(10, 0, 10, 12),
                                 child: _HtmlStudioLayout(
                                   controller: widget.controller,
                                   textController: _textController,
                                   activeTab: _activeTab,
                                   panelOpen: _inspectorOpen,
                                   onTabChanged: _setTab,
-                                  onPreview: _openPresentationPreview,
-                                  onExport: _exportPresentation,
-                                  onExportPdf: _exportPdfPresentation,
                                   adminReadOnly: widget.adminReadOnly,
                                 ),
                               ),
-                            ],
-                          ),
+                            ),
+                          ],
                         );
                       }
 
@@ -934,7 +952,7 @@ class _HtmlHeader extends StatelessWidget {
           icon: Icons.edit_rounded,
           label: 'Son düzenleme: $lastEditorLabel',
         ),
-      _ThemeToggleButton(),
+      const _SettingsMenuButton(),
       if (!adminReadOnly)
         _HistoryButtons(
           onUndo: onUndo,
@@ -953,21 +971,14 @@ class _HtmlHeader extends StatelessWidget {
           label: 'HTML Disa Aktar',
           onTap: onExport,
         ),
-      if (adminReadOnly)
-        const _AdminReadOnlyBadge()
-      else
-        _FileMenuButton(
-          onSave: onSave,
-          onLoad: onLoad,
-          onExportHtml: onExport,
-          onExportPdf: onExportPdf,
-        ),
+      if (adminReadOnly) const _AdminReadOnlyBadge(),
     ];
 
     return LayoutBuilder(
       builder: (context, constraints) {
         final mobile = constraints.maxWidth < AppBreakpoints.mobile;
         final compact = constraints.maxWidth < 980;
+        final condensed = constraints.maxWidth < 1900;
 
         // Mobil (<600): marka header'ı — geri, Sutols logosu + adı; ardından
         // geri al/yinele, sunum modu (▶), dışa aktarma (↓) ve diğer işlemler
@@ -979,8 +990,8 @@ class _HtmlHeader extends StatelessWidget {
             switch (action) {
               case _MobileHeaderAction.preview:
                 onPreview();
-              case _MobileHeaderAction.theme:
-                ThemeController.instance.toggle();
+              case _MobileHeaderAction.settings:
+                _showEditorSettings(context);
               case _MobileHeaderAction.save:
                 onSave();
               case _MobileHeaderAction.load:
@@ -1003,39 +1014,35 @@ class _HtmlHeader extends StatelessWidget {
             key: const ValueKey<String>('mobile-editor-header'),
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
             decoration: BoxDecoration(
-              color: context.colors.surfaceElevated,
+              gradient: const LinearGradient(
+                colors: <Color>[
+                  _studioHeaderBrandStart,
+                  _studioHeaderBrandEnd,
+                ],
+                begin: Alignment.centerLeft,
+                end: Alignment.centerRight,
+              ),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: context.colors.border),
+              border: Border.all(color: _studioHeaderBorder),
+              boxShadow: _studioHeaderFadeShadow,
             ),
             child: Row(
               children: <Widget>[
                 _MobileHeaderIconButton(
-                  tooltip: 'Geri',
                   icon: Icons.arrow_back_rounded,
-                  size: compact ? 40 : 44,
-                  onTap: () => Navigator.of(context).pop(),
+                  tooltip: 'Geri',
+                  size: iconSize,
+                  branded: true,
+                  onTap: () => Navigator.of(context).maybePop(),
+                ),
+                _HeaderBrandMark(
+                  key: const ValueKey<String>('mobile-brand-mark'),
+                  size: compact ? 36 : 50,
+                  branded: true,
+                  showLabel: false,
                 ),
                 SizedBox(width: compact ? 0 : 2),
-                Image.asset(
-                  'assets/images/logo.png',
-                  height: compact ? 22 : 24,
-                ),
-                SizedBox(width: compact ? 5 : 7),
-                Expanded(
-                  child: FittedBox(
-                    fit: BoxFit.scaleDown,
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      'Sutols',
-                      maxLines: 1,
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            color: context._htmlInk,
-                            fontWeight: FontWeight.w900,
-                            letterSpacing: -0.3,
-                          ),
-                    ),
-                  ),
-                ),
+                const Spacer(),
                 if (adminReadOnly)
                   const SizedBox.shrink()
                 else
@@ -1045,11 +1052,13 @@ class _HtmlHeader extends StatelessWidget {
                     canUndo: canUndo,
                     canRedo: canRedo,
                     size: iconSize,
+                    branded: true,
                   ),
                 _MobileHeaderIconButton(
                   tooltip: 'Sunum Modu',
                   icon: Icons.slideshow_rounded,
                   size: iconSize,
+                  branded: true,
                   onTap: onPreview,
                 ),
                 PopupMenuButton<_MobileHeaderAction>(
@@ -1059,7 +1068,7 @@ class _HtmlHeader extends StatelessWidget {
                   iconSize: 20,
                   icon: Icon(
                     Icons.download_rounded,
-                    color: context._htmlInk,
+                    color: _studioHeaderForeground,
                   ),
                   onSelected: handleAction,
                   itemBuilder: (context) =>
@@ -1090,16 +1099,16 @@ class _HtmlHeader extends StatelessWidget {
                     iconSize: 20,
                     icon: Icon(
                       Icons.more_vert_rounded,
-                      color: context._htmlInk,
+                      color: _studioHeaderForeground,
                     ),
                     onSelected: handleAction,
                     itemBuilder: (context) =>
                         <PopupMenuEntry<_MobileHeaderAction>>[
                       PopupMenuItem<_MobileHeaderAction>(
-                        value: _MobileHeaderAction.theme,
+                        value: _MobileHeaderAction.settings,
                         child: const ListTile(
-                          leading: Icon(Icons.dark_mode_rounded),
-                          title: Text('Görünümü Değiştir'),
+                          leading: Icon(Icons.settings_outlined),
+                          title: Text('Ayarlar'),
                         ),
                       ),
                       const PopupMenuDivider(),
@@ -1124,6 +1133,124 @@ class _HtmlHeader extends StatelessWidget {
           );
         }
 
+        if (condensed) {
+          final condensedActions = <Widget>[
+            _HeaderAction(
+              icon: Icons.slideshow_rounded,
+              label: 'Sunum Modu',
+              onTap: onPreview,
+              branded: true,
+            ),
+            if (adminReadOnly)
+              _HeaderAction(
+                icon: Icons.html_rounded,
+                label: 'HTML Disa Aktar',
+                onTap: onExport,
+                branded: true,
+              ),
+            if (adminReadOnly) const _AdminReadOnlyBadge(compact: true),
+            if (!adminReadOnly)
+              _HistoryButtons(
+                onUndo: onUndo,
+                onRedo: onRedo,
+                canUndo: canUndo,
+                canRedo: canRedo,
+                branded: true,
+              ),
+            const _SettingsMenuButton(branded: true),
+            _HeaderBadge(
+              icon: Icons.layers_rounded,
+              label: '$pageCount Sayfa',
+              branded: true,
+            ),
+          ];
+          final titleWidth =
+              (constraints.maxWidth * 0.22).clamp(160.0, 300.0).toDouble();
+
+          return Container(
+            key: const ValueKey<String>('condensed-editor-header'),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: <Color>[
+                  _studioHeaderBrandStart,
+                  _studioHeaderBrandEnd,
+                ],
+                begin: Alignment.centerLeft,
+                end: Alignment.centerRight,
+              ),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: _studioHeaderBorder),
+              boxShadow: _studioHeaderFadeShadow,
+            ),
+            child: Row(
+              children: <Widget>[
+                _HeaderBrandMark(
+                  key: const ValueKey<String>('condensed-brand-mark'),
+                  size: 48,
+                  branded: true,
+                ),
+                const SizedBox(width: 4),
+                SizedBox(
+                  width: titleWidth,
+                  child: InkWell(
+                    onTap: onEditFileName,
+                    borderRadius: BorderRadius.circular(10),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 7,
+                      ),
+                      child: Row(
+                        children: <Widget>[
+                          Expanded(
+                            child: Text(
+                              presentationFileName,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .titleMedium
+                                  ?.copyWith(
+                                    color: _studioHeaderForeground,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                            ),
+                          ),
+                          if (onEditFileName != null) ...<Widget>[
+                            const SizedBox(width: 6),
+                            Icon(
+                              Icons.edit_rounded,
+                              size: 15,
+                              color: _studioHeaderMuted,
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: <Widget>[
+                        for (var i = 0;
+                            i < condensedActions.length;
+                            i += 1) ...<Widget>[
+                          if (i > 0) const SizedBox(width: 8),
+                          condensedActions[i],
+                        ],
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+
         return Container(
           padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
           decoration: BoxDecoration(
@@ -1138,12 +1265,9 @@ class _HtmlHeader extends StatelessWidget {
                   children: <Widget>[
                     Row(
                       children: <Widget>[
-                        IconButton(
-                          onPressed: () => Navigator.of(context).pop(),
-                          icon: Icon(
-                            Icons.arrow_back_rounded,
-                            color: context._htmlInk,
-                          ),
+                        _HeaderBrandMark(
+                          size: 44,
+                          branded: false,
                         ),
                         const SizedBox(width: 8),
                         Expanded(child: title),
@@ -1165,12 +1289,9 @@ class _HtmlHeader extends StatelessWidget {
                 )
               : Row(
                   children: <Widget>[
-                    IconButton(
-                      onPressed: () => Navigator.of(context).pop(),
-                      icon: Icon(
-                        Icons.arrow_back_rounded,
-                        color: context._htmlInk,
-                      ),
+                    _HeaderBrandMark(
+                      size: 44,
+                      branded: false,
                     ),
                     const SizedBox(width: 8),
                     Expanded(child: title),
@@ -1453,7 +1574,10 @@ class _HtmlMobileLayout extends StatelessWidget {
                   top: 10,
                   child: IgnorePointer(
                     ignoring: canvasZoom > 1.0001,
-                    child: _SelectionContextBarSection(controller: controller),
+                    child: _SelectionContextBarSection(
+                      controller: controller,
+                      textController: textController,
+                    ),
                   ),
                 ),
             ],
@@ -1694,7 +1818,8 @@ class _SlideStripThumb extends StatelessWidget {
   }
 }
 
-/// Alt araç iskelesi: Metin, Medya, 3B Modeller, Şekil ve "Daha fazla"
+/// Alt araç iskelesi: Metin, Fotoğraf, Medya, 3B Modeller, Şekil ve
+/// "Daha fazla"
 /// (fotoğraf yükle, şablon, arka plan, geçiş, ses vb.).
 /// Dar ekranlarda sığmayan araçlar öncelik sırasına göre "Daha fazla"
 /// menüsüne taşınır; yatay kaydırma yoktur. Slayt gezinmesi tuvalin altındaki
@@ -1721,6 +1846,12 @@ class _HtmlMobileToolDock extends StatelessWidget {
         label: 'Metin',
         selected: activeTab == _HtmlToolTab.text,
         onTap: () => onOpenTool(_HtmlToolTab.text),
+      ),
+      _MobileDockTool(
+        icon: Icons.add_a_photo_rounded,
+        label: 'Fotoğraf',
+        selected: false,
+        onTap: onOpenPhotoQuick,
       ),
       _MobileDockTool(
         icon: Icons.add_photo_alternate_rounded,
@@ -1817,6 +1948,7 @@ class _HtmlMobileToolDock extends StatelessWidget {
                       entries.add(PopupMenuItem<_MobileMoreTool>(
                         value: switch (tool.label) {
                           'Metin' => _MobileMoreTool.text,
+                          'Fotoğraf' => _MobileMoreTool.photoUpload,
                           'Medya' => _MobileMoreTool.media,
                           '3B Modeller' => _MobileMoreTool.models3d,
                           _ => _MobileMoreTool.components,
@@ -2211,7 +2343,7 @@ class _HtmlMobileToolSheet extends StatelessWidget {
                   child: Row(
                     children: <Widget>[
                       Icon(
-                        _toolSheetIcon(tab),
+                        _htmlToolIcon(tab),
                         size: 20,
                         color: context._htmlAccent,
                       ),
@@ -2260,24 +2392,24 @@ class _HtmlMobileToolSheet extends StatelessWidget {
       ),
     );
   }
+}
 
-  static IconData _toolSheetIcon(_HtmlToolTab tab) {
-    switch (tab) {
-      case _HtmlToolTab.templates:
-        return Icons.dashboard_customize_rounded;
-      case _HtmlToolTab.backgrounds:
-        return Icons.wallpaper_rounded;
-      case _HtmlToolTab.components:
-        return Icons.widgets_rounded;
-      case _HtmlToolTab.text:
-        return Icons.text_fields_rounded;
-      case _HtmlToolTab.models3d:
-        return Icons.view_in_ar_rounded;
-      case _HtmlToolTab.photo:
-        return Icons.add_photo_alternate_rounded;
-      case _HtmlToolTab.transitions:
-        return Icons.animation_rounded;
-    }
+IconData _htmlToolIcon(_HtmlToolTab tab) {
+  switch (tab) {
+    case _HtmlToolTab.templates:
+      return Icons.dashboard_customize_rounded;
+    case _HtmlToolTab.backgrounds:
+      return Icons.wallpaper_rounded;
+    case _HtmlToolTab.components:
+      return Icons.widgets_rounded;
+    case _HtmlToolTab.text:
+      return Icons.text_fields_rounded;
+    case _HtmlToolTab.models3d:
+      return Icons.view_in_ar_rounded;
+    case _HtmlToolTab.photo:
+      return Icons.add_photo_alternate_rounded;
+    case _HtmlToolTab.transitions:
+      return Icons.animation_rounded;
   }
 }
 
@@ -2286,29 +2418,38 @@ class _HeaderBadge extends StatelessWidget {
   const _HeaderBadge({
     required this.icon,
     required this.label,
+    this.branded = false,
   });
 
   final IconData icon;
   final String label;
+  final bool branded;
 
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
       decoration: BoxDecoration(
-        color: context.sutolColors.surfaceSubtle,
+        color:
+            branded ? _studioHeaderControl : context.sutolColors.surfaceSubtle,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: context.sutolColors.outline),
+        border: Border.all(
+          color: branded ? _studioHeaderBorder : context.sutolColors.outline,
+        ),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
-          Icon(icon, size: 18, color: context._htmlInk),
+          Icon(
+            icon,
+            size: 18,
+            color: branded ? _studioHeaderForeground : context._htmlInk,
+          ),
           const SizedBox(width: 8),
           Text(
             label,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: context._htmlInk,
+                  color: branded ? _studioHeaderForeground : context._htmlInk,
                   fontWeight: FontWeight.w700,
                 ),
           ),
@@ -2323,16 +2464,18 @@ class _HeaderAction extends StatelessWidget {
     required this.icon,
     required this.label,
     required this.onTap,
+    this.branded = false,
   });
 
   final IconData icon;
   final String label;
   final VoidCallback onTap;
+  final bool branded;
 
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: context._htmlAccent,
+      color: branded ? _studioHeaderControl : context._htmlAccent,
       borderRadius: BorderRadius.circular(18),
       child: InkWell(
         onTap: onTap,
@@ -2342,12 +2485,20 @@ class _HeaderAction extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
-              Icon(icon, size: 18, color: context.sutolColors.onPrimary),
+              Icon(
+                icon,
+                size: 18,
+                color: branded
+                    ? _studioHeaderForeground
+                    : context.sutolColors.onPrimary,
+              ),
               const SizedBox(width: 8),
               Text(
                 label,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: context.sutolColors.surface,
+                      color: branded
+                          ? _studioHeaderForeground
+                          : context.sutolColors.surface,
                       fontWeight: FontWeight.w800,
                     ),
               ),
@@ -2369,7 +2520,7 @@ enum _FileMenuAction {
 /// Mobil başlıktaki "⋯" overflow menüsünün eylemleri.
 enum _MobileHeaderAction {
   preview,
-  theme,
+  settings,
   save,
   load,
   exportHtml,
@@ -2397,142 +2548,94 @@ enum _MobileMoreTool {
 /// Mobil "Fotoğraf" hızlı aksiyonunun seçenekleri.
 enum _MobilePhotoQuickAction { pick, library }
 
-class _ThemeToggleButton extends StatelessWidget {
-  const _ThemeToggleButton();
-
-  @override
-  Widget build(BuildContext context) {
-    return ValueListenableBuilder<ThemeMode>(
-      valueListenable: ThemeController.instance.mode,
-      builder: (context, mode, _) {
-        final isDark = mode == ThemeMode.dark;
-        return Material(
-          color: context.sutolColors.surfaceSubtle,
-          borderRadius: BorderRadius.circular(18),
-          child: InkWell(
-            borderRadius: BorderRadius.circular(18),
-            onTap: ThemeController.instance.toggle,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: <Widget>[
-                  Icon(
-                    isDark ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
-                    size: 18,
-                    color: context._htmlInk,
+Future<void> _showEditorSettings(BuildContext context) {
+  return showDialog<void>(
+    context: context,
+    builder: (dialogContext) => AlertDialog(
+      title: const Text('Ayarlar'),
+      contentPadding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+      content: SizedBox(
+        width: 360,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            ValueListenableBuilder<ThemeMode>(
+              valueListenable: ThemeController.instance.mode,
+              builder: (context, mode, _) {
+                final isDark = mode == ThemeMode.dark;
+                return ListTile(
+                  key: const ValueKey<String>('settings-dark-theme'),
+                  leading: const Icon(Icons.dark_mode_outlined),
+                  title: const Text('Koyu Tema'),
+                  subtitle: Text(isDark ? 'Açık' : 'Kapalı'),
+                  trailing: Switch(
+                    value: isDark,
+                    onChanged: (_) => ThemeController.instance.toggle(),
                   ),
-                  const SizedBox(width: 8),
-                  Text(
-                    isDark ? 'Açık Tema' : 'Koyu Tema',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: context._htmlInk,
-                          fontWeight: FontWeight.w700,
-                        ),
-                  ),
-                ],
-              ),
+                  onTap: ThemeController.instance.toggle,
+                );
+              },
             ),
-          ),
-        );
-      },
-    );
-  }
-}
-
-class _FileMenuButton extends StatelessWidget {
-  const _FileMenuButton({
-    required this.onSave,
-    required this.onLoad,
-    required this.onExportHtml,
-    required this.onExportPdf,
-  });
-
-  final VoidCallback onSave;
-  final VoidCallback onLoad;
-  final VoidCallback onExportHtml;
-  final VoidCallback onExportPdf;
-
-  @override
-  Widget build(BuildContext context) {
-    final background = context.sutolColors.surfaceSubtle;
-    final foreground = context._htmlInk;
-    final border = Border.all(color: context.sutolColors.outline);
-
-    return PopupMenuButton<_FileMenuAction>(
-      tooltip: 'Dosya islemleri',
-      onSelected: (action) {
-        switch (action) {
-          case _FileMenuAction.save:
-            onSave();
-            break;
-          case _FileMenuAction.load:
-            onLoad();
-            break;
-          case _FileMenuAction.exportHtml:
-            onExportHtml();
-            break;
-          case _FileMenuAction.exportPdf:
-            onExportPdf();
-            break;
-        }
-      },
-      itemBuilder: (context) => const <PopupMenuEntry<_FileMenuAction>>[
-        PopupMenuItem<_FileMenuAction>(
-          value: _FileMenuAction.save,
-          child: ListTile(
-            leading: Icon(Icons.save_alt_rounded),
-            title: Text('Projeyi Kaydet'),
-          ),
+            const Divider(height: 1),
+            ListTile(
+              key: const ValueKey<String>('settings-plans'),
+              leading: const Icon(Icons.workspace_premium_outlined),
+              title: const Text('Planlar'),
+              subtitle: const Text('Üyelik seçeneklerini görüntüle'),
+              trailing: const Icon(Icons.chevron_right_rounded),
+              onTap: () {
+                Navigator.of(dialogContext).pop();
+                Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (_) => const MembershipPage(),
+                  ),
+                );
+              },
+            ),
+          ],
         ),
-        PopupMenuItem<_FileMenuAction>(
-          value: _FileMenuAction.load,
-          child: ListTile(
-            leading: Icon(Icons.upload_file_rounded),
-            title: Text('Proje Yukle'),
-          ),
-        ),
-        PopupMenuDivider(),
-        PopupMenuItem<_FileMenuAction>(
-          value: _FileMenuAction.exportHtml,
-          child: ListTile(
-            leading: Icon(Icons.html_rounded),
-            title: Text('HTML Disa Aktar'),
-          ),
-        ),
-        PopupMenuItem<_FileMenuAction>(
-          value: _FileMenuAction.exportPdf,
-          child: ListTile(
-            leading: Icon(Icons.picture_as_pdf_rounded),
-            title: Text('PDF Olarak Yazdir'),
-          ),
+      ),
+      actions: <Widget>[
+        TextButton(
+          onPressed: () => Navigator.of(dialogContext).pop(),
+          child: const Text('Kapat'),
         ),
       ],
-      child: Semantics(
-        button: true,
-        label: 'Dosya islemleri',
-        child: Container(
+    ),
+  );
+}
+
+class _SettingsMenuButton extends StatelessWidget {
+  const _SettingsMenuButton({this.branded = false});
+
+  final bool branded;
+
+  @override
+  Widget build(BuildContext context) {
+    final foreground = branded ? _studioHeaderForeground : context._htmlInk;
+    return Material(
+      color: branded ? _studioHeaderControl : context.sutolColors.surfaceSubtle,
+      borderRadius: BorderRadius.circular(18),
+      child: InkWell(
+        key: const ValueKey<String>('editor-settings-button'),
+        borderRadius: BorderRadius.circular(18),
+        onTap: () => _showEditorSettings(context),
+        child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
-          decoration: BoxDecoration(
-            color: background,
-            borderRadius: BorderRadius.circular(18),
-            border: border,
-          ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
-              Icon(Icons.folder_open_rounded, size: 18, color: foreground),
-              const SizedBox(width: 8),
-              Text(
-                'Dosya',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: foreground,
-                      fontWeight: FontWeight.w800,
-                    ),
-              ),
-              const SizedBox(width: 4),
-              Icon(Icons.keyboard_arrow_down_rounded,
-                  size: 18, color: foreground),
+              Icon(Icons.settings_outlined, size: 18, color: foreground),
+              if (!branded) ...<Widget>[
+                const SizedBox(width: 8),
+                Text(
+                  'Ayarlar',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: foreground,
+                        fontWeight: FontWeight.w700,
+                      ),
+                ),
+              ],
             ],
           ),
         ),
@@ -2547,19 +2650,25 @@ class _HistoryButtons extends StatelessWidget {
     required this.onRedo,
     required this.canUndo,
     required this.canRedo,
+    this.branded = false,
   });
 
   final VoidCallback onUndo;
   final VoidCallback onRedo;
   final bool canUndo;
   final bool canRedo;
+  final bool branded;
 
   @override
   Widget build(BuildContext context) {
-    final background = context.sutolColors.surfaceSubtle;
-    final borderColor = context.sutolColors.outline;
-    final enabledColor = context._htmlInk;
-    final disabledColor = context._htmlMuted.withValues(alpha: 0.52);
+    final background =
+        branded ? _studioHeaderControl : context.sutolColors.surfaceSubtle;
+    final borderColor =
+        branded ? _studioHeaderBorder : context.sutolColors.outline;
+    final enabledColor = branded ? _studioHeaderForeground : context._htmlInk;
+    final disabledColor = branded
+        ? _studioHeaderMuted.withValues(alpha: 0.48)
+        : context._htmlMuted.withValues(alpha: 0.52);
 
     return Container(
       height: 50,
@@ -2603,6 +2712,7 @@ class _MobileHeaderIconButton extends StatelessWidget {
     required this.onTap,
     this.enabled = true,
     this.size = 40,
+    this.branded = false,
   });
 
   final IconData icon;
@@ -2610,6 +2720,7 @@ class _MobileHeaderIconButton extends StatelessWidget {
   final VoidCallback onTap;
   final bool enabled;
   final double size;
+  final bool branded;
 
   @override
   Widget build(BuildContext context) {
@@ -2623,8 +2734,12 @@ class _MobileHeaderIconButton extends StatelessWidget {
         icon,
         size: 20,
         color: enabled
-            ? context._htmlInk
-            : context._htmlMuted.withValues(alpha: 0.45),
+            ? branded
+                ? _studioHeaderForeground
+                : context._htmlInk
+            : branded
+                ? _studioHeaderMuted.withValues(alpha: 0.45)
+                : context._htmlMuted.withValues(alpha: 0.45),
       ),
     );
   }
@@ -2638,6 +2753,7 @@ class _MobileHistoryButtons extends StatelessWidget {
     required this.canUndo,
     required this.canRedo,
     this.size = 40,
+    this.branded = false,
   });
 
   final VoidCallback onUndo;
@@ -2647,6 +2763,7 @@ class _MobileHistoryButtons extends StatelessWidget {
 
   /// Çok dar ekranlarda (<340) kompakt boyut.
   final double size;
+  final bool branded;
 
   @override
   Widget build(BuildContext context) {
@@ -2659,6 +2776,7 @@ class _MobileHistoryButtons extends StatelessWidget {
           enabled: canUndo,
           onTap: onUndo,
           size: size,
+          branded: branded,
         ),
         _MobileHeaderIconButton(
           icon: Icons.redo_rounded,
@@ -2666,6 +2784,7 @@ class _MobileHistoryButtons extends StatelessWidget {
           enabled: canRedo,
           onTap: onRedo,
           size: size,
+          branded: branded,
         ),
       ],
     );
@@ -2679,8 +2798,6 @@ class _HtmlStudioHeader extends StatelessWidget {
     required this.onPreview,
     required this.onExport,
     required this.onExportPdf,
-    required this.onSave,
-    required this.onLoad,
     required this.onUndo,
     required this.onRedo,
     required this.canUndo,
@@ -2699,8 +2816,6 @@ class _HtmlStudioHeader extends StatelessWidget {
   final VoidCallback onPreview;
   final VoidCallback onExport;
   final VoidCallback onExportPdf;
-  final VoidCallback onSave;
-  final VoidCallback onLoad;
   final VoidCallback onUndo;
   final VoidCallback onRedo;
   final bool canUndo;
@@ -2719,86 +2834,86 @@ class _HtmlStudioHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
+      key: const ValueKey<String>('studio-branded-header'),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: context.colors.surfaceElevated,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: context.colors.border),
+        gradient: const LinearGradient(
+          colors: <Color>[
+            _studioHeaderBrandStart,
+            _studioHeaderBrandEnd,
+          ],
+          begin: Alignment.centerLeft,
+          end: Alignment.centerRight,
+        ),
+        borderRadius: const BorderRadius.only(
+          bottomLeft: Radius.circular(12),
+          bottomRight: Radius.circular(12),
+        ),
+        border: Border.all(color: _studioHeaderBorder),
+        boxShadow: _studioHeaderFadeShadow,
       ),
       child: Row(
         children: <Widget>[
-          _StudioHeaderIconButton(
-            icon: Icons.arrow_back_rounded,
-            onTap: () => Navigator.of(context).pop(),
+          _HeaderBrandMark(
+            key: const ValueKey<String>('studio-brand-mark'),
+            size: 60,
+            branded: true,
           ),
           const SizedBox(width: 12),
-          Image.asset('assets/images/logo.png', height: 28),
-          const SizedBox(width: 10),
-          Text(
-            'Sutols',
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  color: context._htmlInk,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: -0.02,
-                ),
-          ),
-          const SizedBox(width: 10),
-          InkWell(
-            onTap: onEditFileName,
-            borderRadius: BorderRadius.circular(18),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(18),
-                color: onEditFileName != null
-                    ? context.sutolColors.surfaceSubtle
-                    : Colors.transparent,
-                border: Border.all(
+          ConstrainedBox(
+            key: const ValueKey<String>('studio-presentation-title'),
+            constraints: const BoxConstraints(maxWidth: 220),
+            child: InkWell(
+              onTap: onEditFileName,
+              borderRadius: BorderRadius.circular(18),
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(18),
                   color: onEditFileName != null
-                      ? context.sutolColors.outline
+                      ? _studioHeaderControl
                       : Colors.transparent,
-                ),
-              ),
-              child: Row(
-                children: <Widget>[
-                  Expanded(
-                    child: Text(
-                      presentationFileName,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: context._htmlInk,
-                            fontWeight: FontWeight.w700,
-                          ),
-                    ),
+                  border: Border.all(
+                    color: onEditFileName != null
+                        ? _studioHeaderBorder
+                        : Colors.transparent,
                   ),
-                  if (onEditFileName != null)
-                    Icon(
-                      Icons.edit_rounded,
-                      size: 14,
-                      color: context._htmlMuted,
+                ),
+                child: Row(
+                  children: <Widget>[
+                    Expanded(
+                      child: Text(
+                        presentationFileName,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              color: _studioHeaderForeground,
+                              fontWeight: FontWeight.w700,
+                            ),
+                      ),
                     ),
-                ],
+                    if (onEditFileName != null)
+                      Icon(
+                        Icons.edit_rounded,
+                        size: 14,
+                        color: _studioHeaderMuted,
+                      ),
+                  ],
+                ),
               ),
             ),
           ),
           const SizedBox(width: 18),
-          if (adminReadOnly)
-            const _AdminReadOnlyBadge()
-          else
-            _FileMenuButton(
-              onSave: onSave,
-              onLoad: onLoad,
-              onExportHtml: onExport,
-              onExportPdf: onExportPdf,
-            ),
-          const SizedBox(width: 8),
+          if (adminReadOnly) const _AdminReadOnlyBadge(),
+          if (adminReadOnly) const SizedBox(width: 8),
           if (!adminReadOnly)
             _HistoryButtons(
               onUndo: onUndo,
               onRedo: onRedo,
               canUndo: canUndo,
               canRedo: canRedo,
+              branded: true,
             ),
           const Spacer(),
           if (lastEditorLabel != null && lastEditorLabel!.isNotEmpty) ...[
@@ -2808,80 +2923,222 @@ class _HtmlStudioHeader extends StatelessWidget {
             ),
             const SizedBox(width: 8),
           ],
-          _ThemeToggleButton(),
+          const _SettingsMenuButton(branded: true),
           if (!adminReadOnly) ...<Widget>[
             const SizedBox(width: 8),
             _ToolbarAction(
               icon: Icons.add_rounded,
               onTap: onAddText,
+              branded: true,
             ),
             const SizedBox(width: 8),
             _ToolbarAction(
               icon: Icons.delete_outline_rounded,
               onTap: canRemoveText ? onRemoveText : null,
               destructive: true,
+              branded: true,
             ),
           ],
           const SizedBox(width: 12),
           _StudioPreviewButton(onTap: onPreview),
           const SizedBox(width: 8),
-          _StudioExportButton(onTap: onExport),
+          _StudioSaveButton(
+            onExportHtml: onExport,
+            onExportPdf: onExportPdf,
+          ),
         ],
       ),
     );
   }
 }
 
-class _StudioHeaderIconButton extends StatelessWidget {
-  const _StudioHeaderIconButton({
-    required this.icon,
-    required this.onTap,
+enum _HeaderBrandMenuAction { home, settings, presentations }
+
+class _HeaderBrandMark extends StatelessWidget {
+  const _HeaderBrandMark({
+    super.key,
+    required this.size,
+    required this.branded,
+    this.showLabel = true,
   });
 
-  final IconData icon;
-  final VoidCallback onTap;
+  final double size;
+  final bool branded;
+  final bool showLabel;
+
+  void _handleSelection(
+    BuildContext context,
+    _HeaderBrandMenuAction action,
+  ) {
+    switch (action) {
+      case _HeaderBrandMenuAction.home:
+        Navigator.of(context).popUntil((route) => route.isFirst);
+      case _HeaderBrandMenuAction.settings:
+        showDialog<void>(
+          context: context,
+          builder: (dialogContext) => const _HeaderSettingsDialog(),
+        );
+      case _HeaderBrandMenuAction.presentations:
+        Navigator.of(context).push(
+          MaterialPageRoute<void>(
+            builder: (_) => const MyPresentationsPage(),
+          ),
+        );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: context.sutolColors.surfaceSubtle,
-      borderRadius: BorderRadius.circular(18),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(18),
+    final colors = context.colors;
+    return PopupMenuButton<_HeaderBrandMenuAction>(
+      tooltip: 'Sutols menüsü',
+      position: PopupMenuPosition.under,
+      offset: const Offset(0, 6),
+      color: colors.surfaceElevated,
+      elevation: 10,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: colors.border),
+      ),
+      onSelected: (action) => _handleSelection(context, action),
+      itemBuilder: (context) => const <PopupMenuEntry<_HeaderBrandMenuAction>>[
+        PopupMenuItem<_HeaderBrandMenuAction>(
+          key: ValueKey<String>('brand-menu-home'),
+          value: _HeaderBrandMenuAction.home,
+          child: _HeaderBrandMenuItem(
+            icon: Icons.home_outlined,
+            label: 'Ana Sayfa',
+          ),
+        ),
+        PopupMenuItem<_HeaderBrandMenuAction>(
+          key: ValueKey<String>('brand-menu-settings'),
+          value: _HeaderBrandMenuAction.settings,
+          child: _HeaderBrandMenuItem(
+            icon: Icons.settings_outlined,
+            label: 'Ayarlar',
+          ),
+        ),
+        PopupMenuItem<_HeaderBrandMenuAction>(
+          key: ValueKey<String>('brand-menu-presentations'),
+          value: _HeaderBrandMenuAction.presentations,
+          child: _HeaderBrandMenuItem(
+            icon: Icons.slideshow_outlined,
+            label: 'Sunumlarım',
+          ),
+        ),
+      ],
+      child: Semantics(
+        key: showLabel ? null : const ValueKey<String>('sutols-wordmark'),
+        button: true,
+        label: 'Sutols menüsünü aç',
         child: SizedBox(
-          width: 50,
-          height: 50,
-          child: Icon(icon, color: context._htmlInk),
+          height: size,
+          child: Padding(
+            padding: EdgeInsets.symmetric(
+              horizontal: size * 0.08,
+              vertical: size * 0.08,
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                SizedBox.square(
+                  dimension: size * 0.84,
+                  child: branded
+                      ? ColorFiltered(
+                          colorFilter: const ColorFilter.mode(
+                            _studioHeaderForeground,
+                            BlendMode.srcIn,
+                          ),
+                          child: Image.asset(
+                            'assets/images/logo.png',
+                            fit: BoxFit.contain,
+                          ),
+                        )
+                      : Image.asset(
+                          'assets/images/logo.png',
+                          fit: BoxFit.contain,
+                        ),
+                ),
+                if (showLabel) ...<Widget>[
+                  SizedBox(width: size * 0.08),
+                  Text(
+                    'Sutols',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          color: branded
+                              ? _studioHeaderForeground
+                              : context._htmlInk,
+                          fontSize: size < 50 ? 17 : 20,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: -0.4,
+                        ),
+                  ),
+                ],
+              ],
+            ),
+          ),
         ),
       ),
     );
   }
 }
 
-class _StudioHeaderMenuChip extends StatelessWidget {
-  const _StudioHeaderMenuChip({
-    required this.label,
-  });
+class _HeaderBrandMenuItem extends StatelessWidget {
+  const _HeaderBrandMenuItem({required this.icon, required this.label});
 
+  final IconData icon;
   final String label;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-      decoration: BoxDecoration(
-        color: context.sutolColors.surfaceSubtle,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: context.sutolColors.outline),
-      ),
-      child: Text(
-        label,
-        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: context._htmlInk,
-              fontWeight: FontWeight.w700,
+    return Row(
+      children: <Widget>[
+        Icon(icon, size: 20, color: context._htmlMuted),
+        const SizedBox(width: 12),
+        Text(
+          label,
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: context._htmlInk,
+                fontWeight: FontWeight.w700,
+              ),
+        ),
+      ],
+    );
+  }
+}
+
+class _HeaderSettingsDialog extends StatelessWidget {
+  const _HeaderSettingsDialog();
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Ayarlar'),
+      contentPadding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+      content: ValueListenableBuilder<ThemeMode>(
+        valueListenable: ThemeController.instance.mode,
+        builder: (context, mode, _) {
+          final isDark = mode == ThemeMode.dark;
+          return ListTile(
+            contentPadding: const EdgeInsets.symmetric(horizontal: 4),
+            leading: Icon(
+              isDark ? Icons.dark_mode_rounded : Icons.light_mode_rounded,
             ),
+            title: const Text('Koyu tema'),
+            subtitle: Text(isDark ? 'Açık' : 'Kapalı'),
+            trailing: Switch(
+              value: isDark,
+              onChanged: (_) => ThemeController.instance.toggle(),
+            ),
+            onTap: ThemeController.instance.toggle,
+          );
+        },
       ),
+      actions: <Widget>[
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Kapat'),
+        ),
+      ],
     );
   }
 }
@@ -2900,19 +3157,19 @@ class _StudioHeaderInfoChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
-        color: context.sutolColors.surfaceSubtle,
+        color: _studioHeaderControl,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: context.sutolColors.outline),
+        border: Border.all(color: _studioHeaderBorder),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
-          Icon(icon, size: 17, color: context._htmlInk),
+          Icon(icon, size: 17, color: _studioHeaderForeground),
           const SizedBox(width: 8),
           Text(
             label,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: context._htmlInk,
+                  color: _studioHeaderForeground,
                   fontWeight: FontWeight.w700,
                 ),
           ),
@@ -2932,7 +3189,7 @@ class _StudioPreviewButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: context.sutolColors.surfaceSubtle,
+      color: _studioHeaderControl,
       borderRadius: BorderRadius.circular(18),
       child: InkWell(
         onTap: onTap,
@@ -2944,14 +3201,14 @@ class _StudioPreviewButton extends StatelessWidget {
             children: <Widget>[
               Icon(
                 Icons.slideshow_rounded,
-                color: context._htmlInk,
+                color: _studioHeaderForeground,
                 size: 18,
               ),
               const SizedBox(width: 8),
               Text(
                 'Sunum Modu',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: context._htmlInk,
+                      color: _studioHeaderForeground,
                       fontWeight: FontWeight.w800,
                     ),
               ),
@@ -2963,20 +3220,53 @@ class _StudioPreviewButton extends StatelessWidget {
   }
 }
 
-class _StudioExportButton extends StatelessWidget {
-  const _StudioExportButton({
-    required this.onTap,
+class _StudioSaveButton extends StatelessWidget {
+  const _StudioSaveButton({
+    required this.onExportHtml,
+    required this.onExportPdf,
   });
 
-  final VoidCallback onTap;
+  final VoidCallback onExportHtml;
+  final VoidCallback onExportPdf;
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: context._htmlAccent,
-      borderRadius: BorderRadius.circular(18),
-      child: InkWell(
-        onTap: onTap,
+    return PopupMenuButton<_FileMenuAction>(
+      key: const ValueKey<String>('studio-save-button'),
+      tooltip: 'Kaydet',
+      onSelected: (action) {
+        switch (action) {
+          case _FileMenuAction.exportHtml:
+            onExportHtml();
+            break;
+          case _FileMenuAction.exportPdf:
+            onExportPdf();
+            break;
+          case _FileMenuAction.save:
+          case _FileMenuAction.load:
+            break;
+        }
+      },
+      itemBuilder: (context) => const <PopupMenuEntry<_FileMenuAction>>[
+        PopupMenuItem<_FileMenuAction>(
+          key: ValueKey<String>('save-as-html'),
+          value: _FileMenuAction.exportHtml,
+          child: ListTile(
+            leading: Icon(Icons.html_rounded),
+            title: Text('HTML formatı'),
+          ),
+        ),
+        PopupMenuItem<_FileMenuAction>(
+          key: ValueKey<String>('save-as-pdf'),
+          value: _FileMenuAction.exportPdf,
+          child: ListTile(
+            leading: Icon(Icons.picture_as_pdf_rounded),
+            title: Text('PDF formatı (animasyonlar çalışmaz)'),
+          ),
+        ),
+      ],
+      child: Material(
+        color: _studioHeaderControl,
         borderRadius: BorderRadius.circular(18),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
@@ -2984,17 +3274,23 @@ class _StudioExportButton extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
               Icon(
-                Icons.download_rounded,
-                color: context.sutolColors.onPrimary,
+                Icons.save_alt_rounded,
+                color: _studioHeaderForeground,
                 size: 18,
               ),
               const SizedBox(width: 8),
               Text(
-                'HTML Disa Aktar',
+                'Kaydet',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: context.sutolColors.onPrimary,
+                      color: _studioHeaderForeground,
                       fontWeight: FontWeight.w800,
                     ),
+              ),
+              const SizedBox(width: 4),
+              Icon(
+                Icons.keyboard_arrow_down_rounded,
+                color: _studioHeaderForeground,
+                size: 18,
               ),
             ],
           ),
@@ -3011,9 +3307,6 @@ class _HtmlStudioLayout extends StatelessWidget {
     required this.activeTab,
     required this.panelOpen,
     required this.onTabChanged,
-    required this.onPreview,
-    required this.onExport,
-    required this.onExportPdf,
     this.adminReadOnly = false,
   });
 
@@ -3024,9 +3317,6 @@ class _HtmlStudioLayout extends StatelessWidget {
   /// Detay paneli açık mı? (Kapalıyken tuval tüm genişliği kullanır.)
   final bool panelOpen;
   final ValueChanged<_HtmlToolTab> onTabChanged;
-  final VoidCallback onPreview;
-  final VoidCallback onExport;
-  final VoidCallback onExportPdf;
 
   /// Salt okunur (admin) mod: ikon şeridi ve detay paneli gizlenir,
   /// tuval tam genişlikte salt okunur gösterilir.
@@ -3056,9 +3346,6 @@ class _HtmlStudioLayout extends StatelessWidget {
         _HtmlToolRail(
           activeTab: activeTab,
           onTabChanged: onTabChanged,
-          onPreview: onPreview,
-          onExport: onExport,
-          onExportPdf: onExportPdf,
         ),
         const SizedBox(width: 12),
         // Detay paneli: ikon şeridinin hemen yanında açılır/kapanır.
@@ -3097,20 +3384,15 @@ class _HtmlToolRail extends StatelessWidget {
   const _HtmlToolRail({
     required this.activeTab,
     required this.onTabChanged,
-    required this.onPreview,
-    required this.onExport,
-    required this.onExportPdf,
   });
 
   final _HtmlToolTab activeTab;
   final ValueChanged<_HtmlToolTab> onTabChanged;
-  final VoidCallback onPreview;
-  final VoidCallback onExport;
-  final VoidCallback onExportPdf;
 
   @override
   Widget build(BuildContext context) {
     return Container(
+      key: const ValueKey<String>('studio-tool-rail'),
       width: 80,
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 14),
       decoration: BoxDecoration(
@@ -3118,9 +3400,9 @@ class _HtmlToolRail extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: context.colors.border),
       ),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final primaryActions = <Widget>[
+      child: SingleChildScrollView(
+        child: Column(
+          children: <Widget>[
             _RailButton(
               label: 'Şablon',
               icon: Icons.dashboard_customize_rounded,
@@ -3169,61 +3451,8 @@ class _HtmlToolRail extends StatelessWidget {
               isSelected: activeTab == _HtmlToolTab.transitions,
               onTap: () => onTabChanged(_HtmlToolTab.transitions),
             ),
-          ];
-          final secondaryActions = <Widget>[
-            _RailButton(
-              label: 'HTML',
-              icon: Icons.html_rounded,
-              onTap: () {},
-            ),
-            const SizedBox(height: 10),
-            _RailButton(
-              label: 'Sunum',
-              icon: Icons.slideshow_rounded,
-              accent: const Color(0xFFEFFDFD),
-              iconColor: const Color(0xFF0891B2),
-              onTap: onPreview,
-            ),
-            const SizedBox(height: 10),
-            _RailButton(
-              label: 'Disa Aktar',
-              icon: Icons.download_rounded,
-              accent: const Color(0xFFEEF5FF),
-              iconColor: context._htmlAccent,
-              onTap: onExport,
-            ),
-            const SizedBox(height: 10),
-            _RailButton(
-              label: 'PDF',
-              icon: Icons.picture_as_pdf_rounded,
-              accent: const Color(0xFFFFF6EE),
-              iconColor: const Color(0xFFD97706),
-              onTap: onExportPdf,
-            ),
-          ];
-
-          // Birincil + ikincil butonlar toplamda ~1060px tutar; bu
-          // yüksekliğin altında Spacer yerine kaydırılabilir düzen kullan.
-          if (constraints.maxHeight < 1080) {
-            return SingleChildScrollView(
-              child: Column(
-                children: <Widget>[
-                  ...primaryActions,
-                  const SizedBox(height: 10),
-                  ...secondaryActions,
-                ],
-              ),
-            );
-          }
-
-          return Column(
-            children: <Widget>[
-              ...primaryActions,
-              const Spacer(),
-              ...secondaryActions,
-            ],
-          );
-        },
+          ],
+        ),
       ),
     );
   }
@@ -3235,25 +3464,21 @@ class _RailButton extends StatelessWidget {
     required this.icon,
     required this.onTap,
     this.isSelected = false,
-    this.accent,
-    this.iconColor,
   });
 
   final String label;
   final IconData icon;
   final VoidCallback onTap;
   final bool isSelected;
-  final Color? accent;
-  final Color? iconColor;
 
   @override
   Widget build(BuildContext context) {
     final backgroundColor =
-        accent ?? (isSelected ? const Color(0xFFEDF4FF) : Colors.transparent);
+        isSelected ? const Color(0xFFEDF4FF) : Colors.transparent;
     final borderColor =
         isSelected ? const Color(0xFFD4E4FF) : Colors.transparent;
     final effectiveIconColor =
-        iconColor ?? (isSelected ? context._htmlAccent : context._htmlMuted);
+        isSelected ? context._htmlAccent : context._htmlMuted;
 
     return Material(
       color: backgroundColor,
@@ -3304,7 +3529,8 @@ class _HtmlInspectorPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(18, 18, 18, 18),
+      key: const ValueKey<String>('studio-inspector-panel'),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: context.colors.surfaceElevated,
         borderRadius: BorderRadius.circular(12),
@@ -3313,37 +3539,28 @@ class _HtmlInspectorPanel extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Text(
-            _studioPanelTitle(activeTab),
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  color: context._htmlInk,
-                  fontWeight: FontWeight.w900,
-                ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            _studioPanelSubtitle(activeTab, controller),
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: context._htmlMuted,
-                  fontWeight: FontWeight.w600,
-                ),
-          ),
-          const SizedBox(height: 14),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
+          Row(
             children: <Widget>[
-              _InspectorStatChip(
-                icon: Icons.layers_rounded,
-                label: '${controller.pages.length} Sayfa',
+              Icon(
+                _htmlToolIcon(activeTab),
+                size: 20,
+                color: context._htmlAccent,
               ),
-              _InspectorStatChip(
-                icon: Icons.select_all_rounded,
-                label: '${controller.selectedItemCount} Secili',
+              const SizedBox(width: 9),
+              Expanded(
+                child: Text(
+                  _studioPanelTitle(activeTab),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        color: context._htmlInk,
+                        fontWeight: FontWeight.w900,
+                      ),
+                ),
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 14),
           Expanded(
             child: activeTab == _HtmlToolTab.text
                 ? SingleChildScrollView(
@@ -3352,53 +3569,22 @@ class _HtmlInspectorPanel extends StatelessWidget {
                       textController: textController,
                     ),
                   )
-                : SingleChildScrollView(
-                    child: AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 220),
-                      child: _HtmlControlPanel(
-                        key: ValueKey<_HtmlToolTab>(activeTab),
+                : activeTab == _HtmlToolTab.components
+                    ? _HtmlComponentControls(
                         controller: controller,
-                        textController: textController,
-                        activeTab: activeTab,
+                        expandResults: true,
+                      )
+                    : SingleChildScrollView(
+                        child: AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 220),
+                          child: _HtmlControlPanel(
+                            key: ValueKey<_HtmlToolTab>(activeTab),
+                            controller: controller,
+                            textController: textController,
+                            activeTab: activeTab,
+                          ),
+                        ),
                       ),
-                    ),
-                  ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _InspectorStatChip extends StatelessWidget {
-  const _InspectorStatChip({
-    required this.icon,
-    required this.label,
-  });
-
-  final IconData icon;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        color: context.sutolColors.surfaceSubtle,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: context.sutolColors.outline),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: <Widget>[
-          Icon(icon, size: 16, color: context._htmlInk),
-          const SizedBox(width: 8),
-          Text(
-            label,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: context._htmlInk,
-                  fontWeight: FontWeight.w800,
-                ),
           ),
         ],
       ),
@@ -3437,7 +3623,10 @@ class _HtmlStageWorkspace extends StatelessWidget {
             child: Column(
               children: <Widget>[
                 if (!readOnly)
-                  _SelectionContextBarSection(controller: controller),
+                  _SelectionContextBarSection(
+                    controller: controller,
+                    textController: textController,
+                  ),
                 Expanded(
                   child: _HtmlStageCard(
                     controller: controller,
@@ -3850,7 +4039,10 @@ class _HtmlWorkbench extends StatelessWidget {
               onTabChanged: onTabChanged,
             ),
             const SizedBox(height: 12),
-            _SelectionContextBarSection(controller: controller),
+            _SelectionContextBarSection(
+              controller: controller,
+              textController: textController,
+            ),
           ],
           Expanded(child: stage),
         ],
@@ -5183,8 +5375,7 @@ class _TemplatePresetCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final background = presentationTemplateBackground(template)!;
-    final previewColors = presentationBackgroundPreviewColors(background);
+    final previewPage = presentationTemplatePreviewPage(template);
     return Material(
       color: isSelected ? const Color(0xFFF0F6FF) : context.sutolColors.surface,
       borderRadius: BorderRadius.circular(16),
@@ -5204,16 +5395,22 @@ class _TemplatePresetCard extends StatelessWidget {
           ),
           child: Row(
             children: <Widget>[
-              Container(
-                width: 52,
-                height: 52,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(13),
-                  gradient: LinearGradient(colors: previewColors),
-                ),
-                child: Icon(
-                  presentationBackgroundIcon(background),
-                  color: Colors.white,
+              SizedBox(
+                width: 112,
+                child: AspectRatio(
+                  aspectRatio: 16 / 9,
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(10),
+                    child: HtmlPageStage(
+                      key: ValueKey<String>(
+                        'template-preview-${template.name}',
+                      ),
+                      page: previewPage,
+                      showBadge: false,
+                      renderMode: HtmlStageRenderMode.snapshot,
+                      onTap: onTap,
+                    ),
+                  ),
                 ),
               ),
               const SizedBox(width: 12),
@@ -5418,8 +5615,6 @@ class _BackgroundPresetCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = presentationBackgroundPreviewColors(kind);
-
     return Material(
       color: context.sutolColors.surface,
       borderRadius: BorderRadius.circular(16),
@@ -5455,9 +5650,9 @@ class _BackgroundPresetCard extends StatelessWidget {
                 aspectRatio: 16 / 9,
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(12),
-                  child: _BackgroundPresetPreview(
+                  child: HtmlBackgroundPreview(
                     kind: kind,
-                    colors: colors,
+                    onTap: onTap,
                   ),
                 ),
               ),
@@ -5502,176 +5697,14 @@ class _BackgroundPresetCard extends StatelessWidget {
   }
 }
 
-class _BackgroundPresetPreview extends StatelessWidget {
-  const _BackgroundPresetPreview({
-    required this.kind,
-    required this.colors,
-  });
-
-  final PresentationBackgroundKind kind;
-  final List<Color> colors;
-
-  @override
-  Widget build(BuildContext context) {
-    return Stack(
-      fit: StackFit.expand,
-      children: <Widget>[
-        DecoratedBox(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: colors,
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-          ),
-        ),
-        Positioned.fill(
-          child: CustomPaint(
-            painter: _BackgroundPreviewPainter(kind: kind),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _BackgroundPreviewPainter extends CustomPainter {
-  const _BackgroundPreviewPainter({
-    required this.kind,
-  });
-
-  final PresentationBackgroundKind kind;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final w = size.width;
-    final h = size.height;
-    final paint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.2
-      ..color = Colors.white.withValues(alpha: 0.16);
-
-    for (var x = w / 8; x < w; x += w / 8) {
-      canvas.drawLine(Offset(x, 0), Offset(x, h), paint);
-    }
-    for (var y = h / 5; y < h; y += h / 5) {
-      canvas.drawLine(Offset(0, y), Offset(w, y), paint);
-    }
-
-    _drawPackPreview(canvas, size, kind);
-  }
-
-  void _drawPackPreview(
-      Canvas canvas, Size size, PresentationBackgroundKind kind) {
-    final accent = presentationBackgroundPreviewColors(kind).last;
-    switch (presentationBackgroundCategory(kind)) {
-      case 'Teknoloji':
-        _drawStarNetwork(canvas, size, accent);
-      case 'Matematik':
-        _drawOrbit(canvas, size, accent);
-      case 'Kimya':
-        _drawBioStars(canvas, size);
-      case 'Cografya':
-        _drawGeoPreview(canvas, size, accent);
-      default:
-        _drawOrbit(canvas, size, accent);
-    }
-  }
-
-  void _drawGeoPreview(Canvas canvas, Size size, Color color) {
-    final paint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.4
-      ..color = color.withValues(alpha: 0.70);
-    final path = Path()
-      ..moveTo(size.width * 0.12, size.height * 0.70)
-      ..quadraticBezierTo(size.width * 0.30, size.height * 0.46,
-          size.width * 0.48, size.height * 0.66)
-      ..quadraticBezierTo(size.width * 0.66, size.height * 0.84,
-          size.width * 0.86, size.height * 0.54);
-    canvas.drawPath(path, paint);
-    canvas.drawCircle(
-      Offset(size.width * 0.72, size.height * 0.28),
-      8,
-      Paint()..color = color.withValues(alpha: 0.78),
-    );
-  }
-
-  void _drawOrbit(Canvas canvas, Size size, Color color) {
-    final center = Offset(size.width * 0.68, size.height * 0.38);
-    final paint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.5
-      ..color = color.withValues(alpha: 0.72);
-    for (final scale in <double>[0.75, 1.0, 1.25]) {
-      canvas.save();
-      canvas.translate(center.dx, center.dy);
-      canvas.rotate(scale * 0.65);
-      canvas.drawOval(
-        Rect.fromCenter(
-          center: Offset.zero,
-          width: size.width * 0.35 * scale,
-          height: size.height * 0.18 * scale,
-        ),
-        paint,
-      );
-      canvas.restore();
-    }
-    canvas.drawCircle(center, 4, Paint()..color = color);
-  }
-
-  void _drawStarNetwork(Canvas canvas, Size size, Color color) {
-    final points = <Offset>[
-      Offset(size.width * 0.18, size.height * 0.25),
-      Offset(size.width * 0.42, size.height * 0.42),
-      Offset(size.width * 0.64, size.height * 0.24),
-      Offset(size.width * 0.82, size.height * 0.62),
-      Offset(size.width * 0.28, size.height * 0.72),
-    ];
-    final line = Paint()
-      ..color = color.withValues(alpha: 0.32)
-      ..strokeWidth = 1.1;
-    for (var i = 0; i < points.length - 1; i += 1) {
-      canvas.drawLine(points[i], points[i + 1], line);
-    }
-    final dot = Paint()..color = color.withValues(alpha: 0.9);
-    for (final point in points) {
-      canvas.drawCircle(point, 2.6, dot);
-    }
-  }
-
-  void _drawBioStars(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.3
-      ..color = const Color(0xFF8CE0D1).withValues(alpha: 0.7);
-    canvas.drawOval(
-      Rect.fromCenter(
-        center: Offset(size.width * 0.36, size.height * 0.48),
-        width: size.width * 0.28,
-        height: size.height * 0.44,
-      ),
-      paint,
-    );
-    canvas.drawCircle(
-      Offset(size.width * 0.67, size.height * 0.38),
-      3,
-      Paint()..color = const Color(0xFFFFD166),
-    );
-  }
-
-  @override
-  bool shouldRepaint(covariant _BackgroundPreviewPainter oldDelegate) {
-    return oldDelegate.kind != kind;
-  }
-}
-
 class _HtmlComponentControls extends StatefulWidget {
   const _HtmlComponentControls({
     required this.controller,
+    this.expandResults = false,
   });
 
   final PresentationController controller;
+  final bool expandResults;
 
   @override
   State<_HtmlComponentControls> createState() => _HtmlComponentControlsState();
@@ -5706,25 +5739,62 @@ class _HtmlComponentControlsState extends State<_HtmlComponentControls> {
     final controller = widget.controller;
     final categories = presentationComponentCategories();
     final query = _query.trim().toLowerCase();
+    final definitionsByKind =
+        <PresentationComponentKind, PresentationComponentDefinition>{
+      for (final category in categories)
+        for (final definition
+            in presentationComponentDefinitionsForCategory(category))
+          definition.kind: definition,
+    };
+    final allDefinitions = definitionsByKind.values.toList(growable: false)
+      ..sort((a, b) => a.label.toLowerCase().compareTo(b.label.toLowerCase()));
+    final visibleDefinitions = query.isEmpty
+        ? allDefinitions
+        : allDefinitions
+            .where((definition) => _matches(definition, query))
+            .toList(growable: false);
 
-    final searchResults = query.isEmpty
-        ? null
-        : <PresentationComponentDefinition>[
-            for (final category in categories)
-              ...presentationComponentDefinitionsForCategory(category)
-                  .where((definition) => _matches(definition, query)),
-          ];
+    final Widget results;
+    if (visibleDefinitions.isEmpty) {
+      results = Center(
+        child: Text(
+          'Eşleşen bileşen bulunamadı.',
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: context._htmlMuted,
+                fontWeight: FontWeight.w700,
+              ),
+        ),
+      );
+    } else {
+      results = ListView.separated(
+        itemCount: visibleDefinitions.length,
+        separatorBuilder: (_, __) => const SizedBox(height: 8),
+        itemBuilder: (context, index) {
+          final definition = visibleDefinitions[index];
+          return _ComponentLibraryCard(
+            definition: definition,
+            onAdd: () => controller.addComponentBlock(definition.kind),
+          );
+        },
+      );
+    }
 
     return Container(
+      key: const ValueKey<String>('component-library-panel'),
       width: double.infinity,
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: context.sutolColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: context.sutolColors.outline),
-      ),
+      height: widget.expandResults ? double.infinity : null,
+      padding:
+          widget.expandResults ? EdgeInsets.zero : const EdgeInsets.all(12),
+      decoration: widget.expandResults
+          ? null
+          : BoxDecoration(
+              color: context.sutolColors.surface,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: context.sutolColors.outline),
+            ),
       child: Column(
-        mainAxisSize: MainAxisSize.min,
+        mainAxisSize:
+            widget.expandResults ? MainAxisSize.max : MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           _ModelSearchField(
@@ -5734,167 +5804,20 @@ class _HtmlComponentControlsState extends State<_HtmlComponentControls> {
             onClear: _clearSearch,
           ),
           const SizedBox(height: 12),
-          if (searchResults == null)
-            SizedBox(
-              height: 420,
-              child: ListView.separated(
-                itemCount: categories.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 8),
-                itemBuilder: (context, index) {
-                  final category = categories[index];
-                  final definitions =
-                      presentationComponentDefinitionsForCategory(category);
-                  return _ComponentCategorySection(
-                    category: category,
-                    definitions: definitions,
-                    controller: controller,
-                    initiallyExpanded: index == 0,
-                  );
-                },
-              ),
-            )
-          else if (searchResults.isEmpty)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              child: Text(
-                'Eşleşen bileşen bulunamadı.',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: context._htmlMuted,
-                      fontWeight: FontWeight.w700,
-                    ),
+          if (widget.expandResults)
+            Expanded(
+              child: KeyedSubtree(
+                key: const ValueKey<String>('component-library-results'),
+                child: results,
               ),
             )
           else
             SizedBox(
+              key: const ValueKey<String>('component-library-results'),
               height: 420,
-              child: ListView.separated(
-                itemCount: searchResults.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 8),
-                itemBuilder: (context, index) {
-                  final definition = searchResults[index];
-                  return LayoutBuilder(
-                    builder: (context, constraints) {
-                      final cardWidth = constraints.maxWidth >= 640
-                          ? (constraints.maxWidth - 10) / 2
-                          : constraints.maxWidth;
-                      return Wrap(
-                        spacing: 10,
-                        runSpacing: 10,
-                        children: <Widget>[
-                          SizedBox(
-                            width: cardWidth,
-                            child: _ComponentLibraryCard(
-                              definition: definition,
-                              onAdd: () =>
-                                  controller.addComponentBlock(definition.kind),
-                            ),
-                          ),
-                        ],
-                      );
-                    },
-                  );
-                },
-              ),
+              child: results,
             ),
         ],
-      ),
-    );
-  }
-}
-
-class _ComponentCategorySection extends StatefulWidget {
-  const _ComponentCategorySection({
-    required this.category,
-    required this.definitions,
-    required this.controller,
-    required this.initiallyExpanded,
-  });
-
-  final String category;
-  final List<PresentationComponentDefinition> definitions;
-  final PresentationController controller;
-  final bool initiallyExpanded;
-
-  @override
-  State<_ComponentCategorySection> createState() =>
-      _ComponentCategorySectionState();
-}
-
-class _ComponentCategorySectionState extends State<_ComponentCategorySection> {
-  late bool _expanded;
-
-  @override
-  void initState() {
-    super.initState();
-    _expanded = widget.initiallyExpanded;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: context.sutolColors.surfaceSubtle,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: context.sutolColors.primaryLight),
-      ),
-      child: ExpansionTile(
-        initiallyExpanded: widget.initiallyExpanded,
-        onExpansionChanged: (expanded) {
-          if (_expanded != expanded) {
-            setState(() => _expanded = expanded);
-          }
-        },
-        tilePadding: const EdgeInsets.symmetric(horizontal: 12),
-        childrenPadding: const EdgeInsets.fromLTRB(10, 0, 10, 12),
-        leading: Icon(
-          widget.definitions.isEmpty
-              ? Icons.widgets_rounded
-              : presentationComponentIcon(widget.definitions.first.kind),
-          color: context._htmlAccent,
-        ),
-        title: Text(
-          widget.category,
-          style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                color: context._htmlInk,
-                fontWeight: FontWeight.w900,
-              ),
-        ),
-        subtitle: Text(
-          '${widget.definitions.length} bilesen',
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: context._htmlMuted,
-                fontWeight: FontWeight.w700,
-              ),
-        ),
-        children: _expanded
-            ? <Widget>[
-                LayoutBuilder(
-                  builder: (context, constraints) {
-                    final cardWidth = constraints.maxWidth >= 640
-                        ? (constraints.maxWidth - 10) / 2
-                        : constraints.maxWidth;
-                    return Wrap(
-                      spacing: 10,
-                      runSpacing: 10,
-                      children: widget.definitions
-                          .map(
-                            (definition) => SizedBox(
-                              width: cardWidth,
-                              child: _ComponentLibraryCard(
-                                definition: definition,
-                                onAdd: () =>
-                                    widget.controller.addComponentBlock(
-                                  definition.kind,
-                                ),
-                              ),
-                            ),
-                          )
-                          .toList(growable: false),
-                    );
-                  },
-                ),
-              ]
-            : const <Widget>[],
       ),
     );
   }
@@ -6026,50 +5949,29 @@ class _ToolbarBadge extends StatelessWidget {
   }
 }
 
-class _ToolbarChip extends StatelessWidget {
-  const _ToolbarChip({
-    required this.label,
-  });
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        color: context.sutolColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: context.sutolColors.outline),
-      ),
-      child: Text(
-        label,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: context._htmlInk,
-              fontWeight: FontWeight.w700,
-            ),
-      ),
-    );
-  }
-}
-
 class _ToolbarAction extends StatelessWidget {
   const _ToolbarAction({
     required this.icon,
     required this.onTap,
     this.destructive = false,
+    this.branded = false,
   });
 
   final IconData icon;
   final VoidCallback? onTap;
   final bool destructive;
+  final bool branded;
 
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: destructive ? const Color(0xFFFFF4F4) : Colors.white,
+      color: branded
+          ? destructive
+              ? const Color(0x36FFD7D7)
+              : _studioHeaderControl
+          : destructive
+              ? const Color(0xFFFFF4F4)
+              : Colors.white,
       borderRadius: BorderRadius.circular(14),
       child: InkWell(
         onTap: onTap,
@@ -6082,14 +5984,24 @@ class _ToolbarAction extends StatelessWidget {
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(14),
               border: Border.all(
-                color: destructive
-                    ? const Color(0xFFFFD8D8)
-                    : context.sutolColors.outline,
+                color: branded
+                    ? destructive
+                        ? const Color(0x80FFD7D7)
+                        : _studioHeaderBorder
+                    : destructive
+                        ? const Color(0xFFFFD8D8)
+                        : context.sutolColors.outline,
               ),
             ),
             child: Icon(
               icon,
-              color: destructive ? const Color(0xFFD13A3A) : context._htmlInk,
+              color: branded
+                  ? destructive
+                      ? const Color(0xFFFFE4E4)
+                      : _studioHeaderForeground
+                  : destructive
+                      ? const Color(0xFFD13A3A)
+                      : context._htmlInk,
               size: 20,
             ),
           ),
@@ -6160,9 +6072,10 @@ class _HtmlTextControlsState extends State<_HtmlTextControls> {
     final selectedTextBlock = controller.selectedTextBlock;
     final selectedTextCount = controller.selectedTextSelectionCount;
     final fontQuery = _fontQuery.trim().toLowerCase();
+    final availableFontStyles = presentationFontLibraryStyles;
     final fontStyles = fontQuery.isEmpty
-        ? PresentationTextStyle.values
-        : PresentationTextStyle.values
+        ? availableFontStyles
+        : availableFontStyles
             .where(
               (style) =>
                   _htmlTextStyleLabel(style).toLowerCase().contains(fontQuery),
@@ -6172,19 +6085,34 @@ class _HtmlTextControlsState extends State<_HtmlTextControls> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: <Widget>[
-            _ToolbarBadge(
-              icon: Icons.text_fields_rounded,
-              label: 'Metin Katmanı',
+        FilledButton.icon(
+          key: const ValueKey<String>('add-text-box-button'),
+          onPressed: controller.addTextBlock,
+          icon: const Icon(Icons.add_rounded, size: 21),
+          label: const Text('Metin Kutusu Ekle'),
+          style: FilledButton.styleFrom(
+            minimumSize: const Size.fromHeight(48),
+            backgroundColor: context._htmlAccent,
+            foregroundColor: Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(14),
             ),
-            if (selectedTextCount > 1)
-              _ToolbarChip(label: '$selectedTextCount metin seçili'),
-          ],
+            textStyle: Theme.of(context).textTheme.labelLarge?.copyWith(
+                  fontWeight: FontWeight.w800,
+                ),
+          ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 14),
+        if (selectedTextCount > 1) ...<Widget>[
+          Text(
+            '$selectedTextCount metin seçili',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: context._htmlMuted,
+                  fontWeight: FontWeight.w700,
+                ),
+          ),
+          const SizedBox(height: 8),
+        ],
         _TextFieldControl(
           controller: textController,
           enabled: selectedTextBlock != null,
@@ -6198,15 +6126,7 @@ class _HtmlTextControlsState extends State<_HtmlTextControls> {
                 fontWeight: FontWeight.w800,
               ),
         ),
-        const SizedBox(height: 4),
-        Text(
-          'Boyut, biçim, renk ve animasyon ayarları üst çubukta.',
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: context._htmlMuted,
-                fontWeight: FontWeight.w600,
-              ),
-        ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 10),
         _ModelSearchField(
           controller: _fontSearchController,
           hintText: 'Yazı tipi ara: klasik, serif, kaligrafi...',
@@ -6229,6 +6149,7 @@ class _HtmlTextControlsState extends State<_HtmlTextControls> {
           for (final style in fontStyles)
             _FontListTile(
               label: _htmlTextStyleLabel(style),
+              fontFamily: presentationFontFamily(style),
               selected: selectedTextBlock?.textStyle == style,
               enabled: selectedTextBlock != null,
               onTap: () => controller.updateSelectedTextStyle(style),
@@ -6242,12 +6163,14 @@ class _HtmlTextControlsState extends State<_HtmlTextControls> {
 class _FontListTile extends StatelessWidget {
   const _FontListTile({
     required this.label,
+    required this.fontFamily,
     required this.selected,
     required this.enabled,
     required this.onTap,
   });
 
   final String label;
+  final String? fontFamily;
   final bool selected;
   final bool enabled;
   final VoidCallback onTap;
@@ -6284,7 +6207,8 @@ class _FontListTile extends StatelessWidget {
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                           fontSize: 18,
                           color: context._htmlInk,
-                          fontWeight: FontWeight.w700,
+                          fontFamily: fontFamily,
+                          fontWeight: FontWeight.w400,
                         ),
                   ),
                 ),
@@ -6362,7 +6286,7 @@ class _ControlFieldShell extends StatelessWidget {
   }
 }
 
-class _HtmlStageCard extends StatelessWidget {
+class _HtmlStageCard extends StatefulWidget {
   const _HtmlStageCard({
     required this.controller,
     this.canvasZoom = 1,
@@ -6392,12 +6316,24 @@ class _HtmlStageCard extends StatelessWidget {
   final bool readOnly;
 
   @override
+  State<_HtmlStageCard> createState() => _HtmlStageCardState();
+}
+
+class _HtmlStageCardState extends State<_HtmlStageCard> {
+  String? _inlineEditingTextBlockId;
+
+  void _setInlineEditingTextBlock(String? blockId) {
+    if (_inlineEditingTextBlockId == blockId || !mounted) return;
+    setState(() => _inlineEditingTextBlockId = blockId);
+  }
+
+  @override
   Widget build(BuildContext context) {
     final reduceMotion = _shouldReduceHtmlMotion(
       context,
-      controller.effectSettings,
+      widget.controller.effectSettings,
     );
-    final zoom = math.max(1.0, canvasZoom);
+    final zoom = math.max(1.0, widget.canvasZoom);
 
     // Yakınlaşınca tuvali sabitleyen çağrıların sürükleme deltalarını
     // görsel ölçekle böler; parmak 1:1 takip etmeye devam eder. Seçim
@@ -6432,8 +6368,8 @@ class _HtmlStageCard extends StatelessWidget {
             (stageHeight * zoom - constraints.maxHeight) / 2,
           );
           final pan = Offset(
-            canvasPan.dx.clamp(-maxPanX, maxPanX),
-            canvasPan.dy.clamp(-maxPanY, maxPanY),
+            widget.canvasPan.dx.clamp(-maxPanX, maxPanX),
+            widget.canvasPan.dy.clamp(-maxPanY, maxPanY),
           );
 
           final stage = SizedBox(
@@ -6444,53 +6380,50 @@ class _HtmlStageCard extends StatelessWidget {
                   ? Duration.zero
                   : Duration(
                       milliseconds:
-                          controller.effectSettings.transitionDurationMs,
+                          widget.controller.effectSettings.transitionDurationMs,
                     ),
               transitionBuilder: (child, animation) =>
                   _buildHtmlPreviewTransition(
-                kind: controller.effectSettings.transitionKind,
+                kind: widget.controller.effectSettings.transitionKind,
                 animation: animation,
                 reduceMotion: reduceMotion,
                 child: child,
               ),
               child: KeyedSubtree(
-                key: ValueKey<String>('stage-${controller.selectedPage.id}'),
+                key: ValueKey<String>(
+                    'stage-${widget.controller.selectedPage.id}'),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(28),
                   child: Stack(
                     fit: StackFit.expand,
                     children: <Widget>[
-                      // HTML sahnesi web'de bir platform görünümüdür
-                      // (HtmlElementView/iframe) ve yalnızca görsel
-                      // önizlemedir; tüm etkileşim üstteki tuval
-                      // katmanında yapılır. Hit test'e katılması, henüz
-                      // layout edilmemiş platform görünümüne dokunulunca
-                      // "Cannot hit test a render box that has never
-                      // been laid out" hatasına yol açar.
                       IgnorePointer(
                         child: HtmlPageStage(
                           key: ValueKey<String>(
-                              'html-${controller.selectedPage.id}'),
-                          page: controller.selectedPage,
-                          selectedTextBlockId: controller.selectedTextBlockId,
+                              'html-${widget.controller.selectedPage.id}'),
+                          page: widget.controller.selectedPage,
+                          selectedTextBlockId:
+                              widget.controller.selectedTextBlockId,
+                          inlineEditingTextBlockId: _inlineEditingTextBlockId,
                           selectedComponentBlockId:
-                              controller.selectedComponentBlockId,
+                              widget.controller.selectedComponentBlockId,
                           renderMode: reduceMotion
                               ? HtmlStageRenderMode.snapshot
                               : HtmlStageRenderMode.preview,
                         ),
                       ),
-                      if (readOnly)
+                      if (widget.readOnly)
                         IgnorePointer(
                           child: PresentationPageCanvas(
-                            page: controller.selectedPage,
-                            selectedTextBlockId: controller.selectedTextBlockId,
+                            page: widget.controller.selectedPage,
+                            selectedTextBlockId:
+                                widget.controller.selectedTextBlockId,
                             selectedTextBlockIds:
-                                controller.selectedTextBlockIds,
+                                widget.controller.selectedTextBlockIds,
                             selectedComponentBlockId:
-                                controller.selectedComponentBlockId,
+                                widget.controller.selectedComponentBlockId,
                             selectedComponentBlockIds:
-                                controller.selectedComponentBlockIds,
+                                widget.controller.selectedComponentBlockIds,
                             interactive: false,
                             showHint: false,
                             showSurface: false,
@@ -6500,38 +6433,52 @@ class _HtmlStageCard extends StatelessWidget {
                         )
                       else
                         PresentationPageCanvas(
-                          page: controller.selectedPage,
-                          selectedTextBlockId: controller.selectedTextBlockId,
-                          selectedTextBlockIds: controller.selectedTextBlockIds,
+                          page: widget.controller.selectedPage,
+                          selectedTextBlockId:
+                              widget.controller.selectedTextBlockId,
+                          selectedTextBlockIds:
+                              widget.controller.selectedTextBlockIds,
                           selectedComponentBlockId:
-                              controller.selectedComponentBlockId,
+                              widget.controller.selectedComponentBlockId,
                           selectedComponentBlockIds:
-                              controller.selectedComponentBlockIds,
-                          interactive: interactive,
-                          showHint: showHint,
+                              widget.controller.selectedComponentBlockIds,
+                          interactive: widget.interactive,
+                          showHint: widget.showHint,
                           showSurface: false,
                           showEmptyState: false,
                           textOpacity: 0,
-                          onSelectTextBlock: controller.selectTextBlock,
+                          onSelectTextBlock: widget.controller.selectTextBlock,
                           onSelectComponentBlock:
-                              controller.selectComponentBlock,
+                              widget.controller.selectComponentBlock,
                           onDragSelectedText: (delta, size) =>
-                              controller.moveSelectedText(
+                              widget.controller.moveSelectedText(
                             localDelta(delta),
                             size,
                           ),
-                          onInlineTextChanged: controller.updateSelectedText,
-                          onResizeSelectedTextWidth: (deltaX, size) =>
-                              controller.resizeSelectedTextWidth(
-                            localDelta(Offset(deltaX, 0)).dx,
+                          onInlineTextChanged:
+                              widget.controller.updateSelectedText,
+                          onInlineEditingChanged: _setInlineEditingTextBlock,
+                          onResizeSelectedText: (delta, size,
+                                  {required renderedHeightFactor,
+                                  required fromLeft,
+                                  required fromTop,
+                                  required fromRight,
+                                  required fromBottom}) =>
+                              widget.controller.resizeSelectedTextByHandle(
+                            localDelta(delta),
                             size,
+                            renderedHeightFactor: renderedHeightFactor,
+                            fromLeft: fromLeft,
+                            fromTop: fromTop,
+                            fromRight: fromRight,
+                            fromBottom: fromBottom,
                           ),
                           onResizeSelectedComponent: (delta, size,
                                   {required fromLeft,
                                   required fromTop,
                                   required fromRight,
                                   required fromBottom}) =>
-                              controller.resizeSelectedComponentByHandle(
+                              widget.controller.resizeSelectedComponentByHandle(
                             localDelta(delta),
                             size,
                             fromLeft: fromLeft,
@@ -6543,67 +6490,71 @@ class _HtmlStageCard extends StatelessWidget {
                             required textBlockIds,
                             required componentBlockIds,
                           }) =>
-                              controller.selectItems(
+                              widget.controller.selectItems(
                             textBlockIds: textBlockIds,
                             componentBlockIds: componentBlockIds,
                           ),
-                          onClearSelection: controller.clearSelection,
+                          onClearSelection: widget.controller.clearSelection,
                           onSecondaryTapTextBlock: (itemId, globalPosition) {
-                            if (!controller.selectedTextBlockIds
+                            if (!widget.controller.selectedTextBlockIds
                                 .contains(itemId)) {
-                              controller.selectTextBlock(itemId);
+                              widget.controller.selectTextBlock(itemId);
                             }
                             _showStageItemContextMenu(
                               context,
-                              controller,
+                              widget.controller,
                               globalPosition,
                             );
                           },
                           onSecondaryTapComponentBlock:
                               (itemId, globalPosition) {
-                            if (!controller.selectedComponentBlockIds
+                            if (!widget.controller.selectedComponentBlockIds
                                 .contains(itemId)) {
-                              controller.selectComponentBlock(itemId);
+                              widget.controller.selectComponentBlock(itemId);
                             }
                             _showStageItemContextMenu(
                               context,
-                              controller,
+                              widget.controller,
                               globalPosition,
                             );
                           },
                           onSecondaryTapCanvas: (globalPosition) {
                             _showCanvasContextMenu(
                               context,
-                              controller,
+                              widget.controller,
                               globalPosition,
                             );
                           },
                           onToggleModelOrbit: (itemId) {
-                            if (controller.selectedComponentBlockId != itemId) {
-                              controller.selectComponentBlock(itemId);
+                            if (widget.controller.selectedComponentBlockId !=
+                                itemId) {
+                              widget.controller.selectComponentBlock(itemId);
                             }
-                            controller.toggleSelectedModelOrbit();
+                            widget.controller.toggleSelectedModelOrbit();
                           },
                           onRotateModel: (itemId, delta) {
-                            if (controller.selectedComponentBlockId != itemId) {
-                              controller.selectComponentBlock(itemId);
+                            if (widget.controller.selectedComponentBlockId !=
+                                itemId) {
+                              widget.controller.selectComponentBlock(itemId);
                             }
-                            controller.rotateSelectedModel(localDelta(delta));
+                            widget.controller
+                                .rotateSelectedModel(localDelta(delta));
                           },
                           onBeginModelOrbit: (itemId) {
-                            if (controller.selectedComponentBlockId != itemId) {
-                              controller.selectComponentBlock(itemId);
+                            if (widget.controller.selectedComponentBlockId !=
+                                itemId) {
+                              widget.controller.selectComponentBlock(itemId);
                             }
-                            controller.beginSelectedModelOrbitGesture();
+                            widget.controller.beginSelectedModelOrbitGesture();
                           },
                           onEndModelOrbit:
-                              controller.endSelectedModelOrbitGesture,
+                              widget.controller.endSelectedModelOrbitGesture,
                         ),
                     ],
                   ),
                 ),
               ),
-            ), // AnimatedSwitcher'ı kapatır
+            ),
           );
           return Center(
             child: zoom > 1.0001 || pan != Offset.zero
@@ -6627,9 +6578,13 @@ class _HtmlStageCard extends StatelessWidget {
 /// Tekli seçimde seçili öğenin türüne göre hızlı ayarları gösterir;
 /// seçim yoksa ya da çoklu seçimde gizlenir.
 class _SelectionContextBarSection extends StatelessWidget {
-  const _SelectionContextBarSection({required this.controller});
+  const _SelectionContextBarSection({
+    required this.controller,
+    required this.textController,
+  });
 
   final PresentationController controller;
+  final TextEditingController textController;
 
   @override
   Widget build(BuildContext context) {
@@ -6672,6 +6627,11 @@ class _SelectionContextBarSection extends StatelessWidget {
     PresentationTextBlock block,
   ) {
     return <Widget>[
+      _SelectedTextToolbarField(
+        controller: textController,
+        onChanged: controller.updateSelectedText,
+      ),
+      const MiniToolDivider(),
       MiniToolAction(
         icon: Icons.remove_rounded,
         tooltip: 'Yazı Boyutunu Küçült',
@@ -6699,9 +6659,12 @@ class _SelectionContextBarSection extends StatelessWidget {
       MiniToolAction(
         icon: Icons.add_rounded,
         tooltip: 'Yazı Boyutunu Büyüt',
-        onTap: block.fontSize < 120
+        onTap: block.fontSize < PresentationController.maxTextFontSize
             ? () => controller.updateSelectedFontSize(
-                  math.min(120, block.fontSize + 2),
+                  math.min(
+                    PresentationController.maxTextFontSize,
+                    block.fontSize + 2,
+                  ),
                 )
             : null,
       ),
@@ -6748,81 +6711,24 @@ class _SelectionContextBarSection extends StatelessWidget {
             controller.updateSelectedTextAlign(PresentationTextAlign.right),
       ),
       const MiniToolDivider(),
-      _MiniTextMoreButton(
+      _TextAnimationPopupButton(
+        key: const ValueKey<String>('selected-text-animation-control'),
         controller: controller,
-        onAnimation: () => _showTextAnimationSheet(context),
-        onColor: () => _showTextColorSheet(context),
-        onGlow: () => _showGlowDialog(context),
+        current: block.textAnimation,
+      ),
+      const MiniToolDivider(),
+      _TextColorPopupButton(
+        key: const ValueKey<String>('selected-text-color-control'),
+        controller: controller,
+        currentHex: block.textColorHex,
+      ),
+      const MiniToolDivider(),
+      _TextGlowPopupButton(
+        key: const ValueKey<String>('selected-text-glow-control'),
+        controller: controller,
+        current: block.glowIntensity,
       ),
     ];
-  }
-
-  /// Animasyon seçici: ikincil ayarlar "⋮" menüsünden açılır; birincil
-  /// formatlama barını kalabalıklaştırmaz.
-  void _showTextAnimationSheet(BuildContext context) {
-    showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (sheetContext) => _HtmlTextAnimationSheet(
-        controller: controller,
-      ),
-    );
-  }
-
-  void _showTextColorSheet(BuildContext context) {
-    showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (sheetContext) => _HtmlTextColorSheet(
-        controller: controller,
-      ),
-    );
-  }
-
-  void _showGlowDialog(BuildContext context) {
-    showDialog<void>(
-      context: context,
-      builder: (dialogContext) {
-        return AnimatedBuilder(
-          animation: controller,
-          builder: (context, _) {
-            final block = controller.selectedTextBlock;
-            return AlertDialog(
-              title: const Text('Parlaklık'),
-              content: block == null
-                  ? const Text('Metin seçili değil.')
-                  : Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: <Widget>[
-                        Slider(
-                          value: block.glowIntensity,
-                          min: 0,
-                          max: 2,
-                          divisions: 20,
-                          onChanged: controller.updateSelectedGlowIntensity,
-                        ),
-                        Text(
-                          '%${(block.glowIntensity * 100).round()}',
-                          style:
-                              Theme.of(context).textTheme.bodySmall?.copyWith(
-                                    fontWeight: FontWeight.w800,
-                                  ),
-                        ),
-                      ],
-                    ),
-              actions: <Widget>[
-                TextButton(
-                  onPressed: () => Navigator.of(dialogContext).pop(),
-                  child: const Text('Kapat'),
-                ),
-              ],
-            );
-          },
-        );
-      },
-    );
   }
 
   List<Widget> _modelChildren(
@@ -6935,153 +6841,119 @@ class _SelectionContextBarSection extends StatelessWidget {
   }
 }
 
-/// Bağlamsal metin barındaki "⋮": animasyon, renk ve parlaklık gibi ikincil
-/// ayarlar buradan açılır (birincil barı kalabalıklaştırmaz).
-class _MiniTextMoreButton extends StatelessWidget {
-  const _MiniTextMoreButton({
+class _SelectedTextToolbarField extends StatelessWidget {
+  const _SelectedTextToolbarField({
     required this.controller,
-    required this.onAnimation,
-    required this.onColor,
-    required this.onGlow,
+    required this.onChanged,
   });
 
-  final PresentationController controller;
-  final VoidCallback onAnimation;
-  final VoidCallback onColor;
-  final VoidCallback onGlow;
+  final TextEditingController controller;
+  final ValueChanged<String> onChanged;
 
   @override
   Widget build(BuildContext context) {
-    return PopupMenuButton<_MiniTextMoreAction>(
-      tooltip: 'Diğer metin ayarları',
-      padding: EdgeInsets.zero,
-      constraints: const BoxConstraints.tightFor(width: 32, height: 32),
-      iconSize: 17,
-      icon: Icon(
-        Icons.more_horiz_rounded,
-        color: context.sutolColors.onSurfaceVariant,
+    final compact = MediaQuery.sizeOf(context).width < 600;
+    return SizedBox(
+      key: const ValueKey<String>('selected-text-toolbar-field'),
+      width: compact ? 160 : 230,
+      height: 36,
+      child: TextField(
+        controller: controller,
+        onChanged: onChanged,
+        maxLines: 1,
+        textInputAction: TextInputAction.done,
+        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: context._htmlInk,
+              fontWeight: FontWeight.w700,
+            ),
+        decoration: InputDecoration(
+          hintText: 'Metin yazın',
+          isDense: true,
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 12,
+            vertical: 9,
+          ),
+          filled: true,
+          fillColor: context.sutolColors.surfaceSubtle,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: context.sutolColors.outline),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: context.sutolColors.outline),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: context._htmlAccent, width: 1.5),
+          ),
+        ),
       ),
-      onSelected: (action) {
-        switch (action) {
-          case _MiniTextMoreAction.animation:
-            onAnimation();
-          case _MiniTextMoreAction.color:
-            onColor();
-          case _MiniTextMoreAction.glow:
-            onGlow();
-        }
-      },
-      itemBuilder: (context) => const <PopupMenuEntry<_MiniTextMoreAction>>[
-        PopupMenuItem<_MiniTextMoreAction>(
-          value: _MiniTextMoreAction.animation,
-          height: 46,
-          child: ListTile(
-            dense: true,
-            leading: Icon(Icons.animation_rounded),
-            title: Text('Animasyon'),
-          ),
-        ),
-        PopupMenuItem<_MiniTextMoreAction>(
-          value: _MiniTextMoreAction.color,
-          height: 46,
-          child: ListTile(
-            dense: true,
-            leading: Icon(Icons.palette_rounded),
-            title: Text('Renk'),
-          ),
-        ),
-        PopupMenuItem<_MiniTextMoreAction>(
-          value: _MiniTextMoreAction.glow,
-          height: 46,
-          child: ListTile(
-            dense: true,
-            leading: Icon(Icons.brightness_7_rounded),
-            title: Text('Parlaklık'),
-          ),
-        ),
-      ],
     );
   }
 }
 
-enum _MiniTextMoreAction {
-  animation,
-  color,
-  glow,
-}
-
-/// "⋮" menüsündeki Animasyon seçici: seçili metnin giriş animasyonu.
-class _HtmlTextAnimationSheet extends StatelessWidget {
-  const _HtmlTextAnimationSheet({required this.controller});
+class _TextAnimationPopupButton extends StatelessWidget {
+  const _TextAnimationPopupButton({
+    super.key,
+    required this.controller,
+    required this.current,
+  });
 
   final PresentationController controller;
+  final PresentationTextAnimation current;
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Container(
-        constraints: const BoxConstraints(maxHeight: 380),
-        margin: const EdgeInsets.all(12),
-        padding: const EdgeInsets.fromLTRB(16, 14, 16, 10),
+    final active = current != PresentationTextAnimation.none;
+    final colors = context.colors;
+    return PopupMenuButton<PresentationTextAnimation>(
+      tooltip: 'Metin animasyonu',
+      initialValue: current,
+      position: PopupMenuPosition.under,
+      constraints: const BoxConstraints(
+        minWidth: 230,
+        maxWidth: 280,
+        maxHeight: 360,
+      ),
+      onSelected: controller.updateSelectedTextAnimation,
+      itemBuilder: (context) => <PopupMenuEntry<PresentationTextAnimation>>[
+        for (final animation in PresentationTextAnimation.values)
+          CheckedPopupMenuItem<PresentationTextAnimation>(
+            key: ValueKey<String>('text-animation-option-${animation.name}'),
+            value: animation,
+            checked: animation == current,
+            child: Text(_textAnimationLabel(animation)),
+          ),
+      ],
+      child: AnimatedContainer(
+        duration: AppMotion.fast,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
         decoration: BoxDecoration(
-          color: context.colors.surface,
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: context.colors.border),
-          boxShadow: context.elevation2,
+          color: active ? colors.primary : Colors.transparent,
+          borderRadius: BorderRadius.circular(AppRadius.full),
         ),
-        child: Column(
+        child: Row(
           mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
+            Icon(
+              Icons.animation_rounded,
+              size: 17,
+              color: active ? colors.surface : colors.onSurfaceVariant,
+            ),
+            const SizedBox(width: 7),
             Text(
-              'Metin Animasyonu',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: context._htmlInk,
-                    fontWeight: FontWeight.w900,
+              _textAnimationLabel(current),
+              style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: active ? colors.surface : colors.onSurfaceVariant,
                   ),
             ),
-            const SizedBox(height: 8),
-            Flexible(
-              child: AnimatedBuilder(
-                animation: controller,
-                builder: (context, _) {
-                  final current = controller.selectedTextBlock?.textAnimation;
-                  return ListView(
-                    shrinkWrap: true,
-                    children: <Widget>[
-                      for (final animation in PresentationTextAnimation.values)
-                        ListTile(
-                          dense: true,
-                          leading: Icon(
-                            animation == current
-                                ? Icons.check_circle_rounded
-                                : Icons.circle_outlined,
-                            size: 20,
-                            color: animation == current
-                                ? context.colors.primary
-                                : context.sutolColors.onSurfaceVariant,
-                          ),
-                          title: Text(
-                            _textAnimationLabel(animation),
-                            style: Theme.of(context)
-                                .textTheme
-                                .bodyMedium
-                                ?.copyWith(
-                                  color: context._htmlInk,
-                                  fontWeight: animation == current
-                                      ? FontWeight.w800
-                                      : FontWeight.w600,
-                                ),
-                          ),
-                          onTap: () {
-                            controller.updateSelectedTextAnimation(animation);
-                            Navigator.of(context).pop();
-                          },
-                        ),
-                    ],
-                  );
-                },
-              ),
+            const SizedBox(width: 5),
+            Icon(
+              Icons.arrow_drop_down_rounded,
+              size: 18,
+              color: active ? colors.surface : colors.onSurfaceVariant,
             ),
           ],
         ),
@@ -7090,82 +6962,177 @@ class _HtmlTextAnimationSheet extends StatelessWidget {
   }
 }
 
-/// "⋮" menüsündeki Renk seçici: seçili metin için renk paleti.
-class _HtmlTextColorSheet extends StatelessWidget {
-  const _HtmlTextColorSheet({required this.controller});
+class _TextColorPopupButton extends StatelessWidget {
+  const _TextColorPopupButton({
+    super.key,
+    required this.controller,
+    required this.currentHex,
+  });
 
   final PresentationController controller;
+  final String? currentHex;
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Container(
-        margin: const EdgeInsets.all(12),
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: context.colors.surface,
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: context.colors.border),
-          boxShadow: context.elevation2,
-        ),
-        child: AnimatedBuilder(
-          animation: controller,
-          builder: (context, _) {
-            final currentHex = controller.selectedTextBlock?.textColorHex;
-            return Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
+    final current = _textColorOptions.firstWhere(
+      (option) => option.hex == currentHex,
+      orElse: () => _textColorOptions.first,
+    );
+    return PopupMenuButton<_TextColorOption>(
+      tooltip: 'Yazı rengi',
+      initialValue: current,
+      position: PopupMenuPosition.under,
+      constraints: const BoxConstraints(
+        minWidth: 190,
+        maxWidth: 230,
+        maxHeight: 360,
+      ),
+      onSelected: (option) {
+        controller.updateSelectedTextColor(option.hex);
+      },
+      itemBuilder: (context) => <PopupMenuEntry<_TextColorOption>>[
+        for (final option in _textColorOptions)
+          PopupMenuItem<_TextColorOption>(
+            key: ValueKey<String>('text-color-${option.hex ?? 'auto'}'),
+            value: option,
+            height: 44,
+            child: Row(
               children: <Widget>[
-                Text(
-                  'Yazı Rengi',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                Container(
+                  width: 24,
+                  height: 24,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: option.color,
+                    borderRadius: BorderRadius.circular(7),
+                    border: Border.all(color: context.sutolColors.outline),
+                  ),
+                  child: option.hex == null
+                      ? Text(
+                          'A',
+                          style:
+                              Theme.of(context).textTheme.labelSmall?.copyWith(
+                                    color: context._htmlInk,
+                                    fontWeight: FontWeight.w900,
+                                  ),
+                        )
+                      : null,
+                ),
+                const SizedBox(width: 10),
+                Expanded(child: Text(option.label)),
+                if (option.hex == currentHex)
+                  Icon(
+                    Icons.check_rounded,
+                    size: 18,
+                    color: context.colors.primary,
+                  ),
+              ],
+            ),
+          ),
+      ],
+      child: Container(
+        width: 36,
+        height: 34,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: context.sutolColors.outline),
+        ),
+        child: Container(
+          width: 21,
+          height: 21,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: current.color,
+            borderRadius: BorderRadius.circular(6),
+            border: Border.all(color: context.sutolColors.outline),
+          ),
+          child: current.hex == null
+              ? Text(
+                  'A',
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
                         color: context._htmlInk,
                         fontWeight: FontWeight.w900,
                       ),
-                ),
-                const SizedBox(height: 14),
-                Wrap(
-                  spacing: 12,
-                  runSpacing: 12,
-                  children: <Widget>[
-                    for (final option in _textColorOptions)
-                      GestureDetector(
-                        key: ValueKey<String>(
-                          'text-color-${option.hex ?? 'auto'}',
-                        ),
-                        onTap: () {
-                          controller.updateSelectedTextColor(option.hex);
-                          Navigator.of(context).pop();
-                        },
-                        child: Container(
-                          width: 42,
-                          height: 42,
-                          decoration: BoxDecoration(
-                            color: option.color,
-                            borderRadius: BorderRadius.circular(13),
-                            border: Border.all(
-                              color: currentHex == option.hex
-                                  ? context.colors.primary
-                                  : context.sutolColors.outline,
-                              width: currentHex == option.hex ? 3 : 1,
-                            ),
-                          ),
-                          child: currentHex == option.hex
-                              ? Icon(
-                                  Icons.check_rounded,
-                                  size: 20,
-                                  color: option.hex == null
-                                      ? context._htmlInk
-                                      : const Color(0xFF1A2233),
-                                )
-                              : null,
-                        ),
-                      ),
-                  ],
-                ),
-              ],
-            );
-          },
+                )
+              : null,
+        ),
+      ),
+    );
+  }
+}
+
+/// Metin parlaklığını modal pencere oluşturmadan doğrudan ayarlar.
+class _TextGlowPopupButton extends StatelessWidget {
+  const _TextGlowPopupButton({
+    super.key,
+    required this.controller,
+    required this.current,
+  });
+
+  static final Map<double, String> _options = <double, String>{
+    0: 'Kapalı',
+    0.5: 'Hafif',
+    1: 'Normal',
+    1.5: 'Güçlü',
+    2: 'Çok güçlü',
+  };
+
+  final PresentationController controller;
+  final double current;
+
+  @override
+  Widget build(BuildContext context) {
+    final selectedValue = _options.keys.reduce(
+      (a, b) => (current - a).abs() <= (current - b).abs() ? a : b,
+    );
+    final active = current > 0;
+    final colors = context.colors;
+    return PopupMenuButton<double>(
+      tooltip: 'Metin parlaklığı',
+      initialValue: selectedValue,
+      position: PopupMenuPosition.under,
+      constraints: const BoxConstraints(minWidth: 190, maxWidth: 220),
+      onSelected: controller.updateSelectedGlowIntensity,
+      itemBuilder: (context) => <PopupMenuEntry<double>>[
+        for (final option in _options.entries)
+          CheckedPopupMenuItem<double>(
+            key: ValueKey<String>('text-glow-${option.key}'),
+            value: option.key,
+            checked: option.key == selectedValue,
+            child: Text(option.value),
+          ),
+      ],
+      child: AnimatedContainer(
+        duration: AppMotion.fast,
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+        decoration: BoxDecoration(
+          color: active ? colors.primary : Colors.transparent,
+          borderRadius: BorderRadius.circular(AppRadius.full),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            Icon(
+              Icons.brightness_7_rounded,
+              size: 17,
+              color: active ? colors.surface : colors.onSurfaceVariant,
+            ),
+            const SizedBox(width: 7),
+            Text(
+              'Parlaklık',
+              style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: active ? colors.surface : colors.onSurfaceVariant,
+                  ),
+            ),
+            const SizedBox(width: 4),
+            Icon(
+              Icons.arrow_drop_down_rounded,
+              size: 18,
+              color: active ? colors.surface : colors.onSurfaceVariant,
+            ),
+          ],
         ),
       ),
     );
@@ -7525,30 +7492,6 @@ String _studioPanelTitle(_HtmlToolTab tab) {
   }
 }
 
-String _studioPanelSubtitle(
-  _HtmlToolTab tab,
-  PresentationController controller,
-) {
-  switch (tab) {
-    case _HtmlToolTab.templates:
-      return 'Tek bir seçimle tüm slaytların görsel temasını değiştir.';
-    case _HtmlToolTab.backgrounds:
-      return 'Ornek HTML sunumlardan cikarilan kaliteli sahne arka planlarini sec.';
-    case _HtmlToolTab.components:
-      return 'Ornek sunumlardaki fizik, optik, gunes, uzay ve mikro animasyonlari slayta ekle.';
-    case _HtmlToolTab.text:
-      return controller.selectedTextSelectionCount > 1
-          ? 'Birden fazla metin secili. Tekil icerik duzenleme yerine toplu tasima kullanilabilir.'
-          : 'Metin araçları sunum sahnesinin üst bölümüne taşındı.';
-    case _HtmlToolTab.models3d:
-      return 'GLB modellerini sahneye ekle, taşı ve çerçevesinden boyutlandır.';
-    case _HtmlToolTab.photo:
-      return 'Cihazindan fotograf yukle ve slayta yerlesin.';
-    case _HtmlToolTab.transitions:
-      return 'Slayt değişimini hissettirmeyen akıcı sahne geçişlerini uygula.';
-  }
-}
-
 InputDecoration _inputDecoration(String hintText) {
   return InputDecoration(
     hintText: hintText,
@@ -7577,6 +7520,8 @@ InputDecoration _inputDecoration(String hintText) {
 }
 
 String _htmlTextStyleLabel(PresentationTextStyle style) {
+  final googleFontFamily = presentationGoogleFontFamily(style);
+  if (googleFontFamily != null) return googleFontFamily;
   switch (style) {
     case PresentationTextStyle.standard:
       return 'Varsayılan';
@@ -7658,6 +7603,8 @@ String _htmlTextStyleLabel(PresentationTextStyle style) {
       return 'Pacifico';
     case PresentationTextStyle.klasikLobster:
       return 'Lobster';
+    default:
+      return presentationGoogleFontFamily(style) ?? style.name;
   }
 }
 
