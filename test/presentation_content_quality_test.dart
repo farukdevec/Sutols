@@ -58,6 +58,41 @@ void main() {
 
       expect(slides.map((slide) => slide.title).toSet(), hasLength(30));
       expect(slides.map((slide) => slide.content).toSet(), hasLength(30));
+    });
+
+    test('sunum planını anlatan üst-anlatıyı reddeder', () {
+      final slides = <PresentationContentSample>[
+        const PresentationContentSample(
+          title: 'Konuya Giriş',
+          content: '- Solunum sistemi için başlangıç noktası belirlenir.\n'
+              '- Sunumun izleyeceği düşünce hattı açıklanır.',
+        ),
+        const PresentationContentSample(
+          title: 'İşleyiş',
+          content: '- Kapsam çizgisi oluşturularak konu değerlendirilir.',
+        ),
+        const PresentationContentSample(
+          title: 'Sonuç',
+          content: '- Ayrıntılar ortak bir ana soruya bağlanır.',
+        ),
+      ];
+
+      expect(
+        PresentationContentQuality.rejectionReason(slides),
+        contains('üst-anlatı'),
+      );
+    });
+
+    test('solunum sistemi yedeği gerçek konu içeriği üretir', () {
+      final slides = samplesFrom('Solunum sistemi ve çalışma prensibi', 30);
+      final allContent = slides.map((slide) => slide.content).join(' ');
+
+      expect(slides, hasLength(30));
+      expect(slides.map((slide) => slide.title).toSet(), hasLength(30));
+      expect(allContent, contains('alveol'));
+      expect(allContent, contains('diyafram'));
+      expect(allContent, contains('oksijen'));
+      expect(allContent, isNot(contains('düşünce hattı')));
       expect(PresentationContentQuality.rejectionReason(slides), isNull);
     });
   });

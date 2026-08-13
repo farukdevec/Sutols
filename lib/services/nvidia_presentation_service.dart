@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
@@ -43,6 +44,7 @@ class NvidiaPresentation {
 class NvidiaPresentationService {
   static const String _proxyUrl =
       'https://sutol-ai-proxy.sutolsofficial.workers.dev';
+  static const Duration _requestTimeout = Duration(seconds: 20);
 
   Future<NvidiaPresentation> generatePresentation(
     String topic, {
@@ -75,11 +77,18 @@ class NvidiaPresentationService {
       'stream': false,
     };
 
-    final response = await http.post(
-      Uri.parse(_proxyUrl),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode(body),
-    );
+    final response = await http
+        .post(
+          Uri.parse(_proxyUrl),
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode(body),
+        )
+        .timeout(
+          _requestTimeout,
+          onTimeout: () => throw TimeoutException(
+            'NVIDIA servisine 20 saniye içinde ulaşılamadı.',
+          ),
+        );
 
     if (response.statusCode != 200) {
       throw Exception(

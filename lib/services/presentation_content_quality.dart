@@ -15,6 +15,16 @@ class PresentationContentSample {
 class PresentationContentQuality {
   const PresentationContentQuality._();
 
+  static const List<String> _metaNarrationPhrases = <String>[
+    'bu sunumda',
+    'bu slaytta',
+    'konuya genel bakış',
+    'sunumun izleyeceği',
+    'düşünce hattı',
+    'kapsam çizgisi',
+    'ortak bir ana soruya',
+  ];
+
   static const Set<String> _stopWords = <String>{
     'ama',
     'ancak',
@@ -47,6 +57,16 @@ class PresentationContentQuality {
       (slide) => slide.title.trim().isEmpty || slide.content.trim().isEmpty,
     )) {
       return 'Boş başlık veya içerik var.';
+    }
+    final normalizedContents = slides
+        .map((slide) => _normalize(slide.content))
+        .toList(growable: false);
+    if (normalizedContents.any(
+      (content) => _metaNarrationPhrases.any(
+        (phrase) => content.contains(_normalize(phrase)),
+      ),
+    )) {
+      return 'Konu bilgisi yerine sunum planını anlatan üst-anlatı var.';
     }
     if (slides.length <= 2) return null;
 
