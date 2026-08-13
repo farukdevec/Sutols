@@ -165,7 +165,7 @@ class _SutolHomePageState extends State<SutolHomePage> {
           children: [
             _TierBadge(),
             const SizedBox(width: AppSpacing.s12),
-            const _ThemeToggleButton(),
+            const _HomeSettingsButton(),
             const SizedBox(width: AppSpacing.s8),
             const _MyPresentationsButton(),
             const SizedBox(width: AppSpacing.s8),
@@ -178,9 +178,8 @@ class _SutolHomePageState extends State<SutolHomePage> {
     );
   }
 
-  /// Dar ekran (< 720px): logo + tema + profil tek satırda, kompakt plan
-  /// durumu hemen altında. Sunumlarım/Editör kısayolları yalnız geniş
-  /// ekranda gösterilir.
+  /// Dar ekran (< 720px): logo + ayarlar + boş sunum + profil tek satırda,
+  /// kompakt plan durumu hemen altında.
   Widget _buildNarrowNavbar(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -189,8 +188,8 @@ class _SutolHomePageState extends State<SutolHomePage> {
           children: [
             _buildLogo(),
             const Spacer(),
-            const _ThemeToggleButton(),
-            const _EditorButton(),
+            const _HomeSettingsButton(),
+            const _EditorButton(compact: true),
             _UserAvatar(),
           ],
         ),
@@ -1222,27 +1221,57 @@ class _UpgradeButtonState extends State<_UpgradeButton> {
   }
 }
 
-class _ThemeToggleButton extends StatelessWidget {
-  const _ThemeToggleButton();
+Future<void> _showHomeSettings(BuildContext context) {
+  return showDialog<void>(
+    context: context,
+    builder: (dialogContext) => AlertDialog(
+      title: const Text('Ayarlar'),
+      contentPadding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+      content: SizedBox(
+        width: 360,
+        child: ValueListenableBuilder<ThemeMode>(
+          valueListenable: ThemeController.instance.mode,
+          builder: (context, mode, _) {
+            final isDark = mode == ThemeMode.dark;
+            return ListTile(
+              key: const ValueKey<String>('home-settings-dark-theme'),
+              leading: const Icon(Icons.dark_mode_outlined),
+              title: const Text('Koyu Tema'),
+              subtitle: Text(isDark ? 'Açık' : 'Kapalı'),
+              trailing: Switch(
+                value: isDark,
+                onChanged: (_) => ThemeController.instance.toggle(),
+              ),
+              onTap: ThemeController.instance.toggle,
+            );
+          },
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(dialogContext).pop(),
+          child: const Text('Kapat'),
+        ),
+      ],
+    ),
+  );
+}
+
+class _HomeSettingsButton extends StatelessWidget {
+  const _HomeSettingsButton();
 
   @override
   Widget build(BuildContext context) {
-    return ValueListenableBuilder<ThemeMode>(
-      valueListenable: ThemeController.instance.mode,
-      builder: (context, mode, _) {
-        final isDark = mode == ThemeMode.dark;
-        return IconButton(
-          style: IconButton.styleFrom(
-            iconSize: 22,
-            padding: const EdgeInsets.all(8),
-            minimumSize: const Size(40, 40),
-          ),
-          tooltip: isDark ? 'Açık Tema' : 'Koyu Tema',
-          onPressed: ThemeController.instance.toggle,
-          icon: Icon(
-              isDark ? Icons.light_mode_outlined : Icons.dark_mode_outlined),
-        );
-      },
+    return IconButton(
+      key: const ValueKey<String>('home-settings-button'),
+      style: IconButton.styleFrom(
+        iconSize: 22,
+        padding: const EdgeInsets.all(8),
+        minimumSize: const Size(40, 40),
+      ),
+      tooltip: 'Ayarlar',
+      onPressed: () => _showHomeSettings(context),
+      icon: const Icon(Icons.settings_outlined),
     );
   }
 }
@@ -1330,7 +1359,9 @@ class _MyPresentationsButtonState extends State<_MyPresentationsButton> {
 }
 
 class _EditorButton extends StatefulWidget {
-  const _EditorButton();
+  const _EditorButton({this.compact = false});
+
+  final bool compact;
 
   @override
   State<_EditorButton> createState() => _EditorButtonState();
@@ -1359,8 +1390,16 @@ class _EditorButtonState extends State<_EditorButton> {
   Widget build(BuildContext context) {
     if (_user == null) return const SizedBox.shrink();
 
-    return IconButton(
-      tooltip: 'Editör',
+    return OutlinedButton(
+      key: const ValueKey<String>('home-blank-presentation-button'),
+      style: OutlinedButton.styleFrom(
+        padding: EdgeInsets.symmetric(
+          horizontal: widget.compact ? 10 : 14,
+          vertical: widget.compact ? 8 : 10,
+        ),
+        minimumSize: const Size(0, 40),
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      ),
       onPressed: () {
         Navigator.of(context).push(
           MaterialPageRoute<void>(
@@ -1370,7 +1409,11 @@ class _EditorButtonState extends State<_EditorButton> {
           ),
         );
       },
-      icon: const Icon(Icons.edit_rounded),
+      child: Text(
+        'Boş Sunum',
+        maxLines: 1,
+        style: TextStyle(fontSize: widget.compact ? 12 : 14),
+      ),
     );
   }
 }
