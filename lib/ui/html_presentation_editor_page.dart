@@ -1828,7 +1828,7 @@ class _SlideStripThumb extends StatelessWidget {
   }
 }
 
-/// Alt araç iskelesi: Metin, Fotoğraf, Medya, 3B Modeller, Şekil ve
+/// Alt araç iskelesi: Metin, Fotoğraf, Medya, 3B Modeller, Bileşenler ve
 /// "Daha fazla"
 /// (fotoğraf yükle, şablon, arka plan, geçiş, ses vb.).
 /// Dar ekranlarda sığmayan araçlar öncelik sırasına göre "Daha fazla"
@@ -1877,7 +1877,7 @@ class _HtmlMobileToolDock extends StatelessWidget {
       ),
       _MobileDockTool(
         icon: Icons.widgets_rounded,
-        label: 'Şekil',
+        label: 'Bileşenler',
         selected: activeTab == _HtmlToolTab.components,
         onTap: () => onOpenTool(_HtmlToolTab.components),
       ),
@@ -1890,7 +1890,11 @@ class _HtmlMobileToolDock extends StatelessWidget {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final available = constraints.maxWidth;
+        // Container'ın yatay padding'i Row'un gerçek kullanılabilir alanını
+        // daraltır. Hesabı dış genişlikle yapmak 320-390px cihazlarda son
+        // chip'in taşmasına ve dokunma hedeflerinin üst üste binmesine neden
+        // oluyordu.
+        final available = math.max(0, constraints.maxWidth - 16);
         final gap = _MobileDockButton.chipGap;
         final compactMoreWidth = _MobileDockButton.compactWidth;
         final fullMoreWidth = _dockChipWidth(context, 'Daha fazla');
@@ -1994,9 +1998,10 @@ class _HtmlMobileToolDock extends StatelessWidget {
                     Icons.wallpaper_rounded,
                     'Arka Planlar',
                   );
-                  // "Şekil" dock'ta görünüyorsa "Bileşenler" menüde ayrıca
-                  // yer alır; gizliyse aynı panel zaten menüdeki "Şekil"dir.
-                  if (!hiddenLabels.contains('Şekil')) {
+                  // Gizliyse yukarıdaki döngü menüye ekledi; dock'ta
+                  // görünüyorsa burada menü kısayolunu da koruyoruz. Araç her
+                  // ekran boyutunda aynı "Bileşenler" adıyla bulunabilir.
+                  if (!hiddenLabels.contains('Bileşenler')) {
                     add(
                       _MobileMoreTool.components,
                       Icons.widgets_rounded,
@@ -2082,9 +2087,7 @@ double _dockChipWidth(BuildContext context, String label) {
   return math.max(
     _MobileDockButton.miniWidth,
     _MobileDockButton.paddingH * 2 +
-        _MobileDockButton.iconSize +
-        _MobileDockButton.iconGap +
-        painter.width,
+        math.max(_MobileDockButton.iconSize, painter.width),
   );
 }
 
@@ -2320,82 +2323,95 @@ class _HtmlMobileToolSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final sheetHeight = MediaQuery.sizeOf(context).height * 0.72;
-    return Align(
-      alignment: Alignment.bottomCenter,
-      child: ConstrainedBox(
-        constraints: BoxConstraints(maxWidth: 720, maxHeight: sheetHeight),
-        child: Container(
-          decoration: BoxDecoration(
-            color: context.colors.surface,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(26)),
-            boxShadow: context.elevation2,
-          ),
-          child: SafeArea(
-            top: false,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: <Widget>[
-                Center(
-                  child: Container(
-                    width: 36,
-                    height: 4,
-                    margin: const EdgeInsets.only(top: 10, bottom: 4),
-                    decoration: BoxDecoration(
-                      color: context.colors.border,
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(18, 4, 8, 4),
-                  child: Row(
-                    children: <Widget>[
-                      Icon(
-                        _htmlToolIcon(tab),
-                        size: 20,
-                        color: context._htmlAccent,
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Text(
-                          _studioPanelTitle(tab),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style:
-                              Theme.of(context).textTheme.titleMedium?.copyWith(
-                                    color: context._htmlInk,
-                                    fontWeight: FontWeight.w900,
-                                  ),
-                        ),
-                      ),
-                      IconButton(
-                        tooltip: 'Kapat',
-                        onPressed: onClose,
-                        icon: Icon(
-                          Icons.close_rounded,
-                          color: context.sutolColors.onSurfaceVariant,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Flexible(
-                  child: AnimatedBuilder(
-                    animation: controller,
-                    builder: (context, _) => SingleChildScrollView(
-                      padding: const EdgeInsets.fromLTRB(20, 4, 20, 32),
-                      child: _HtmlControlPanel(
-                        key: ValueKey<_HtmlToolTab>(tab),
-                        controller: controller,
-                        textController: textController,
-                        activeTab: tab,
+    final media = MediaQuery.of(context);
+    final keyboardInset = media.viewInsets.bottom;
+    final availableHeight = media.size.height - keyboardInset;
+    final sheetHeight = availableHeight * (keyboardInset > 0 ? 0.96 : 0.72);
+    return AnimatedPadding(
+      duration: const Duration(milliseconds: 180),
+      curve: Curves.easeOut,
+      padding: EdgeInsets.only(bottom: keyboardInset),
+      child: Align(
+        alignment: Alignment.bottomCenter,
+        child: ConstrainedBox(
+          constraints: BoxConstraints(maxWidth: 720, maxHeight: sheetHeight),
+          child: Container(
+            decoration: BoxDecoration(
+              color: context.colors.surface,
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(26)),
+              boxShadow: context.elevation2,
+            ),
+            child: SafeArea(
+              top: false,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: <Widget>[
+                  Center(
+                    child: Container(
+                      width: 36,
+                      height: 4,
+                      margin: const EdgeInsets.only(top: 10, bottom: 4),
+                      decoration: BoxDecoration(
+                        color: context.colors.border,
+                        borderRadius: BorderRadius.circular(2),
                       ),
                     ),
                   ),
-                ),
-              ],
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(18, 4, 8, 4),
+                    child: Row(
+                      children: <Widget>[
+                        Icon(
+                          _htmlToolIcon(tab),
+                          size: 20,
+                          color: context._htmlAccent,
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            _studioPanelTitle(tab),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleMedium
+                                ?.copyWith(
+                                  color: context._htmlInk,
+                                  fontWeight: FontWeight.w900,
+                                ),
+                          ),
+                        ),
+                        IconButton(
+                          tooltip: 'Kapat',
+                          onPressed: onClose,
+                          icon: Icon(
+                            Icons.close_rounded,
+                            color: context.sutolColors.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Flexible(
+                    child: AnimatedBuilder(
+                      animation: controller,
+                      builder: (context, _) => SingleChildScrollView(
+                        keyboardDismissBehavior:
+                            ScrollViewKeyboardDismissBehavior.onDrag,
+                        padding: const EdgeInsets.fromLTRB(20, 4, 20, 32),
+                        child: _HtmlControlPanel(
+                          key: ValueKey<_HtmlToolTab>(tab),
+                          controller: controller,
+                          textController: textController,
+                          activeTab: tab,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),

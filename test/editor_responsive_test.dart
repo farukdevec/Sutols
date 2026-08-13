@@ -124,21 +124,17 @@ void main() {
     expect(find.byType(HtmlPresentationEditorPage), findsOneWidget);
   });
 
-  for (final tool in <String>['Metin', 'Medya', 'Şekil']) {
+  for (final tool in <String>['Metin', 'Medya', 'Bileşenler']) {
     for (final w in <double>[360, 390]) {
       testWidgets('"$tool" alet paneli ${w.toInt()}px bottom sheet taşmaz', (
         tester,
       ) async {
         await pumpAt(tester, Size(w, 844));
         expect(tester.takeException(), isNull);
-        final moreLabel = switch (tool) {
-          'Şekil' => 'Bileşenler',
-          _ => tool,
-        };
         await openToolSmart(
           tester,
           dockLabel: tool,
-          moreLabel: moreLabel,
+          moreLabel: tool,
         );
         expect(tester.takeException(), isNull, reason: '$tool sheet @ $w');
       });
@@ -245,6 +241,28 @@ void main() {
     expect(tester.takeException(), isNull, reason: 'metin sheet + selection');
   });
 
+  testWidgets('mobil araç paneli klavye açıkken görünür ve taşmasız kalır',
+      (tester) async {
+    await pumpAt(tester, const Size(390, 844));
+    await openMoreTool(tester, '3B Modeller');
+
+    final searchField = find.byWidgetPredicate(
+      (widget) =>
+          widget is TextField &&
+          (widget.decoration?.hintText ?? '').startsWith('Model ara:'),
+    );
+    expect(searchField, findsOneWidget);
+    await tester.ensureVisible(searchField);
+    await tester.tap(searchField);
+    await tester.enterText(searchField, 'dünya');
+    tester.view.viewInsets = const FakeViewPadding(bottom: 320);
+    await tester.pumpAndSettle();
+
+    expect(tester.testTextInput.isVisible, isTrue);
+    expect(tester.getRect(searchField).bottom, lessThan(844 - 320));
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('editor renders without overflow at 768px (tablet)', (
     tester,
   ) async {
@@ -289,7 +307,7 @@ void main() {
     testWidgets('dock dar ekranda araçları "Daha fazla"ya taşır, taşmaz', (
       tester,
     ) async {
-      const labels = <String>['Metin', 'Fotoğraf', 'Medya', 'Şekil'];
+      const labels = <String>['Metin', 'Fotoğraf', 'Medya', 'Bileşenler'];
       int visibleCount() {
         var count = 0;
         for (final l in labels) {
@@ -319,7 +337,7 @@ void main() {
     testWidgets('dock daraldıkça görünür araç sayısı azalır (kademeli)', (
       tester,
     ) async {
-      const labels = <String>['Metin', 'Fotoğraf', 'Medya', 'Şekil'];
+      const labels = <String>['Metin', 'Fotoğraf', 'Medya', 'Bileşenler'];
       int visibleCount() {
         var count = 0;
         for (final l in labels) {
@@ -383,7 +401,7 @@ void main() {
           if (tab == 'Bilesenler') {
             await openToolSmart(
               tester,
-              dockLabel: 'Şekil',
+              dockLabel: 'Bileşenler',
               moreLabel: menuLabel,
             );
           } else {
@@ -817,7 +835,7 @@ void main() {
         );
 
         // Dock araçları: öncelik sırasıyla görünür; gizlenenler menüde.
-        const labels = <String>['Metin', 'Fotoğraf', 'Medya', 'Şekil'];
+        const labels = <String>['Metin', 'Fotoğraf', 'Medya', 'Bileşenler'];
         final visible =
             labels.where((l) => find.text(l).evaluate().isNotEmpty).toList();
         expect(visible, isNotEmpty, reason: 'dock boş olmamalı @$size');
@@ -840,7 +858,7 @@ void main() {
         final menuItems = <String>[
           'Şablonlar',
           'Arka Planlar',
-          if (visible.contains('Şekil')) 'Bileşenler',
+          if (visible.contains('Bileşenler')) 'Bileşenler',
           '3B Modeller',
           'Geçişler',
           'Fotoğraf Yükle',
@@ -863,11 +881,11 @@ void main() {
           expect(find.text('Medya'), findsOneWidget,
               reason: 'Medya tek @$size');
         }
-        if (visible.contains('Şekil')) {
+        if (visible.contains('Bileşenler')) {
           expect(
-            find.text('Şekil'),
-            findsOneWidget,
-            reason: 'Şekil dock ta da menüde değil @$size',
+            find.text('Bileşenler'),
+            findsWidgets,
+            reason: 'Bileşenler dockta da menüde değil @$size',
           );
         }
         final inMenu = <String>[

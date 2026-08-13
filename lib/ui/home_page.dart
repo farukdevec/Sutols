@@ -28,6 +28,9 @@ class SutolHomePage extends StatefulWidget {
 class _SutolHomePageState extends State<SutolHomePage> {
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _promptController = TextEditingController();
+  final FocusNode _titleFocusNode = FocusNode(debugLabel: 'presentation-title');
+  final FocusNode _promptFocusNode =
+      FocusNode(debugLabel: 'presentation-prompt');
   bool _isGenerating = false;
   int _slideCount = 5;
   String _userTier = 'free';
@@ -91,6 +94,8 @@ class _SutolHomePageState extends State<SutolHomePage> {
     _authSub.cancel();
     _titleController.dispose();
     _promptController.dispose();
+    _titleFocusNode.dispose();
+    _promptFocusNode.dispose();
     super.dispose();
   }
 
@@ -265,6 +270,7 @@ class _SutolHomePageState extends State<SutolHomePage> {
     final colors = context.colors;
 
     return Scaffold(
+      resizeToAvoidBottomInset: true,
       backgroundColor: colors.surface,
       body: Stack(
         children: [
@@ -298,11 +304,17 @@ class _SutolHomePageState extends State<SutolHomePage> {
                   builder: (context, constraints) {
                     final narrow = constraints.maxWidth < 600;
                     final dashboard = narrow && _user != null;
+                    final keyboardInset =
+                        MediaQuery.viewInsetsOf(context).bottom;
+                    final keyboardVisible = keyboardInset > 0;
 
                     // Kısa ekranlarda (mobil, yatay telefon vb.) içeriği
-                    // kompaktlaştırıp ekrana sığdırırız.
-                    final compact = constraints.maxHeight < 620;
-                    final showFooter = constraints.maxHeight >= 460;
+                    // kompaktlaştırıp ekrana sığdırırız. Klavye açıldığında
+                    // viewport küçülse de form ağacının biçimi değişmemeli;
+                    // aksi halde TextField yeniden oluşup odağını kaybeder.
+                    final fullHeight = constraints.maxHeight + keyboardInset;
+                    final compact = fullHeight < 620;
+                    final showFooter = !keyboardVisible && fullHeight >= 460;
 
                     Widget heroColumn({
                       required String description,
@@ -345,9 +357,14 @@ class _SutolHomePageState extends State<SutolHomePage> {
                                   title: _loadingStepTitle,
                                   description: _loadingStepDescription,
                                 )
-                              : _InputCard(
+                              : PresentationCreationCard(
+                                  key: const ValueKey<String>(
+                                    'presentation-input-card',
+                                  ),
                                   titleController: _titleController,
                                   promptController: _promptController,
+                                  titleFocusNode: _titleFocusNode,
+                                  promptFocusNode: _promptFocusNode,
                                   onGenerate: _generatePresentation,
                                   slideCount: _slideCount,
                                   hasPlusSlideAccess:
@@ -456,8 +473,33 @@ class _SutolHomePageState extends State<SutolHomePage> {
                       );
                     }
 
-                    // Kaydırma yok: içerik alana sığarsa ortalanır,
-                    // sığmazsa ekrana ölçeklenir. Footer sabit kalır.
+                    // Mobilde FittedBox, klavye açıldığında TextField'ları
+                    // ölçekleyip yeniden yerleştirerek web input odağını
+                    // düşürebilir. Dar ekranı doğal boyutta ve kaydırılabilir
+                    // tutuyoruz; masaüstündeki ortalanmış düzen korunuyor.
+                    if (narrow) {
+                      return Column(
+                        children: [
+                          Expanded(
+                            child: SingleChildScrollView(
+                              key: const ValueKey<String>(
+                                'mobile-home-scroll',
+                              ),
+                              keyboardDismissBehavior:
+                                  ScrollViewKeyboardDismissBehavior.onDrag,
+                              padding: EdgeInsets.only(
+                                bottom: keyboardVisible
+                                    ? AppSpacing.s24
+                                    : AppSpacing.s8,
+                              ),
+                              child: mainContent,
+                            ),
+                          ),
+                          if (showFooter) const _FooterBar(),
+                        ],
+                      );
+                    }
+
                     return Column(
                       children: [
                         Expanded(
@@ -566,10 +608,15 @@ class _AmbientGlowBackgroundState extends State<_AmbientGlowBackground> {
   }
 }
 
-class _InputCard extends StatelessWidget {
-  const _InputCard({
+/// Sunum oluşturma formu. Focus düğümleri üst sayfada tutulur; böylece mobil
+/// klavye viewport'u yeniden ölçtüğünde alanlar odağını ve metnini korur.
+class PresentationCreationCard extends StatelessWidget {
+  const PresentationCreationCard({
+    super.key,
     required this.titleController,
     required this.promptController,
+    required this.titleFocusNode,
+    required this.promptFocusNode,
     required this.onGenerate,
     required this.slideCount,
     required this.hasPlusSlideAccess,
@@ -579,6 +626,8 @@ class _InputCard extends StatelessWidget {
 
   final TextEditingController titleController;
   final TextEditingController promptController;
+  final FocusNode titleFocusNode;
+  final FocusNode promptFocusNode;
   final VoidCallback onGenerate;
   final int slideCount;
   final bool hasPlusSlideAccess;
@@ -605,7 +654,12 @@ class _InputCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           TextField(
+            key: const ValueKey<String>('presentation-title-field'),
             controller: titleController,
+            focusNode: titleFocusNode,
+            textInputAction: TextInputAction.next,
+            onSubmitted: (_) => promptFocusNode.requestFocus(),
+            onTapOutside: (_) => FocusManager.instance.primaryFocus?.unfocus(),
             style:
                 AppTypography.titleMedium.copyWith(color: colors.textPrimary),
             decoration: InputDecoration(
@@ -616,7 +670,12 @@ class _InputCard extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.s16),
           TextField(
+            key: const ValueKey<String>('presentation-prompt-field'),
             controller: promptController,
+            focusNode: promptFocusNode,
+            keyboardType: TextInputType.multiline,
+            textInputAction: TextInputAction.newline,
+            onTapOutside: (_) => FocusManager.instance.primaryFocus?.unfocus(),
             maxLines: narrow ? 4 : 5,
             minLines: 3,
             style: AppTypography.bodyLarge.copyWith(color: colors.textPrimary),
@@ -631,21 +690,37 @@ class _InputCard extends StatelessWidget {
           SizedBox(
             height: narrow ? AppSpacing.s16 : AppSpacing.s24,
           ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              _SlideCountSelector(
-                value: slideCount,
-                hasPlusAccess: hasPlusSlideAccess,
-                onChanged: onSlideCountChanged,
-              ),
-              const SizedBox(width: AppSpacing.s12),
-              FilledButton(
+          if (narrow) ...[
+            _SlideCountSelector(
+              value: slideCount,
+              hasPlusAccess: hasPlusSlideAccess,
+              onChanged: onSlideCountChanged,
+              expanded: true,
+            ),
+            const SizedBox(height: AppSpacing.s12),
+            SizedBox(
+              height: 48,
+              child: FilledButton(
                 onPressed: onGenerate,
                 child: const Text('Oluştur'),
               ),
-            ],
-          ),
+            ),
+          ] else
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                _SlideCountSelector(
+                  value: slideCount,
+                  hasPlusAccess: hasPlusSlideAccess,
+                  onChanged: onSlideCountChanged,
+                ),
+                const SizedBox(width: AppSpacing.s12),
+                FilledButton(
+                  onPressed: onGenerate,
+                  child: const Text('Oluştur'),
+                ),
+              ],
+            ),
         ],
       ),
     );
@@ -657,16 +732,19 @@ class _SlideCountSelector extends StatelessWidget {
     required this.value,
     required this.hasPlusAccess,
     required this.onChanged,
+    this.expanded = false,
   });
 
   final int value;
   final bool hasPlusAccess;
   final ValueChanged<int> onChanged;
+  final bool expanded;
 
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
     return Container(
+      width: expanded ? double.infinity : null,
       height: 48,
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s12),
       decoration: BoxDecoration(
@@ -678,6 +756,7 @@ class _SlideCountSelector extends StatelessWidget {
         child: DropdownButton<int>(
           key: const ValueKey<String>('presentation-slide-count'),
           value: value,
+          isExpanded: expanded,
           borderRadius: BorderRadius.circular(AppRadius.md),
           icon: const Icon(Icons.keyboard_arrow_down_rounded),
           items: List<DropdownMenuItem<int>>.generate(
