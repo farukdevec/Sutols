@@ -33,6 +33,8 @@ class _SutolHomePageState extends State<SutolHomePage> {
   final FocusNode _promptFocusNode =
       FocusNode(debugLabel: 'presentation-prompt');
   bool _isGenerating = false;
+  bool _highlightLogin = false;
+  Timer? _highlightTimer;
   int _slideCount = 5;
   String _userTier = 'free';
   String _loadingStepTitle = '';
@@ -92,12 +94,56 @@ class _SutolHomePageState extends State<SutolHomePage> {
 
   @override
   void dispose() {
+    _highlightTimer?.cancel();
     _authSub.cancel();
     _titleController.dispose();
     _promptController.dispose();
     _titleFocusNode.dispose();
     _promptFocusNode.dispose();
     super.dispose();
+  }
+
+  void _triggerLoginHighlight() {
+    _highlightTimer?.cancel();
+    setState(() {
+      _highlightLogin = true;
+    });
+    _highlightTimer = Timer(const Duration(seconds: 3), () {
+      if (mounted) {
+        setState(() {
+          _highlightLogin = false;
+        });
+      }
+    });
+
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Row(
+          children: [
+            Icon(Icons.lightbulb_rounded, color: Color(0xFF00E5FF)),
+            SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                'Sunum oluşturmak için lütfen önce giriş yapın.',
+                style: TextStyle(fontWeight: FontWeight.w500),
+              ),
+            ),
+          ],
+        ),
+        duration: const Duration(seconds: 4),
+        behavior: SnackBarBehavior.floating,
+        action: SnackBarAction(
+          label: 'Giriş Yap',
+          textColor: const Color(0xFF00E5FF),
+          onPressed: () {
+            Navigator.of(context).push(
+              MaterialPageRoute<void>(builder: (_) => const AuthPage()),
+            );
+          },
+        ),
+      ),
+    );
   }
 
   Future<void> _fetchRecentPresentations() async {
@@ -172,7 +218,7 @@ class _SutolHomePageState extends State<SutolHomePage> {
             const SizedBox(width: AppSpacing.s8),
             const _EditorButton(),
             const SizedBox(width: AppSpacing.s8),
-            _UserAvatar(),
+            _UserAvatar(highlight: _highlightLogin),
           ],
         ),
       ],
@@ -191,7 +237,7 @@ class _SutolHomePageState extends State<SutolHomePage> {
             const Spacer(),
             const _HomeSettingsButton(),
             const _EditorButton(compact: true),
-            _UserAvatar(),
+            _UserAvatar(highlight: _highlightLogin),
           ],
         ),
         const SizedBox(height: AppSpacing.s8),
@@ -203,6 +249,12 @@ class _SutolHomePageState extends State<SutolHomePage> {
   Future<void> _generatePresentation() async {
     final topic = _promptController.text.trim();
     if (topic.isEmpty) return;
+
+    final userId = FirebaseAuth.instance.currentUser?.uid;
+    if (userId == null) {
+      _triggerLoginHighlight();
+      return;
+    }
 
     setState(() {
       _isGenerating = true;
@@ -497,7 +549,12 @@ class _SutolHomePageState extends State<SutolHomePage> {
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            mainContent,
+                            ConstrainedBox(
+                              constraints: BoxConstraints(
+                                minHeight: constraints.maxHeight,
+                              ),
+                              child: mainContent,
+                            ),
                             if (showFooter) const _FooterBar(),
                           ],
                         ),
@@ -692,22 +749,92 @@ class PresentationCreationCard extends StatelessWidget {
             ),
           ),
           SizedBox(height: narrow ? AppSpacing.s12 : AppSpacing.s16),
-          TextField(
-            key: const ValueKey<String>('presentation-prompt-field'),
-            controller: promptController,
-            focusNode: promptFocusNode,
-            keyboardType: TextInputType.multiline,
-            textInputAction: TextInputAction.newline,
-            onTapOutside: (_) => FocusManager.instance.primaryFocus?.unfocus(),
-            maxLines: narrow ? 3 : 5,
-            minLines: narrow ? 2 : 3,
-            style: AppTypography.bodyLarge.copyWith(color: colors.textPrimary),
-            decoration: InputDecoration(
-              hintText: isDashboard
-                  ? 'Sunum hakkında'
-                  : 'Bu sunum ne hakkında? Konuyu, ana fikirleri ve kitleyi kısaca anlatın...',
-              filled: true,
-              fillColor: colors.surface,
+          // Prominent Prompt Input Container with Glowing Gradient Frame
+          Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(AppRadius.lg),
+              gradient: LinearGradient(
+                colors: [
+                  colors.primary.withValues(alpha: 0.15),
+                  colors.primary.withValues(alpha: 0.04),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              border: Border.all(
+                color: colors.primary.withValues(alpha: 0.45),
+                width: 1.5,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: colors.primary.withValues(alpha: 0.1),
+                  blurRadius: 16,
+                  spreadRadius: 0,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            padding: const EdgeInsets.all(AppSpacing.s8),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(left: 4, bottom: 6),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.auto_awesome_rounded,
+                        size: 14,
+                        color: colors.primary,
+                      ),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          'SUNUM İÇERİĞİ VE DETAYLAR',
+                          style: AppTypography.labelSmall.copyWith(
+                            color: colors.primary,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 0.8,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                TextField(
+                  key: const ValueKey<String>('presentation-prompt-field'),
+                  controller: promptController,
+                  focusNode: promptFocusNode,
+                  keyboardType: TextInputType.multiline,
+                  textInputAction: TextInputAction.newline,
+                  onTapOutside: (_) =>
+                      FocusManager.instance.primaryFocus?.unfocus(),
+                  maxLines: narrow ? 3 : 5,
+                  minLines: narrow ? 2 : 3,
+                  style: AppTypography.bodyLarge
+                      .copyWith(color: colors.textPrimary),
+                  decoration: InputDecoration(
+                    hintText: isDashboard
+                        ? 'Sunum hakkında'
+                        : 'Bu sunum ne hakkında? Konuyu, ana fikirleri ve kitleyi kısaca anlatın...',
+                    filled: true,
+                    fillColor: colors.surface,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.md),
+                      borderSide: BorderSide.none,
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.md),
+                      borderSide: BorderSide.none,
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.md),
+                      borderSide: BorderSide(color: colors.primary, width: 1.5),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
           SizedBox(
@@ -1443,6 +1570,10 @@ class _EditorButtonState extends State<_EditorButton> {
 }
 
 class _UserAvatar extends StatefulWidget {
+  const _UserAvatar({this.highlight = false});
+
+  final bool highlight;
+
   @override
   State<_UserAvatar> createState() => _UserAvatarState();
 }
@@ -1485,29 +1616,71 @@ class _UserAvatarState extends State<_UserAvatar> {
       );
     }
 
+    final glow = widget.highlight;
+
     return GestureDetector(
       onTap: () => _openAuthPage(context),
-      child: Container(
-        width: 40,
-        height: 40,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          gradient: LinearGradient(
-            colors: [colors.primary, colors.primary.withValues(alpha: 0.7)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: colors.primary.withValues(alpha: 0.3),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
+      child: Stack(
+        alignment: Alignment.center,
+        clipBehavior: Clip.none,
+        children: [
+          // Light / Glow Effect behind the sign-in button
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 300),
+            width: glow ? 56 : 40,
+            height: glow ? 56 : 40,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: glow
+                  ? colors.primary.withValues(alpha: 0.4)
+                  : Colors.transparent,
+              boxShadow: glow
+                  ? [
+                      BoxShadow(
+                        color: colors.primary,
+                        blurRadius: 28,
+                        spreadRadius: 8,
+                      ),
+                      BoxShadow(
+                        color: const Color(0xFF00E5FF).withValues(alpha: 0.9),
+                        blurRadius: 40,
+                        spreadRadius: 14,
+                      ),
+                    ]
+                  : [],
             ),
-          ],
-        ),
-        child: const Center(
-          child: Icon(Icons.person_rounded, size: 20, color: Colors.white),
-        ),
+          ),
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 300),
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: glow
+                  ? Border.all(color: Colors.white, width: 2)
+                  : null,
+              gradient: LinearGradient(
+                colors: glow
+                    ? [const Color(0xFF00E5FF), colors.primary]
+                    : [colors.primary, colors.primary.withValues(alpha: 0.7)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: glow
+                      ? colors.primary
+                      : colors.primary.withValues(alpha: 0.3),
+                  blurRadius: glow ? 16 : 8,
+                  offset: glow ? Offset.zero : const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: const Center(
+              child: Icon(Icons.person_rounded, size: 20, color: Colors.white),
+            ),
+          ),
+        ],
       ),
     );
   }
