@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'design/design_system.dart';
+import 'widgets/contact_social_widget.dart';
 
 /// Gizlilik Politikası (/gizlilik) ve Kullanım Şartları (/sartlar) sayfaları.
 /// Metinler başlangıç taslağıdır; yasal inceleme sonrası güncellenmelidir.
@@ -330,17 +331,6 @@ class _ContactSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.colors;
-    return Padding(
-      padding:
-          const EdgeInsets.only(top: AppSpacing.s32, bottom: AppSpacing.s16),
-      child: Text(
-        'Sorularınız için: sutolsofficial@gmail.com',
-        style: AppTypography.bodyMedium.copyWith(
-          color: colors.textSecondary,
-          fontStyle: FontStyle.italic,
-        ),
-      ),
-    );
+    return const SutolContactCard();
   }
 }

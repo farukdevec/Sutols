@@ -2269,12 +2269,7 @@ class _PresentationPageCanvasState extends State<PresentationPageCanvas> {
                         widget.onRotateModel != null
                     ? (_) => widget.onEndModelOrbit?.call()
                     : null,
-                onPanUpdate: widget.interactive &&
-                        widget.onDragSelectedText != null &&
-                        !(block.modelAssetId != null &&
-                            !_isCanvasImageBlock(block) &&
-                            block.modelOrbitEnabled &&
-                            widget.onRotateModel != null)
+                onPanUpdate: widget.interactive && widget.onDragSelectedText != null
                     ? (details) {
                         if (!selectedComponentIds.contains(block.id)) {
                           widget.onSelectComponentBlock?.call(block.id);
@@ -2581,6 +2576,9 @@ class _PageTextBlock extends StatelessWidget {
                 onTap: onTap,
                 onDoubleTap: onDoubleTap,
                 onSecondaryTapDown: onSecondaryTapDown,
+                onPanStart: (details) {
+                  if (!isSelected) onTap?.call();
+                },
                 onPanUpdate: onPanUpdate,
                 child: AnimatedContainer(
                   duration: isSelected
@@ -2710,7 +2708,12 @@ class _PageComponentBlock extends StatelessWidget {
                 behavior: HitTestBehavior.translucent,
                 onTap: onTap,
                 onSecondaryTapDown: onSecondaryTapDown,
-                onPanStart: onOrbitPanStart,
+                onPanStart: onOrbitPanStart ??
+                    (onPanUpdate == null
+                        ? null
+                        : (_) {
+                            if (!isSelected) onTap?.call();
+                          }),
                 onPanUpdate: onOrbitPanUpdate ?? onPanUpdate,
                 onPanEnd: onOrbitPanEnd,
                 onPanCancel: onOrbitPanEnd == null

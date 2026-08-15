@@ -27,7 +27,7 @@ void main() {
     final localAssets = RegExp(
       r"assets/assets/fonts/google_fonts/([^')]+)",
     ).allMatches(sutolHtmlStageStyles);
-    expect(localAssets.length, 124);
+    expect(localAssets.length, 172);
     for (final match in localAssets) {
       expect(
         File('assets/fonts/google_fonts/${match.group(1)}').existsSync(),
@@ -39,7 +39,7 @@ void main() {
           .listSync()
           .whereType<File>()
           .length,
-      30,
+      45,
     );
   });
 

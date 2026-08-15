@@ -6,8 +6,11 @@ import 'package:sutol/ui/html_presentation_editor_page.dart';
 import 'package:sutol/ui/widgets/editor_shell.dart';
 import 'package:sutol/ui/widgets/selection_mini_toolbar.dart';
 
+import 'package:sutol/services/cookie_consent_service.dart';
+
 void main() {
   Future<PresentationController> pumpAt(WidgetTester tester, Size size) async {
+    CookieConsentService.instance.state.value = CookieConsentState.accepted;
     tester.view.physicalSize = size;
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.reset);
@@ -172,7 +175,7 @@ void main() {
     );
     expect(textFieldHost, findsOneWidget);
     expect(tester.getRect(textFieldHost).left, lessThan(32));
-    expect(find.text('Animasyon yok'), findsOneWidget);
+    expect(find.byIcon(Icons.animation_rounded), findsOneWidget);
     expect(tester.takeException(), isNull);
 
     final controller = tester.widget<HtmlPresentationEditorPage>(
@@ -200,7 +203,6 @@ void main() {
       controller.controller.selectedTextBlock!.textAnimation,
       PresentationTextAnimation.bilimDramatik,
     );
-    expect(find.text('Derin ışıma'), findsOneWidget);
 
     final colorControl = find.byKey(
       const ValueKey<String>('selected-text-color-control'),

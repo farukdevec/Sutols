@@ -81,6 +81,22 @@ enum PresentationTemplate {
   vintage,
   yapayZeka,
   yazilim,
+  cyberpunk,
+  glassmorphism,
+  luxuryGold,
+  ecoGreen,
+  synthwave,
+  gradientMesh,
+  editorial,
+  bauhaus,
+  dataTech,
+  deepSpace,
+  bentoGrid,
+  auroraBorealis,
+  neomorphism,
+  holographic,
+  nordicMinimal,
+  claymorphism,
 }
 
 String presentationTemplateLabel(PresentationTemplate template) {
@@ -99,6 +115,26 @@ String presentationTemplateLabel(PresentationTemplate template) {
       return 'Koyu Kurumsal';
     case PresentationTemplate.techStartup:
       return 'Teknoloji Girişimi';
+    case PresentationTemplate.cyberpunk:
+      return 'Siberpunk Neon';
+    case PresentationTemplate.glassmorphism:
+      return 'Buzlu Cam (Glassmorphism)';
+    case PresentationTemplate.luxuryGold:
+      return 'Lüks Altın & Premium';
+    case PresentationTemplate.ecoGreen:
+      return 'Eko Doğa & Yeşil';
+    case PresentationTemplate.synthwave:
+      return 'Retro Synthwave 80s';
+    case PresentationTemplate.gradientMesh:
+      return 'Gradyan Renk Ağları';
+    case PresentationTemplate.editorial:
+      return 'Dergi Tipografi (Editorial)';
+    case PresentationTemplate.bauhaus:
+      return 'Bauhaus Geometrik';
+    case PresentationTemplate.dataTech:
+      return 'Finansal & Veri Analitiği';
+    case PresentationTemplate.deepSpace:
+      return 'Koyu Kozmik & Kuantum';
     case PresentationTemplate.scientific:
       return 'Bilimsel';
     case PresentationTemplate.elegant:
@@ -209,6 +245,18 @@ String presentationTemplateLabel(PresentationTemplate template) {
       return 'Yapay Zeka';
     case PresentationTemplate.yazilim:
       return 'Yazılım';
+    case PresentationTemplate.bentoGrid:
+      return 'Bento Grid Kartlar';
+    case PresentationTemplate.auroraBorealis:
+      return 'Aurora Yeşil & Mor Işıltı';
+    case PresentationTemplate.neomorphism:
+      return 'Neumorphic Yumuşak 3D';
+    case PresentationTemplate.holographic:
+      return 'Holografik Siber Işıltı';
+    case PresentationTemplate.nordicMinimal:
+      return 'İskandinav Tipografik Minimal';
+    case PresentationTemplate.claymorphism:
+      return 'Kil 3D Pasteller (Claymorphism)';
   }
 }
 
@@ -338,6 +386,38 @@ String presentationTemplateDescription(PresentationTemplate template) {
       return 'Yapay zeka ve makine öğrenmesi odaklı teknoloji sahnesi';
     case PresentationTemplate.yazilim:
       return 'Yazılım geliştirme ve programlama odaklı modern düzen';
+    case PresentationTemplate.cyberpunk:
+      return 'Karanlık ve parlayan neon efektli siberpunk tasarım';
+    case PresentationTemplate.glassmorphism:
+      return 'Buzlu cam katmanlı, ultra modern şeffaf tasarım';
+    case PresentationTemplate.luxuryGold:
+      return 'Lüks obsidian ve şampanya altını zarafeti';
+    case PresentationTemplate.ecoGreen:
+      return 'Doğa ve sürdürülebilirlik odaklı yeşil tema';
+    case PresentationTemplate.synthwave:
+      return '80ler retro neon ve dalga estetiği';
+    case PresentationTemplate.gradientMesh:
+      return 'Dinamik akan gradyan renk ağı düzeni';
+    case PresentationTemplate.editorial:
+      return 'Dergi ve tipografi odaklı prestijli tasarım';
+    case PresentationTemplate.bauhaus:
+      return 'Geometrik yapı ve cesur renk kontrasti düzeni';
+    case PresentationTemplate.dataTech:
+      return 'Finansal veri ve teknoloji analitiği odağı';
+    case PresentationTemplate.deepSpace:
+      return 'Derin uzay, kozmik ve kuantum temalı sahne';
+    case PresentationTemplate.bentoGrid:
+      return 'Bento box düzeninde modern modüler kart tasarımları';
+    case PresentationTemplate.auroraBorealis:
+      return 'Kuzey ışıkları temalı ışıltılı canlı renk ağları';
+    case PresentationTemplate.neomorphism:
+      return 'Yumuşak kabartmalı 3D neomorfik arayüz stili';
+    case PresentationTemplate.holographic:
+      return 'Siber renk geçişleri ve holografik ışıltılar';
+    case PresentationTemplate.nordicMinimal:
+      return 'Yüksek kontrastlı, sade ve mimari tipografi';
+    case PresentationTemplate.claymorphism:
+      return '3D kil ve pastel tonlarında dost canlısı kabartmalar';
   }
 }
 
@@ -938,6 +1018,38 @@ PresentationBackgroundKind? presentationTemplateBackground(
       return PresentationBackgroundKind.technology;
     case PresentationTemplate.yazilim:
       return PresentationBackgroundKind.lightTechnology;
+    case PresentationTemplate.cyberpunk:
+      return PresentationBackgroundKind.technology;
+    case PresentationTemplate.glassmorphism:
+      return PresentationBackgroundKind.lightCreative;
+    case PresentationTemplate.luxuryGold:
+      return PresentationBackgroundKind.historyArchaeology;
+    case PresentationTemplate.ecoGreen:
+      return PresentationBackgroundKind.natureEcology;
+    case PresentationTemplate.synthwave:
+      return PresentationBackgroundKind.lightCreative;
+    case PresentationTemplate.gradientMesh:
+      return PresentationBackgroundKind.lightCorporate;
+    case PresentationTemplate.editorial:
+      return PresentationBackgroundKind.lightWarm;
+    case PresentationTemplate.bauhaus:
+      return PresentationBackgroundKind.lightCorporate;
+    case PresentationTemplate.dataTech:
+      return PresentationBackgroundKind.technology;
+    case PresentationTemplate.deepSpace:
+      return PresentationBackgroundKind.spaceTechnology;
+    case PresentationTemplate.bentoGrid:
+      return PresentationBackgroundKind.lightCorporate;
+    case PresentationTemplate.auroraBorealis:
+      return PresentationBackgroundKind.technology;
+    case PresentationTemplate.neomorphism:
+      return PresentationBackgroundKind.lightWarm;
+    case PresentationTemplate.holographic:
+      return PresentationBackgroundKind.spaceTechnology;
+    case PresentationTemplate.nordicMinimal:
+      return PresentationBackgroundKind.lightEducation;
+    case PresentationTemplate.claymorphism:
+      return PresentationBackgroundKind.lightCreative;
   }
 }
 
@@ -2084,6 +2196,294 @@ PresentationTemplateConfig templateConfig(PresentationTemplate template) {
           PresentationComponentKind.teknoloji08,
         ],
         glowIntensity: 0.5,
+        fontScale: 1.05,
+      );
+    case PresentationTemplate.cyberpunk:
+      return const PresentationTemplateConfig(
+        backgroundKind: PresentationBackgroundKind.technology,
+        titleTextStyle: PresentationTextStyle.googleArchivoBlack,
+        bodyTextStyle: PresentationTextStyle.googleRobotoMono,
+        titleTextAnimation: PresentationTextAnimation.kesikSinyal,
+        bodyTextAnimation: PresentationTextAnimation.isikTaramasi,
+        titleTextColor: '#00E5FF',
+        bodyTextColor: '#FF0055',
+        transitionKind: PresentationTransitionKind.glitch,
+        transitionDurationMs: 400,
+        componentKinds: [
+          PresentationComponentKind.teknoloji09,
+          PresentationComponentKind.teknoloji10,
+        ],
+        glowIntensity: 1.2,
+        fontScale: 1.1,
+      );
+    case PresentationTemplate.glassmorphism:
+      return const PresentationTemplateConfig(
+        backgroundKind: PresentationBackgroundKind.lightCreative,
+        titleTextStyle: PresentationTextStyle.googleOutfit,
+        bodyTextStyle: PresentationTextStyle.googleInter,
+        titleTextAnimation: PresentationTextAnimation.sinematikYaklasma,
+        bodyTextAnimation: PresentationTextAnimation.yavasBelirme,
+        titleTextColor: '#E2E8F0',
+        bodyTextColor: '#94A3B8',
+        transitionKind: PresentationTransitionKind.morph,
+        transitionDurationMs: 650,
+        componentKinds: [
+          PresentationComponentKind.genelSunumIs05,
+          PresentationComponentKind.genelSunumIs06,
+        ],
+        glowIntensity: 0.8,
+        fontScale: 1.05,
+      );
+    case PresentationTemplate.luxuryGold:
+      return const PresentationTemplateConfig(
+        backgroundKind: PresentationBackgroundKind.historyArchaeology,
+        titleTextStyle: PresentationTextStyle.googlePlayfairDisplay,
+        bodyTextStyle: PresentationTextStyle.googleLora,
+        titleTextAnimation: PresentationTextAnimation.yavasBelirme,
+        bodyTextAnimation: PresentationTextAnimation.bulaniktanNet,
+        titleTextColor: '#F59E0B',
+        bodyTextColor: '#D97706',
+        transitionKind: PresentationTransitionKind.prism,
+        transitionDurationMs: 750,
+        componentKinds: [
+          PresentationComponentKind.tarih01,
+          PresentationComponentKind.edebiyat01,
+        ],
+        glowIntensity: 0.9,
+        fontScale: 1.0,
+      );
+    case PresentationTemplate.ecoGreen:
+      return const PresentationTemplateConfig(
+        backgroundKind: PresentationBackgroundKind.natureEcology,
+        titleTextStyle: PresentationTextStyle.googleNunito,
+        bodyTextStyle: PresentationTextStyle.googleManrope,
+        titleTextAnimation: PresentationTextAnimation.yavasBelirme,
+        bodyTextAnimation: PresentationTextAnimation.none,
+        titleTextColor: '#10B981',
+        bodyTextColor: '#059669',
+        transitionKind: PresentationTransitionKind.parallax,
+        transitionDurationMs: 600,
+        componentKinds: [
+          PresentationComponentKind.cevreDoga01,
+          PresentationComponentKind.cevreDoga02,
+        ],
+        glowIntensity: 0.4,
+        fontScale: 1.0,
+      );
+    case PresentationTemplate.synthwave:
+      return const PresentationTemplateConfig(
+        backgroundKind: PresentationBackgroundKind.lightCreative,
+        titleTextStyle: PresentationTextStyle.googleOswald,
+        bodyTextStyle: PresentationTextStyle.googlePoppins,
+        titleTextAnimation: PresentationTextAnimation.holografikDalga,
+        bodyTextAnimation: PresentationTextAnimation.ziplayarakGiris,
+        titleTextColor: '#EC4899',
+        bodyTextColor: '#8B5CF6',
+        transitionKind: PresentationTransitionKind.rotateZoom,
+        transitionDurationMs: 700,
+        componentKinds: [
+          PresentationComponentKind.sanat03,
+          PresentationComponentKind.sanat04,
+        ],
+        glowIntensity: 1.1,
+        fontScale: 1.1,
+      );
+    case PresentationTemplate.gradientMesh:
+      return const PresentationTemplateConfig(
+        backgroundKind: PresentationBackgroundKind.lightCorporate,
+        titleTextStyle: PresentationTextStyle.googleDMSans,
+        bodyTextStyle: PresentationTextStyle.googleInter,
+        titleTextAnimation: PresentationTextAnimation.sinematikYaklasma,
+        bodyTextAnimation: PresentationTextAnimation.yavasBelirme,
+        titleTextColor: '#6366F1',
+        bodyTextColor: '#4F46E5',
+        transitionKind: PresentationTransitionKind.elastic,
+        transitionDurationMs: 600,
+        componentKinds: [
+          PresentationComponentKind.genelSunumIs03,
+          PresentationComponentKind.genelSunumIs04,
+        ],
+        glowIntensity: 0.6,
+        fontScale: 1.0,
+      );
+    case PresentationTemplate.editorial:
+      return const PresentationTemplateConfig(
+        backgroundKind: PresentationBackgroundKind.lightWarm,
+        titleTextStyle: PresentationTextStyle.googlePlayfairDisplay,
+        bodyTextStyle: PresentationTextStyle.googleRobotoSlab,
+        titleTextAnimation: PresentationTextAnimation.daktilo,
+        bodyTextAnimation: PresentationTextAnimation.none,
+        titleTextColor: '#1E293B',
+        bodyTextColor: '#334155',
+        transitionKind: PresentationTransitionKind.radialWipe,
+        transitionDurationMs: 700,
+        componentKinds: [
+          PresentationComponentKind.edebiyat03,
+          PresentationComponentKind.edebiyat04,
+        ],
+        glowIntensity: 0.2,
+        fontScale: 1.0,
+      );
+    case PresentationTemplate.bauhaus:
+      return const PresentationTemplateConfig(
+        backgroundKind: PresentationBackgroundKind.lightCorporate,
+        titleTextStyle: PresentationTextStyle.googleArchivoBlack,
+        bodyTextStyle: PresentationTextStyle.googleArimo,
+        titleTextAnimation: PresentationTextAnimation.perdeAcilisi,
+        bodyTextAnimation: PresentationTextAnimation.none,
+        titleTextColor: '#EF4444',
+        bodyTextColor: '#1E40AF',
+        transitionKind: PresentationTransitionKind.cube3d,
+        transitionDurationMs: 700,
+        componentKinds: [
+          PresentationComponentKind.sanat01,
+          PresentationComponentKind.sanat02,
+        ],
+        glowIntensity: 0.3,
+        fontScale: 1.05,
+      );
+    case PresentationTemplate.dataTech:
+      return const PresentationTemplateConfig(
+        backgroundKind: PresentationBackgroundKind.technology,
+        titleTextStyle: PresentationTextStyle.googleRobotoMono,
+        bodyTextStyle: PresentationTextStyle.googleDMSans,
+        titleTextAnimation: PresentationTextAnimation.isikTaramasi,
+        bodyTextAnimation: PresentationTextAnimation.none,
+        titleTextColor: '#06B6D4',
+        bodyTextColor: '#0EA5E9',
+        transitionKind: PresentationTransitionKind.split,
+        transitionDurationMs: 500,
+        componentKinds: [
+          PresentationComponentKind.teknoloji01,
+          PresentationComponentKind.teknoloji02,
+        ],
+        glowIntensity: 0.7,
+        fontScale: 1.0,
+      );
+    case PresentationTemplate.deepSpace:
+      return const PresentationTemplateConfig(
+        backgroundKind: PresentationBackgroundKind.spaceTechnology,
+        titleTextStyle: PresentationTextStyle.googlePlayfairDisplay,
+        bodyTextStyle: PresentationTextStyle.googleInter,
+        titleTextAnimation: PresentationTextAnimation.uzayDramatik,
+        bodyTextAnimation: PresentationTextAnimation.uzayDeneysel,
+        titleTextColor: '#A855F7',
+        bodyTextColor: '#C084FC',
+        transitionKind: PresentationTransitionKind.cube3d,
+        transitionDurationMs: 800,
+        componentKinds: [
+          PresentationComponentKind.astronomi01,
+          PresentationComponentKind.astronomi02,
+        ],
+        glowIntensity: 1.0,
+        fontScale: 1.05,
+      );
+    case PresentationTemplate.bentoGrid:
+      return const PresentationTemplateConfig(
+        backgroundKind: PresentationBackgroundKind.lightCorporate,
+        titleTextStyle: PresentationTextStyle.googleOutfit,
+        bodyTextStyle: PresentationTextStyle.googleInter,
+        titleTextAnimation: PresentationTextAnimation.yavasBelirme,
+        bodyTextAnimation: PresentationTextAnimation.none,
+        titleTextColor: '#0F172A',
+        bodyTextColor: '#334155',
+        transitionKind: PresentationTransitionKind.smooth,
+        transitionDurationMs: 550,
+        componentKinds: [
+          PresentationComponentKind.genelSunumIs01,
+          PresentationComponentKind.genelSunumIs02,
+        ],
+        glowIntensity: 0.5,
+        fontScale: 1.0,
+      );
+    case PresentationTemplate.auroraBorealis:
+      return const PresentationTemplateConfig(
+        backgroundKind: PresentationBackgroundKind.technology,
+        titleTextStyle: PresentationTextStyle.googleOutfit,
+        bodyTextStyle: PresentationTextStyle.googleInter,
+        titleTextAnimation: PresentationTextAnimation.holografikDalga,
+        bodyTextAnimation: PresentationTextAnimation.yavasBelirme,
+        titleTextColor: '#10B981',
+        bodyTextColor: '#8B5CF6',
+        transitionKind: PresentationTransitionKind.morph,
+        transitionDurationMs: 650,
+        componentKinds: [
+          PresentationComponentKind.teknoloji05,
+          PresentationComponentKind.teknoloji06,
+        ],
+        glowIntensity: 1.1,
+        fontScale: 1.05,
+      );
+    case PresentationTemplate.neomorphism:
+      return const PresentationTemplateConfig(
+        backgroundKind: PresentationBackgroundKind.lightWarm,
+        titleTextStyle: PresentationTextStyle.googleDMSans,
+        bodyTextStyle: PresentationTextStyle.googleManrope,
+        titleTextAnimation: PresentationTextAnimation.yavasBelirme,
+        bodyTextAnimation: PresentationTextAnimation.none,
+        titleTextColor: '#1E293B',
+        bodyTextColor: '#475569',
+        transitionKind: PresentationTransitionKind.convex,
+        transitionDurationMs: 600,
+        componentKinds: [
+          PresentationComponentKind.genelSunumIs05,
+          PresentationComponentKind.genelSunumIs06,
+        ],
+        glowIntensity: 0.4,
+        fontScale: 1.0,
+      );
+    case PresentationTemplate.holographic:
+      return const PresentationTemplateConfig(
+        backgroundKind: PresentationBackgroundKind.spaceTechnology,
+        titleTextStyle: PresentationTextStyle.googleArchivoBlack,
+        bodyTextStyle: PresentationTextStyle.googleRobotoMono,
+        titleTextAnimation: PresentationTextAnimation.neonKontur,
+        bodyTextAnimation: PresentationTextAnimation.isikTaramasi,
+        titleTextColor: '#38BDF8',
+        bodyTextColor: '#F472B6',
+        transitionKind: PresentationTransitionKind.glitch,
+        transitionDurationMs: 500,
+        componentKinds: [
+          PresentationComponentKind.teknoloji09,
+          PresentationComponentKind.teknoloji10,
+        ],
+        glowIntensity: 1.3,
+        fontScale: 1.1,
+      );
+    case PresentationTemplate.nordicMinimal:
+      return const PresentationTemplateConfig(
+        backgroundKind: PresentationBackgroundKind.lightEducation,
+        titleTextStyle: PresentationTextStyle.googlePlayfairDisplay,
+        bodyTextStyle: PresentationTextStyle.googleInter,
+        titleTextAnimation: PresentationTextAnimation.daktilo,
+        bodyTextAnimation: PresentationTextAnimation.none,
+        titleTextColor: '#09090B',
+        bodyTextColor: '#27272A',
+        transitionKind: PresentationTransitionKind.fade,
+        transitionDurationMs: 400,
+        componentKinds: [
+          PresentationComponentKind.edebiyat01,
+          PresentationComponentKind.edebiyat02,
+        ],
+        glowIntensity: 0.0,
+        fontScale: 1.0,
+      );
+    case PresentationTemplate.claymorphism:
+      return const PresentationTemplateConfig(
+        backgroundKind: PresentationBackgroundKind.lightCreative,
+        titleTextStyle: PresentationTextStyle.googleNunito,
+        bodyTextStyle: PresentationTextStyle.googlePoppins,
+        titleTextAnimation: PresentationTextAnimation.ziplayarakGiris,
+        bodyTextAnimation: PresentationTextAnimation.yavasBelirme,
+        titleTextColor: '#EC4899',
+        bodyTextColor: '#6366F1',
+        transitionKind: PresentationTransitionKind.elastic,
+        transitionDurationMs: 600,
+        componentKinds: [
+          PresentationComponentKind.sanat03,
+          PresentationComponentKind.sanat04,
+        ],
+        glowIntensity: 0.7,
         fontScale: 1.05,
       );
   }

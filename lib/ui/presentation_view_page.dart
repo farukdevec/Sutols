@@ -5,7 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
 import '../services/firestore_rest_helper.dart';
+import '../services/presentation_model_source_resolver.dart';
 import '../services/presentation_project_codec.dart';
+
 import 'design/design_system.dart';
 import 'widgets/share_presentation_dialog.dart';
 
@@ -80,6 +82,9 @@ class _PresentationViewPageState extends State<PresentationViewPage> {
       if (projectJson.isNotEmpty) {
         try {
           final decoded = PresentationProjectCodec.decodeProject(projectJson);
+          await hydratePresentationModelSources(decoded.pages);
+
+
           for (final page in decoded.pages) {
             final title = page.textBlocks.isNotEmpty
                 ? page.textBlocks.first.text

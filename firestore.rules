@@ -150,6 +150,15 @@ service cloud.firestore {
     }
 
 
+    // GLB indirme ve erişim kayıtları
+    match /glb_downloads/{downloadId} {
+      allow read: if isAdmin();
+      allow create: if request.auth != null && isNotSuspended(request.auth.uid);
+      allow update, delete: if isAdmin();
+    }
+
+
+
     function isAdmin() {
       return request.auth != null && (
         exists(/databases/$(database)/documents/admins/$(request.auth.uid)) ||

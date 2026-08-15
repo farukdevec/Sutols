@@ -17,6 +17,7 @@ import 'auth_page.dart';
 import 'membership_page.dart';
 import 'my_presentations_page.dart';
 import 'presentation_view_page.dart';
+import 'widgets/contact_social_widget.dart';
 
 class SutolHomePage extends StatefulWidget {
   const SutolHomePage({super.key});
@@ -329,15 +330,20 @@ class _SutolHomePageState extends State<SutolHomePage> {
                             textAlign: TextAlign.center,
                             style: AppTypography.display.copyWith(
                               color: colors.textPrimary,
-                              fontSize: narrow ? 34 : null,
+                              fontSize: narrow ? 28 : null,
                               letterSpacing: narrow ? -0.5 : null,
                             ),
                           ),
-                          const SizedBox(height: AppSpacing.s16),
+                          SizedBox(
+                            height: narrow ? AppSpacing.s8 : AppSpacing.s16,
+                          ),
                           Text(
                             description,
                             textAlign: TextAlign.center,
-                            style: AppTypography.bodyLarge.copyWith(
+                            style: (narrow
+                                    ? AppTypography.bodyMedium
+                                    : AppTypography.bodyLarge)
+                                .copyWith(
                               color: colors.textSecondary,
                             ),
                           ),
@@ -477,25 +483,24 @@ class _SutolHomePageState extends State<SutolHomePage> {
                     // düşürebilir. Dar ekranı doğal boyutta ve kaydırılabilir
                     // tutuyoruz; masaüstündeki ortalanmış düzen korunuyor.
                     if (narrow) {
-                      return Column(
-                        children: [
-                          Expanded(
-                            child: SingleChildScrollView(
-                              key: const ValueKey<String>(
-                                'mobile-home-scroll',
-                              ),
-                              keyboardDismissBehavior:
-                                  ScrollViewKeyboardDismissBehavior.onDrag,
-                              padding: EdgeInsets.only(
-                                bottom: keyboardVisible
-                                    ? AppSpacing.s24
-                                    : AppSpacing.s8,
-                              ),
-                              child: mainContent,
-                            ),
-                          ),
-                          if (showFooter) const _FooterBar(),
-                        ],
+                      return SingleChildScrollView(
+                        key: const ValueKey<String>(
+                          'mobile-home-scroll',
+                        ),
+                        keyboardDismissBehavior:
+                            ScrollViewKeyboardDismissBehavior.onDrag,
+                        padding: EdgeInsets.only(
+                          bottom: keyboardVisible
+                              ? AppSpacing.s24
+                              : AppSpacing.s16,
+                        ),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            mainContent,
+                            if (showFooter) const _FooterBar(),
+                          ],
+                        ),
                       );
                     }
 
@@ -532,34 +537,53 @@ class _FooterBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.s16,
-        vertical: AppSpacing.s12,
+    final narrow = MediaQuery.sizeOf(context).width < 600;
+
+    return Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: narrow ? AppSpacing.s16 : AppSpacing.s24,
+        vertical: narrow ? AppSpacing.s12 : 20.0,
       ),
-      child: Wrap(
-        alignment: WrapAlignment.center,
-        crossAxisAlignment: WrapCrossAlignment.center,
-        spacing: AppSpacing.s8,
-        runSpacing: AppSpacing.s4,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Text(
-            '© ${DateTime.now().year} Sutols',
-            style: AppTypography.labelSmall.copyWith(
-              color: colors.textSecondary,
-            ),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pushNamed('/gizlilik'),
-            child: const Text('Gizlilik Politikası'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pushNamed('/sartlar'),
-            child: const Text('Kullanım Şartları'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pushNamed('/sss'),
-            child: const Text('SSS'),
+          SutolContactChips(showTitle: false, compact: narrow),
+          SizedBox(height: narrow ? AppSpacing.s12 : AppSpacing.s16),
+          Wrap(
+            alignment: WrapAlignment.center,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: AppSpacing.s12,
+            runSpacing: AppSpacing.s4,
+            children: [
+              Text(
+                '© ${DateTime.now().year} Sutols',
+                style: AppTypography.labelSmall.copyWith(
+                  color: colors.textSecondary,
+                ),
+              ),
+              Text(
+                '•',
+                style: TextStyle(
+                  color: colors.textSecondary.withValues(alpha: 0.4),
+                ),
+              ),
+              TextButton(
+                onPressed: () => showSutolContactDialog(context),
+                child: const Text('İletişim'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(context).pushNamed('/gizlilik'),
+                child: const Text('Gizlilik Politikası'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(context).pushNamed('/sartlar'),
+                child: const Text('Kullanım Şartları'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(context).pushNamed('/sss'),
+                child: const Text('SSS'),
+              ),
+            ],
           ),
         ],
       ),
@@ -667,7 +691,7 @@ class PresentationCreationCard extends StatelessWidget {
               fillColor: colors.surface,
             ),
           ),
-          const SizedBox(height: AppSpacing.s16),
+          SizedBox(height: narrow ? AppSpacing.s12 : AppSpacing.s16),
           TextField(
             key: const ValueKey<String>('presentation-prompt-field'),
             controller: promptController,
@@ -675,8 +699,8 @@ class PresentationCreationCard extends StatelessWidget {
             keyboardType: TextInputType.multiline,
             textInputAction: TextInputAction.newline,
             onTapOutside: (_) => FocusManager.instance.primaryFocus?.unfocus(),
-            maxLines: narrow ? 4 : 5,
-            minLines: 3,
+            maxLines: narrow ? 3 : 5,
+            minLines: narrow ? 2 : 3,
             style: AppTypography.bodyLarge.copyWith(color: colors.textPrimary),
             decoration: InputDecoration(
               hintText: isDashboard
@@ -687,7 +711,7 @@ class PresentationCreationCard extends StatelessWidget {
             ),
           ),
           SizedBox(
-            height: narrow ? AppSpacing.s16 : AppSpacing.s24,
+            height: narrow ? AppSpacing.s12 : AppSpacing.s24,
           ),
           if (narrow) ...[
             _SlideCountSelector(
@@ -696,7 +720,7 @@ class PresentationCreationCard extends StatelessWidget {
               onChanged: onSlideCountChanged,
               expanded: true,
             ),
-            const SizedBox(height: AppSpacing.s12),
+            const SizedBox(height: AppSpacing.s8),
             SizedBox(
               height: 48,
               child: FilledButton(

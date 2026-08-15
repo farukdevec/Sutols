@@ -237,13 +237,25 @@ class GeminiPresentationService {
       topic: data['topic'] as String? ?? '',
       titles: slides
           .map((s) => s['title'] as String)
-          .where((t) => t.isNotEmpty)
+          .where((t) =>
+              t.isNotEmpty &&
+              !_isUiInstructionTitle(t))
           .toList(),
       layouts: slides
           .map((s) => s['layout'] as String)
           .where((l) => l.isNotEmpty)
           .toList(),
     );
+  }
+
+  static bool _isUiInstructionTitle(String title) {
+    final lower = title.toLowerCase();
+    return lower.contains('drag_handle') ||
+        lower.contains('sürükleme') ||
+        lower.contains('surukleme') ||
+        lower.contains('sahne kart') ||
+        lower.contains('seçili sayfa') ||
+        lower.contains('secili sayfa');
   }
 
   /// Metni küçük harfli kelime tokene'larına böler (2 harften kısa bağlaç

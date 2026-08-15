@@ -357,20 +357,20 @@ class SutolLightColors {
 }
 
 class SutolDarkColors {
-  static const primary = Color(0xFFFFFFFF);
-  static const onPrimary = Color(0xFF0F172A);
+  static const primary = Color(0xFF14B8A6);
+  static const onPrimary = Color(0xFFFFFFFF);
   static const primaryContainer = Color(0xFF1E293B);
   static const onPrimaryContainer = Color(0xFFF8FAFC);
-  static const surface = Color(0xFF0B0F19);
-  static const surfaceSubtle = Color(0xFF0B0F19);
-  static const surfaceElevated = Color(0xFF111827);
+  static const surface = Color(0xFF090D16);
+  static const surfaceSubtle = Color(0xFF131B2E);
+  static const surfaceElevated = Color(0xFF131B2E);
   static const onSurfaceVariant = Color(0xFF94A3B8);
-  static const outline = Color(0xFF1E293B);
+  static const outline = Color(0xFF26334D);
   static const outlineVariant = Color(0xFF334155);
   
-  static const primaryHover = Color(0xFFE2E8F0);
-  static const primaryPressed = Color(0xFFCBD5E1);
-  static const primaryLight = Color(0xFF334155);
+  static const primaryHover = Color(0xFF0D9488);
+  static const primaryPressed = Color(0xFF0F766E);
+  static const primaryLight = Color(0xFF134E4A);
   
   static const infoContainer = Color(0xFF1E3A8A);
   static const onInfoContainer = Color(0xFFDBEAFE);

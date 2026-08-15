@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'design/design_system.dart';
+import 'widgets/contact_social_widget.dart';
 
 /// SSS (Sıkça Sorulan Sorular) sayfası (/sss).
 /// Sorular kategorilere ayrılmış akordiyon kartlarıyla sunulur.
@@ -83,6 +84,8 @@ class FaqPage extends StatelessWidget {
                   ..._categories.map(
                     (category) => _FaqCategorySection(category: category),
                   ),
+                  const SizedBox(height: AppSpacing.s24),
+                  const SutolContactCard(),
                 ],
               ),
             ),
@@ -338,8 +341,8 @@ const List<_FaqCategory> _categories = [
         question: 'Bir hata ile karşılaşırsam ne yapmalıyım?',
         blocks: [
           _FaqBlock.paragraph(
-            ' adresinden bize ulaşabilirsiniz.',
-            lead: 'sutolsofficial@gmail.com',
+            ' e-posta adresinden veya Instagram\'da @sutolscom hesabımızdan bize dilediğiniz zaman ulaşabilirsiniz.',
+            lead: 'contact@sutols.com',
           ),
         ],
       ),

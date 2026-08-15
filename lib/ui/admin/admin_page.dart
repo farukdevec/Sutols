@@ -10,6 +10,8 @@ import 'admin_presentations_page.dart';
 import 'admin_promo_codes_page.dart';
 import 'admin_users_page.dart';
 
+import 'admin_glb_downloads_page.dart';
+
 class AdminPage extends StatelessWidget {
   const AdminPage({super.key});
 
@@ -22,6 +24,7 @@ class AdminPage extends StatelessWidget {
     _AdminMenuItem(title: 'Analytics', icon: Icons.insights_outlined),
     _AdminMenuItem(title: 'Sunumlar', icon: Icons.slideshow_outlined),
     _AdminMenuItem(title: 'Promosyon Kodları', icon: Icons.confirmation_number_outlined),
+    _AdminMenuItem(title: 'GLB İndirmeleri', icon: Icons.download_for_offline_outlined),
     _AdminMenuItem(title: 'Settings', icon: Icons.settings_outlined),
   ];
 
@@ -57,8 +60,10 @@ class AdminPage extends StatelessWidget {
                 'Analytics' => const AdminAnalyticsPage(),
                 'Sunumlar' => const AdminPresentationsPage(),
                 'Promosyon Kodları' => const AdminPromoCodesPage(),
+                'GLB İndirmeleri' => const AdminGlbDownloadsPage(),
                 _ => _EmptySectionPage(title: item.title),
               };
+
               Navigator.of(context).push(
                 MaterialPageRoute<void>(builder: (_) => page),
               );

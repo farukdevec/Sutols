@@ -36,17 +36,32 @@ class _PresentationEntry {
   final String createdAt;
 }
 
+class _GlbUserDownloadEntry {
+  const _GlbUserDownloadEntry({
+    required this.modelKey,
+    required this.downloadedAt,
+    required this.source,
+  });
+
+  final String modelKey;
+  final String downloadedAt;
+  final String source;
+}
+
 class _UserDetailData {
   const _UserDetailData({
     required this.fields,
     required this.usage,
     required this.presentations,
+    required this.glbDownloads,
   });
 
   final Map<String, dynamic> fields;
   final List<_UsageEntry> usage;
   final List<_PresentationEntry> presentations;
+  final List<_GlbUserDownloadEntry> glbDownloads;
 }
+
 
 class _AdminUserDetailPageState extends State<AdminUserDetailPage> {
   static const List<String> _months = [
@@ -145,11 +160,42 @@ class _AdminUserDetailPageState extends State<AdminUserDetailPage> {
         // Sunumlar okunamazsa boş bırak.
       }
 
+      List<_GlbUserDownloadEntry> glbDownloads = [];
+      try {
+        final downloadDocs = await FirestoreRestHelper.runQuery({
+          'from': [
+            {'collectionId': 'glb_downloads'},
+          ],
+          'where': {
+            'fieldFilter': {
+              'field': {'fieldPath': 'userId'},
+              'op': 'EQUAL',
+              'value': {'stringValue': widget.userId},
+            },
+          },
+        });
+        glbDownloads = downloadDocs.map((d) {
+          final df = d['fields'] as Map<String, dynamic>? ?? {};
+          return _GlbUserDownloadEntry(
+            modelKey: FirestoreRestHelper.stringField(df, 'modelKey'),
+            downloadedAt: FirestoreRestHelper.timestampField(df, 'downloadedAt'),
+            source: FirestoreRestHelper.stringField(df, 'source'),
+          );
+        }).toList()
+          ..sort((a, b) => b.downloadedAt.compareTo(a.downloadedAt));
+      } catch (_) {}
+
       setState(() {
         _data = _UserDetailData(
-            fields: fields, usage: usage, presentations: presentations);
+          fields: fields,
+          usage: usage,
+          presentations: presentations,
+          glbDownloads: glbDownloads,
+        );
         _loading = false;
       });
+
+
     } catch (e) {
       setState(() {
         _loading = false;
@@ -444,11 +490,62 @@ class _AdminUserDetailPageState extends State<AdminUserDetailPage> {
           const SizedBox(height: AppSpacing.s16),
           _buildUsageCard(context),
           const SizedBox(height: AppSpacing.s16),
+          _buildGlbDownloadsCard(context),
+          const SizedBox(height: AppSpacing.s16),
           _buildPresentationsCard(context),
         ],
       ),
     );
   }
+
+  Widget _buildGlbDownloadsCard(BuildContext context) {
+    final colors = context.colors;
+    final downloads = _data?.glbDownloads ?? const <_GlbUserDownloadEntry>[];
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.s16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                _sectionTitle(context, 'GLB İndirmeleri (${downloads.length})'),
+                _Badge(
+                  label: '${downloads.length} İndirme',
+                  color: Colors.green,
+                ),
+              ],
+            ),
+            if (downloads.isEmpty)
+              Text(
+                'Bu kullanıcı henüz GLB model indirmedi.',
+                style: AppTypography.bodyMedium.copyWith(
+                  color: colors.textSecondary,
+                ),
+              )
+            else
+              for (final dl in downloads)
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  dense: true,
+                  leading: const Icon(Icons.view_in_ar_rounded, color: Colors.blue),
+                  title: Text(
+                    dl.modelKey.isNotEmpty ? dl.modelKey : 'GLB Modeli',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  subtitle: Text(
+                    'Tarih: ${dl.downloadedAt.isNotEmpty ? _formatDate(dl.downloadedAt) : '-'} • Kaynak: ${dl.source.isNotEmpty ? dl.source : 'link'}',
+                  ),
+                ),
+          ],
+        ),
+      ),
+    );
+  }
+
 
   Widget _sectionTitle(BuildContext context, String title) {
     final colors = context.colors;

@@ -22,6 +22,8 @@ class AuthService {
 
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
+  static final Map<String, Future<void>> _ensureUserRequests = <String, Future<void>>{};
+
   User? get currentUser => _auth.currentUser;
   bool get isSignedIn => _auth.currentUser != null;
 
@@ -34,7 +36,23 @@ class AuthService {
     });
   }
 
-  Future<void> _ensureUserDocument(User user) async {
+  Future<void> _ensureUserDocument(User user) {
+    final uid = user.uid;
+    final existing = _ensureUserRequests[uid];
+    if (existing != null) {
+      return existing;
+    }
+
+    final future = _doEnsureUserDocument(user).catchError((Object e) {
+      _ensureUserRequests.remove(uid);
+      throw e;
+    });
+
+    _ensureUserRequests[uid] = future;
+    return future;
+  }
+
+  Future<void> _doEnsureUserDocument(User user) async {
     // ignore: avoid_print
     print('ensureUserDocument başladı');
     final uid = user.uid;
@@ -183,7 +201,10 @@ class AuthService {
     return credential;
   }
 
-  Future<void> signOut() => _auth.signOut();
+  Future<void> signOut() {
+    _ensureUserRequests.clear();
+    return _auth.signOut();
+  }
 
   /// Hesap `creationTime` ile `lastSignInTime` aynıysa bu, hesabın ilk
   /// girişidir. (users/{uid} dokümanı, authStateChanges tetikli

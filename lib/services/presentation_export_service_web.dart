@@ -7,6 +7,7 @@ import 'dart:html' as html;
 import 'package:http/http.dart' as http;
 
 import '../models/slide_model.dart';
+import 'model_asset_service.dart';
 import 'presentation_export_builder.dart';
 import 'remote_image_sources.dart';
 import 'remote_model_sources.dart';
@@ -107,12 +108,19 @@ Future<Map<String, String>> _embeddedModelSources(
       sources[modelId] = cached;
       continue;
     }
-    final source = RemoteModelSources.sourceFor(modelId);
-    if (source == null || !source.startsWith('http')) {
+    var source = RemoteModelSources.sourceFor(modelId);
+    if (source == null || source.trim().isEmpty) {
+      source = modelId;
+    }
+    final signedUrl = await ModelAssetService.generateSignedUrl(source);
+    if (signedUrl == null || !signedUrl.contains('token=')) {
       continue;
     }
+    final fetchUrl = signedUrl;
+
+
     try {
-      final response = await http.get(Uri.parse(source));
+      final response = await http.get(Uri.parse(fetchUrl));
       if (response.statusCode != 200) {
         continue;
       }
@@ -130,3 +138,4 @@ Future<Map<String, String>> _embeddedModelSources(
 }
 
 final Map<String, String> _embeddedModelSourceCache = <String, String>{};
+

@@ -187,8 +187,14 @@ String buildHtmlStageMarkup({
     final is3D = modelId != null;
     final isImage = imageId != null;
     final remoteSource = is3D ? modelSourcesById[modelId] : null;
-    final resolvableSource = remoteSource;
+    final resolvableSource = (remoteSource != null && remoteSource.isNotEmpty) ? remoteSource : null;
     final has3D = resolvableSource != null;
+
+    if (is3D) {
+      final sourceHasToken = resolvableSource?.contains('token=') ?? false;
+      print('[MODEL_RENDER] id=$modelId signed=$sourceHasToken');
+    }
+
     final componentHtml = presentationComponentHtml(block.kind);
     final hasHtmlComponent =
         has3D || isImage || componentHtml.trim().isNotEmpty;
@@ -220,7 +226,9 @@ String buildHtmlStageMarkup({
                 orbitTheta: block.modelOrbitTheta,
                 orbitPhi: block.modelOrbitPhi,
                 deferSource: deferEmbeddedAssets,
-                fallbackHtml: componentHtml,
+                fallbackHtml: block.kind == PresentationComponentKind.edebiyat01
+                    ? ''
+                    : componentHtml,
               )
             : componentHtml.trim().isEmpty
                 ? '<span class="sutol-component-shape"></span>'
@@ -244,7 +252,7 @@ String buildHtmlStageMarkup({
 
 String _model3DMarkup(
   String label,
-  String source, {
+  String? source, {
   required String id,
   required bool hasAnimations,
   required bool animationEnabled,
@@ -268,15 +276,24 @@ String _model3DMarkup(
       '${orbitTheta.toStringAsFixed(2)}deg ${orbitPhi.toStringAsFixed(2)}deg auto';
   final sourceMarkup = deferSource
       ? 'data-sutol-model-source-id="${_escapeAttribute(id)}"'
-      : 'src="${_escapeAttribute(source)}"';
+      : source != null && source.isNotEmpty
+          ? 'src="${_escapeAttribute(source)}"'
+          : '';
+
+
+
   final fallbackMarkup = fallbackHtml.trim().isEmpty
-      ? '<span class="sutol-component-shape"></span>'
-      : fallbackHtml;
+      ? '''<div class="sutol-3d-fallback-card">
+      <span class="sutol-3d-fallback-icon">🧊</span>
+      <span class="sutol-3d-fallback-title">3B Model Yüklenemedi</span>
+      <span class="sutol-3d-fallback-sub">Model kaynağına ulaşılamadı.</span>
+    </div>'''
+      : '<div class="sutol-html-component-inner">$fallbackHtml</div>';
   return '''
 <div class="sutol-html-component-inner sutol-3d-model-inner">
-  <model-viewer class="sutol-3d-model-viewer" data-sutol-model-id="${_escapeAttribute(id)}" $sourceMarkup alt="${_escapeAttribute(label)}"$cameraControlsMarkup$animationMarkup$autoRotateMarkup camera-orbit="$cameraOrbit" interaction-prompt="none" shadow-intensity="1" shadow-softness="0.8" exposure="1" loading="eager" reveal="auto" onload="this.nextElementSibling.hidden=true" onerror="const status=this.nextElementSibling;const fallback=status.nextElementSibling;console.error('Sutols 3B model yüklenemedi',{modelId:this.dataset.sutolModelId,source:this.currentSrc||this.src});this.hidden=true;status.hidden=true;fallback.hidden=false"></model-viewer>
+  <model-viewer class="sutol-3d-model-viewer" crossorigin="anonymous" data-sutol-model-id="${_escapeAttribute(id)}" $sourceMarkup alt="${_escapeAttribute(label)}"$cameraControlsMarkup$animationMarkup$autoRotateMarkup camera-orbit="$cameraOrbit" interaction-prompt="none" shadow-intensity="1" shadow-softness="0.8" exposure="1" loading="eager" reveal="auto" onload="this.hidden=false;const status=this.nextElementSibling;if(status)status.hidden=true;const fallback=status?status.nextElementSibling:null;if(fallback)fallback.hidden=true;console.log('Sutols 3B model yüklendi',{modelId:this.dataset.sutolModelId})" onerror="const status=this.nextElementSibling;if(status)status.hidden=true;const fallback=status?status.nextElementSibling:null;if(fallback)fallback.hidden=false;this.hidden=true;console.error('Sutols 3B model yüklenemedi',{modelId:this.dataset.sutolModelId})"></model-viewer>
   <span class="sutol-3d-model-status">3B model yükleniyor…</span>
-  <div class="sutol-3d-model-fallback" hidden><div class="sutol-html-component-inner">$fallbackMarkup</div></div>
+  <div class="sutol-3d-model-fallback" hidden>$fallbackMarkup</div>
 </div>
 ''';
 }
@@ -1956,6 +1973,40 @@ body {
 
 .sutol-3d-model-fallback[hidden] {
   display: none;
+}
+
+.sutol-3d-fallback-card {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 12px;
+  background: rgba(15, 23, 42, 0.85);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  color: #f8fafc;
+  text-align: center;
+  user-select: none;
+}
+
+.sutol-3d-fallback-icon {
+  font-size: 24px;
+  line-height: 1;
+}
+
+.sutol-3d-fallback-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: #f1f5f9;
+}
+
+.sutol-3d-fallback-sub {
+  font-size: 10px;
+  color: #94a3b8;
 }
 
 .sutol-export-stage .sutol-html-component.component-3d-model,

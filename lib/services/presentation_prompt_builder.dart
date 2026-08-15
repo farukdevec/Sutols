@@ -33,6 +33,7 @@ SUNUM DÜZENİ:
 - Aynı bilgiyi farklı kelimelerle yeniden anlatma; bir bilgi yalnızca en uygun slaytta yer alsın.
 - Aynı cümleyi, cümle kalıbını, giriş ifadesini veya maddeyi birden fazla slaytta kullanma.
 - "Bu sunumda...", "Bu slaytta...", "Konuya genel bakış...", "önemli noktalar" gibi dolgu ve üst-anlatı ifadeleri kullanma.
+- KESİNLİKLE ARAYÜZ VE SİSTEM METNİ ÜRETME: Slayt içeriklerinde "sürükleme kolu", "drag_handle_rounded", "sahne kartı", "mouse ile tutarak", "seçili sayfa", "düşünce aşaması" veya yazılım talimatı gibi ifadeleri ASLA kullanma. Yalnızca konunun özüne odaklanan akademik, bilimsel ve profesyonel bilgiler yaz.
 - Giriş yalnızca ilk slaytta, özet yalnızca son slaytta bulunsun.
 - Kesinliğinden emin olmadığın sayı, tarih, kişi veya kaynak uydurma.
 
@@ -43,7 +44,7 @@ SUNUM DÜZENİ:
 - keywords, yalnızca o slaydın görsel ana fikrini temsil eden 3-8 somut nesne, kişi, yer, süreç veya kavram içersin.
 - Komşu slaytların keywords listelerini gereksiz yere aynılaştırma.
 - Tüm metinler "$language" dilinde olsun; Türkçe ise ç, ğ, ı, ö, ş, ü karakterlerini doğru kullan.
-- İşletim sistemi bildirimi, yazılım uyarısı, lisans filigranı, bozuk kelime veya konu dışı metin üretme.
+- İşletim sistemi bildirimi, yazılım uyarısı, lisans filigranı, bozuk kelime, arayüz açıklaması veya konu dışı metin üretme.
 - Yalnızca geçerli JSON döndür; açıklama veya markdown kod bloğu ekleme.
 
 Konu: $topic

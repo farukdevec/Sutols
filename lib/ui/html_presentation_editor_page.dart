@@ -8,7 +8,9 @@ import 'package:flutter/services.dart';
 import '../models/slide_model.dart';
 import '../services/firestore_rest_helper.dart';
 import '../services/local_image_picker.dart';
+import '../services/model_asset_service.dart';
 import '../services/model_repository.dart';
+
 import '../services/presentation_export_service.dart';
 import '../services/presentation_auto_builder.dart';
 import '../services/presentation_fullscreen_service.dart';
@@ -23,6 +25,8 @@ import '../services/remote_model_sources.dart';
 import '../state/presentation_controller.dart';
 import '../state/theme_controller.dart';
 import 'membership_page.dart';
+import 'widgets/signed_thumbnail_image.dart';
+
 import 'my_presentations_page.dart';
 import 'presentation_preview_page.dart';
 import 'widgets/editor_shell.dart';
@@ -106,6 +110,7 @@ class HtmlPresentationEditorPage extends StatefulWidget {
 
 class _HtmlPresentationEditorPageState
     extends State<HtmlPresentationEditorPage> {
+  final FocusNode _editorFocusNode = FocusNode();
   late final TextEditingController _textController;
   _HtmlToolTab _activeTab = _HtmlToolTab.text;
   String? _lastEditorLabel;
@@ -218,11 +223,25 @@ class _HtmlPresentationEditorPageState
     }
     _hintTimer = Timer(const Duration(seconds: 6), _dismissMobileHint);
     _resolvePresentationFileName();
+    _hydrateModels();
     if (widget.adminReadOnly) {
       _adminLoading = true;
       _loadAdminPresentation();
     }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _editorFocusNode.requestFocus();
+      }
+    });
   }
+
+  Future<void> _hydrateModels() async {
+    await hydratePresentationModelSources(widget.controller.pages);
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
 
   /// Salt okunur (admin) mod: sunumu verilen presentationId ile Firestore'dan
   /// mevcut yükleme mantığını kullanarak mevcut controller'a yükler.
@@ -260,6 +279,7 @@ class _HtmlPresentationEditorPageState
 
   @override
   void dispose() {
+    _editorFocusNode.dispose();
     _hintTimer?.cancel();
     widget.controller.removeListener(_syncTextField);
     widget.controller.removeListener(_syncTabWithSelection);
@@ -619,6 +639,46 @@ class _HtmlPresentationEditorPageState
     );
   }
 
+  bool get _isEditingText {
+    final primaryFocus = FocusManager.instance.primaryFocus;
+    if (primaryFocus == null) return false;
+    final context = primaryFocus.context;
+    if (context == null) return false;
+    return context.findAncestorWidgetOfExactType<EditableText>() != null;
+  }
+
+  void _handleDeleteShortcut() {
+    if (_isEditingText) return;
+    if (widget.controller.hasSelection) {
+      widget.controller.removeSelectedItems();
+    } else if (widget.controller.canRemovePage) {
+      widget.controller.removeSelectedPage();
+    }
+  }
+
+  void _handleDuplicateShortcut() {
+    if (_isEditingText) return;
+    if (widget.controller.hasSelection) {
+      widget.controller.duplicateSelectedItems();
+    } else {
+      widget.controller.duplicatePage(widget.controller.selectedIndex);
+    }
+  }
+
+  void _handlePrevPageShortcut() {
+    if (_isEditingText) return;
+    if (widget.controller.selectedIndex > 0) {
+      widget.controller.selectPage(widget.controller.selectedIndex - 1);
+    }
+  }
+
+  void _handleNextPageShortcut() {
+    if (_isEditingText) return;
+    if (widget.controller.selectedIndex < widget.controller.pages.length - 1) {
+      widget.controller.selectPage(widget.controller.selectedIndex + 1);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     if (widget.adminReadOnly && (_adminLoading || _adminLoadError != null)) {
@@ -630,7 +690,9 @@ class _HtmlPresentationEditorPageState
     }
 
     return Focus(
+      focusNode: _editorFocusNode,
       autofocus: true,
+      canRequestFocus: true,
       child: CallbackShortcuts(
         bindings: widget.adminReadOnly
             ? const <ShortcutActivator, VoidCallback>{}
@@ -671,9 +733,9 @@ class _HtmlPresentationEditorPageState
 
                 // Çoğalt
                 const SingleActivator(LogicalKeyboardKey.keyD, control: true):
-                    widget.controller.duplicateSelectedItems,
+                    _handleDuplicateShortcut,
                 const SingleActivator(LogicalKeyboardKey.keyD, meta: true):
-                    widget.controller.duplicateSelectedItems,
+                    _handleDuplicateShortcut,
 
                 // Tümünü seç
                 const SingleActivator(LogicalKeyboardKey.keyA, control: true):
@@ -689,13 +751,35 @@ class _HtmlPresentationEditorPageState
 
                 // Sil
                 const SingleActivator(LogicalKeyboardKey.delete):
-                    widget.controller.removeSelectedItems,
+                    _handleDeleteShortcut,
                 const SingleActivator(LogicalKeyboardKey.backspace):
-                    widget.controller.removeSelectedItems,
+                    _handleDeleteShortcut,
 
                 // Seçimi temizle
                 const SingleActivator(LogicalKeyboardKey.escape):
                     widget.controller.clearSelection,
+
+                // Sunum Modu (F5 / Ctrl+Enter)
+                const SingleActivator(LogicalKeyboardKey.f5):
+                    _openPresentationPreview,
+                const SingleActivator(LogicalKeyboardKey.enter, control: true):
+                    _openPresentationPreview,
+                const SingleActivator(LogicalKeyboardKey.enter, meta: true):
+                    _openPresentationPreview,
+
+                // Slayt Gezinme Kısayolları (Yukarı / Aşağı Oklar)
+                const SingleActivator(LogicalKeyboardKey.arrowUp):
+                    _handlePrevPageShortcut,
+                const SingleActivator(LogicalKeyboardKey.arrowLeft):
+                    _handlePrevPageShortcut,
+                const SingleActivator(LogicalKeyboardKey.pageUp):
+                    _handlePrevPageShortcut,
+                const SingleActivator(LogicalKeyboardKey.arrowDown):
+                    _handleNextPageShortcut,
+                const SingleActivator(LogicalKeyboardKey.arrowRight):
+                    _handleNextPageShortcut,
+                const SingleActivator(LogicalKeyboardKey.pageDown):
+                    _handleNextPageShortcut,
               },
         child: AnimatedBuilder(
           animation: widget.controller,
@@ -1013,8 +1097,10 @@ class _HtmlHeader extends StatelessWidget {
             }
           }
 
-          final compact = constraints.maxWidth < 340;
-          final iconSize = compact ? 36.0 : 40.0;
+          final compact = constraints.maxWidth < 600;
+          final iconSize = compact
+              ? (constraints.maxWidth < 340 ? 30.0 : 34.0)
+              : 40.0;
           final popupConstraints = BoxConstraints.tightFor(
             width: iconSize,
             height: iconSize,
@@ -1022,7 +1108,7 @@ class _HtmlHeader extends StatelessWidget {
 
           return Container(
             key: const ValueKey<String>('mobile-editor-header'),
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
             decoration: BoxDecoration(
               gradient: const LinearGradient(
                 colors: <Color>[
@@ -1037,107 +1123,122 @@ class _HtmlHeader extends StatelessWidget {
               boxShadow: _studioHeaderFadeShadow,
             ),
             child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: <Widget>[
-                _MobileHeaderIconButton(
-                  icon: Icons.arrow_back_rounded,
-                  tooltip: 'Geri',
-                  size: iconSize,
-                  branded: true,
-                  onTap: () => Navigator.of(context).maybePop(),
-                ),
-                _HeaderBrandMark(
-                  key: const ValueKey<String>('mobile-brand-mark'),
-                  size: compact ? 36 : 50,
-                  branded: true,
-                  showLabel: false,
-                ),
-                SizedBox(width: compact ? 0 : 2),
-                const Spacer(),
-                if (adminReadOnly)
-                  const SizedBox.shrink()
-                else
-                  _MobileHistoryButtons(
-                    onUndo: onUndo,
-                    onRedo: onRedo,
-                    canUndo: canUndo,
-                    canRedo: canRedo,
-                    size: iconSize,
-                    branded: true,
-                  ),
-                _MobileHeaderIconButton(
-                  tooltip: 'Sunum Modu',
-                  icon: Icons.slideshow_rounded,
-                  size: iconSize,
-                  branded: true,
-                  onTap: onPreview,
-                ),
-                PopupMenuButton<_MobileHeaderAction>(
-                  tooltip: 'Dışa Aktar',
-                  padding: EdgeInsets.zero,
-                  constraints: popupConstraints,
-                  iconSize: 20,
-                  icon: Icon(
-                    Icons.download_rounded,
-                    color: _studioHeaderForeground,
-                  ),
-                  onSelected: handleAction,
-                  itemBuilder: (context) =>
-                      <PopupMenuEntry<_MobileHeaderAction>>[
-                    PopupMenuItem<_MobileHeaderAction>(
-                      value: _MobileHeaderAction.exportHtml,
-                      child: const ListTile(
-                        leading: Icon(Icons.html_rounded),
-                        title: Text('HTML Dışa Aktar'),
-                      ),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    _MobileHeaderIconButton(
+                      icon: Icons.arrow_back_rounded,
+                      tooltip: 'Geri',
+                      size: iconSize,
+                      branded: true,
+                      onTap: () => Navigator.of(context).maybePop(),
                     ),
-                    PopupMenuItem<_MobileHeaderAction>(
-                      value: _MobileHeaderAction.exportPdf,
-                      child: const ListTile(
-                        leading: Icon(Icons.picture_as_pdf_rounded),
-                        title: Text('PDF Olarak Yazdır'),
-                      ),
+                    _HeaderBrandMark(
+                      key: const ValueKey<String>('mobile-brand-mark'),
+                      size: compact ? 36 : 50,
+                      branded: true,
+                      showLabel: false,
                     ),
                   ],
                 ),
-                if (adminReadOnly)
-                  const _AdminReadOnlyBadge(compact: true)
-                else
-                  PopupMenuButton<_MobileHeaderAction>(
-                    tooltip: 'Diğer işlemler',
-                    padding: EdgeInsets.zero,
-                    constraints: popupConstraints,
-                    iconSize: 20,
-                    icon: Icon(
-                      Icons.more_vert_rounded,
-                      color: _studioHeaderForeground,
+                Flexible(
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerRight,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: <Widget>[
+                        if (!adminReadOnly)
+                          _MobileHistoryButtons(
+                            onUndo: onUndo,
+                            onRedo: onRedo,
+                            canUndo: canUndo,
+                            canRedo: canRedo,
+                            size: iconSize,
+                            branded: true,
+                          ),
+                        _MobileHeaderIconButton(
+                          tooltip: 'Sunum Modu',
+                          icon: Icons.slideshow_rounded,
+                          size: iconSize,
+                          branded: true,
+                          onTap: onPreview,
+                        ),
+                        PopupMenuButton<_MobileHeaderAction>(
+                          tooltip: 'Dışa Aktar',
+                          padding: EdgeInsets.zero,
+                          onSelected: handleAction,
+                          itemBuilder: (context) =>
+                              <PopupMenuEntry<_MobileHeaderAction>>[
+                            PopupMenuItem<_MobileHeaderAction>(
+                              value: _MobileHeaderAction.exportHtml,
+                              child: const ListTile(
+                                leading: Icon(Icons.html_rounded),
+                                title: Text('HTML Dışa Aktar'),
+                              ),
+                            ),
+                            PopupMenuItem<_MobileHeaderAction>(
+                              value: _MobileHeaderAction.exportPdf,
+                              child: const ListTile(
+                                leading: Icon(Icons.picture_as_pdf_rounded),
+                                title: Text('PDF Olarak Yazdır'),
+                              ),
+                            ),
+                          ],
+                          child: _MobileHeaderIconButton(
+                            icon: Icons.download_rounded,
+                            tooltip: '',
+                            size: iconSize,
+                            branded: true,
+                            onTap: () {},
+                          ),
+                        ),
+                        if (adminReadOnly)
+                          const _AdminReadOnlyBadge(compact: true)
+                        else
+                          PopupMenuButton<_MobileHeaderAction>(
+                            tooltip: 'Diğer işlemler',
+                            padding: EdgeInsets.zero,
+                            onSelected: handleAction,
+                            itemBuilder: (context) =>
+                                <PopupMenuEntry<_MobileHeaderAction>>[
+                              PopupMenuItem<_MobileHeaderAction>(
+                                value: _MobileHeaderAction.settings,
+                                child: const ListTile(
+                                  leading: Icon(Icons.settings_outlined),
+                                  title: Text('Ayarlar'),
+                                ),
+                              ),
+                              const PopupMenuDivider(),
+                              PopupMenuItem<_MobileHeaderAction>(
+                                value: _MobileHeaderAction.save,
+                                child: const ListTile(
+                                  leading: Icon(Icons.save_alt_rounded),
+                                  title: Text('Projeyi Kaydet'),
+                                ),
+                              ),
+                              PopupMenuItem<_MobileHeaderAction>(
+                                value: _MobileHeaderAction.load,
+                                child: const ListTile(
+                                  leading: Icon(Icons.upload_file_rounded),
+                                  title: Text('Proje Yükle'),
+                                ),
+                              ),
+                            ],
+                            child: _MobileHeaderIconButton(
+                              icon: Icons.more_vert_rounded,
+                              tooltip: '',
+                              size: iconSize,
+                              branded: true,
+                              onTap: () {},
+                            ),
+                          ),
+                      ],
                     ),
-                    onSelected: handleAction,
-                    itemBuilder: (context) =>
-                        <PopupMenuEntry<_MobileHeaderAction>>[
-                      PopupMenuItem<_MobileHeaderAction>(
-                        value: _MobileHeaderAction.settings,
-                        child: const ListTile(
-                          leading: Icon(Icons.settings_outlined),
-                          title: Text('Ayarlar'),
-                        ),
-                      ),
-                      const PopupMenuDivider(),
-                      PopupMenuItem<_MobileHeaderAction>(
-                        value: _MobileHeaderAction.save,
-                        child: const ListTile(
-                          leading: Icon(Icons.save_alt_rounded),
-                          title: Text('Projeyi Kaydet'),
-                        ),
-                      ),
-                      PopupMenuItem<_MobileHeaderAction>(
-                        value: _MobileHeaderAction.load,
-                        child: const ListTile(
-                          leading: Icon(Icons.upload_file_rounded),
-                          title: Text('Proje Yükle'),
-                        ),
-                      ),
-                    ],
                   ),
+                ),
               ],
             ),
           );
@@ -1927,26 +2028,29 @@ class _HtmlMobileToolDock extends StatelessWidget {
             border: Border.all(color: context.colors.border),
             boxShadow: context.elevation2,
           ),
-          child: Row(
-            // Araçlar dar ekranda azalsa bile iskele boyunca eşit dağılır;
-            // solda "devasa boşluk" oluşmaz.
-            mainAxisSize: MainAxisSize.max,
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: <Widget>[
-              for (final i in visible)
-                Padding(
-                  padding: EdgeInsets.only(right: gap),
-                  child: _MobileDockButton(
-                    icon: tools[i].icon,
-                    label: tools[i].label,
-                    selected: tools[i].selected,
-                    onTap: tools[i].onTap,
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.center,
+            child: Row(
+              // Araçlar dar ekranda azalsa bile iskele boyunca eşit dağılır;
+              // solda "devasa boşluk" oluşmaz.
+              mainAxisSize: MainAxisSize.max,
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: <Widget>[
+                for (final i in visible)
+                  Padding(
+                    padding: EdgeInsets.only(right: gap),
+                    child: _MobileDockButton(
+                      icon: tools[i].icon,
+                      label: tools[i].label,
+                      selected: tools[i].selected,
+                      onTap: tools[i].onTap,
+                    ),
                   ),
-                ),
-              PopupMenuButton<_MobileMoreTool>(
-                tooltip: 'Daha fazla araç',
-                onSelected: _handleMore,
-                itemBuilder: (context) {
+                PopupMenuButton<_MobileMoreTool>(
+                  tooltip: 'Daha fazla araç',
+                  onSelected: _handleMore,
+                  itemBuilder: (context) {
                   // Dar ekranda dock'a sığmayan araçlar (öncelik sırasıyla)
                   // menünün başına düşer; böylece hiçbir araç kaybolmaz.
                   final hiddenLabels = tools
@@ -2046,7 +2150,8 @@ class _HtmlMobileToolDock extends StatelessWidget {
               ),
             ],
           ),
-        );
+        ),
+      );
       },
     );
   }
@@ -2146,8 +2251,17 @@ class _MobileDockButton extends StatelessWidget {
     final iconOnly = label.isEmpty;
     final foreground =
         selected ? context._htmlAccent : context.sutolColors.onSurfaceVariant;
-    final background = selected ? const Color(0xFFEDF4FF) : Colors.transparent;
-    final borderColor = selected ? const Color(0xFFD4E4FF) : Colors.transparent;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final background = selected
+        ? (isDark
+            ? context.colors.primary.withValues(alpha: 0.18)
+            : const Color(0xFFEDF4FF))
+        : Colors.transparent;
+    final borderColor = selected
+        ? (isDark
+            ? context.colors.primary.withValues(alpha: 0.4)
+            : const Color(0xFFD4E4FF))
+        : Colors.transparent;
     return Material(
       color: background,
       borderRadius: BorderRadius.circular(16),
@@ -2759,7 +2873,11 @@ class _MobileHeaderIconButton extends StatelessWidget {
       onPressed: enabled ? onTap : null,
       padding: EdgeInsets.zero,
       constraints: BoxConstraints.tightFor(width: size, height: size),
-      visualDensity: VisualDensity.compact,
+      style: IconButton.styleFrom(
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        minimumSize: Size(size, size),
+        padding: EdgeInsets.zero,
+      ),
       icon: Icon(
         icon,
         size: 20,
@@ -3499,12 +3617,20 @@ class _RailButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final backgroundColor =
-        isSelected ? const Color(0xFFEAF7F7) : Colors.transparent;
-    final borderColor =
-        isSelected ? const Color(0xFFB9E1E3) : Colors.transparent;
-    final effectiveIconColor =
-        isSelected ? context._htmlAccent : context._htmlMuted;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final backgroundColor = isSelected
+        ? (isDark
+            ? context.colors.primary.withValues(alpha: 0.18)
+            : const Color(0xFFEAF7F7))
+        : Colors.transparent;
+    final borderColor = isSelected
+        ? (isDark
+            ? context.colors.primary.withValues(alpha: 0.5)
+            : const Color(0xFFB9E1E3))
+        : Colors.transparent;
+    final effectiveIconColor = isSelected
+        ? context._htmlAccent
+        : (isDark ? context.colors.textSecondary : context._htmlMuted);
 
     return Material(
       color: backgroundColor,
@@ -3529,7 +3655,9 @@ class _RailButton extends StatelessWidget {
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: isSelected ? context._htmlInk : context._htmlMuted,
+                      color: isSelected
+                          ? (isDark ? context.colors.textPrimary : context._htmlInk)
+                          : (isDark ? context.colors.textSecondary : context._htmlMuted),
                       fontWeight:
                           isSelected ? FontWeight.w800 : FontWeight.w700,
                       fontSize: 10.5,
@@ -3810,10 +3938,15 @@ class _HtmlStudioPageThumb extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return SizedBox(
       width: 148,
       child: Material(
-        color: isSelected ? const Color(0xFFEEF5FF) : Colors.white,
+        color: isSelected
+            ? (isDark
+                ? context.colors.primary.withValues(alpha: 0.18)
+                : const Color(0xFFEEF5FF))
+            : (isDark ? context.colors.surfaceElevated : Colors.white),
         borderRadius: BorderRadius.circular(20),
         child: InkWell(
           onTap: onTap,
@@ -3877,69 +4010,304 @@ class _HtmlPageSidebar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(12, 14, 12, 12),
-      decoration: BoxDecoration(
-        color: context.colors.surfaceElevated,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: context.colors.border),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          Row(
-            children: <Widget>[
-              Expanded(
-                child: Text(
-                  'Sahneler',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: context._htmlInk,
-                        fontWeight: FontWeight.w900,
+    return GestureDetector(
+      onSecondaryTapUp: (details) {
+        if (!readOnly) {
+          _showPageContextMenu(
+            context,
+            details.globalPosition,
+            controller,
+            controller.selectedIndex,
+          );
+        }
+      },
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(12, 14, 12, 12),
+        decoration: BoxDecoration(
+          color: context.colors.surfaceElevated,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: context.colors.border),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Row(
+              children: <Widget>[
+                Expanded(
+                  child: Text(
+                    'Sahneler',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          color: context._htmlInk,
+                          fontWeight: FontWeight.w900,
+                        ),
+                  ),
+                ),
+                Icon(Icons.sort_rounded, size: 20, color: context._htmlMuted),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Expanded(
+              child: ReorderableListView.builder(
+                buildDefaultDragHandles: false,
+                proxyDecorator: (child, index, animation) {
+                  return Material(
+                    elevation: animation.value * 6,
+                    color: Colors.transparent,
+                    child: AnimatedBuilder(
+                      animation: animation,
+                      builder: (context, child) => Transform.scale(
+                        scale: 1.0 + animation.value * 0.05,
+                        child: child,
                       ),
+                    ),
+                  );
+                },
+                itemCount: controller.pages.length,
+                onReorder: (oldIndex, newIndex) {
+                  controller.reorderPage(oldIndex, newIndex);
+                },
+                itemBuilder: (context, index) {
+                  final page = controller.pages[index];
+                  return KeyedSubtree(
+                    key: ValueKey<String>('reorder-page-${page.id}'),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: <Widget>[
+                        _HtmlPageCard(
+                          page: page,
+                          index: index,
+                          isSelected: index == controller.selectedIndex,
+                          onTap: () => controller.selectPage(index),
+                          controller: controller,
+                          readOnly: readOnly,
+                        ),
+                        _SlideInsertButton(
+                          onPressed: () => controller.addPageAfter(index),
+                          readOnly: readOnly,
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ),
+            if (!readOnly) ...<Widget>[
+              const SizedBox(height: 10),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: controller.addPage,
+                  icon: const Icon(Icons.add_rounded, size: 18),
+                  label: const Text('Yeni sahne'),
                 ),
               ),
-              Icon(Icons.sort_rounded, size: 20, color: context._htmlMuted),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Expanded(
-            child: ListView.separated(
-              itemCount: controller.pages.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 12),
-              itemBuilder: (context, index) {
-                final page = controller.pages[index];
-                return _HtmlPageCard(
-                  page: page,
-                  index: index,
-                  isSelected: index == controller.selectedIndex,
-                  onTap: () => controller.selectPage(index),
-                );
-              },
-            ),
-          ),
-          if (!readOnly) ...<Widget>[
-            const SizedBox(height: 10),
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                onPressed: controller.addPage,
-                icon: const Icon(Icons.add_rounded, size: 18),
-                label: const Text('Yeni sahne'),
+              const SizedBox(height: 6),
+              TextButton.icon(
+                onPressed: controller.canRemovePage
+                    ? controller.removeSelectedPage
+                    : null,
+                icon: const Icon(Icons.delete_outline_rounded, size: 17),
+                label: const Text('Seçili sahneyi sil'),
               ),
-            ),
-            const SizedBox(height: 6),
-            TextButton.icon(
-              onPressed: controller.canRemovePage
-                  ? controller.removeSelectedPage
-                  : null,
-              icon: const Icon(Icons.delete_outline_rounded, size: 17),
-              label: const Text('Seçili sahneyi sil'),
-            ),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }
+}
+
+class _SlideInsertButton extends StatefulWidget {
+  const _SlideInsertButton({
+    required this.onPressed,
+    this.readOnly = false,
+  });
+
+  final VoidCallback onPressed;
+  final bool readOnly;
+
+  @override
+  State<_SlideInsertButton> createState() => _SlideInsertButtonState();
+}
+
+class _SlideInsertButtonState extends State<_SlideInsertButton> {
+  bool _isHovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    if (widget.readOnly) return const SizedBox(height: 6);
+
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
+      child: GestureDetector(
+        onTap: widget.onPressed,
+        behavior: HitTestBehavior.opaque,
+        child: Container(
+          margin: const EdgeInsets.symmetric(vertical: 2),
+          padding: const EdgeInsets.symmetric(vertical: 3),
+          child: Stack(
+            alignment: Alignment.center,
+            children: <Widget>[
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 150),
+                height: _isHovered ? 2 : 1,
+                color: _isHovered
+                    ? context._htmlAccent
+                    : Colors.black.withValues(alpha: 0.08),
+              ),
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 150),
+                padding: EdgeInsets.symmetric(
+                  horizontal: _isHovered ? 10 : 8,
+                  vertical: 3,
+                ),
+                decoration: BoxDecoration(
+                  color: _isHovered
+                      ? context._htmlAccent
+                      : (Theme.of(context).brightness == Brightness.dark
+                          ? context.colors.surfaceElevated
+                          : Colors.white),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: _isHovered
+                        ? context._htmlAccent
+                        : context.sutolColors.outline.withValues(alpha: 0.8),
+                    width: 1,
+                  ),
+                  boxShadow: _isHovered
+                      ? <BoxShadow>[
+                          BoxShadow(
+                            color: context._htmlAccent.withValues(alpha: 0.25),
+                            blurRadius: 6,
+                            offset: const Offset(0, 2),
+                          )
+                        ]
+                      : null,
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    Icon(
+                      Icons.add_rounded,
+                      size: 14,
+                      color: _isHovered ? Colors.white : context._htmlInk,
+                    ),
+                    if (_isHovered) ...<Widget>[
+                      const SizedBox(width: 4),
+                      const Text(
+                        'Slayt Ekle',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+void _showPageContextMenu(
+  BuildContext context,
+  Offset globalPosition,
+  PresentationController controller,
+  int index,
+) {
+  final RenderBox? overlay =
+      Overlay.of(context).context.findRenderObject() as RenderBox?;
+  if (overlay == null) return;
+
+  showMenu<String>(
+    context: context,
+    position: RelativeRect.fromRect(
+      globalPosition & const Size(1, 1),
+      Offset.zero & overlay.size,
+    ),
+    items: <PopupMenuEntry<String>>[
+      PopupMenuItem<String>(
+        value: 'add',
+        child: Row(
+          children: const <Widget>[
+            Icon(Icons.add_circle_outline_rounded, size: 18),
+            SizedBox(width: 10),
+            Text('Araya Yeni Slayt Ekle'),
+          ],
+        ),
+      ),
+      PopupMenuItem<String>(
+        value: 'duplicate',
+        child: Row(
+          children: const <Widget>[
+            Icon(Icons.content_copy_rounded, size: 18),
+            SizedBox(width: 10),
+            Text('Slaytı Çoğalt'),
+          ],
+        ),
+      ),
+      const PopupMenuDivider(),
+      PopupMenuItem<String>(
+        value: 'move_up',
+        enabled: index > 0,
+        child: Row(
+          children: const <Widget>[
+            Icon(Icons.arrow_upward_rounded, size: 18),
+            SizedBox(width: 10),
+            Text('Yukarı Taşı'),
+          ],
+        ),
+      ),
+      PopupMenuItem<String>(
+        value: 'move_down',
+        enabled: index < controller.pages.length - 1,
+        child: Row(
+          children: const <Widget>[
+            Icon(Icons.arrow_downward_rounded, size: 18),
+            SizedBox(width: 10),
+            Text('Aşağı Taşı'),
+          ],
+        ),
+      ),
+      const PopupMenuDivider(),
+      PopupMenuItem<String>(
+        value: 'delete',
+        enabled: controller.canRemovePage,
+        child: Row(
+          children: const <Widget>[
+            Icon(Icons.delete_outline_rounded, size: 18, color: Colors.redAccent),
+            SizedBox(width: 10),
+            Text('Slaytı Sil', style: TextStyle(color: Colors.redAccent)),
+          ],
+        ),
+      ),
+    ],
+  ).then((value) {
+    if (value == null) return;
+    switch (value) {
+      case 'add':
+        controller.addPageAfter(index);
+        break;
+      case 'duplicate':
+        controller.duplicatePage(index);
+        break;
+      case 'move_up':
+        controller.movePageUp(index);
+        break;
+      case 'move_down':
+        controller.movePageDown(index);
+        break;
+      case 'delete':
+        controller.removePageAt(index);
+        break;
+    }
+  });
 }
 
 class _SidebarAction extends StatelessWidget {
@@ -3982,53 +4350,115 @@ class _HtmlPageCard extends StatelessWidget {
     required this.index,
     required this.isSelected,
     required this.onTap,
+    required this.controller,
+    this.readOnly = false,
   });
 
   final PresentationPage page;
   final int index;
   final bool isSelected;
   final VoidCallback onTap;
+  final PresentationController controller;
+  final bool readOnly;
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(8),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 220),
-        padding: const EdgeInsets.all(7),
-        decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFFEAF7F7) : const Color(0xFFF8FAFD),
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(
-            color:
-                isSelected ? context._htmlAccent : context.sutolColors.outline,
-            width: isSelected ? 1.5 : 1,
-          ),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Text(
-              '${index + 1}'.padLeft(2, '0'),
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: context._htmlInk,
-                    fontWeight: FontWeight.w900,
-                  ),
+    return GestureDetector(
+      onSecondaryTapUp: (details) {
+        if (!readOnly) {
+          _showPageContextMenu(
+            context,
+            details.globalPosition,
+            controller,
+            index,
+          );
+        }
+      },
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(8),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 220),
+          padding: const EdgeInsets.all(7),
+          decoration: BoxDecoration(
+            color: isSelected
+                ? (Theme.of(context).brightness == Brightness.dark
+                    ? context.colors.primary.withValues(alpha: 0.18)
+                    : const Color(0xFFEAF7F7))
+                : (Theme.of(context).brightness == Brightness.dark
+                    ? context.colors.surface
+                    : const Color(0xFFF8FAFD)),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color:
+                  isSelected ? context._htmlAccent : context.sutolColors.outline,
+              width: isSelected ? 1.5 : 1,
             ),
-            const SizedBox(height: 5),
-            AspectRatio(
-              aspectRatio: 16 / 9,
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(6),
-                child: IgnorePointer(
-                  child: PresentationPageThumbnailCanvas(
-                    page: page,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: <Widget>[
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      if (!readOnly)
+                        ReorderableDragStartListener(
+                          index: index,
+                          child: MouseRegion(
+                            cursor: SystemMouseCursors.grab,
+                            child: Padding(
+                              padding: const EdgeInsets.only(right: 6),
+                              child: Icon(
+                                Icons.drag_handle_rounded,
+                                size: 18,
+                                color: context._htmlMuted,
+                              ),
+                            ),
+                          ),
+                        ),
+                      Text(
+                        '${index + 1}'.padLeft(2, '0'),
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: context._htmlInk,
+                              fontWeight: FontWeight.w900,
+                            ),
+                      ),
+                    ],
+                  ),
+                  if (!readOnly)
+                    InkWell(
+                      onTapDown: (details) => _showPageContextMenu(
+                        context,
+                        details.globalPosition,
+                        controller,
+                        index,
+                      ),
+                      borderRadius: BorderRadius.circular(4),
+                      child: Icon(
+                        Icons.more_vert_rounded,
+                        size: 16,
+                        color: context._htmlMuted,
+                      ),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 5),
+              AspectRatio(
+                aspectRatio: 16 / 9,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(6),
+                  child: IgnorePointer(
+                    child: PresentationPageThumbnailCanvas(
+                      page: page,
+                    ),
                   ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -4435,7 +4865,7 @@ class _Html3DModelControlsState extends State<_Html3DModelControls> {
     }).toList(growable: false);
   }
 
-  void _add(ModelCatalogEntry model) {
+  Future<void> _add(ModelCatalogEntry model) async {
     if (_isLocked(model)) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -4445,14 +4875,26 @@ class _Html3DModelControlsState extends State<_Html3DModelControls> {
       );
       return;
     }
-    // Sahnenin çözebilmesi için R2 kaynağını kayıt defterine işle,
-    // ardından tuval üzerine 3B blok olarak ekle.
-    RemoteModelSources.registerAll(<String, String>{model.id: model.modelUrl});
+    // Yetkili imzalı URL edin; yetki verilemezse bloğu ekleme.
+    final signedUrl = await ModelAssetService.generateSignedUrl(model.modelUrl);
+    if (signedUrl == null || signedUrl.isEmpty || !signedUrl.contains('token=')) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Model yetkilendirmesi başarısız oldu. Lütfen tekrar deneyin.'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+      return;
+    }
+
+    RemoteModelSources.registerAll(<String, String>{model.id: signedUrl});
     widget.controller.add3DModelBlock(
       Presentation3DModelAsset(
         id: model.id,
         label: model.name,
-        assetPath: model.modelUrl,
+        assetPath: signedUrl,
         category: model.category.isEmpty ? '3B Model' : model.category,
         tags: model.tags,
         byteSize: 0,
@@ -4460,6 +4902,7 @@ class _Html3DModelControlsState extends State<_Html3DModelControls> {
       ),
     );
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -4674,9 +5117,11 @@ class _Html3DModelControlsState extends State<_Html3DModelControls> {
                 byteSize: 0,
                 sha256: '',
               ),
-              thumbnailUrl: model.thumbnailUrl.isEmpty
-                  ? 'https://assets.sutols.com/thumbnails/${model.id}.webp'
-                  : model.thumbnailUrl,
+              thumbnailUrl: ModelAssetService.thumbnailKey(
+                thumbnailField: model.thumbnailUrl,
+                modelId: model.id,
+              ),
+
               isSelected: selectedModelId == model.id,
               locked: _isLocked(model),
               onTap: () => _add(model),
@@ -5043,6 +5488,7 @@ class _HtmlTransitionControls extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final effectSettings = controller.effectSettings;
     return LayoutBuilder(
       builder: (context, constraints) {
         final columns = constraints.maxWidth >= 760 ? 2 : 1;
@@ -5053,6 +5499,85 @@ class _HtmlTransitionControls extends StatelessWidget {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: <Widget>[
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Text(
+                        'Sahne Ölçüleri & Format',
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                              color: context._htmlInk,
+                              fontWeight: FontWeight.w900,
+                            ),
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        'Dikey mobil, standart 16:9 veya özel sahne ölçüleri belirle.',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: context._htmlMuted,
+                              fontWeight: FontWeight.w600,
+                            ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                TextButton.icon(
+                  onPressed: () => _showStageDimensionsDialog(context, controller),
+                  icon: const Icon(Icons.tune_rounded, size: 16),
+                  label: const Text('Ölçü Düzenle'),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: <Widget>[
+                  _QuickStageDimensionChip(
+                    label: 'Standart (16:9)',
+                    icon: Icons.desktop_windows_rounded,
+                    isSelected: effectSettings.aspectRatio == '16:9',
+                    onTap: () => controller.updateStageDimensions(aspectRatio: '16:9'),
+                  ),
+                  const SizedBox(width: 8),
+                  _QuickStageDimensionChip(
+                    label: '📱 Mobil Dikey (9:16)',
+                    icon: Icons.stay_current_portrait_rounded,
+                    isSelected: effectSettings.aspectRatio == '9:16',
+                    highlight: true,
+                    onTap: () => controller.updateStageDimensions(aspectRatio: '9:16'),
+                  ),
+                  const SizedBox(width: 8),
+                  _QuickStageDimensionChip(
+                    label: 'Klasik (4:3)',
+                    icon: Icons.aspect_ratio_rounded,
+                    isSelected: effectSettings.aspectRatio == '4:3',
+                    onTap: () => controller.updateStageDimensions(aspectRatio: '4:3'),
+                  ),
+                  const SizedBox(width: 8),
+                  _QuickStageDimensionChip(
+                    label: 'Kare (1:1)',
+                    icon: Icons.crop_square_rounded,
+                    isSelected: effectSettings.aspectRatio == '1:1',
+                    onTap: () => controller.updateStageDimensions(aspectRatio: '1:1'),
+                  ),
+                  const SizedBox(width: 8),
+                  _QuickStageDimensionChip(
+                    label: 'Özel (${effectSettings.customWidth.toInt()}x${effectSettings.customHeight.toInt()})',
+                    icon: Icons.tune_rounded,
+                    isSelected: effectSettings.aspectRatio == 'custom',
+                    onTap: () => _showStageDimensionsDialog(context, controller),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 24),
+            const Divider(),
+            const SizedBox(height: 16),
             Text(
               'Popüler Geçişler',
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
@@ -5110,46 +5635,85 @@ class _TransitionLibraryCard extends StatelessWidget {
   final bool isSelected;
   final VoidCallback onTap;
 
+  List<Color> _iconGradientColors(BuildContext context) {
+    if (isSelected) {
+      return const <Color>[Color(0xFF0F172A), Color(0xFF1E293B)];
+    }
+    switch (kind) {
+      case PresentationTransitionKind.none:
+        return const <Color>[Color(0xFF64748B), Color(0xFF475569)];
+      case PresentationTransitionKind.cube3d:
+      case PresentationTransitionKind.rotateZoom:
+      case PresentationTransitionKind.flip:
+      case PresentationTransitionKind.convex:
+      case PresentationTransitionKind.concave:
+        return const <Color>[Color(0xFF1E1B4B), Color(0xFF312E81)];
+      case PresentationTransitionKind.morph:
+      case PresentationTransitionKind.smooth:
+      case PresentationTransitionKind.fade:
+      case PresentationTransitionKind.zoom:
+        return const <Color>[Color(0xFF0F172A), Color(0xFF2563EB)];
+      default:
+        return const <Color>[Color(0xFF1E293B), Color(0xFF334155)];
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final gradient = LinearGradient(
+      colors: _iconGradientColors(context),
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+    );
+
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Material(
-      color: isSelected ? const Color(0xFFF0F6FF) : Colors.white,
-      borderRadius: BorderRadius.circular(18),
+      color: isSelected
+          ? (isDark
+              ? context.colors.primary.withValues(alpha: 0.18)
+              : const Color(0xFFF0F6FF))
+          : (isDark ? context.colors.surfaceElevated : Colors.white),
+      borderRadius: BorderRadius.circular(16),
+      elevation: isSelected ? 2 : 0,
+      shadowColor: context._htmlAccent.withValues(alpha: 0.15),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(16),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 180),
-          padding: const EdgeInsets.all(13),
+          padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(18),
+            borderRadius: BorderRadius.circular(16),
             border: Border.all(
               color: isSelected
                   ? context._htmlAccent
-                  : context.sutolColors.outline,
-              width: isSelected ? 1.6 : 1,
+                  : context.sutolColors.outline.withValues(alpha: 0.7),
+              width: isSelected ? 1.8 : 1,
             ),
           ),
           child: Row(
             children: <Widget>[
               Container(
-                width: 48,
-                height: 48,
+                width: 44,
+                height: 44,
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(14),
-                  gradient: const LinearGradient(
-                    colors: <Color>[Color(0xFF0B7BFF), Color(0xFF7047EB)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
+                  borderRadius: BorderRadius.circular(12),
+                  gradient: gradient,
+                  boxShadow: <BoxShadow>[
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.08),
+                      blurRadius: 6,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
                 ),
                 child: Icon(
                   presentationTransitionIcon(kind),
-                  color: context.sutolColors.surface,
-                  size: 25,
+                  color: Colors.white,
+                  size: 22,
                 ),
               ),
-              const SizedBox(width: 11),
+              const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -5158,7 +5722,8 @@ class _TransitionLibraryCard extends StatelessWidget {
                       presentationTransitionLabel(kind),
                       style: Theme.of(context).textTheme.titleSmall?.copyWith(
                             color: context._htmlInk,
-                            fontWeight: FontWeight.w900,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: -0.2,
                           ),
                     ),
                     if (MediaQuery.sizeOf(context).width >= 480) ...<Widget>[
@@ -5169,8 +5734,9 @@ class _TransitionLibraryCard extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
                               color: context._htmlMuted,
-                              fontWeight: FontWeight.w600,
-                              height: 1.25,
+                              fontWeight: FontWeight.w500,
+                              height: 1.2,
+                              fontSize: 11,
                             ),
                       ),
                     ],
@@ -5178,12 +5744,16 @@ class _TransitionLibraryCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 6),
-              Icon(
-                isSelected
-                    ? Icons.check_circle_rounded
-                    : Icons.add_circle_outline_rounded,
-                color: context._htmlAccent,
-                size: 24,
+              AnimatedSwitcher(
+                duration: const Duration(milliseconds: 150),
+                child: Icon(
+                  isSelected
+                      ? Icons.check_circle_rounded
+                      : Icons.add_circle_outline_rounded,
+                  key: ValueKey<bool>(isSelected),
+                  color: isSelected ? context._htmlAccent : context._htmlMuted,
+                  size: 22,
+                ),
               ),
             ],
           ),
@@ -5248,35 +5818,34 @@ class _Model3DLibraryCardState extends State<_Model3DLibraryCard> {
   }
 
   Widget _thumbnail(BuildContext context) {
-    // Thumbnail boşsa doğrudan harf kutusuna düş (network hatası UI'ı
-    // bozmasın).
-    if (widget.thumbnailUrl.isEmpty) {
+    final key = ModelAssetService.thumbnailKey(
+      thumbnailField: widget.thumbnailUrl,
+      modelId: widget.model.id,
+    );
+
+    if (key.isEmpty) {
       return _letterBox(context);
     }
-    return Image.network(
-      widget.thumbnailUrl,
+    return SignedThumbnailImage(
+      assetKey: key,
       fit: BoxFit.cover,
       width: double.infinity,
       height: double.infinity,
-      loadingBuilder: (context, child, progress) {
-        if (progress == null) {
-          return child;
-        }
-        return Container(
-          color: Theme.of(context).brightness == Brightness.dark
-              ? SutolDarkColors.surfaceSubtle
-              : SutolLightColors.surfaceSubtle,
-          alignment: Alignment.center,
-          child: const SizedBox(
-            width: 18,
-            height: 18,
-            child: CircularProgressIndicator(strokeWidth: 2),
-          ),
-        );
-      },
-      errorBuilder: (context, error, stackTrace) => _letterBox(context),
+      placeholder: Container(
+        color: Theme.of(context).brightness == Brightness.dark
+            ? SutolDarkColors.surfaceSubtle
+            : SutolLightColors.surfaceSubtle,
+        alignment: Alignment.center,
+        child: const SizedBox(
+          width: 18,
+          height: 18,
+          child: CircularProgressIndicator(strokeWidth: 2),
+        ),
+      ),
+      errorBuilder: (context) => _letterBox(context),
     );
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -5442,8 +6011,13 @@ class _TemplatePresetCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Material(
-      color: isSelected ? const Color(0xFFF0F6FF) : context.sutolColors.surface,
+      color: isSelected
+          ? (isDark
+              ? context.colors.primary.withValues(alpha: 0.18)
+              : const Color(0xFFF0F6FF))
+          : context.sutolColors.surface,
       borderRadius: BorderRadius.circular(16),
       child: InkWell(
         onTap: onTap,
@@ -6458,7 +7032,7 @@ class _TextFieldControl extends StatelessWidget {
           color: context._htmlInk,
           fontWeight: FontWeight.w700,
         ),
-        decoration: _inputDecoration('Buraya metin yazin'),
+        decoration: _inputDecoration(context, 'Buraya metin yazın'),
       ),
     );
   }
@@ -6558,13 +7132,18 @@ class _HtmlStageCardState extends State<_HtmlStageCard> {
       ),
       child: LayoutBuilder(
         builder: (context, constraints) {
+          final targetRatio = widget.controller.effectSettings.calculatedAspectRatio;
           final availableWidth = math.max(0.0, constraints.maxWidth);
           final availableHeight = math.max(0.0, constraints.maxHeight);
-          final stageWidth = math.min(
-            availableWidth,
-            availableHeight * (16 / 9),
-          );
-          final stageHeight = stageWidth / (16 / 9);
+          double stageWidth;
+          double stageHeight;
+          if (availableWidth / availableHeight > targetRatio) {
+            stageHeight = availableHeight;
+            stageWidth = stageHeight * targetRatio;
+          } else {
+            stageWidth = availableWidth;
+            stageHeight = stageWidth / targetRatio;
+          }
 
           // Yakınlaşınca tuvali kutu içinde tutacak şekilde kaydırmayı sınırla.
           final maxPanX = math.max(
@@ -6740,6 +7319,14 @@ class _HtmlStageCardState extends State<_HtmlStageCard> {
                       },
                       onEndModelOrbit:
                           widget.controller.endSelectedModelOrbitGesture,
+                    ),
+                  if (!widget.readOnly)
+                    Positioned(
+                      top: 10,
+                      right: 10,
+                      child: _StageDimensionBadgeButton(
+                        controller: widget.controller,
+                      ),
                     ),
                 ],
               ),
@@ -7578,29 +8165,40 @@ String _studioPanelTitle(_HtmlToolTab tab) {
   }
 }
 
-InputDecoration _inputDecoration(String hintText) {
+InputDecoration _inputDecoration(BuildContext context, String hintText) {
+  final isDark = Theme.of(context).brightness == Brightness.dark;
+  final surfaceColor = isDark
+      ? context.colors.surfaceElevated
+      : SutolLightColors.surfaceSubtle;
+  final borderColor =
+      isDark ? context.colors.border : SutolLightColors.outline;
+  final focusColor = context.colors.primary;
+  final hintColor = isDark
+      ? context.colors.textSecondary.withValues(alpha: 0.6)
+      : SutolLightColors.onSurfaceVariant;
+
   return InputDecoration(
     hintText: hintText,
-    hintStyle: const TextStyle(color: SutolLightColors.onSurfaceVariant),
+    hintStyle: TextStyle(color: hintColor),
     isDense: true,
     filled: true,
-    fillColor: SutolLightColors.surfaceSubtle,
+    fillColor: surfaceColor,
     contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
     border: OutlineInputBorder(
       borderRadius: BorderRadius.circular(14),
-      borderSide: const BorderSide(color: SutolLightColors.outline),
+      borderSide: BorderSide(color: borderColor),
     ),
     enabledBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(14),
-      borderSide: const BorderSide(color: SutolLightColors.outline),
+      borderSide: BorderSide(color: borderColor),
     ),
     disabledBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(14),
-      borderSide: const BorderSide(color: SutolLightColors.outlineVariant),
+      borderSide: BorderSide(color: borderColor.withValues(alpha: 0.5)),
     ),
     focusedBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(14),
-      borderSide: const BorderSide(color: SutolLightColors.primary, width: 1.2),
+      borderSide: BorderSide(color: focusColor, width: 1.2),
     ),
   );
 }
@@ -7764,5 +8362,520 @@ String _textAnimationLabel(PresentationTextAnimation animation) {
       return 'Kesik sinyal';
     case PresentationTextAnimation.holografikDalga:
       return 'Holografik dalga';
+  }
+}
+
+class _StageDimensionBadgeButton extends StatelessWidget {
+  const _StageDimensionBadgeButton({required this.controller});
+
+  final PresentationController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    final effectSettings = controller.effectSettings;
+    final isPortrait = effectSettings.isPortrait;
+    final label = effectSettings.stageDimensionLabel;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Tooltip(
+      message: 'Sahne Ölçüleri ve Formatı Değiştir',
+      child: Material(
+        color: isPortrait
+            ? (isDark ? const Color(0xFF1E3A8A) : const Color(0xFFEFF6FF))
+            : (isDark ? context.colors.surfaceElevated : Colors.white),
+        borderRadius: BorderRadius.circular(12),
+        elevation: 1,
+        child: InkWell(
+          onTap: () => _showStageDimensionsDialog(context, controller),
+          borderRadius: BorderRadius.circular(12),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: isPortrait
+                    ? context.colors.primary
+                    : context.sutolColors.outline.withValues(alpha: 0.6),
+                width: isPortrait ? 1.4 : 1,
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                Icon(
+                  isPortrait
+                      ? Icons.stay_current_portrait_rounded
+                      : Icons.aspect_ratio_rounded,
+                  size: 16,
+                  color: isPortrait ? context.colors.primary : context._htmlInk,
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  label,
+                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                        color: isPortrait ? context.colors.primary : context._htmlInk,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 12,
+                      ),
+                ),
+                const SizedBox(width: 4),
+                Icon(
+                  Icons.keyboard_arrow_down_rounded,
+                  size: 16,
+                  color: context._htmlMuted,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _QuickStageDimensionChip extends StatelessWidget {
+  const _QuickStageDimensionChip({
+    required this.label,
+    required this.icon,
+    required this.isSelected,
+    required this.onTap,
+    this.highlight = false,
+  });
+
+  final String label;
+  final IconData icon;
+  final bool isSelected;
+  final VoidCallback onTap;
+  final bool highlight;
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Material(
+      color: isSelected
+          ? (isDark ? context.colors.primary.withValues(alpha: 0.2) : const Color(0xFFE0F2FE))
+          : (highlight ? (isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC)) : Colors.transparent),
+      borderRadius: BorderRadius.circular(10),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(10),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(
+              color: isSelected
+                  ? context.colors.primary
+                  : (highlight
+                      ? context.colors.primary.withValues(alpha: 0.4)
+                      : context.sutolColors.outline.withValues(alpha: 0.5)),
+              width: isSelected ? 1.6 : 1,
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              Icon(
+                icon,
+                size: 15,
+                color: isSelected
+                    ? context.colors.primary
+                    : (highlight ? context.colors.primary : context._htmlInk),
+              ),
+              const SizedBox(width: 6),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                  color: isSelected
+                      ? context.colors.primary
+                      : (highlight ? context.colors.primary : context._htmlInk),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+Future<void> _showStageDimensionsDialog(
+  BuildContext context,
+  PresentationController controller,
+) async {
+  final currentSettings = controller.effectSettings;
+  String selectedPreset = currentSettings.aspectRatio;
+  final widthController = TextEditingController(
+    text: currentSettings.customWidth.round().toString(),
+  );
+  final heightController = TextEditingController(
+    text: currentSettings.customHeight.round().toString(),
+  );
+
+  return showDialog<void>(
+    context: context,
+    builder: (dialogContext) {
+      return StatefulBuilder(
+        builder: (context, setState) {
+          final isDark = Theme.of(context).brightness == Brightness.dark;
+
+          double calculateCurrentRatio() {
+            if (selectedPreset == 'custom') {
+              final w = double.tryParse(widthController.text) ?? 1920;
+              final h = double.tryParse(heightController.text) ?? 1080;
+              return h > 0 ? (w / h).clamp(0.2, 5.0) : 1.777;
+            }
+            switch (selectedPreset) {
+              case '9:16':
+                return 9 / 16;
+              case '4:3':
+                return 4 / 3;
+              case '1:1':
+                return 1 / 1;
+              case '16:9':
+              default:
+                return 16 / 9;
+            }
+          }
+
+          final ratio = calculateCurrentRatio();
+          final isPortrait = ratio < 1.0;
+
+          return AlertDialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+            title: Row(
+              children: <Widget>[
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: context.colors.primary.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Icon(
+                    Icons.aspect_ratio_rounded,
+                    color: context.colors.primary,
+                    size: 24,
+                  ),
+                ),
+                const SizedBox(width: 14),
+                const Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Text(
+                      'Sahne Ölçüleri & Format',
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
+                    Text(
+                      'Sunum tuval boyutunu ve oranını özelleştirin',
+                      style: TextStyle(fontSize: 12, color: Colors.grey),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            content: SingleChildScrollView(
+              child: SizedBox(
+                width: 500,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    const SizedBox(height: 8),
+                    Text(
+                      'Hazır Sahne Ölçüleri (Presets)',
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                    ),
+                    const SizedBox(height: 10),
+                    Column(
+                      children: <Widget>[
+                        _StageDimensionPresetCard(
+                          title: 'Standart Sunum (16:9)',
+                          subtitle: 'Masaüstü, TV, Projeksiyon (1920×1080 px)',
+                          icon: Icons.desktop_windows_rounded,
+                          isSelected: selectedPreset == '16:9',
+                          badgeText: 'Varsayılan',
+                          onTap: () => setState(() => selectedPreset = '16:9'),
+                        ),
+                        const SizedBox(height: 8),
+                        _StageDimensionPresetCard(
+                          title: 'Mobil Dikey (9:16)',
+                          subtitle: 'Telefonlar için responsive dikey HTML sahne (1080×1920 px)',
+                          icon: Icons.stay_current_portrait_rounded,
+                          isSelected: selectedPreset == '9:16',
+                          badgeText: '📱 Mobil Dikey',
+                          highlight: true,
+                          onTap: () => setState(() => selectedPreset = '9:16'),
+                        ),
+                        const SizedBox(height: 8),
+                        _StageDimensionPresetCard(
+                          title: 'Klasik Sunum (4:3)',
+                          subtitle: 'Klasik ekranlar & PDF sunumu (1024×768 px)',
+                          icon: Icons.aspect_ratio_rounded,
+                          isSelected: selectedPreset == '4:3',
+                          onTap: () => setState(() => selectedPreset = '4:3'),
+                        ),
+                        const SizedBox(height: 8),
+                        _StageDimensionPresetCard(
+                          title: 'Kare (1:1)',
+                          subtitle: 'Sosyal medya & tablet kart formatı (1080×1080 px)',
+                          icon: Icons.crop_square_rounded,
+                          isSelected: selectedPreset == '1:1',
+                          onTap: () => setState(() => selectedPreset = '1:1'),
+                        ),
+                        const SizedBox(height: 8),
+                        _StageDimensionPresetCard(
+                          title: 'Özel Sahne Ölçüsü (Custom)',
+                          subtitle: 'Piksel bazlı manuel Genişlik × Yükseklik girin',
+                          icon: Icons.tune_rounded,
+                          isSelected: selectedPreset == 'custom',
+                          onTap: () => setState(() => selectedPreset = 'custom'),
+                        ),
+                      ],
+                    ),
+                    if (selectedPreset == 'custom') ...<Widget>[
+                      const SizedBox(height: 16),
+                      const Divider(),
+                      const SizedBox(height: 12),
+                      Text(
+                        'Piksel Ölçüleri Girin',
+                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                      ),
+                      const SizedBox(height: 10),
+                      Row(
+                        children: <Widget>[
+                          Expanded(
+                            child: TextField(
+                              controller: widthController,
+                              keyboardType: TextInputType.number,
+                              decoration: _inputDecoration(context, 'Genişlik (ör. 1920)')
+                                  .copyWith(labelText: 'Genişlik (px)'),
+                              onChanged: (_) => setState(() {}),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          const Text('×', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: TextField(
+                              controller: heightController,
+                              keyboardType: TextInputType.number,
+                              decoration: _inputDecoration(context, 'Yükseklik (ör. 1080)')
+                                  .copyWith(labelText: 'Yükseklik (px)'),
+                              onChanged: (_) => setState(() {}),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                    const SizedBox(height: 16),
+                    // Live ratio preview banner
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.grey.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                          color: isDark ? Colors.white12 : Colors.black12,
+                        ),
+                      ),
+                      child: Row(
+                        children: <Widget>[
+                          Container(
+                            width: isPortrait ? 24 : 40,
+                            height: isPortrait ? 40 : 24,
+                            decoration: BoxDecoration(
+                              color: context.colors.primary,
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Icon(
+                              isPortrait ? Icons.smartphone_rounded : Icons.laptop_rounded,
+                              color: Colors.white,
+                              size: 14,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: <Widget>[
+                                Text(
+                                  isPortrait ? 'Mobil Dikey Sahne (Responsive)' : 'Yatay / Standart Sahne',
+                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                                ),
+                                Text(
+                                  'Görünüm Oranı: ${ratio.toStringAsFixed(2)}:1 (${isPortrait ? "Mobil cihazlar için ideal" : "Masaüstü & sunumlar için ideal"})',
+                                  style: TextStyle(fontSize: 11, color: context.colors.primary, fontWeight: FontWeight.w600),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            actions: <Widget>[
+              TextButton(
+                onPressed: () => Navigator.of(dialogContext).pop(),
+                child: const Text('İptal'),
+              ),
+              ElevatedButton.icon(
+                icon: const Icon(Icons.check_rounded, size: 18),
+                label: const Text('Uygula'),
+                style: ElevatedButton.styleFrom(
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                ),
+                onPressed: () {
+                  final customW = double.tryParse(widthController.text) ?? 1920;
+                  final customH = double.tryParse(heightController.text) ?? 1080;
+                  controller.updateStageDimensions(
+                    aspectRatio: selectedPreset,
+                    customWidth: customW,
+                    customHeight: customH,
+                  );
+                  Navigator.of(dialogContext).pop();
+                },
+              ),
+            ],
+          );
+        },
+      );
+    },
+  );
+}
+
+class _StageDimensionPresetCard extends StatelessWidget {
+  const _StageDimensionPresetCard({
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+    required this.isSelected,
+    required this.onTap,
+    this.badgeText,
+    this.highlight = false,
+  });
+
+  final String title;
+  final String subtitle;
+  final IconData icon;
+  final bool isSelected;
+  final VoidCallback onTap;
+  final String? badgeText;
+  final bool highlight;
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryColor = context.colors.primary;
+
+    return Material(
+      color: isSelected
+          ? (isDark ? primaryColor.withValues(alpha: 0.18) : const Color(0xFFEFF6FF))
+          : (isDark ? context.colors.surfaceElevated : Colors.white),
+      borderRadius: BorderRadius.circular(14),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(14),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: isSelected
+                  ? primaryColor
+                  : (highlight
+                      ? primaryColor.withValues(alpha: 0.5)
+                      : context.sutolColors.outline.withValues(alpha: 0.5)),
+              width: isSelected ? 1.8 : 1,
+            ),
+          ),
+          child: Row(
+            children: <Widget>[
+              Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  color: isSelected
+                      ? primaryColor
+                      : (highlight
+                          ? primaryColor.withValues(alpha: 0.15)
+                          : (isDark ? Colors.white10 : const Color(0xFFF1F5F9))),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(
+                  icon,
+                  color: isSelected
+                      ? Colors.white
+                      : (highlight ? primaryColor : context._htmlInk),
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Row(
+                      children: <Widget>[
+                        Text(
+                          title,
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
+                            color: isSelected ? primaryColor : context._htmlInk,
+                          ),
+                        ),
+                        if (badgeText != null) ...<Widget>[
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: highlight
+                                  ? primaryColor.withValues(alpha: 0.15)
+                                  : Colors.grey.withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              badgeText!,
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                                color: highlight ? primaryColor : Colors.grey[700],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      subtitle,
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: context._htmlMuted,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(
+                isSelected ? Icons.check_circle_rounded : Icons.radio_button_unchecked_rounded,
+                color: isSelected ? primaryColor : context._htmlMuted,
+                size: 20,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }

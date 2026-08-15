@@ -322,53 +322,73 @@ class _PreviewDeckStage extends StatelessWidget {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        return SizedBox(
-          width: constraints.maxWidth,
-          height: constraints.maxHeight,
-          child: ClipRect(
-            child: Semantics(
-              label: 'Sunum sayfasi ${currentIndex + 1} / $pageCount',
-              button: effectSettings.zoomEnabled,
-              hint: effectSettings.zoomEnabled
-                  ? (zoomed ? 'Zoomu kapat' : 'Zoom yap')
-                  : null,
-              onTap: effectSettings.zoomEnabled ? onToggleZoom : null,
-              child: MouseRegion(
-                cursor: effectSettings.zoomEnabled
-                    ? (zoomed
-                        ? SystemMouseCursors.zoomOut
-                        : SystemMouseCursors.zoomIn)
-                    : SystemMouseCursors.basic,
-                child: GestureDetector(
-                  behavior: HitTestBehavior.translucent,
+        final availableWidth = math.max(0.0, constraints.maxWidth);
+        final availableHeight = math.max(0.0, constraints.maxHeight);
+        final targetRatio = effectSettings.calculatedAspectRatio;
+        double stageWidth;
+        double stageHeight;
+        if (availableWidth / availableHeight > targetRatio) {
+          stageHeight = availableHeight;
+          stageWidth = stageHeight * targetRatio;
+        } else {
+          stageWidth = availableWidth;
+          stageHeight = stageWidth / targetRatio;
+        }
+
+        return Center(
+          child: SizedBox(
+            width: stageWidth,
+            height: stageHeight,
+            child: ClipRRect(
+              borderRadius: effectSettings.isPortrait
+                  ? BorderRadius.circular(16)
+                  : BorderRadius.zero,
+              child: ClipRect(
+                child: Semantics(
+                  label: 'Sunum sayfasi ${currentIndex + 1} / $pageCount',
+                  button: effectSettings.zoomEnabled,
+                  hint: effectSettings.zoomEnabled
+                      ? (zoomed ? 'Zoomu kapat' : 'Zoom yap')
+                      : null,
                   onTap: effectSettings.zoomEnabled ? onToggleZoom : null,
-                  child: AnimatedSwitcher(
-                    duration: duration,
-                    transitionBuilder: (child, animation) =>
-                        _buildPreviewTransition(
-                      kind: effectSettings.transitionKind,
-                      animation: animation,
-                      reduceMotion: reduceMotion,
-                      child: child,
-                    ),
-                    child: KeyedSubtree(
-                      key: ValueKey<String>('preview-${page.id}'),
-                      child: AnimatedScale(
-                        scale: zoomed ? effectSettings.zoomScale : 1,
-                        duration: reduceMotion
-                            ? SutolMotion.instant
-                            : SutolMotion.moderate,
-                        curve: SutolMotion.easeOut,
-                        child: _PreviewStageWithOrbit(
-                          key: ValueKey<String>('orbit-${page.id}'),
-                          page: page,
-                          transitionFromPage: transitionFromPage,
-                          currentRevealStep: currentRevealStep,
-                          effectSettings: effectSettings,
+                  child: MouseRegion(
+                    cursor: effectSettings.zoomEnabled
+                        ? (zoomed
+                            ? SystemMouseCursors.zoomOut
+                            : SystemMouseCursors.zoomIn)
+                        : SystemMouseCursors.basic,
+                    child: GestureDetector(
+                      behavior: HitTestBehavior.translucent,
+                      onTap: effectSettings.zoomEnabled ? onToggleZoom : null,
+                      child: AnimatedSwitcher(
+                        duration: duration,
+                        transitionBuilder: (child, animation) =>
+                            _buildPreviewTransition(
+                          kind: effectSettings.transitionKind,
+                          animation: animation,
                           reduceMotion: reduceMotion,
-                          duration: duration,
-                          showHotspots: showHotspots,
-                          onHotspot: onHotspot,
+                          child: child,
+                        ),
+                        child: KeyedSubtree(
+                          key: ValueKey<String>('preview-${page.id}'),
+                          child: AnimatedScale(
+                            scale: zoomed ? effectSettings.zoomScale : 1,
+                            duration: reduceMotion
+                                ? SutolMotion.instant
+                                : SutolMotion.moderate,
+                            curve: SutolMotion.easeOut,
+                            child: _PreviewStageWithOrbit(
+                              key: ValueKey<String>('orbit-${page.id}'),
+                              page: page,
+                              transitionFromPage: transitionFromPage,
+                              currentRevealStep: currentRevealStep,
+                              effectSettings: effectSettings,
+                              reduceMotion: reduceMotion,
+                              duration: duration,
+                              showHotspots: showHotspots,
+                              onHotspot: onHotspot,
+                            ),
+                          ),
                         ),
                       ),
                     ),
@@ -1379,6 +1399,89 @@ Widget _buildPreviewTransition({
             ..setEntry(3, 2, 0.001)
             ..rotateY((1 - curved.value) * -0.7),
           child: Opacity(opacity: curved.value, child: child),
+        ),
+      );
+    case PresentationTransitionKind.cube3d:
+      return AnimatedBuilder(
+        animation: curved,
+        child: child,
+        builder: (context, child) => Transform(
+          alignment: Alignment.centerLeft,
+          transform: Matrix4.identity()
+            ..setEntry(3, 2, 0.001)
+            ..rotateY((1 - curved.value) * -1.57),
+          child: Opacity(opacity: curved.value, child: child),
+        ),
+      );
+    case PresentationTransitionKind.morph:
+      return FadeTransition(
+        opacity: curved,
+        child: ScaleTransition(
+          scale: Tween<double>(begin: 1.15, end: 1.0).animate(curved),
+          child: child,
+        ),
+      );
+    case PresentationTransitionKind.parallax:
+      return FadeTransition(
+        opacity: curved,
+        child: SlideTransition(
+          position: Tween<Offset>(
+            begin: const Offset(0.12, 0),
+            end: Offset.zero,
+          ).animate(curved),
+          child: child,
+        ),
+      );
+    case PresentationTransitionKind.elastic:
+      final elasticCurve = CurvedAnimation(
+        parent: animation,
+        curve: Curves.elasticOut,
+        reverseCurve: Curves.easeIn,
+      );
+      return ScaleTransition(
+        scale: Tween<double>(begin: 0.7, end: 1.0).animate(elasticCurve),
+        child: FadeTransition(opacity: curved, child: child),
+      );
+    case PresentationTransitionKind.glitch:
+      return FadeTransition(
+        opacity: curved,
+        child: SlideTransition(
+          position: Tween<Offset>(
+            begin: const Offset(-0.04, 0.02),
+            end: Offset.zero,
+          ).animate(curved),
+          child: child,
+        ),
+      );
+    case PresentationTransitionKind.prism:
+      return FadeTransition(
+        opacity: curved,
+        child: ScaleTransition(
+          scale: Tween<double>(begin: 0.92, end: 1.0).animate(curved),
+          child: child,
+        ),
+      );
+    case PresentationTransitionKind.radialWipe:
+      return FadeTransition(
+        opacity: curved,
+        child: ScaleTransition(
+          scale: Tween<double>(begin: 0.85, end: 1.0).animate(curved),
+          child: child,
+        ),
+      );
+    case PresentationTransitionKind.rotateZoom:
+      return AnimatedBuilder(
+        animation: curved,
+        child: child,
+        builder: (context, child) => Transform(
+          alignment: Alignment.center,
+          transform: Matrix4.identity()
+            ..setEntry(3, 2, 0.001)
+            ..rotateZ((1 - curved.value) * -0.5),
+          child: ScaleTransition(
+            scale: Tween<double>(begin: 0.5, end: 1.0).animate(curved),
+            child: Opacity(opacity: curved.value, child: child),
+          ),
         ),
       );
   }

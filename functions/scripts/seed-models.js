@@ -20,16 +20,17 @@ admin.initializeApp({
 
 const db = admin.firestore();
 
-// modelUrl ve thumbnailUrl: Cloudflare R2 public bucket linkleri.
-// "pub-...r2.dev" kısmını kendi R2 hesap ID'nizle değiştirin.
+// modelUrl ve thumbnailUrl: Cloudflare Worker (sutol-model-proxy) üzerinden
+// https://assets.sutols.com/<object-key> ve /thumbnails/<object-key>.webp
+// olarak servis edilir. R2 bucket public değildir; doğrudan r2.dev erişimi
+// kapalıdır. Worker Origin/Referer bazlı erişim kontrolü uygular.
 const models = [
   {
     id: "model-taşıt-001",
     name: "Kırmızı Spor Araba",
-    modelUrl:
-      "https://pub-00000000000000000000000000000000.r2.dev/sutol/models/red-sports-car.glb",
+    modelUrl: "https://assets.sutols.com/red-sports-car.glb",
     thumbnailUrl:
-      "https://pub-00000000000000000000000000000000.r2.dev/sutol/thumbnails/red-sports-car.webp",
+      "https://assets.sutols.com/thumbnails/red-sports-car.webp",
     tags: ["araba", "taşıt", "spor", "motorlu"],
     category: "taşıt",
     tier: "free",
@@ -37,10 +38,9 @@ const models = [
   {
     id: "model-mimari-001",
     name: "Modern Villa",
-    modelUrl:
-      "https://pub-00000000000000000000000000000000.r2.dev/sutol/models/modern-villa.glb",
+    modelUrl: "https://assets.sutols.com/modern-villa.glb",
     thumbnailUrl:
-      "https://pub-00000000000000000000000000000000.r2.dev/sutol/thumbnails/modern-villa.webp",
+      "https://assets.sutols.com/thumbnails/modern-villa.webp",
     tags: ["bina", "mimari", "villa", "ev"],
     category: "mimari",
     tier: "plus",
@@ -48,10 +48,9 @@ const models = [
   {
     id: "model-doğa-001",
     name: "Çam Ağacı",
-    modelUrl:
-      "https://pub-00000000000000000000000000000000.r2.dev/sutol/models/pine-tree.glb",
+    modelUrl: "https://assets.sutols.com/pine-tree.glb",
     thumbnailUrl:
-      "https://pub-00000000000000000000000000000000.r2.dev/sutol/thumbnails/pine-tree.webp",
+      "https://assets.sutols.com/thumbnails/pine-tree.webp",
     tags: ["ağaç", "doğa", "bitki", "orman"],
     category: "doğa",
     tier: "plus",

@@ -327,6 +327,14 @@ class PresentationProjectCodec {
       'zoomEnabled': settings.zoomEnabled,
       'zoomScale': settings.zoomScale,
       'reducedMotion': settings.reducedMotion,
+      'autoPlayIntervalSec': settings.autoPlayIntervalSec,
+      'loop': settings.loop,
+      'showProgressBar': settings.showProgressBar,
+      'enableLaserPointer': settings.enableLaserPointer,
+      'enableSoundEffects': settings.enableSoundEffects,
+      'aspectRatio': settings.aspectRatio,
+      'customWidth': settings.customWidth,
+      'customHeight': settings.customHeight,
     };
   }
 
@@ -343,6 +351,16 @@ class PresentationProjectCodec {
       zoomEnabled: _bool(json['zoomEnabled'], false),
       zoomScale: _double(json['zoomScale'], 1.55),
       reducedMotion: _bool(json['reducedMotion'], false),
+      autoPlayIntervalSec: _int(json['autoPlayIntervalSec'], 0),
+      loop: _bool(json['loop'], false),
+      showProgressBar: _bool(json['showProgressBar'], true),
+      enableLaserPointer: _bool(json['enableLaserPointer'], false),
+      enableSoundEffects: _bool(json['enableSoundEffects'], false),
+      aspectRatio: json['aspectRatio'] is String
+          ? json['aspectRatio']! as String
+          : '16:9',
+      customWidth: _double(json['customWidth'], 1920),
+      customHeight: _double(json['customHeight'], 1080),
     );
   }
 

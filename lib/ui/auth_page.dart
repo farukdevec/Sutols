@@ -17,9 +17,11 @@ class _AuthPageState extends State<AuthPage> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _nameController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
   bool _isLogin = true;
   bool _isLoading = false;
   bool _termsAgreed = false;
+  bool _obscurePassword = true;
   String? _error;
 
   @override
@@ -27,6 +29,7 @@ class _AuthPageState extends State<AuthPage> {
     _emailController.dispose();
     _passwordController.dispose();
     _nameController.dispose();
+    _confirmPasswordController.dispose();
     super.dispose();
   }
 
@@ -43,6 +46,12 @@ class _AuthPageState extends State<AuthPage> {
           _passwordController.text,
         );
       } else {
+        if (_passwordController.text != _confirmPasswordController.text) {
+          setState(() {
+            _error = 'Şifreler eşleşmiyor.';
+          });
+          return;
+        }
         await AuthService.instance.createUserWithEmailAndPassword(
           _emailController.text.trim(),
           _passwordController.text,
@@ -190,11 +199,31 @@ class _AuthPageState extends State<AuthPage> {
             keyboardType: TextInputType.emailAddress,
           ),
           const SizedBox(height: AppSpacing.s16),
+          if (!_isLogin) ...[
+            TextField(
+              controller: _confirmPasswordController,
+              style: AppTypography.bodyLarge.copyWith(color: colors.textPrimary),
+              decoration: const InputDecoration(hintText: 'Şifre (tekrar)'),
+            ),
+            const SizedBox(height: AppSpacing.s16),
+          ],
           TextField(
             controller: _passwordController,
             style: AppTypography.bodyLarge.copyWith(color: colors.textPrimary),
-            decoration: const InputDecoration(hintText: 'Şifre'),
-            obscureText: true,
+            decoration: InputDecoration(
+              hintText: 'Şifre',
+              suffixIcon: IconButton(
+                icon: Icon(
+                  _obscurePassword
+                      ? Icons.visibility_off_outlined
+                      : Icons.visibility_outlined,
+                ),
+                onPressed: () {
+                  setState(() => _obscurePassword = !_obscurePassword);
+                },
+              ),
+            ),
+            obscureText: _obscurePassword,
           ),
           // Kayıt modunda onay kutucuğu butonlara tıklamadan önce görünür;
           // işaretlenmeden "Kayıt Ol" ve "Google ile Devam Et" pasiftir.

@@ -5,7 +5,10 @@ import '../state/presentation_controller.dart';
 import 'model_matching_service.dart';
 import 'presentation_auto_builder.dart';
 import 'presentation_keyword_catalog.dart';
+
 import 'remote_model_sources.dart';
+import 'model_asset_service.dart';
+import 'presentation_model_source_resolver.dart';
 
 /// Gemini + model eşleştirme çıktısından gerçek bir sunum destesi (deck)
 /// üretir. Metin blokları sola, 3B modeller sağa yerleştirilir.
@@ -19,10 +22,14 @@ class PresentationDeckBuilder {
     final sources = <String, String>{};
     for (final slide in slides) {
       for (final model in slide.models.take(1)) {
-        sources[model.id] = model.modelUrl;
+        if (model.id.isNotEmpty && model.modelUrl.trim().isNotEmpty) {
+          sources[model.id] = ModelAssetService.modelUrlFromField(model.modelUrl);
+        }
       }
     }
-    RemoteModelSources.registerAll(sources);
+    if (sources.isNotEmpty) {
+      RemoteModelSources.registerAll(sources);
+    }
 
     var pageCounter = 1;
     var textCounter = 1;
@@ -121,9 +128,11 @@ class PresentationDeckBuilder {
         ),
       );
     }
-
+    hydratePresentationModelSources(pages);
     return pages;
   }
+
+
 
   static PresentationBackgroundKind _bestBackground({
     required String topic,

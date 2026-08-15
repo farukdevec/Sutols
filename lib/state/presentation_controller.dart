@@ -639,6 +639,69 @@ class PresentationController extends ChangeNotifier {
     notifyListeners();
   }
 
+  void updateAutoPlayIntervalSec(int value) {
+    if (_effectSettings.autoPlayIntervalSec == value) return;
+    _recordUndo();
+    _effectSettings = _effectSettings.copyWith(autoPlayIntervalSec: value);
+    notifyListeners();
+  }
+
+  void updateLoop(bool value) {
+    if (_effectSettings.loop == value) return;
+    _recordUndo();
+    _effectSettings = _effectSettings.copyWith(loop: value);
+    notifyListeners();
+  }
+
+  void updateShowProgressBar(bool value) {
+    if (_effectSettings.showProgressBar == value) return;
+    _recordUndo();
+    _effectSettings = _effectSettings.copyWith(showProgressBar: value);
+    notifyListeners();
+  }
+
+  void updateEnableLaserPointer(bool value) {
+    if (_effectSettings.enableLaserPointer == value) return;
+    _recordUndo();
+    _effectSettings = _effectSettings.copyWith(enableLaserPointer: value);
+    notifyListeners();
+  }
+
+  void updateEnableSoundEffects(bool value) {
+    if (_effectSettings.enableSoundEffects == value) return;
+    _recordUndo();
+    _effectSettings = _effectSettings.copyWith(enableSoundEffects: value);
+    notifyListeners();
+  }
+
+  void updateAspectRatio(String value) {
+    if (_effectSettings.aspectRatio == value) return;
+    _recordUndo();
+    _effectSettings = _effectSettings.copyWith(aspectRatio: value);
+    notifyListeners();
+  }
+
+  void updateStageDimensions({
+    required String aspectRatio,
+    double? customWidth,
+    double? customHeight,
+  }) {
+    final newWidth = customWidth ?? _effectSettings.customWidth;
+    final newHeight = customHeight ?? _effectSettings.customHeight;
+    if (_effectSettings.aspectRatio == aspectRatio &&
+        _effectSettings.customWidth == newWidth &&
+        _effectSettings.customHeight == newHeight) {
+      return;
+    }
+    _recordUndo();
+    _effectSettings = _effectSettings.copyWith(
+      aspectRatio: aspectRatio,
+      customWidth: newWidth,
+      customHeight: newHeight,
+    );
+    notifyListeners();
+  }
+
   void updateReducedMotion(bool value) {
     if (_effectSettings.reducedMotion == value) {
       return;
@@ -756,6 +819,114 @@ class PresentationController extends ChangeNotifier {
     if (_selectedPageIndex >= _pages.length) {
       _selectedPageIndex = _pages.length - 1;
     }
+    _resetSelectionForCurrentPage();
+    notifyListeners();
+  }
+
+  void addPageAfter(int index) {
+    if (index < 0 || index >= _pages.length) {
+      addPage();
+      return;
+    }
+    _recordUndo();
+    final inheritedBackground = _pages[index].backgroundKind;
+    final textBlock = _createTextBlock(
+      text: '',
+      position: const Offset(0.12, 0.16),
+      fontSize: 48,
+      type: PresentationTextType.title,
+      widthFactor: 0.34,
+    );
+    final newPage = PresentationPage(
+      id: 'page-$_pageCounter',
+      textBlocks: <PresentationTextBlock>[textBlock],
+      backgroundKind: inheritedBackground,
+    );
+    _pageCounter += 1;
+    final insertIndex = index + 1;
+    _pages.insert(insertIndex, newPage);
+    _selectedPageIndex = insertIndex;
+    _setSingleSelection(textBlockId: textBlock.id);
+    notifyListeners();
+  }
+
+  void duplicatePage(int index) {
+    if (index < 0 || index >= _pages.length) {
+      return;
+    }
+    _recordUndo();
+    final source = _pages[index];
+    final duplicatedTextBlocks = source.textBlocks.map((tb) {
+      return tb.copyWith(id: 'text-${_textBlockCounter++}');
+    }).toList(growable: false);
+    final duplicatedComponentBlocks = source.componentBlocks.map((cb) {
+      return cb.copyWith(id: 'component-${_componentBlockCounter++}');
+    }).toList(growable: false);
+    final newPage = PresentationPage(
+      id: 'page-$_pageCounter',
+      textBlocks: duplicatedTextBlocks,
+      componentBlocks: duplicatedComponentBlocks,
+      backgroundKind: source.backgroundKind,
+      speakerNotes: source.speakerNotes,
+    );
+    _pageCounter += 1;
+    final insertIndex = index + 1;
+    _pages.insert(insertIndex, newPage);
+    _selectedPageIndex = insertIndex;
+    _resetSelectionForCurrentPage();
+    notifyListeners();
+  }
+
+  void movePageUp(int index) {
+    if (index <= 0 || index >= _pages.length) {
+      return;
+    }
+    _recordUndo();
+    final page = _pages.removeAt(index);
+    _pages.insert(index - 1, page);
+    _selectedPageIndex = index - 1;
+    _resetSelectionForCurrentPage();
+    notifyListeners();
+  }
+
+  void movePageDown(int index) {
+    if (index < 0 || index >= _pages.length - 1) {
+      return;
+    }
+    _recordUndo();
+    final page = _pages.removeAt(index);
+    _pages.insert(index + 1, page);
+    _selectedPageIndex = index + 1;
+    _resetSelectionForCurrentPage();
+    notifyListeners();
+  }
+
+  void reorderPage(int oldIndex, int newIndex) {
+    if (oldIndex < 0 ||
+        oldIndex >= _pages.length ||
+        newIndex < 0 ||
+        newIndex > _pages.length ||
+        oldIndex == newIndex) {
+      return;
+    }
+    _recordUndo();
+    final page = _pages.removeAt(oldIndex);
+    final insertIndex = newIndex > oldIndex ? newIndex - 1 : newIndex;
+    _pages.insert(insertIndex, page);
+    _selectedPageIndex = insertIndex;
+    _resetSelectionForCurrentPage();
+    notifyListeners();
+  }
+
+  void removePageAt(int index) {
+    if (!canRemovePage || index < 0 || index >= _pages.length) {
+      return;
+    }
+    _recordUndo();
+    final removedPageId = _pages[index].id;
+    _pages.removeAt(index);
+    _clearHotspotsTargeting(removedPageId);
+    _selectedPageIndex = math.min(index, _pages.length - 1);
     _resetSelectionForCurrentPage();
     notifyListeners();
   }

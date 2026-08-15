@@ -238,6 +238,10 @@ class _HtmlPageStageState extends State<HtmlPageStage> {
     // İlk sahnede değiştirecek eski bir kare yoktur; doğrudan yükle.
     if (!_hasRendered) {
       _hasRendered = true;
+      _iframeElement.style.pointerEvents =
+          widget.renderMode == HtmlStageRenderMode.full
+              ? 'auto'
+              : 'none';
       _iframeElement.srcdoc = document;
       return;
     }
@@ -254,12 +258,23 @@ class _HtmlPageStageState extends State<HtmlPageStage> {
     }
     _pendingIframeElement?.remove();
 
-    final nextIframe = _createIframe()..style.opacity = '0';
+    final nextIframe = _createIframe()
+      ..style.position = 'absolute'
+      ..style.left = '0'
+      ..style.top = '0'
+      ..style.width = '100%'
+      ..style.height = '100%'
+      ..style.pointerEvents = 'none'
+      ..style.opacity = '0.001';
     _pendingIframeElement = nextIframe;
     _pendingLoadSubscription = nextIframe.onLoad.listen((_) {
       if (!mounted || generation != _renderGeneration) return;
       final previousIframe = _iframeElement;
       nextIframe.style.opacity = '1';
+      nextIframe.style.pointerEvents =
+          widget.renderMode == HtmlStageRenderMode.full
+              ? 'auto'
+              : 'none';
       _iframeElement = nextIframe;
       _pendingIframeElement = null;
       final subscription = _pendingLoadSubscription;

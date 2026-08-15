@@ -117,22 +117,22 @@ class AppColors extends ThemeExtension<AppColors> {
     accent: Color(0xFF6366F1), // Indigo accent
   );
 
-  /// Dark theme color palette (Optional/Secondary)
+  /// Dark theme color palette (Sleek Dark Teal Accent)
   static const AppColors dark = AppColors(
-    primary: Color(0xFFFFFFFF),
-    onPrimary: Color(0xFF0F172A),
-    surface: Color(0xFF0B0F19),
-    surfaceElevated: Color(0xFF111827),
+    primary: Color(0xFF14B8A6), // Brand teal accent
+    onPrimary: Color(0xFFFFFFFF),
+    surface: Color(0xFF090D16), // Deep dark navy/slate
+    surfaceElevated: Color(0xFF131B2E), // Dark slate cards & panels
     onSurface: Color(0xFFF8FAFC),
     onSurfaceVariant: Color(0xFF94A3B8),
-    border: Color(0xFF1E293B),
-    borderFocus: Color(0xFF60A5FA),
+    border: Color(0xFF26334D),
+    borderFocus: Color(0xFF2DD4BF),
     textPrimary: Color(0xFFF8FAFC),
     textSecondary: Color(0xFFCBD5E1),
     success: Color(0xFF34D399),
     warning: Color(0xFFFBBF24),
     danger: Color(0xFFF87171),
-    accent: Color(0xFF818CF8),
+    accent: Color(0xFF2DD4BF),
   );
 }
 

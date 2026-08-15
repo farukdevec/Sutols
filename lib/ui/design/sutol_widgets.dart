@@ -11,11 +11,13 @@ class SutolsBrandLockup extends StatelessWidget {
     super.key,
     required this.height,
     this.showWordmark = true,
+    this.showBetaBadge = true,
     this.color,
   });
 
   final double height;
   final bool showWordmark;
+  final bool showBetaBadge;
   final Color? color;
 
   Widget _tinted(Widget child) {
@@ -29,14 +31,19 @@ class SutolsBrandLockup extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final betaTextColor = color ??
+        (isDark ? const Color(0xFFA5B4FC) : const Color(0xFF4F46E5));
+
     return Semantics(
       image: true,
-      label: 'Sutols',
+      label: 'Sutols Beta',
       child: SizedBox(
         height: height,
         child: _tinted(
           Row(
             mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: <Widget>[
               SizedBox.square(
                 dimension: height,
@@ -54,6 +61,52 @@ class SutolsBrandLockup extends StatelessWidget {
                     'assets/images/sutols_wordmark.webp',
                     fit: BoxFit.contain,
                     filterQuality: FilterQuality.high,
+                  ),
+                ),
+              ],
+              if (showBetaBadge) ...<Widget>[
+                SizedBox(width: height * 0.18),
+                Container(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: (height * 0.18).clamp(5.0, 9.0),
+                    vertical: (height * 0.06).clamp(2.0, 4.0),
+                  ),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        const Color(0xFF6366F1).withValues(alpha: 0.15),
+                        const Color(0xFF8B5CF6).withValues(alpha: 0.12),
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(SutolRadius.xs),
+                    border: Border.all(
+                      color: const Color(0xFF6366F1).withValues(alpha: 0.35),
+                      width: 1,
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 5,
+                        height: 5,
+                        decoration: const BoxDecoration(
+                          color: Color(0xFF6366F1),
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        'BETA',
+                        style: TextStyle(
+                          fontFamily: AppTypography.fontFamily,
+                          fontSize: (height * 0.26).clamp(9.0, 11.0),
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.8,
+                          color: betaTextColor,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],

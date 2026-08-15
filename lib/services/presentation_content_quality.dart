@@ -23,6 +23,14 @@ class PresentationContentQuality {
     'düşünce hattı',
     'kapsam çizgisi',
     'ortak bir ana soruya',
+    'drag_handle',
+    'sürükleme kolu',
+    'sahne kartı',
+    'seçili sayfa',
+    'mouse ile tut',
+    'düşünce aşaması',
+    'burada amacımız',
+    'sayfa sırası anında',
   ];
 
   static const Set<String> _stopWords = <String>{

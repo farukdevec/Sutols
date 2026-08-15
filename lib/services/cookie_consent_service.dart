@@ -36,20 +36,24 @@ class CookieConsentService {
   /// Uygulama başlangıcında bir kez çağrılır; mevcut kullanıcının kayıtlı
   /// seçimini yükler ve oturum değişikliklerinde yeniden senkronize eder.
   Future<void> load() async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user != null) {
-      await _loadFromFirestore(user.uid);
-    } else {
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        await _loadFromFirestore(user.uid);
+      } else {
+        await _loadFromPrefs();
+      }
+
+      FirebaseAuth.instance.authStateChanges().listen((u) {
+        if (u != null) {
+          _loadFromFirestore(u.uid);
+        } else {
+          _loadFromPrefs();
+        }
+      });
+    } catch (_) {
       await _loadFromPrefs();
     }
-
-    FirebaseAuth.instance.authStateChanges().listen((u) {
-      if (u != null) {
-        _loadFromFirestore(u.uid);
-      } else {
-        _loadFromPrefs();
-      }
-    });
   }
 
   Future<void> accept() => _save(CookieConsentState.accepted);
@@ -59,20 +63,24 @@ class CookieConsentService {
   Future<void> _save(CookieConsentState value) async {
     state.value = value;
 
-    final user = FirebaseAuth.instance.currentUser;
-    if (user != null) {
-      try {
-        await FirebaseFirestore.instance
-            .collection('users')
-            .doc(user.uid)
-            .update({_firestoreField: value.name});
-      } catch (_) {
-        // Best-effort: Firestore yazılamazsa yerel kayıt yeterlidir.
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        try {
+          await FirebaseFirestore.instance
+              .collection('users')
+              .doc(user.uid)
+              .update({_firestoreField: value.name});
+        } catch (_) {
+          // Best-effort: Firestore yazılamazsa yerel kayıt yeterlidir.
+        }
       }
-    }
+    } catch (_) {}
 
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_prefsKey, value.name);
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_prefsKey, value.name);
+    } catch (_) {}
   }
 
   Future<void> _loadFromFirestore(String uid) async {

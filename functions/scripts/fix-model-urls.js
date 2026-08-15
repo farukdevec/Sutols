@@ -76,9 +76,9 @@ function decodeFileName(value) {
       continue;
     }
 
-    if (!currentUrl.startsWith("https://pub-1380bf0474d81b7754ca92aabc18a4d4.r2.dev/")) {
-      anomalies.push(`${doc.id} (eski: ${currentUrl})`);
-    }
+    # Eski r2.dev pattern'i artık değişmediği için UYARI her zaman tetiklenir;
+    # script artık modelUrl başlarındaki "https://pub-*" patternini kontrol etmez.
+    anomalies.push(`${doc.id} (eski: ${currentUrl})`);
 
     updates.push({ ref: doc.ref, newUrl, newThumb });
   }

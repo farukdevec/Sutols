@@ -46,6 +46,39 @@ void main() {
     expect(controller.canRedo, isFalse);
   });
 
+  test('page operations addPageAfter duplicatePage movePage and removePageAt work correctly', () {
+    final controller = PresentationController();
+    addTearDown(controller.dispose);
+
+    expect(controller.pages, hasLength(1));
+    final initialPageId = controller.selectedPage.id;
+
+    // Add page after index 0
+    controller.addPageAfter(0);
+    expect(controller.pages, hasLength(2));
+    expect(controller.selectedIndex, 1);
+
+    // Duplicate page at index 1
+    controller.duplicatePage(1);
+    expect(controller.pages, hasLength(3));
+    expect(controller.selectedIndex, 2);
+
+    // Move page down and up
+    controller.movePageUp(2);
+    expect(controller.selectedIndex, 1);
+
+    controller.movePageDown(1);
+    expect(controller.selectedIndex, 2);
+
+    // Remove page at index 2
+    controller.removePageAt(2);
+    expect(controller.pages, hasLength(2));
+
+    // Test undo restores previous pages state
+    controller.undo();
+    expect(controller.pages, hasLength(3));
+  });
+
   test('undo and redo restore effect settings', () {
     final controller = PresentationController();
     addTearDown(controller.dispose);

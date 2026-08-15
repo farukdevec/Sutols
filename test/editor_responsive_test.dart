@@ -9,6 +9,8 @@ import 'package:sutol/ui/html_presentation_editor_page.dart';
 import 'package:sutol/ui/widgets/editor_shell.dart';
 import 'package:sutol/ui/widgets/html_stage/html_page_stage.dart';
 
+import 'package:sutol/services/cookie_consent_service.dart';
+
 void main() {
   // Test ortamının kare Ahem fontu yerine gerçek glif genişlikleriyle ölçüm
   // yapılır. Test MaterialApp'i varsayılan Material temasını (Roboto ailesi)
@@ -33,6 +35,7 @@ void main() {
     WidgetTester tester,
     Size size,
   ) async {
+    CookieConsentService.instance.state.value = CookieConsentState.accepted;
     tester.view.physicalSize = size;
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.reset);

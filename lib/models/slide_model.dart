@@ -278,6 +278,14 @@ enum PresentationTransitionKind {
   cover,
   uncover,
   flip,
+  cube3d,
+  morph,
+  parallax,
+  elastic,
+  glitch,
+  prism,
+  radialWipe,
+  rotateZoom,
 }
 
 @immutable
@@ -288,6 +296,14 @@ class PresentationEffectSettings {
     this.zoomEnabled = false,
     this.zoomScale = 1.55,
     this.reducedMotion = false,
+    this.autoPlayIntervalSec = 0,
+    this.loop = false,
+    this.showProgressBar = true,
+    this.enableLaserPointer = false,
+    this.enableSoundEffects = false,
+    this.aspectRatio = '16:9',
+    this.customWidth = 1920,
+    this.customHeight = 1080,
   });
 
   final PresentationTransitionKind transitionKind;
@@ -295,6 +311,49 @@ class PresentationEffectSettings {
   final bool zoomEnabled;
   final double zoomScale;
   final bool reducedMotion;
+  final int autoPlayIntervalSec;
+  final bool loop;
+  final bool showProgressBar;
+  final bool enableLaserPointer;
+  final bool enableSoundEffects;
+  final String aspectRatio;
+  final double customWidth;
+  final double customHeight;
+
+  double get calculatedAspectRatio {
+    if (aspectRatio == 'custom' && customHeight > 0 && customWidth > 0) {
+      return (customWidth / customHeight).clamp(0.2, 5.0);
+    }
+    switch (aspectRatio) {
+      case '9:16':
+        return 9 / 16;
+      case '4:3':
+        return 4 / 3;
+      case '1:1':
+        return 1 / 1;
+      case '16:9':
+      default:
+        return 16 / 9;
+    }
+  }
+
+  bool get isPortrait => calculatedAspectRatio < 1.0;
+
+  String get stageDimensionLabel {
+    switch (aspectRatio) {
+      case '9:16':
+        return 'Mobil Dikey (9:16)';
+      case '4:3':
+        return 'Klasik (4:3)';
+      case '1:1':
+        return 'Kare (1:1)';
+      case 'custom':
+        return 'Özel (${customWidth.toInt()}x${customHeight.toInt()})';
+      case '16:9':
+      default:
+        return 'Standart (16:9)';
+    }
+  }
 
   PresentationEffectSettings copyWith({
     PresentationTransitionKind? transitionKind,
@@ -302,6 +361,14 @@ class PresentationEffectSettings {
     bool? zoomEnabled,
     double? zoomScale,
     bool? reducedMotion,
+    int? autoPlayIntervalSec,
+    bool? loop,
+    bool? showProgressBar,
+    bool? enableLaserPointer,
+    bool? enableSoundEffects,
+    String? aspectRatio,
+    double? customWidth,
+    double? customHeight,
   }) {
     return PresentationEffectSettings(
       transitionKind: transitionKind ?? this.transitionKind,
@@ -309,6 +376,14 @@ class PresentationEffectSettings {
       zoomEnabled: zoomEnabled ?? this.zoomEnabled,
       zoomScale: zoomScale ?? this.zoomScale,
       reducedMotion: reducedMotion ?? this.reducedMotion,
+      autoPlayIntervalSec: autoPlayIntervalSec ?? this.autoPlayIntervalSec,
+      loop: loop ?? this.loop,
+      showProgressBar: showProgressBar ?? this.showProgressBar,
+      enableLaserPointer: enableLaserPointer ?? this.enableLaserPointer,
+      enableSoundEffects: enableSoundEffects ?? this.enableSoundEffects,
+      aspectRatio: aspectRatio ?? this.aspectRatio,
+      customWidth: customWidth ?? this.customWidth,
+      customHeight: customHeight ?? this.customHeight,
     );
   }
 }
@@ -573,6 +648,22 @@ String presentationTransitionLabel(PresentationTransitionKind kind) {
       return 'Örtüyü Kaldırma';
     case PresentationTransitionKind.flip:
       return 'Çevirme';
+    case PresentationTransitionKind.cube3d:
+      return '3D Küp';
+    case PresentationTransitionKind.morph:
+      return 'Cam Blur Morph';
+    case PresentationTransitionKind.parallax:
+      return 'Parallaks Derinlik';
+    case PresentationTransitionKind.elastic:
+      return 'Esnek Sıçrama';
+    case PresentationTransitionKind.glitch:
+      return 'Siber Titreşim';
+    case PresentationTransitionKind.prism:
+      return 'Prizma Işığı';
+    case PresentationTransitionKind.radialWipe:
+      return 'Dairesel Süpürme';
+    case PresentationTransitionKind.rotateZoom:
+      return '3D Dönel Yakınlaşma';
   }
 }
 
@@ -604,37 +695,69 @@ String presentationTransitionSubtitle(PresentationTransitionKind kind) {
       return 'Eski slayt çekilerek yenisini ortaya çıkarır';
     case PresentationTransitionKind.flip:
       return 'Slaytı 3B kart gibi çevirir';
+    case PresentationTransitionKind.cube3d:
+      return 'Slaytları 3B küp yüzeyi gibi döndürür';
+    case PresentationTransitionKind.morph:
+      return 'Bulanıklaşan cam efektiyle odak değiştirir';
+    case PresentationTransitionKind.parallax:
+      return 'Derinlikli katman kayması yaratır';
+    case PresentationTransitionKind.elastic:
+      return 'Yay esnekliğinde sıçrayışlı geçiş yapar';
+    case PresentationTransitionKind.glitch:
+      return 'Dijital siber parazit ve renk kırılması';
+    case PresentationTransitionKind.prism:
+      return 'Prizmatik parlak ışık hüzmesi geçişi';
+    case PresentationTransitionKind.radialWipe:
+      return 'Merkezden dışa dairesel açılış efekti';
+    case PresentationTransitionKind.rotateZoom:
+      return '3B eksende dönerek ekrana yaklaşır';
   }
 }
 
 IconData presentationTransitionIcon(PresentationTransitionKind kind) {
   switch (kind) {
     case PresentationTransitionKind.none:
-      return Icons.motion_photos_off_rounded;
+      return Icons.block_rounded;
     case PresentationTransitionKind.smooth:
-      return Icons.animation_rounded;
+      return Icons.motion_photos_on_rounded;
     case PresentationTransitionKind.fade:
-      return Icons.gradient_rounded;
+      return Icons.blur_on_rounded;
     case PresentationTransitionKind.slide:
-      return Icons.swipe_rounded;
-    case PresentationTransitionKind.zoom:
-      return Icons.zoom_in_rounded;
-    case PresentationTransitionKind.convex:
       return Icons.view_carousel_rounded;
+    case PresentationTransitionKind.zoom:
+      return Icons.center_focus_strong_rounded;
+    case PresentationTransitionKind.convex:
+      return Icons.view_array_rounded;
     case PresentationTransitionKind.concave:
-      return Icons.filter_center_focus_rounded;
+      return Icons.crop_free_rounded;
     case PresentationTransitionKind.wipe:
-      return Icons.format_color_fill_rounded;
+      return Icons.gradient_rounded;
     case PresentationTransitionKind.split:
-      return Icons.vertical_split_rounded;
+      return Icons.splitscreen_rounded;
     case PresentationTransitionKind.reveal:
-      return Icons.keyboard_arrow_up_rounded;
+      return Icons.unfold_more_rounded;
     case PresentationTransitionKind.cover:
       return Icons.layers_rounded;
     case PresentationTransitionKind.uncover:
-      return Icons.flip_to_back_rounded;
+      return Icons.layers_clear_rounded;
     case PresentationTransitionKind.flip:
-      return Icons.flip_rounded;
+      return Icons.flip_camera_android_rounded;
+    case PresentationTransitionKind.cube3d:
+      return Icons.view_in_ar_rounded;
+    case PresentationTransitionKind.morph:
+      return Icons.transform_rounded;
+    case PresentationTransitionKind.parallax:
+      return Icons.filter_hdr_rounded;
+    case PresentationTransitionKind.elastic:
+      return Icons.polyline_rounded;
+    case PresentationTransitionKind.glitch:
+      return Icons.sensors_rounded;
+    case PresentationTransitionKind.prism:
+      return Icons.style_rounded;
+    case PresentationTransitionKind.radialWipe:
+      return Icons.radio_button_checked_rounded;
+    case PresentationTransitionKind.rotateZoom:
+      return Icons.autorenew_rounded;
   }
 }
 

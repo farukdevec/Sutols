@@ -93,10 +93,14 @@
         }
       });
 
-      // Prevent browser default right-click menu so Flutter handles it
+      // Prevent browser default right-click menu so Flutter handles custom context menu
+      window.addEventListener('contextmenu', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+      }, true);
       document.addEventListener('contextmenu', function (e) {
         e.preventDefault();
-      });
+      }, true);
     </script>
     <script src="flutter_bootstrap.js" async></script>
   </body>

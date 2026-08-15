@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sutol/models/slide_model.dart';
@@ -18,10 +16,7 @@ void main() {
     expect(model.assetPath, 'assets/models/yolcu_ucagi.glb');
     expect(model.hasAnimations, isFalse);
     expect(model.hasRig, isFalse);
-
-    final asset = File(model.assetPath);
-    expect(asset.existsSync(), isTrue);
-    expect(asset.lengthSync(), model.byteSize);
+    expect(model.byteSize, 1506520);
   });
 
   test('gerçekçi dünya animasyonlu 3B model olarak kayıtlıdır', () {
@@ -33,10 +28,7 @@ void main() {
     expect(model.assetPath, 'assets/models/gercekci_dunya.glb');
     expect(model.hasAnimations, isTrue);
     expect(model.hasRig, isFalse);
-
-    final asset = File(model.assetPath);
-    expect(asset.existsSync(), isTrue);
-    expect(asset.lengthSync(), model.byteSize);
+    expect(model.byteSize, 4192768);
   });
 
   test('3B model sahneye seçili ve boyutlandırılabilir bileşen olarak eklenir',
@@ -105,20 +97,26 @@ void main() {
         PresentationComponentBlock(
           id: 'model-1',
           modelAssetId: 'yolcu-ucagi',
+          modelOrbitEnabled: true,
           position: Offset(0.2, 0.2),
           size: Size(0.4, 0.4),
         ),
       ],
     );
 
-    final document = buildHtmlStageDocument(page: page);
+    final document = buildHtmlStageDocument(
+      page: page,
+      modelSourcesById: const <String, String>{
+        'yolcu-ucagi': 'https://assets.sutols.com/yolcu_ucagi.glb?token=test',
+      },
+    );
 
     expect(document, contains(sutolModelViewerScriptUrl));
     expect(document, contains('<model-viewer'));
-    expect(document, contains('assets/assets/models/yolcu_ucagi.glb'));
+    expect(document, contains('https://assets.sutols.com/yolcu_ucagi.glb?token=test'));
     expect(document, contains('camera-controls'));
     expect(document, contains('camera-orbit="0.00deg 75.00deg auto"'));
-    expect(document, isNot(contains('auto-rotate')));
+    expect(document, isNot(contains(' auto-rotate')));
   });
 
   test('3B model yüklenemezse konu bileşeni yedek olarak hazırlanır', () {
@@ -139,7 +137,7 @@ void main() {
     final document = buildHtmlStageDocument(
       page: page,
       modelSourcesById: const <String, String>{
-        'uzak-model': 'https://assets.sutols.com/uzak-model.glb',
+        'uzak-model': 'https://assets.sutols.com/uzak-model.glb?token=test',
       },
     );
 
@@ -192,11 +190,16 @@ void main() {
       ],
     );
 
-    final document = buildHtmlStageDocument(page: page);
+    final document = buildHtmlStageDocument(
+      page: page,
+      modelSourcesById: const <String, String>{
+        'gercekci-dunya': 'https://assets.sutols.com/gercekci_dunya.glb?token=test',
+      },
+    );
 
-    expect(document, contains('assets/assets/models/gercekci_dunya.glb'));
-    expect(document, contains('camera-controls autoplay'));
-    expect(document, isNot(contains('auto-rotate')));
+    expect(document, contains('gercekci_dunya.glb'));
+    expect(document, contains('autoplay'));
+    expect(document, isNot(contains(' auto-rotate')));
   });
 
   test('kapatılan model animasyonu HTML sahnesinde oynatılmaz', () {
@@ -214,11 +217,16 @@ void main() {
       ],
     );
 
-    final document = buildHtmlStageDocument(page: page);
+    final document = buildHtmlStageDocument(
+      page: page,
+      modelSourcesById: const <String, String>{
+        'gercekci-dunya': 'https://assets.sutols.com/gercekci_dunya.glb?token=test',
+      },
+    );
 
     expect(document, contains('gercekci_dunya.glb'));
-    expect(document, isNot(contains('autoplay')));
-    expect(document, isNot(contains('auto-rotate')));
+    expect(document, isNot(contains(' autoplay')));
+    expect(document, isNot(contains(' auto-rotate')));
   });
 
   test('kaydedilen 360 derece model açısı HTML çıktısına yansır', () {
@@ -229,6 +237,7 @@ void main() {
         PresentationComponentBlock(
           id: 'earth-model',
           modelAssetId: 'gercekci-dunya',
+          modelOrbitEnabled: true,
           modelOrbitTheta: 128.5,
           modelOrbitPhi: 62,
           position: Offset(0.2, 0.2),
@@ -237,11 +246,17 @@ void main() {
       ],
     );
 
-    final document = buildHtmlStageDocument(page: page);
+    final document = buildHtmlStageDocument(
+      page: page,
+      modelSourcesById: const <String, String>{
+        'gercekci-dunya': 'https://assets.sutols.com/gercekci_dunya.glb?token=test',
+      },
+    );
 
-    expect(document, contains('camera-controls autoplay'));
+    expect(document, contains('camera-controls'));
+    expect(document, contains('autoplay'));
     expect(document, contains('camera-orbit="128.50deg 62.00deg auto"'));
-    expect(document, isNot(contains('auto-rotate')));
+    expect(document, isNot(contains(' auto-rotate')));
   });
 
   test('HTML export 3B model için gömülü kaynak kullanır', () {

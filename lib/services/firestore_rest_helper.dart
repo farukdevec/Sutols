@@ -110,8 +110,10 @@ class FirestoreRestHelper {
     required List<String> updateMask,
   }) async {
     final token = await authToken();
-    final uri = Uri.parse('$apiBase/$path')
-        .replace(queryParameters: {'updateMask.fieldPaths': updateMask.join(',')});
+    final query = updateMask
+        .map((f) => 'updateMask.fieldPaths=${Uri.encodeQueryComponent(f)}')
+        .join('&');
+    final uri = Uri.parse('$apiBase/$path').replace(query: query);
     final response = await http.patch(
       uri,
       headers: {

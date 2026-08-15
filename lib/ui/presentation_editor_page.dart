@@ -29,7 +29,10 @@ class _PresentationEditorPageState extends State<PresentationEditorPage> {
   void _openHtmlEditor() {
     Navigator.of(context).push(
       MaterialPageRoute<void>(
-        builder: (_) => HtmlPresentationEditorPage(controller: _controller),
+        builder: (_) => HtmlPresentationEditorPage(
+          controller: _controller,
+          presentationId: 'mobile-edit',
+        ),
       ),
     );
   }

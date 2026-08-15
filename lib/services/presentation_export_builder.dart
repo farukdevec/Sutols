@@ -55,6 +55,9 @@ String buildPresentationExportHtml({
     );
   }
 
+  final speakerNotesList = pages.map((p) => p.speakerNotes).toList();
+  final speakerNotesJson = _scriptSafeJson(speakerNotesList);
+
   final document = '''
 <!DOCTYPE html>
 <html lang="tr">
@@ -70,20 +73,43 @@ String buildPresentationExportHtml({
   </style>
 </head>
 <body>
+  ${effectSettings.showProgressBar ? '<div id="sutolProgressBar" class="sutol-progress-bar"><div class="sutol-progress-fill" id="sutolProgressFill"></div></div>' : ''}
+  <div id="sutolLaserPointer" class="sutol-laser-pointer"></div>
+  <div id="sutolCurtainOverlay" class="sutol-curtain-overlay"></div>
+
   <div class="sutol-export-shell ${_transitionShellClass(effectSettings.transitionKind)}${effectSettings.zoomEnabled ? ' allow-zoom' : ''}${effectSettings.reducedMotion ? ' reduce-motion' : ''}${printMode ? ' print-mode' : ''}" style="--sutol-transition-duration:${effectSettings.transitionDurationMs}ms;--sutol-zoom-scale:${effectSettings.zoomScale.toStringAsFixed(2)};">
     <main class="sutol-export-deck">
       $slidesMarkup
     </main>
 
     <div class="sutol-export-nav">
-      <button id="sutolPrevBtn" class="sutol-export-action sutol-export-arrow" type="button" aria-label="Onceki slayt" title="Onceki slayt">&#8592;</button>
+      <button id="sutolPrevBtn" class="sutol-export-action sutol-export-arrow" type="button" aria-label="Önceki slayt" title="Önceki slayt (Sol Ok)">&#8592;</button>
       <div class="sutol-export-dots">
         $dotsMarkup
       </div>
-      <button id="sutolNextBtn" class="sutol-export-action sutol-export-arrow primary" type="button" aria-label="Sonraki slayt" title="Sonraki slayt">&#8594;</button>
+      <button id="sutolNextBtn" class="sutol-export-action sutol-export-arrow primary" type="button" aria-label="Sonraki slayt" title="Sonraki slayt (Sağ Ok / Boşluk)">&#8594;</button>
       $zoomButtonMarkup
-      <button id="sutolFullscreenBtn" class="sutol-export-action sutol-export-icon-action" type="button" aria-label="Tam ekran" title="Tam ekran">&#9974;</button>
+      <button id="sutolLaserBtn" class="sutol-export-action sutol-export-icon-action" type="button" aria-label="Lazer (L)" title="Lazer İşaretçi (L)">&#128308;</button>
+      <button id="sutolOverviewBtn" class="sutol-export-action sutol-export-icon-action" type="button" aria-label="Genel Bakış (O)" title="Genel Bakış (O)">&#9638;</button>
+      <button id="sutolNotesBtn" class="sutol-export-action sutol-export-icon-action" type="button" aria-label="Notlar (P)" title="Sunucu Notları (P)">&#128221;</button>
+      <button id="sutolFullscreenBtn" class="sutol-export-action sutol-export-icon-action" type="button" aria-label="Tam ekran (F)" title="Tam ekran (F)">&#9974;</button>
     </div>
+  </div>
+
+  <div id="sutolOverviewModal" class="sutol-overview-modal" aria-hidden="true">
+    <div class="sutol-overview-header">
+      <span>Slayt Genel Bakış</span>
+      <button id="sutolCloseOverviewBtn" class="sutol-export-action" type="button" style="width: auto; padding: 0.4rem 1rem;">Kapat (&times;)</button>
+    </div>
+    <div class="sutol-overview-grid" id="sutolOverviewGrid"></div>
+  </div>
+
+  <div id="sutolPresenterNotes" class="sutol-presenter-drawer" aria-hidden="true">
+    <div class="sutol-presenter-header">
+      <span>Sunucu Notları</span>
+      <button id="sutolClosePresenterBtn" class="sutol-export-action" type="button" style="width: auto; padding: 0.2rem 0.6rem; font-size: 0.8rem;">&times;</button>
+    </div>
+    <div id="sutolNotesContent" class="sutol-presenter-body">Not bulunmuyor.</div>
   </div>
 
   <script>
@@ -97,6 +123,11 @@ String buildPresentationExportHtml({
           smoothTransition: effectSettings.transitionKind ==
               PresentationTransitionKind.smooth,
           transitionDurationMs: effectSettings.transitionDurationMs,
+          autoPlayIntervalSec: effectSettings.autoPlayIntervalSec,
+          loop: effectSettings.loop,
+          enableLaserPointer: effectSettings.enableLaserPointer,
+          enableSoundEffects: effectSettings.enableSoundEffects,
+          speakerNotesJson: speakerNotesJson,
         )}
   </script>
 </body>
@@ -263,6 +294,22 @@ String _transitionShellClass(PresentationTransitionKind kind) {
       return 'transition-uncover';
     case PresentationTransitionKind.flip:
       return 'transition-flip';
+    case PresentationTransitionKind.cube3d:
+      return 'transition-cube3d';
+    case PresentationTransitionKind.morph:
+      return 'transition-morph';
+    case PresentationTransitionKind.parallax:
+      return 'transition-parallax';
+    case PresentationTransitionKind.elastic:
+      return 'transition-elastic';
+    case PresentationTransitionKind.glitch:
+      return 'transition-glitch';
+    case PresentationTransitionKind.prism:
+      return 'transition-prism';
+    case PresentationTransitionKind.radialWipe:
+      return 'transition-radial-wipe';
+    case PresentationTransitionKind.rotateZoom:
+      return 'transition-rotate-zoom';
   }
 }
 
@@ -385,11 +432,13 @@ body {
 }
 
 .sutol-export-stage-frame {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
+  position: relative;
+  aspect-ratio: ${effectSettings.calculatedAspectRatio};
+  width: min(100vw, calc(100vh * ${effectSettings.calculatedAspectRatio.toStringAsFixed(4)}));
+  height: min(100vh, calc(100vw / ${effectSettings.calculatedAspectRatio.toStringAsFixed(4)}));
   overflow: hidden;
+  box-shadow: ${effectSettings.isPortrait ? '0 12px 48px rgba(0,0,0,0.6)' : 'none'};
+  border-radius: ${effectSettings.isPortrait ? '16px' : '0'};
   transform-origin: var(--sutol-zoom-origin-x, 50%) var(--sutol-zoom-origin-y, 50%);
   transition:
     transform 320ms cubic-bezier(.22, 1, .36, 1);
@@ -611,6 +660,51 @@ body {
   to { opacity: 1; transform: perspective(1400px) rotateY(0); }
 }
 
+@keyframes sutolTransitionCube3D {
+  from { opacity: 0; transform: perspective(1600px) rotateY(-90deg); transform-origin: 0% 50%; }
+  to { opacity: 1; transform: perspective(1600px) rotateY(0deg); transform-origin: 0% 50%; }
+}
+
+@keyframes sutolTransitionMorph {
+  from { opacity: 0; filter: blur(20px) contrast(150%); transform: scale(1.15); }
+  to { opacity: 1; filter: blur(0) contrast(100%); transform: scale(1); }
+}
+
+@keyframes sutolTransitionParallax {
+  from { opacity: 0; transform: translateX(60px) scale(0.92); }
+  to { opacity: 1; transform: translateX(0) scale(1); }
+}
+
+@keyframes sutolTransitionElastic {
+  0% { opacity: 0; transform: scale(0.7); }
+  60% { opacity: 1; transform: scale(1.05); }
+  80% { transform: scale(0.97); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes sutolTransitionGlitch {
+  0% { opacity: 0; transform: translate(-10px, 5px) skewX(10deg); filter: hue-rotate(90deg); }
+  25% { opacity: 0.8; transform: translate(8px, -4px) skewX(-8deg); }
+  50% { opacity: 0.9; transform: translate(-4px, 2px); filter: hue-rotate(-60deg); }
+  75% { opacity: 1; transform: translate(2px, -1px); }
+  100% { opacity: 1; transform: translate(0, 0) filter: hue-rotate(0deg); }
+}
+
+@keyframes sutolTransitionPrism {
+  0% { opacity: 0; filter: brightness(2.5) saturate(200%); transform: scale(0.95); }
+  100% { opacity: 1; filter: brightness(1) saturate(100%); transform: scale(1); }
+}
+
+@keyframes sutolTransitionRadialWipe {
+  from { clip-path: circle(0% at 50% 50%); }
+  to { clip-path: circle(150% at 50% 50%); }
+}
+
+@keyframes sutolTransitionRotateZoom {
+  from { opacity: 0; transform: scale(0.4) rotate(-360deg); }
+  to { opacity: 1; transform: scale(1) rotate(0deg); }
+}
+
 @media (max-width: 920px) {
   .sutol-export-nav {
     bottom: max(10px, env(safe-area-inset-bottom));
@@ -728,6 +822,11 @@ String _exportScript({
   required String revealCounts,
   required bool smoothTransition,
   required int transitionDurationMs,
+  required int autoPlayIntervalSec,
+  required bool loop,
+  required bool enableLaserPointer,
+  required bool enableSoundEffects,
+  required String speakerNotesJson,
 }) =>
     '''
 (() => {
@@ -735,6 +834,12 @@ String _exportScript({
   const revealCounts = $revealCounts;
   const smoothTransition = $smoothTransition;
   const transitionDurationMs = $transitionDurationMs;
+  const autoPlayIntervalSec = $autoPlayIntervalSec;
+  const loop = $loop;
+  const initialLaserPointer = $enableLaserPointer;
+  const enableSoundEffects = $enableSoundEffects;
+  const speakerNotes = $speakerNotesJson;
+
   const shell = document.querySelector('.sutol-export-shell');
   const slides = Array.from(document.querySelectorAll('.sutol-export-slide'));
   const dots = Array.from(document.querySelectorAll('.sutol-export-dot'));
@@ -742,10 +847,130 @@ String _exportScript({
   const nextBtn = document.getElementById('sutolNextBtn');
   const fullscreenBtn = document.getElementById('sutolFullscreenBtn');
   const zoomBtn = document.getElementById('sutolZoomBtn');
+  const laserBtn = document.getElementById('sutolLaserBtn');
+  const overviewBtn = document.getElementById('sutolOverviewBtn');
+  const notesBtn = document.getElementById('sutolNotesBtn');
+
+  const progressFill = document.getElementById('sutolProgressFill');
+  const laserEl = document.getElementById('sutolLaserPointer');
+  const curtainEl = document.getElementById('sutolCurtainOverlay');
+  const overviewModal = document.getElementById('sutolOverviewModal');
+  const overviewGrid = document.getElementById('sutolOverviewGrid');
+  const closeOverviewBtn = document.getElementById('sutolCloseOverviewBtn');
+  const presenterDrawer = document.getElementById('sutolPresenterNotes');
+  const presenterBody = document.getElementById('sutolNotesContent');
+  const closePresenterBtn = document.getElementById('sutolClosePresenterBtn');
+
   let index = 0;
   let fragmentStep = 0;
   let isZoomed = false;
   let leavingTimer = null;
+  let laserActive = initialLaserPointer;
+  let autoTimer = null;
+
+  function playTransitionSound() {
+    if (!enableSoundEffects) return;
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(440, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.08);
+      gain.gain.setValueAtTime(0.08, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.08);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.08);
+    } catch (_) {}
+  }
+
+  function updateProgressBar() {
+    if (!progressFill) return;
+    if (slides.length <= 1) {
+      progressFill.style.width = '100%';
+      return;
+    }
+    const percent = (index / (slides.length - 1)) * 100;
+    progressFill.style.width = percent + '%';
+  }
+
+  function resetAutoTimer() {
+    if (autoTimer) clearInterval(autoTimer);
+    if (autoPlayIntervalSec > 0) {
+      autoTimer = setInterval(() => {
+        if (index < slides.length - 1) {
+          goNext();
+        } else if (loop) {
+          goTo(0);
+        }
+      }, autoPlayIntervalSec * 1000);
+    }
+  }
+
+  function toggleLaser(state) {
+    laserActive = state !== undefined ? state : !laserActive;
+    laserEl?.classList.toggle('is-active', laserActive);
+    laserBtn?.classList.toggle('primary', laserActive);
+  }
+
+  function toggleBlackout() {
+    if (!curtainEl) return;
+    const isBlack = curtainEl.classList.contains('is-blackout');
+    curtainEl.classList.remove('is-whiteout');
+    curtainEl.classList.toggle('is-blackout', !isBlack);
+  }
+
+  function toggleWhiteout() {
+    if (!curtainEl) return;
+    const isWhite = curtainEl.classList.contains('is-whiteout');
+    curtainEl.classList.remove('is-blackout');
+    curtainEl.classList.toggle('is-whiteout', !isWhite);
+  }
+
+  function updateNotes() {
+    if (!presenterBody) return;
+    const notes = (speakerNotes && speakerNotes[index]) || 'Bu slayt için konuşmacı notu eklenmedi.';
+    presenterBody.textContent = notes;
+  }
+
+  function toggleNotes() {
+    if (!presenterDrawer) return;
+    const isOpen = presenterDrawer.classList.contains('is-open');
+    presenterDrawer.classList.toggle('is-open', !isOpen);
+    notesBtn?.classList.toggle('primary', !isOpen);
+    if (!isOpen) updateNotes();
+  }
+
+  function toggleOverview() {
+    if (!overviewModal || !overviewGrid) return;
+    const isOpen = overviewModal.classList.contains('is-open');
+    if (!isOpen) {
+      overviewGrid.innerHTML = '';
+      slides.forEach((slide, idx) => {
+        const card = document.createElement('div');
+        card.className = 'sutol-overview-card' + (idx === index ? ' is-active' : '');
+        const badge = document.createElement('span');
+        badge.className = 'sutol-overview-card-badge';
+        badge.textContent = idx + 1;
+        const textBlock = slide.querySelector('h1, h2, h3, p');
+        const titleText = textBlock ? textBlock.textContent : ('Slayt ' + (idx + 1));
+        const titleEl = document.createElement('div');
+        titleEl.className = 'sutol-overview-card-title';
+        titleEl.textContent = titleText.length > 36 ? titleText.substring(0, 36) + '...' : titleText;
+        card.appendChild(badge);
+        card.appendChild(titleEl);
+        card.addEventListener('click', () => {
+          goTo(idx);
+          toggleOverview();
+        });
+        overviewGrid.appendChild(card);
+      });
+    }
+    overviewModal.classList.toggle('is-open', !isOpen);
+    overviewBtn?.classList.toggle('primary', !isOpen);
+  }
 
   function orbitValue(element, key, fallback) {
     const value = Number(element?.dataset?.[key]);
@@ -894,6 +1119,8 @@ String _exportScript({
       nextBtn.setAttribute('aria-disabled', disabled ? 'true' : 'false');
     }
     renderZoomState();
+    updateProgressBar();
+    updateNotes();
     window.SutolStageBackgrounds?.refresh?.();
     window.SutolStageComponents?.refresh?.();
   }
@@ -924,9 +1151,11 @@ String _exportScript({
     if (next !== index) {
       setZoomed(false);
       beginSmoothTransition(index, next);
+      playTransitionSound();
     }
     index = next;
     fragmentStep = Math.max(0, Math.min(revealStep, maxRevealFor(index)));
+    resetAutoTimer();
     render();
   }
 
@@ -941,6 +1170,8 @@ String _exportScript({
     }
     if (index < slides.length - 1) {
       goTo(index + 1);
+    } else if (loop) {
+      goTo(0);
     }
   }
 
@@ -970,9 +1201,16 @@ String _exportScript({
   nextBtn?.addEventListener('click', goNext);
   fullscreenBtn?.addEventListener('click', toggleFullscreen);
   zoomBtn?.addEventListener('click', () => toggleZoom(window.innerWidth / 2, window.innerHeight / 2));
+  laserBtn?.addEventListener('click', () => toggleLaser());
+  overviewBtn?.addEventListener('click', toggleOverview);
+  notesBtn?.addEventListener('click', toggleNotes);
+  closeOverviewBtn?.addEventListener('click', toggleOverview);
+  closePresenterBtn?.addEventListener('click', toggleNotes);
+
   dots.forEach((dot) => {
     dot.addEventListener('click', () => goTo(Number(dot.dataset.index || '0'), 0));
   });
+
   document.querySelectorAll('[data-hotspot-target]').forEach((element) => {
     element.addEventListener('click', (event) => {
       const targetPageId = element.dataset.hotspotTarget;
@@ -990,6 +1228,7 @@ String _exportScript({
       goTo(targetIndex, 0);
     });
   });
+
   slides.forEach((slide) => {
     const frame = slide.querySelector('.sutol-export-stage-frame');
     frame?.addEventListener('click', (event) => {
@@ -998,24 +1237,45 @@ String _exportScript({
     });
   });
 
-  window.addEventListener('keydown', (event) => {
-    if (event.key === 'ArrowRight' || event.key === 'PageDown' || event.key === ' ' || event.code === 'Space') {
-      event.preventDefault();
-      goNext();
-    }
-    if (event.key === 'ArrowLeft' || event.key === 'PageUp' || event.key === 'Backspace') {
-      event.preventDefault();
-      goPrevious();
-    }
-    if (event.key.toLowerCase() === 'f') toggleFullscreen();
-    if (event.key.toLowerCase() === 'z' || event.key === '+') {
-      toggleZoom(window.innerWidth / 2, window.innerHeight / 2);
-    }
-    if (event.key === 'Escape') {
-      setZoomed(false);
+  window.addEventListener('mousemove', (e) => {
+    if (laserEl && laserActive) {
+      laserEl.style.left = e.clientX + 'px';
+      laserEl.style.top = e.clientY + 'px';
     }
   });
 
+  window.addEventListener('keydown', (event) => {
+    const key = event.key.toLowerCase();
+    if (event.key === 'ArrowRight' || event.key === 'PageDown' || event.key === ' ' || event.code === 'Space') {
+      event.preventDefault();
+      goNext();
+    } else if (event.key === 'ArrowLeft' || event.key === 'PageUp' || event.key === 'Backspace') {
+      event.preventDefault();
+      goPrevious();
+    } else if (key === 'f') {
+      toggleFullscreen();
+    } else if (key === 'b') {
+      toggleBlackout();
+    } else if (key === 'w') {
+      toggleWhiteout();
+    } else if (key === 'l') {
+      toggleLaser();
+    } else if (key === 'o') {
+      toggleOverview();
+    } else if (key === 'p') {
+      toggleNotes();
+    } else if (key === 'z' || event.key === '+') {
+      toggleZoom(window.innerWidth / 2, window.innerHeight / 2);
+    } else if (event.key === 'Escape') {
+      setZoomed(false);
+      curtainEl?.classList.remove('is-blackout', 'is-whiteout');
+      overviewModal?.classList.remove('is-open');
+      presenterDrawer?.classList.remove('is-open');
+    }
+  });
+
+  toggleLaser(initialLaserPointer);
+  resetAutoTimer();
   render();
 })();
 ''';
