@@ -15,6 +15,7 @@ import 'model_repository.dart';
 import 'presentation_deck_builder.dart';
 import 'presentation_content_quality.dart';
 import 'presentation_project_codec.dart';
+import 'presentation_keyword_catalog.dart';
 import 'usage_service.dart';
 import 'firestore_rest_helper.dart';
 
@@ -141,12 +142,21 @@ class PresentationService {
     final slidesData = <Map<String, dynamic>>[];
     final deckSlides = <DeckSlide>[];
     final usedModelIds = <String>{};
-    await modelCatalogWarmup;
-    final matchesBySlide = await _matcher.matchModelsForSlides(
-      resultPresentation.slides
-          .map((slide) => slide.keywords)
-          .toList(growable: false),
-    );
+    final catalogEntries = await modelCatalogWarmup;
+    final allAvailableCatalog = catalogEntries.isNotEmpty
+        ? catalogEntries
+        : ModelMatchingService.localCatalogEntries;
+
+    final searchKeywordsBySlide = resultPresentation.slides.map((slide) {
+      return <String>[
+        ...slide.keywords,
+        ...slide.title.split(' '),
+        ...slide.content.split(' '),
+        ...topic.split(' '),
+      ];
+    }).toList(growable: false);
+
+    final matchesBySlide = await _matcher.matchModelsForSlides(searchKeywordsBySlide);
     for (var slideIndex = 0;
         slideIndex < resultPresentation.slides.length;
         slideIndex += 1) {
@@ -156,16 +166,47 @@ class PresentationService {
       final matches = matchesBySlide[slideIndex];
       // ignore: avoid_print
       print('ADIM 2 TAMAM - ${matches.length} eşleşme');
-      // Otomatik üretimde slayt başına en fazla bir görsel öğe kullanılır.
-      // Model varsa ilk ve en güçlü eşleşme seçilir; model yoksa deck builder
-      // konuya uygun tek bir bileşen arar, o da yoksa slayt metin olarak kalır.
-      // Aynı genel modelin art arda bütün slaytlara yerleşmesini önle. İlgili
-      // kullanılmamış bir model varsa onu seç; katalogda bu alt konu için tek
-      // seçenek varsa mevcut en güçlü eşleşmeyi yeniden kullanmak mümkündür.
-      final selectedModel = ModelMatchingService.bestMatchPreferUnused(
+      // Otomatik üretimde 3B modeller her zaman 2D bileşenlere önceliklidir.
+      // Slayta özel anahtar kelime eşleşmesi sağlayan en güçlü unused modeli seç.
+      // Eşleşme yoksa konu kelimelerine veya katalogdaki diğer 3B modellere başvur.
+      var selectedModel = ModelMatchingService.bestMatchPreferUnused(
         matches,
         usedModelIds,
       );
+
+      if (selectedModel == null && allAvailableCatalog.isNotEmpty) {
+        final topicMatches = ModelMatchingService.rankCatalogModels(
+          models: allAvailableCatalog,
+          keywords: PresentationKeywordCatalog.words(topic),
+        );
+        selectedModel = ModelMatchingService.bestMatchPreferUnused(
+          topicMatches,
+          usedModelIds,
+        );
+
+        if (selectedModel == null) {
+          for (final entry in allAvailableCatalog) {
+            if (!usedModelIds.contains(entry.id)) {
+              selectedModel = ModelMatch(
+                id: entry.id,
+                name: entry.name,
+                modelUrl: entry.modelUrl,
+                thumbnailUrl: entry.thumbnailUrl,
+                score: 1,
+              );
+              break;
+            }
+          }
+          selectedModel ??= ModelMatch(
+            id: allAvailableCatalog.first.id,
+            name: allAvailableCatalog.first.name,
+            modelUrl: allAvailableCatalog.first.modelUrl,
+            thumbnailUrl: allAvailableCatalog.first.thumbnailUrl,
+            score: 1,
+          );
+        }
+      }
+
       final selectedModels = selectedModel == null
           ? const <ModelMatch>[]
           : <ModelMatch>[selectedModel];

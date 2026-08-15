@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../services/firestore_rest_helper.dart';
 import '../services/presentation_loader.dart';
+import '../state/language_controller.dart';
 import 'design/design_system.dart';
 import 'html_presentation_editor_page.dart';
 
@@ -77,24 +78,27 @@ class _MyPresentationsPageState extends State<MyPresentationsPage> {
     return docs.map((doc) {
       final fields = doc['fields'] as Map<String, dynamic>? ?? {};
       final id = (doc['name'] as String? ?? '').split('/').last;
-      final slideCount = int.tryParse(
-            FirestoreRestHelper.integerField(fields, 'slideCount'),
-          ) ??
-          0;
       return _PresentationItem(
         id: id,
         topic: FirestoreRestHelper.stringField(fields, 'topic'),
-        slideCount: slideCount,
+        slideCount: int.tryParse(
+              FirestoreRestHelper.integerField(fields, 'slideCount'),
+            ) ??
+            0,
         createdAt: FirestoreRestHelper.timestampField(fields, 'createdAt'),
       );
     }).toList();
   }
 
-  String _formatDate(String iso) {
-    final date = DateTime.tryParse(iso);
+  String _formatDate(String isoString) {
+    if (isoString.isEmpty) return '';
+    final date = DateTime.tryParse(isoString);
     if (date == null) return '';
-    final local = date.toLocal();
-    return '${local.day} ${_months[local.month - 1]} ${local.year}';
+    if (LanguageController.instance.isEnglish) {
+      return '${date.day}/${date.month}/${date.year}';
+    }
+    final monthName = _months[date.month - 1];
+    return '${date.day} $monthName ${date.year}';
   }
 
   @override
@@ -104,7 +108,7 @@ class _MyPresentationsPageState extends State<MyPresentationsPage> {
     return Scaffold(
       backgroundColor: colors.surface,
       appBar: AppBar(
-        title: const Text('Sunumlarım'),
+        title: Text(tr('Sunumlarım', 'My Presentations')),
       ),
       body: FutureBuilder<List<_PresentationItem>>(
         future: _future,
@@ -127,7 +131,10 @@ class _MyPresentationsPageState extends State<MyPresentationsPage> {
                     ),
                     const SizedBox(height: AppSpacing.s16),
                     Text(
-                      'Sunumlar şu anda yüklenemiyor.\nLütfen daha sonra tekrar deneyin.',
+                      tr(
+                        'Sunumlar şu anda yüklenemiyor.\nLütfen daha sonra tekrar deneyin.',
+                        'Presentations cannot be loaded right now.\nPlease try again later.',
+                      ),
                       textAlign: TextAlign.center,
                       style: AppTypography.bodyLarge.copyWith(
                         color: colors.textSecondary,
@@ -152,7 +159,10 @@ class _MyPresentationsPageState extends State<MyPresentationsPage> {
                   ),
                   const SizedBox(height: AppSpacing.s16),
                   Text(
-                    'Henüz sunum oluşturmadınız',
+                    tr(
+                      'Henüz sunum oluşturmadınız',
+                      'You haven\'t created any presentations yet',
+                    ),
                     style: AppTypography.titleMedium.copyWith(
                       color: colors.textSecondary,
                     ),
@@ -186,7 +196,7 @@ class _MyPresentationsPageState extends State<MyPresentationsPage> {
                     child: Text(
                       [
                         if (createdAt.isNotEmpty) createdAt,
-                        '${item.slideCount} slayt'
+                        '${item.slideCount} ${tr('slayt', 'slides')}'
                       ].join(' • '),
                       style: AppTypography.bodyMedium.copyWith(
                         color: colors.textSecondary,

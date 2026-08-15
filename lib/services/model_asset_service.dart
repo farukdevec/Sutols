@@ -111,7 +111,12 @@ class ModelAssetService {
 
   static Future<String?> _fetchSignedUrl(String key, {String? idToken}) async {
     try {
-      final token = idToken ?? await FirebaseAuth.instance.currentUser?.getIdToken();
+      String? token = idToken;
+      if (token == null || token.isEmpty) {
+        try {
+          token = await FirebaseAuth.instance.currentUser?.getIdToken();
+        } catch (_) {}
+      }
       if (token == null || token.isEmpty) {
         print('[ASSET_AUTH] key=$key status=no_user_token signed=false');
         return null;

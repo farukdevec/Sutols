@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 import '../services/auth_service.dart';
+import '../state/language_controller.dart';
 import 'design/design_system.dart';
 import 'design/sutol_widgets.dart';
 import 'widgets/terms_consent_dialog.dart';
@@ -188,14 +189,14 @@ class _AuthPageState extends State<AuthPage> {
               controller: _nameController,
               style:
                   AppTypography.bodyLarge.copyWith(color: colors.textPrimary),
-              decoration: const InputDecoration(hintText: 'Adınız'),
+              decoration: InputDecoration(hintText: tr('Adınız', 'Your Name')),
             ),
             const SizedBox(height: AppSpacing.s16),
           ],
           TextField(
             controller: _emailController,
             style: AppTypography.bodyLarge.copyWith(color: colors.textPrimary),
-            decoration: const InputDecoration(hintText: 'E-posta'),
+            decoration: InputDecoration(hintText: tr('E-posta', 'Email')),
             keyboardType: TextInputType.emailAddress,
           ),
           const SizedBox(height: AppSpacing.s16),
@@ -203,7 +204,7 @@ class _AuthPageState extends State<AuthPage> {
             TextField(
               controller: _confirmPasswordController,
               style: AppTypography.bodyLarge.copyWith(color: colors.textPrimary),
-              decoration: const InputDecoration(hintText: 'Şifre (tekrar)'),
+              decoration: InputDecoration(hintText: tr('Şifre (tekrar)', 'Password (confirm)')),
             ),
             const SizedBox(height: AppSpacing.s16),
           ],
@@ -211,7 +212,7 @@ class _AuthPageState extends State<AuthPage> {
             controller: _passwordController,
             style: AppTypography.bodyLarge.copyWith(color: colors.textPrimary),
             decoration: InputDecoration(
-              hintText: 'Şifre',
+              hintText: tr('Şifre', 'Password'),
               suffixIcon: IconButton(
                 icon: Icon(
                   _obscurePassword
@@ -225,8 +226,6 @@ class _AuthPageState extends State<AuthPage> {
             ),
             obscureText: _obscurePassword,
           ),
-          // Kayıt modunda onay kutucuğu butonlara tıklamadan önce görünür;
-          // işaretlenmeden "Kayıt Ol" ve "Google ile Devam Et" pasiftir.
           if (!_isLogin) ...[
             const SizedBox(height: AppSpacing.s16),
             TermsConsentBox(
@@ -253,7 +252,7 @@ class _AuthPageState extends State<AuthPage> {
                       height: 20,
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
-                  : Text(_isLogin ? 'Giriş Yap' : 'Kayıt Ol'),
+                  : Text(_isLogin ? tr('Giriş Yap', 'Sign In') : tr('Kayıt Ol', 'Sign Up')),
             ),
           ),
           const SizedBox(height: AppSpacing.s16),
@@ -262,7 +261,7 @@ class _AuthPageState extends State<AuthPage> {
               Expanded(child: Divider(color: colors.border)),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16),
-                child: Text('veya',
+                child: Text(tr('veya', 'or'),
                     style: AppTypography.bodyMedium
                         .copyWith(color: colors.textSecondary)),
               ),
@@ -277,7 +276,7 @@ class _AuthPageState extends State<AuthPage> {
                   ? null
                   : _signInWithGoogle,
               icon: const Icon(Icons.g_mobiledata_rounded, size: 24),
-              label: const Text('Google ile Devam Et'),
+              label: Text(tr('Google ile Devam Et', 'Continue with Google')),
             ),
           ),
         ],

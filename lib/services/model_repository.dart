@@ -39,7 +39,10 @@ class ModelRepository {
 
   /// Model kataloğunu yükler veya aynı uygulama oturumundaki önbelleği döner.
   Future<List<ModelCatalogEntry>> getModels() {
-    final userId = FirebaseAuth.instance.currentUser?.uid;
+    String? userId;
+    try {
+      userId = FirebaseAuth.instance.currentUser?.uid;
+    } catch (_) {}
     final cachedModels = _cachedModels;
     if (cachedModels != null && _cachedForUserId == userId) {
       return Future.value(cachedModels);

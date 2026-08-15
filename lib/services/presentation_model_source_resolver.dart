@@ -1,10 +1,10 @@
+import '../models/presentation_3d_model_catalog.dart';
 import '../models/slide_model.dart';
 import 'model_repository.dart';
 import 'remote_model_sources.dart';
 import 'model_asset_service.dart';
 
-/// Kaydedilmiş sunumlardaki model kimliklerini gerçek imzalı GLB adresleriyle
-/// eşleştirir. Yalnızca geçerli imzalı URL'leri kayıt defterine ekler.
+/// Kaydedilmiş sunumlardaki model kimliklerini gerçek GLB adresleriyle eşleştirir.
 Future<void> hydratePresentationModelSources(
   Iterable<PresentationPage> pages,
 ) async {
@@ -12,7 +12,7 @@ Future<void> hydratePresentationModelSources(
       .expand((page) => page.componentBlocks)
       .map((block) => block.modelAssetId)
       .whereType<String>()
-      .where((id) => RemoteModelSources.sourceFor(id) == null)
+      .where((id) => !RemoteModelSources.hasSignedSource(id))
       .toSet();
   if (missingIds.isEmpty) return;
 
@@ -21,9 +21,16 @@ Future<void> hydratePresentationModelSources(
 
   final resolvedSources = <String, String>{};
   for (final entry in baseSources.entries) {
-    final signedUrl = await ModelAssetService.generateSignedUrl(entry.value);
-    if (signedUrl != null && signedUrl.isNotEmpty && signedUrl.contains('token=')) {
-      resolvedSources[entry.key] = signedUrl;
+    if (entry.value.startsWith('assets/') || entry.value.startsWith('packages/')) {
+      resolvedSources[entry.key] = entry.value;
+      continue;
+    }
+    String? signedUrl;
+    try {
+      signedUrl = await ModelAssetService.generateSignedUrl(entry.value);
+    } catch (_) {}
+    if (signedUrl != null && signedUrl.trim().isNotEmpty) {
+      resolvedSources[entry.key] = signedUrl.trim();
     }
   }
 
@@ -36,9 +43,16 @@ Map<String, String> modelSourcesForIds(
   Set<String> modelIds,
   Iterable<ModelCatalogEntry> catalog,
 ) {
-  return <String, String>{
-    for (final model in catalog)
-      if (modelIds.contains(model.id) && model.modelUrl.trim().isNotEmpty)
-        model.id: model.modelUrl,
-  };
+  final map = <String, String>{};
+  for (final model in catalog) {
+    if (modelIds.contains(model.id) && model.modelUrl.trim().isNotEmpty) {
+      map[model.id] = model.modelUrl.trim();
+    }
+  }
+  for (final asset in presentation3DModelCatalog) {
+    if (modelIds.contains(asset.id) && asset.assetPath.trim().isNotEmpty) {
+      map.putIfAbsent(asset.id, () => asset.assetPath.trim());
+    }
+  }
+  return map;
 }

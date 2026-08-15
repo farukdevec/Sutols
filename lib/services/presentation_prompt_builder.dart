@@ -39,9 +39,19 @@ SUNUM DÜZENİ:
 
 ÇIKTI KURALLARI:
 - Tam olarak $slideCount slayt üret; eksik veya fazla üretme.
-- Her slaytta title, content ve keywords alanlarını doldur.
+- Yanıtı KESİNLİKLE aşağıdaki JSON şemasına tam uyacak şekilde ver:
+{
+  "slides": [
+    {
+      "title": "Slayt Başlığı",
+      "content": "- Birinci detaylı açıklama maddesi\\n- İkinci detaylı açıklama maddesi",
+      "keywords": ["anahtar1", "anahtar2"]
+    }
+  ]
+}
+- Her slaytta title, content ve keywords alanlarını eksiksiz doldur.
 - content içindeki her madde ayrı satırda "- " ile başlasın.
-- keywords, yalnızca o slaydın görsel ana fikrini temsil eden 3-8 somut nesne, kişi, yer, süreç veya kavram içersin.
+- keywords, 3B (3D) modellerle ve nesnelerle doğrudan eşleşebilecek 3-8 somut fiziksel nesne, araç, yapı, gezegen, cihaz ve kavram adı içersin.
 - Komşu slaytların keywords listelerini gereksiz yere aynılaştırma.
 - Tüm metinler "$language" dilinde olsun; Türkçe ise ç, ğ, ı, ö, ş, ü karakterlerini doğru kullan.
 - İşletim sistemi bildirimi, yazılım uyarısı, lisans filigranı, bozuk kelime, arayüz açıklaması veya konu dışı metin üretme.

@@ -7,6 +7,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'services/firebase_options.dart';
 import 'services/auth_service.dart';
 import 'state/theme_controller.dart';
+import 'state/language_controller.dart';
 import 'ui/admin/admin_gate.dart';
 import 'ui/design/design_system.dart';
 import 'ui/home_page.dart';
@@ -21,6 +22,7 @@ void main() async {
   usePathUrlStrategy();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.web);
   await ThemeController.instance.init();
+  await LanguageController.instance.init();
   runApp(const SutolApp());
 }
 
@@ -29,37 +31,42 @@ class SutolApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ValueListenableBuilder<ThemeMode>(
-      valueListenable: ThemeController.instance.mode,
-      builder: (context, themeMode, _) {
-        return MaterialApp(
-          title: 'Sutols',
-          debugShowCheckedModeBanner: false,
-          navigatorKey: appNavigatorKey,
-          theme: sutolLightTheme,
-          darkTheme: sutolDarkTheme,
-          themeMode: themeMode,
-          home: CookieConsentHost(
-            child: StreamBuilder<User?>(
-              stream: AuthService.instance.authStateChanges,
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const _SplashScreen();
-                }
-                final user = snapshot.data;
-                if (user == null) {
-                  return const SutolHomePage();
-                }
-                // Giriş yapıldıysa paylaşım bağlantılarını (/p/{id}) yakala.
-                return _DeepLinkHost(child: const SutolHomePage());
+    return ValueListenableBuilder<AppLanguage>(
+      valueListenable: LanguageController.instance.currentLanguage,
+      builder: (context, language, _) {
+        return ValueListenableBuilder<ThemeMode>(
+          valueListenable: ThemeController.instance.mode,
+          builder: (context, themeMode, _) {
+            return MaterialApp(
+              title: 'Sutols',
+              debugShowCheckedModeBanner: false,
+              navigatorKey: appNavigatorKey,
+              theme: sutolLightTheme,
+              darkTheme: sutolDarkTheme,
+              themeMode: themeMode,
+              home: CookieConsentHost(
+                child: StreamBuilder<User?>(
+                  stream: AuthService.instance.authStateChanges,
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const _SplashScreen();
+                    }
+                    final user = snapshot.data;
+                    if (user == null) {
+                      return const SutolHomePage();
+                    }
+                    // Giriş yapıldıysa paylaşım bağlantılarını (/p/{id}) yakala.
+                    return _DeepLinkHost(child: const SutolHomePage());
+                  },
+                ),
+              ),
+              routes: {
+                '/admin': (_) => const AdminGate(),
+                '/gizlilik': (_) => const PrivacyPolicyPage(),
+                '/sartlar': (_) => const TermsOfServicePage(),
+                '/sss': (_) => const FaqPage(),
               },
-            ),
-          ),
-          routes: {
-            '/admin': (_) => const AdminGate(),
-            '/gizlilik': (_) => const PrivacyPolicyPage(),
-            '/sartlar': (_) => const TermsOfServicePage(),
-            '/sss': (_) => const FaqPage(),
+            );
           },
         );
       },

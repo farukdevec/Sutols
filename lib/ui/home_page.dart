@@ -10,6 +10,7 @@ import '../services/presentation_loader.dart';
 import '../services/presentation_service.dart';
 import '../state/presentation_controller.dart';
 import '../state/theme_controller.dart';
+import '../state/language_controller.dart';
 import 'html_presentation_editor_page.dart';
 import 'widgets/looping_loading_video.dart';
 import 'design/design_system.dart';
@@ -119,14 +120,17 @@ class _SutolHomePageState extends State<SutolHomePage> {
     ScaffoldMessenger.of(context).hideCurrentSnackBar();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: const Row(
+        content: Row(
           children: [
-            Icon(Icons.lightbulb_rounded, color: Color(0xFF00E5FF)),
-            SizedBox(width: 12),
+            const Icon(Icons.lightbulb_rounded, color: Color(0xFF00E5FF)),
+            const SizedBox(width: 12),
             Expanded(
               child: Text(
-                'Sunum oluşturmak için lütfen önce giriş yapın.',
-                style: TextStyle(fontWeight: FontWeight.w500),
+                tr(
+                  'Sunum oluşturmak için lütfen önce giriş yapın.',
+                  'Please sign in first to create a presentation.',
+                ),
+                style: const TextStyle(fontWeight: FontWeight.w500),
               ),
             ),
           ],
@@ -134,7 +138,7 @@ class _SutolHomePageState extends State<SutolHomePage> {
         duration: const Duration(seconds: 4),
         behavior: SnackBarBehavior.floating,
         action: SnackBarAction(
-          label: 'Giriş Yap',
+          label: tr('Giriş Yap', 'Sign In'),
           textColor: const Color(0xFF00E5FF),
           onPressed: () {
             Navigator.of(context).push(
@@ -377,8 +381,8 @@ class _SutolHomePageState extends State<SutolHomePage> {
                         children: [
                           Text(
                             narrow
-                                ? 'Fikirden sunuma,\ntek cümlede.'
-                                : 'Fikirden sunuma, tek cümlede.',
+                                ? tr('Fikirden sunuma,\ntek cümlede.', 'From idea to presentation,\nin a single sentence.')
+                                : tr('Fikirden sunuma, tek cümlede.', 'From idea to presentation, in a single sentence.'),
                             textAlign: TextAlign.center,
                             style: AppTypography.display.copyWith(
                               color: colors.textPrimary,
@@ -454,7 +458,7 @@ class _SutolHomePageState extends State<SutolHomePage> {
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
                             Text(
-                              'Fikirden sunuma,\ntek cümlede.',
+                              tr('Fikirden sunuma,\ntek cümlede.', 'From idea to presentation,\nin a single sentence.'),
                               textAlign: TextAlign.center,
                               style: AppTypography.display.copyWith(
                                 color: colors.textPrimary,
@@ -465,7 +469,7 @@ class _SutolHomePageState extends State<SutolHomePage> {
                             if (!compact) ...[
                               const SizedBox(height: AppSpacing.s8),
                               Text(
-                                'Yeni sunumunu saniyeler içinde oluştur.',
+                                tr('Yeni sunumunu saniyeler içinde oluştur.', 'Create your new presentation in seconds.'),
                                 textAlign: TextAlign.center,
                                 style: AppTypography.bodyLarge.copyWith(
                                   color: colors.textSecondary,
@@ -484,7 +488,7 @@ class _SutolHomePageState extends State<SutolHomePage> {
                               Row(
                                 children: [
                                   Text(
-                                    'Son sunumların',
+                                    tr('Son sunumların', 'Recent presentations'),
                                     style: AppTypography.titleMedium.copyWith(
                                       color: colors.textPrimary,
                                     ),
@@ -499,7 +503,7 @@ class _SutolHomePageState extends State<SutolHomePage> {
                                         ),
                                       );
                                     },
-                                    child: const Text('Tümünü gör'),
+                                    child: Text(tr('Tümünü gör', 'View all')),
                                   ),
                                 ],
                               ),
@@ -518,8 +522,10 @@ class _SutolHomePageState extends State<SutolHomePage> {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             heroColumn(
-                              description:
-                                  'Anlatmak istediğinizi yazın. Sutols, sizin için tasarlanmış bir sunumu saniyeler içinde hazırlasın.',
+                              description: tr(
+                                'Anlatmak istediğinizi yazın. Sutols, sizin için tasarlanmış bir sunumu saniyeler içinde hazırlasın.',
+                                'Type what you want to explain. Sutols will craft a designed presentation for you in seconds.',
+                              ),
                               gapAfter: narrow
                                   ? (compact ? AppSpacing.s16 : AppSpacing.s24)
                                   : AppSpacing.s48,
@@ -626,19 +632,19 @@ class _FooterBar extends StatelessWidget {
               ),
               TextButton(
                 onPressed: () => showSutolContactDialog(context),
-                child: const Text('İletişim'),
+                child: Text(tr('İletişim', 'Contact')),
               ),
               TextButton(
                 onPressed: () => Navigator.of(context).pushNamed('/gizlilik'),
-                child: const Text('Gizlilik Politikası'),
+                child: Text(tr('Gizlilik Politikası', 'Privacy Policy')),
               ),
               TextButton(
                 onPressed: () => Navigator.of(context).pushNamed('/sartlar'),
-                child: const Text('Kullanım Şartları'),
+                child: Text(tr('Kullanım Şartları', 'Terms of Use')),
               ),
               TextButton(
                 onPressed: () => Navigator.of(context).pushNamed('/sss'),
-                child: const Text('SSS'),
+                child: Text(tr('SSS', 'FAQ')),
               ),
             ],
           ),
@@ -743,7 +749,9 @@ class PresentationCreationCard extends StatelessWidget {
             style:
                 AppTypography.titleMedium.copyWith(color: colors.textPrimary),
             decoration: InputDecoration(
-              hintText: isDashboard ? 'Sunum başlığı' : 'Sunum Başlığı',
+              hintText: isDashboard
+                  ? tr('Sunum başlığı', 'Presentation title')
+                  : tr('Sunum Başlığı', 'Presentation Title'),
               filled: true,
               fillColor: colors.surface,
             ),
@@ -761,8 +769,11 @@ class PresentationCreationCard extends StatelessWidget {
             style: AppTypography.bodyLarge.copyWith(color: colors.textPrimary),
             decoration: InputDecoration(
               hintText: isDashboard
-                  ? 'Sunum hakkında'
-                  : 'Bu sunum ne hakkında? Konuyu, ana fikirleri ve kitleyi kısaca anlatın...',
+                  ? tr('Sunum hakkında', 'About presentation')
+                  : tr(
+                      'Bu sunum ne hakkında? Konuyu, ana fikirleri ve kitleyi kısaca anlatın...',
+                      'What is this presentation about? Briefly explain topic, main points, and audience...',
+                    ),
               filled: true,
               fillColor: colors.surface,
             ),
@@ -782,7 +793,7 @@ class PresentationCreationCard extends StatelessWidget {
               height: 48,
               child: FilledButton(
                 onPressed: onGenerate,
-                child: const Text('Oluştur'),
+                child: Text(tr('Oluştur', 'Generate')),
               ),
             ),
           ] else
@@ -797,7 +808,7 @@ class PresentationCreationCard extends StatelessWidget {
                 const SizedBox(width: AppSpacing.s12),
                 FilledButton(
                   onPressed: onGenerate,
-                  child: const Text('Oluştur'),
+                  child: Text(tr('Oluştur', 'Generate')),
                 ),
               ],
             ),
@@ -1309,37 +1320,104 @@ class _UpgradeButtonState extends State<_UpgradeButton> {
 }
 
 Future<void> _showHomeSettings(BuildContext context) {
+  final langController = LanguageController.instance;
   return showDialog<void>(
     context: context,
-    builder: (dialogContext) => AlertDialog(
-      title: const Text('Ayarlar'),
-      contentPadding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
-      content: SizedBox(
-        width: 360,
-        child: ValueListenableBuilder<ThemeMode>(
-          valueListenable: ThemeController.instance.mode,
-          builder: (context, mode, _) {
-            final isDark = mode == ThemeMode.dark;
-            return ListTile(
-              key: const ValueKey<String>('home-settings-dark-theme'),
-              leading: const Icon(Icons.dark_mode_outlined),
-              title: const Text('Koyu Tema'),
-              subtitle: Text(isDark ? 'Açık' : 'Kapalı'),
-              trailing: Switch(
-                value: isDark,
-                onChanged: (_) => ThemeController.instance.toggle(),
-              ),
-              onTap: ThemeController.instance.toggle,
-            );
-          },
-        ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(dialogContext).pop(),
-          child: const Text('Kapat'),
-        ),
-      ],
+    builder: (dialogContext) => ValueListenableBuilder<AppLanguage>(
+      valueListenable: langController.currentLanguage,
+      builder: (context, currentLang, _) {
+        return AlertDialog(
+          title: Text(langController.tr('Ayarlar', 'Settings')),
+          contentPadding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+          content: SizedBox(
+            width: 380,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ValueListenableBuilder<ThemeMode>(
+                  valueListenable: ThemeController.instance.mode,
+                  builder: (context, mode, _) {
+                    final isDark = mode == ThemeMode.dark;
+                    return ListTile(
+                      key: const ValueKey<String>('home-settings-dark-theme'),
+                      leading: const Icon(Icons.dark_mode_outlined),
+                      title: Text(langController.tr('Koyu Tema', 'Dark Mode')),
+                      subtitle: Text(
+                        isDark
+                            ? langController.tr('Açık', 'On')
+                            : langController.tr('Kapalı', 'Off'),
+                      ),
+                      trailing: Switch(
+                        value: isDark,
+                        onChanged: (_) => ThemeController.instance.toggle(),
+                      ),
+                      onTap: ThemeController.instance.toggle,
+                    );
+                  },
+                ),
+                const Divider(height: 1),
+                ListTile(
+                  key: const ValueKey<String>('home-settings-language'),
+                  leading: const Icon(Icons.language_outlined),
+                  title: Text(langController.tr('Dil / Language', 'Language')),
+                  subtitle: Text(
+                    currentLang == AppLanguage.en ? 'English' : 'Türkçe',
+                  ),
+                  trailing: SegmentedButton<AppLanguage>(
+                    segments: const [
+                      ButtonSegment<AppLanguage>(
+                        value: AppLanguage.tr,
+                        label: Text('TR'),
+                      ),
+                      ButtonSegment<AppLanguage>(
+                        value: AppLanguage.en,
+                        label: Text('EN'),
+                      ),
+                    ],
+                    selected: {currentLang},
+                    onSelectionChanged: (Set<AppLanguage> selected) {
+                      if (selected.isNotEmpty) {
+                        langController.setLanguage(selected.first);
+                      }
+                    },
+                  ),
+                ),
+                if (langController.detectedLocationInfo != null)
+                  Padding(
+                    padding:
+                        const EdgeInsets.only(left: 16, right: 16, bottom: 8),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.location_on_outlined, size: 14),
+                        const SizedBox(width: 4),
+                        Expanded(
+                          child: Text(
+                            langController.tr(
+                              'Konum: ${langController.detectedLocationInfo}',
+                              'Location: ${langController.detectedLocationInfo}',
+                            ),
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onSurfaceVariant,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: Text(langController.tr('Kapat', 'Close')),
+            ),
+          ],
+        );
+      },
     ),
   );
 }
@@ -1498,7 +1576,7 @@ class _EditorButtonState extends State<_EditorButton> {
         );
       },
       child: Text(
-        'Boş Sunum',
+        tr('Boş Sunum', 'Blank Presentation'),
         maxLines: 1,
         style: TextStyle(fontSize: widget.compact ? 12 : 14),
       ),

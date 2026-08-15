@@ -24,6 +24,7 @@ import '../services/remote_image_sources.dart';
 import '../services/remote_model_sources.dart';
 import '../state/presentation_controller.dart';
 import '../state/theme_controller.dart';
+import '../state/language_controller.dart';
 import 'membership_page.dart';
 import 'widgets/signed_thumbnail_image.dart';
 
@@ -1064,11 +1065,11 @@ class _HtmlHeader extends StatelessWidget {
     final actions = <Widget>[
       _HeaderBadge(
         icon: Icons.layers_rounded,
-        label: '$pageCount Sayfa',
+        label: '$pageCount ${tr('Sayfa', 'Pages')}',
       ),
       _HeaderBadge(
         icon: Icons.notes_rounded,
-        label: '$blockCount Metin',
+        label: '$blockCount ${tr('Metin', 'Texts')}',
       ),
       _HeaderBadge(
         icon: Icons.html_rounded,
@@ -1077,7 +1078,7 @@ class _HtmlHeader extends StatelessWidget {
       if (lastEditorLabel != null && lastEditorLabel!.isNotEmpty)
         _HeaderBadge(
           icon: Icons.edit_rounded,
-          label: 'Son düzenleme: $lastEditorLabel',
+          label: '${tr('Son düzenleme:', 'Last edited:')} $lastEditorLabel',
         ),
       const _SettingsMenuButton(),
       if (!adminReadOnly)
@@ -1089,13 +1090,13 @@ class _HtmlHeader extends StatelessWidget {
         ),
       _HeaderAction(
         icon: Icons.slideshow_rounded,
-        label: 'Sunum Modu',
+        label: tr('Sunum Modu', 'Presentation Mode'),
         onTap: onPreview,
       ),
       if (adminReadOnly)
         _HeaderAction(
           icon: Icons.html_rounded,
-          label: 'HTML Disa Aktar',
+          label: tr('HTML Disa Aktar', 'Export HTML'),
           onTap: onExport,
         ),
       if (adminReadOnly) const _AdminReadOnlyBadge(),
@@ -1277,14 +1278,14 @@ class _HtmlHeader extends StatelessWidget {
           final condensedActions = <Widget>[
             _HeaderAction(
               icon: Icons.slideshow_rounded,
-              label: 'Sunum Modu',
+              label: tr('Sunum Modu', 'Presentation Mode'),
               onTap: onPreview,
               branded: true,
             ),
             if (adminReadOnly)
               _HeaderAction(
                 icon: Icons.html_rounded,
-                label: 'HTML Disa Aktar',
+                label: tr('HTML Disa Aktar', 'Export HTML'),
                 onTap: onExport,
                 branded: true,
               ),
@@ -1300,7 +1301,7 @@ class _HtmlHeader extends StatelessWidget {
             const _SettingsMenuButton(branded: true),
             _HeaderBadge(
               icon: Icons.layers_rounded,
-              label: '$pageCount Sayfa',
+              label: '$pageCount ${tr('Sayfa', 'Pages')}',
               branded: true,
             ),
           ];
@@ -2058,25 +2059,25 @@ class _HtmlMobileToolDock extends StatelessWidget {
           tools.addAll(<_MobileDockTool>[
             _MobileDockTool(
               icon: Icons.edit_note_rounded,
-              label: 'Metin',
+              label: tr('Metin', 'Text'),
               selected: activeTab == _HtmlToolTab.text,
               onTap: () => onOpenTool(_HtmlToolTab.text),
             ),
             _MobileDockTool(
               icon: Icons.palette_rounded,
-              label: 'Stil',
+              label: tr('Stil', 'Style'),
               selected: activeTab == _HtmlToolTab.text,
               onTap: () => onOpenTool(_HtmlToolTab.text),
             ),
             _MobileDockTool(
               icon: Icons.delete_outline_rounded,
-              label: 'Öğeyi Sil',
+              label: tr('Öğeyi Sil', 'Delete Item'),
               selected: false,
               onTap: () => controller.removeSelectedTextBlock(),
             ),
             _MobileDockTool(
               icon: Icons.close_rounded,
-              label: 'Kapat',
+              label: tr('Kapat', 'Close'),
               selected: false,
               onTap: () => controller.clearSelection(),
             ),
@@ -2085,25 +2086,25 @@ class _HtmlMobileToolDock extends StatelessWidget {
           tools.addAll(<_MobileDockTool>[
             _MobileDockTool(
               icon: Icons.palette_rounded,
-              label: 'Stil',
+              label: tr('Stil', 'Style'),
               selected: activeTab == _HtmlToolTab.components,
               onTap: () => onOpenTool(_HtmlToolTab.components),
             ),
             _MobileDockTool(
               icon: Icons.image_rounded,
-              label: 'Fotoğraf',
+              label: tr('Fotoğraf', 'Photo'),
               selected: false,
               onTap: onOpenPhotoQuick,
             ),
             _MobileDockTool(
               icon: Icons.delete_outline_rounded,
-              label: 'Öğeyi Sil',
+              label: tr('Öğeyi Sil', 'Delete Item'),
               selected: false,
               onTap: () => controller.removeSelectedComponentBlock(),
             ),
             _MobileDockTool(
               icon: Icons.close_rounded,
-              label: 'Kapat',
+              label: tr('Kapat', 'Close'),
               selected: false,
               onTap: () => controller.clearSelection(),
             ),
@@ -2112,37 +2113,37 @@ class _HtmlMobileToolDock extends StatelessWidget {
           tools.addAll(<_MobileDockTool>[
             _MobileDockTool(
               icon: Icons.dashboard_customize_rounded,
-              label: 'Şablon',
+              label: tr('Şablon', 'Template'),
               selected: activeTab == _HtmlToolTab.templates,
               onTap: () => onOpenTool(_HtmlToolTab.templates),
             ),
             _MobileDockTool(
               icon: Icons.wallpaper_rounded,
-              label: 'Arka Plan',
+              label: tr('Arka Plan', 'Background'),
               selected: activeTab == _HtmlToolTab.backgrounds,
               onTap: () => onOpenTool(_HtmlToolTab.backgrounds),
             ),
             _MobileDockTool(
               icon: Icons.text_fields_rounded,
-              label: 'Metin',
+              label: tr('Metin', 'Text'),
               selected: activeTab == _HtmlToolTab.text,
               onTap: () => controller.addTextBlock(),
             ),
             _MobileDockTool(
               icon: Icons.view_in_ar_rounded,
-              label: 'Modeller',
+              label: tr('Modeller', 'Models'),
               selected: activeTab == _HtmlToolTab.models3d,
               onTap: () => onOpenTool(_HtmlToolTab.models3d),
             ),
             _MobileDockTool(
               icon: Icons.widgets_rounded,
-              label: 'Bileşen',
+              label: tr('Bileşen', 'Component'),
               selected: activeTab == _HtmlToolTab.components,
               onTap: () => onOpenTool(_HtmlToolTab.components),
             ),
             _MobileDockTool(
               icon: Icons.delete_outline_rounded,
-              label: 'Sahne Sil',
+              label: tr('Sahne Sil', 'Delete Slide'),
               selected: false,
               onTap: () => _confirmDeleteCurrentSlide(context, controller),
             ),
@@ -2893,58 +2894,125 @@ enum _MobileMoreTool {
 enum _MobilePhotoQuickAction { pick, library }
 
 Future<void> _showEditorSettings(BuildContext context) {
+  final langController = LanguageController.instance;
   return showDialog<void>(
     context: context,
-    builder: (dialogContext) => AlertDialog(
-      title: const Text('Ayarlar'),
-      contentPadding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
-      content: SizedBox(
-        width: 360,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            ValueListenableBuilder<ThemeMode>(
-              valueListenable: ThemeController.instance.mode,
-              builder: (context, mode, _) {
-                final isDark = mode == ThemeMode.dark;
-                return ListTile(
-                  key: const ValueKey<String>('settings-dark-theme'),
-                  leading: const Icon(Icons.dark_mode_outlined),
-                  title: const Text('Koyu Tema'),
-                  subtitle: Text(isDark ? 'Açık' : 'Kapalı'),
-                  trailing: Switch(
-                    value: isDark,
-                    onChanged: (_) => ThemeController.instance.toggle(),
+    builder: (dialogContext) => ValueListenableBuilder<AppLanguage>(
+      valueListenable: langController.currentLanguage,
+      builder: (context, currentLang, _) {
+        return AlertDialog(
+          title: Text(langController.tr('Ayarlar', 'Settings')),
+          contentPadding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+          content: SizedBox(
+            width: 380,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                ValueListenableBuilder<ThemeMode>(
+                  valueListenable: ThemeController.instance.mode,
+                  builder: (context, mode, _) {
+                    final isDark = mode == ThemeMode.dark;
+                    return ListTile(
+                      key: const ValueKey<String>('settings-dark-theme'),
+                      leading: const Icon(Icons.dark_mode_outlined),
+                      title: Text(langController.tr('Koyu Tema', 'Dark Mode')),
+                      subtitle: Text(
+                        isDark
+                            ? langController.tr('Açık', 'On')
+                            : langController.tr('Kapalı', 'Off'),
+                      ),
+                      trailing: Switch(
+                        value: isDark,
+                        onChanged: (_) => ThemeController.instance.toggle(),
+                      ),
+                      onTap: ThemeController.instance.toggle,
+                    );
+                  },
+                ),
+                const Divider(height: 1),
+                ListTile(
+                  key: const ValueKey<String>('settings-language'),
+                  leading: const Icon(Icons.language_outlined),
+                  title: Text(langController.tr('Dil / Language', 'Language')),
+                  subtitle: Text(
+                    currentLang == AppLanguage.en ? 'English' : 'Türkçe',
                   ),
-                  onTap: ThemeController.instance.toggle,
-                );
-              },
+                  trailing: SegmentedButton<AppLanguage>(
+                    segments: const [
+                      ButtonSegment<AppLanguage>(
+                        value: AppLanguage.tr,
+                        label: Text('TR'),
+                      ),
+                      ButtonSegment<AppLanguage>(
+                        value: AppLanguage.en,
+                        label: Text('EN'),
+                      ),
+                    ],
+                    selected: {currentLang},
+                    onSelectionChanged: (Set<AppLanguage> selected) {
+                      if (selected.isNotEmpty) {
+                        langController.setLanguage(selected.first);
+                      }
+                    },
+                  ),
+                ),
+                if (langController.detectedLocationInfo != null)
+                  Padding(
+                    padding:
+                        const EdgeInsets.only(left: 16, right: 16, bottom: 8),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.location_on_outlined, size: 14),
+                        const SizedBox(width: 4),
+                        Expanded(
+                          child: Text(
+                            langController.tr(
+                              'Konum: ${langController.detectedLocationInfo}',
+                              'Location: ${langController.detectedLocationInfo}',
+                            ),
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onSurfaceVariant,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                const Divider(height: 1),
+                ListTile(
+                  key: const ValueKey<String>('settings-plans'),
+                  leading: const Icon(Icons.workspace_premium_outlined),
+                  title: Text(langController.tr('Planlar', 'Plans')),
+                  subtitle: Text(
+                    langController.tr(
+                      'Üyelik seçeneklerini görüntüle',
+                      'View membership options',
+                    ),
+                  ),
+                  trailing: const Icon(Icons.chevron_right_rounded),
+                  onTap: () {
+                    Navigator.of(dialogContext).pop();
+                    Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => const MembershipPage(),
+                      ),
+                    );
+                  },
+                ),
+              ],
             ),
-            const Divider(height: 1),
-            ListTile(
-              key: const ValueKey<String>('settings-plans'),
-              leading: const Icon(Icons.workspace_premium_outlined),
-              title: const Text('Planlar'),
-              subtitle: const Text('Üyelik seçeneklerini görüntüle'),
-              trailing: const Icon(Icons.chevron_right_rounded),
-              onTap: () {
-                Navigator.of(dialogContext).pop();
-                Navigator.of(context).push(
-                  MaterialPageRoute<void>(
-                    builder: (_) => const MembershipPage(),
-                  ),
-                );
-              },
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: Text(langController.tr('Kapat', 'Close')),
             ),
           ],
-        ),
-      ),
-      actions: <Widget>[
-        TextButton(
-          onPressed: () => Navigator.of(dialogContext).pop(),
-          child: const Text('Kapat'),
-        ),
-      ],
+        );
+      },
     ),
   );
 }
@@ -3372,29 +3440,29 @@ class _HeaderBrandMark extends StatelessWidget {
         side: BorderSide(color: colors.border),
       ),
       onSelected: (action) => _handleSelection(context, action),
-      itemBuilder: (context) => const <PopupMenuEntry<_HeaderBrandMenuAction>>[
+      itemBuilder: (context) => <PopupMenuEntry<_HeaderBrandMenuAction>>[
         PopupMenuItem<_HeaderBrandMenuAction>(
-          key: ValueKey<String>('brand-menu-home'),
+          key: const ValueKey<String>('brand-menu-home'),
           value: _HeaderBrandMenuAction.home,
           child: _HeaderBrandMenuItem(
             icon: Icons.home_outlined,
-            label: 'Ana Sayfa',
+            label: tr('Ana Sayfa', 'Home'),
           ),
         ),
         PopupMenuItem<_HeaderBrandMenuAction>(
-          key: ValueKey<String>('brand-menu-settings'),
+          key: const ValueKey<String>('brand-menu-settings'),
           value: _HeaderBrandMenuAction.settings,
           child: _HeaderBrandMenuItem(
             icon: Icons.settings_outlined,
-            label: 'Ayarlar',
+            label: tr('Ayarlar', 'Settings'),
           ),
         ),
         PopupMenuItem<_HeaderBrandMenuAction>(
-          key: ValueKey<String>('brand-menu-presentations'),
+          key: const ValueKey<String>('brand-menu-presentations'),
           value: _HeaderBrandMenuAction.presentations,
           child: _HeaderBrandMenuItem(
             icon: Icons.slideshow_outlined,
-            label: 'Sunumlarım',
+            label: tr('Sunumlarım', 'My Presentations'),
           ),
         ),
       ],
@@ -3455,34 +3523,103 @@ class _HeaderSettingsDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      title: const Text('Ayarlar'),
-      contentPadding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-      content: ValueListenableBuilder<ThemeMode>(
-        valueListenable: ThemeController.instance.mode,
-        builder: (context, mode, _) {
-          final isDark = mode == ThemeMode.dark;
-          return ListTile(
-            contentPadding: const EdgeInsets.symmetric(horizontal: 4),
-            leading: Icon(
-              isDark ? Icons.dark_mode_rounded : Icons.light_mode_rounded,
+    final langController = LanguageController.instance;
+    return ValueListenableBuilder<AppLanguage>(
+      valueListenable: langController.currentLanguage,
+      builder: (context, currentLang, _) {
+        return AlertDialog(
+          title: Text(langController.tr('Ayarlar', 'Settings')),
+          contentPadding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+          content: SizedBox(
+            width: 380,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ValueListenableBuilder<ThemeMode>(
+                  valueListenable: ThemeController.instance.mode,
+                  builder: (context, mode, _) {
+                    final isDark = mode == ThemeMode.dark;
+                    return ListTile(
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 4),
+                      leading: Icon(
+                        isDark ? Icons.dark_mode_rounded : Icons.light_mode_rounded,
+                      ),
+                      title: Text(langController.tr('Koyu tema', 'Dark mode')),
+                      subtitle: Text(
+                        isDark
+                            ? langController.tr('Açık', 'On')
+                            : langController.tr('Kapalı', 'Off'),
+                      ),
+                      trailing: Switch(
+                        value: isDark,
+                        onChanged: (_) => ThemeController.instance.toggle(),
+                      ),
+                      onTap: ThemeController.instance.toggle,
+                    );
+                  },
+                ),
+                const Divider(height: 1),
+                ListTile(
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 4),
+                  leading: const Icon(Icons.language_outlined),
+                  title: Text(langController.tr('Dil / Language', 'Language')),
+                  subtitle: Text(
+                    currentLang == AppLanguage.en ? 'English' : 'Türkçe',
+                  ),
+                  trailing: SegmentedButton<AppLanguage>(
+                    segments: const [
+                      ButtonSegment<AppLanguage>(
+                        value: AppLanguage.tr,
+                        label: Text('TR'),
+                      ),
+                      ButtonSegment<AppLanguage>(
+                        value: AppLanguage.en,
+                        label: Text('EN'),
+                      ),
+                    ],
+                    selected: {currentLang},
+                    onSelectionChanged: (Set<AppLanguage> selected) {
+                      if (selected.isNotEmpty) {
+                        langController.setLanguage(selected.first);
+                      }
+                    },
+                  ),
+                ),
+                if (langController.detectedLocationInfo != null)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.location_on_outlined, size: 14),
+                        const SizedBox(width: 4),
+                        Expanded(
+                          child: Text(
+                            langController.tr(
+                              'Konum: ${langController.detectedLocationInfo}',
+                              'Location: ${langController.detectedLocationInfo}',
+                            ),
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onSurfaceVariant,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+              ],
             ),
-            title: const Text('Koyu tema'),
-            subtitle: Text(isDark ? 'Açık' : 'Kapalı'),
-            trailing: Switch(
-              value: isDark,
-              onChanged: (_) => ThemeController.instance.toggle(),
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text(langController.tr('Kapat', 'Close')),
             ),
-            onTap: ThemeController.instance.toggle,
-          );
-        },
-      ),
-      actions: <Widget>[
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Kapat'),
-        ),
-      ],
+          ],
+        );
+      },
     );
   }
 }
@@ -3759,56 +3896,56 @@ class _HtmlToolRail extends StatelessWidget {
         child: Row(
           children: <Widget>[
             _RailButton(
-              label: 'Şablon',
+              label: tr('Şablon', 'Template'),
               icon: Icons.dashboard_customize_rounded,
               isSelected: activeTab == _HtmlToolTab.templates,
               onTap: () => onTabChanged(_HtmlToolTab.templates),
             ),
             const SizedBox(width: 8),
             _RailButton(
-              label: 'Arka Plan',
+              label: tr('Arka Plan', 'Background'),
               icon: Icons.wallpaper_rounded,
               isSelected: activeTab == _HtmlToolTab.backgrounds,
               onTap: () => onTabChanged(_HtmlToolTab.backgrounds),
             ),
             const SizedBox(width: 8),
             _RailButton(
-              label: 'Bileşen',
+              label: tr('Bileşen', 'Component'),
               icon: Icons.widgets_rounded,
               isSelected: activeTab == _HtmlToolTab.components,
               onTap: () => onTabChanged(_HtmlToolTab.components),
             ),
             const SizedBox(width: 8),
             _RailButton(
-              label: 'Metin',
+              label: tr('Metin', 'Text'),
               icon: Icons.text_fields_rounded,
               isSelected: activeTab == _HtmlToolTab.text,
               onTap: () => onTabChanged(_HtmlToolTab.text),
             ),
             const SizedBox(width: 8),
             _RailButton(
-              label: '3D Modeller',
+              label: tr('3D Modeller', '3D Models'),
               icon: Icons.view_in_ar_rounded,
               isSelected: activeTab == _HtmlToolTab.models3d,
               onTap: () => onTabChanged(_HtmlToolTab.models3d),
             ),
             const SizedBox(width: 8),
             _RailButton(
-              label: 'Fotoğraf',
+              label: tr('Fotoğraf', 'Photo'),
               icon: Icons.add_photo_alternate_rounded,
               isSelected: activeTab == _HtmlToolTab.photo,
               onTap: () => onTabChanged(_HtmlToolTab.photo),
             ),
             const SizedBox(width: 8),
             _RailButton(
-              label: 'Geçişler',
+              label: tr('Geçişler', 'Transitions'),
               icon: Icons.animation_rounded,
               isSelected: activeTab == _HtmlToolTab.transitions,
               onTap: () => onTabChanged(_HtmlToolTab.transitions),
             ),
             const SizedBox(width: 8),
             _RailButton(
-              label: 'Sahne Ölçüsü',
+              label: tr('Sahne Ölçüsü', 'Canvas Size'),
               icon: Icons.aspect_ratio_rounded,
               isSelected: activeTab == _HtmlToolTab.stageDimensions,
               onTap: () => onTabChanged(_HtmlToolTab.stageDimensions),
@@ -4852,56 +4989,56 @@ class _HtmlTabStrip extends StatelessWidget {
         child: Row(
           children: <Widget>[
             _HtmlTabButton(
-              label: 'Şablonlar',
+              label: tr('Şablonlar', 'Templates'),
               icon: Icons.dashboard_customize_rounded,
               isSelected: activeTab == _HtmlToolTab.templates,
               onTap: () => onTabChanged(_HtmlToolTab.templates),
             ),
             const SizedBox(width: 6),
             _HtmlTabButton(
-              label: 'Arka Planlar',
+              label: tr('Arka Planlar', 'Backgrounds'),
               icon: Icons.wallpaper_rounded,
               isSelected: activeTab == _HtmlToolTab.backgrounds,
               onTap: () => onTabChanged(_HtmlToolTab.backgrounds),
             ),
             const SizedBox(width: 6),
             _HtmlTabButton(
-              label: 'Bilesenler',
+              label: tr('Bilesenler', 'Components'),
               icon: Icons.widgets_rounded,
               isSelected: activeTab == _HtmlToolTab.components,
               onTap: () => onTabChanged(_HtmlToolTab.components),
             ),
             const SizedBox(width: 6),
             _HtmlTabButton(
-              label: 'Metin',
+              label: tr('Metin', 'Text'),
               icon: Icons.text_fields_rounded,
               isSelected: activeTab == _HtmlToolTab.text,
               onTap: () => onTabChanged(_HtmlToolTab.text),
             ),
             const SizedBox(width: 6),
             _HtmlTabButton(
-              label: '3D Modeller',
+              label: tr('3D Modeller', '3D Models'),
               icon: Icons.view_in_ar_rounded,
               isSelected: activeTab == _HtmlToolTab.models3d,
               onTap: () => onTabChanged(_HtmlToolTab.models3d),
             ),
             const SizedBox(width: 6),
             _HtmlTabButton(
-              label: 'Fotoğraf',
+              label: tr('Fotoğraf', 'Photos'),
               icon: Icons.add_photo_alternate_rounded,
               isSelected: activeTab == _HtmlToolTab.photo,
               onTap: () => onTabChanged(_HtmlToolTab.photo),
             ),
             const SizedBox(width: 6),
             _HtmlTabButton(
-              label: 'Geçişler',
+              label: tr('Geçişler', 'Transitions'),
               icon: Icons.animation_rounded,
               isSelected: activeTab == _HtmlToolTab.transitions,
               onTap: () => onTabChanged(_HtmlToolTab.transitions),
             ),
             const SizedBox(width: 6),
             _HtmlTabButton(
-              label: 'Sahne Ölçüsü',
+              label: tr('Sahne Ölçüsü', 'Canvas Size'),
               icon: Icons.aspect_ratio_rounded,
               isSelected: activeTab == _HtmlToolTab.stageDimensions,
               onTap: () => onTabChanged(_HtmlToolTab.stageDimensions),
@@ -7213,18 +7350,48 @@ class _ToolbarAction extends StatelessWidget {
   }
 }
 
+Color? _parseTextColorHex(String? hex) {
+  if (hex == null || hex.trim().isEmpty) return null;
+  var clean = hex.trim().replaceAll('#', '');
+  if (clean.startsWith('0x') || clean.startsWith('0X')) {
+    clean = clean.substring(2);
+  }
+  if (clean.length == 3) {
+    clean = '${clean[0]}${clean[0]}${clean[1]}${clean[1]}${clean[2]}${clean[2]}';
+  }
+  if (clean.length == 6) {
+    clean = 'FF$clean';
+  }
+  if (clean.length == 8) {
+    final val = int.tryParse(clean, radix: 16);
+    if (val != null) return Color(val);
+  }
+  return null;
+}
+
+String _colorToTextHex(Color color) {
+  final r = (color.r * 255).round().toRadixString(16).padLeft(2, '0');
+  final g = (color.g * 255).round().toRadixString(16).padLeft(2, '0');
+  final b = (color.b * 255).round().toRadixString(16).padLeft(2, '0');
+  return '#${r}${g}${b}'.toUpperCase();
+}
+
 const List<_TextColorOption> _textColorOptions = <_TextColorOption>[
   _TextColorOption(label: 'Otomatik', hex: null, color: Color(0xFFFFFFFF)),
   _TextColorOption(label: 'Beyaz', hex: '#F8FBFF', color: Color(0xFFF8FBFF)),
+  _TextColorOption(label: 'Açık Gri', hex: '#E2E8F0', color: Color(0xFFE2E8F0)),
   _TextColorOption(
       label: 'Camgöbeği', hex: '#67E8F9', color: Color(0xFF67E8F9)),
   _TextColorOption(label: 'Mavi', hex: '#3B82F6', color: Color(0xFF3B82F6)),
   _TextColorOption(label: 'Mor', hex: '#A855F7', color: Color(0xFFA855F7)),
+  _TextColorOption(label: 'Pembe', hex: '#EC4899', color: Color(0xFFEC4899)),
   _TextColorOption(label: 'Sarı', hex: '#FBBF24', color: Color(0xFFFBBF24)),
   _TextColorOption(label: 'Turuncu', hex: '#FB923C', color: Color(0xFFFB923C)),
   _TextColorOption(label: 'Kırmızı', hex: '#F87171', color: Color(0xFFF87171)),
   _TextColorOption(label: 'Yeşil', hex: '#22C55E', color: Color(0xFF22C55E)),
   _TextColorOption(label: 'Nane', hex: '#34D399', color: Color(0xFF34D399)),
+  _TextColorOption(label: 'Koyu Gri', hex: '#334155', color: Color(0xFF334155)),
+  _TextColorOption(label: 'Siyah', hex: '#000000', color: Color(0xFF000000)),
 ];
 
 class _TextColorOption {
@@ -7237,6 +7404,434 @@ class _TextColorOption {
   final String label;
   final String? hex;
   final Color color;
+}
+
+class _TextColorPickerPanel extends StatefulWidget {
+  const _TextColorPickerPanel({
+    super.key,
+    required this.controller,
+    required this.currentHex,
+  });
+
+  final PresentationController controller;
+  final String? currentHex;
+
+  @override
+  State<_TextColorPickerPanel> createState() => _TextColorPickerPanelState();
+}
+
+class _TextColorPickerPanelState extends State<_TextColorPickerPanel> {
+  late TextEditingController _hexController;
+  late double _hue;
+  late double _saturation;
+  late double _value;
+  bool _isAuto = true;
+  String? _lastExternalHex;
+
+  @override
+  void initState() {
+    super.initState();
+    _hexController = TextEditingController();
+    _updateFromHex(widget.currentHex, isExternal: true);
+  }
+
+  @override
+  void didUpdateWidget(covariant _TextColorPickerPanel oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.currentHex != oldWidget.currentHex &&
+        widget.currentHex != _lastExternalHex) {
+      _updateFromHex(widget.currentHex, isExternal: true);
+    }
+  }
+
+  @override
+  void dispose() {
+    _hexController.dispose();
+    super.dispose();
+  }
+
+  void _updateFromHex(String? hex, {bool isExternal = false}) {
+    _lastExternalHex = hex;
+    if (hex == null || hex.trim().isEmpty) {
+      setState(() {
+        _isAuto = true;
+        _hue = 210.0;
+        _saturation = 1.0;
+        _value = 1.0;
+        if (isExternal) {
+          _hexController.text = '';
+        }
+      });
+    } else {
+      final parsed = _parseTextColorHex(hex);
+      if (parsed != null) {
+        final hsv = HSVColor.fromColor(parsed);
+        final cleanHex = _colorToTextHex(parsed);
+        setState(() {
+          _isAuto = false;
+          _hue = hsv.hue;
+          _saturation = hsv.saturation;
+          _value = hsv.value;
+          if (isExternal) {
+            _hexController.text = cleanHex;
+          }
+        });
+      } else if (isExternal) {
+        setState(() {
+          _hexController.text = hex.toUpperCase();
+        });
+      }
+    }
+  }
+
+  Color get _displayColor {
+    if (_isAuto) return const Color(0xFFFFFFFF);
+    return HSVColor.fromAHSV(1.0, _hue, _saturation, _value).toColor();
+  }
+
+  void _selectColor(Color color, {String? hexCode}) {
+    final hex = hexCode ?? _colorToTextHex(color);
+    final hsv = HSVColor.fromColor(color);
+    setState(() {
+      _isAuto = false;
+      _hue = hsv.hue;
+      _saturation = hsv.saturation;
+      _value = hsv.value;
+      _hexController.text = hex;
+    });
+    _lastExternalHex = hex;
+    widget.controller.updateSelectedTextColor(hex);
+  }
+
+  void _selectAuto() {
+    setState(() {
+      _isAuto = true;
+      _hexController.text = '';
+    });
+    _lastExternalHex = null;
+    widget.controller.updateSelectedTextColor(null);
+  }
+
+  void _onHexInputChanged(String val) {
+    final clean = val.trim();
+    if (clean.isEmpty) {
+      _selectAuto();
+      return;
+    }
+    final parsed = _parseTextColorHex(clean);
+    if (parsed != null) {
+      final formattedHex = _colorToTextHex(parsed);
+      final hsv = HSVColor.fromColor(parsed);
+      setState(() {
+        _isAuto = false;
+        _hue = hsv.hue;
+        _saturation = hsv.saturation;
+        _value = hsv.value;
+      });
+      _lastExternalHex = formattedHex;
+      widget.controller.updateSelectedTextColor(formattedHex);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: <Widget>[
+        _buildHexInputField(context),
+        const SizedBox(height: 12),
+        _buildVisualPicker(context),
+        const SizedBox(height: 12),
+        _buildPresetSwatches(context),
+      ],
+    );
+  }
+
+  Widget _buildHexInputField(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: context.sutolColors.surfaceSubtle,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: _isAuto ? context.sutolColors.outline : context._htmlAccent,
+          width: _isAuto ? 1 : 1.5,
+        ),
+      ),
+      child: Row(
+        children: <Widget>[
+          Container(
+            width: 28,
+            height: 28,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: _isAuto ? Colors.white : _displayColor,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: context.sutolColors.outline),
+              boxShadow: _isAuto
+                  ? null
+                  : <BoxShadow>[
+                      BoxShadow(
+                        color: _displayColor.withValues(alpha: 0.35),
+                        blurRadius: 6,
+                      ),
+                    ],
+            ),
+            child: _isAuto
+                ? Text(
+                    'A',
+                    style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                          color: context._htmlInk,
+                          fontWeight: FontWeight.w900,
+                        ),
+                  )
+                : null,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                Text(
+                  'HEX Renk Kodu',
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: context._htmlMuted,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                      ),
+                ),
+                TextField(
+                  controller: _hexController,
+                  onChanged: _onHexInputChanged,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: context._htmlInk,
+                        fontWeight: FontWeight.w800,
+                        fontFamily: 'monospace',
+                      ),
+                  decoration: InputDecoration(
+                    hintText: 'Otomatik (#HEX)',
+                    hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: context._htmlMuted,
+                          fontStyle: FontStyle.italic,
+                        ),
+                    isDense: true,
+                    contentPadding: const EdgeInsets.symmetric(vertical: 2),
+                    border: InputBorder.none,
+                    enabledBorder: InputBorder.none,
+                    focusedBorder: InputBorder.none,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if (!_isAuto)
+            IconButton(
+              tooltip: 'Otomatik renge sıfırla',
+              icon: const Icon(Icons.refresh_rounded, size: 18),
+              onPressed: _selectAuto,
+              visualDensity: VisualDensity.compact,
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildVisualPicker(BuildContext context) {
+    final pureHueColor = HSVColor.fromAHSV(1.0, _hue, 1.0, 1.0).toColor();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: <Widget>[
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final boxWidth = constraints.maxWidth;
+            const boxHeight = 110.0;
+            final thumbX = (_saturation * boxWidth - 10).clamp(0.0, boxWidth - 20.0);
+            final thumbY = ((1.0 - _value) * boxHeight - 10).clamp(0.0, boxHeight - 20.0);
+            return ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: GestureDetector(
+                onPanUpdate: (details) {
+                  final sat = (details.localPosition.dx / boxWidth).clamp(0.0, 1.0);
+                  final val = (1.0 - (details.localPosition.dy / boxHeight)).clamp(0.0, 1.0);
+                  _selectColor(HSVColor.fromAHSV(1.0, _hue, sat, val).toColor());
+                },
+                onPanDown: (details) {
+                  final sat = (details.localPosition.dx / boxWidth).clamp(0.0, 1.0);
+                  final val = (1.0 - (details.localPosition.dy / boxHeight)).clamp(0.0, 1.0);
+                  _selectColor(HSVColor.fromAHSV(1.0, _hue, sat, val).toColor());
+                },
+                child: Container(
+                  height: boxHeight,
+                  color: pureHueColor,
+                  child: Stack(
+                    children: <Widget>[
+                      Positioned.fill(
+                        child: Container(
+                          decoration: const BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: <Color>[Colors.white, Color(0x00FFFFFF)],
+                              begin: Alignment.centerLeft,
+                              end: Alignment.centerRight,
+                            ),
+                          ),
+                        ),
+                      ),
+                      Positioned.fill(
+                        child: Container(
+                          decoration: const BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: <Color>[Color(0x00000000), Colors.black],
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                            ),
+                          ),
+                        ),
+                      ),
+                      Positioned(
+                        left: thumbX,
+                        top: thumbY,
+                        child: Container(
+                          width: 20,
+                          height: 20,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: _displayColor,
+                            border: Border.all(color: Colors.white, width: 2.5),
+                            boxShadow: const <BoxShadow>[
+                              BoxShadow(color: Colors.black38, blurRadius: 4),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
+        const SizedBox(height: 10),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final sliderWidth = constraints.maxWidth;
+            final thumbX = ((_hue / 360.0) * sliderWidth - 8).clamp(0.0, sliderWidth - 16.0);
+            return ClipRRect(
+              borderRadius: BorderRadius.circular(10),
+              child: GestureDetector(
+                onPanUpdate: (details) {
+                  final h = ((details.localPosition.dx / sliderWidth) * 360.0).clamp(0.0, 360.0);
+                  _selectColor(HSVColor.fromAHSV(1.0, h, _saturation, _value).toColor());
+                },
+                onPanDown: (details) {
+                  final h = ((details.localPosition.dx / sliderWidth) * 360.0).clamp(0.0, 360.0);
+                  _selectColor(HSVColor.fromAHSV(1.0, h, _saturation, _value).toColor());
+                },
+                child: Container(
+                  height: 20,
+                  decoration: const BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: <Color>[
+                        Color(0xFFFF0000),
+                        Color(0xFFFFFF00),
+                        Color(0xFF00FF00),
+                        Color(0xFF00FFFF),
+                        Color(0xFF0000FF),
+                        Color(0xFFFF00FF),
+                        Color(0xFFFF0000),
+                      ],
+                    ),
+                  ),
+                  child: Stack(
+                    children: <Widget>[
+                      Positioned(
+                        left: thumbX,
+                        top: 1,
+                        bottom: 1,
+                        child: Container(
+                          width: 16,
+                          decoration: BoxDecoration(
+                            color: pureHueColor,
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.white, width: 2),
+                            boxShadow: const <BoxShadow>[
+                              BoxShadow(color: Colors.black26, blurRadius: 3),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPresetSwatches(BuildContext context) {
+    final currentHexUpper = widget.currentHex?.toUpperCase();
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: <Widget>[
+        for (final option in _textColorOptions) ...<Widget>[
+          InkWell(
+            onTap: () {
+              if (option.hex == null) {
+                _selectAuto();
+              } else {
+                _selectColor(option.color, hexCode: option.hex);
+              }
+            },
+            borderRadius: BorderRadius.circular(8),
+            child: Tooltip(
+              message: option.label + (option.hex != null ? ' (${option.hex})' : ''),
+              child: Container(
+                width: 30,
+                height: 30,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: option.color,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: (option.hex == null && _isAuto) ||
+                            (option.hex != null && currentHexUpper == option.hex!.toUpperCase())
+                        ? context._htmlAccent
+                        : context.sutolColors.outline,
+                    width: (option.hex == null && _isAuto) ||
+                            (option.hex != null && currentHexUpper == option.hex!.toUpperCase())
+                        ? 2.5
+                        : 1,
+                  ),
+                ),
+                child: option.hex == null
+                    ? Text(
+                        'A',
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                              color: context._htmlInk,
+                              fontWeight: FontWeight.w900,
+                            ),
+                      )
+                    : ((currentHexUpper == option.hex!.toUpperCase())
+                        ? Icon(
+                            Icons.check_rounded,
+                            size: 16,
+                            color: option.color.computeLuminance() > 0.5
+                                ? Colors.black
+                                : Colors.white,
+                          )
+                        : null),
+              ),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
 }
 
 class _HtmlTextControls extends StatefulWidget {
@@ -7319,6 +7914,19 @@ class _HtmlTextControlsState extends State<_HtmlTextControls> {
           controller: textController,
           enabled: selectedTextBlock != null,
           onChanged: controller.updateSelectedText,
+        ),
+        const SizedBox(height: 18),
+        Text(
+          'Metin Rengi',
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                color: context._htmlInk,
+                fontWeight: FontWeight.w800,
+              ),
+        ),
+        const SizedBox(height: 10),
+        _TextColorPickerPanel(
+          controller: controller,
+          currentHex: selectedTextBlock?.textColorHex,
         ),
         const SizedBox(height: 18),
         Text(
@@ -8202,92 +8810,105 @@ class _TextColorPopupButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final current = _textColorOptions.firstWhere(
-      (option) => option.hex == currentHex,
-      orElse: () => _textColorOptions.first,
-    );
-    return PopupMenuButton<_TextColorOption>(
-      tooltip: 'Yazı rengi',
-      initialValue: current,
-      position: PopupMenuPosition.under,
-      constraints: const BoxConstraints(
-        minWidth: 190,
-        maxWidth: 230,
-        maxHeight: 360,
-      ),
-      onSelected: (option) {
-        controller.updateSelectedTextColor(option.hex);
-      },
-      itemBuilder: (context) => <PopupMenuEntry<_TextColorOption>>[
-        for (final option in _textColorOptions)
-          PopupMenuItem<_TextColorOption>(
-            key: ValueKey<String>('text-color-${option.hex ?? 'auto'}'),
-            value: option,
-            height: 44,
-            child: Row(
-              children: <Widget>[
-                Container(
-                  width: 24,
-                  height: 24,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: option.color,
-                    borderRadius: BorderRadius.circular(7),
-                    border: Border.all(color: context.sutolColors.outline),
-                  ),
-                  child: option.hex == null
-                      ? Text(
-                          'A',
-                          style:
-                              Theme.of(context).textTheme.labelSmall?.copyWith(
-                                    color: context._htmlInk,
-                                    fontWeight: FontWeight.w900,
-                                  ),
-                        )
-                      : null,
-                ),
-                const SizedBox(width: 10),
-                Expanded(child: Text(option.label)),
-                if (option.hex == currentHex)
-                  Icon(
-                    Icons.check_rounded,
-                    size: 18,
-                    color: context.colors.primary,
-                  ),
-              ],
-            ),
-          ),
-      ],
-      child: Container(
-        width: 36,
-        height: 34,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: context.sutolColors.outline),
-        ),
+    final currentColor = _parseTextColorHex(currentHex);
+    return Tooltip(
+      message: 'Metin Rengi (Color Picker & HEX)',
+      child: InkWell(
+        onTap: () {
+          _showTextColorPickerDialog(context, controller, currentHex);
+        },
+        borderRadius: BorderRadius.circular(10),
         child: Container(
-          width: 21,
-          height: 21,
+          width: 36,
+          height: 34,
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            color: current.color,
-            borderRadius: BorderRadius.circular(6),
+            borderRadius: BorderRadius.circular(10),
             border: Border.all(color: context.sutolColors.outline),
           ),
-          child: current.hex == null
-              ? Text(
-                  'A',
-                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        color: context._htmlInk,
-                        fontWeight: FontWeight.w900,
-                      ),
-                )
-              : null,
+          child: Container(
+            width: 21,
+            height: 21,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: currentColor ?? Colors.white,
+              borderRadius: BorderRadius.circular(6),
+              border: Border.all(color: context.sutolColors.outline),
+            ),
+            child: currentColor == null
+                ? Text(
+                    'A',
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                          color: context._htmlInk,
+                          fontWeight: FontWeight.w900,
+                        ),
+                  )
+                : null,
+          ),
         ),
       ),
     );
   }
+}
+
+void _showTextColorPickerDialog(
+  BuildContext context,
+  PresentationController controller,
+  String? currentHex,
+) {
+  showDialog<void>(
+    context: context,
+    builder: (dialogContext) {
+      return Dialog(
+        backgroundColor: context.colors.surfaceElevated,
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: BorderSide(color: context.sutolColors.outline),
+        ),
+        child: Container(
+          width: 340,
+          padding: const EdgeInsets.all(20),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: <Widget>[
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: <Widget>[
+                    Row(
+                      children: <Widget>[
+                        Icon(Icons.palette_rounded, size: 20, color: context._htmlAccent),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Metin Rengi Seçin',
+                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                color: context._htmlInk,
+                                fontWeight: FontWeight.w800,
+                              ),
+                        ),
+                      ],
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close_rounded, size: 20),
+                      onPressed: () => Navigator.of(dialogContext).pop(),
+                      visualDensity: VisualDensity.compact,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 14),
+                _TextColorPickerPanel(
+                  controller: controller,
+                  currentHex: currentHex,
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    },
+  );
 }
 
 /// Metin parlaklığını modal pencere oluşturmadan doğrudan ayarlar.

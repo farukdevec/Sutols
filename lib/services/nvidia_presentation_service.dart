@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
+import 'package:meta/meta.dart';
 
 import 'presentation_prompt_builder.dart';
 
@@ -107,10 +108,10 @@ class NvidiaPresentationService {
       'messages': [
         {
           'role': 'system',
-          'content': 'Sen deneyimli bir sunum editörü ve bilgi mimarısın. Önce anlatı '
-              'akışını planlar, sonra her slayta benzersiz bir görev verirsin. '
-              'Aynı bilgiyi veya cümle kalıbını tekrarlamazsın. SADECE geçerli '
-              'JSON döndürürsün; açıklama ve markdown eklemezsin.',
+          'content': 'Sen profesyonel bir sunum üreticisisin. İstenen sunumu KESİNLİKLE VE '
+              'YALNIZCA TEK BİR GEÇERLİ JSON NESNESİ OLARAK DÖNDÜR. Yanıtında asla '
+              'konuşma, açıklama, Türkçe anlatı metni, planlama düşünceleri veya '
+              'markdown kod blokları yazma.',
         },
         {
           'role': 'user',
@@ -146,7 +147,10 @@ class NvidiaPresentationService {
         final response = await http
             .post(
               Uri.parse(_proxyUrl),
-              headers: {'Content-Type': 'application/json'},
+              headers: {
+                'Content-Type': 'application/json',
+                'Origin': 'https://sutols.com',
+              },
               body: jsonEncode(body),
             )
             .timeout(
@@ -226,33 +230,43 @@ class NvidiaPresentationService {
     return decoded;
   }
 
+  @visibleForTesting
+  static Map<String, dynamic> parsePresentationPayload(String rawContent) =>
+      _parsePresentationPayload(rawContent);
+
   static Map<String, dynamic> _parsePresentationPayload(String rawContent) {
     var cleaned = rawContent.trim();
-    if (cleaned.startsWith('```')) {
-      final firstNewline = cleaned.indexOf('\n');
-      if (firstNewline != -1) {
-        cleaned = cleaned.substring(firstNewline + 1);
-      }
-      cleaned = cleaned.replaceFirst(RegExp(r'```\s*$'), '').trim();
-    }
 
-    final direct = _tryDecodeMap(cleaned);
-    if (direct != null) {
-      return _normalizePresentationPayload(direct);
-    }
-
-    final blockMatch = RegExp(r'\{.*\}', dotAll: true).firstMatch(cleaned);
-    if (blockMatch != null) {
-      final block = blockMatch.group(0)!;
-      final blockMap = _tryDecodeMap(block);
-      if (blockMap != null) {
-        return _normalizePresentationPayload(blockMap);
+    // 1. Remove markdown code fences if present (e.g. ```json ... ```)
+    if (cleaned.contains('```')) {
+      final match = RegExp(r'```(?:json)?\s*([\s\S]*?)\s*```').firstMatch(cleaned);
+      if (match != null) {
+        cleaned = match.group(1)!.trim();
+      } else if (cleaned.startsWith('```')) {
+        final firstNewline = cleaned.indexOf('\n');
+        if (firstNewline != -1) {
+          cleaned = cleaned.substring(firstNewline + 1);
+        }
+        cleaned = cleaned.replaceFirst(RegExp(r'```\s*$'), '').trim();
       }
     }
 
-    final objectSequence = _decodeJsonObjectSequence(cleaned);
-    if (objectSequence.isNotEmpty) {
-      return {'slides': objectSequence};
+    // 2. Direct object attempt
+    final directMap = _tryDecodeMap(cleaned);
+    if (directMap != null) {
+      return _normalizePresentationPayload(directMap);
+    }
+
+    // 3. Direct array attempt
+    final directList = _tryDecodeList(cleaned);
+    if (directList != null) {
+      return _normalizeSlideList(directList);
+    }
+
+    // 4. Extract all slides from any embedded JSON maps or lists
+    final extractedSlides = _extractAllSlidesFromText(cleaned);
+    if (extractedSlides.isNotEmpty) {
+      return {'slides': extractedSlides};
     }
 
     throw Exception(
@@ -260,12 +274,81 @@ class NvidiaPresentationService {
     );
   }
 
+  static List<Map<String, dynamic>> _extractAllSlidesFromText(String text) {
+    final slides = <Map<String, dynamic>>[];
+
+    // 1. Look for any {"slides": [...]} structure
+    final slideMatches = RegExp(r'\{[^{}]*"slides"\s*:\s*\[[\s\S]*?\][^{}]*\}').allMatches(text);
+    for (final match in slideMatches) {
+      final map = _tryDecodeMap(match.group(0)!);
+      if (map != null && map['slides'] is List) {
+        for (final item in map['slides'] as List) {
+          if (item is Map) {
+            final m = item.map((k, v) => MapEntry(k.toString(), v));
+            if (_looksLikeSlideObject(m)) slides.add(m);
+          }
+        }
+      }
+    }
+    if (slides.isNotEmpty) return slides;
+
+    // 2. Look for individual slide objects {"title": ..., "content": ...}
+    final objMatches = RegExp(r'\{[^{}]*"title"\s*:[^{}]*"content"\s*:[^{}]*\}').allMatches(text);
+    for (final match in objMatches) {
+      final map = _tryDecodeMap(match.group(0)!);
+      if (map != null && _looksLikeSlideObject(map)) {
+        slides.add(map);
+      }
+    }
+    if (slides.isNotEmpty) return slides;
+
+    // 3. Fall back to greedy object sequence scanning
+    return _decodeJsonObjectSequence(text);
+  }
+
+  static List<dynamic>? _tryDecodeList(String raw) {
+    try {
+      final decoded = jsonDecode(raw);
+      if (decoded is List) return decoded;
+    } catch (_) {}
+    return null;
+  }
+
+  static Map<String, dynamic> _normalizeSlideList(List<dynamic> list) {
+    final validSlides = <Map<String, dynamic>>[];
+    for (final item in list) {
+      if (item is Map) {
+        final map = item.map((key, value) => MapEntry(key.toString(), value));
+        if (_looksLikeSlideObject(map)) {
+          validSlides.add(map);
+        }
+      }
+    }
+    if (validSlides.isEmpty) {
+      throw const FormatException('AI yanıtında geçerli slayt bulunamadı.');
+    }
+    return {'slides': validSlides};
+  }
+
   static Map<String, dynamic> _normalizePresentationPayload(
     Map<String, dynamic> decoded,
   ) {
-    if (decoded['slides'] is List) {
-      return decoded;
+    for (final key in const ['slides', 'sunum', 'slaytlar', 'presentation', 'items', 'data']) {
+      if (decoded[key] is List) {
+        return {'slides': decoded[key]};
+      }
     }
+
+    for (final entry in decoded.entries) {
+      if (entry.value is List) {
+        final list = entry.value as List;
+        if (list.isNotEmpty &&
+            list.any((item) => item is Map && _looksLikeSlideObject(item.map((k, v) => MapEntry(k.toString(), v))))) {
+          return {'slides': list};
+        }
+      }
+    }
+
     if (_looksLikeSlideObject(decoded)) {
       return {
         'slides': [decoded]

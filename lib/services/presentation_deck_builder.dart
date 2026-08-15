@@ -56,6 +56,7 @@ class PresentationDeckBuilder {
           ...slide.keywords,
           ...title.split(' '),
           ...content.split(' '),
+          ...topic.split(' '),
         ];
         final catalogMatches = ModelMatchingService.rankCatalogModels(
           models: ModelMatchingService.localCatalogEntries,

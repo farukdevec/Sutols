@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import '../services/presentation_service.dart';
+import '../state/language_controller.dart';
 import 'design/design_system.dart';
 import 'redeem_code_page.dart';
 
@@ -56,10 +57,10 @@ class _MembershipPageState extends State<MembershipPage> {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    final currentPlanLabel = _hasPlus ? 'Plus' : 'Ücretsiz';
+    final currentPlanLabel = _hasPlus ? 'Plus' : tr('Ücretsiz', 'Free');
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Üyelik Planları')),
+      appBar: AppBar(title: Text(tr('Üyelik Planları', 'Membership Plans'))),
       backgroundColor: colors.surface,
       body: Center(
         child: ConstrainedBox(
@@ -73,7 +74,7 @@ class _MembershipPageState extends State<MembershipPage> {
             child: Column(
               children: [
                 Text(
-                  'Fikirden sunuma, tek cümlede.',
+                  tr('Fikirden sunuma, tek cümlede.', 'From idea to presentation, in a single sentence.'),
                   textAlign: TextAlign.center,
                   style: AppTypography.headline.copyWith(
                     color: colors.textPrimary,
@@ -81,7 +82,7 @@ class _MembershipPageState extends State<MembershipPage> {
                 ),
                 const SizedBox(height: AppSpacing.s8),
                 Text(
-                  'Size uygun planı seçin ve sunum üretimini başlatın.',
+                  tr('Size uygun planı seçin ve sunum üretimini başlatın.', 'Choose the plan that fits you best and start creating presentations.'),
                   textAlign: TextAlign.center,
                   style: AppTypography.bodyLarge.copyWith(
                     color: colors.textSecondary,
@@ -107,8 +108,8 @@ class _MembershipPageState extends State<MembershipPage> {
                         ),
                   label: Text(
                     _loadingPlan
-                        ? 'Mevcut plan yükleniyor'
-                        : 'Mevcut plan: $currentPlanLabel',
+                        ? tr('Mevcut plan yükleniyor', 'Loading current plan')
+                        : '${tr('Mevcut plan:', 'Current plan:')} $currentPlanLabel',
                     style: AppTypography.labelMedium.copyWith(
                       color: _hasPlus ? _plusGold : colors.textSecondary,
                       fontWeight: FontWeight.w700,
@@ -119,8 +120,8 @@ class _MembershipPageState extends State<MembershipPage> {
                 TextButton.icon(
                   onPressed: _openRedeemCode,
                   icon: const Icon(Icons.redeem_outlined, size: 18),
-                  label: const Text(
-                      'Bir promosyon kodunuz mu var? Kodunuzu kullanın'),
+                  label: Text(
+                      tr('Bir promosyon kodunuz mu var? Kodunuzu kullanın', 'Have a promo code? Redeem your code')),
                 ),
                 const SizedBox(height: AppSpacing.s32),
                 Expanded(
@@ -128,28 +129,28 @@ class _MembershipPageState extends State<MembershipPage> {
                     builder: (context, constraints) {
                       final wide = constraints.maxWidth >= 900;
                       final freeCard = _MembershipCard(
-                        title: 'Ücretsiz',
-                        price: '₺0 / ay',
-                        features: const [
-                          'Günde 5 sunum',
-                          'Temel model kütüphanesi',
-                          '1-7 slaytlık sunumlar',
+                        title: tr('Ücretsiz', 'Free'),
+                        price: tr('₺0 / ay', '\$0 / month'),
+                        features: [
+                          tr('Günde 5 sunum', '5 presentations per day'),
+                          tr('Temel model kütüphanesi', 'Basic model library'),
+                          tr('1-7 slaytlık sunumlar', '1-7 slides presentations'),
                         ],
                         buttonLabel:
-                            !_loadingPlan && !_hasPlus ? 'Mevcut Planınız' : '',
+                            !_loadingPlan && !_hasPlus ? tr('Mevcut Planınız', 'Your Current Plan') : '',
                         isCurrent: !_loadingPlan && !_hasPlus,
                       );
                       final plusCard = _MembershipCard(
                         title: 'Plus',
                         price: '\$2 / ay',
-                        features: const [
-                          'Günde 15 sunum',
-                          'Genişletilmiş model kütüphanesi',
-                          '1-30 slaytlık sunumlar',
+                        features: [
+                          tr('Günde 15 sunum', '15 presentations per day'),
+                          tr('Genişletilmiş model kütüphanesi', 'Extended model library'),
+                          tr('1-30 slaytlık sunumlar', '1-30 slides presentations'),
                         ],
                         buttonLabel: !_loadingPlan && _hasPlus
-                            ? 'Mevcut Planınız'
-                            : 'Plus’a Geç',
+                            ? tr('Mevcut Planınız', 'Your Current Plan')
+                            : tr('Plus’a Geç', 'Upgrade to Plus'),
                         highlighted: true,
                         isCurrent: !_loadingPlan && _hasPlus,
                         buttonEnabled: !_loadingPlan && !_hasPlus,
