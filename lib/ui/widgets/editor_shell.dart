@@ -3135,21 +3135,16 @@ class ComponentBlockPreviewPainter extends CustomPainter {
 
   void _drawScience(Canvas canvas, Size size, Paint paint, Paint fill) {
     final center = Offset(size.width * 0.50, size.height * 0.50);
-    for (final rotation in <double>[0.1, 0.9, 1.7]) {
-      canvas.save();
-      canvas.translate(center.dx, center.dy);
-      canvas.rotate(rotation);
-      canvas.drawOval(
-        Rect.fromCenter(
-          center: Offset.zero,
-          width: size.width * 0.55,
-          height: size.height * 0.22,
-        ),
-        paint,
-      );
-      canvas.restore();
-    }
-    canvas.drawCircle(center, size.shortestSide * 0.06, fill);
+    final cardRect = RRect.fromRectAndRadius(
+      Rect.fromCenter(
+        center: center,
+        width: size.width * 0.52,
+        height: size.height * 0.52,
+      ),
+      const Radius.circular(8),
+    );
+    canvas.drawRRect(cardRect, paint);
+    canvas.drawCircle(center, size.shortestSide * 0.10, fill);
   }
 
   @override
@@ -3227,26 +3222,6 @@ class _CanvasBackgroundPreviewPainter extends CustomPainter {
         size.height * 0.54,
       );
     canvas.drawPath(path, paint);
-    _drawOrbit(canvas, size, paint, accent);
-  }
-
-  void _drawOrbit(Canvas canvas, Size size, Paint paint, Color accent) {
-    final center = Offset(size.width * 0.72, size.height * 0.34);
-    for (final rotation in <double>[0.1, 0.9, 1.7]) {
-      canvas.save();
-      canvas.translate(center.dx, center.dy);
-      canvas.rotate(rotation);
-      canvas.drawOval(
-        Rect.fromCenter(
-          center: Offset.zero,
-          width: size.width * 0.28,
-          height: size.height * 0.12,
-        ),
-        paint,
-      );
-      canvas.restore();
-    }
-    canvas.drawCircle(center, 4, Paint()..color = accent);
   }
 
   @override

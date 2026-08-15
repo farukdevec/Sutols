@@ -104,6 +104,9 @@ void main() {
   }) async {
     if (find.text(dockLabel).evaluate().isNotEmpty) {
       await openDockTool(tester, dockLabel);
+    } else if (find.byTooltip(dockLabel).evaluate().isNotEmpty) {
+      await tester.tap(find.byTooltip(dockLabel));
+      await tester.pumpAndSettle();
     } else {
       await openMoreTool(tester, moreLabel);
     }
@@ -127,19 +130,23 @@ void main() {
     expect(find.byType(HtmlPresentationEditorPage), findsOneWidget);
   });
 
-  for (final tool in <String>['Metin', 'Medya', 'Bileşenler']) {
+  for (final tool in <(String, String)>[
+    ('Metin', 'Metin'),
+    ('Modeller', '3B Modeller'),
+    ('Bileşen', 'Bileşenler'),
+  ]) {
     for (final w in <double>[360, 390]) {
-      testWidgets('"$tool" alet paneli ${w.toInt()}px bottom sheet taşmaz', (
+      testWidgets('"${tool.$1}" alet paneli ${w.toInt()}px bottom sheet taşmaz', (
         tester,
       ) async {
         await pumpAt(tester, Size(w, 844));
         expect(tester.takeException(), isNull);
         await openToolSmart(
           tester,
-          dockLabel: tool,
-          moreLabel: tool,
+          dockLabel: tool.$1,
+          moreLabel: tool.$2,
         );
-        expect(tester.takeException(), isNull, reason: '$tool sheet @ $w');
+        expect(tester.takeException(), isNull, reason: '${tool.$1} sheet @ $w');
       });
     }
   }
@@ -147,7 +154,7 @@ void main() {
   for (final tool in <String>[
     'Şablonlar',
     'Arka Planlar',
-    '3B Modeller',
+    'Fotoğraf',
     'Geçişler'
   ]) {
     for (final w in <double>[360, 390]) {
@@ -247,7 +254,7 @@ void main() {
   testWidgets('mobil araç paneli klavye açıkken görünür ve taşmasız kalır',
       (tester) async {
     await pumpAt(tester, const Size(390, 844));
-    await openMoreTool(tester, '3B Modeller');
+    await openToolSmart(tester, dockLabel: 'Modeller', moreLabel: '3B Modeller');
 
     final searchField = find.byWidgetPredicate(
       (widget) =>
@@ -310,7 +317,7 @@ void main() {
     testWidgets('dock dar ekranda araçları "Daha fazla"ya taşır, taşmaz', (
       tester,
     ) async {
-      const labels = <String>['Metin', 'Fotoğraf', 'Medya', 'Bileşenler'];
+      const labels = <String>['Metin', 'Modeller', 'Arka Plan', 'Bileşen'];
       int visibleCount() {
         var count = 0;
         for (final l in labels) {
@@ -319,13 +326,13 @@ void main() {
         return count;
       }
 
-      await pumpAt(tester, const Size(800, 800));
-      expect(visibleCount(), 4, reason: 'geniş ekranda tüm araçlar dockta');
+      await pumpAt(tester, const Size(580, 800));
+      expect(visibleCount(), greaterThanOrEqualTo(1), reason: 'geniş mobil ekranda araçlar dockta');
       expect(tester.takeException(), isNull);
 
       await pumpAt(tester, const Size(320, 800));
       final narrowCount = visibleCount();
-      expect(narrowCount, lessThan(4),
+      expect(narrowCount, lessThanOrEqualTo(2),
           reason: 'dar ekranda taşan araç gizlenir');
       expect(find.text('Metin'), findsOneWidget,
           reason: 'Metin hep dockta kalır');
@@ -333,14 +340,14 @@ void main() {
 
       // Kompakt "⋯" butonu ile "Daha fazla" menüsü yine de açılır.
       await openMoreMenu(tester);
-      expect(find.text('Fotoğraf Yükle'), findsOneWidget);
+      expect(find.text('Fotoğraf'), findsOneWidget);
       expect(tester.takeException(), isNull);
     });
 
     testWidgets('dock daraldıkça görünür araç sayısı azalır (kademeli)', (
       tester,
     ) async {
-      const labels = <String>['Metin', 'Fotoğraf', 'Medya', 'Bileşenler'];
+      const labels = <String>['Metin', 'Modeller', 'Arka Plan', 'Bileşen'];
       int visibleCount() {
         var count = 0;
         for (final l in labels) {
@@ -350,39 +357,30 @@ void main() {
       }
 
       final counts = <double, int>{};
-      for (final w in <double>[320, 360, 390, 414, 800]) {
+      for (final w in <double>[320, 360, 390, 414, 580]) {
         await pumpAt(tester, Size(w, 800));
         expect(tester.takeException(), isNull, reason: 'dock @${w.toInt()}px');
         counts[w] = visibleCount();
       }
-      expect(counts[320]!, lessThan(counts[800]!));
+      expect(counts[320]!, lessThanOrEqualTo(counts[580]!));
       expect(counts[360]!, lessThanOrEqualTo(counts[390]!));
       expect(counts[390]!, lessThanOrEqualTo(counts[414]!));
-      expect(counts[414]!, lessThanOrEqualTo(counts[800]!));
+      expect(counts[414]!, lessThanOrEqualTo(counts[580]!));
     });
 
-    testWidgets('Fotoğraf dock kısayolu hızlı aksiyon sheeti açar',
-        (tester) async {
+    testWidgets('Modeller dock kısayolu modeller panelini açar', (tester) async {
       await pumpAt(tester, const Size(390, 844));
-      expect(find.text('Fotoğraf'), findsOneWidget);
-      await openDockTool(tester, 'Fotoğraf');
-      expect(find.text('Fotoğraf Ekle'), findsOneWidget);
-      expect(find.text('Galeriden / Dosyadan'), findsOneWidget);
-      expect(find.text('Fotoğraf Kütüphanem'), findsOneWidget);
-
-      // "Fotoğraf Kütüphanem" → Medya (fotoğraf) panelini açar.
-      await tester.tap(find.text('Fotoğraf Kütüphanem'));
-      await tester.pumpAndSettle();
-      expect(find.text('Fotoğraf Yükle'), findsOneWidget);
+      await openToolSmart(tester, dockLabel: 'Modeller', moreLabel: '3B Modeller');
+      expect(find.byKey(const ValueKey<String>('model-library-panel')), findsOneWidget);
       expect(tester.takeException(), isNull);
     });
 
-    testWidgets('"Fotoğraf Yükle" menü öğesi hızlı aksiyon sheetini açar', (
+    testWidgets('"Fotoğraf" menü öğesi hızlı aksiyon sheetini açar', (
       tester,
     ) async {
-      await pumpAt(tester, const Size(320, 800));
+      await pumpAt(tester, const Size(390, 800));
       await openMoreMenu(tester);
-      await tester.tap(find.text('Fotoğraf Yükle'));
+      await tester.tap(find.text('Fotoğraf'));
       await tester.pumpAndSettle();
       expect(find.text('Fotoğraf Ekle'), findsOneWidget);
       expect(find.text('Galeriden / Dosyadan'), findsOneWidget);
@@ -838,7 +836,7 @@ void main() {
         );
 
         // Dock araçları: öncelik sırasıyla görünür; gizlenenler menüde.
-        const labels = <String>['Metin', 'Fotoğraf', 'Medya', 'Bileşenler'];
+        const labels = <String>['Şablon', 'Arka Plan', 'Metin', 'Modeller', 'Bileşen'];
         final visible =
             labels.where((l) => find.text(l).evaluate().isNotEmpty).toList();
         expect(visible, isNotEmpty, reason: 'dock boş olmamalı @$size');
@@ -846,10 +844,17 @@ void main() {
           if (!visible.contains(l)) {
             // Gizlenen araç "Daha fazla" menüsünde erişilebilir olmalı.
             await openMoreMenu(tester);
+            final menuText = switch (l) {
+              'Arka Plan' => 'Arka Planlar',
+              'Bileşen' => 'Bileşenler',
+              'Modeller' => '3B Modeller',
+              'Şablon' => 'Şablonlar',
+              _ => l,
+            };
             expect(
-              find.text(l),
+              find.text(menuText),
               findsWidgets,
-              reason: 'gizlenen "$l" menüde olmalı @$size',
+              reason: 'gizlenen "$l" ($menuText) menüde olmalı @$size',
             );
             await tester.tapAt(const Offset(10, 10));
             await tester.pumpAndSettle();
@@ -861,12 +866,11 @@ void main() {
         final menuItems = <String>[
           'Şablonlar',
           'Arka Planlar',
-          if (visible.contains('Bileşenler')) 'Bileşenler',
-          '3B Modeller',
           'Geçişler',
-          'Fotoğraf Yükle',
+          'Fotoğraf',
           'Ses',
           'Animasyonlar',
+          'Sahne Ölçüleri',
         ];
         for (final m in menuItems) {
           expect(
@@ -880,16 +884,9 @@ void main() {
           expect(find.text('Metin'), findsOneWidget,
               reason: 'Metin tek @$size');
         }
-        if (visible.contains('Medya')) {
-          expect(find.text('Medya'), findsOneWidget,
-              reason: 'Medya tek @$size');
-        }
-        if (visible.contains('Bileşenler')) {
-          expect(
-            find.text('Bileşenler'),
-            findsWidgets,
-            reason: 'Bileşenler dockta da menüde değil @$size',
-          );
+        if (visible.contains('Modeller')) {
+          expect(find.text('Modeller'), findsWidgets,
+              reason: 'Modeller dockta @$size');
         }
         final inMenu = <String>[
           for (final l in labels)

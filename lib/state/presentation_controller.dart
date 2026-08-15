@@ -512,6 +512,25 @@ class PresentationController extends ChangeNotifier {
     notifyListeners();
   }
 
+  void applyFontPairToDeck(PresentationTextStyle headingStyle, PresentationTextStyle bodyStyle) {
+    _recordUndo();
+    final updatedPages = _pages.map((page) {
+      final updatedTextBlocks = page.textBlocks.map((block) {
+        if (block.type == PresentationTextType.title) {
+          return block.copyWith(textStyle: headingStyle);
+        } else {
+          return block.copyWith(textStyle: bodyStyle);
+        }
+      }).toList(growable: false);
+      return page.copyWith(textBlocks: updatedTextBlocks);
+    }).toList(growable: false);
+
+    _pages
+      ..clear()
+      ..addAll(updatedPages);
+    notifyListeners();
+  }
+
   void updateSelectedPageNotes(String value) {
     if (selectedPage.speakerNotes == value) {
       return;

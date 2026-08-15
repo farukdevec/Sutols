@@ -17,7 +17,7 @@ const String sutolModelViewerScriptUrl =
 const String sutolModelViewerScriptTag =
     '<script type="module" src="$sutolModelViewerScriptUrl"></script>';
 
-String get sutolHtmlStageStyles => _stageStyles;
+String get sutolHtmlStageStyles => '$_stageStyles\n\n$sutolCombinedTemplatesCSS';
 String get sutolHtmlStageBackgroundScript => _backgroundScript;
 String get sutolHtmlStageComponentScript => _stageComponentScript;
 String get sutolHtmlStagePatchScript => _stagePatchScript;
@@ -240,10 +240,6 @@ String buildHtmlStageMarkup({
     buffer.writeln(
       '<div class="$classes" data-sutol-component-id="${_escapeAttribute(block.id)}"$modelAttr data-reveal-step="${block.revealStep}" aria-label="${_escapeAttribute(label)}"$hotspotAttr style="left:${_pct(block.position.dx)}%;top:${_pct(block.position.dy)}%;width:${_pct(block.size.width)}%;height:${_pct(block.size.height)}%;">$componentInner</div>',
     );
-  }
-
-  if (showBadge) {
-    buffer.writeln('<div class="sutol-html-badge">HTML SAHNE</div>');
   }
 
   buffer.writeln('</div>');
@@ -1929,7 +1925,14 @@ body {
 }
 
 .sutol-html-component.component-3d-model {
-  background: radial-gradient(circle at 50% 42%, rgba(42, 118, 196, 0.16), rgba(3, 8, 18, 0.04) 70%);
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.sutol-html-component.component-3d-model::before,
+.sutol-html-component.component-3d-model::after {
+  display: none !important;
 }
 
 .sutol-3d-model-inner,
@@ -2295,26 +2298,7 @@ body {
   color: rgba(255, 255, 255, 0.72);
 }
 
-.sutol-html-badge {
-  position: absolute;
-  right: 16px;
-  bottom: 14px;
-  z-index: 4;
-  padding: 7px 10px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.88);
-  border: 1px solid #DCE5F1;
-  color: #667389;
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 0;
-}
 
-.sutol-html-stage.theme-dark .sutol-html-badge {
-  background: rgba(3, 6, 15, 0.72);
-  border-color: rgba(255, 255, 255, 0.12);
-  color: rgba(255, 255, 255, 0.78);
-}
 
 @media (prefers-reduced-motion: reduce) {
   .sutol-bg-glow,

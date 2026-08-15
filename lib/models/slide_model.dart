@@ -4,6 +4,7 @@ import 'presentation_component_catalog.dart';
 
 export 'presentation_component_catalog.dart';
 export 'presentation_3d_model_catalog.dart';
+export 'presentation_template_catalog.dart';
 
 enum PresentationTextType {
   title,

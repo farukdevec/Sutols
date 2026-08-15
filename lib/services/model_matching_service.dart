@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 
+import '../models/presentation_3d_model_catalog.dart';
 import 'model_repository.dart';
 import 'presentation_keyword_catalog.dart';
 
@@ -23,6 +24,21 @@ class ModelMatchingService {
   static List<ModelCatalogEntry>? _indexedSource;
   static List<_IndexedModel> _indexedModels = const <_IndexedModel>[];
 
+  static List<ModelCatalogEntry> get localCatalogEntries =>
+      presentation3DModelCatalog
+          .map(
+            (m) => ModelCatalogEntry(
+              id: m.id,
+              name: m.label,
+              modelUrl: m.assetPath,
+              thumbnailUrl: '',
+              tags: m.tags,
+              category: m.category,
+              tier: 'free',
+            ),
+          )
+          .toList(growable: false);
+
   Future<List<ModelMatch>> matchModelsForSlide(List<String> keywords) async {
     if (keywords.isEmpty) return const <ModelMatch>[];
     final results = await matchModelsForSlides(<List<String>>[keywords]);
@@ -43,16 +59,19 @@ class ModelMatchingService {
         growable: false,
       );
     }
-    if (FirebaseAuth.instance.currentUser == null) {
-      return List<List<ModelMatch>>.generate(
-        keywordsBySlide.length,
-        (_) => const <ModelMatch>[],
-        growable: false,
-      );
+
+    List<ModelCatalogEntry> onlineModels = const <ModelCatalogEntry>[];
+    if (FirebaseAuth.instance.currentUser != null) {
+      try {
+        onlineModels = await ModelRepository.instance.getModels();
+      } catch (_) {}
     }
 
-    final models = await ModelRepository.instance.getModels();
-    final indexedModels = _indexFor(models);
+    final allModels = <ModelCatalogEntry>[
+      ...onlineModels,
+      ...localCatalogEntries,
+    ];
+    final indexedModels = _indexFor(allModels);
     return keywordsBySlide
         .map((keywords) => _matchIndexed(indexedModels, keywords))
         .toList(growable: false);

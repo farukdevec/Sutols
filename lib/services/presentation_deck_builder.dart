@@ -47,14 +47,30 @@ class PresentationDeckBuilder {
       // cannot be resolved. Calculate it for model-backed blocks as well;
       // otherwise PresentationComponentBlock's historical default
       // (edebiyat01 / open book) appears for every missing model.
-      final fallbackComponent = bestPresentationComponentForSlide(
-        title: title,
-        body: '${slide.keywords.join(' ')} $content',
-      );
-      final selectedModel =
+      var selectedModel =
           slide.models.isEmpty || slide.models.first.modelUrl.trim().isEmpty
               ? null
               : slide.models.first;
+      if (selectedModel == null) {
+        final searchKeywords = <String>[
+          ...slide.keywords,
+          ...title.split(' '),
+          ...content.split(' '),
+        ];
+        final catalogMatches = ModelMatchingService.rankCatalogModels(
+          models: ModelMatchingService.localCatalogEntries,
+          keywords: searchKeywords,
+        );
+        if (catalogMatches.isNotEmpty) {
+          selectedModel = catalogMatches.first;
+        }
+      }
+      final fallbackComponent = selectedModel != null
+          ? null
+          : bestPresentationComponentForSlide(
+              title: title,
+              body: '${slide.keywords.join(' ')} $content',
+            );
       final hasVisual = selectedModel != null || fallbackComponent != null;
       final background =
           _bestBackground(topic: topic, title: title, content: content);

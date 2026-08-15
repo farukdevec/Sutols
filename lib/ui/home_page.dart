@@ -1488,10 +1488,11 @@ class _EditorButtonState extends State<_EditorButton> {
         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
       ),
       onPressed: () {
+        final controller = PresentationController();
         Navigator.of(context).push(
           MaterialPageRoute<void>(
             builder: (_) => HtmlPresentationEditorPage(
-              controller: PresentationController(),
+              controller: controller,
             ),
           ),
         );
