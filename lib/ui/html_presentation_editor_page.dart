@@ -6224,14 +6224,12 @@ class _HtmlTemplateControls extends StatelessWidget {
         for (final sutolTemplate in sutolTemplateCatalog) ...<Widget>[
           _SutolCollectionTemplateCard(
             template: sutolTemplate,
-            isSelected: false,
+            isSelected: controller.pages.isNotEmpty &&
+                controller.pages.every(
+                  (page) => page.templateId == sutolTemplate.id,
+                ),
             onTap: () {
-              // Apply collection font pair & palette style
-              final headingStyle =
-                  presentationFontFamilyStyle(sutolTemplate.fontPair['heading'] ?? '');
-              final bodyStyle =
-                  presentationFontFamilyStyle(sutolTemplate.fontPair['body'] ?? '');
-              controller.applyFontPairToDeck(headingStyle, bodyStyle);
+              controller.applySutolTemplate(sutolTemplate);
             },
           ),
           const SizedBox(height: 10),
@@ -9384,17 +9382,41 @@ class _HtmlStageDimensionsControls extends StatelessWidget {
     final effectSettings = controller.effectSettings;
     final currentRatio = effectSettings.aspectRatio;
 
-    const presets = <(String, String, IconData, String, String)>[
-      ('9:16', 'Mobil Dikey', Icons.smartphone_rounded, '📱 Mobil', '1080×1920 px'),
-      ('16:9', 'Standart Sunum', Icons.desktop_windows_rounded, 'Standart', '1920×1080 px'),
-      ('4:3', 'Klasik Sunum', Icons.aspect_ratio_rounded, 'Klasik', '1024×768 px'),
-      ('1:1', 'Kare Format', Icons.crop_square_rounded, 'Kare', '1080×1080 px'),
+    const presets = <(String, String, String, IconData, String)>[
+      (
+        '9:16',
+        'Mobil Dikey (9:16)',
+        'Telefonlar için dikey responsive HTML sahne (1080×1920 px)',
+        Icons.smartphone_rounded,
+        '📱 Mobil',
+      ),
+      (
+        '16:9',
+        'Standart Sunum (16:9)',
+        'Masaüstü & TV ekranları için standart (1920×1080 px)',
+        Icons.desktop_windows_rounded,
+        'Standart',
+      ),
+      (
+        '4:3',
+        'Klasik Sunum (4:3)',
+        'Klasik sunum ekranları (1024×768 px)',
+        Icons.aspect_ratio_rounded,
+        'Klasik',
+      ),
+      (
+        '1:1',
+        'Kare Format (1:1)',
+        'Kare sosyal medya ve kart formatı (1080×1080 px)',
+        Icons.crop_square_rounded,
+        'Kare',
+      ),
     ];
 
     return ListView(
       controller: scrollController,
       shrinkWrap: !isExpanded,
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       children: <Widget>[
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -9426,129 +9448,19 @@ class _HtmlStageDimensionsControls extends StatelessWidget {
               ),
           ],
         ),
-        const SizedBox(height: 10),
-        GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
-            crossAxisSpacing: 10,
-            mainAxisSpacing: 10,
-            childAspectRatio: 1.6,
+        const SizedBox(height: 12),
+        for (final (ratio, label, subtitle, icon, badge) in presets) ...<Widget>[
+          _StageDimensionPresetCard(
+            title: label,
+            subtitle: subtitle,
+            icon: icon,
+            isSelected: currentRatio == ratio,
+            badgeText: badge,
+            highlight: ratio == '9:16',
+            onTap: () => controller.updateStageDimensions(aspectRatio: ratio),
           ),
-          itemCount: presets.length,
-          itemBuilder: (context, index) {
-            final (ratio, label, icon, badge, resolution) = presets[index];
-            final isSelected = currentRatio == ratio;
-            final isDark = Theme.of(context).brightness == Brightness.dark;
-            final primaryColor = context.colors.primary;
-
-            return Material(
-              color: isSelected
-                  ? (isDark
-                      ? primaryColor.withValues(alpha: 0.22)
-                      : const Color(0xFFEFF6FF))
-                  : (isDark
-                      ? context.colors.surfaceElevated
-                      : context.colors.surface),
-              borderRadius: BorderRadius.circular(14),
-              child: InkWell(
-                onTap: () => controller.updateStageDimensions(aspectRatio: ratio),
-                borderRadius: BorderRadius.circular(14),
-                child: Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(
-                      color: isSelected
-                          ? primaryColor
-                          : context.sutolColors.outline.withValues(alpha: 0.4),
-                      width: isSelected ? 2.0 : 1.0,
-                    ),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: <Widget>[
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: <Widget>[
-                          Container(
-                            width: 32,
-                            height: 32,
-                            decoration: BoxDecoration(
-                              color: isSelected
-                                  ? primaryColor
-                                  : (isDark
-                                      ? Colors.white10
-                                      : const Color(0xFFF1F5F9)),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Icon(
-                              icon,
-                              size: 18,
-                              color: isSelected
-                                  ? Colors.white
-                                  : context._htmlInk,
-                            ),
-                          ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 6,
-                              vertical: 2,
-                            ),
-                            decoration: BoxDecoration(
-                              color: isSelected
-                                  ? primaryColor.withValues(alpha: 0.18)
-                                  : Colors.grey.withValues(alpha: 0.12),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: Text(
-                              ratio,
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
-                                color: isSelected
-                                    ? primaryColor
-                                    : context._htmlMuted,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: <Widget>[
-                          Text(
-                            label,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 12,
-                              color: isSelected
-                                  ? primaryColor
-                                  : context._htmlInk,
-                            ),
-                          ),
-                          const SizedBox(height: 1),
-                          Text(
-                            resolution,
-                            style: TextStyle(
-                              fontSize: 10,
-                              color: context._htmlMuted,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            );
-          },
-        ),
-        const SizedBox(height: 10),
+          const SizedBox(height: 10),
+        ],
         _StageDimensionPresetCard(
           title: 'Özel Sahne Ölçüsü',
           subtitle: currentRatio == 'custom'

@@ -36,15 +36,9 @@ Map<String, String> modelSourcesForIds(
   Set<String> modelIds,
   Iterable<ModelCatalogEntry> catalog,
 ) {
-  final map = <String, String>{
+  return <String, String>{
     for (final model in catalog)
       if (modelIds.contains(model.id) && model.modelUrl.trim().isNotEmpty)
         model.id: model.modelUrl,
   };
-  for (final id in modelIds) {
-    if (!map.containsKey(id) && id.trim().isNotEmpty) {
-      map[id] = id;
-    }
-  }
-  return map;
 }

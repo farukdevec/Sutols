@@ -566,6 +566,7 @@ class PresentationPage {
     this.componentBlocks = const <PresentationComponentBlock>[],
     this.backgroundKind = PresentationBackgroundKind.science,
     this.speakerNotes = '',
+    this.templateId,
   });
 
   final String id;
@@ -573,6 +574,7 @@ class PresentationPage {
   final List<PresentationComponentBlock> componentBlocks;
   final PresentationBackgroundKind backgroundKind;
   final String speakerNotes;
+  final String? templateId;
 
   PresentationPage copyWith({
     String? id,
@@ -580,6 +582,7 @@ class PresentationPage {
     List<PresentationComponentBlock>? componentBlocks,
     PresentationBackgroundKind? backgroundKind,
     String? speakerNotes,
+    Object? templateId = _copySentinel,
   }) {
     return PresentationPage(
       id: id ?? this.id,
@@ -587,6 +590,9 @@ class PresentationPage {
       componentBlocks: componentBlocks ?? this.componentBlocks,
       backgroundKind: backgroundKind ?? this.backgroundKind,
       speakerNotes: speakerNotes ?? this.speakerNotes,
+      templateId: templateId == _copySentinel
+          ? this.templateId
+          : templateId as String?,
     );
   }
 

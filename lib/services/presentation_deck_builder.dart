@@ -65,12 +65,10 @@ class PresentationDeckBuilder {
           selectedModel = catalogMatches.first;
         }
       }
-      final fallbackComponent = selectedModel != null
-          ? null
-          : bestPresentationComponentForSlide(
-              title: title,
-              body: '${slide.keywords.join(' ')} $content',
-            );
+      final fallbackComponent = bestPresentationComponentForSlide(
+        title: title,
+        body: '${slide.keywords.join(' ')} $content',
+      );
       final hasVisual = selectedModel != null || fallbackComponent != null;
       final background =
           _bestBackground(topic: topic, title: title, content: content);

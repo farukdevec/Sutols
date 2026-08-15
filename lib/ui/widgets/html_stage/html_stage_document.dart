@@ -121,8 +121,16 @@ String buildHtmlStageMarkup({
   bool deferEmbeddedAssets = false,
 }) {
   final renderModeName = _renderModeName(renderMode);
+  final templateClass = (page.templateId != null && page.templateId!.isNotEmpty)
+      ? 'sutol-template-${page.templateId}'
+      : '';
+  final templateAttr = (page.templateId != null && page.templateId!.isNotEmpty)
+      ? ' data-sutol-template="${_escapeAttribute(page.templateId!)}"'
+      : '';
+
   final stageClasses = <String>[
     'sutol-html-stage',
+    if (templateClass.isNotEmpty) templateClass,
     _backgroundStageClass(page.backgroundKind),
     'sutol-stage-mode-$renderModeName',
     if (_isDarkBackground(page.backgroundKind)) 'theme-dark',
@@ -132,7 +140,7 @@ String buildHtmlStageMarkup({
 
   final buffer = StringBuffer()
     ..writeln(
-      '<div class="$stageClasses" data-sutol-render-mode="$renderModeName">',
+      '<div class="$stageClasses"$templateAttr data-sutol-render-mode="$renderModeName">',
     )
     ..writeln(
       _backgroundInnerMarkup(

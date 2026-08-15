@@ -512,6 +512,64 @@ class PresentationController extends ChangeNotifier {
     notifyListeners();
   }
 
+  void applySutolTemplate(SutolTemplateModel template) {
+    _recordUndo();
+    final headingStyle =
+        presentationFontFamilyStyle(template.fontPair['heading'] ?? '');
+    final bodyStyle =
+        presentationFontFamilyStyle(template.fontPair['body'] ?? '');
+
+    final primaryColor =
+        template.colorPalette.isNotEmpty ? template.colorPalette[0] : null;
+    final accentColor = template.colorPalette.length > 1
+        ? template.colorPalette[1]
+        : primaryColor;
+
+    final backgroundKind = switch (template.category.toLowerCase()) {
+      'kurumsal' => template.id.contains('koyu')
+          ? PresentationBackgroundKind.businessFinance
+          : PresentationBackgroundKind.lightCorporate,
+      'yaratıcı' => template.id.contains('neon')
+          ? PresentationBackgroundKind.technology
+          : PresentationBackgroundKind.lightCreative,
+      'minimal' => PresentationBackgroundKind.lightCorporate,
+      'eğitim' => PresentationBackgroundKind.lightEducation,
+      'pazarlama' => PresentationBackgroundKind.businessFinance,
+      _ => PresentationBackgroundKind.science,
+    };
+
+    final updatedPages = _pages.map((page) {
+      final updatedTextBlocks = page.textBlocks.map((block) {
+        if (block.type == PresentationTextType.title) {
+          return block.copyWith(
+            textStyle: headingStyle,
+            textColorHex: primaryColor,
+          );
+        } else if (block.type == PresentationTextType.subtitle) {
+          return block.copyWith(
+            textStyle: headingStyle,
+            textColorHex: accentColor,
+          );
+        } else {
+          return block.copyWith(
+            textStyle: bodyStyle,
+          );
+        }
+      }).toList(growable: false);
+
+      return page.copyWith(
+        templateId: template.id,
+        backgroundKind: backgroundKind,
+        textBlocks: updatedTextBlocks,
+      );
+    }).toList(growable: false);
+
+    _pages
+      ..clear()
+      ..addAll(updatedPages);
+    notifyListeners();
+  }
+
   void applyFontPairToDeck(PresentationTextStyle headingStyle, PresentationTextStyle bodyStyle) {
     _recordUndo();
     final updatedPages = _pages.map((page) {

@@ -87,6 +87,7 @@ class PresentationProjectCodec {
     return <String, Object?>{
       'id': page.id,
       'backgroundKind': page.backgroundKind.name,
+      'templateId': page.templateId,
       'speakerNotes': page.speakerNotes,
       'textBlocks': page.textBlocks.map(_textBlockToJson).toList(),
       'componentBlocks':
@@ -109,6 +110,7 @@ class PresentationProjectCodec {
     return PresentationPage(
       id: _string(json['id'], 'page-1'),
       backgroundKind: _backgroundKindValue(json['backgroundKind']),
+      templateId: json['templateId'] as String?,
       speakerNotes: _string(json['speakerNotes'], ''),
       textBlocks: textBlocks,
       componentBlocks: componentBlocks,
