@@ -749,92 +749,22 @@ class PresentationCreationCard extends StatelessWidget {
             ),
           ),
           SizedBox(height: narrow ? AppSpacing.s12 : AppSpacing.s16),
-          // Prominent Prompt Input Container with Glowing Gradient Frame
-          Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(AppRadius.lg),
-              gradient: LinearGradient(
-                colors: [
-                  colors.primary.withValues(alpha: 0.15),
-                  colors.primary.withValues(alpha: 0.04),
-                ],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              border: Border.all(
-                color: colors.primary.withValues(alpha: 0.45),
-                width: 1.5,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: colors.primary.withValues(alpha: 0.1),
-                  blurRadius: 16,
-                  spreadRadius: 0,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            padding: const EdgeInsets.all(AppSpacing.s8),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.only(left: 4, bottom: 6),
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.auto_awesome_rounded,
-                        size: 14,
-                        color: colors.primary,
-                      ),
-                      const SizedBox(width: 6),
-                      Expanded(
-                        child: Text(
-                          'SUNUM İÇERİĞİ VE DETAYLAR',
-                          style: AppTypography.labelSmall.copyWith(
-                            color: colors.primary,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 0.8,
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                TextField(
-                  key: const ValueKey<String>('presentation-prompt-field'),
-                  controller: promptController,
-                  focusNode: promptFocusNode,
-                  keyboardType: TextInputType.multiline,
-                  textInputAction: TextInputAction.newline,
-                  onTapOutside: (_) =>
-                      FocusManager.instance.primaryFocus?.unfocus(),
-                  maxLines: narrow ? 3 : 5,
-                  minLines: narrow ? 2 : 3,
-                  style: AppTypography.bodyLarge
-                      .copyWith(color: colors.textPrimary),
-                  decoration: InputDecoration(
-                    hintText: isDashboard
-                        ? 'Sunum hakkında'
-                        : 'Bu sunum ne hakkında? Konuyu, ana fikirleri ve kitleyi kısaca anlatın...',
-                    filled: true,
-                    fillColor: colors.surface,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(AppRadius.md),
-                      borderSide: BorderSide.none,
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(AppRadius.md),
-                      borderSide: BorderSide.none,
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(AppRadius.md),
-                      borderSide: BorderSide(color: colors.primary, width: 1.5),
-                    ),
-                  ),
-                ),
-              ],
+          TextField(
+            key: const ValueKey<String>('presentation-prompt-field'),
+            controller: promptController,
+            focusNode: promptFocusNode,
+            keyboardType: TextInputType.multiline,
+            textInputAction: TextInputAction.newline,
+            onTapOutside: (_) => FocusManager.instance.primaryFocus?.unfocus(),
+            maxLines: narrow ? 3 : 5,
+            minLines: narrow ? 2 : 3,
+            style: AppTypography.bodyLarge.copyWith(color: colors.textPrimary),
+            decoration: InputDecoration(
+              hintText: isDashboard
+                  ? 'Sunum hakkında'
+                  : 'Bu sunum ne hakkında? Konuyu, ana fikirleri ve kitleyi kısaca anlatın...',
+              filled: true,
+              fillColor: colors.surface,
             ),
           ),
           SizedBox(
