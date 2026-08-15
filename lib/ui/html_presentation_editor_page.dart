@@ -8957,11 +8957,11 @@ Future<void> _showStageDimensionsDialog(
             ),
             const SizedBox(height: 10),
             _StageDimensionPresetCard(
-              title: 'Mobil Dikey (9:16)',
+              title: 'Mobil Dikey',
               subtitle: 'Telefonlar için dikey responsive HTML sahne (1080×1920 px)',
               icon: Icons.smartphone_rounded,
               isSelected: selectedPreset == '9:16',
-              badgeText: '📱 Mobil Dikey',
+              badgeText: '9:16',
               highlight: true,
               onTap: () {
                 setState(() => selectedPreset = '9:16');
@@ -8970,11 +8970,11 @@ Future<void> _showStageDimensionsDialog(
             ),
             const SizedBox(height: 8),
             _StageDimensionPresetCard(
-              title: 'Standart Sunum (16:9)',
+              title: 'Standart Sunum',
               subtitle: 'Masaüstü, TV & Projeksiyon ekranları (1920×1080 px)',
               icon: Icons.desktop_windows_rounded,
               isSelected: selectedPreset == '16:9',
-              badgeText: 'Standart',
+              badgeText: '16:9',
               onTap: () {
                 setState(() => selectedPreset = '16:9');
                 controller.updateStageDimensions(aspectRatio: '16:9');
@@ -8982,10 +8982,11 @@ Future<void> _showStageDimensionsDialog(
             ),
             const SizedBox(height: 8),
             _StageDimensionPresetCard(
-              title: 'Klasik Sunum (4:3)',
+              title: 'Klasik Sunum',
               subtitle: 'Klasik ekranlar & PDF çıktısı (1024×768 px)',
               icon: Icons.aspect_ratio_rounded,
               isSelected: selectedPreset == '4:3',
+              badgeText: '4:3',
               onTap: () {
                 setState(() => selectedPreset = '4:3');
                 controller.updateStageDimensions(aspectRatio: '4:3');
@@ -8993,10 +8994,11 @@ Future<void> _showStageDimensionsDialog(
             ),
             const SizedBox(height: 8),
             _StageDimensionPresetCard(
-              title: 'Kare Format (1:1)',
+              title: 'Kare Format',
               subtitle: 'Sosyal medya & tablet kart formatı (1080×1080 px)',
               icon: Icons.crop_square_rounded,
               isSelected: selectedPreset == '1:1',
+              badgeText: '1:1',
               onTap: () {
                 setState(() => selectedPreset = '1:1');
                 controller.updateStageDimensions(aspectRatio: '1:1');
@@ -9004,10 +9006,11 @@ Future<void> _showStageDimensionsDialog(
             ),
             const SizedBox(height: 8),
             _StageDimensionPresetCard(
-              title: 'Özel Sahne Ölçüsü (Custom)',
+              title: 'Özel Sahne Ölçüsü',
               subtitle: 'Piksel bazlı genişlik ve yükseklik tanımlayın',
               icon: Icons.tune_rounded,
               isSelected: selectedPreset == 'custom',
+              badgeText: 'Özel',
               onTap: () => setState(() => selectedPreset = 'custom'),
             ),
             if (selectedPreset == 'custom') ...<Widget>[
@@ -9312,39 +9315,51 @@ class _StageDimensionPresetCard extends StatelessWidget {
                   children: <Widget>[
                     Row(
                       children: <Widget>[
-                        Text(
-                          title,
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 13,
-                            color: isSelected ? primaryColor : context._htmlInk,
+                        Expanded(
+                          child: Text(
+                            title,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13,
+                              color: isSelected ? primaryColor : context._htmlInk,
+                            ),
                           ),
                         ),
                         if (badgeText != null) ...<Widget>[
-                          const SizedBox(width: 8),
+                          const SizedBox(width: 6),
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                             decoration: BoxDecoration(
                               color: highlight
                                   ? primaryColor.withValues(alpha: 0.15)
-                                  : Colors.grey.withValues(alpha: 0.15),
+                                  : (isSelected
+                                      ? primaryColor.withValues(alpha: 0.15)
+                                      : Colors.grey.withValues(alpha: 0.15)),
                               borderRadius: BorderRadius.circular(6),
                             ),
                             child: Text(
                               badgeText!,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                               style: TextStyle(
                                 fontSize: 10,
                                 fontWeight: FontWeight.bold,
-                                color: highlight ? primaryColor : Colors.grey[700],
+                                color: highlight || isSelected
+                                    ? primaryColor
+                                    : Colors.grey[700],
                               ),
                             ),
                           ),
                         ],
                       ],
                     ),
-                    const SizedBox(height: 2),
+                    const SizedBox(height: 3),
                     Text(
                       subtitle,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         fontSize: 11,
                         color: context._htmlMuted,
@@ -9353,8 +9368,11 @@ class _StageDimensionPresetCard extends StatelessWidget {
                   ],
                 ),
               ),
+              const SizedBox(width: 8),
               Icon(
-                isSelected ? Icons.check_circle_rounded : Icons.radio_button_unchecked_rounded,
+                isSelected
+                    ? Icons.check_circle_rounded
+                    : Icons.radio_button_unchecked_rounded,
                 color: isSelected ? primaryColor : context._htmlMuted,
                 size: 20,
               ),
@@ -9385,31 +9403,31 @@ class _HtmlStageDimensionsControls extends StatelessWidget {
     const presets = <(String, String, String, IconData, String)>[
       (
         '9:16',
-        'Mobil Dikey (9:16)',
-        'Telefonlar için dikey responsive HTML sahne (1080×1920 px)',
+        'Mobil Dikey',
+        '1080×1920 px • Telefon ekranları',
         Icons.smartphone_rounded,
-        '📱 Mobil',
+        '9:16',
       ),
       (
         '16:9',
-        'Standart Sunum (16:9)',
-        'Masaüstü & TV ekranları için standart (1920×1080 px)',
+        'Standart Sunum',
+        '1920×1080 px • Masaüstü & TV ekranları',
         Icons.desktop_windows_rounded,
-        'Standart',
+        '16:9',
       ),
       (
         '4:3',
-        'Klasik Sunum (4:3)',
-        'Klasik sunum ekranları (1024×768 px)',
+        'Klasik Sunum',
+        '1024×768 px • Klasik projeksiyon',
         Icons.aspect_ratio_rounded,
-        'Klasik',
+        '4:3',
       ),
       (
         '1:1',
-        'Kare Format (1:1)',
-        'Kare sosyal medya ve kart formatı (1080×1080 px)',
+        'Kare Format',
+        '1080×1080 px • Sosyal medya & kart',
         Icons.crop_square_rounded,
-        'Kare',
+        '1:1',
       ),
     ];
 
