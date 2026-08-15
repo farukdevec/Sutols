@@ -8,7 +8,9 @@ import '../services/firestore_rest_helper.dart';
 import '../services/presentation_model_source_resolver.dart';
 import '../services/presentation_project_codec.dart';
 
+import '../services/presentation_loader.dart';
 import 'design/design_system.dart';
+import 'html_presentation_editor_page.dart';
 import 'widgets/share_presentation_dialog.dart';
 
 class PresentationViewPage extends StatefulWidget {
@@ -211,6 +213,24 @@ class _PresentationViewPageState extends State<PresentationViewPage> {
         title: const Text('Sunum'),
         backgroundColor: colors.surface,
         actions: [
+          if (!widget.adminView)
+            IconButton(
+              tooltip: 'Editörde Düzenle',
+              icon: const Icon(Icons.edit_note_rounded),
+              onPressed: () async {
+                final result = await loadPresentationForEdit(widget.presentationId);
+                if (!context.mounted) return;
+                Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (_) => HtmlPresentationEditorPage(
+                      controller: result.controller,
+                      presentationId: widget.presentationId,
+                      initialUpdatedByName: result.updatedByName,
+                    ),
+                  ),
+                );
+              },
+            ),
           if (_shareInfo != null && !widget.adminView)
             IconButton(
               tooltip: 'Paylaş',

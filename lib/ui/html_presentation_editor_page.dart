@@ -822,6 +822,11 @@ class _HtmlPresentationEditorPageState
                               adminReadOnly: widget.adminReadOnly,
                               presentationFileName: _presentationFileName,
                               onEditFileName: _editPresentationFileName,
+                              onOpenStageDimensions: () =>
+                                  _showStageDimensionsDialog(
+                                context,
+                                widget.controller,
+                              ),
                             ),
                             const SizedBox(height: 8),
                             Expanded(
@@ -1702,6 +1707,7 @@ class _HtmlMobileLayout extends StatelessWidget {
         if (!readOnly) ...<Widget>[
           const SizedBox(height: 8),
           _HtmlMobileToolDock(
+            controller: controller,
             activeTab: activeTab,
             onOpenTool: onOpenTool,
             onOpenPhotoQuick: onOpenPhotoQuick,
@@ -1937,11 +1943,13 @@ class _SlideStripThumb extends StatelessWidget {
 /// kalıcı küçük resim şeridinde yapılır.
 class _HtmlMobileToolDock extends StatelessWidget {
   const _HtmlMobileToolDock({
+    required this.controller,
     required this.activeTab,
     required this.onOpenTool,
     required this.onOpenPhotoQuick,
   });
 
+  final PresentationController controller;
   final _HtmlToolTab activeTab;
   final ValueChanged<_HtmlToolTab> onOpenTool;
 
@@ -2049,7 +2057,7 @@ class _HtmlMobileToolDock extends StatelessWidget {
                   ),
                 PopupMenuButton<_MobileMoreTool>(
                   tooltip: 'Daha fazla araç',
-                  onSelected: _handleMore,
+                  onSelected: (tool) => _handleMore(context, tool),
                   itemBuilder: (context) {
                   // Dar ekranda dock'a sığmayan araçlar (öncelik sırasıyla)
                   // menünün başına düşer; böylece hiçbir araç kaybolmaz.
@@ -2131,14 +2139,14 @@ class _HtmlMobileToolDock extends StatelessWidget {
                     'Fotoğraf Yükle',
                   );
                   add(
-                    _MobileMoreTool.audio,
-                    Icons.music_note_rounded,
-                    'Ses',
-                  );
-                  add(
                     _MobileMoreTool.animations,
                     Icons.auto_awesome_rounded,
                     'Animasyonlar',
+                  );
+                  add(
+                    _MobileMoreTool.stageDimensions,
+                    Icons.aspect_ratio_rounded,
+                    'Sahne Ölçüleri',
                   );
                   return entries;
                 },
@@ -2156,7 +2164,7 @@ class _HtmlMobileToolDock extends StatelessWidget {
     );
   }
 
-  void _handleMore(_MobileMoreTool tool) {
+  void _handleMore(BuildContext context, _MobileMoreTool tool) {
     switch (tool) {
       case _MobileMoreTool.photoUpload:
         onOpenPhotoQuick();
@@ -2174,10 +2182,10 @@ class _HtmlMobileToolDock extends StatelessWidget {
         onOpenTool(_HtmlToolTab.models3d);
       case _MobileMoreTool.transitions:
         onOpenTool(_HtmlToolTab.transitions);
-      case _MobileMoreTool.audio:
-        onOpenTool(_HtmlToolTab.backgrounds);
       case _MobileMoreTool.animations:
         onOpenTool(_HtmlToolTab.transitions);
+      case _MobileMoreTool.stageDimensions:
+        _showStageDimensionsDialog(context, controller);
     }
   }
 }
@@ -2678,11 +2686,11 @@ enum _MobileMoreTool {
   models3d,
   transitions,
 
-  /// "Ses" → Arka Planlar (Müzik ve Ses kategorisi).
-  audio,
-
   /// "Animasyonlar" → Geçişler (slayt animasyonları) paneli.
   animations,
+
+  /// "Sahne Ölçüleri" → Dikey mobil, standart 16:9, özel ölçü seçimi.
+  stageDimensions,
 }
 
 /// Mobil "Fotoğraf" hızlı aksiyonunun seçenekleri.
@@ -2957,6 +2965,7 @@ class _HtmlStudioHeader extends StatelessWidget {
     this.adminReadOnly = false,
     this.presentationFileName = 'Sutols Sunumu',
     this.onEditFileName,
+    this.onOpenStageDimensions,
   });
 
   final int pageCount;
@@ -2974,6 +2983,7 @@ class _HtmlStudioHeader extends StatelessWidget {
   final String? lastEditorLabel;
   final String presentationFileName;
   final VoidCallback? onEditFileName;
+  final VoidCallback? onOpenStageDimensions;
 
   /// Salt okunur (admin) mod: düzenleme araçları gizlenir, yerine kırmızı
   /// "GÖRÜNTÜLEME MODU (Admin)" rozeti gösterilir.
@@ -3087,6 +3097,11 @@ class _HtmlStudioHeader extends StatelessWidget {
           const SizedBox(width: 14),
           const _SettingsMenuButton(branded: true, compact: true),
           if (!adminReadOnly) ...<Widget>[
+            const SizedBox(width: 8),
+            _ToolbarAction(
+              icon: Icons.aspect_ratio_rounded,
+              onTap: onOpenStageDimensions,
+            ),
             const SizedBox(width: 8),
             _ToolbarAction(
               icon: Icons.add_rounded,
@@ -7320,14 +7335,6 @@ class _HtmlStageCardState extends State<_HtmlStageCard> {
                       onEndModelOrbit:
                           widget.controller.endSelectedModelOrbitGesture,
                     ),
-                  if (!widget.readOnly)
-                    Positioned(
-                      top: 10,
-                      right: 10,
-                      child: _StageDimensionBadgeButton(
-                        controller: widget.controller,
-                      ),
-                    ),
                 ],
               ),
             ),
@@ -8365,73 +8372,6 @@ String _textAnimationLabel(PresentationTextAnimation animation) {
   }
 }
 
-class _StageDimensionBadgeButton extends StatelessWidget {
-  const _StageDimensionBadgeButton({required this.controller});
-
-  final PresentationController controller;
-
-  @override
-  Widget build(BuildContext context) {
-    final effectSettings = controller.effectSettings;
-    final isPortrait = effectSettings.isPortrait;
-    final label = effectSettings.stageDimensionLabel;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    return Tooltip(
-      message: 'Sahne Ölçüleri ve Formatı Değiştir',
-      child: Material(
-        color: isPortrait
-            ? (isDark ? const Color(0xFF1E3A8A) : const Color(0xFFEFF6FF))
-            : (isDark ? context.colors.surfaceElevated : Colors.white),
-        borderRadius: BorderRadius.circular(12),
-        elevation: 1,
-        child: InkWell(
-          onTap: () => _showStageDimensionsDialog(context, controller),
-          borderRadius: BorderRadius.circular(12),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: isPortrait
-                    ? context.colors.primary
-                    : context.sutolColors.outline.withValues(alpha: 0.6),
-                width: isPortrait ? 1.4 : 1,
-              ),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: <Widget>[
-                Icon(
-                  isPortrait
-                      ? Icons.stay_current_portrait_rounded
-                      : Icons.aspect_ratio_rounded,
-                  size: 16,
-                  color: isPortrait ? context.colors.primary : context._htmlInk,
-                ),
-                const SizedBox(width: 6),
-                Text(
-                  label,
-                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                        color: isPortrait ? context.colors.primary : context._htmlInk,
-                        fontWeight: FontWeight.w800,
-                        fontSize: 12,
-                      ),
-                ),
-                const SizedBox(width: 4),
-                Icon(
-                  Icons.keyboard_arrow_down_rounded,
-                  size: 16,
-                  color: context._htmlMuted,
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
 
 class _QuickStageDimensionChip extends StatelessWidget {
   const _QuickStageDimensionChip({
@@ -8514,243 +8454,369 @@ Future<void> _showStageDimensionsDialog(
     text: currentSettings.customHeight.round().toString(),
   );
 
-  return showDialog<void>(
-    context: context,
-    builder: (dialogContext) {
-      return StatefulBuilder(
-        builder: (context, setState) {
-          final isDark = Theme.of(context).brightness == Brightness.dark;
+  Widget buildContent(BuildContext ctx, StateSetter setState) {
+    final isDark = Theme.of(ctx).brightness == Brightness.dark;
+    final primaryColor = ctx.colors.primary;
 
-          double calculateCurrentRatio() {
-            if (selectedPreset == 'custom') {
-              final w = double.tryParse(widthController.text) ?? 1920;
-              final h = double.tryParse(heightController.text) ?? 1080;
-              return h > 0 ? (w / h).clamp(0.2, 5.0) : 1.777;
-            }
-            switch (selectedPreset) {
-              case '9:16':
-                return 9 / 16;
-              case '4:3':
-                return 4 / 3;
-              case '1:1':
-                return 1 / 1;
-              case '16:9':
-              default:
-                return 16 / 9;
-            }
-          }
+    double calculateCurrentRatio() {
+      if (selectedPreset == 'custom') {
+        final w = double.tryParse(widthController.text) ?? 1920;
+        final h = double.tryParse(heightController.text) ?? 1080;
+        return h > 0 ? (w / h).clamp(0.2, 5.0) : 1.777;
+      }
+      switch (selectedPreset) {
+        case '9:16':
+          return 9 / 16;
+        case '4:3':
+          return 4 / 3;
+        case '1:1':
+          return 1 / 1;
+        case '16:9':
+        default:
+          return 16 / 9;
+      }
+    }
 
-          final ratio = calculateCurrentRatio();
-          final isPortrait = ratio < 1.0;
+    final ratio = calculateCurrentRatio();
+    final isPortrait = ratio < 1.0;
 
-          return AlertDialog(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-            title: Row(
+    return SingleChildScrollView(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Row(
               children: <Widget>[
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: context.colors.primary.withValues(alpha: 0.15),
+                    gradient: LinearGradient(
+                      colors: <Color>[
+                        primaryColor,
+                        primaryColor.withValues(alpha: 0.7),
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
                     borderRadius: BorderRadius.circular(14),
+                    boxShadow: <BoxShadow>[
+                      BoxShadow(
+                        color: primaryColor.withValues(alpha: 0.3),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
                   ),
-                  child: Icon(
+                  child: const Icon(
                     Icons.aspect_ratio_rounded,
-                    color: context.colors.primary,
-                    size: 24,
+                    color: Colors.white,
+                    size: 22,
                   ),
                 ),
                 const SizedBox(width: 14),
-                const Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    Text(
-                      'Sahne Ölçüleri & Format',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                    ),
-                    Text(
-                      'Sunum tuval boyutunu ve oranını özelleştirin',
-                      style: TextStyle(fontSize: 12, color: Colors.grey),
-                    ),
-                  ],
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Text(
+                        'Sahne Ölçüleri & Format',
+                        style: Theme.of(ctx).textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.w900,
+                              color: ctx._htmlInk,
+                            ),
+                      ),
+                      Text(
+                        'Sunum tuval boyutunu ve formatını özelleştirin',
+                        style: Theme.of(ctx).textTheme.bodySmall?.copyWith(
+                              color: ctx._htmlMuted,
+                            ),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
-            content: SingleChildScrollView(
-              child: SizedBox(
-                width: 500,
+            const SizedBox(height: 18),
+            Text(
+              'HAZIR FORMATLAR (PRESETS)',
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 0.8,
+                color: ctx._htmlMuted,
+              ),
+            ),
+            const SizedBox(height: 10),
+            _StageDimensionPresetCard(
+              title: 'Mobil Dikey (9:16)',
+              subtitle: 'Telefonlar için dikey responsive HTML sahne (1080×1920 px)',
+              icon: Icons.smartphone_rounded,
+              isSelected: selectedPreset == '9:16',
+              badgeText: '📱 Mobil Dikey',
+              highlight: true,
+              onTap: () => setState(() => selectedPreset = '9:16'),
+            ),
+            const SizedBox(height: 8),
+            _StageDimensionPresetCard(
+              title: 'Standart Sunum (16:9)',
+              subtitle: 'Masaüstü, TV & Projeksiyon ekranları (1920×1080 px)',
+              icon: Icons.desktop_windows_rounded,
+              isSelected: selectedPreset == '16:9',
+              badgeText: 'Standart',
+              onTap: () => setState(() => selectedPreset = '16:9'),
+            ),
+            const SizedBox(height: 8),
+            _StageDimensionPresetCard(
+              title: 'Klasik Sunum (4:3)',
+              subtitle: 'Klasik ekranlar & PDF çıktısı (1024×768 px)',
+              icon: Icons.aspect_ratio_rounded,
+              isSelected: selectedPreset == '4:3',
+              onTap: () => setState(() => selectedPreset = '4:3'),
+            ),
+            const SizedBox(height: 8),
+            _StageDimensionPresetCard(
+              title: 'Kare Format (1:1)',
+              subtitle: 'Sosyal medya & tablet kart formatı (1080×1080 px)',
+              icon: Icons.crop_square_rounded,
+              isSelected: selectedPreset == '1:1',
+              onTap: () => setState(() => selectedPreset = '1:1'),
+            ),
+            const SizedBox(height: 8),
+            _StageDimensionPresetCard(
+              title: 'Özel Sahne Ölçüsü (Custom)',
+              subtitle: 'Piksel bazlı genişlik ve yükseklik tanımlayın',
+              icon: Icons.tune_rounded,
+              isSelected: selectedPreset == 'custom',
+              onTap: () => setState(() => selectedPreset = 'custom'),
+            ),
+            if (selectedPreset == 'custom') ...<Widget>[
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.04)
+                      : primaryColor.withValues(alpha: 0.04),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: primaryColor.withValues(alpha: 0.3),
+                  ),
+                ),
                 child: Column(
-                  mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
-                    const SizedBox(height: 8),
                     Text(
-                      'Hazır Sahne Ölçüleri (Presets)',
-                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
+                      'PİKSEL BOYUTLARI',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 0.8,
+                        color: primaryColor,
+                      ),
                     ),
                     const SizedBox(height: 10),
-                    Column(
+                    Row(
                       children: <Widget>[
-                        _StageDimensionPresetCard(
-                          title: 'Standart Sunum (16:9)',
-                          subtitle: 'Masaüstü, TV, Projeksiyon (1920×1080 px)',
-                          icon: Icons.desktop_windows_rounded,
-                          isSelected: selectedPreset == '16:9',
-                          badgeText: 'Varsayılan',
-                          onTap: () => setState(() => selectedPreset = '16:9'),
+                        Expanded(
+                          child: TextField(
+                            controller: widthController,
+                            keyboardType: TextInputType.number,
+                            decoration: _inputDecoration(ctx, '1920')
+                                .copyWith(labelText: 'Genişlik (px)'),
+                            onChanged: (_) => setState(() {}),
+                          ),
                         ),
-                        const SizedBox(height: 8),
-                        _StageDimensionPresetCard(
-                          title: 'Mobil Dikey (9:16)',
-                          subtitle: 'Telefonlar için responsive dikey HTML sahne (1080×1920 px)',
-                          icon: Icons.stay_current_portrait_rounded,
-                          isSelected: selectedPreset == '9:16',
-                          badgeText: '📱 Mobil Dikey',
-                          highlight: true,
-                          onTap: () => setState(() => selectedPreset = '9:16'),
-                        ),
-                        const SizedBox(height: 8),
-                        _StageDimensionPresetCard(
-                          title: 'Klasik Sunum (4:3)',
-                          subtitle: 'Klasik ekranlar & PDF sunumu (1024×768 px)',
-                          icon: Icons.aspect_ratio_rounded,
-                          isSelected: selectedPreset == '4:3',
-                          onTap: () => setState(() => selectedPreset = '4:3'),
-                        ),
-                        const SizedBox(height: 8),
-                        _StageDimensionPresetCard(
-                          title: 'Kare (1:1)',
-                          subtitle: 'Sosyal medya & tablet kart formatı (1080×1080 px)',
-                          icon: Icons.crop_square_rounded,
-                          isSelected: selectedPreset == '1:1',
-                          onTap: () => setState(() => selectedPreset = '1:1'),
-                        ),
-                        const SizedBox(height: 8),
-                        _StageDimensionPresetCard(
-                          title: 'Özel Sahne Ölçüsü (Custom)',
-                          subtitle: 'Piksel bazlı manuel Genişlik × Yükseklik girin',
-                          icon: Icons.tune_rounded,
-                          isSelected: selectedPreset == 'custom',
-                          onTap: () => setState(() => selectedPreset = 'custom'),
-                        ),
-                      ],
-                    ),
-                    if (selectedPreset == 'custom') ...<Widget>[
-                      const SizedBox(height: 16),
-                      const Divider(),
-                      const SizedBox(height: 12),
-                      Text(
-                        'Piksel Ölçüleri Girin',
-                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        const Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 8),
+                          child: Text(
+                            '×',
+                            style: TextStyle(
+                              fontSize: 22,
                               fontWeight: FontWeight.bold,
                             ),
-                      ),
-                      const SizedBox(height: 10),
-                      Row(
-                        children: <Widget>[
-                          Expanded(
-                            child: TextField(
-                              controller: widthController,
-                              keyboardType: TextInputType.number,
-                              decoration: _inputDecoration(context, 'Genişlik (ör. 1920)')
-                                  .copyWith(labelText: 'Genişlik (px)'),
-                              onChanged: (_) => setState(() {}),
-                            ),
                           ),
-                          const SizedBox(width: 10),
-                          const Text('×', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: TextField(
-                              controller: heightController,
-                              keyboardType: TextInputType.number,
-                              decoration: _inputDecoration(context, 'Yükseklik (ör. 1080)')
-                                  .copyWith(labelText: 'Yükseklik (px)'),
-                              onChanged: (_) => setState(() {}),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                    const SizedBox(height: 16),
-                    // Live ratio preview banner
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.grey.withValues(alpha: 0.08),
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(
-                          color: isDark ? Colors.white12 : Colors.black12,
                         ),
-                      ),
-                      child: Row(
-                        children: <Widget>[
-                          Container(
-                            width: isPortrait ? 24 : 40,
-                            height: isPortrait ? 40 : 24,
-                            decoration: BoxDecoration(
-                              color: context.colors.primary,
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: Icon(
-                              isPortrait ? Icons.smartphone_rounded : Icons.laptop_rounded,
-                              color: Colors.white,
-                              size: 14,
-                            ),
+                        Expanded(
+                          child: TextField(
+                            controller: heightController,
+                            keyboardType: TextInputType.number,
+                            decoration: _inputDecoration(ctx, '1080')
+                                .copyWith(labelText: 'Yükseklik (px)'),
+                            onChanged: (_) => setState(() {}),
                           ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: <Widget>[
-                                Text(
-                                  isPortrait ? 'Mobil Dikey Sahne (Responsive)' : 'Yatay / Standart Sahne',
-                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-                                ),
-                                Text(
-                                  'Görünüm Oranı: ${ratio.toStringAsFixed(2)}:1 (${isPortrait ? "Mobil cihazlar için ideal" : "Masaüstü & sunumlar için ideal"})',
-                                  style: TextStyle(fontSize: 11, color: context.colors.primary, fontWeight: FontWeight.w600),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
               ),
-            ),
-            actions: <Widget>[
-              TextButton(
-                onPressed: () => Navigator.of(dialogContext).pop(),
-                child: const Text('İptal'),
-              ),
-              ElevatedButton.icon(
-                icon: const Icon(Icons.check_rounded, size: 18),
-                label: const Text('Uygula'),
-                style: ElevatedButton.styleFrom(
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                ),
-                onPressed: () {
-                  final customW = double.tryParse(widthController.text) ?? 1920;
-                  final customH = double.tryParse(heightController.text) ?? 1080;
-                  controller.updateStageDimensions(
-                    aspectRatio: selectedPreset,
-                    customWidth: customW,
-                    customHeight: customH,
-                  );
-                  Navigator.of(dialogContext).pop();
-                },
-              ),
             ],
-          );
-        },
-      );
-    },
-  );
+            const SizedBox(height: 14),
+            // Dynamic Live Banner
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 250),
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: isPortrait
+                    ? (isDark
+                        ? const Color(0xFF0F291E)
+                        : const Color(0xFFECFDF5))
+                    : (isDark
+                        ? const Color(0xFF1E293B)
+                        : const Color(0xFFF1F5F9)),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: isPortrait
+                      ? const Color(0xFF10B981)
+                      : primaryColor.withValues(alpha: 0.4),
+                ),
+              ),
+              child: Row(
+                children: <Widget>[
+                  Container(
+                    width: isPortrait ? 26 : 42,
+                    height: isPortrait ? 42 : 26,
+                    decoration: BoxDecoration(
+                      color: isPortrait
+                          ? const Color(0xFF10B981)
+                          : primaryColor,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(
+                      isPortrait
+                          ? Icons.smartphone_rounded
+                          : Icons.laptop_rounded,
+                      color: Colors.white,
+                      size: 16,
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        Text(
+                          isPortrait
+                              ? '📱 Mobil Dikey Sahne Modu'
+                              : '🖥️ Yatay / Masaüstü Sahne Modu',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w800,
+                            fontSize: 13,
+                            color: isPortrait
+                                ? (isDark ? Colors.white : const Color(0xFF065F46))
+                                : ctx._htmlInk,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'Görünüm Oranı: ${ratio.toStringAsFixed(2)}:1 • ${isPortrait ? "Telefon ekranları için optimize edildi" : "Standart sunumlar için optimize edildi"}',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: isPortrait
+                                ? (isDark
+                                    ? const Color(0xFF6EE7B7)
+                                    : const Color(0xFF047857))
+                                : ctx._htmlMuted,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 18),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: <Widget>[
+                TextButton(
+                  onPressed: () => Navigator.of(ctx).pop(),
+                  child: const Text('İptal'),
+                ),
+                const SizedBox(width: 10),
+                ElevatedButton.icon(
+                  icon: const Icon(Icons.check_rounded, size: 18),
+                  label: const Text('Uygula'),
+                  style: ElevatedButton.styleFrom(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 22,
+                      vertical: 13,
+                    ),
+                  ),
+                  onPressed: () {
+                    final customW =
+                        double.tryParse(widthController.text) ?? 1920;
+                    final customH =
+                        double.tryParse(heightController.text) ?? 1080;
+                    controller.updateStageDimensions(
+                      aspectRatio: selectedPreset,
+                      customWidth: customW,
+                      customHeight: customH,
+                    );
+                    Navigator.of(ctx).pop();
+                  },
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  final isMobileScreen = MediaQuery.sizeOf(context).width < 600;
+
+  if (isMobileScreen) {
+    return showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Theme.of(context).brightness == Brightness.dark
+          ? const Color(0xFF1E1E2D)
+          : Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (sheetContext) {
+        return Padding(
+          padding: EdgeInsets.only(
+            top: 16,
+            left: 16,
+            right: 16,
+            bottom: MediaQuery.of(sheetContext).viewInsets.bottom + 20,
+          ),
+          child: StatefulBuilder(
+            builder: (ctx, setState) => buildContent(ctx, setState),
+          ),
+        );
+      },
+    );
+  } else {
+    return showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
+          ),
+          child: SizedBox(
+            width: 520,
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: StatefulBuilder(
+                builder: (ctx, setState) => buildContent(ctx, setState),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
 }
 
 class _StageDimensionPresetCard extends StatelessWidget {

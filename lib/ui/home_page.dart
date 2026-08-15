@@ -6,6 +6,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../services/auth_service.dart';
 import '../services/firestore_rest_helper.dart';
+import '../services/presentation_loader.dart';
 import '../services/presentation_service.dart';
 import '../state/presentation_controller.dart';
 import '../state/theme_controller.dart';
@@ -16,7 +17,6 @@ import 'design/sutol_widgets.dart';
 import 'auth_page.dart';
 import 'membership_page.dart';
 import 'my_presentations_page.dart';
-import 'presentation_view_page.dart';
 import 'widgets/contact_social_widget.dart';
 
 class SutolHomePage extends StatefulWidget {
@@ -1000,10 +1000,16 @@ class _RecentPresentationTile extends StatelessWidget {
           ),
         ),
         trailing: const Icon(Icons.chevron_right_rounded),
-        onTap: () {
+        onTap: () async {
+          final result = await loadPresentationForEdit(item.id);
+          if (!context.mounted) return;
           Navigator.of(context).push(
             MaterialPageRoute<void>(
-              builder: (_) => PresentationViewPage(presentationId: item.id),
+              builder: (_) => HtmlPresentationEditorPage(
+                controller: result.controller,
+                presentationId: item.id,
+                initialUpdatedByName: result.updatedByName,
+              ),
             ),
           );
         },
