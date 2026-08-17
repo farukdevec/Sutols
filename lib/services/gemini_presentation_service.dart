@@ -88,8 +88,12 @@ class GeminiPresentationService {
     int slideCount = 5,
     String language = 'turkish',
   }) async {
+    final systemInstruction = PresentationPromptBuilder.buildSystemInstruction();
+    final maxTokens = (slideCount * 180 + 200).clamp(300, 8192);
+
     final model = _ai.generativeModel(
       model: modelName,
+      systemInstruction: Content.system(systemInstruction),
       generationConfig: GenerationConfig(
         responseMimeType: 'application/json',
         responseSchema: Schema.object(
@@ -101,6 +105,7 @@ class GeminiPresentationService {
             ),
           },
         ),
+        maxOutputTokens: maxTokens,
       ),
     );
 
@@ -108,7 +113,7 @@ class GeminiPresentationService {
     final referenceBlock =
         references.isEmpty ? '' : _buildReferenceBlock(references);
 
-    final prompt = PresentationPromptBuilder.build(
+    final prompt = PresentationPromptBuilder.buildUserPrompt(
       topic: topic,
       slideCount: slideCount,
       language: language,

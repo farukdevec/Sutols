@@ -97,29 +97,30 @@ class NvidiaPresentationService {
     int slideCount = 5,
     String language = 'turkish',
   }) async {
-    final prompt = PresentationPromptBuilder.build(
+    final systemInstruction = PresentationPromptBuilder.buildSystemInstruction();
+    final userPrompt = PresentationPromptBuilder.buildUserPrompt(
       topic: topic,
       slideCount: slideCount,
       language: language,
     );
+    final maxTokens = (slideCount * 180 + 200).clamp(300, 4096);
 
     final body = {
       'model': _modelName,
       'messages': [
         {
           'role': 'system',
-          'content': 'Sen profesyonel bir sunum üreticisisin. İstenen sunumu KESİNLİKLE VE '
-              'YALNIZCA TEK BİR GEÇERLİ JSON NESNESİ OLARAK DÖNDÜR. Yanıtında asla '
-              'konuşma, açıklama, Türkçe anlatı metni, planlama düşünceleri veya '
-              'markdown kod blokları yazma.',
+          'content': '$systemInstruction\n\nİstenen sunumu KESİNLİKLE VE YALNIZCA TEK BİR GEÇERLİ JSON NESNESİ OLARAK DÖNDÜR. '
+              'JSON Şeması: {"slides": [{"title": "Slayt Başlığı", "content": "- Açıklama 1\\n- Açıklama 2", "keywords": ["nesne1", "nesne2"]}]}. '
+              'Yanıtında asla ekstra metin, açıklama veya markdown kod bloğu yazma.',
         },
         {
           'role': 'user',
-          'content': prompt,
+          'content': userPrompt,
         },
       ],
       'temperature': 0.65,
-      'max_tokens': 4096,
+      'max_tokens': maxTokens,
       'stream': false,
     };
 

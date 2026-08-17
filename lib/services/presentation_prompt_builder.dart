@@ -1,63 +1,51 @@
 /// Sunum içeriği üreten bütün AI sağlayıcılarının aynı anlatı ve kalite
-/// kurallarını kullanmasını sağlar.
+/// kurallarını kullanmasını sağlar. İstemleri sistem talimatı ve dinamik kullanıcı
+/// mesajı olarak ikiye ayırarak token kullanımını optimize eder.
 class PresentationPromptBuilder {
   const PresentationPromptBuilder._();
 
+  /// Statik kalite, anlatı ve yapı kurallarından oluşan Sistem Talimatı.
+  /// API tarafında önbelleklenebilir (Context Caching).
+  static String buildSystemInstruction() {
+    return '''Sen akademik ve kurumsal standartlarda sunum içeriği üreten uzman bir asistansın.
+
+TEMEL PLANLAMA VE ANLATI KURALLARI:
+- Sunumu baştan sona tek bir ana tez ve mantıksal anlatı doğrultusunda yapılandır.
+- Akışı temelden ayrıntıya; açıklamadan örnek ve uygulamaya; değerlendirmeden sonuca ilerlet.
+- Başlıkların tamamı birbirinden farklı, kısa ve konuya özgü olsun.
+- Her slayt içeriğinde 3-5 ayrı detaylı açıklama maddesi (toplam 35-65 kelime) bulundur.
+- Her maddede somut bilgi, mekanizma, örnek veya karşılaştırma ver.
+- Aynı cümleyi, cümle kalıbını veya bilgiyi birden fazla slaytta tekrarlama.
+- "Bu sunumda...", "Bu slaytta...", "Konuya genel bakış" gibi dolgu ifadeler KESİNLİKLE KULLANMA.
+- ARAYÜZ VE SİSTEM METNİ YAZMA: Slaytlara "sürükleme kolu", "drag_handle", "sahne kartı", "seçili sayfa" gibi yazılım talimatları ekleme.
+
+ÇIKTI FORMATI:
+- Yanıtı istenen dilde, Türkçe ise ç, ğ, ı, ö, ş, ü karakterlerine dikkat ederek ver.
+- Slayt içerik maddeleri satır başında "- " ile başlamalıdır.
+- Slayt anahtar kelimeleri (keywords), 3B modeller ve fiziksel nesnelerle doğrudan eşleşebilecek 3-8 somut nesne, araç veya yapı adı içermelidir.''';
+  }
+
+  /// Konuya özgü dinamik kullanıcı istemi.
+  static String buildUserPrompt({
+    required String topic,
+    required int slideCount,
+    required String language,
+    String referenceBlock = '',
+  }) {
+    return '''${referenceBlock}Konu: $topic
+Slayt Sayısı: $slideCount
+Çıktı Dili: $language''';
+  }
+
+  /// Geriye dönük uyumluluk için birleşik istem metni.
   static String build({
     required String topic,
     required int slideCount,
     required String language,
     String referenceBlock = '',
   }) {
-    return '''${referenceBlock}Kullanıcının verdiği konu hakkında tam olarak $slideCount slaytlık, baştan sona planlanmış bir sunum oluştur.
+    return '''${buildSystemInstruction()}
 
-ÖNCE ÇIKTIYA YAZMADAN PLANLA:
-- Sunum için tek bir ana tez ve mantıksal anlatı yolu belirle.
-- $slideCount slaydın her birine benzersiz bir amaç ve alt konu ata.
-- Akışı temelden ayrıntıya; açıklamadan örnek ve uygulamaya; değerlendirmeden sonuca ilerlet.
-- 20 veya daha fazla slaytta içeriği 5-7 anlamlı bölüme ayır; ancak başlıklarda "Bölüm 1" gibi yapay adlar kullanma.
-
-SUNUM DÜZENİ:
-- İlk slayt konuya özgü güçlü bir açılış ve kapsam sunsun.
-- İlk bölüm tanım, bağlam ve temel kavramları kursun.
-- Orta bölüm farklı alt konuları, mekanizmaları, neden-sonuç ilişkilerini, örnekleri ve uygulamaları sırayla geliştirsin.
-- Son bölüme yakın slaytlar karşılaştırma, sorunlar, sınırlılıklar, güncel durum ve gelecek perspektifi içersin.
-- Son slayt yeni bilgi başlatmadan ana çıkarımları sentezlesin.
-- Slayt sayısı azsa bu rolleri birleştir; hiçbir zaman aynı rolü tekrarlama.
-
-İÇERİK KALİTESİ:
-- Her slayt yalnızca kendi benzersiz alt konusunu anlatsın ve önceki slaydın doğal devamı olsun.
-- Başlıkların tamamı birbirinden farklı, kısa ve konuya özgü olsun.
-- Her content alanında 3-5 ayrı madde ve toplam yaklaşık 35-65 kelime kullan.
-- Her maddede somut bilgi, açıklama, mekanizma, örnek, karşılaştırma veya çıkarım ver.
-- Aynı bilgiyi farklı kelimelerle yeniden anlatma; bir bilgi yalnızca en uygun slaytta yer alsın.
-- Aynı cümleyi, cümle kalıbını, giriş ifadesini veya maddeyi birden fazla slaytta kullanma.
-- "Bu sunumda...", "Bu slaytta...", "Konuya genel bakış...", "önemli noktalar" gibi dolgu ve üst-anlatı ifadeleri kullanma.
-- KESİNLİKLE ARAYÜZ VE SİSTEM METNİ ÜRETME: Slayt içeriklerinde "sürükleme kolu", "drag_handle_rounded", "sahne kartı", "mouse ile tutarak", "seçili sayfa", "düşünce aşaması" veya yazılım talimatı gibi ifadeleri ASLA kullanma. Yalnızca konunun özüne odaklanan akademik, bilimsel ve profesyonel bilgiler yaz.
-- Giriş yalnızca ilk slaytta, özet yalnızca son slaytta bulunsun.
-- Kesinliğinden emin olmadığın sayı, tarih, kişi veya kaynak uydurma.
-
-ÇIKTI KURALLARI:
-- Tam olarak $slideCount slayt üret; eksik veya fazla üretme.
-- Yanıtı KESİNLİKLE aşağıdaki JSON şemasına tam uyacak şekilde ver:
-{
-  "slides": [
-    {
-      "title": "Slayt Başlığı",
-      "content": "- Birinci detaylı açıklama maddesi\\n- İkinci detaylı açıklama maddesi",
-      "keywords": ["anahtar1", "anahtar2"]
-    }
-  ]
-}
-- Her slaytta title, content ve keywords alanlarını eksiksiz doldur.
-- content içindeki her madde ayrı satırda "- " ile başlasın.
-- keywords, 3B (3D) modellerle ve nesnelerle doğrudan eşleşebilecek 3-8 somut fiziksel nesne, araç, yapı, gezegen, cihaz ve kavram adı içersin.
-- Komşu slaytların keywords listelerini gereksiz yere aynılaştırma.
-- Tüm metinler "$language" dilinde olsun; Türkçe ise ç, ğ, ı, ö, ş, ü karakterlerini doğru kullan.
-- İşletim sistemi bildirimi, yazılım uyarısı, lisans filigranı, bozuk kelime, arayüz açıklaması veya konu dışı metin üretme.
-- Yalnızca geçerli JSON döndür; açıklama veya markdown kod bloğu ekleme.
-
-Konu: $topic
-''';
+${buildUserPrompt(topic: topic, slideCount: slideCount, language: language, referenceBlock: referenceBlock)}''';
   }
 }
