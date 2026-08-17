@@ -1,44 +1,94 @@
 {
   "domains": [
     {
-      "id": "yer_sekilleri",
-      "label": "Yer şekilleri / jeomorfoloji",
-      "examples": ["dağ", "vadi", "plato", "volkan", "kanyon", "delta", "buzul"]
+      "id": "analiz-modeli",
+      "label": "Analiz Modeli",
+      "examples": ["swot", "pestel", "kpi", "okr", "matris", "büyüme", "portföy", "risk"]
     },
     {
-      "id": "jeoloji",
-      "label": "Jeoloji / yer katmanları",
-      "examples": ["tabaka", "fay hattı", "mineral", "kaya türü"]
+      "id": "anatomi-ve-tip",
+      "label": "Anatomi ve Tıp",
+      "examples": ["akciğer", "kalp", "beyin", "mide", "böbrek", "iskelet", "damar", "hücre", "ameliyat", "stetoskop"]
     },
     {
-      "id": "biyoloji_anatomi",
-      "label": "Biyoloji / insan-hayvan anatomisi",
-      "examples": ["organ", "hücre", "iskelet", "solunum sistemi"]
+      "id": "biyoloji",
+      "label": "Biyoloji",
+      "examples": ["bakteri", "virüs", "dna", "rna", "hücre", "mitokondri", "kloroplast", "bitki", "biyoloji"]
     },
     {
-      "id": "muhendislik_mekanik",
-      "label": "Mühendislik / mekanik sistemler",
-      "examples": ["dişli", "motor", "türbin", "çark"]
+      "id": "fizik-ve-kimya",
+      "label": "Fizik ve Kimya",
+      "examples": ["atom", "elektron", "molekül", "beher", "deney tüpü", "dalga", "optik", "prizma", "sarkaç"]
     },
     {
-      "id": "astronomi",
-      "label": "Astronomi / uzay",
-      "examples": ["gezegen", "yıldız", "galaksi", "yörünge"]
+      "id": "uzay-ve-astronomi",
+      "label": "Uzay ve Astronomi",
+      "examples": ["gezegen", "dünya", "mars", "ay", "güneş", "yıldız", "galaksi", "yörünge", "roket", "teleskop"]
     },
     {
-      "id": "iklim_meteoroloji",
-      "label": "İklim / hava olayları",
-      "examples": ["bulut", "fırtına", "atmosfer katmanı"]
+      "id": "doga-ve-cografya",
+      "label": "Doğa ve Coğrafya",
+      "examples": ["dağ", "vadi", "volkan", "kanyon", "buzul", "nehir", "göl", "fay", "topografya", "harita"]
     },
     {
-      "id": "is_finans_grafik",
-      "label": "İş / Finans / Grafikler ve İş Modelleri",
-      "examples": ["swot", "gantt", "bar grafiği", "gayrimenkul", "kpi", "bütçe"]
+      "id": "enerji",
+      "label": "Enerji",
+      "examples": ["rüzgar türbini", "güneş paneli", "hidroelektrik", "biyogaz", "nükleer", "trafo", "enerji"]
     },
     {
-      "id": "genel_sembol",
-      "label": "Genel / Sembol ve İkonlar",
-      "examples": ["hedef tahtası", "rozet", "tabela", "etiket", "puzzle"]
+      "id": "tarih-ve-mimari",
+      "label": "Tarih ve Mimari",
+      "examples": ["piramit", "kale", "sütun", "tapınak", "amfora", "mozaik", "bina", "köprü", "mimari"]
+    },
+    {
+      "id": "teknoloji-ve-yazilim",
+      "label": "Teknoloji ve Yazılım",
+      "examples": ["bilgisayar", "sunucu", "ağ", "yazılım", "yapay zeka", "robot", "dijital", "çip", "sensör"]
+    },
+    {
+      "id": "makine-ve-mekanizma",
+      "label": "Makine ve Mekanizma",
+      "examples": ["dişli", "motor", "türbin", "çark", "piston", "rulman", "cnc", "freze", "mekanizma"]
+    },
+    {
+      "id": "ulasim",
+      "label": "Ulaşım",
+      "examples": ["uçak", "helikopter", "gemi", "tren", "otobüs", "bisiklet", "araç", "ulaşım"]
+    },
+    {
+      "id": "finans-ve-is",
+      "label": "Finans ve İş",
+      "examples": ["banka", "para", "banknot", "kumbara", "yatırım", "bütçe", "kredi kartı", "ticaret", "finans"]
+    },
+    {
+      "id": "ofis-ve-egitim",
+      "label": "Ofis ve Eğitim",
+      "examples": ["masa", "sandalye", "tahta", "kitap", "kalem", "dosya", "ofis", "eğitim"]
+    },
+    {
+      "id": "spor-ve-oyun",
+      "label": "Spor ve Oyun",
+      "examples": ["top", "basketbol", "futbol", "kupa", "madalya", "spor", "oyun"]
+    },
+    {
+      "id": "diyagram",
+      "label": "Diyagram",
+      "examples": ["akış şeması", "hiyerarşi", "piramit diyagramı", "venn", "döngü", "süreç"]
+    },
+    {
+      "id": "grafik",
+      "label": "Grafik",
+      "examples": ["bar grafiği", "pasta grafik", "çizgi grafik", "sütun grafik", "istatistik", "veri"]
+    },
+    {
+      "id": "ikon-3d",
+      "label": "3B İkon",
+      "examples": ["ikon", "simge", "klasör", "zarf", "zil", "kilit", "anahtar", "yıldız ikon"]
+    },
+    {
+      "id": "sembol",
+      "label": "Sembol",
+      "examples": ["hedef", "rozet", "tabela", "etiket", "puzzle", "bayrak", "ok", "işaret"]
     }
   ]
 }

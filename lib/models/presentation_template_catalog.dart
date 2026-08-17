@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'beautiful_template_catalog.dart';
 import 'slide_model.dart';
 
 /// Firestore `templates/{templateId}` doküman yapısına uygun Sutol Şablon Modeli.
@@ -681,16 +682,22 @@ const List<SutolTemplateModel> sutolTemplateCatalog = <SutolTemplateModel>[
   ),
 ];
 
+/// Tüm şablonların (özgün ve 34 Beautiful HTML Şablonları) birleşik listesi
+List<SutolTemplateModel> get allSutolTemplateCatalog => <SutolTemplateModel>[
+      ...sutolTemplateCatalog,
+      ...beautifulTemplateCatalog,
+    ];
+
 /// Helper fonksiyonlar
 SutolTemplateModel? getSutolTemplateById(String id) {
-  for (final template in sutolTemplateCatalog) {
+  for (final template in allSutolTemplateCatalog) {
     if (template.id == id) return template;
   }
   return null;
 }
 
 List<SutolTemplateModel> getSutolTemplatesByCategory(String category) {
-  return sutolTemplateCatalog
+  return allSutolTemplateCatalog
       .where((t) => t.category.toLowerCase() == category.toLowerCase())
       .toList(growable: false);
 }
@@ -705,7 +712,7 @@ List<String> get sutolTemplateCategories => const <String>[
 
 /// Tüm şablonların ürettiği derlenmiş toplu layoutCSS kuralları
 String get sutolCombinedTemplatesCSS =>
-    sutolTemplateCatalog.map((t) => t.layoutCSS).join('\n\n');
+    allSutolTemplateCatalog.map((t) => t.layoutCSS).join('\n\n');
 
 /// Font ailesi adını PresentationTextStyle enum değerine çevirir.
 PresentationTextStyle presentationFontFamilyStyle(String fontFamily) {
@@ -729,3 +736,4 @@ PresentationTextStyle presentationFontFamilyStyle(String fontFamily) {
     _ => PresentationTextStyle.googleInter,
   };
 }
+

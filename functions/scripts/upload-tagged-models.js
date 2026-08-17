@@ -71,6 +71,7 @@ async function uploadModels() {
         modelUrl: toModelUrl(item.fileName),
         thumbnailUrl: toThumbnailUrl(item.fileName),
         tags: item.tags,
+        tags_en: item.tags_en || [],
         category: item.category,
         tier: item.tier,
       };

@@ -14,6 +14,7 @@ class ModelCatalogEntry {
     required this.modelUrl,
     required this.thumbnailUrl,
     required this.tags,
+    this.tagsEn = const <String>[],
     required this.category,
     required this.tier,
   });
@@ -23,6 +24,7 @@ class ModelCatalogEntry {
   final String modelUrl;
   final String thumbnailUrl;
   final List<String> tags;
+  final List<String> tagsEn;
   final String category;
   final String tier;
 }
@@ -79,6 +81,7 @@ class ModelRepository {
           modelUrl: modelUrl,
           thumbnailUrl: FirestoreRestHelper.stringField(fields, 'thumbnailUrl'),
           tags: FirestoreRestHelper.arrayField(fields, 'tags'),
+          tagsEn: FirestoreRestHelper.arrayField(fields, 'tags_en'),
           category: FirestoreRestHelper.stringField(fields, 'category'),
           tier: FirestoreRestHelper.stringField(fields, 'tier'),
         ));

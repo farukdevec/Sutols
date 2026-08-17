@@ -85,7 +85,7 @@ class ModelMatchingService {
           (model) => _IndexedModel(
             model: model,
             normalizedName: PresentationKeywordCatalog.normalize(model.name),
-            normalizedTags: model.tags
+            normalizedTags: <String>[...model.tags, ...model.tagsEn]
                 .map(PresentationKeywordCatalog.normalize)
                 .where((tag) => tag.isNotEmpty)
                 .toList(growable: false),

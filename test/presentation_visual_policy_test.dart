@@ -23,12 +23,13 @@ void main() {
         modelUrl: json['modelUrl'] as String,
         thumbnailUrl: json['thumbnailUrl'] as String? ?? '',
         tags: (json['tags'] as List<dynamic>).cast<String>(),
+        tagsEn: (json['tags_en'] as List<dynamic>?)?.cast<String>() ?? const <String>[],
         category: json['category'] as String? ?? '',
         tier: json['tier'] as String? ?? 'free',
       );
     }).toList(growable: false);
-    expect(models, hasLength(1037));
-    expect(models.map((model) => model.id).toSet(), hasLength(1037));
+    expect(models, hasLength(1035));
+    expect(models.map((model) => model.id).toSet(), hasLength(1035));
     return models;
   }
 

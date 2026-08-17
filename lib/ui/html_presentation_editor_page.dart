@@ -6358,7 +6358,7 @@ class _HtmlTemplateControls extends StatelessWidget {
                 ),
           ),
         ),
-        for (final sutolTemplate in sutolTemplateCatalog) ...<Widget>[
+        for (final sutolTemplate in allSutolTemplateCatalog) ...<Widget>[
           _SutolCollectionTemplateCard(
             template: sutolTemplate,
             isSelected: controller.pages.isNotEmpty &&
