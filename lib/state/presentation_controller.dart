@@ -65,6 +65,8 @@ class PresentationController extends ChangeNotifier {
       const <PresentationComponentBlock>[];
   bool _historySuspended = false;
   bool _modelOrbitGestureActive = false;
+  int _transitionPreviewRevision = 0;
+  int? _transitionPreviewGapIndex;
 
   UnmodifiableListView<PresentationPage> get pages =>
       UnmodifiableListView<PresentationPage>(_pages);
@@ -80,6 +82,8 @@ class PresentationController extends ChangeNotifier {
   Set<String> get selectedComponentBlockIds =>
       Set<String>.unmodifiable(_selectedComponentBlockIds);
   PresentationEffectSettings get effectSettings => _effectSettings;
+  int get transitionPreviewRevision => _transitionPreviewRevision;
+  int? get transitionPreviewGapIndex => _transitionPreviewGapIndex;
   int get selectedTextSelectionCount => _selectedTextBlockIds.length;
   int get selectedComponentSelectionCount => _selectedComponentBlockIds.length;
   int get selectedItemCount =>
@@ -100,6 +104,41 @@ class PresentationController extends ChangeNotifier {
       _selectedComponentBlockIds.length == 1 && _selectedTextBlockIds.isEmpty
           ? selectedPage.findComponentBlock(_selectedComponentBlockId)
           : null;
+
+  PresentationEntranceAnimation? get selectedEntranceAnimation {
+    final text = selectedTextBlock;
+    if (text != null) return text.entranceAnimation;
+    return selectedComponentBlock?.entranceAnimation;
+  }
+
+  PresentationAnimationTrigger? get selectedAnimationTrigger {
+    final text = selectedTextBlock;
+    if (text != null) return text.animationTrigger;
+    return selectedComponentBlock?.animationTrigger;
+  }
+
+  double? get selectedAnimationDuration {
+    final text = selectedTextBlock;
+    if (text != null) return text.animationDuration;
+    return selectedComponentBlock?.animationDuration;
+  }
+
+  double? get selectedAnimationDelay {
+    final text = selectedTextBlock;
+    if (text != null) return text.animationDelay;
+    return selectedComponentBlock?.animationDelay;
+  }
+
+  PresentationTextGrouping? get selectedTextGrouping =>
+      selectedTextBlock?.textGrouping;
+
+  double? get selectedTextGroupDelay => selectedTextBlock?.groupDelay;
+
+  List<Offset>? get selectedMotionPathPoints {
+    final text = selectedTextBlock;
+    if (text != null) return text.motionPathPoints;
+    return selectedComponentBlock?.motionPathPoints;
+  }
 
   bool get canRemovePage => _pages.length > 1;
   bool get canRemoveTextBlock => _selectedTextBlockIds.isNotEmpty;
@@ -140,7 +179,20 @@ class PresentationController extends ChangeNotifier {
     for (final block in page.componentBlocks) {
       maxStep = math.max(maxStep, block.revealStep);
     }
-    return maxStep;
+    final clickAnimationCount = <Object>[
+      ...page.textBlocks,
+      ...page.componentBlocks,
+    ].where((block) {
+      if (block is PresentationTextBlock) {
+        return block.entranceAnimation != PresentationEntranceAnimation.none &&
+            block.animationTrigger == PresentationAnimationTrigger.onClick;
+      }
+      final component = block as PresentationComponentBlock;
+      return component.entranceAnimation !=
+              PresentationEntranceAnimation.none &&
+          component.animationTrigger == PresentationAnimationTrigger.onClick;
+    }).length;
+    return maxStep + clickAnimationCount;
   }
 
   void selectPage(int index) {
@@ -240,6 +292,186 @@ class PresentationController extends ChangeNotifier {
     _replaceSelectedTextBlock(
       selectedTextBlock?.copyWith(textAnimation: value),
     );
+  }
+
+  void updateSelectedEntranceAnimation(PresentationEntranceAnimation value) {
+    final nextOrder = _nextEntranceAnimationOrder();
+    final text = selectedTextBlock;
+    if (text != null) {
+      if (text.entranceAnimation == value) return;
+      _replaceSelectedTextBlock(
+        text.copyWith(
+          entranceAnimation: value,
+          animationOrder: value == PresentationEntranceAnimation.none
+              ? 0
+              : (text.animationOrder > 0 ? text.animationOrder : nextOrder),
+          textAnimation: value == PresentationEntranceAnimation.none
+              ? text.textAnimation
+              : PresentationTextAnimation.none,
+        ),
+      );
+      return;
+    }
+    final component = selectedComponentBlock;
+    if (component == null || component.entranceAnimation == value) return;
+    final nextComponents = selectedPage.componentBlocks
+        .map((block) => block.id == component.id
+            ? block.copyWith(
+                entranceAnimation: value,
+                animationOrder: value == PresentationEntranceAnimation.none
+                    ? 0
+                    : (block.animationOrder > 0
+                        ? block.animationOrder
+                        : nextOrder),
+              )
+            : block)
+        .toList(growable: false);
+    _replaceSelectedPage(
+        selectedPage.copyWith(componentBlocks: nextComponents));
+    notifyListeners();
+  }
+
+  void updateSelectedAnimationTiming({
+    PresentationAnimationTrigger? trigger,
+    double? duration,
+    double? delay,
+  }) {
+    final safeDuration = duration?.clamp(.1, 5).toDouble();
+    final safeDelay = delay?.clamp(0, 5).toDouble();
+    final text = selectedTextBlock;
+    if (text != null) {
+      _replaceSelectedTextBlock(
+        text.copyWith(
+          animationTrigger: trigger,
+          animationDuration: safeDuration,
+          animationDelay: safeDelay,
+        ),
+      );
+      return;
+    }
+    final component = selectedComponentBlock;
+    if (component == null) return;
+    final nextComponents = selectedPage.componentBlocks
+        .map((block) => block.id == component.id
+            ? block.copyWith(
+                animationTrigger: trigger,
+                animationDuration: safeDuration,
+                animationDelay: safeDelay,
+              )
+            : block)
+        .toList(growable: false);
+    _replaceSelectedPage(
+        selectedPage.copyWith(componentBlocks: nextComponents));
+    notifyListeners();
+  }
+
+  void updateSelectedTextGrouping({
+    PresentationTextGrouping? grouping,
+    double? groupDelay,
+  }) {
+    final text = selectedTextBlock;
+    if (text == null) return;
+    _replaceSelectedTextBlock(
+      text.copyWith(
+        textGrouping: grouping,
+        groupDelay: groupDelay?.clamp(.05, .5).toDouble(),
+      ),
+    );
+  }
+
+  void updateSelectedMotionPathPoints(List<Offset> points) {
+    if (points.length != 4) return;
+    final safePoints = points
+        .map((point) => Offset(
+              point.dx.clamp(-.6, .6).toDouble(),
+              point.dy.clamp(-.6, .6).toDouble(),
+            ))
+        .toList(growable: false);
+    final text = selectedTextBlock;
+    if (text != null) {
+      _replaceSelectedTextBlock(text.copyWith(motionPathPoints: safePoints));
+      return;
+    }
+    final component = selectedComponentBlock;
+    if (component == null) return;
+    final nextComponents = selectedPage.componentBlocks
+        .map((block) => block.id == component.id
+            ? block.copyWith(motionPathPoints: safePoints)
+            : block)
+        .toList(growable: false);
+    _replaceSelectedPage(
+        selectedPage.copyWith(componentBlocks: nextComponents));
+    notifyListeners();
+  }
+
+  int _nextEntranceAnimationOrder() {
+    var maxOrder = 0;
+    for (final block in selectedPage.textBlocks) {
+      maxOrder = math.max(maxOrder, block.animationOrder);
+    }
+    for (final block in selectedPage.componentBlocks) {
+      maxOrder = math.max(maxOrder, block.animationOrder);
+    }
+    return maxOrder + 1;
+  }
+
+  void reorderEntranceAnimations(List<String> orderedTargetIds) {
+    final orders = <String, int>{
+      for (var i = 0; i < orderedTargetIds.length; i += 1)
+        orderedTargetIds[i]: i + 1,
+    };
+    final nextPage = selectedPage.copyWith(
+      textBlocks: selectedPage.textBlocks
+          .map((block) => orders[block.id] == null
+              ? block
+              : block.copyWith(animationOrder: orders[block.id]))
+          .toList(growable: false),
+      componentBlocks: selectedPage.componentBlocks
+          .map((block) => orders[block.id] == null
+              ? block
+              : block.copyWith(animationOrder: orders[block.id]))
+          .toList(growable: false),
+    );
+    _replaceSelectedPage(nextPage);
+    notifyListeners();
+  }
+
+  void selectAnimationTarget(String targetId) {
+    if (selectedPage.findTextBlock(targetId) != null) {
+      selectTextBlock(targetId);
+    } else if (selectedPage.findComponentBlock(targetId) != null) {
+      selectComponentBlock(targetId);
+    }
+  }
+
+  Future<void> previewEntranceAnimations({String? targetId}) async {
+    final original = selectedPage;
+    bool matches(String id) => targetId == null || targetId == id;
+    final resetPage = original.copyWith(
+      textBlocks: original.textBlocks
+          .map((block) => matches(block.id)
+              ? block.copyWith(
+                  entranceAnimation: PresentationEntranceAnimation.none,
+                )
+              : block)
+          .toList(growable: false),
+      componentBlocks: original.componentBlocks
+          .map((block) => matches(block.id)
+              ? block.copyWith(
+                  entranceAnimation: PresentationEntranceAnimation.none,
+                )
+              : block)
+          .toList(growable: false),
+    );
+    _pages[_selectedPageIndex] = resetPage;
+    notifyListeners();
+    await Future<void>.delayed(const Duration(milliseconds: 80));
+    if (_selectedPageIndex >= _pages.length ||
+        _pages[_selectedPageIndex].id != original.id) {
+      return;
+    }
+    _pages[_selectedPageIndex] = original;
+    notifyListeners();
   }
 
   void updateSelectedTextColor(String? value) {
@@ -570,7 +802,8 @@ class PresentationController extends ChangeNotifier {
     notifyListeners();
   }
 
-  void applyFontPairToDeck(PresentationTextStyle headingStyle, PresentationTextStyle bodyStyle) {
+  void applyFontPairToDeck(
+      PresentationTextStyle headingStyle, PresentationTextStyle bodyStyle) {
     _recordUndo();
     final updatedPages = _pages.map((page) {
       final updatedTextBlocks = page.textBlocks.map((block) {
@@ -681,6 +914,36 @@ class PresentationController extends ChangeNotifier {
     _recordUndo();
     _effectSettings = _effectSettings.copyWith(transitionKind: value);
     notifyListeners();
+  }
+
+  void updateTransitionAfterPage(
+    int pageIndex,
+    PresentationTransitionKind value,
+  ) {
+    if (pageIndex < 0 || pageIndex >= _pages.length - 1) return;
+    final page = _pages[pageIndex];
+    if (page.transitionAfter == value) {
+      if (value != PresentationTransitionKind.none) {
+        _transitionPreviewGapIndex = pageIndex;
+        _transitionPreviewRevision += 1;
+        notifyListeners();
+      }
+      return;
+    }
+    _recordUndo();
+    _pages[pageIndex] = page.copyWith(transitionAfter: value);
+    if (value != PresentationTransitionKind.none) {
+      _transitionPreviewGapIndex = pageIndex;
+      _transitionPreviewRevision += 1;
+    }
+    notifyListeners();
+  }
+
+  PresentationTransitionKind transitionAfterPage(int pageIndex) {
+    if (pageIndex < 0 || pageIndex >= _pages.length - 1) {
+      return PresentationTransitionKind.none;
+    }
+    return _pages[pageIndex].transitionAfter ?? _effectSettings.transitionKind;
   }
 
   void updateTransitionDuration(double value) {

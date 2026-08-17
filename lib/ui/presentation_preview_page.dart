@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 import 'dart:ui' as ui;
 
@@ -23,7 +24,8 @@ class PresentationPreviewPage extends StatefulWidget {
       _PresentationPreviewPageState();
 }
 
-class _PresentationPreviewPageState extends State<PresentationPreviewPage> {
+class _PresentationPreviewPageState extends State<PresentationPreviewPage>
+    with SingleTickerProviderStateMixin {
   late final FocusNode _focusNode;
   late int _index;
   int _fragmentStep = 0;
@@ -31,12 +33,24 @@ class _PresentationPreviewPageState extends State<PresentationPreviewPage> {
   bool _showControls = true;
   bool _presenterMode = false;
   PresentationPage? _transitionFromPage;
+  PresentationTransitionKind? _activeTransitionKind;
+  StreamSubscription<bool>? _fullscreenSubscription;
+  bool _closing = false;
+  late final AnimationController _pageTransitionController;
+  int _transitionGeneration = 0;
+  int _activeTransitionGeneration = 0;
 
   @override
   void initState() {
     super.initState();
     _focusNode = FocusNode(debugLabel: 'Sutols presentation preview');
+    _pageTransitionController = AnimationController(vsync: this, value: 1);
     _index = widget.controller.selectedIndex;
+    _fullscreenSubscription = presentationFullscreenChanges().listen(
+      (isFullscreen) {
+        if (!isFullscreen && mounted) _close();
+      },
+    );
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) {
         return;
@@ -48,7 +62,9 @@ class _PresentationPreviewPageState extends State<PresentationPreviewPage> {
 
   @override
   void dispose() {
+    unawaited(_fullscreenSubscription?.cancel());
     _focusNode.dispose();
+    _pageTransitionController.dispose();
     exitPresentationFullscreen();
     super.dispose();
   }
@@ -66,8 +82,19 @@ class _PresentationPreviewPageState extends State<PresentationPreviewPage> {
       return;
     }
     final previousPage = widget.controller.pages[_index];
+    final gapIndex = math.min(_index, clamped);
+    final transitionKind = widget.controller.transitionAfterPage(gapIndex);
+    final shouldAnimate = transitionKind != PresentationTransitionKind.none &&
+        !widget.controller.effectSettings.reducedMotion;
+    final generation = ++_transitionGeneration;
+    _activeTransitionGeneration = generation;
+    _pageTransitionController.duration = Duration(
+      milliseconds: widget.controller.effectSettings.transitionDurationMs,
+    );
+    _pageTransitionController.value = shouldAnimate ? 0 : 1;
     setState(() {
       _transitionFromPage = previousPage;
+      _activeTransitionKind = transitionKind;
       _index = clamped;
       _fragmentStep = revealStep.clamp(
         0,
@@ -76,6 +103,23 @@ class _PresentationPreviewPageState extends State<PresentationPreviewPage> {
         ),
       );
       _zoomed = false;
+    });
+    if (!shouldAnimate) {
+      setState(() => _transitionFromPage = null);
+      return;
+    }
+  }
+
+  void _startLoadedTransition() {
+    final generation = _activeTransitionGeneration;
+    if (!mounted ||
+        generation != _transitionGeneration ||
+        _pageTransitionController.isAnimating) {
+      return;
+    }
+    _pageTransitionController.forward(from: 0).whenComplete(() {
+      if (!mounted || generation != _transitionGeneration) return;
+      setState(() => _transitionFromPage = null);
     });
   }
 
@@ -147,6 +191,8 @@ class _PresentationPreviewPageState extends State<PresentationPreviewPage> {
   }
 
   void _close() {
+    if (_closing || !mounted) return;
+    _closing = true;
     Navigator.of(context).pop();
   }
 
@@ -165,7 +211,7 @@ class _PresentationPreviewPageState extends State<PresentationPreviewPage> {
         key == LogicalKeyboardKey.backspace) {
       _previous();
     } else if (key == LogicalKeyboardKey.escape) {
-      _zoomed ? _toggleZoom() : _close();
+      _close();
     } else if (key == LogicalKeyboardKey.keyZ ||
         key == LogicalKeyboardKey.equal ||
         key == LogicalKeyboardKey.add) {
@@ -188,6 +234,10 @@ class _PresentationPreviewPageState extends State<PresentationPreviewPage> {
         final colors = context.sutolColors;
         final pages = widget.controller.pages;
         final effectSettings = widget.controller.effectSettings;
+        final transitionSettings = effectSettings.copyWith(
+          transitionKind:
+              _activeTransitionKind ?? effectSettings.transitionKind,
+        );
         final reduceMotion = _shouldReducePreviewMotion(
           context,
           effectSettings,
@@ -210,6 +260,7 @@ class _PresentationPreviewPageState extends State<PresentationPreviewPage> {
             onKeyEvent: _handleKeyEvent,
             child: GestureDetector(
               behavior: HitTestBehavior.opaque,
+              onTap: effectSettings.zoomEnabled ? null : _next,
               child: Stack(
                 fit: StackFit.expand,
                 children: <Widget>[
@@ -221,24 +272,31 @@ class _PresentationPreviewPageState extends State<PresentationPreviewPage> {
                         ? Center(
                             child: Text(
                               'Sunumda sayfa yok.',
-                              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .titleLarge
+                                  ?.copyWith(
                                     color: colors.onSurface,
                                     fontWeight: FontWeight.w700,
                                   ),
                             ),
                           )
-                        : _PreviewDeckStage(
-                            page: page,
-                            transitionFromPage: _transitionFromPage,
-                            currentIndex: safeIndex,
-                            pageCount: pageCount,
-                            currentRevealStep: _fragmentStep,
-                            effectSettings: effectSettings,
-                            reduceMotion: reduceMotion,
-                            zoomed: _zoomed,
-                            onToggleZoom: _toggleZoom,
-                            onHotspot: _goToPageId,
-                            showHotspots: _showControls,
+                        : AnimatedBuilder(
+                            animation: _pageTransitionController,
+                            builder: (context, _) => _PreviewDeckStage(
+                              page: page,
+                              transitionFromPage: _transitionFromPage,
+                              currentIndex: safeIndex,
+                              pageCount: pageCount,
+                              currentRevealStep: _fragmentStep,
+                              effectSettings: transitionSettings,
+                              reduceMotion: reduceMotion,
+                              zoomed: _zoomed,
+                              onToggleZoom: _toggleZoom,
+                              onHotspot: _goToPageId,
+                              showHotspots: _showControls,
+                              onTransitionReady: _startLoadedTransition,
+                            ),
                           ),
                   ),
                   if (_showControls && _presenterMode)
@@ -299,6 +357,7 @@ class _PreviewDeckStage extends StatelessWidget {
     required this.onToggleZoom,
     required this.onHotspot,
     required this.showHotspots,
+    required this.onTransitionReady,
   });
 
   final PresentationPage page;
@@ -312,6 +371,7 @@ class _PreviewDeckStage extends StatelessWidget {
   final VoidCallback onToggleZoom;
   final ValueChanged<String> onHotspot;
   final bool showHotspots;
+  final VoidCallback onTransitionReady;
 
   @override
   Widget build(BuildContext context) {
@@ -334,6 +394,9 @@ class _PreviewDeckStage extends StatelessWidget {
           stageWidth = availableWidth;
           stageHeight = stageWidth / targetRatio;
         }
+        final isPlayingTransition = transitionFromPage != null &&
+            !reduceMotion &&
+            effectSettings.transitionKind != PresentationTransitionKind.none;
 
         return Center(
           child: SizedBox(
@@ -360,37 +423,35 @@ class _PreviewDeckStage extends StatelessWidget {
                     child: GestureDetector(
                       behavior: HitTestBehavior.translucent,
                       onTap: effectSettings.zoomEnabled ? onToggleZoom : null,
-                      child: AnimatedSwitcher(
-                        duration: duration,
-                        transitionBuilder: (child, animation) =>
-                            _buildPreviewTransition(
-                          kind: effectSettings.transitionKind,
-                          animation: animation,
-                          reduceMotion: reduceMotion,
-                          child: child,
-                        ),
-                        child: KeyedSubtree(
-                          key: ValueKey<String>('preview-${page.id}'),
-                          child: AnimatedScale(
-                            scale: zoomed ? effectSettings.zoomScale : 1,
-                            duration: reduceMotion
-                                ? SutolMotion.instant
-                                : SutolMotion.moderate,
-                            curve: SutolMotion.easeOut,
-                            child: _PreviewStageWithOrbit(
-                              key: ValueKey<String>('orbit-${page.id}'),
-                              page: page,
-                              transitionFromPage: transitionFromPage,
-                              currentRevealStep: currentRevealStep,
-                              effectSettings: effectSettings,
-                              reduceMotion: reduceMotion,
-                              duration: duration,
-                              showHotspots: showHotspots,
-                              onHotspot: onHotspot,
+                      child: isPlayingTransition
+                          ? HtmlPageTransitionStage(
+                              key: ValueKey<String>(
+                                'transition-${transitionFromPage!.id}-${page.id}-${effectSettings.transitionKind.name}',
+                              ),
+                              from: transitionFromPage!,
+                              to: page,
+                              kind: effectSettings.transitionKind,
+                              durationMs: effectSettings.transitionDurationMs,
+                              onReady: onTransitionReady,
+                            )
+                          : AnimatedScale(
+                              scale: zoomed ? effectSettings.zoomScale : 1,
+                              duration: reduceMotion
+                                  ? SutolMotion.instant
+                                  : SutolMotion.moderate,
+                              curve: SutolMotion.easeOut,
+                              child: _PreviewStageWithOrbit(
+                                key: ValueKey<String>('incoming-${page.id}'),
+                                page: page,
+                                transitionFromPage: null,
+                                currentRevealStep: currentRevealStep,
+                                effectSettings: effectSettings,
+                                reduceMotion: reduceMotion,
+                                duration: duration,
+                                showHotspots: showHotspots,
+                                onHotspot: onHotspot,
+                              ),
                             ),
-                          ),
-                        ),
-                      ),
                     ),
                   ),
                 ),
@@ -765,7 +826,8 @@ class _PreviewTopBar extends StatelessWidget {
               SizedBox(width: context.md),
               _PreviewInfoPill(
                 icon: presentationTransitionIcon(effectSettings.transitionKind),
-                label: presentationTransitionLabel(effectSettings.transitionKind),
+                label:
+                    presentationTransitionLabel(effectSettings.transitionKind),
               ),
               if (maxRevealStep > 0) ...<Widget>[
                 SizedBox(width: context.md),
@@ -1046,7 +1108,8 @@ class _PreviewControlButtonState extends State<_PreviewControlButton> {
                 child: AnimatedContainer(
                   duration: context.motionFast,
                   curve: context.motionDefaultCurve,
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   decoration: BoxDecoration(
                     color: _isHovered
                         ? colors.surface.withValues(alpha: 0.6)
@@ -1065,10 +1128,11 @@ class _PreviewControlButtonState extends State<_PreviewControlButton> {
                       const SizedBox(width: 6),
                       Text(
                         widget.label,
-                        style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                              color: colors.onSurface,
-                              fontWeight: FontWeight.w600,
-                            ),
+                        style:
+                            Theme.of(context).textTheme.labelMedium?.copyWith(
+                                  color: colors.onSurface,
+                                  fontWeight: FontWeight.w600,
+                                ),
                       ),
                     ],
                   ),
@@ -1176,7 +1240,9 @@ class _PreviewDot extends StatelessWidget {
                 width: isSelected ? 24 : 8,
                 height: 8,
                 decoration: BoxDecoration(
-                  color: isSelected ? colors.primary : colors.onSurface.withValues(alpha: 0.24),
+                  color: isSelected
+                      ? colors.primary
+                      : colors.onSurface.withValues(alpha: 0.24),
                   borderRadius: BorderRadius.circular(SutolRadius.full),
                 ),
               ),
@@ -1263,6 +1329,115 @@ String _previewPageTitle(PresentationPage page) {
   return 'Bos slayt';
 }
 
+// ignore: unused_element
+Widget _buildPresentationTransitionPair({
+  required PresentationTransitionKind kind,
+  required double progress,
+  required Widget? outgoing,
+  required Widget incoming,
+}) {
+  if (outgoing == null || kind == PresentationTransitionKind.none) {
+    return incoming;
+  }
+  final t = Curves.easeInOutCubic.transform(progress.clamp(0.0, 1.0));
+  final layers = <Widget>[];
+
+  switch (kind) {
+    case PresentationTransitionKind.none:
+      return incoming;
+    case PresentationTransitionKind.fade:
+    case PresentationTransitionKind.smooth:
+      layers.addAll(<Widget>[
+        Opacity(opacity: 1 - t, child: outgoing),
+        Opacity(opacity: t, child: incoming),
+      ]);
+    case PresentationTransitionKind.slide:
+      layers.addAll(<Widget>[
+        FractionalTranslation(translation: Offset(-t, 0), child: outgoing),
+        FractionalTranslation(
+          translation: Offset(1 - t, 0),
+          child: incoming,
+        ),
+      ]);
+    case PresentationTransitionKind.cover:
+      layers.addAll(<Widget>[
+        outgoing,
+        FractionalTranslation(
+          translation: Offset(1 - t, 0),
+          child: incoming,
+        ),
+      ]);
+    case PresentationTransitionKind.uncover:
+      layers.addAll(<Widget>[
+        incoming,
+        FractionalTranslation(translation: Offset(-t, 0), child: outgoing),
+      ]);
+    case PresentationTransitionKind.wipe:
+      layers.addAll(<Widget>[
+        outgoing,
+        ClipRect(
+          child: Align(
+            alignment: Alignment.centerLeft,
+            widthFactor: t,
+            child: incoming,
+          ),
+        ),
+      ]);
+    case PresentationTransitionKind.split:
+      layers.addAll(<Widget>[
+        outgoing,
+        ClipRect(
+          child: Align(
+            alignment: Alignment.center,
+            widthFactor: t,
+            child: incoming,
+          ),
+        ),
+      ]);
+    case PresentationTransitionKind.reveal:
+      layers.addAll(<Widget>[
+        outgoing,
+        FractionalTranslation(
+          translation: Offset(0, 1 - t),
+          child: incoming,
+        ),
+      ]);
+    case PresentationTransitionKind.flip:
+    case PresentationTransitionKind.cube3d:
+      layers.addAll(<Widget>[
+        Transform(
+          alignment: Alignment.centerRight,
+          transform: Matrix4.identity()
+            ..setEntry(3, 2, .0012)
+            ..rotateY(-1.5708 * t),
+          child: Opacity(opacity: 1 - t, child: outgoing),
+        ),
+        Transform(
+          alignment: Alignment.centerLeft,
+          transform: Matrix4.identity()
+            ..setEntry(3, 2, .0012)
+            ..rotateY(1.5708 * (1 - t)),
+          child: Opacity(opacity: t, child: incoming),
+        ),
+      ]);
+    default:
+      layers.addAll(<Widget>[
+        Opacity(
+          opacity: 1 - t,
+          child: Transform.scale(scale: 1 + (.12 * t), child: outgoing),
+        ),
+        Opacity(
+          opacity: t,
+          child: Transform.scale(scale: .88 + (.12 * t), child: incoming),
+        ),
+      ]);
+  }
+
+  return Stack(fit: StackFit.expand, children: layers);
+}
+
+// Kept for the individual transition widgets used by legacy callers.
+// ignore: unused_element
 Widget _buildPreviewTransition({
   required PresentationTransitionKind kind,
   required Animation<double> animation,
@@ -1278,7 +1453,6 @@ Widget _buildPreviewTransition({
     curve: SutolMotion.easeOut,
     reverseCurve: SutolMotion.easeIn,
   );
-
   switch (kind) {
     case PresentationTransitionKind.none:
       return child;
@@ -1292,15 +1466,18 @@ Widget _buildPreviewTransition({
     case PresentationTransitionKind.fade:
       return FadeTransition(opacity: curved, child: child);
     case PresentationTransitionKind.slide:
-      return FadeTransition(
-        opacity: curved,
-        child: SlideTransition(
-          position: Tween<Offset>(
-            begin: const Offset(0.06, 0),
-            end: Offset.zero,
-          ).animate(curved),
-          child: child,
-        ),
+      return AnimatedBuilder(
+        animation: curved,
+        child: child,
+        builder: (context, child) {
+          final outgoing = animation.status == AnimationStatus.reverse;
+          return FractionalTranslation(
+            translation: outgoing
+                ? Offset(curved.value - 1, 0)
+                : Offset(1 - curved.value, 0),
+            child: child,
+          );
+        },
       );
     case PresentationTransitionKind.zoom:
       return FadeTransition(
@@ -1355,7 +1532,7 @@ Widget _buildPreviewTransition({
         child: SizeTransition(
           sizeFactor: curved,
           axis: Axis.horizontal,
-          axisAlignment: 0,
+          alignment: Alignment.center,
           child: child,
         ),
       );
@@ -1371,23 +1548,28 @@ Widget _buildPreviewTransition({
         ),
       );
     case PresentationTransitionKind.cover:
-      return SlideTransition(
-        position: Tween<Offset>(
-          begin: const Offset(1, 0),
-          end: Offset.zero,
-        ).animate(curved),
+      return AnimatedBuilder(
+        animation: curved,
         child: child,
+        builder: (context, child) {
+          final outgoing = animation.status == AnimationStatus.reverse;
+          return FractionalTranslation(
+            translation: outgoing ? Offset.zero : Offset(1 - curved.value, 0),
+            child: child,
+          );
+        },
       );
     case PresentationTransitionKind.uncover:
-      return FadeTransition(
-        opacity: curved,
-        child: SlideTransition(
-          position: Tween<Offset>(
-            begin: const Offset(-0.18, 0),
-            end: Offset.zero,
-          ).animate(curved),
-          child: child,
-        ),
+      return AnimatedBuilder(
+        animation: curved,
+        child: child,
+        builder: (context, child) {
+          final outgoing = animation.status == AnimationStatus.reverse;
+          return FractionalTranslation(
+            translation: outgoing ? Offset(curved.value - 1, 0) : Offset.zero,
+            child: child,
+          );
+        },
       );
     case PresentationTransitionKind.flip:
       return AnimatedBuilder(
@@ -1488,9 +1670,12 @@ Widget _buildPreviewTransition({
 }
 
 bool _shouldReducePreviewMotion(
-  BuildContext context,
+  BuildContext _,
   PresentationEffectSettings settings,
 ) {
-  return settings.reducedMotion ||
-      (MediaQuery.maybeOf(context)?.disableAnimations ?? false);
+  // Sunum geçişleri yalnız kullanıcının uygulama içindeki "azaltılmış
+  // hareket" seçimiyle kapatılır. İşletim sistemi ayarını burada otomatik
+  // uygulamak, kullanıcı bir geçiş seçtiği halde tüm efektleri görünmez
+  // kılıyordu.
+  return settings.reducedMotion;
 }

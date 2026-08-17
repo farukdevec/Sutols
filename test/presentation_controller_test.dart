@@ -4,6 +4,23 @@ import 'package:sutol/models/slide_model.dart';
 import 'package:sutol/state/presentation_controller.dart';
 
 void main() {
+  test('applying a transition requests one preview for that slide gap', () {
+    final controller = PresentationController()..addPage();
+    final before = controller.transitionPreviewRevision;
+
+    controller.updateTransitionAfterPage(0, PresentationTransitionKind.cover);
+
+    expect(controller.transitionAfterPage(0), PresentationTransitionKind.cover);
+    expect(controller.transitionPreviewGapIndex, 0);
+    expect(controller.transitionPreviewRevision, before + 1);
+
+    controller.updateTransitionAfterPage(0, PresentationTransitionKind.cover);
+    expect(controller.transitionPreviewRevision, before + 2);
+
+    controller.updateTransitionAfterPage(0, PresentationTransitionKind.none);
+    expect(controller.transitionPreviewRevision, before + 2);
+  });
+
   test('newly added 3D models animate and rotate automatically', () {
     final controller = PresentationController();
     addTearDown(controller.dispose);
@@ -46,7 +63,9 @@ void main() {
     expect(controller.canRedo, isFalse);
   });
 
-  test('page operations addPageAfter duplicatePage movePage and removePageAt work correctly', () {
+  test(
+      'page operations addPageAfter duplicatePage movePage and removePageAt work correctly',
+      () {
     final controller = PresentationController();
     addTearDown(controller.dispose);
 
@@ -80,6 +99,27 @@ void main() {
   });
 
   test('undo and redo restore effect settings', () {
+    final reorderController = PresentationController();
+    addTearDown(reorderController.dispose);
+    reorderController.addPage();
+    reorderController.addPage();
+    final originalOrder =
+        reorderController.pages.map((page) => page.id).toList();
+
+    reorderController.reorderPage(1, 0);
+    expect(
+      reorderController.pages.map((page) => page.id),
+      <String>[originalOrder[1], originalOrder[0], originalOrder[2]],
+    );
+    expect(reorderController.selectedIndex, 0);
+
+    reorderController.reorderPage(0, 3);
+    expect(
+      reorderController.pages.map((page) => page.id),
+      <String>[originalOrder[0], originalOrder[2], originalOrder[1]],
+    );
+    expect(reorderController.selectedIndex, 2);
+
     final controller = PresentationController();
     addTearDown(controller.dispose);
 

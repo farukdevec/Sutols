@@ -168,14 +168,14 @@ void main() {
       find.byKey(
         const ValueKey<String>('selected-text-animation-control'),
       ),
-      findsOneWidget,
+      findsNothing,
     );
     final textFieldHost = find.byKey(
       const ValueKey<String>('selected-text-toolbar-field'),
     );
     expect(textFieldHost, findsOneWidget);
     expect(tester.getRect(textFieldHost).left, lessThan(32));
-    expect(find.byIcon(Icons.animation_rounded), findsOneWidget);
+    expect(find.byIcon(Icons.animation_rounded), findsNothing);
     expect(tester.takeException(), isNull);
 
     final controller = tester.widget<HtmlPresentationEditorPage>(
@@ -186,23 +186,6 @@ void main() {
       'Yeni başlık',
     );
     expect(controller.controller.selectedTextBlock!.text, 'Yeni başlık');
-
-    final animationControl = find.byKey(
-      const ValueKey<String>('selected-text-animation-control'),
-    );
-    await tester.ensureVisible(animationControl);
-    await tester.tap(animationControl);
-    await tester.pumpAndSettle();
-    final animationOption = find.byKey(
-      const ValueKey<String>('text-animation-option-bilimDramatik'),
-    );
-    expect(animationOption, findsOneWidget);
-    await tester.tap(animationOption);
-    await tester.pumpAndSettle();
-    expect(
-      controller.controller.selectedTextBlock!.textAnimation,
-      PresentationTextAnimation.bilimDramatik,
-    );
 
     final colorControl = find.byKey(
       const ValueKey<String>('selected-text-color-control'),

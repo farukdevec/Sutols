@@ -12,6 +12,89 @@ import '../../../services/remote_image_sources.dart';
 import '../../../services/remote_model_sources.dart';
 import 'html_stage_document.dart';
 
+class HtmlPageTransitionStage extends StatefulWidget {
+  const HtmlPageTransitionStage({
+    super.key,
+    required this.from,
+    required this.to,
+    required this.kind,
+    required this.durationMs,
+    this.onReady,
+  });
+
+  final PresentationPage from;
+  final PresentationPage to;
+  final PresentationTransitionKind kind;
+  final int durationMs;
+  final VoidCallback? onReady;
+
+  @override
+  State<HtmlPageTransitionStage> createState() =>
+      _HtmlPageTransitionStageState();
+}
+
+class _HtmlPageTransitionStageState extends State<HtmlPageTransitionStage> {
+  static int _viewCounter = 0;
+  late final String _viewType;
+  late final html.IFrameElement _iframe;
+  StreamSubscription<html.Event>? _loadSubscription;
+
+  @override
+  void initState() {
+    super.initState();
+    _viewType = 'sutol-html-transition-${_viewCounter++}';
+    _iframe = html.IFrameElement()
+      ..style.width = '100%'
+      ..style.height = '100%'
+      ..style.position = 'absolute'
+      ..style.top = '0'
+      ..style.right = '0'
+      ..style.bottom = '0'
+      ..style.left = '0'
+      ..style.border = '0'
+      ..style.pointerEvents = 'none'
+      ..setAttribute('scrolling', 'no');
+    _loadSubscription = _iframe.onLoad.listen((_) => widget.onReady?.call());
+    _render();
+    ui_web.platformViewRegistry.registerViewFactory(
+      _viewType,
+      (int viewId) => _iframe,
+    );
+  }
+
+  @override
+  void didUpdateWidget(covariant HtmlPageTransitionStage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.from != widget.from ||
+        oldWidget.to != widget.to ||
+        oldWidget.kind != widget.kind ||
+        oldWidget.durationMs != widget.durationMs) {
+      _render();
+    }
+  }
+
+  void _render() {
+    _iframe.srcdoc = buildHtmlPageTransitionDocument(
+      from: widget.from,
+      to: widget.to,
+      kind: widget.kind,
+      durationMs: widget.durationMs,
+      modelSourcesById: RemoteModelSources.all,
+      imageSourcesById: RemoteImageSources.all,
+    );
+  }
+
+  @override
+  void dispose() {
+    unawaited(_loadSubscription?.cancel());
+    _iframe.remove();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => HtmlElementView(viewType: _viewType);
+}
+
 class HtmlPageStage extends StatefulWidget {
   const HtmlPageStage({
     super.key,
@@ -23,6 +106,10 @@ class HtmlPageStage extends StatefulWidget {
     this.showBadge = true,
     this.renderMode = HtmlStageRenderMode.full,
     this.onTap,
+    this.cssTransform = 'none',
+    this.cssOpacity = 1,
+    this.cssClipPath,
+    this.cssTransformOrigin = 'center center',
   });
 
   final PresentationPage page;
@@ -33,6 +120,10 @@ class HtmlPageStage extends StatefulWidget {
   final bool showBadge;
   final HtmlStageRenderMode renderMode;
   final VoidCallback? onTap;
+  final String cssTransform;
+  final double cssOpacity;
+  final String? cssClipPath;
+  final String cssTransformOrigin;
 
   @override
   State<HtmlPageStage> createState() => _HtmlPageStageState();
@@ -151,6 +242,7 @@ class _HtmlPageStageState extends State<HtmlPageStage> {
       ..style.position = 'relative'
       ..style.pointerEvents = widget.onTap == null ? 'none' : 'auto'
       ..style.overflow = 'hidden';
+    _applyVisualStyle();
     _iframeElement = _createIframe();
     _hostElement.children.add(_iframeElement);
     if (widget.onTap != null) {
@@ -201,9 +293,19 @@ class _HtmlPageStageState extends State<HtmlPageStage> {
   @override
   void didUpdateWidget(covariant HtmlPageStage oldWidget) {
     super.didUpdateWidget(oldWidget);
+    _applyVisualStyle();
     if (!_patchInPlace(oldWidget)) {
       _render();
     }
+  }
+
+  void _applyVisualStyle() {
+    _hostElement.style
+      ..transform = widget.cssTransform
+      ..transformOrigin = widget.cssTransformOrigin
+      ..opacity = widget.cssOpacity.clamp(0.0, 1.0).toString()
+      ..clipPath = widget.cssClipPath ?? 'none'
+      ..willChange = 'transform, opacity, clip-path';
   }
 
   @override
@@ -239,9 +341,7 @@ class _HtmlPageStageState extends State<HtmlPageStage> {
     if (!_hasRendered) {
       _hasRendered = true;
       _iframeElement.style.pointerEvents =
-          widget.renderMode == HtmlStageRenderMode.full
-              ? 'auto'
-              : 'none';
+          widget.renderMode == HtmlStageRenderMode.full ? 'auto' : 'none';
       _iframeElement.srcdoc = document;
       return;
     }
@@ -272,9 +372,7 @@ class _HtmlPageStageState extends State<HtmlPageStage> {
       final previousIframe = _iframeElement;
       nextIframe.style.opacity = '1';
       nextIframe.style.pointerEvents =
-          widget.renderMode == HtmlStageRenderMode.full
-              ? 'auto'
-              : 'none';
+          widget.renderMode == HtmlStageRenderMode.full ? 'auto' : 'none';
       _iframeElement = nextIframe;
       _pendingIframeElement = null;
       final subscription = _pendingLoadSubscription;
@@ -317,6 +415,7 @@ class _HtmlPageStageState extends State<HtmlPageStage> {
             'id': block.id,
             'className': <String>[
               'sutol-html-component',
+              _entranceAnimationDomClass(block.entranceAnimation),
               if (isImage) 'component-uploaded-image',
               if (modelId == null && !isImage)
                 'component-${_componentDomKindName(block.kind)}',
@@ -335,6 +434,14 @@ class _HtmlPageStageState extends State<HtmlPageStage> {
             'top': '${_pct(block.position.dy)}%',
             'width': '${_pct(block.size.width)}%',
             'height': '${_pct(block.size.height)}%',
+            'animationDuration': block.animationDuration.toStringAsFixed(2),
+            'animationDelay': block.animationDelay.toStringAsFixed(2),
+            'motionPathPoints': block.motionPathPoints
+                .map((point) => <String, String>{
+                      'x': '${_pct(point.dx)}cqw',
+                      'y': '${_pct(point.dy)}cqh',
+                    })
+                .toList(growable: false),
             'modelOrbitTheta': isImage || modelId == null
                 ? null
                 : block.modelOrbitTheta.toStringAsFixed(2),
@@ -361,6 +468,7 @@ class _HtmlPageStageState extends State<HtmlPageStage> {
                 _textTypeDomClass(block.type),
                 _textStyleDomClass(block.textStyle),
                 _textAnimationDomClass(block.textAnimation),
+                _entranceAnimationDomClass(block.entranceAnimation),
                 if (block.glowIntensity <= 0) 'is-glow-off',
                 if (block.id == widget.selectedTextBlockId) 'is-selected',
                 if (block.id == widget.inlineEditingTextBlockId)
@@ -376,6 +484,18 @@ class _HtmlPageStageState extends State<HtmlPageStage> {
                   : '${_pct(block.heightFactor!)}%',
               'baseFontSize': '${(block.fontSize / 10).toStringAsFixed(2)}cqw',
               'glowIntensity': block.glowIntensity.toStringAsFixed(2),
+              'animationDuration': block.animationDuration.toStringAsFixed(2),
+              'animationDelay': block.animationDelay.toStringAsFixed(2),
+              'motionPathPoints': block.motionPathPoints
+                  .map((point) => <String, String>{
+                        'x': '${_pct(point.dx)}cqw',
+                        'y': '${_pct(point.dy)}cqh',
+                      })
+                  .toList(growable: false),
+              'textGrouping': block.textGrouping.name,
+              'groupDelay': block.groupDelay.toStringAsFixed(2),
+              'entranceAnimationClass':
+                  _entranceAnimationDomClass(block.entranceAnimation),
               'textColor': block.textColorHex,
               'textBold': block.textBold,
               'textItalic': block.textItalic,
@@ -383,6 +503,8 @@ class _HtmlPageStageState extends State<HtmlPageStage> {
               'textAlign': block.textAlign.name,
               'isTypewriter':
                   block.textAnimation == PresentationTextAnimation.daktilo,
+              'isWordReveal': block.textAnimation ==
+                  PresentationTextAnimation.kelimeKelimeBelirme,
               'text': block.text.trim().isEmpty ? 'Metin kutusu' : block.text,
             },
           )
@@ -451,6 +573,10 @@ String _textTypeDomClass(PresentationTextType type) {
     case PresentationTextType.body:
       return 'is-body';
   }
+}
+
+String _entranceAnimationDomClass(PresentationEntranceAnimation animation) {
+  return 'entrance-animation-${animation.name.replaceAllMapped(RegExp(r'([A-Z])'), (match) => '-${match.group(1)!.toLowerCase()}')}';
 }
 
 String _textStyleDomClass(PresentationTextStyle style) {

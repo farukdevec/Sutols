@@ -113,7 +113,8 @@ void main() {
 
     expect(document, contains(sutolModelViewerScriptUrl));
     expect(document, contains('<model-viewer'));
-    expect(document, contains('https://assets.sutols.com/yolcu_ucagi.glb?token=test'));
+    expect(document,
+        contains('https://assets.sutols.com/yolcu_ucagi.glb?token=test'));
     expect(document, contains('camera-controls'));
     expect(document, contains('camera-orbit="0.00deg 75.00deg auto"'));
     expect(document, isNot(contains(' auto-rotate')));
@@ -193,7 +194,8 @@ void main() {
     final document = buildHtmlStageDocument(
       page: page,
       modelSourcesById: const <String, String>{
-        'gercekci-dunya': 'https://assets.sutols.com/gercekci_dunya.glb?token=test',
+        'gercekci-dunya':
+            'https://assets.sutols.com/gercekci_dunya.glb?token=test',
       },
     );
 
@@ -220,7 +222,8 @@ void main() {
     final document = buildHtmlStageDocument(
       page: page,
       modelSourcesById: const <String, String>{
-        'gercekci-dunya': 'https://assets.sutols.com/gercekci_dunya.glb?token=test',
+        'gercekci-dunya':
+            'https://assets.sutols.com/gercekci_dunya.glb?token=test',
       },
     );
 
@@ -249,7 +252,8 @@ void main() {
     final document = buildHtmlStageDocument(
       page: page,
       modelSourcesById: const <String, String>{
-        'gercekci-dunya': 'https://assets.sutols.com/gercekci_dunya.glb?token=test',
+        'gercekci-dunya':
+            'https://assets.sutols.com/gercekci_dunya.glb?token=test',
       },
     );
 
@@ -354,6 +358,48 @@ void main() {
 
       expect(document, contains(entry.value));
     }
+  });
+
+  test('temel sahne geçişleri gelen ve çıkan slaytı ayrı hareket ettirir', () {
+    final document = buildPresentationExportHtml(
+      pages: const <PresentationPage>[
+        PresentationPage(
+          id: 'first',
+          textBlocks: <PresentationTextBlock>[],
+          transitionAfter: PresentationTransitionKind.cover,
+        ),
+        PresentationPage(
+          id: 'second',
+          textBlocks: <PresentationTextBlock>[],
+          transitionAfter: PresentationTransitionKind.fade,
+        ),
+        PresentationPage(id: 'third', textBlocks: <PresentationTextBlock>[]),
+      ],
+      effectSettings: const PresentationEffectSettings(
+        transitionKind: PresentationTransitionKind.slide,
+      ),
+    );
+
+    expect(document, contains('sutolTransitionFadeIn'));
+    expect(document, contains('sutolTransitionFadeOut'));
+    expect(document, contains('sutolTransitionPushIn'));
+    expect(document, contains('sutolTransitionPushOut'));
+    expect(
+      document,
+      contains(
+        '.sutol-export-shell.transition-cover .sutol-export-slide.is-leaving',
+      ),
+    );
+    expect(
+      document,
+      contains(
+        '.sutol-export-shell.transition-uncover .sutol-export-slide.is-leaving',
+      ),
+    );
+    expect(document, contains('beginSceneTransition(index, next)'));
+    expect(document, contains('data-transition-after="transition-cover"'));
+    expect(document, contains('data-transition-after="transition-fade"'));
+    expect(document, contains('transitionSource?.dataset?.transitionAfter'));
   });
 
   test('tekrarlanan 3B model kaynağı HTML dosyasına bir kez gömülür', () {

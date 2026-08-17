@@ -2491,8 +2491,9 @@ class _PageTextBlock extends StatelessWidget {
         : block.text.trim().isEmpty
             ? math.max(0.42, textOpacity * 0.52)
             : textOpacity;
-    final textColor =
-        (darkSurface ? Colors.white : context.onSurface).withValues(
+    final resolvedTextColor = _presentationTextColor(block.textColorHex) ??
+        (darkSurface ? Colors.white : context.onSurface);
+    final textColor = resolvedTextColor.withValues(
       alpha: effectiveTextAlpha,
     );
     final displayStyle = Theme.of(context).textTheme.headlineSmall?.copyWith(
@@ -2503,7 +2504,7 @@ class _PageTextBlock extends StatelessWidget {
           letterSpacing: _letterSpacingForType(block.type),
         );
     final editingStyle = Theme.of(context).textTheme.headlineSmall?.copyWith(
-          color: darkSurface ? Colors.white : context.onSurface,
+          color: resolvedTextColor,
           fontWeight: _fontWeightForType(block.type),
           fontSize: adjustedFontSize,
           height: _lineHeightForType(block.type),
@@ -2520,10 +2521,14 @@ class _PageTextBlock extends StatelessWidget {
             style: editingStyle,
             decoration: InputDecoration(
               isCollapsed: true,
+              filled: false,
+              fillColor: Colors.transparent,
               border: InputBorder.none,
+              enabledBorder: InputBorder.none,
+              focusedBorder: InputBorder.none,
               hintText: 'Buraya metin yazin',
               hintStyle: TextStyle(
-                color: context.onSurfaceVariant,
+                color: resolvedTextColor.withValues(alpha: 0.52),
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -2624,6 +2629,22 @@ class _PageTextBlock extends StatelessWidget {
       ),
     );
   }
+}
+
+Color? _presentationTextColor(String? hex) {
+  if (hex == null || hex.trim().isEmpty) return null;
+  var value = hex.trim().replaceAll('#', '');
+  if (value.startsWith('0x') || value.startsWith('0X')) {
+    value = value.substring(2);
+  }
+  if (value.length == 3) {
+    value = '${value[0]}${value[0]}${value[1]}${value[1]}'
+        '${value[2]}${value[2]}';
+  }
+  if (value.length == 6) value = 'FF$value';
+  if (value.length != 8) return null;
+  final colorValue = int.tryParse(value, radix: 16);
+  return colorValue == null ? null : Color(colorValue);
 }
 
 class _PageComponentBlock extends StatelessWidget {

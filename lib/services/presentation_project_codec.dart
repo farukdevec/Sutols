@@ -89,6 +89,7 @@ class PresentationProjectCodec {
       'backgroundKind': page.backgroundKind.name,
       'templateId': page.templateId,
       'speakerNotes': page.speakerNotes,
+      'transitionAfter': page.transitionAfter?.name,
       'textBlocks': page.textBlocks.map(_textBlockToJson).toList(),
       'componentBlocks':
           page.componentBlocks.map(_componentBlockToJson).toList(),
@@ -112,6 +113,13 @@ class PresentationProjectCodec {
       backgroundKind: _backgroundKindValue(json['backgroundKind']),
       templateId: json['templateId'] as String?,
       speakerNotes: _string(json['speakerNotes'], ''),
+      transitionAfter: json['transitionAfter'] == null
+          ? null
+          : _enumValue(
+              PresentationTransitionKind.values,
+              json['transitionAfter'],
+              PresentationTransitionKind.none,
+            ),
       textBlocks: textBlocks,
       componentBlocks: componentBlocks,
     );
@@ -191,6 +199,14 @@ class PresentationProjectCodec {
       'heightFactor': block.heightFactor,
       'textStyle': block.textStyle.name,
       'textAnimation': block.textAnimation.name,
+      'entranceAnimation': block.entranceAnimation.name,
+      'animationTrigger': block.animationTrigger.name,
+      'animationDuration': block.animationDuration,
+      'animationDelay': block.animationDelay,
+      'animationOrder': block.animationOrder,
+      'textGrouping': block.textGrouping.name,
+      'groupDelay': block.groupDelay,
+      'motionPathPoints': block.motionPathPoints.map(_offsetToJson).toList(),
       'textColorHex': block.textColorHex,
       'glowIntensity': block.glowIntensity,
       'revealStep': block.revealStep,
@@ -227,6 +243,26 @@ class PresentationProjectCodec {
         json['textAnimation'],
         PresentationTextAnimation.none,
       ),
+      entranceAnimation: _enumValue(
+        PresentationEntranceAnimation.values,
+        json['entranceAnimation'],
+        PresentationEntranceAnimation.none,
+      ),
+      animationTrigger: _enumValue(
+        PresentationAnimationTrigger.values,
+        json['animationTrigger'],
+        PresentationAnimationTrigger.withPrevious,
+      ),
+      animationDuration: _double(json['animationDuration'], .8),
+      animationDelay: _double(json['animationDelay'], 0),
+      animationOrder: _int(json['animationOrder'], 0),
+      textGrouping: _enumValue(
+        PresentationTextGrouping.values,
+        json['textGrouping'],
+        PresentationTextGrouping.asObject,
+      ),
+      groupDelay: _double(json['groupDelay'], .08),
+      motionPathPoints: _offsetListFromJson(json['motionPathPoints']),
       textColorHex: json['textColorHex'] is String
           ? json['textColorHex']! as String
           : null,
@@ -268,6 +304,12 @@ class PresentationProjectCodec {
       'size': _sizeToJson(block.size),
       'revealStep': block.revealStep,
       'hotspotTargetPageId': block.hotspotTargetPageId,
+      'entranceAnimation': block.entranceAnimation.name,
+      'animationTrigger': block.animationTrigger.name,
+      'animationDuration': block.animationDuration,
+      'animationDelay': block.animationDelay,
+      'animationOrder': block.animationOrder,
+      'motionPathPoints': block.motionPathPoints.map(_offsetToJson).toList(),
     };
   }
 
@@ -317,6 +359,20 @@ class PresentationProjectCodec {
       hotspotTargetPageId: json['hotspotTargetPageId'] is String
           ? json['hotspotTargetPageId']! as String
           : null,
+      entranceAnimation: _enumValue(
+        PresentationEntranceAnimation.values,
+        json['entranceAnimation'],
+        PresentationEntranceAnimation.none,
+      ),
+      animationTrigger: _enumValue(
+        PresentationAnimationTrigger.values,
+        json['animationTrigger'],
+        PresentationAnimationTrigger.withPrevious,
+      ),
+      animationDuration: _double(json['animationDuration'], .8),
+      animationDelay: _double(json['animationDelay'], 0),
+      animationOrder: _int(json['animationOrder'], 0),
+      motionPathPoints: _offsetListFromJson(json['motionPathPoints']),
     );
   }
 
@@ -398,6 +454,26 @@ class PresentationProjectCodec {
       _double(value['x'], 0),
       _double(value['y'], 0),
     );
+  }
+
+  static List<Offset> _offsetListFromJson(Object? value) {
+    if (value is! List) {
+      return const <Offset>[
+        Offset.zero,
+        Offset(.12, -.08),
+        Offset(.24, .08),
+        Offset(.36, 0),
+      ];
+    }
+    final points = value.map(_offsetFromJson).take(4).toList(growable: false);
+    return points.length == 4
+        ? points
+        : const <Offset>[
+            Offset.zero,
+            Offset(.12, -.08),
+            Offset(.24, .08),
+            Offset(.36, 0),
+          ];
   }
 
   static T _enumValue<T extends Enum>(

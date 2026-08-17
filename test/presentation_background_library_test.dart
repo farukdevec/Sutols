@@ -654,6 +654,212 @@ void main() {
     expect(document, contains("word.className = 'sutol-typewriter-word'"));
   });
 
+  test('click entrance animations become presentation reveal steps', () {
+    const page = PresentationPage(
+      id: 'timed-entrance',
+      textBlocks: <PresentationTextBlock>[
+        PresentationTextBlock(
+          id: 'click-text',
+          text: 'Tıklayınca göster',
+          position: Offset(.1, .1),
+          fontSize: 42,
+          type: PresentationTextType.title,
+          widthFactor: .6,
+          entranceAnimation: PresentationEntranceAnimation.fadeIn,
+          animationTrigger: PresentationAnimationTrigger.onClick,
+          animationDuration: 1.2,
+          animationDelay: .4,
+        ),
+      ],
+    );
+
+    final initial = buildHtmlStageDocument(page: page, visibleRevealStep: 0);
+    final revealed = buildHtmlStageDocument(page: page, visibleRevealStep: 1);
+
+    expect(initial, isNot(contains('data-sutol-text-id="click-text"')));
+    expect(revealed, contains('data-reveal-step="1"'));
+    expect(revealed, contains('--sutol-element-duration:1.20s'));
+    expect(revealed, contains('--sutol-element-delay:0.40s'));
+  });
+
+  test('animation order controls click reveal sequence', () {
+    const page = PresentationPage(
+      id: 'ordered-entrance',
+      textBlocks: <PresentationTextBlock>[
+        PresentationTextBlock(
+          id: 'second-animation',
+          text: 'İkinci',
+          position: Offset(.1, .1),
+          fontSize: 40,
+          type: PresentationTextType.body,
+          widthFactor: .4,
+          entranceAnimation: PresentationEntranceAnimation.fadeIn,
+          animationTrigger: PresentationAnimationTrigger.onClick,
+          animationOrder: 2,
+        ),
+        PresentationTextBlock(
+          id: 'first-animation',
+          text: 'Birinci',
+          position: Offset(.1, .3),
+          fontSize: 40,
+          type: PresentationTextType.body,
+          widthFactor: .4,
+          entranceAnimation: PresentationEntranceAnimation.zoomIn,
+          animationTrigger: PresentationAnimationTrigger.onClick,
+          animationOrder: 1,
+        ),
+      ],
+    );
+
+    final document = buildHtmlStageDocument(page: page);
+    expect(
+      document,
+      contains('data-sutol-text-id="first-animation" data-reveal-step="1"'),
+    );
+    expect(
+      document,
+      contains('data-sutol-text-id="second-animation" data-reveal-step="2"'),
+    );
+  });
+
+  test('emphasis and exit effects stay visible until their click step', () {
+    const page = PresentationPage(
+      id: 'emphasis-exit',
+      textBlocks: <PresentationTextBlock>[
+        PresentationTextBlock(
+          id: 'pulse-text',
+          text: 'Vurgu',
+          position: Offset(.1, .1),
+          fontSize: 40,
+          type: PresentationTextType.body,
+          widthFactor: .4,
+          entranceAnimation: PresentationEntranceAnimation.pulse,
+          animationTrigger: PresentationAnimationTrigger.onClick,
+          animationOrder: 1,
+        ),
+        PresentationTextBlock(
+          id: 'exit-text',
+          text: 'Çıkış',
+          position: Offset(.1, .3),
+          fontSize: 40,
+          type: PresentationTextType.body,
+          widthFactor: .4,
+          entranceAnimation: PresentationEntranceAnimation.fadeOut,
+          animationTrigger: PresentationAnimationTrigger.onClick,
+          animationOrder: 2,
+        ),
+      ],
+    );
+
+    final beforeClick = buildHtmlStageMarkup(
+      page: page,
+      visibleRevealStep: 0,
+      renderMode: HtmlStageRenderMode.preview,
+    );
+    final afterFirstClick = buildHtmlStageMarkup(
+      page: page,
+      visibleRevealStep: 1,
+      renderMode: HtmlStageRenderMode.preview,
+    );
+
+    expect(beforeClick, contains('data-sutol-text-id="pulse-text"'));
+    expect(beforeClick,
+        contains('entrance-animation-pulse is-element-animation-pending'));
+    expect(beforeClick,
+        contains('entrance-animation-fade-out is-element-animation-pending'));
+    expect(
+      afterFirstClick,
+      isNot(contains('entrance-animation-pulse is-element-animation-pending')),
+    );
+    expect(afterFirstClick, contains('data-animation-step="1"'));
+  });
+
+  test('exit effects restore the element after the animation finishes', () {
+    expect(
+      sutolHtmlStageStyles,
+      contains('animation: sutolExitFadeOut .8s ease-in 1 none !important'),
+    );
+    expect(
+      sutolHtmlStageStyles,
+      contains('animation: sutolExitShrinkOut .8s ease-in 1 none !important'),
+    );
+    expect(
+      sutolHtmlStageStyles,
+      contains('animation: sutolExitSpinOut .9s ease-in 1 none !important'),
+    );
+  });
+
+  test('grouped Turkish text keeps accessible label and staggered spans', () {
+    const page = PresentationPage(
+      id: 'grouped-text',
+      textBlocks: <PresentationTextBlock>[
+        PresentationTextBlock(
+          id: 'letters',
+          text: 'İş güç',
+          position: Offset(.1, .1),
+          fontSize: 40,
+          type: PresentationTextType.body,
+          widthFactor: .5,
+          entranceAnimation: PresentationEntranceAnimation.fadeIn,
+          textGrouping: PresentationTextGrouping.byLetter,
+          animationDelay: .2,
+          groupDelay: .1,
+        ),
+      ],
+    );
+
+    final markup = buildHtmlStageMarkup(page: page);
+
+    expect(markup, contains('aria-label="İş güç"'));
+    expect(
+        markup, contains('class="sutol-animation-visual" aria-hidden="true"'));
+    expect(
+        markup,
+        contains(
+            'aria-hidden="true" style="--sutol-element-delay:0.20s">İ</span>'));
+    expect(markup, contains('--sutol-element-delay:0.30s">ş</span>'));
+    expect(markup, contains('--sutol-element-delay:0.70s">ç</span>'));
+  });
+
+  test('custom motion path emits editable transform points', () {
+    const page = PresentationPage(
+      id: 'motion-path',
+      textBlocks: <PresentationTextBlock>[
+        PresentationTextBlock(
+          id: 'moving-text',
+          text: 'Hareket',
+          position: Offset(.1, .1),
+          fontSize: 40,
+          type: PresentationTextType.title,
+          widthFactor: .4,
+          entranceAnimation: PresentationEntranceAnimation.motionCustom,
+          motionPathPoints: <Offset>[
+            Offset.zero,
+            Offset(.1, -.2),
+            Offset(.2, .15),
+            Offset(.4, 0),
+          ],
+        ),
+      ],
+    );
+
+    final markup = buildHtmlStageMarkup(page: page);
+
+    expect(markup, contains('entrance-animation-motion-custom'));
+    expect(markup, contains('--sutol-motion-x1:10.00cqw'));
+    expect(markup, contains('--sutol-motion-y1:-20.00cqh'));
+    expect(sutolHtmlStageStyles, contains('@keyframes sutolMotionCustom'));
+    expect(
+      sutolHtmlStageStyles,
+      contains(
+          'animation: sutolMotionCustom 1.8s ease-in-out 1 none !important'),
+    );
+    expect(
+      sutolHtmlStageStyles,
+      contains('animation-iteration-count: 1 !important'),
+    );
+  });
+
   test('topic tags select their corresponding imported backgrounds', () {
     const cases = <String, PresentationBackgroundKind>{
       'bilimsel araştırma': PresentationBackgroundKind.science,
@@ -726,6 +932,43 @@ void main() {
     );
   });
 
+  test('scripted catalog components resolve their local artwork wrapper', () {
+    const page = PresentationPage(
+      id: 'scripted-components',
+      textBlocks: <PresentationTextBlock>[],
+      componentBlocks: <PresentationComponentBlock>[
+        PresentationComponentBlock(
+          id: 'canvas-component',
+          kind: PresentationComponentKind.edebiyat27,
+          position: Offset.zero,
+          size: Size(.25, .25),
+        ),
+        PresentationComponentBlock(
+          id: 'svg-component',
+          kind: PresentationComponentKind.genelSunumIs32,
+          position: Offset(.3, 0),
+          size: Size(.25, .25),
+        ),
+      ],
+    );
+
+    final markup = buildHtmlStageMarkup(page: page);
+
+    expect(
+        markup, isNot(contains("currentScript.closest('.sutol-edeb27-wrap')")));
+    expect(markup, isNot(contains('currentScript.previousElementSibling')));
+    expect(
+      markup,
+      contains(
+        "currentScript.parentElement.querySelector('.sutol-edeb27-wrap')",
+      ),
+    );
+    expect(
+      markup,
+      contains("querySelector(':scope > :not(style):not(script)')"),
+    );
+  });
+
   test('repeated backgrounds are embedded only once in HTML export', () {
     final pages = List<PresentationPage>.generate(
       12,
@@ -760,6 +1003,26 @@ void main() {
     );
 
     expect(indexedCount, presentationComponentDefinitions.length);
+  });
+
+  test('template themes cannot add cards behind real components', () {
+    final templateRule = sutolHtmlStageStyles.indexOf(
+      '.sutol-html-stage[data-sutol-template="kurumsal_modern_vizyon"] .sutol-html-component',
+    );
+    final transparentOverride = sutolHtmlStageStyles.indexOf(
+      '/* Template themes may style generic component placeholders as cards.',
+    );
+
+    expect(templateRule, greaterThanOrEqualTo(0));
+    expect(transparentOverride, greaterThan(templateRule));
+    expect(
+      sutolHtmlStageStyles.substring(transparentOverride),
+      contains('background: transparent !important'),
+    );
+    expect(
+      sutolHtmlStageStyles.substring(transparentOverride),
+      contains('border: none !important'),
+    );
   });
 
   test('HTML export uses a frameless fullscreen stage with bottom navigation',
@@ -824,5 +1087,40 @@ void main() {
       RegExp('class="sutol-export-slide(?: is-active)?"').allMatches(document),
       hasLength(2),
     );
+  });
+
+  test('transition document embeds both stages and real CSS keyframes', () {
+    const from = PresentationPage(
+      id: 'transition-from',
+      textBlocks: <PresentationTextBlock>[],
+    );
+    const to = PresentationPage(
+      id: 'transition-to',
+      textBlocks: <PresentationTextBlock>[],
+    );
+    const expectedAnimations = <PresentationTransitionKind, String>{
+      PresentationTransitionKind.fade: 'sutolInFade',
+      PresentationTransitionKind.slide: 'sutolInPush',
+      PresentationTransitionKind.wipe: 'sutolInWipe',
+      PresentationTransitionKind.split: 'sutolInSplit',
+      PresentationTransitionKind.reveal: 'sutolInReveal',
+      PresentationTransitionKind.cube3d: 'sutolInCube',
+    };
+
+    for (final entry in expectedAnimations.entries) {
+      final document = buildHtmlPageTransitionDocument(
+        from: from,
+        to: to,
+        kind: entry.key,
+        durationMs: 725,
+      );
+      expect(
+        RegExp('class="sutol-transition-frame').allMatches(document),
+        hasLength(2),
+      );
+      expect(document, contains('animation-duration:725ms'));
+      expect(document, contains('animation-name:${entry.value}'));
+      expect(document, contains('@keyframes ${entry.value}'));
+    }
   });
 }

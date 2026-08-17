@@ -235,6 +235,49 @@ enum PresentationTextAnimation {
   siviDalga,
   kesikSinyal,
   holografikDalga,
+  asagidanYukselme,
+  soldanKayma,
+  kelimeKelimeBelirme,
+}
+
+enum PresentationEntranceAnimation {
+  none,
+  fadeIn,
+  flyInLeft,
+  flyInRight,
+  flyInTop,
+  flyInBottom,
+  zoomIn,
+  pulse,
+  shake,
+  growShrink,
+  spin,
+  glow,
+  fadeOut,
+  flyOutLeft,
+  flyOutRight,
+  flyOutTop,
+  flyOutBottom,
+  shrinkOut,
+  zoomOut,
+  spinOut,
+  motionLine,
+  motionCircle,
+  motionWave,
+  motionCustom,
+}
+
+enum PresentationAnimationTrigger {
+  onClick,
+  withPrevious,
+  afterPrevious,
+}
+
+enum PresentationTextGrouping {
+  asObject,
+  byParagraph,
+  byWord,
+  byLetter,
 }
 
 enum PresentationBackgroundKind {
@@ -401,6 +444,19 @@ class PresentationTextBlock {
     this.heightFactor,
     this.textStyle = PresentationTextStyle.standard,
     this.textAnimation = PresentationTextAnimation.none,
+    this.entranceAnimation = PresentationEntranceAnimation.none,
+    this.animationTrigger = PresentationAnimationTrigger.withPrevious,
+    this.animationDuration = .8,
+    this.animationDelay = 0,
+    this.animationOrder = 0,
+    this.textGrouping = PresentationTextGrouping.asObject,
+    this.groupDelay = .08,
+    this.motionPathPoints = const <Offset>[
+      Offset.zero,
+      Offset(.12, -.08),
+      Offset(.24, .08),
+      Offset(.36, 0),
+    ],
     this.textColorHex,
     this.glowIntensity = 1,
     this.revealStep = 0,
@@ -420,6 +476,14 @@ class PresentationTextBlock {
   final double? heightFactor;
   final PresentationTextStyle textStyle;
   final PresentationTextAnimation textAnimation;
+  final PresentationEntranceAnimation entranceAnimation;
+  final PresentationAnimationTrigger animationTrigger;
+  final double animationDuration;
+  final double animationDelay;
+  final int animationOrder;
+  final PresentationTextGrouping textGrouping;
+  final double groupDelay;
+  final List<Offset> motionPathPoints;
   final String? textColorHex;
   final double glowIntensity;
   final int revealStep;
@@ -439,6 +503,14 @@ class PresentationTextBlock {
     Object? heightFactor = _copySentinel,
     PresentationTextStyle? textStyle,
     PresentationTextAnimation? textAnimation,
+    PresentationEntranceAnimation? entranceAnimation,
+    PresentationAnimationTrigger? animationTrigger,
+    double? animationDuration,
+    double? animationDelay,
+    int? animationOrder,
+    PresentationTextGrouping? textGrouping,
+    double? groupDelay,
+    List<Offset>? motionPathPoints,
     Object? textColorHex = _copySentinel,
     double? glowIntensity,
     int? revealStep,
@@ -460,6 +532,14 @@ class PresentationTextBlock {
           : heightFactor as double?,
       textStyle: textStyle ?? this.textStyle,
       textAnimation: textAnimation ?? this.textAnimation,
+      entranceAnimation: entranceAnimation ?? this.entranceAnimation,
+      animationTrigger: animationTrigger ?? this.animationTrigger,
+      animationDuration: animationDuration ?? this.animationDuration,
+      animationDelay: animationDelay ?? this.animationDelay,
+      animationOrder: animationOrder ?? this.animationOrder,
+      textGrouping: textGrouping ?? this.textGrouping,
+      groupDelay: groupDelay ?? this.groupDelay,
+      motionPathPoints: motionPathPoints ?? this.motionPathPoints,
       textColorHex: identical(textColorHex, _copySentinel)
           ? this.textColorHex
           : textColorHex as String?,
@@ -494,6 +574,17 @@ class PresentationComponentBlock {
     required this.size,
     this.revealStep = 0,
     this.hotspotTargetPageId,
+    this.entranceAnimation = PresentationEntranceAnimation.none,
+    this.animationTrigger = PresentationAnimationTrigger.withPrevious,
+    this.animationDuration = .8,
+    this.animationDelay = 0,
+    this.animationOrder = 0,
+    this.motionPathPoints = const <Offset>[
+      Offset.zero,
+      Offset(.12, -.08),
+      Offset(.24, .08),
+      Offset(.36, 0),
+    ],
   });
 
   final String id;
@@ -511,6 +602,12 @@ class PresentationComponentBlock {
   final Size size;
   final int revealStep;
   final String? hotspotTargetPageId;
+  final PresentationEntranceAnimation entranceAnimation;
+  final PresentationAnimationTrigger animationTrigger;
+  final double animationDuration;
+  final double animationDelay;
+  final int animationOrder;
+  final List<Offset> motionPathPoints;
 
   PresentationComponentBlock copyWith({
     String? id,
@@ -528,6 +625,12 @@ class PresentationComponentBlock {
     Size? size,
     int? revealStep,
     Object? hotspotTargetPageId = _copySentinel,
+    PresentationEntranceAnimation? entranceAnimation,
+    PresentationAnimationTrigger? animationTrigger,
+    double? animationDuration,
+    double? animationDelay,
+    int? animationOrder,
+    List<Offset>? motionPathPoints,
   }) {
     return PresentationComponentBlock(
       id: id ?? this.id,
@@ -554,6 +657,12 @@ class PresentationComponentBlock {
       hotspotTargetPageId: identical(hotspotTargetPageId, _copySentinel)
           ? this.hotspotTargetPageId
           : hotspotTargetPageId as String?,
+      entranceAnimation: entranceAnimation ?? this.entranceAnimation,
+      animationTrigger: animationTrigger ?? this.animationTrigger,
+      animationDuration: animationDuration ?? this.animationDuration,
+      animationDelay: animationDelay ?? this.animationDelay,
+      animationOrder: animationOrder ?? this.animationOrder,
+      motionPathPoints: motionPathPoints ?? this.motionPathPoints,
     );
   }
 }
@@ -567,6 +676,7 @@ class PresentationPage {
     this.backgroundKind = PresentationBackgroundKind.science,
     this.speakerNotes = '',
     this.templateId,
+    this.transitionAfter,
   });
 
   final String id;
@@ -576,6 +686,10 @@ class PresentationPage {
   final String speakerNotes;
   final String? templateId;
 
+  /// Transition used from this page to the next page. Null keeps the legacy
+  /// presentation-wide transition for older projects.
+  final PresentationTransitionKind? transitionAfter;
+
   PresentationPage copyWith({
     String? id,
     List<PresentationTextBlock>? textBlocks,
@@ -583,6 +697,7 @@ class PresentationPage {
     PresentationBackgroundKind? backgroundKind,
     String? speakerNotes,
     Object? templateId = _copySentinel,
+    Object? transitionAfter = _copySentinel,
   }) {
     return PresentationPage(
       id: id ?? this.id,
@@ -590,9 +705,11 @@ class PresentationPage {
       componentBlocks: componentBlocks ?? this.componentBlocks,
       backgroundKind: backgroundKind ?? this.backgroundKind,
       speakerNotes: speakerNotes ?? this.speakerNotes,
-      templateId: templateId == _copySentinel
-          ? this.templateId
-          : templateId as String?,
+      templateId:
+          templateId == _copySentinel ? this.templateId : templateId as String?,
+      transitionAfter: transitionAfter == _copySentinel
+          ? this.transitionAfter
+          : transitionAfter as PresentationTransitionKind?,
     );
   }
 
@@ -630,7 +747,7 @@ const Object _copySentinel = Object();
 String presentationTransitionLabel(PresentationTransitionKind kind) {
   switch (kind) {
     case PresentationTransitionKind.none:
-      return 'Yok';
+      return 'Geçiş Yok';
     case PresentationTransitionKind.smooth:
       return 'Yumuşak Geçiş';
     case PresentationTransitionKind.fade:
@@ -677,13 +794,13 @@ String presentationTransitionLabel(PresentationTransitionKind kind) {
 String presentationTransitionSubtitle(PresentationTransitionKind kind) {
   switch (kind) {
     case PresentationTransitionKind.none:
-      return 'Kesintisiz sayfa degisimi';
+      return 'Sahneler animasyon olmadan doğrudan değiştirilir';
     case PresentationTransitionKind.smooth:
       return 'Aynı 3D modeli ve sahneyi akıcı biçimde dönüştürür';
     case PresentationTransitionKind.fade:
-      return 'Yumusak opaklik gecisi';
+      return 'Sahneler birbirinin üzerinde yumuşakça kaybolup belirir';
     case PresentationTransitionKind.slide:
-      return 'Yeni slayt eskisini yatay olarak iter';
+      return 'Yeni sahne eskisini aynı doğrultuda ekran dışına iter';
     case PresentationTransitionKind.zoom:
       return 'Sahneye yakinlasarak giris';
     case PresentationTransitionKind.convex:
@@ -697,9 +814,9 @@ String presentationTransitionSubtitle(PresentationTransitionKind kind) {
     case PresentationTransitionKind.reveal:
       return 'Yeni slaytı alttan akıcı biçimde gösterir';
     case PresentationTransitionKind.cover:
-      return 'Yeni slayt eskisinin üzerini kaplar';
+      return 'Yeni sahne eskisinin üzerine bir örtü gibi kapanır';
     case PresentationTransitionKind.uncover:
-      return 'Eski slayt çekilerek yenisini ortaya çıkarır';
+      return 'Eski sahne çekilir, altındaki yeni sahne ortaya çıkar';
     case PresentationTransitionKind.flip:
       return 'Slaytı 3B kart gibi çevirir';
     case PresentationTransitionKind.cube3d:

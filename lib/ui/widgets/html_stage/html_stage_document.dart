@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:math' as math;
+import 'dart:ui' show Offset;
 
 import '../../../models/slide_model.dart';
 import '../../../services/local_google_fonts_css.dart';
@@ -17,10 +18,29 @@ const String sutolModelViewerScriptUrl =
 const String sutolModelViewerScriptTag =
     '<script type="module" src="$sutolModelViewerScriptUrl"></script>';
 
-String get sutolHtmlStageStyles => '$_stageStyles\n\n$sutolCombinedTemplatesCSS';
+String get sutolHtmlStageStyles =>
+    '$_stageStyles\n\n$sutolCombinedTemplatesCSS\n\n$_transparentComponentOverrides';
 String get sutolHtmlStageBackgroundScript => _backgroundScript;
 String get sutolHtmlStageComponentScript => _stageComponentScript;
 String get sutolHtmlStagePatchScript => _stagePatchScript;
+
+const String _transparentComponentOverrides = '''
+/* Template themes may style generic component placeholders as cards. Real
+   catalog/media components must keep only their own artwork. */
+.sutol-html-stage .sutol-html-component.has-html-component:not(.component-uploaded-image):not(.component-3d-model) {
+  background: transparent !important;
+  border: none !important;
+  border-color: transparent !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+}
+.sutol-html-stage .sutol-html-component.has-html-component:not(.component-uploaded-image):not(.component-3d-model)::before,
+.sutol-html-stage .sutol-html-component.has-html-component:not(.component-uploaded-image):not(.component-3d-model)::after {
+  display: none !important;
+  content: none !important;
+}
+''';
 
 String sutolHtmlBackgroundScene(PresentationBackgroundKind kind) =>
     presentationBackgroundSceneHtml(kind);
@@ -54,6 +74,84 @@ window.addEventListener('load', function () {
       ? document.replaceFirst('</body>', '$freezeScript</body>')
       : '$document$freezeScript';
 }
+
+String buildHtmlPageTransitionDocument({
+  required PresentationPage from,
+  required PresentationPage to,
+  required PresentationTransitionKind kind,
+  required int durationMs,
+  Map<String, String> modelSourcesById = const <String, String>{},
+  Map<String, String> imageSourcesById = const <String, String>{},
+}) {
+  final fromMarkup = buildHtmlStageMarkup(
+    page: from,
+    showBadge: false,
+    renderMode: HtmlStageRenderMode.preview,
+    modelSourcesById: modelSourcesById,
+    imageSourcesById: imageSourcesById,
+  );
+  final toMarkup = buildHtmlStageMarkup(
+    page: to,
+    showBadge: false,
+    renderMode: HtmlStageRenderMode.preview,
+    modelSourcesById: modelSourcesById,
+    imageSourcesById: imageSourcesById,
+  );
+  final names = _htmlTransitionAnimationNames(kind);
+  final needsModelViewer = from.componentBlocks.any(
+        (block) => block.modelAssetId != null,
+      ) ||
+      to.componentBlocks.any((block) => block.modelAssetId != null);
+  return '''<!doctype html><html><head><meta charset="utf-8">${needsModelViewer ? sutolModelViewerScriptTag : ''}<style>
+$sutolHtmlStageStyles
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#000}
+.sutol-transition-frame{position:absolute;inset:0;overflow:hidden;will-change:transform,opacity,clip-path;animation-duration:${durationMs}ms;animation-timing-function:cubic-bezier(.65,0,.35,1);animation-fill-mode:both;animation-play-state:paused}
+body.sutol-transition-playing .sutol-transition-frame{animation-play-state:running}
+.sutol-transition-frame>.sutol-html-stage{position:absolute!important;inset:0!important;width:100%!important;height:100%!important}
+.sutol-transition-out{z-index:${kind == PresentationTransitionKind.uncover ? 2 : 1};animation-name:${names.$1}}
+.sutol-transition-in{z-index:${kind == PresentationTransitionKind.uncover ? 1 : 2};animation-name:${names.$2}}
+@keyframes sutolOutFade{from{opacity:1}to{opacity:0}}
+@keyframes sutolInFade{from{opacity:0}to{opacity:1}}
+@keyframes sutolOutPush{from{transform:translateX(0)}to{transform:translateX(-100%)}}
+@keyframes sutolInPush{from{transform:translateX(100%)}to{transform:translateX(0)}}
+@keyframes sutolStay{from{transform:translateX(0);opacity:1}to{transform:translateX(0);opacity:1}}
+@keyframes sutolOutUncover{from{transform:translateX(0)}to{transform:translateX(-100%)}}
+@keyframes sutolInWipe{from{clip-path:inset(0 100% 0 0)}to{clip-path:inset(0)}}
+@keyframes sutolInSplit{from{clip-path:inset(0 50%)}to{clip-path:inset(0)}}
+@keyframes sutolInReveal{from{transform:translateY(100%);box-shadow:0 -20px 40px #0008}to{transform:translateY(0);box-shadow:0 0 0 #0000}}
+@keyframes sutolOutCube{from{transform:perspective(1400px) rotateY(0);opacity:1}to{transform:perspective(1400px) rotateY(-90deg);opacity:0}}
+@keyframes sutolInCube{from{transform:perspective(1400px) rotateY(90deg);opacity:0}to{transform:perspective(1400px) rotateY(0);opacity:1}}
+@keyframes sutolOutZoom{from{transform:scale(1);opacity:1}to{transform:scale(1.18);opacity:0}}
+@keyframes sutolInZoom{from{transform:scale(.82);opacity:0}to{transform:scale(1);opacity:1}}
+</style></head><body>
+<div class="sutol-transition-frame sutol-transition-out">$fromMarkup</div>
+<div class="sutol-transition-frame sutol-transition-in">$toMarkup</div>
+<script>$sutolHtmlStageBackgroundScript\n$sutolHtmlStageComponentScript</script>
+<script>window.addEventListener('load',function(){requestAnimationFrame(function(){requestAnimationFrame(function(){document.body.classList.add('sutol-transition-playing')})})})</script>
+</body></html>''';
+}
+
+(String, String) _htmlTransitionAnimationNames(
+  PresentationTransitionKind kind,
+) =>
+    switch (kind) {
+      PresentationTransitionKind.fade || PresentationTransitionKind.smooth => (
+          'sutolOutFade',
+          'sutolInFade'
+        ),
+      PresentationTransitionKind.slide => ('sutolOutPush', 'sutolInPush'),
+      PresentationTransitionKind.cover => ('sutolStay', 'sutolInPush'),
+      PresentationTransitionKind.uncover => ('sutolOutUncover', 'sutolStay'),
+      PresentationTransitionKind.wipe => ('sutolStay', 'sutolInWipe'),
+      PresentationTransitionKind.split => ('sutolStay', 'sutolInSplit'),
+      PresentationTransitionKind.reveal => ('sutolStay', 'sutolInReveal'),
+      PresentationTransitionKind.flip || PresentationTransitionKind.cube3d => (
+          'sutolOutCube',
+          'sutolInCube'
+        ),
+      PresentationTransitionKind.none => ('sutolStay', 'sutolStay'),
+      _ => ('sutolOutZoom', 'sutolInZoom'),
+    };
 
 String buildHtmlStageDocument({
   required PresentationPage page,
@@ -120,6 +218,7 @@ String buildHtmlStageMarkup({
   Map<String, String> imageSourcesById = const <String, String>{},
   bool deferEmbeddedAssets = false,
 }) {
+  final animationTimeline = _buildEntranceAnimationTimeline(page);
   final renderModeName = _renderModeName(renderMode);
   final templateClass = (page.templateId != null && page.templateId!.isNotEmpty)
       ? 'sutol-template-${page.templateId}'
@@ -155,7 +254,12 @@ String buildHtmlStageMarkup({
   }
 
   for (final block in page.textBlocks) {
-    if (!_isVisibleAtRevealStep(block.revealStep, visibleRevealStep)) {
+    final effectiveRevealStep =
+        animationTimeline.revealSteps[block.id] ?? block.revealStep;
+    final entranceEffect = _isEntranceEffect(block.entranceAnimation);
+    final displayRevealStep =
+        entranceEffect ? effectiveRevealStep : block.revealStep;
+    if (!_isVisibleAtRevealStep(displayRevealStep, visibleRevealStep)) {
       continue;
     }
     final classes = <String>[
@@ -167,6 +271,17 @@ String buildHtmlStageMarkup({
           block.revealStep < visibleRevealStep &&
           block.textAnimation != PresentationTextAnimation.none)
         'is-text-animation-complete',
+      _entranceAnimationClass(block.entranceAnimation),
+      if (block.entranceAnimation != PresentationEntranceAnimation.none &&
+          block.textGrouping != PresentationTextGrouping.asObject)
+        'has-grouped-element-animation',
+      if (!entranceEffect &&
+          effectiveRevealStep > 0 &&
+          ((visibleRevealStep != null &&
+                  effectiveRevealStep > visibleRevealStep) ||
+              (visibleRevealStep == null &&
+                  renderMode == HtmlStageRenderMode.full)))
+        'is-element-animation-pending',
       if (block.glowIntensity <= 0) 'is-glow-off',
       if (block.id == selectedTextBlockId) 'is-selected',
       if (block.id == inlineEditingTextBlockId) 'is-inline-editing',
@@ -176,13 +291,24 @@ String buildHtmlStageMarkup({
         : ' data-hotspot-target="${_escapeAttribute(block.hotspotTargetPageId!)}"';
     final displayText = block.text.trim().isEmpty ? 'Metin kutusu' : block.text;
     final typewriterCycle = _typewriterCycleSeconds(displayText);
+    final computedDelay =
+        animationTimeline.delays[block.id] ?? block.animationDelay;
+    final accessibilityAttr =
+        block.textGrouping == PresentationTextGrouping.asObject
+            ? ''
+            : ' aria-label="${_escapeAttribute(displayText)}"';
     buffer.writeln(
-      '<div class="$classes" data-sutol-text-id="${_escapeAttribute(block.id)}" data-reveal-step="${block.revealStep}"$hotspotAttr style="left:${_pct(block.position.dx)}%;top:${_pct(block.position.dy)}%;width:${_pct(block.widthFactor)}%;${block.heightFactor == null ? '' : 'height:${_pct(block.heightFactor!)}%;'}--sutol-left:${_pct(block.position.dx)}%;--sutol-top:${_pct(block.position.dy)}%;--base-font-size:${(block.fontSize / 10).toStringAsFixed(2)}cqw;--sutol-glow:${block.glowIntensity.toStringAsFixed(2)};--sutol-type-cycle:${typewriterCycle.toStringAsFixed(2)}s;${_textFormatStyles(block)}${block.textColorHex == null ? '' : 'color:${_escapeAttribute(block.textColorHex!)};--sutol-text-color:${_escapeAttribute(block.textColorHex!)};'}">${_textBlockMarkup(displayText, block.textAnimation)}</div>',
+      '<div class="$classes" data-sutol-text-id="${_escapeAttribute(block.id)}" data-reveal-step="$displayRevealStep" data-animation-step="$effectiveRevealStep"$accessibilityAttr$hotspotAttr style="left:${_pct(block.position.dx)}%;top:${_pct(block.position.dy)}%;width:${_pct(block.widthFactor)}%;${block.heightFactor == null ? '' : 'height:${_pct(block.heightFactor!)}%;'}--sutol-left:${_pct(block.position.dx)}%;--sutol-top:${_pct(block.position.dy)}%;--base-font-size:${(block.fontSize / 10).toStringAsFixed(2)}cqw;--sutol-glow:${block.glowIntensity.toStringAsFixed(2)};--sutol-type-cycle:${typewriterCycle.toStringAsFixed(2)}s;${_animationTimingStyle(block.animationDuration, computedDelay)}${_motionPathStyle(block.motionPathPoints)}${_textFormatStyles(block)}${block.textColorHex == null ? '' : 'color:${_escapeAttribute(block.textColorHex!)};--sutol-text-color:${_escapeAttribute(block.textColorHex!)};'}">${_textBlockMarkup(displayText, block.textAnimation, block.entranceAnimation, block.textGrouping, block.groupDelay, computedDelay)}</div>',
     );
   }
 
   for (final block in page.componentBlocks) {
-    if (!_isVisibleAtRevealStep(block.revealStep, visibleRevealStep)) {
+    final effectiveRevealStep =
+        animationTimeline.revealSteps[block.id] ?? block.revealStep;
+    final entranceEffect = _isEntranceEffect(block.entranceAnimation);
+    final displayRevealStep =
+        entranceEffect ? effectiveRevealStep : block.revealStep;
+    if (!_isVisibleAtRevealStep(displayRevealStep, visibleRevealStep)) {
       continue;
     }
     final legacyImageId = block.imageAssetId == null &&
@@ -195,7 +321,8 @@ String buildHtmlStageMarkup({
     final is3D = modelId != null;
     final isImage = imageId != null;
     final remoteSource = is3D ? modelSourcesById[modelId] : null;
-    final resolvableSource = (remoteSource != null && remoteSource.isNotEmpty) ? remoteSource : null;
+    final resolvableSource =
+        (remoteSource != null && remoteSource.isNotEmpty) ? remoteSource : null;
     final has3D = resolvableSource != null;
 
     if (is3D) {
@@ -203,11 +330,21 @@ String buildHtmlStageMarkup({
       print('[MODEL_RENDER] id=$modelId signed=$sourceHasToken');
     }
 
-    final componentHtml = presentationComponentHtml(block.kind);
+    final componentHtml = _normalizeCatalogComponentScripts(
+      presentationComponentHtml(block.kind),
+    );
     final hasHtmlComponent =
         has3D || isImage || componentHtml.trim().isNotEmpty;
     final classes = <String>[
       'sutol-html-component',
+      _entranceAnimationClass(block.entranceAnimation),
+      if (!entranceEffect &&
+          effectiveRevealStep > 0 &&
+          ((visibleRevealStep != null &&
+                  effectiveRevealStep > visibleRevealStep) ||
+              (visibleRevealStep == null &&
+                  renderMode == HtmlStageRenderMode.full)))
+        'is-element-animation-pending',
       if (isImage) 'component-uploaded-image',
       if (!is3D && !isImage) 'component-${_componentDomKindName(block.kind)}',
       if (is3D) 'component-3d-model',
@@ -246,12 +383,52 @@ String buildHtmlStageMarkup({
         ? ''
         : ' data-sutol-model-id="${_escapeAttribute(modelId)}" data-sutol-orbit-theta="${block.modelOrbitTheta.toStringAsFixed(2)}" data-sutol-orbit-phi="${block.modelOrbitPhi.toStringAsFixed(2)}"';
     buffer.writeln(
-      '<div class="$classes" data-sutol-component-id="${_escapeAttribute(block.id)}"$modelAttr data-reveal-step="${block.revealStep}" aria-label="${_escapeAttribute(label)}"$hotspotAttr style="left:${_pct(block.position.dx)}%;top:${_pct(block.position.dy)}%;width:${_pct(block.size.width)}%;height:${_pct(block.size.height)}%;">$componentInner</div>',
+      '<div class="$classes" data-sutol-component-id="${_escapeAttribute(block.id)}"$modelAttr data-reveal-step="$displayRevealStep" data-animation-step="$effectiveRevealStep" aria-label="${_escapeAttribute(label)}"$hotspotAttr style="left:${_pct(block.position.dx)}%;top:${_pct(block.position.dy)}%;width:${_pct(block.size.width)}%;height:${_pct(block.size.height)}%;${_animationTimingStyle(block.animationDuration, animationTimeline.delays[block.id] ?? block.animationDelay)}${_motionPathStyle(block.motionPathPoints)}">$componentInner</div>',
     );
   }
 
   buffer.writeln('</div>');
   return buffer.toString();
+}
+
+/// Catalog components are embedded as siblings inside a stage-owned wrapper.
+/// Some imported snippets assume their script is inside the artwork element,
+/// or immediately follows it. In practice a `<style>` element commonly sits
+/// between the artwork and script, making those lookups return null and leaving
+/// canvas/SVG components blank. Keep snippets self-contained while resolving
+/// their artwork from the stage-owned wrapper.
+String _normalizeCatalogComponentScripts(String html) {
+  if (!html.contains('<script')) return html;
+
+  var normalized = html.replaceAll(
+    'document.currentScript.previousElementSibling',
+    "document.currentScript.parentElement.querySelector(':scope > :not(style):not(script)')",
+  );
+  normalized = normalized.replaceAllMapped(
+    RegExp(r'''document\.currentScript\.closest\((['"])([^'"]+)\1\)'''),
+    (match) =>
+        'document.currentScript.parentElement.querySelector(${match.group(1)}${match.group(2)}${match.group(1)})',
+  );
+  normalized = normalized.replaceAllMapped(
+    RegExp(r'''\bscript\.closest\((['"])([^'"]+)\1\)'''),
+    (match) =>
+        'script.parentElement.querySelector(${match.group(1)}${match.group(2)}${match.group(1)})',
+  );
+  // Global selectors make duplicate copies of a component control only the
+  // first matching node. Scope them to the current component instance.
+  normalized = normalized.replaceAll(
+    'document.getElementById(',
+    'document.currentScript.parentElement.querySelector(\'#\' + ',
+  );
+  normalized = normalized.replaceAll(
+    'document.querySelectorAll(',
+    'document.currentScript.parentElement.querySelectorAll(',
+  );
+  normalized = normalized.replaceAll(
+    'document.querySelector(',
+    'document.currentScript.parentElement.querySelector(',
+  );
+  return normalized;
 }
 
 String _model3DMarkup(
@@ -283,8 +460,6 @@ String _model3DMarkup(
       : source != null && source.isNotEmpty
           ? 'src="${_escapeAttribute(source)}"'
           : '';
-
-
 
   final fallbackMarkup = fallbackHtml.trim().isEmpty
       ? '''<div class="sutol-3d-fallback-card">
@@ -341,8 +516,48 @@ String _escapeAttribute(String value) =>
 String _textBlockMarkup(
   String text,
   PresentationTextAnimation animation,
+  PresentationEntranceAnimation entranceAnimation,
+  PresentationTextGrouping grouping,
+  double groupDelay,
+  double baseDelay,
 ) {
-  if (animation != PresentationTextAnimation.daktilo) {
+  if (entranceAnimation != PresentationEntranceAnimation.none &&
+      grouping != PresentationTextGrouping.asObject) {
+    final buffer = StringBuffer(
+      '<span class="sutol-animation-visual" aria-hidden="true">',
+    );
+    var segmentIndex = 0;
+    void segment(String value, {bool paragraph = false}) {
+      final delay = baseDelay + segmentIndex * groupDelay;
+      buffer.write(
+        '<span class="sutol-animation-segment ${_entranceAnimationClass(entranceAnimation)}${paragraph ? ' is-paragraph-segment' : ''}" aria-hidden="true" style="--sutol-element-delay:${delay.toStringAsFixed(2)}s">${_escape(value)}</span>',
+      );
+      segmentIndex += 1;
+    }
+
+    if (grouping == PresentationTextGrouping.byParagraph) {
+      final paragraphs = text.split('\n');
+      for (var index = 0; index < paragraphs.length; index += 1) {
+        if (paragraphs[index].isNotEmpty)
+          segment(paragraphs[index], paragraph: true);
+        if (index < paragraphs.length - 1)
+          buffer.write('<br aria-hidden="true">');
+      }
+    } else if (grouping == PresentationTextGrouping.byWord) {
+      for (final match in RegExp(r'\S+|\s+').allMatches(text)) {
+        final token = match.group(0)!;
+        token.trim().isEmpty ? buffer.write(_escape(token)) : segment(token);
+      }
+    } else {
+      for (final rune in text.runes) {
+        segment(String.fromCharCode(rune));
+      }
+    }
+    buffer.write('</span>');
+    return buffer.toString();
+  }
+  if (animation != PresentationTextAnimation.daktilo &&
+      animation != PresentationTextAnimation.kelimeKelimeBelirme) {
     return _escape(text);
   }
 
@@ -365,6 +580,139 @@ String _textBlockMarkup(
 double _typewriterCycleSeconds(String text) {
   final wordCount = RegExp(r'\S+').allMatches(text).length;
   return math.max(4.8, (wordCount * 0.46) + 2.8);
+}
+
+String _animationTimingStyle(double duration, double delay) {
+  return '--sutol-element-duration:${duration.clamp(.1, 5).toStringAsFixed(2)}s;'
+      '--sutol-element-delay:${delay.clamp(0, 30).toStringAsFixed(2)}s;';
+}
+
+String _motionPathStyle(List<Offset> points) {
+  final safe = points.length == 4
+      ? points
+      : const <Offset>[
+          Offset.zero,
+          Offset(.12, -.08),
+          Offset(.24, .08),
+          Offset(.36, 0)
+        ];
+  return List<String>.generate(safe.length, (index) {
+    final point = safe[index];
+    return '--sutol-motion-x$index:${_pct(point.dx)}cqw;'
+        '--sutol-motion-y$index:${_pct(point.dy)}cqh;';
+  }).join();
+}
+
+class _EntranceAnimationTimeline {
+  const _EntranceAnimationTimeline(this.revealSteps, this.delays);
+
+  final Map<String, int> revealSteps;
+  final Map<String, double> delays;
+}
+
+class _EntranceAnimationItem {
+  const _EntranceAnimationItem({
+    required this.id,
+    required this.revealStep,
+    required this.animation,
+    required this.trigger,
+    required this.duration,
+    required this.delay,
+    required this.order,
+    required this.fallbackOrder,
+  });
+
+  final String id;
+  final int revealStep;
+  final PresentationEntranceAnimation animation;
+  final PresentationAnimationTrigger trigger;
+  final double duration;
+  final double delay;
+  final int order;
+  final int fallbackOrder;
+}
+
+_EntranceAnimationTimeline _buildEntranceAnimationTimeline(
+  PresentationPage page,
+) {
+  var manualMaxStep = 0;
+  for (final block in page.textBlocks) {
+    manualMaxStep = math.max(manualMaxStep, block.revealStep);
+  }
+  for (final block in page.componentBlocks) {
+    manualMaxStep = math.max(manualMaxStep, block.revealStep);
+  }
+
+  final revealSteps = <String, int>{};
+  final delays = <String, double>{};
+  var clickGroup = 0;
+  var previousStart = 0.0;
+  var previousEnd = 0.0;
+
+  void add(
+    String id,
+    int revealStep,
+    PresentationEntranceAnimation animation,
+    PresentationAnimationTrigger trigger,
+    double duration,
+    double delay,
+  ) {
+    if (animation == PresentationEntranceAnimation.none) return;
+    if (trigger == PresentationAnimationTrigger.onClick) {
+      clickGroup += 1;
+      previousStart = delay;
+    } else if (trigger == PresentationAnimationTrigger.afterPrevious) {
+      previousStart = previousEnd + delay;
+    } else {
+      previousStart += delay;
+    }
+    previousEnd = previousStart + duration;
+    revealSteps[id] = clickGroup == 0
+        ? revealStep
+        : math.max(revealStep, manualMaxStep + clickGroup);
+    delays[id] = previousStart;
+  }
+
+  var fallbackOrder = 0;
+  final items = <_EntranceAnimationItem>[
+    for (final block in page.textBlocks)
+      _EntranceAnimationItem(
+        id: block.id,
+        revealStep: block.revealStep,
+        animation: block.entranceAnimation,
+        trigger: block.animationTrigger,
+        duration: block.animationDuration,
+        delay: block.animationDelay,
+        order: block.animationOrder,
+        fallbackOrder: fallbackOrder++,
+      ),
+    for (final block in page.componentBlocks)
+      _EntranceAnimationItem(
+        id: block.id,
+        revealStep: block.revealStep,
+        animation: block.entranceAnimation,
+        trigger: block.animationTrigger,
+        duration: block.animationDuration,
+        delay: block.animationDelay,
+        order: block.animationOrder,
+        fallbackOrder: fallbackOrder++,
+      ),
+  ]..sort((a, b) {
+      final aOrder = a.order > 0 ? a.order : 100000 + a.fallbackOrder;
+      final bOrder = b.order > 0 ? b.order : 100000 + b.fallbackOrder;
+      return aOrder.compareTo(bOrder);
+    });
+  for (final item in items) {
+    add(
+      item.id,
+      item.revealStep,
+      item.animation,
+      item.trigger,
+      item.duration,
+      item.delay,
+    );
+  }
+  return _EntranceAnimationTimeline(revealSteps, delays);
 }
 
 bool _isVisibleAtRevealStep(int itemStep, int? visibleRevealStep) {
@@ -475,6 +823,22 @@ String _textStyleClass(PresentationTextStyle style) {
 
 String _textAnimationClass(PresentationTextAnimation animation) {
   return 'text-animation-${_enumValueName(animation)}';
+}
+
+String _entranceAnimationClass(PresentationEntranceAnimation animation) {
+  return 'entrance-animation-${_enumValueName(animation)}';
+}
+
+bool _isEntranceEffect(PresentationEntranceAnimation animation) {
+  return <PresentationEntranceAnimation>{
+    PresentationEntranceAnimation.none,
+    PresentationEntranceAnimation.fadeIn,
+    PresentationEntranceAnimation.flyInLeft,
+    PresentationEntranceAnimation.flyInRight,
+    PresentationEntranceAnimation.flyInTop,
+    PresentationEntranceAnimation.flyInBottom,
+    PresentationEntranceAnimation.zoomIn,
+  }.contains(animation);
 }
 
 String _componentDomKindName(PresentationComponentKind kind) {
@@ -1448,14 +1812,17 @@ body {
 .sutol-html-stage .sutol-html-block[class*="text-style-"] {
   color: #142033;
   text-shadow: none;
-  animation: none !important;
-  filter: none;
-  background: none;
-  -webkit-text-fill-color: currentColor;
 }
 
 .sutol-html-stage.theme-dark .sutol-html-block[class*="text-style-"] {
   color: #f8fbff;
+}
+
+.sutol-html-block.text-animation-none {
+  animation: none !important;
+  filter: none;
+  background: none;
+  -webkit-text-fill-color: currentColor;
 }
 
 .sutol-html-block[class*="text-animation-"] {
@@ -1530,6 +1897,21 @@ body {
 .sutol-html-block.text-animation-bulaniktan-net {
   animation: sutolEffectBlurFocus 4.8s cubic-bezier(.22, 1, .36, 1) 1 forwards !important;
 }
+.sutol-html-block.text-animation-asagidan-yukselme {
+  animation: sutolEffectRiseIn 1.15s cubic-bezier(.22, 1, .36, 1) 1 both !important;
+}
+.sutol-html-block.text-animation-soldan-kayma {
+  animation: sutolEffectSlideFromLeft 1.1s cubic-bezier(.22, 1, .36, 1) 1 both !important;
+}
+.sutol-html-block.text-animation-kelime-kelime-belirme {
+  animation: none !important;
+}
+.sutol-html-block.text-animation-kelime-kelime-belirme .sutol-typewriter-word {
+  display: inline-block;
+  opacity: 0;
+  animation: sutolEffectWordReveal .55s cubic-bezier(.22, 1, .36, 1) 1 both;
+  animation-delay: calc(var(--sutol-word-index) * .16s);
+}
 .sutol-html-block.text-animation-uc-boyutlu-donus {
   transform-origin: center top;
   animation: sutolEffectFlip3d 4.6s cubic-bezier(.22, 1, .36, 1) 1 forwards !important;
@@ -1593,6 +1975,208 @@ body {
   color: transparent !important;
   -webkit-text-fill-color: transparent !important;
   animation: sutolEffectHolographicWave 4s ease-in-out 1 forwards !important;
+}
+
+.sutol-html-stage .entrance-animation-fade-in {
+  animation: sutolEntranceFadeIn .8s ease-out 1 both !important;
+}
+.sutol-html-stage .entrance-animation-fly-in-left {
+  animation: sutolEntranceFlyInLeft .8s cubic-bezier(.22, 1, .36, 1) 1 both !important;
+}
+.sutol-html-stage .entrance-animation-fly-in-right {
+  animation: sutolEntranceFlyInRight .8s cubic-bezier(.22, 1, .36, 1) 1 both !important;
+}
+.sutol-html-stage .entrance-animation-fly-in-top {
+  animation: sutolEntranceFlyInTop .8s cubic-bezier(.22, 1, .36, 1) 1 both !important;
+}
+.sutol-html-stage .entrance-animation-fly-in-bottom {
+  animation: sutolEntranceFlyInBottom .8s cubic-bezier(.22, 1, .36, 1) 1 both !important;
+}
+.sutol-html-stage .entrance-animation-zoom-in {
+  animation: sutolEntranceZoomIn .8s cubic-bezier(.22, 1, .36, 1) 1 both !important;
+}
+
+.sutol-html-stage .entrance-animation-pulse {
+  animation: sutolEmphasisPulse .8s ease-in-out 1 both !important;
+}
+.sutol-html-stage .entrance-animation-shake {
+  animation: sutolEmphasisShake .7s ease-in-out 1 both !important;
+}
+.sutol-html-stage .entrance-animation-grow-shrink {
+  animation: sutolEmphasisGrowShrink .9s ease-in-out 1 both !important;
+}
+.sutol-html-stage .entrance-animation-spin {
+  animation: sutolEmphasisSpin .9s ease-in-out 1 both !important;
+}
+.sutol-html-stage .entrance-animation-glow {
+  animation: sutolEmphasisGlow 1s ease-in-out 1 both !important;
+}
+.sutol-html-stage .entrance-animation-fade-out {
+  animation: sutolExitFadeOut .8s ease-in 1 none !important;
+}
+.sutol-html-stage .entrance-animation-fly-out-left {
+  animation: sutolExitFlyOutLeft .8s cubic-bezier(.55, 0, 1, .45) 1 none !important;
+}
+.sutol-html-stage .entrance-animation-fly-out-right {
+  animation: sutolExitFlyOutRight .8s cubic-bezier(.55, 0, 1, .45) 1 none !important;
+}
+.sutol-html-stage .entrance-animation-fly-out-top {
+  animation: sutolExitFlyOutTop .8s cubic-bezier(.55, 0, 1, .45) 1 none !important;
+}
+.sutol-html-stage .entrance-animation-fly-out-bottom {
+  animation: sutolExitFlyOutBottom .8s cubic-bezier(.55, 0, 1, .45) 1 none !important;
+}
+.sutol-html-stage .entrance-animation-shrink-out {
+  animation: sutolExitShrinkOut .8s ease-in 1 none !important;
+}
+.sutol-html-stage .entrance-animation-zoom-out {
+  animation: sutolExitZoomOut .8s ease-in 1 none !important;
+}
+.sutol-html-stage .entrance-animation-spin-out {
+  animation: sutolExitSpinOut .9s ease-in 1 none !important;
+}
+.sutol-html-stage .entrance-animation-motion-line {
+  animation: sutolMotionLine 1.4s ease-in-out 1 none !important;
+}
+.sutol-html-stage .entrance-animation-motion-circle {
+  animation: sutolMotionCircle 1.8s linear 1 none !important;
+}
+.sutol-html-stage .entrance-animation-motion-wave {
+  animation: sutolMotionWave 1.8s ease-in-out 1 none !important;
+}
+.sutol-html-stage .entrance-animation-motion-custom {
+  animation: sutolMotionCustom 1.8s ease-in-out 1 none !important;
+}
+.sutol-html-stage [class*="entrance-animation-"]:not(.entrance-animation-none) {
+  animation-duration: var(--sutol-element-duration, .8s) !important;
+  animation-delay: var(--sutol-element-delay, 0s) !important;
+  animation-iteration-count: 1 !important;
+}
+
+@keyframes sutolEntranceFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes sutolEntranceFlyInLeft {
+  from { opacity: 0; transform: translate3d(-110cqw, 0, 0); }
+  to { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+@keyframes sutolEntranceFlyInRight {
+  from { opacity: 0; transform: translate3d(110cqw, 0, 0); }
+  to { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+@keyframes sutolEntranceFlyInTop {
+  from { opacity: 0; transform: translate3d(0, -110cqh, 0); }
+  to { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+@keyframes sutolEntranceFlyInBottom {
+  from { opacity: 0; transform: translate3d(0, 110cqh, 0); }
+  to { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+@keyframes sutolEntranceZoomIn {
+  from { opacity: 0; transform: scale(.55); }
+  to { opacity: 1; transform: scale(1); }
+}
+.sutol-html-stage .has-grouped-element-animation {
+  animation: none !important;
+}
+.sutol-animation-segment {
+  display: inline-block;
+  will-change: transform, opacity, filter;
+}
+.sutol-animation-segment.is-paragraph-segment {
+  display: inline;
+}
+.sutol-html-stage .is-element-animation-pending {
+  animation: none !important;
+  transform: none !important;
+  opacity: 1 !important;
+  filter: none !important;
+}
+.sutol-html-stage .is-element-animation-pending .sutol-animation-segment {
+  animation: none !important;
+  transform: none !important;
+  opacity: 1 !important;
+  filter: none !important;
+}
+@keyframes sutolEmphasisPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.13); }
+}
+@keyframes sutolEmphasisShake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-12px) rotate(-1deg); }
+  40% { transform: translateX(10px) rotate(1deg); }
+  60% { transform: translateX(-7px); }
+  80% { transform: translateX(5px); }
+}
+@keyframes sutolEmphasisGrowShrink {
+  0%, 100% { transform: scale(1); }
+  45% { transform: scale(1.2); }
+  70% { transform: scale(.94); }
+}
+@keyframes sutolEmphasisSpin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+@keyframes sutolEmphasisGlow {
+  0%, 100% { filter: brightness(1) drop-shadow(0 0 0 currentColor); }
+  50% { filter: brightness(1.35) drop-shadow(0 0 16px currentColor); }
+}
+@keyframes sutolExitFadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+@keyframes sutolExitFlyOutLeft {
+  from { opacity: 1; transform: translate3d(0, 0, 0); }
+  to { opacity: 0; transform: translate3d(-100px, 0, 0); }
+}
+@keyframes sutolExitFlyOutRight {
+  from { opacity: 1; transform: translate3d(0, 0, 0); }
+  to { opacity: 0; transform: translate3d(100px, 0, 0); }
+}
+@keyframes sutolExitFlyOutTop {
+  from { opacity: 1; transform: translate3d(0, 0, 0); }
+  to { opacity: 0; transform: translate3d(0, -80px, 0); }
+}
+@keyframes sutolExitFlyOutBottom {
+  from { opacity: 1; transform: translate3d(0, 0, 0); }
+  to { opacity: 0; transform: translate3d(0, 80px, 0); }
+}
+@keyframes sutolExitShrinkOut {
+  from { opacity: 1; transform: scale(1); }
+  to { opacity: 0; transform: scale(.05); }
+}
+@keyframes sutolExitZoomOut {
+  from { opacity: 1; transform: scale(1); filter: blur(0); }
+  to { opacity: 0; transform: scale(1.8); filter: blur(8px); }
+}
+@keyframes sutolExitSpinOut {
+  from { opacity: 1; transform: rotate(0deg) scale(1); }
+  to { opacity: 0; transform: rotate(540deg) scale(.1); }
+}
+@keyframes sutolMotionLine {
+  from { transform: translate(var(--sutol-motion-x0), var(--sutol-motion-y0)); }
+  to { transform: translate(var(--sutol-motion-x3), var(--sutol-motion-y3)); }
+}
+@keyframes sutolMotionCircle {
+  0%, 100% { transform: translate(0, 0); }
+  25% { transform: translate(8cqw, -8cqh); }
+  50% { transform: translate(16cqw, 0); }
+  75% { transform: translate(8cqw, 8cqh); }
+}
+@keyframes sutolMotionWave {
+  0% { transform: translate(0, 0); }
+  25% { transform: translate(9cqw, -7cqh); }
+  50% { transform: translate(18cqw, 7cqh); }
+  75% { transform: translate(27cqw, -7cqh); }
+  100% { transform: translate(36cqw, 0); }
+}
+@keyframes sutolMotionCustom {
+  0% { transform: translate(var(--sutol-motion-x0), var(--sutol-motion-y0)); }
+  33% { transform: translate(var(--sutol-motion-x1), var(--sutol-motion-y1)); }
+  66% { transform: translate(var(--sutol-motion-x2), var(--sutol-motion-y2)); }
+  100% { transform: translate(var(--sutol-motion-x3), var(--sutol-motion-y3)); }
 }
 
 /* Bir sonraki gösterim adımında sahne yeniden kurulduğunda daha önce
@@ -1737,6 +2321,21 @@ body {
   100% { clip-path: inset(0 0 0 0); transform: translateY(0); filter: blur(0); opacity: 1; text-shadow: 0 0 calc(10px * var(--sutol-glow)) currentColor; }
 }
 
+@keyframes sutolEffectRiseIn {
+  0% { transform: translateY(42px); filter: blur(5px); opacity: 0; }
+  100% { transform: translateY(0); filter: blur(0); opacity: 1; }
+}
+
+@keyframes sutolEffectSlideFromLeft {
+  0% { transform: translateX(-64px); filter: blur(3px); opacity: 0; }
+  100% { transform: translateX(0); filter: blur(0); opacity: 1; }
+}
+
+@keyframes sutolEffectWordReveal {
+  0% { transform: translateY(.7em) scale(.96); filter: blur(5px); opacity: 0; }
+  100% { transform: translateY(0) scale(1); filter: blur(0); opacity: 1; }
+}
+
 @keyframes sutolEffectTypewriterWord {
   0%, 2% {
     clip-path: inset(0 100% 0 0);
@@ -1845,18 +2444,10 @@ body {
   filter: none !important;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .sutol-html-block[class*="text-animation-"] {
-    animation: none !important;
-    transform: none !important;
-  }
-  .sutol-html-block.text-animation-daktilo .sutol-typewriter-word {
-    animation: none !important;
-    clip-path: none;
-    border-right-color: transparent;
-    transform: none;
-    opacity: 1;
-  }
+.sutol-stage-mode-snapshot [class*="entrance-animation-"] {
+  animation: none !important;
+  transform: none !important;
+  opacity: 1 !important;
 }
 
 .sutol-html-block.is-selected {
@@ -2421,6 +3012,13 @@ const String _stagePatchScript = r'''
   function patchElement(attribute, item) {
     const element = document.querySelector(selectorFor(attribute, item.id));
     if (!element) return false;
+    const previousAnimationClass = Array.from(element.classList).filter(function (name) {
+      return name.indexOf('text-animation-') === 0 || name.indexOf('entrance-animation-') === 0;
+    }).join('|');
+    const nextAnimationClass = String(item.className || '').split(/\s+/).filter(function (name) {
+      return name.indexOf('text-animation-') === 0 || name.indexOf('entrance-animation-') === 0;
+    }).join('|');
+    const animationChanged = previousAnimationClass !== nextAnimationClass;
     element.className = item.className;
     element.setAttribute('data-reveal-step', String(item.revealStep));
     setOptionalAttribute(element, 'data-hotspot-target', item.hotspotTargetPageId);
@@ -2500,6 +3098,18 @@ const String _stagePatchScript = r'''
     if (item.glowIntensity !== undefined) {
       element.style.setProperty('--sutol-glow', item.glowIntensity);
     }
+    if (item.animationDuration !== undefined) {
+      element.style.setProperty('--sutol-element-duration', item.animationDuration + 's');
+    }
+    if (item.animationDelay !== undefined) {
+      element.style.setProperty('--sutol-element-delay', item.animationDelay + 's');
+    }
+    if (Array.isArray(item.motionPathPoints)) {
+      item.motionPathPoints.slice(0, 4).forEach(function (point, index) {
+        element.style.setProperty('--sutol-motion-x' + index, point.x);
+        element.style.setProperty('--sutol-motion-y' + index, point.y);
+      });
+    }
     if (item.textColor === null || item.textColor === undefined) {
       element.style.removeProperty('color');
       element.style.removeProperty('--sutol-text-color');
@@ -2508,7 +3118,46 @@ const String _stagePatchScript = r'''
       element.style.setProperty('--sutol-text-color', item.textColor);
     }
     if (item.text !== undefined) {
-      if (item.isTypewriter) {
+      if (item.textGrouping && item.textGrouping !== 'asObject' &&
+          item.entranceAnimationClass !== 'entrance-animation-none') {
+        element.setAttribute('aria-label', String(item.text));
+        const visual = document.createElement('span');
+        visual.className = 'sutol-animation-visual';
+        visual.setAttribute('aria-hidden', 'true');
+        const baseDelay = Number(item.animationDelay || 0);
+        const groupDelay = Number(item.groupDelay || .08);
+        let tokens;
+        if (item.textGrouping === 'byParagraph') {
+          tokens = String(item.text).split('\n');
+        } else if (item.textGrouping === 'byWord') {
+          tokens = String(item.text).match(/\S+|\s+/g) || [];
+        } else {
+          tokens = Array.from(String(item.text));
+        }
+        let segmentIndex = 0;
+        tokens.forEach(function (token, tokenIndex) {
+          if (item.textGrouping === 'byWord' && token.trim().length === 0) {
+            visual.appendChild(document.createTextNode(token));
+            return;
+          }
+          const segment = document.createElement('span');
+          segment.className = 'sutol-animation-segment ' + item.entranceAnimationClass +
+            (item.textGrouping === 'byParagraph' ? ' is-paragraph-segment' : '');
+          segment.setAttribute('aria-hidden', 'true');
+          segment.style.setProperty(
+            '--sutol-element-delay',
+            (baseDelay + segmentIndex * groupDelay).toFixed(2) + 's'
+          );
+          segment.textContent = token;
+          visual.appendChild(segment);
+          segmentIndex += 1;
+          if (item.textGrouping === 'byParagraph' && tokenIndex < tokens.length - 1) {
+            visual.appendChild(document.createElement('br'));
+          }
+        });
+        element.replaceChildren(visual);
+      } else if (item.isTypewriter || item.isWordReveal) {
+        element.removeAttribute('aria-label');
         const tokens = String(item.text).match(/\S+|\s+/g) || [];
         const wordCount = tokens.filter(function (token) {
           return token.trim().length > 0;
@@ -2530,8 +3179,17 @@ const String _stagePatchScript = r'''
           wordIndex += 1;
         });
       } else {
+        element.removeAttribute('aria-label');
         element.textContent = item.text;
       }
+    }
+    if (animationChanged) {
+      // Setting a different animation class during an in-place iframe patch is
+      // not sufficient in every browser. Force a style boundary so the newly
+      // selected effect visibly starts from its first frame.
+      element.style.setProperty('animation', 'none', 'important');
+      void element.offsetWidth;
+      element.style.removeProperty('animation');
     }
     if (element.classList.contains('sutol-html-block')) fitText(element);
     return true;

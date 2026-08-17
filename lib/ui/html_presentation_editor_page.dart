@@ -78,6 +78,7 @@ enum _HtmlToolTab {
   text,
   models3d,
   photo,
+  animations,
   transitions,
   stageDimensions,
 }
@@ -146,6 +147,7 @@ class _HtmlPresentationEditorPageState
   /// Çoklu dokunma sırasında tuval içi jestler kapatılır (kıstırma sahne
   /// katmanına geçer); parmaklar kalkınca tekrar açılır.
   bool _multiTouchActive = false;
+  bool _textInputHasFocus = false;
 
   /// Mobil tuvaldeki "boş alanda sürükle" ipucu: ilk açılışta kısa süre
   /// görünür, etkileşimle ya da süre dolunca kaybolur.
@@ -210,6 +212,7 @@ class _HtmlPresentationEditorPageState
   void initState() {
     super.initState();
     HardwareKeyboard.instance.addHandler(_handleGlobalKeyEvent);
+    FocusManager.instance.addListener(_handlePrimaryFocusChanged);
     _openedAt = DateTime.now();
     _trackedSignature = _deckSignature();
     widget.controller.addListener(_syncTextField);
@@ -234,7 +237,8 @@ class _HtmlPresentationEditorPageState
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         _editorFocusNode.requestFocus();
-        final isMobile = MediaQuery.sizeOf(context).width < AppBreakpoints.mobile;
+        final isMobile =
+            MediaQuery.sizeOf(context).width < AppBreakpoints.mobile;
         if (isMobile) {
           final currentRatio = widget.controller.effectSettings.aspectRatio;
           if (currentRatio.isEmpty) {
@@ -251,7 +255,6 @@ class _HtmlPresentationEditorPageState
       setState(() {});
     }
   }
-
 
   /// Salt okunur (admin) mod: sunumu verilen presentationId ile Firestore'dan
   /// mevcut yükleme mantığını kullanarak mevcut controller'a yükler.
@@ -290,6 +293,7 @@ class _HtmlPresentationEditorPageState
   @override
   void dispose() {
     HardwareKeyboard.instance.removeHandler(_handleGlobalKeyEvent);
+    FocusManager.instance.removeListener(_handlePrimaryFocusChanged);
     _editorFocusNode.dispose();
     _hintTimer?.cancel();
     widget.controller.removeListener(_syncTextField);
@@ -652,12 +656,21 @@ class _HtmlPresentationEditorPageState
     );
   }
 
-  bool get _isEditingText {
+  bool _primaryFocusIsTextInput() {
     final primaryFocus = FocusManager.instance.primaryFocus;
     if (primaryFocus == null) return false;
-    final context = primaryFocus.context;
-    if (context == null) return false;
-    return context.findAncestorWidgetOfExactType<EditableText>() != null;
+    final focusContext = primaryFocus.context;
+    if (focusContext == null) return false;
+    return focusContext.widget is EditableText ||
+        focusContext.findAncestorWidgetOfExactType<EditableText>() != null;
+  }
+
+  bool get _isEditingText => _textInputHasFocus || _primaryFocusIsTextInput();
+
+  void _handlePrimaryFocusChanged() {
+    final nextValue = _primaryFocusIsTextInput();
+    if (!mounted || nextValue == _textInputHasFocus) return;
+    setState(() => _textInputHasFocus = nextValue);
   }
 
   bool _handleGlobalKeyEvent(KeyEvent event) {
@@ -723,7 +736,7 @@ class _HtmlPresentationEditorPageState
       autofocus: true,
       canRequestFocus: true,
       child: CallbackShortcuts(
-        bindings: widget.adminReadOnly
+        bindings: widget.adminReadOnly || _textInputHasFocus
             ? const <ShortcutActivator, VoidCallback>{}
             : <ShortcutActivator, VoidCallback>{
                 // Undo / Redo
@@ -1132,9 +1145,8 @@ class _HtmlHeader extends StatelessWidget {
           }
 
           final compact = constraints.maxWidth < 600;
-          final iconSize = compact
-              ? (constraints.maxWidth < 340 ? 30.0 : 34.0)
-              : 40.0;
+          final iconSize =
+              compact ? (constraints.maxWidth < 340 ? 30.0 : 34.0) : 40.0;
 
           return Container(
             key: const ValueKey<String>('mobile-editor-header'),
@@ -1828,9 +1840,11 @@ class _HtmlMobileSlideStripState extends State<_HtmlMobileSlideStrip> {
                   index: index,
                   isSelected: index == widget.controller.selectedIndex,
                   onTap: () => widget.controller.selectPage(index),
-                  onLongPress: !widget.readOnly && widget.controller.canRemovePage
-                      ? () => _confirmDeleteCurrentSlide(context, widget.controller, index)
-                      : null,
+                  onLongPress:
+                      !widget.readOnly && widget.controller.canRemovePage
+                          ? () => _confirmDeleteCurrentSlide(
+                              context, widget.controller, index)
+                          : null,
                 );
               },
             ),
@@ -1841,10 +1855,12 @@ class _HtmlMobileSlideStripState extends State<_HtmlMobileSlideStrip> {
               IconButton(
                 key: const ValueKey<String>('mobile-slide-strip-delete'),
                 tooltip: 'Sahneyi Sil',
-                onPressed: () => _confirmDeleteCurrentSlide(context, widget.controller),
+                onPressed: () =>
+                    _confirmDeleteCurrentSlide(context, widget.controller),
                 style: IconButton.styleFrom(
                   backgroundColor: Theme.of(context).colorScheme.errorContainer,
-                  foregroundColor: Theme.of(context).colorScheme.onErrorContainer,
+                  foregroundColor:
+                      Theme.of(context).colorScheme.onErrorContainer,
                   minimumSize: const Size(36, 36),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),
@@ -1892,7 +1908,8 @@ Future<void> _confirmDeleteCurrentSlide(
     context: context,
     builder: (ctx) => AlertDialog(
       title: const Text('Sahneyi Sil'),
-      content: Text('${index + 1}. sahneyi silmek istediğinizden emin misiniz?'),
+      content:
+          Text('${index + 1}. sahneyi silmek istediğinizden emin misiniz?'),
       actions: <Widget>[
         TextButton(
           onPressed: () => Navigator.of(ctx).pop(false),
@@ -2170,7 +2187,8 @@ class _HtmlMobileToolDock extends StatelessWidget {
             final widths = <double>[
               for (final t in tools) _dockChipWidth(context, t.label)
             ];
-            final toolsWidth = widths.fold<double>(0, (sum, w) => sum + w + gap);
+            final toolsWidth =
+                widths.fold<double>(0, (sum, w) => sum + w + gap);
             final fullFits = toolsWidth + fullMoreWidth <= available;
             final compactFits = toolsWidth + compactMoreWidth <= available;
             final visible = <int>[];
@@ -2236,8 +2254,12 @@ class _HtmlMobileToolDock extends StatelessWidget {
                                 'Metin' => _MobileMoreTool.text,
                                 'Fotoğraf' => _MobileMoreTool.photoUpload,
                                 'Medya' => _MobileMoreTool.media,
-                                'Modeller' || '3B Modeller' => _MobileMoreTool.models3d,
-                                'Sahne Ölçüleri' || 'Ölçü' => _MobileMoreTool.stageDimensions,
+                                'Modeller' ||
+                                '3B Modeller' =>
+                                  _MobileMoreTool.models3d,
+                                'Sahne Ölçüleri' ||
+                                'Ölçü' =>
+                                  _MobileMoreTool.stageDimensions,
                                 _ => _MobileMoreTool.components,
                               },
                               child: ListTile(
@@ -2271,14 +2293,16 @@ class _HtmlMobileToolDock extends StatelessWidget {
                           Icons.wallpaper_rounded,
                           'Arka Planlar',
                         );
-                        if (!hiddenLabels.contains('Bileşenler') && !hiddenLabels.contains('Bileşen')) {
+                        if (!hiddenLabels.contains('Bileşenler') &&
+                            !hiddenLabels.contains('Bileşen')) {
                           add(
                             _MobileMoreTool.components,
                             Icons.widgets_rounded,
                             'Bileşenler',
                           );
                         }
-                        if (!hiddenLabels.contains('Modeller') && !hiddenLabels.contains('3B Modeller')) {
+                        if (!hiddenLabels.contains('Modeller') &&
+                            !hiddenLabels.contains('3B Modeller')) {
                           add(
                             _MobileMoreTool.models3d,
                             Icons.view_in_ar_rounded,
@@ -2290,7 +2314,8 @@ class _HtmlMobileToolDock extends StatelessWidget {
                           Icons.animation_rounded,
                           'Geçişler',
                         );
-                        if (!hiddenLabels.contains('Fotoğraf') && !hiddenLabels.contains('Fotoğraf Yükle')) {
+                        if (!hiddenLabels.contains('Fotoğraf') &&
+                            !hiddenLabels.contains('Fotoğraf Yükle')) {
                           add(
                             _MobileMoreTool.photoUpload,
                             Icons.add_a_photo_rounded,
@@ -2349,7 +2374,7 @@ class _HtmlMobileToolDock extends StatelessWidget {
       case _MobileMoreTool.transitions:
         onOpenTool(_HtmlToolTab.transitions);
       case _MobileMoreTool.animations:
-        onOpenTool(_HtmlToolTab.transitions);
+        onOpenTool(_HtmlToolTab.animations);
       case _MobileMoreTool.audio:
         onOpenTool(_HtmlToolTab.backgrounds);
       case _MobileMoreTool.stageDimensions:
@@ -2748,6 +2773,8 @@ IconData _htmlToolIcon(_HtmlToolTab tab) {
       return Icons.view_in_ar_rounded;
     case _HtmlToolTab.photo:
       return Icons.add_photo_alternate_rounded;
+    case _HtmlToolTab.animations:
+      return Icons.auto_awesome_motion_rounded;
     case _HtmlToolTab.transitions:
       return Icons.animation_rounded;
     case _HtmlToolTab.stageDimensions:
@@ -2880,7 +2907,7 @@ enum _MobileMoreTool {
   models3d,
   transitions,
 
-  /// "Animasyonlar" → Geçişler (slayt animasyonları) paneli.
+  /// "Animasyonlar" → seçili öğenin animasyon paneli.
   animations,
 
   /// "Ses" → Arka Planlar (müzik ve ses) paneli.
@@ -3542,7 +3569,9 @@ class _HeaderSettingsDialog extends StatelessWidget {
                     return ListTile(
                       contentPadding: const EdgeInsets.symmetric(horizontal: 4),
                       leading: Icon(
-                        isDark ? Icons.dark_mode_rounded : Icons.light_mode_rounded,
+                        isDark
+                            ? Icons.dark_mode_rounded
+                            : Icons.light_mode_rounded,
                       ),
                       title: Text(langController.tr('Koyu tema', 'Dark mode')),
                       subtitle: Text(
@@ -3587,7 +3616,8 @@ class _HeaderSettingsDialog extends StatelessWidget {
                 ),
                 if (langController.detectedLocationInfo != null)
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
                     child: Row(
                       children: [
                         const Icon(Icons.location_on_outlined, size: 14),
@@ -3938,6 +3968,13 @@ class _HtmlToolRail extends StatelessWidget {
             ),
             const SizedBox(width: 8),
             _RailButton(
+              label: tr('Animasyonlar', 'Animations'),
+              icon: Icons.auto_awesome_motion_rounded,
+              isSelected: activeTab == _HtmlToolTab.animations,
+              onTap: () => onTabChanged(_HtmlToolTab.animations),
+            ),
+            const SizedBox(width: 8),
+            _RailButton(
               label: tr('Geçişler', 'Transitions'),
               icon: Icons.animation_rounded,
               isSelected: activeTab == _HtmlToolTab.transitions,
@@ -4011,8 +4048,12 @@ class _RailButton extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: isSelected
-                          ? (isDark ? context.colors.textPrimary : context._htmlInk)
-                          : (isDark ? context.colors.textSecondary : context._htmlMuted),
+                          ? (isDark
+                              ? context.colors.textPrimary
+                              : context._htmlInk)
+                          : (isDark
+                              ? context.colors.textSecondary
+                              : context._htmlMuted),
                       fontWeight:
                           isSelected ? FontWeight.w800 : FontWeight.w700,
                       fontSize: 10.5,
@@ -4405,16 +4446,41 @@ class _HtmlPageSidebar extends StatelessWidget {
               child: ReorderableListView.builder(
                 buildDefaultDragHandles: false,
                 proxyDecorator: (child, index, animation) {
-                  return Material(
-                    elevation: animation.value * 6,
-                    color: Colors.transparent,
-                    child: AnimatedBuilder(
-                      animation: animation,
-                      builder: (context, child) => Transform.scale(
-                        scale: 1.0 + animation.value * 0.05,
-                        child: child,
-                      ),
-                    ),
+                  return AnimatedBuilder(
+                    animation: animation,
+                    child: child,
+                    builder: (context, draggedCard) {
+                      final progress = Curves.easeOutCubic.transform(
+                        animation.value,
+                      );
+                      return Transform.scale(
+                        scale: 1 + (progress * 0.03),
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(
+                              color: context._htmlAccent.withValues(
+                                alpha: progress * 0.55,
+                              ),
+                              width: 1.5,
+                            ),
+                            boxShadow: <BoxShadow>[
+                              BoxShadow(
+                                color: Colors.black.withValues(
+                                  alpha: progress * 0.18,
+                                ),
+                                blurRadius: 14 * progress,
+                                offset: Offset(0, 5 * progress),
+                              ),
+                            ],
+                          ),
+                          child: Material(
+                            type: MaterialType.transparency,
+                            child: draggedCard,
+                          ),
+                        ),
+                      );
+                    },
                   );
                 },
                 itemCount: controller.pages.length,
@@ -4428,21 +4494,35 @@ class _HtmlPageSidebar extends StatelessWidget {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: <Widget>[
-                        ReorderableDelayedDragStartListener(
+                        ReorderableDragStartListener(
                           index: index,
                           enabled: !readOnly,
-                          child: _HtmlPageCard(
-                            page: page,
-                            index: index,
-                            isSelected: index == controller.selectedIndex,
-                            onTap: () => controller.selectPage(index),
-                            controller: controller,
-                            readOnly: readOnly,
+                          child: MouseRegion(
+                            cursor: readOnly
+                                ? MouseCursor.defer
+                                : SystemMouseCursors.grab,
+                            child: _HtmlPageCard(
+                              page: page,
+                              index: index,
+                              isSelected: index == controller.selectedIndex,
+                              onTap: () => controller.selectPage(index),
+                              controller: controller,
+                              readOnly: readOnly,
+                            ),
                           ),
                         ),
                         _SlideInsertButton(
                           onPressed: () => controller.addPageAfter(index),
+                          onTransitionDropped: (kind) =>
+                              controller.updateTransitionAfterPage(index, kind),
+                          onTransitionRemoved: () =>
+                              controller.updateTransitionAfterPage(
+                            index,
+                            PresentationTransitionKind.none,
+                          ),
                           readOnly: readOnly,
+                          transitionKind: controller.transitionAfterPage(index),
+                          showTransition: index < controller.pages.length - 1,
                         ),
                       ],
                     ),
@@ -4479,11 +4559,19 @@ class _HtmlPageSidebar extends StatelessWidget {
 class _SlideInsertButton extends StatefulWidget {
   const _SlideInsertButton({
     required this.onPressed,
+    this.onTransitionDropped,
+    this.onTransitionRemoved,
     this.readOnly = false,
+    this.transitionKind = PresentationTransitionKind.none,
+    this.showTransition = false,
   });
 
   final VoidCallback onPressed;
+  final ValueChanged<PresentationTransitionKind>? onTransitionDropped;
+  final VoidCallback? onTransitionRemoved;
   final bool readOnly;
+  final PresentationTransitionKind transitionKind;
+  final bool showTransition;
 
   @override
   State<_SlideInsertButton> createState() => _SlideInsertButtonState();
@@ -4491,17 +4579,25 @@ class _SlideInsertButton extends StatefulWidget {
 
 class _SlideInsertButtonState extends State<_SlideInsertButton> {
   bool _isHovered = false;
+  bool _isTransitionHovered = false;
 
   @override
   Widget build(BuildContext context) {
-    if (widget.readOnly) return const SizedBox(height: 6);
+    final hasTransition = widget.showTransition &&
+        widget.transitionKind != PresentationTransitionKind.none;
+    if (widget.readOnly && !hasTransition) {
+      return const SizedBox(height: 6);
+    }
 
-    return MouseRegion(
-      onEnter: (_) => setState(() => _isHovered = true),
-      onExit: (_) => setState(() => _isHovered = false),
-      child: GestureDetector(
-        onTap: widget.onPressed,
-        behavior: HitTestBehavior.opaque,
+    return DragTarget<PresentationTransitionKind>(
+      onWillAcceptWithDetails: (_) => !widget.readOnly,
+      onAcceptWithDetails: (details) {
+        widget.onTransitionDropped?.call(details.data);
+        setState(() => _isHovered = false);
+      },
+      builder: (context, candidates, rejected) => MouseRegion(
+        onEnter: (_) => setState(() => _isHovered = true),
+        onExit: (_) => setState(() => _isHovered = false),
         child: Container(
           margin: const EdgeInsets.symmetric(vertical: 2),
           padding: const EdgeInsets.symmetric(vertical: 3),
@@ -4510,61 +4606,156 @@ class _SlideInsertButtonState extends State<_SlideInsertButton> {
             children: <Widget>[
               AnimatedContainer(
                 duration: const Duration(milliseconds: 150),
-                height: _isHovered ? 2 : 1,
-                color: _isHovered
+                height: _isHovered && !widget.readOnly ? 2 : 1,
+                color: (_isHovered || candidates.isNotEmpty) && !widget.readOnly
                     ? context._htmlAccent
                     : Colors.black.withValues(alpha: 0.08),
               ),
-              AnimatedContainer(
-                duration: const Duration(milliseconds: 150),
-                padding: EdgeInsets.symmetric(
-                  horizontal: _isHovered ? 10 : 8,
-                  vertical: 3,
-                ),
-                decoration: BoxDecoration(
-                  color: _isHovered
-                      ? context._htmlAccent
-                      : (Theme.of(context).brightness == Brightness.dark
-                          ? context.colors.surfaceElevated
-                          : Colors.white),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: _isHovered
-                        ? context._htmlAccent
-                        : context.sutolColors.outline.withValues(alpha: 0.8),
-                    width: 1,
-                  ),
-                  boxShadow: _isHovered
-                      ? <BoxShadow>[
-                          BoxShadow(
-                            color: context._htmlAccent.withValues(alpha: 0.25),
-                            blurRadius: 6,
-                            offset: const Offset(0, 2),
-                          )
-                        ]
-                      : null,
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: <Widget>[
-                    Icon(
-                      Icons.add_rounded,
-                      size: 14,
-                      color: _isHovered ? Colors.white : context._htmlInk,
-                    ),
-                    if (_isHovered) ...<Widget>[
-                      const SizedBox(width: 4),
-                      const Text(
-                        'Slayt Ekle',
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  if (hasTransition)
+                    MouseRegion(
+                      onEnter: (_) =>
+                          setState(() => _isTransitionHovered = true),
+                      onExit: (_) =>
+                          setState(() => _isTransitionHovered = false),
+                      child: Tooltip(
+                        message: _isTransitionHovered && !widget.readOnly
+                            ? 'Geçişi kaldır'
+                            : '${_transitionShortLabel(widget.transitionKind)} geçişi',
+                        child: GestureDetector(
+                          behavior: HitTestBehavior.opaque,
+                          onTap: widget.readOnly
+                              ? null
+                              : widget.onTransitionRemoved,
+                          child: Container(
+                            key: ValueKey<String>(
+                              'slide-transition-${widget.transitionKind.name}',
+                            ),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 7,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: (_isTransitionHovered && !widget.readOnly
+                                      ? const Color(0xFFDC2626)
+                                      : const Color(0xFF7C3AED))
+                                  .withValues(alpha: .12),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: (_isTransitionHovered && !widget.readOnly
+                                        ? const Color(0xFFDC2626)
+                                        : const Color(0xFF7C3AED))
+                                    .withValues(alpha: .35),
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: <Widget>[
+                                AnimatedSwitcher(
+                                  duration: const Duration(milliseconds: 120),
+                                  child: Icon(
+                                    _isTransitionHovered && !widget.readOnly
+                                        ? Icons.close_rounded
+                                        : _transitionBadgeIcon(
+                                            widget.transitionKind,
+                                          ),
+                                    key: ValueKey<bool>(
+                                      _isTransitionHovered && !widget.readOnly,
+                                    ),
+                                    size: 12,
+                                    color:
+                                        _isTransitionHovered && !widget.readOnly
+                                            ? const Color(0xFFDC2626)
+                                            : const Color(0xFF7C3AED),
+                                  ),
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  _isTransitionHovered && !widget.readOnly
+                                      ? 'Kaldır'
+                                      : _transitionShortLabel(
+                                          widget.transitionKind,
+                                        ),
+                                  style: TextStyle(
+                                    fontSize: 9,
+                                    height: 1,
+                                    fontWeight: FontWeight.w800,
+                                    color:
+                                        _isTransitionHovered && !widget.readOnly
+                                            ? const Color(0xFFDC2626)
+                                            : const Color(0xFF6D28D9),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                         ),
                       ),
-                    ],
-                  ],
-                ),
+                    ),
+                  if (hasTransition && !widget.readOnly)
+                    const SizedBox(width: 5),
+                  if (!widget.readOnly)
+                    GestureDetector(
+                      onTap: widget.onPressed,
+                      behavior: HitTestBehavior.opaque,
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 150),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: _isHovered ? 10 : 8,
+                          vertical: 3,
+                        ),
+                        decoration: BoxDecoration(
+                          color: _isHovered
+                              ? context._htmlAccent
+                              : (Theme.of(context).brightness == Brightness.dark
+                                  ? context.colors.surfaceElevated
+                                  : Colors.white),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: _isHovered
+                                ? context._htmlAccent
+                                : context.sutolColors.outline
+                                    .withValues(alpha: 0.8),
+                            width: 1,
+                          ),
+                          boxShadow: _isHovered
+                              ? <BoxShadow>[
+                                  BoxShadow(
+                                    color: context._htmlAccent
+                                        .withValues(alpha: 0.25),
+                                    blurRadius: 6,
+                                    offset: const Offset(0, 2),
+                                  )
+                                ]
+                              : null,
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: <Widget>[
+                            Icon(
+                              Icons.add_rounded,
+                              size: 14,
+                              color:
+                                  _isHovered ? Colors.white : context._htmlInk,
+                            ),
+                            if (_isHovered) ...<Widget>[
+                              const SizedBox(width: 4),
+                              const Text(
+                                'Slayt Ekle',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                    ),
+                ],
               ),
             ],
           ),
@@ -4573,6 +4764,46 @@ class _SlideInsertButtonState extends State<_SlideInsertButton> {
     );
   }
 }
+
+String _transitionShortLabel(PresentationTransitionKind kind) => switch (kind) {
+      PresentationTransitionKind.none => 'Yok',
+      PresentationTransitionKind.smooth => 'Yumuşak',
+      PresentationTransitionKind.fade => 'Fade',
+      PresentationTransitionKind.slide => 'İtme',
+      PresentationTransitionKind.wipe => 'Silme',
+      PresentationTransitionKind.split => 'Bölme',
+      PresentationTransitionKind.reveal => 'Açığa çıkar',
+      PresentationTransitionKind.cover => 'Kaplama',
+      PresentationTransitionKind.uncover => 'Örtüyü kaldır',
+      PresentationTransitionKind.zoom => 'Yakınlaşma',
+      PresentationTransitionKind.flip => 'Çevirme',
+      PresentationTransitionKind.cube3d => '3B Küp',
+      PresentationTransitionKind.convex => 'Dışbükey',
+      PresentationTransitionKind.concave => 'İçbükey',
+      PresentationTransitionKind.morph => 'Dönüşüm',
+      PresentationTransitionKind.parallax => 'Paralaks',
+      PresentationTransitionKind.elastic => 'Esnek',
+      PresentationTransitionKind.glitch => 'Glitch',
+      PresentationTransitionKind.prism => 'Prizma',
+      PresentationTransitionKind.radialWipe => 'Dairesel',
+      PresentationTransitionKind.rotateZoom => 'Döndür',
+    };
+
+IconData _transitionBadgeIcon(PresentationTransitionKind kind) =>
+    switch (kind) {
+      PresentationTransitionKind.fade => Icons.blur_on_rounded,
+      PresentationTransitionKind.slide => Icons.view_carousel_rounded,
+      PresentationTransitionKind.wipe => Icons.gradient_rounded,
+      PresentationTransitionKind.split => Icons.splitscreen_rounded,
+      PresentationTransitionKind.zoom ||
+      PresentationTransitionKind.rotateZoom =>
+        Icons.zoom_in_map_rounded,
+      PresentationTransitionKind.flip ||
+      PresentationTransitionKind.cube3d =>
+        Icons.view_in_ar_rounded,
+      PresentationTransitionKind.none => Icons.block_rounded,
+      _ => Icons.motion_photos_on_rounded,
+    };
 
 void _showPageContextMenu(
   BuildContext context,
@@ -4640,7 +4871,8 @@ void _showPageContextMenu(
         enabled: controller.canRemovePage,
         child: Row(
           children: const <Widget>[
-            Icon(Icons.delete_outline_rounded, size: 18, color: Colors.redAccent),
+            Icon(Icons.delete_outline_rounded,
+                size: 18, color: Colors.redAccent),
             SizedBox(width: 10),
             Text('Slaytı Sil', style: TextStyle(color: Colors.redAccent)),
           ],
@@ -4749,8 +4981,9 @@ class _HtmlPageCard extends StatelessWidget {
                     : const Color(0xFFF8FAFD)),
             borderRadius: BorderRadius.circular(8),
             border: Border.all(
-              color:
-                  isSelected ? context._htmlAccent : context.sutolColors.outline,
+              color: isSelected
+                  ? context._htmlAccent
+                  : context.sutolColors.outline,
               width: isSelected ? 1.5 : 1,
             ),
           ),
@@ -4764,18 +4997,12 @@ class _HtmlPageCard extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: <Widget>[
                       if (!readOnly)
-                        ReorderableDragStartListener(
-                          index: index,
-                          child: MouseRegion(
-                            cursor: SystemMouseCursors.grab,
-                            child: Padding(
-                              padding: const EdgeInsets.only(right: 6),
-                              child: Icon(
-                                Icons.drag_handle_rounded,
-                                size: 18,
-                                color: context._htmlMuted,
-                              ),
-                            ),
+                        Padding(
+                          padding: const EdgeInsets.only(right: 6),
+                          child: Icon(
+                            Icons.drag_handle_rounded,
+                            size: 18,
+                            color: context._htmlMuted,
                           ),
                         ),
                       Text(
@@ -4806,12 +5033,14 @@ class _HtmlPageCard extends StatelessWidget {
               ),
               const SizedBox(height: 5),
               AspectRatio(
-                aspectRatio: 16 / 9,
+                aspectRatio: controller.effectSettings.calculatedAspectRatio,
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(6),
                   child: IgnorePointer(
-                    child: PresentationPageThumbnailCanvas(
+                    child: HtmlPageStage(
+                      key: ValueKey<String>('page-thumbnail-${page.id}'),
                       page: page,
+                      renderMode: HtmlStageRenderMode.snapshot,
                     ),
                   ),
                 ),
@@ -5031,6 +5260,13 @@ class _HtmlTabStrip extends StatelessWidget {
             ),
             const SizedBox(width: 6),
             _HtmlTabButton(
+              label: tr('Animasyonlar', 'Animations'),
+              icon: Icons.auto_awesome_motion_rounded,
+              isSelected: activeTab == _HtmlToolTab.animations,
+              onTap: () => onTabChanged(_HtmlToolTab.animations),
+            ),
+            const SizedBox(width: 6),
+            _HtmlTabButton(
               label: tr('Geçişler', 'Transitions'),
               icon: Icons.animation_rounded,
               isSelected: activeTab == _HtmlToolTab.transitions,
@@ -5096,6 +5332,7 @@ class _HtmlTabButton extends StatelessWidget {
     );
   }
 }
+
 class _HtmlControlPanel extends StatelessWidget {
   const _HtmlControlPanel({
     super.key,
@@ -5153,6 +5390,12 @@ class _HtmlControlPanel extends StatelessWidget {
           controller: scrollController,
           padding: const EdgeInsets.all(12),
           child: _HtmlPhotoControls(controller: controller),
+        );
+      case _HtmlToolTab.animations:
+        return SingleChildScrollView(
+          controller: scrollController,
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
+          child: _HtmlEntranceAnimationControls(controller: controller),
         );
       case _HtmlToolTab.transitions:
         return SingleChildScrollView(
@@ -5282,11 +5525,14 @@ class _Html3DModelControlsState extends State<_Html3DModelControls> {
     }
     // Yetkili imzalı URL edin; yetki verilemezse bloğu ekleme.
     final signedUrl = await ModelAssetService.generateSignedUrl(model.modelUrl);
-    if (signedUrl == null || signedUrl.isEmpty || !signedUrl.contains('token=')) {
+    if (signedUrl == null ||
+        signedUrl.isEmpty ||
+        !signedUrl.contains('token=')) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Model yetkilendirmesi başarısız oldu. Lütfen tekrar deneyin.'),
+            content: Text(
+                'Model yetkilendirmesi başarısız oldu. Lütfen tekrar deneyin.'),
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -5329,7 +5575,8 @@ class _Html3DModelControlsState extends State<_Html3DModelControls> {
       key: const ValueKey<String>('model-library-panel'),
       width: double.infinity,
       height: double.infinity,
-      padding: isExpandedMode ? const EdgeInsets.all(14) : const EdgeInsets.all(6),
+      padding:
+          isExpandedMode ? const EdgeInsets.all(14) : const EdgeInsets.all(6),
       decoration: BoxDecoration(
         color: context.sutolColors.surface,
         borderRadius: BorderRadius.circular(16),
@@ -5494,7 +5741,8 @@ class _Html3DModelControlsState extends State<_Html3DModelControls> {
     if (!widget.expandResults && !widget.isExpanded) {
       return LayoutBuilder(
         builder: (context, constraints) {
-          final maxH = constraints.maxHeight.isFinite ? constraints.maxHeight : 148.0;
+          final maxH =
+              constraints.maxHeight.isFinite ? constraints.maxHeight : 148.0;
           final height = maxH.clamp(60.0, 148.0);
           return SizedBox(
             height: height,
@@ -5512,7 +5760,8 @@ class _Html3DModelControlsState extends State<_Html3DModelControls> {
                       id: model.id,
                       label: model.name,
                       assetPath: model.modelUrl,
-                      category: model.category.isEmpty ? '3B Model' : model.category,
+                      category:
+                          model.category.isEmpty ? '3B Model' : model.category,
                       tags: model.tags,
                       byteSize: 0,
                       sha256: '',
@@ -5920,6 +6169,7 @@ class _HtmlTransitionControls extends StatelessWidget {
   final PresentationController controller;
 
   static const _popularTransitions = <PresentationTransitionKind>[
+    PresentationTransitionKind.none,
     PresentationTransitionKind.smooth,
     PresentationTransitionKind.fade,
     PresentationTransitionKind.slide,
@@ -5934,7 +6184,9 @@ class _HtmlTransitionControls extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final effectSettings = controller.effectSettings;
+    final selectedGapIndex = controller.pages.length < 2
+        ? -1
+        : controller.selectedIndex.clamp(0, controller.pages.length - 2);
     return LayoutBuilder(
       builder: (context, constraints) {
         final columns = constraints.maxWidth >= 760 ? 2 : 1;
@@ -5954,13 +6206,68 @@ class _HtmlTransitionControls extends StatelessWidget {
             ),
             const SizedBox(height: 3),
             Text(
-              'Sunumlarda en sık tercih edilen 10 geçişten birini seç.',
+              'Geçiş kullanma veya popüler efektlerden birini seç.',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: context._htmlMuted,
                     fontWeight: FontWeight.w600,
                   ),
             ),
             const SizedBox(height: 12),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.fromLTRB(14, 12, 14, 8),
+              margin: const EdgeInsets.only(bottom: 14),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF8FAFC),
+                border: Border.all(color: const Color(0xFFDCE5F0)),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Row(
+                    children: <Widget>[
+                      const Icon(Icons.timer_outlined, size: 19),
+                      const SizedBox(width: 8),
+                      const Expanded(
+                        child: Text(
+                          'Geçiş süresi',
+                          style: TextStyle(fontWeight: FontWeight.w800),
+                        ),
+                      ),
+                      Text(
+                        '${(controller.effectSettings.transitionDurationMs / 1000).toStringAsFixed(1)} sn',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w900,
+                          color: Color(0xFF0F766E),
+                        ),
+                      ),
+                    ],
+                  ),
+                  Slider(
+                    value: controller.effectSettings.transitionDurationMs
+                        .clamp(200, 3000)
+                        .toDouble(),
+                    min: 200,
+                    max: 3000,
+                    divisions: 28,
+                    label:
+                        '${(controller.effectSettings.transitionDurationMs / 1000).toStringAsFixed(1)} saniye',
+                    onChanged: controller.updateTransitionDuration,
+                  ),
+                  const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 4),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: <Widget>[
+                        Text('Hızlı', style: TextStyle(fontSize: 11)),
+                        Text('Yavaş', style: TextStyle(fontSize: 11)),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
             Wrap(
               spacing: 12,
               runSpacing: 12,
@@ -5970,15 +6277,18 @@ class _HtmlTransitionControls extends StatelessWidget {
                     width: cardWidth,
                     child: _TransitionLibraryCard(
                       kind: kind,
-                      isSelected:
-                          controller.effectSettings.transitionKind == kind,
+                      isSelected: selectedGapIndex >= 0 &&
+                          controller.transitionAfterPage(selectedGapIndex) ==
+                              kind,
                       onTap: () {
-                        controller.updateTransitionKind(kind);
-                        controller.updateTransitionDuration(
-                          kind == PresentationTransitionKind.smooth
-                              ? 1400
-                              : 620,
-                        );
+                        if (selectedGapIndex >= 0) {
+                          controller.updateTransitionAfterPage(
+                            selectedGapIndex,
+                            kind,
+                          );
+                        } else {
+                          controller.updateTransitionKind(kind);
+                        }
                       },
                     ),
                   ),
@@ -6034,7 +6344,7 @@ class _TransitionLibraryCard extends StatelessWidget {
     );
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Material(
+    final card = Material(
       color: isSelected
           ? (isDark
               ? context.colors.primary.withValues(alpha: 0.18)
@@ -6127,6 +6437,38 @@ class _TransitionLibraryCard extends StatelessWidget {
         ),
       ),
     );
+    return Draggable<PresentationTransitionKind>(
+      data: kind,
+      feedback: Material(
+        color: Colors.transparent,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          decoration: BoxDecoration(
+            color: const Color(0xFF0F172A),
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: const <BoxShadow>[
+              BoxShadow(color: Colors.black26, blurRadius: 14),
+            ],
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              Icon(presentationTransitionIcon(kind), color: Colors.white),
+              const SizedBox(width: 8),
+              Text(
+                presentationTransitionLabel(kind),
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+      childWhenDragging: Opacity(opacity: .45, child: card),
+      child: card,
+    );
   }
 }
 
@@ -6212,7 +6554,6 @@ class _Model3DLibraryCardState extends State<_Model3DLibraryCard> {
       errorBuilder: (context) => _letterBox(context),
     );
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -6459,7 +6800,8 @@ class _SutolCollectionTemplateCard extends StatelessWidget {
                     ),
                   ),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                     decoration: BoxDecoration(
                       color: context._htmlAccent.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(20),
@@ -7139,8 +7481,7 @@ class _HtmlComponentControlsState extends State<_HtmlComponentControls> {
       key: const ValueKey<String>('component-library-panel'),
       width: double.infinity,
       height: isExpandedMode ? double.infinity : null,
-      padding:
-          isExpandedMode ? EdgeInsets.zero : const EdgeInsets.all(12),
+      padding: isExpandedMode ? EdgeInsets.zero : const EdgeInsets.all(12),
       decoration: isExpandedMode
           ? null
           : BoxDecoration(
@@ -7149,8 +7490,7 @@ class _HtmlComponentControlsState extends State<_HtmlComponentControls> {
               border: Border.all(color: context.sutolColors.outline),
             ),
       child: Column(
-        mainAxisSize:
-            isExpandedMode ? MainAxisSize.max : MainAxisSize.min,
+        mainAxisSize: isExpandedMode ? MainAxisSize.max : MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           _ModelSearchField(
@@ -7357,7 +7697,8 @@ Color? _parseTextColorHex(String? hex) {
     clean = clean.substring(2);
   }
   if (clean.length == 3) {
-    clean = '${clean[0]}${clean[0]}${clean[1]}${clean[1]}${clean[2]}${clean[2]}';
+    clean =
+        '${clean[0]}${clean[0]}${clean[1]}${clean[1]}${clean[2]}${clean[2]}';
   }
   if (clean.length == 6) {
     clean = 'FF$clean';
@@ -7647,20 +7988,28 @@ class _TextColorPickerPanelState extends State<_TextColorPickerPanel> {
           builder: (context, constraints) {
             final boxWidth = constraints.maxWidth;
             const boxHeight = 110.0;
-            final thumbX = (_saturation * boxWidth - 10).clamp(0.0, boxWidth - 20.0);
-            final thumbY = ((1.0 - _value) * boxHeight - 10).clamp(0.0, boxHeight - 20.0);
+            final thumbX =
+                (_saturation * boxWidth - 10).clamp(0.0, boxWidth - 20.0);
+            final thumbY =
+                ((1.0 - _value) * boxHeight - 10).clamp(0.0, boxHeight - 20.0);
             return ClipRRect(
               borderRadius: BorderRadius.circular(12),
               child: GestureDetector(
                 onPanUpdate: (details) {
-                  final sat = (details.localPosition.dx / boxWidth).clamp(0.0, 1.0);
-                  final val = (1.0 - (details.localPosition.dy / boxHeight)).clamp(0.0, 1.0);
-                  _selectColor(HSVColor.fromAHSV(1.0, _hue, sat, val).toColor());
+                  final sat =
+                      (details.localPosition.dx / boxWidth).clamp(0.0, 1.0);
+                  final val = (1.0 - (details.localPosition.dy / boxHeight))
+                      .clamp(0.0, 1.0);
+                  _selectColor(
+                      HSVColor.fromAHSV(1.0, _hue, sat, val).toColor());
                 },
                 onPanDown: (details) {
-                  final sat = (details.localPosition.dx / boxWidth).clamp(0.0, 1.0);
-                  final val = (1.0 - (details.localPosition.dy / boxHeight)).clamp(0.0, 1.0);
-                  _selectColor(HSVColor.fromAHSV(1.0, _hue, sat, val).toColor());
+                  final sat =
+                      (details.localPosition.dx / boxWidth).clamp(0.0, 1.0);
+                  final val = (1.0 - (details.localPosition.dy / boxHeight))
+                      .clamp(0.0, 1.0);
+                  _selectColor(
+                      HSVColor.fromAHSV(1.0, _hue, sat, val).toColor());
                 },
                 child: Container(
                   height: boxHeight,
@@ -7716,17 +8065,22 @@ class _TextColorPickerPanelState extends State<_TextColorPickerPanel> {
         LayoutBuilder(
           builder: (context, constraints) {
             final sliderWidth = constraints.maxWidth;
-            final thumbX = ((_hue / 360.0) * sliderWidth - 8).clamp(0.0, sliderWidth - 16.0);
+            final thumbX = ((_hue / 360.0) * sliderWidth - 8)
+                .clamp(0.0, sliderWidth - 16.0);
             return ClipRRect(
               borderRadius: BorderRadius.circular(10),
               child: GestureDetector(
                 onPanUpdate: (details) {
-                  final h = ((details.localPosition.dx / sliderWidth) * 360.0).clamp(0.0, 360.0);
-                  _selectColor(HSVColor.fromAHSV(1.0, h, _saturation, _value).toColor());
+                  final h = ((details.localPosition.dx / sliderWidth) * 360.0)
+                      .clamp(0.0, 360.0);
+                  _selectColor(
+                      HSVColor.fromAHSV(1.0, h, _saturation, _value).toColor());
                 },
                 onPanDown: (details) {
-                  final h = ((details.localPosition.dx / sliderWidth) * 360.0).clamp(0.0, 360.0);
-                  _selectColor(HSVColor.fromAHSV(1.0, h, _saturation, _value).toColor());
+                  final h = ((details.localPosition.dx / sliderWidth) * 360.0)
+                      .clamp(0.0, 360.0);
+                  _selectColor(
+                      HSVColor.fromAHSV(1.0, h, _saturation, _value).toColor());
                 },
                 child: Container(
                   height: 20,
@@ -7780,6 +8134,7 @@ class _TextColorPickerPanelState extends State<_TextColorPickerPanel> {
       children: <Widget>[
         for (final option in _textColorOptions) ...<Widget>[
           InkWell(
+            key: ValueKey<String>('text-color-${option.hex ?? 'auto'}'),
             onTap: () {
               if (option.hex == null) {
                 _selectAuto();
@@ -7789,7 +8144,8 @@ class _TextColorPickerPanelState extends State<_TextColorPickerPanel> {
             },
             borderRadius: BorderRadius.circular(8),
             child: Tooltip(
-              message: option.label + (option.hex != null ? ' (${option.hex})' : ''),
+              message:
+                  option.label + (option.hex != null ? ' (${option.hex})' : ''),
               child: Container(
                 width: 30,
                 height: 30,
@@ -7799,11 +8155,13 @@ class _TextColorPickerPanelState extends State<_TextColorPickerPanel> {
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
                     color: (option.hex == null && _isAuto) ||
-                            (option.hex != null && currentHexUpper == option.hex!.toUpperCase())
+                            (option.hex != null &&
+                                currentHexUpper == option.hex!.toUpperCase())
                         ? context._htmlAccent
                         : context.sutolColors.outline,
                     width: (option.hex == null && _isAuto) ||
-                            (option.hex != null && currentHexUpper == option.hex!.toUpperCase())
+                            (option.hex != null &&
+                                currentHexUpper == option.hex!.toUpperCase())
                         ? 2.5
                         : 1,
                   ),
@@ -8129,8 +8487,68 @@ class _HtmlStageCard extends StatefulWidget {
   State<_HtmlStageCard> createState() => _HtmlStageCardState();
 }
 
-class _HtmlStageCardState extends State<_HtmlStageCard> {
+class _HtmlStageCardState extends State<_HtmlStageCard>
+    with SingleTickerProviderStateMixin {
   String? _inlineEditingTextBlockId;
+  late final AnimationController _transitionPreviewController;
+  int _seenTransitionPreviewRevision = 0;
+  PresentationPage? _transitionPreviewFrom;
+  PresentationPage? _transitionPreviewTo;
+  PresentationTransitionKind? _transitionPreviewKind;
+
+  @override
+  void initState() {
+    super.initState();
+    _transitionPreviewController = AnimationController(vsync: this);
+    _seenTransitionPreviewRevision =
+        widget.controller.transitionPreviewRevision;
+    widget.controller.addListener(_handleTransitionPreviewRequest);
+  }
+
+  @override
+  void didUpdateWidget(covariant _HtmlStageCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.controller == widget.controller) return;
+    oldWidget.controller.removeListener(_handleTransitionPreviewRequest);
+    widget.controller.addListener(_handleTransitionPreviewRequest);
+    _seenTransitionPreviewRevision =
+        widget.controller.transitionPreviewRevision;
+  }
+
+  @override
+  void dispose() {
+    widget.controller.removeListener(_handleTransitionPreviewRequest);
+    _transitionPreviewController.dispose();
+    super.dispose();
+  }
+
+  void _handleTransitionPreviewRequest() {
+    final revision = widget.controller.transitionPreviewRevision;
+    if (revision == _seenTransitionPreviewRevision || !mounted) return;
+    _seenTransitionPreviewRevision = revision;
+    final gap = widget.controller.transitionPreviewGapIndex;
+    if (gap == null || gap < 0 || gap + 1 >= widget.controller.pages.length) {
+      return;
+    }
+    final kind = widget.controller.transitionAfterPage(gap);
+    if (kind == PresentationTransitionKind.none) return;
+    _transitionPreviewController.duration = Duration(
+      milliseconds: widget.controller.effectSettings.transitionDurationMs,
+    );
+    setState(() {
+      _transitionPreviewFrom = widget.controller.pages[gap];
+      _transitionPreviewTo = widget.controller.pages[gap + 1];
+      _transitionPreviewKind = kind;
+    });
+    _transitionPreviewController.forward(from: 0).whenComplete(() {
+      if (!mounted) return;
+      setState(() {
+        _transitionPreviewFrom = null;
+        _transitionPreviewTo = null;
+        _transitionPreviewKind = null;
+      });
+    });
+  }
 
   void _setInlineEditingTextBlock(String? blockId) {
     if (_inlineEditingTextBlockId == blockId || !mounted) return;
@@ -8160,7 +8578,8 @@ class _HtmlStageCardState extends State<_HtmlStageCard> {
       ),
       child: LayoutBuilder(
         builder: (context, constraints) {
-          final targetRatio = widget.controller.effectSettings.calculatedAspectRatio;
+          final targetRatio =
+              widget.controller.effectSettings.calculatedAspectRatio;
           final availableWidth = math.max(0.0, constraints.maxWidth);
           final availableHeight = math.max(0.0, constraints.maxHeight);
           double stageWidth;
@@ -8212,6 +8631,24 @@ class _HtmlStageCardState extends State<_HtmlStageCard> {
                           : HtmlStageRenderMode.preview,
                     ),
                   ),
+                  if (_transitionPreviewFrom != null &&
+                      _transitionPreviewTo != null &&
+                      _transitionPreviewKind != null)
+                    Positioned.fill(
+                      child: IgnorePointer(
+                        child: AnimatedBuilder(
+                          animation: _transitionPreviewController,
+                          builder: (context, _) => _EditorTransitionPreview(
+                            from: _transitionPreviewFrom!,
+                            to: _transitionPreviewTo!,
+                            kind: _transitionPreviewKind!,
+                            progress: Curves.easeInOut.transform(
+                              _transitionPreviewController.value,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
                   if (widget.readOnly)
                     IgnorePointer(
                       child: PresentationPageCanvas(
@@ -8348,6 +8785,15 @@ class _HtmlStageCardState extends State<_HtmlStageCard> {
                       onEndModelOrbit:
                           widget.controller.endSelectedModelOrbitGesture,
                     ),
+                  if (!widget.readOnly)
+                    IgnorePointer(
+                      child: _StageAnimationOrderBadges(
+                        page: widget.controller.selectedPage,
+                        selectedTextIds: widget.controller.selectedTextBlockIds,
+                        selectedComponentIds:
+                            widget.controller.selectedComponentBlockIds,
+                      ),
+                    ),
                 ],
               ),
             ),
@@ -8365,6 +8811,196 @@ class _HtmlStageCardState extends State<_HtmlStageCard> {
                 : stage,
           );
         },
+      ),
+    );
+  }
+}
+
+class _EditorTransitionPreview extends StatelessWidget {
+  const _EditorTransitionPreview({
+    required this.from,
+    required this.to,
+    required this.kind,
+    required this.progress,
+  });
+
+  final PresentationPage from;
+  final PresentationPage to;
+  final PresentationTransitionKind kind;
+  final double progress;
+
+  @override
+  Widget build(BuildContext context) {
+    final outgoing = _page(from);
+    final incoming = _page(to);
+    final t = progress.clamp(0.0, 1.0);
+
+    switch (kind) {
+      case PresentationTransitionKind.none:
+        return incoming;
+      case PresentationTransitionKind.fade:
+      case PresentationTransitionKind.smooth:
+        return Stack(
+          fit: StackFit.expand,
+          children: <Widget>[
+            Opacity(opacity: 1 - t, child: outgoing),
+            Opacity(opacity: t, child: incoming),
+          ],
+        );
+      case PresentationTransitionKind.slide:
+        return Stack(
+          fit: StackFit.expand,
+          children: <Widget>[
+            FractionalTranslation(
+              translation: Offset(-t, 0),
+              child: outgoing,
+            ),
+            FractionalTranslation(
+              translation: Offset(1 - t, 0),
+              child: incoming,
+            ),
+          ],
+        );
+      case PresentationTransitionKind.cover:
+        return Stack(
+          fit: StackFit.expand,
+          children: <Widget>[
+            outgoing,
+            FractionalTranslation(
+              translation: Offset(1 - t, 0),
+              child: incoming,
+            ),
+          ],
+        );
+      case PresentationTransitionKind.uncover:
+        return Stack(
+          fit: StackFit.expand,
+          children: <Widget>[
+            incoming,
+            FractionalTranslation(
+              translation: Offset(-t, 0),
+              child: outgoing,
+            ),
+          ],
+        );
+      case PresentationTransitionKind.wipe:
+        return Stack(
+          fit: StackFit.expand,
+          children: <Widget>[
+            outgoing,
+            ClipRect(
+              child: Align(
+                alignment: Alignment.centerLeft,
+                widthFactor: t,
+                child: incoming,
+              ),
+            ),
+          ],
+        );
+      case PresentationTransitionKind.split:
+        return Stack(
+          fit: StackFit.expand,
+          children: <Widget>[
+            outgoing,
+            ClipRect(
+              child: Align(
+                alignment: Alignment.center,
+                widthFactor: t,
+                child: incoming,
+              ),
+            ),
+          ],
+        );
+      case PresentationTransitionKind.reveal:
+        return Stack(
+          fit: StackFit.expand,
+          children: <Widget>[
+            outgoing,
+            FractionalTranslation(
+              translation: Offset(0, 1 - t),
+              child: incoming,
+            ),
+          ],
+        );
+      default:
+        return Stack(
+          fit: StackFit.expand,
+          children: <Widget>[
+            Opacity(opacity: 1 - t, child: outgoing),
+            Opacity(
+              opacity: t,
+              child: Transform.scale(
+                scale: .88 + (.12 * t),
+                child: incoming,
+              ),
+            ),
+          ],
+        );
+    }
+  }
+
+  Widget _page(PresentationPage page) => HtmlPageStage(
+        key: ValueKey<String>('transition-preview-${page.id}'),
+        page: page,
+        renderMode: HtmlStageRenderMode.preview,
+      );
+}
+
+class _StageAnimationOrderBadges extends StatelessWidget {
+  const _StageAnimationOrderBadges({
+    required this.page,
+    required this.selectedTextIds,
+    required this.selectedComponentIds,
+  });
+
+  final PresentationPage page;
+  final Set<String> selectedTextIds;
+  final Set<String> selectedComponentIds;
+
+  @override
+  Widget build(BuildContext context) {
+    final items = _animationPaneItems(page);
+    return LayoutBuilder(
+      builder: (context, constraints) => Stack(
+        children: <Widget>[
+          for (var index = 0; index < items.length; index += 1)
+            _badge(items[index], index, constraints.biggest),
+        ],
+      ),
+    );
+  }
+
+  Widget _badge(_AnimationPaneItem item, int index, Size size) {
+    final text = page.findTextBlock(item.id);
+    final component = page.findComponentBlock(item.id);
+    final position = text?.position ?? component?.position ?? Offset.zero;
+    final selected = selectedTextIds.contains(item.id) ||
+        selectedComponentIds.contains(item.id);
+    final color = _animationCategoryColor(item.animation);
+    return Positioned(
+      left: (position.dx * size.width - 10).clamp(2, size.width - 26),
+      top: (position.dy * size.height - 10).clamp(2, size.height - 26),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 160),
+        width: selected ? 25 : 21,
+        height: selected ? 25 : 21,
+        decoration: BoxDecoration(
+          color: color,
+          shape: BoxShape.circle,
+          border: Border.all(color: Colors.white, width: 2),
+          boxShadow: const <BoxShadow>[
+            BoxShadow(color: Colors.black26, blurRadius: 5),
+          ],
+        ),
+        alignment: Alignment.center,
+        child: Text(
+          '${index + 1}',
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 10,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
       ),
     );
   }
@@ -8511,13 +9147,6 @@ class _SelectionContextBarSection extends StatelessWidget {
         active: block.textAlign == PresentationTextAlign.right,
         onTap: () =>
             controller.updateSelectedTextAlign(PresentationTextAlign.right),
-      ),
-      const MiniToolDivider(),
-      _TextAnimationPopupButton(
-        key: const ValueKey<String>('selected-text-animation-control'),
-        controller: controller,
-        current: block.textAnimation,
-        compact: compact,
       ),
       const MiniToolDivider(),
       _TextColorPopupButton(
@@ -8725,79 +9354,6 @@ class _SelectedTextToolbarField extends StatelessWidget {
   }
 }
 
-class _TextAnimationPopupButton extends StatelessWidget {
-  const _TextAnimationPopupButton({
-    super.key,
-    required this.controller,
-    required this.current,
-    required this.compact,
-  });
-
-  final PresentationController controller;
-  final PresentationTextAnimation current;
-  final bool compact;
-
-  @override
-  Widget build(BuildContext context) {
-    final active = current != PresentationTextAnimation.none;
-    final colors = context.colors;
-    return PopupMenuButton<PresentationTextAnimation>(
-      tooltip: 'Metin animasyonu',
-      initialValue: current,
-      position: PopupMenuPosition.under,
-      constraints: const BoxConstraints(
-        minWidth: 230,
-        maxWidth: 280,
-        maxHeight: 360,
-      ),
-      onSelected: controller.updateSelectedTextAnimation,
-      itemBuilder: (context) => <PopupMenuEntry<PresentationTextAnimation>>[
-        for (final animation in PresentationTextAnimation.values)
-          CheckedPopupMenuItem<PresentationTextAnimation>(
-            key: ValueKey<String>('text-animation-option-${animation.name}'),
-            value: animation,
-            checked: animation == current,
-            child: Text(_textAnimationLabel(animation)),
-          ),
-      ],
-      child: AnimatedContainer(
-        duration: AppMotion.fast,
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-        decoration: BoxDecoration(
-          color: active ? colors.primary : Colors.transparent,
-          borderRadius: BorderRadius.circular(AppRadius.full),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            Icon(
-              Icons.animation_rounded,
-              size: 17,
-              color: active ? colors.surface : colors.onSurfaceVariant,
-            ),
-            if (!compact) ...<Widget>[
-              const SizedBox(width: 7),
-              Text(
-                _textAnimationLabel(current),
-                style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
-                      color: active ? colors.surface : colors.onSurfaceVariant,
-                    ),
-              ),
-              const SizedBox(width: 5),
-            ],
-            Icon(
-              Icons.arrow_drop_down_rounded,
-              size: 18,
-              color: active ? colors.surface : colors.onSurfaceVariant,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
 class _TextColorPopupButton extends StatelessWidget {
   const _TextColorPopupButton({
     super.key,
@@ -8877,18 +9433,28 @@ void _showTextColorPickerDialog(
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: <Widget>[
-                    Row(
-                      children: <Widget>[
-                        Icon(Icons.palette_rounded, size: 20, color: context._htmlAccent),
-                        const SizedBox(width: 8),
-                        Text(
-                          'Metin Rengi Seçin',
-                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                color: context._htmlInk,
-                                fontWeight: FontWeight.w800,
-                              ),
-                        ),
-                      ],
+                    Expanded(
+                      child: Row(
+                        children: <Widget>[
+                          Icon(Icons.palette_rounded,
+                              size: 20, color: context._htmlAccent),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'Metin Rengi Seçin',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .titleMedium
+                                  ?.copyWith(
+                                    color: context._htmlInk,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                     IconButton(
                       icon: const Icon(Icons.close_rounded, size: 20),
@@ -9175,8 +9741,7 @@ bool _shouldReduceHtmlMotion(
   BuildContext context,
   PresentationEffectSettings settings,
 ) {
-  return settings.reducedMotion ||
-      (MediaQuery.maybeOf(context)?.disableAnimations ?? false);
+  return settings.reducedMotion;
 }
 
 String _studioPanelTitle(_HtmlToolTab tab) {
@@ -9193,6 +9758,8 @@ String _studioPanelTitle(_HtmlToolTab tab) {
       return '3D Modeller';
     case _HtmlToolTab.photo:
       return 'Fotoğraflar';
+    case _HtmlToolTab.animations:
+      return 'Animasyonlar';
     case _HtmlToolTab.transitions:
       return 'Geçişler';
     case _HtmlToolTab.stageDimensions:
@@ -9202,11 +9769,9 @@ String _studioPanelTitle(_HtmlToolTab tab) {
 
 InputDecoration _inputDecoration(BuildContext context, String hintText) {
   final isDark = Theme.of(context).brightness == Brightness.dark;
-  final surfaceColor = isDark
-      ? context.colors.surfaceElevated
-      : SutolLightColors.surfaceSubtle;
-  final borderColor =
-      isDark ? context.colors.border : SutolLightColors.outline;
+  final surfaceColor =
+      isDark ? context.colors.surfaceElevated : SutolLightColors.surfaceSubtle;
+  final borderColor = isDark ? context.colors.border : SutolLightColors.outline;
   final focusColor = context.colors.primary;
   final hintColor = isDark
       ? context.colors.textSecondary.withValues(alpha: 0.6)
@@ -9327,80 +9892,6 @@ String _htmlTextStyleLabel(PresentationTextStyle style) {
   }
 }
 
-String _textAnimationLabel(PresentationTextAnimation animation) {
-  switch (animation) {
-    case PresentationTextAnimation.none:
-      return 'Animasyon yok';
-    case PresentationTextAnimation.bilimDramatik:
-      return 'Derin ışıma';
-    case PresentationTextAnimation.bilimTemiz:
-      return 'Yumuşak nabız';
-    case PresentationTextAnimation.bilimDeneysel:
-      return 'Dijital glitch';
-    case PresentationTextAnimation.gunesDramatik:
-      return 'Işık patlaması';
-    case PresentationTextAnimation.gunesTemiz:
-      return 'Işık nefesi';
-    case PresentationTextAnimation.gunesDeneysel:
-      return 'Parlama titreşimi';
-    case PresentationTextAnimation.uzayDramatik:
-      return 'Perspektif ışıması';
-    case PresentationTextAnimation.uzayTemiz:
-      return 'Yatay hareket nabzı';
-    case PresentationTextAnimation.uzayDeneysel:
-      return 'Yörüngesel kayma';
-    case PresentationTextAnimation.optikDramatik:
-      return 'Ayna ışıması';
-    case PresentationTextAnimation.optikTemiz:
-      return 'Yumuşak parlama';
-    case PresentationTextAnimation.optikDeneysel:
-      return 'Prizma geçişi';
-    case PresentationTextAnimation.fizikDramatik:
-      return 'Elektrik titreşimi';
-    case PresentationTextAnimation.fizikTemiz:
-      return 'Enerji dalgası';
-    case PresentationTextAnimation.fizikDeneysel:
-      return 'Ölçek nabzı';
-    case PresentationTextAnimation.teknolojiDramatik:
-      return 'Matrix ışıması';
-    case PresentationTextAnimation.teknolojiTemiz:
-      return 'Devre taraması';
-    case PresentationTextAnimation.teknolojiDeneysel:
-      return 'Veri glitch';
-    case PresentationTextAnimation.metalikParlama:
-      return 'Metalik parlama';
-    case PresentationTextAnimation.yavasBelirme:
-      return 'Yavaş yazı reveal';
-    case PresentationTextAnimation.daktilo:
-      return 'Daktilo yazımı';
-    case PresentationTextAnimation.bulaniktanNet:
-      return 'Bulanıktan nete';
-    case PresentationTextAnimation.ucBoyutluDonus:
-      return '3B dönüşlü giriş';
-    case PresentationTextAnimation.ziplayarakGiris:
-      return 'Zıplayarak giriş';
-    case PresentationTextAnimation.isikTaramasi:
-      return 'Spot ışığı taraması';
-    case PresentationTextAnimation.perdeAcilisi:
-      return 'Merkezden perde açılışı';
-    case PresentationTextAnimation.sinematikYaklasma:
-      return 'Sinematik yaklaşma';
-    case PresentationTextAnimation.yercekimsizSuzulme:
-      return 'Yerçekimsiz süzülme';
-    case PresentationTextAnimation.neonKontur:
-      return 'Neon kontur';
-    case PresentationTextAnimation.golgeEkstruzyonu:
-      return 'Uzun gölge ekstrüzyonu';
-    case PresentationTextAnimation.siviDalga:
-      return 'Sıvı dalga';
-    case PresentationTextAnimation.kesikSinyal:
-      return 'Kesik sinyal';
-    case PresentationTextAnimation.holografikDalga:
-      return 'Holografik dalga';
-  }
-}
-
-
 class _QuickStageDimensionChip extends StatelessWidget {
   const _QuickStageDimensionChip({
     required this.label,
@@ -9421,8 +9912,12 @@ class _QuickStageDimensionChip extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Material(
       color: isSelected
-          ? (isDark ? context.colors.primary.withValues(alpha: 0.2) : const Color(0xFFE0F2FE))
-          : (highlight ? (isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC)) : Colors.transparent),
+          ? (isDark
+              ? context.colors.primary.withValues(alpha: 0.2)
+              : const Color(0xFFE0F2FE))
+          : (highlight
+              ? (isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC))
+              : Colors.transparent),
       borderRadius: BorderRadius.circular(10),
       child: InkWell(
         onTap: onTap,
@@ -9579,7 +10074,8 @@ Future<void> _showStageDimensionsDialog(
             const SizedBox(height: 10),
             _StageDimensionPresetCard(
               title: 'Mobil Dikey',
-              subtitle: 'Telefonlar için dikey responsive HTML sahne (1080×1920 px)',
+              subtitle:
+                  'Telefonlar için dikey responsive HTML sahne (1080×1920 px)',
               icon: Icons.smartphone_rounded,
               isSelected: selectedPreset == '9:16',
               badgeText: '9:16',
@@ -9722,9 +10218,8 @@ Future<void> _showStageDimensionsDialog(
                     width: isPortrait ? 26 : 42,
                     height: isPortrait ? 42 : 26,
                     decoration: BoxDecoration(
-                      color: isPortrait
-                          ? const Color(0xFF10B981)
-                          : primaryColor,
+                      color:
+                          isPortrait ? const Color(0xFF10B981) : primaryColor,
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Icon(
@@ -9748,7 +10243,9 @@ Future<void> _showStageDimensionsDialog(
                             fontWeight: FontWeight.w800,
                             fontSize: 13,
                             color: isPortrait
-                                ? (isDark ? Colors.white : const Color(0xFF065F46))
+                                ? (isDark
+                                    ? Colors.white
+                                    : const Color(0xFF065F46))
                                 : ctx._htmlInk,
                           ),
                         ),
@@ -9889,7 +10386,9 @@ class _StageDimensionPresetCard extends StatelessWidget {
 
     return Material(
       color: isSelected
-          ? (isDark ? primaryColor.withValues(alpha: 0.18) : const Color(0xFFEFF6FF))
+          ? (isDark
+              ? primaryColor.withValues(alpha: 0.18)
+              : const Color(0xFFEFF6FF))
           : (isDark ? context.colors.surfaceElevated : Colors.white),
       borderRadius: BorderRadius.circular(14),
       child: InkWell(
@@ -9918,7 +10417,9 @@ class _StageDimensionPresetCard extends StatelessWidget {
                       ? primaryColor
                       : (highlight
                           ? primaryColor.withValues(alpha: 0.15)
-                          : (isDark ? Colors.white10 : const Color(0xFFF1F5F9))),
+                          : (isDark
+                              ? Colors.white10
+                              : const Color(0xFFF1F5F9))),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(
@@ -9944,14 +10445,16 @@ class _StageDimensionPresetCard extends StatelessWidget {
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 13,
-                              color: isSelected ? primaryColor : context._htmlInk,
+                              color:
+                                  isSelected ? primaryColor : context._htmlInk,
                             ),
                           ),
                         ),
                         if (badgeText != null) ...<Widget>[
                           const SizedBox(width: 6),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 6, vertical: 2),
                             decoration: BoxDecoration(
                               color: highlight
                                   ? primaryColor.withValues(alpha: 0.15)
@@ -9996,6 +10499,891 @@ class _StageDimensionPresetCard extends StatelessWidget {
                     : Icons.radio_button_unchecked_rounded,
                 color: isSelected ? primaryColor : context._htmlMuted,
                 size: 20,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _HtmlEntranceAnimationControls extends StatelessWidget {
+  const _HtmlEntranceAnimationControls({required this.controller});
+
+  final PresentationController controller;
+
+  static const options = <(PresentationEntranceAnimation, String, IconData)>[
+    (PresentationEntranceAnimation.none, 'Animasyon yok', Icons.block_rounded),
+    (PresentationEntranceAnimation.fadeIn, 'Belirme', Icons.blur_on_rounded),
+    (
+      PresentationEntranceAnimation.flyInLeft,
+      'Soldan uç',
+      Icons.arrow_forward_rounded
+    ),
+    (
+      PresentationEntranceAnimation.flyInRight,
+      'Sağdan uç',
+      Icons.arrow_back_rounded
+    ),
+    (
+      PresentationEntranceAnimation.flyInTop,
+      'Yukarıdan uç',
+      Icons.arrow_downward_rounded
+    ),
+    (
+      PresentationEntranceAnimation.flyInBottom,
+      'Aşağıdan uç',
+      Icons.arrow_upward_rounded
+    ),
+    (PresentationEntranceAnimation.zoomIn, 'Yakınlaşma', Icons.zoom_in_rounded),
+  ];
+  static const emphasisOptions =
+      <(PresentationEntranceAnimation, String, IconData)>[
+    (PresentationEntranceAnimation.pulse, 'Nabız', Icons.favorite_rounded),
+    (PresentationEntranceAnimation.shake, 'Sallanma', Icons.vibration_rounded),
+    (
+      PresentationEntranceAnimation.growShrink,
+      'Büyüt-Küçült',
+      Icons.expand_rounded
+    ),
+    (PresentationEntranceAnimation.spin, 'Döndür', Icons.rotate_right_rounded),
+    (PresentationEntranceAnimation.glow, 'Parla', Icons.wb_sunny_rounded),
+  ];
+  static const exitOptions =
+      <(PresentationEntranceAnimation, String, IconData)>[
+    (PresentationEntranceAnimation.fadeOut, 'Kaybol', Icons.blur_off_rounded),
+    (PresentationEntranceAnimation.flyOutLeft, 'Sola uç', Icons.west_rounded),
+    (PresentationEntranceAnimation.flyOutRight, 'Sağa uç', Icons.east_rounded),
+    (PresentationEntranceAnimation.flyOutTop, 'Yukarı uç', Icons.north_rounded),
+    (
+      PresentationEntranceAnimation.flyOutBottom,
+      'Aşağı uç',
+      Icons.south_rounded
+    ),
+    (
+      PresentationEntranceAnimation.shrinkOut,
+      'Küçülerek çık',
+      Icons.close_fullscreen_rounded
+    ),
+    (
+      PresentationEntranceAnimation.zoomOut,
+      'Uzaklaşarak çık',
+      Icons.zoom_out_rounded
+    ),
+    (
+      PresentationEntranceAnimation.spinOut,
+      'Dönerek çık',
+      Icons.rotate_left_rounded
+    ),
+  ];
+  static const motionOptions =
+      <(PresentationEntranceAnimation, String, IconData)>[
+    (
+      PresentationEntranceAnimation.motionLine,
+      'Düz çizgi',
+      Icons.trending_flat_rounded
+    ),
+    (
+      PresentationEntranceAnimation.motionCircle,
+      'Daire',
+      Icons.circle_outlined
+    ),
+    (PresentationEntranceAnimation.motionWave, 'Dalga', Icons.waves_rounded),
+    (
+      PresentationEntranceAnimation.motionCustom,
+      'Özel yol',
+      Icons.gesture_rounded
+    ),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final paneItems = _animationPaneItems(controller.selectedPage);
+    if (controller.selectedItemCount != 1) {
+      return Column(
+        children: <Widget>[
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 28),
+            decoration: BoxDecoration(
+              color: context.colors.surfaceElevated,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: context.sutolColors.outline),
+            ),
+            child: const Column(
+              children: <Widget>[
+                Icon(Icons.touch_app_rounded, size: 34),
+                SizedBox(height: 12),
+                Text(
+                  'Animasyon eklemek için sahneden bir öğe seçin.',
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 20),
+          _AnimationPane(controller: controller, items: paneItems),
+        ],
+      );
+    }
+
+    final current = controller.selectedEntranceAnimation ??
+        PresentationEntranceAnimation.none;
+    final targetName = controller.selectedTextBlock != null
+        ? 'Seçili metin'
+        : controller.selectedComponentBlock?.imageAssetId != null
+            ? 'Seçili fotoğraf'
+            : controller.selectedComponentBlock?.modelAssetId != null
+                ? 'Seçili 3D model'
+                : 'Seçili bileşen';
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Text(
+          'Öğe Animasyonu',
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w800,
+              ),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          '$targetName için giriş, vurgu, çıkış veya hareket yolu seçin.',
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: context.colors.onSurfaceVariant,
+              ),
+        ),
+        const SizedBox(height: 16),
+        _AnimationEffectGrid(
+          title: 'Giriş',
+          color: const Color(0xFF16A34A),
+          options: options,
+          current: current,
+          onSelected: controller.updateSelectedEntranceAnimation,
+        ),
+        const SizedBox(height: 18),
+        _AnimationEffectGrid(
+          title: 'Vurgu',
+          color: const Color(0xFFEAB308),
+          options: emphasisOptions,
+          current: current,
+          onSelected: controller.updateSelectedEntranceAnimation,
+        ),
+        const SizedBox(height: 18),
+        _AnimationEffectGrid(
+          title: 'Çıkış',
+          color: const Color(0xFFDC2626),
+          options: exitOptions,
+          current: current,
+          onSelected: controller.updateSelectedEntranceAnimation,
+        ),
+        const SizedBox(height: 18),
+        _AnimationEffectGrid(
+          title: 'Hareket Yolu',
+          color: const Color(0xFF7C3AED),
+          options: motionOptions,
+          current: current,
+          onSelected: controller.updateSelectedEntranceAnimation,
+        ),
+        if (current == PresentationEntranceAnimation.motionCustom) ...<Widget>[
+          const SizedBox(height: 16),
+          Text(
+            'Özel Yol Düzenleyici',
+            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w800,
+                ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Mor noktaları sürükleyerek hareket yolunu şekillendirin.',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: context.colors.onSurfaceVariant,
+                ),
+          ),
+          const SizedBox(height: 10),
+          _MotionPathEditor(
+            points: controller.selectedMotionPathPoints ??
+                const <Offset>[
+                  Offset.zero,
+                  Offset(.12, -.08),
+                  Offset(.24, .08),
+                  Offset(.36, 0),
+                ],
+            onChanged: controller.updateSelectedMotionPathPoints,
+          ),
+        ],
+        if (current != PresentationEntranceAnimation.none) ...<Widget>[
+          const SizedBox(height: 16),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              onPressed: () => controller.previewEntranceAnimations(
+                targetId: controller.selectedTextBlock?.id ??
+                    controller.selectedComponentBlock?.id,
+              ),
+              icon: const Icon(Icons.play_arrow_rounded),
+              label: const Text('Seçili efekti oynat'),
+            ),
+          ),
+          const SizedBox(height: 22),
+          Text(
+            'Zamanlama',
+            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w800,
+                ),
+          ),
+          const SizedBox(height: 12),
+          DropdownButtonFormField<PresentationAnimationTrigger>(
+            initialValue: controller.selectedAnimationTrigger ??
+                PresentationAnimationTrigger.withPrevious,
+            decoration: _inputDecoration(context, 'Başlatma'),
+            items: const <DropdownMenuItem<PresentationAnimationTrigger>>[
+              DropdownMenuItem(
+                value: PresentationAnimationTrigger.onClick,
+                child: Text('Tıklamayla başlat'),
+              ),
+              DropdownMenuItem(
+                value: PresentationAnimationTrigger.withPrevious,
+                child: Text('Öncekiyle birlikte'),
+              ),
+              DropdownMenuItem(
+                value: PresentationAnimationTrigger.afterPrevious,
+                child: Text('Öncekinden sonra'),
+              ),
+            ],
+            onChanged: (value) {
+              if (value != null) {
+                controller.updateSelectedAnimationTiming(trigger: value);
+              }
+            },
+          ),
+          const SizedBox(height: 18),
+          _AnimationTimingSlider(
+            label: 'Süre',
+            value: controller.selectedAnimationDuration ?? .8,
+            min: .1,
+            max: 5,
+            onChanged: (value) =>
+                controller.updateSelectedAnimationTiming(duration: value),
+          ),
+          const SizedBox(height: 12),
+          _AnimationTimingSlider(
+            label: 'Gecikme',
+            value: controller.selectedAnimationDelay ?? 0,
+            min: 0,
+            max: 5,
+            onChanged: (value) =>
+                controller.updateSelectedAnimationTiming(delay: value),
+          ),
+          if (controller.selectedTextBlock != null) ...<Widget>[
+            const SizedBox(height: 20),
+            Text(
+              'Metni Böl',
+              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w800,
+                  ),
+            ),
+            const SizedBox(height: 10),
+            DropdownButtonFormField<PresentationTextGrouping>(
+              initialValue: controller.selectedTextGrouping ??
+                  PresentationTextGrouping.asObject,
+              decoration: _inputDecoration(context, 'Metin gruplaması'),
+              items: const <DropdownMenuItem<PresentationTextGrouping>>[
+                DropdownMenuItem(
+                  value: PresentationTextGrouping.asObject,
+                  child: Text('Tek nesne olarak'),
+                ),
+                DropdownMenuItem(
+                  value: PresentationTextGrouping.byParagraph,
+                  child: Text('Paragraf paragraf'),
+                ),
+                DropdownMenuItem(
+                  value: PresentationTextGrouping.byWord,
+                  child: Text('Kelime kelime'),
+                ),
+                DropdownMenuItem(
+                  value: PresentationTextGrouping.byLetter,
+                  child: Text('Harf harf'),
+                ),
+              ],
+              onChanged: (value) {
+                if (value != null) {
+                  controller.updateSelectedTextGrouping(grouping: value);
+                }
+              },
+            ),
+            if ((controller.selectedTextGrouping ??
+                    PresentationTextGrouping.asObject) !=
+                PresentationTextGrouping.asObject) ...<Widget>[
+              const SizedBox(height: 14),
+              _AnimationTimingSlider(
+                label: 'Parça gecikmesi',
+                value: controller.selectedTextGroupDelay ?? .08,
+                min: .05,
+                max: .5,
+                onChanged: (value) => controller.updateSelectedTextGrouping(
+                  groupDelay: value,
+                ),
+              ),
+            ],
+          ],
+        ],
+        const SizedBox(height: 22),
+        _AnimationPane(controller: controller, items: paneItems),
+      ],
+    );
+  }
+}
+
+class _AnimationPaneItem {
+  const _AnimationPaneItem({
+    required this.id,
+    required this.name,
+    required this.animation,
+    required this.trigger,
+    required this.duration,
+    required this.order,
+    required this.fallbackOrder,
+  });
+
+  final String id;
+  final String name;
+  final PresentationEntranceAnimation animation;
+  final PresentationAnimationTrigger trigger;
+  final double duration;
+  final int order;
+  final int fallbackOrder;
+}
+
+List<_AnimationPaneItem> _animationPaneItems(PresentationPage page) {
+  var fallback = 0;
+  final items = <_AnimationPaneItem>[
+    for (final block in page.textBlocks)
+      if (block.entranceAnimation != PresentationEntranceAnimation.none)
+        _AnimationPaneItem(
+          id: block.id,
+          name: block.text.trim().isEmpty ? 'Metin kutusu' : block.text.trim(),
+          animation: block.entranceAnimation,
+          trigger: block.animationTrigger,
+          duration: block.animationDuration,
+          order: block.animationOrder,
+          fallbackOrder: fallback++,
+        ),
+    for (final block in page.componentBlocks)
+      if (block.entranceAnimation != PresentationEntranceAnimation.none)
+        _AnimationPaneItem(
+          id: block.id,
+          name: block.imageAssetId != null
+              ? 'Fotoğraf'
+              : block.modelAssetId != null
+                  ? '3D model'
+                  : 'Bileşen',
+          animation: block.entranceAnimation,
+          trigger: block.animationTrigger,
+          duration: block.animationDuration,
+          order: block.animationOrder,
+          fallbackOrder: fallback++,
+        ),
+  ]..sort((a, b) {
+      final aOrder = a.order > 0 ? a.order : 100000 + a.fallbackOrder;
+      final bOrder = b.order > 0 ? b.order : 100000 + b.fallbackOrder;
+      return aOrder.compareTo(bOrder);
+    });
+  return items;
+}
+
+class _AnimationPane extends StatelessWidget {
+  const _AnimationPane({required this.controller, required this.items});
+
+  final PresentationController controller;
+  final List<_AnimationPaneItem> items;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Row(
+          children: <Widget>[
+            Expanded(
+              child: Text(
+                'Animasyon Bölmesi',
+                style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w800,
+                    ),
+              ),
+            ),
+            TextButton.icon(
+              onPressed: items.isEmpty
+                  ? null
+                  : () => controller.previewEntranceAnimations(),
+              icon: const Icon(Icons.play_arrow_rounded, size: 18),
+              label: const Text('Tümünü Oynat'),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        if (items.isEmpty)
+          Text(
+            'Bu sahnede henüz öğe animasyonu yok.',
+            style: TextStyle(color: context.colors.onSurfaceVariant),
+          )
+        else
+          ReorderableListView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            buildDefaultDragHandles: false,
+            itemCount: items.length,
+            onReorderItem: (oldIndex, newIndex) {
+              final ids = items.map((item) => item.id).toList();
+              final moved = ids.removeAt(oldIndex);
+              ids.insert(newIndex, moved);
+              controller.reorderEntranceAnimations(ids);
+            },
+            itemBuilder: (context, index) {
+              final item = items[index];
+              return _AnimationPaneRow(
+                key: ValueKey<String>('animation-pane-${item.id}'),
+                item: item,
+                index: index,
+                onSelect: () => controller.selectAnimationTarget(item.id),
+                onPlay: () =>
+                    controller.previewEntranceAnimations(targetId: item.id),
+              );
+            },
+          ),
+      ],
+    );
+  }
+}
+
+class _AnimationPaneRow extends StatelessWidget {
+  const _AnimationPaneRow({
+    super.key,
+    required this.item,
+    required this.index,
+    required this.onSelect,
+    required this.onPlay,
+  });
+
+  final _AnimationPaneItem item;
+  final int index;
+  final VoidCallback onSelect;
+  final VoidCallback onPlay;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = _animationCategoryColor(item.animation);
+    return Card(
+      margin: const EdgeInsets.only(bottom: 8),
+      child: InkWell(
+        onTap: onSelect,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+          child: Row(
+            children: <Widget>[
+              CircleAvatar(
+                radius: 13,
+                backgroundColor: color,
+                foregroundColor: Colors.white,
+                child:
+                    Text('${index + 1}', style: const TextStyle(fontSize: 11)),
+              ),
+              const SizedBox(width: 8),
+              Icon(_animationCategoryIcon(item.animation),
+                  color: color, size: 19),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Text(item.name,
+                        maxLines: 1, overflow: TextOverflow.ellipsis),
+                    Text(
+                      '${_entranceAnimationLabel(item.animation)} • ${_animationTriggerShortLabel(item.trigger)} • ${item.duration.toStringAsFixed(1)} sn',
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                            color: context.colors.onSurfaceVariant,
+                          ),
+                    ),
+                  ],
+                ),
+              ),
+              IconButton(
+                tooltip: 'Bu animasyonu oynat',
+                onPressed: onPlay,
+                icon: const Icon(Icons.play_arrow_rounded),
+              ),
+              ReorderableDragStartListener(
+                index: index,
+                child: const Padding(
+                  padding: EdgeInsets.all(8),
+                  child: Icon(Icons.drag_handle_rounded),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+String _entranceAnimationLabel(PresentationEntranceAnimation animation) {
+  return switch (animation) {
+    PresentationEntranceAnimation.none => 'Animasyon yok',
+    PresentationEntranceAnimation.fadeIn => 'Belirme',
+    PresentationEntranceAnimation.flyInLeft => 'Soldan uç',
+    PresentationEntranceAnimation.flyInRight => 'Sağdan uç',
+    PresentationEntranceAnimation.flyInTop => 'Yukarıdan uç',
+    PresentationEntranceAnimation.flyInBottom => 'Aşağıdan uç',
+    PresentationEntranceAnimation.zoomIn => 'Yakınlaşma',
+    PresentationEntranceAnimation.pulse => 'Nabız',
+    PresentationEntranceAnimation.shake => 'Sallanma',
+    PresentationEntranceAnimation.growShrink => 'Büyüt-Küçült',
+    PresentationEntranceAnimation.spin => 'Döndür',
+    PresentationEntranceAnimation.glow => 'Parla',
+    PresentationEntranceAnimation.fadeOut => 'Kaybol',
+    PresentationEntranceAnimation.flyOutLeft => 'Sola uç',
+    PresentationEntranceAnimation.flyOutRight => 'Sağa uç',
+    PresentationEntranceAnimation.flyOutTop => 'Yukarı uç',
+    PresentationEntranceAnimation.flyOutBottom => 'Aşağı uç',
+    PresentationEntranceAnimation.shrinkOut => 'Küçülerek çık',
+    PresentationEntranceAnimation.zoomOut => 'Uzaklaşarak çık',
+    PresentationEntranceAnimation.spinOut => 'Dönerek çık',
+    PresentationEntranceAnimation.motionLine => 'Düz çizgi',
+    PresentationEntranceAnimation.motionCircle => 'Daire',
+    PresentationEntranceAnimation.motionWave => 'Dalga',
+    PresentationEntranceAnimation.motionCustom => 'Özel yol',
+  };
+}
+
+Color _animationCategoryColor(PresentationEntranceAnimation animation) {
+  if (<PresentationEntranceAnimation>{
+    PresentationEntranceAnimation.pulse,
+    PresentationEntranceAnimation.shake,
+    PresentationEntranceAnimation.growShrink,
+    PresentationEntranceAnimation.spin,
+    PresentationEntranceAnimation.glow,
+  }.contains(animation)) {
+    return const Color(0xFFEAB308);
+  }
+  if (<PresentationEntranceAnimation>{
+    PresentationEntranceAnimation.fadeOut,
+    PresentationEntranceAnimation.flyOutLeft,
+    PresentationEntranceAnimation.flyOutRight,
+    PresentationEntranceAnimation.flyOutTop,
+    PresentationEntranceAnimation.flyOutBottom,
+    PresentationEntranceAnimation.shrinkOut,
+    PresentationEntranceAnimation.zoomOut,
+    PresentationEntranceAnimation.spinOut,
+  }.contains(animation)) {
+    return const Color(0xFFDC2626);
+  }
+  if (<PresentationEntranceAnimation>{
+    PresentationEntranceAnimation.motionLine,
+    PresentationEntranceAnimation.motionCircle,
+    PresentationEntranceAnimation.motionWave,
+    PresentationEntranceAnimation.motionCustom,
+  }.contains(animation)) {
+    return const Color(0xFF7C3AED);
+  }
+  return const Color(0xFF16A34A);
+}
+
+IconData _animationCategoryIcon(PresentationEntranceAnimation animation) {
+  final color = _animationCategoryColor(animation);
+  if (color == const Color(0xFFEAB308)) return Icons.star_rounded;
+  if (color == const Color(0xFFDC2626)) return Icons.logout_rounded;
+  if (color == const Color(0xFF7C3AED)) return Icons.route_rounded;
+  return Icons.login_rounded;
+}
+
+String _animationTriggerShortLabel(PresentationAnimationTrigger trigger) {
+  return switch (trigger) {
+    PresentationAnimationTrigger.onClick => 'Tıklamayla',
+    PresentationAnimationTrigger.withPrevious => 'Öncekiyle',
+    PresentationAnimationTrigger.afterPrevious => 'Öncekinden sonra',
+  };
+}
+
+class _MotionPathEditor extends StatefulWidget {
+  const _MotionPathEditor({required this.points, required this.onChanged});
+
+  final List<Offset> points;
+  final ValueChanged<List<Offset>> onChanged;
+
+  @override
+  State<_MotionPathEditor> createState() => _MotionPathEditorState();
+}
+
+class _MotionPathEditorState extends State<_MotionPathEditor> {
+  int? _activePoint;
+
+  Offset _toCanvas(Offset point, Size size) => Offset(
+        size.width / 2 + point.dx * size.width,
+        size.height / 2 + point.dy * size.height,
+      );
+
+  void _update(Offset localPosition, Size size) {
+    final index = _activePoint;
+    if (index == null) return;
+    final next = List<Offset>.of(widget.points);
+    next[index] = Offset(
+      (localPosition.dx / size.width - .5).clamp(-.48, .48),
+      (localPosition.dy / size.height - .5).clamp(-.48, .48),
+    );
+    widget.onChanged(next);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 150,
+      decoration: BoxDecoration(
+        color: context.colors.surfaceElevated,
+        borderRadius: BorderRadius.circular(14),
+        border:
+            Border.all(color: const Color(0xFF7C3AED).withValues(alpha: .35)),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final size = Size(constraints.maxWidth, constraints.maxHeight);
+          return GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onPanStart: (details) {
+              var closest = 0;
+              var distance = double.infinity;
+              for (var i = 0; i < widget.points.length; i += 1) {
+                final candidate =
+                    (_toCanvas(widget.points[i], size) - details.localPosition)
+                        .distance;
+                if (candidate < distance) {
+                  closest = i;
+                  distance = candidate;
+                }
+              }
+              _activePoint = closest;
+              _update(details.localPosition, size);
+            },
+            onPanUpdate: (details) => _update(details.localPosition, size),
+            onPanEnd: (_) => _activePoint = null,
+            child: CustomPaint(
+              size: size,
+              painter: _MotionPathPainter(widget.points),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _MotionPathPainter extends CustomPainter {
+  const _MotionPathPainter(this.points);
+
+  final List<Offset> points;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    Offset map(Offset point) => Offset(
+          size.width / 2 + point.dx * size.width,
+          size.height / 2 + point.dy * size.height,
+        );
+
+    final gridPaint = Paint()
+      ..color = const Color(0xFF7C3AED).withValues(alpha: .10)
+      ..strokeWidth = 1;
+    for (var i = 1; i < 4; i += 1) {
+      canvas.drawLine(Offset(size.width * i / 4, 0),
+          Offset(size.width * i / 4, size.height), gridPaint);
+      canvas.drawLine(Offset(0, size.height * i / 4),
+          Offset(size.width, size.height * i / 4), gridPaint);
+    }
+    if (points.length != 4) return;
+    final path = Path()
+      ..moveTo(map(points[0]).dx, map(points[0]).dy)
+      ..cubicTo(
+        map(points[1]).dx,
+        map(points[1]).dy,
+        map(points[2]).dx,
+        map(points[2]).dy,
+        map(points[3]).dx,
+        map(points[3]).dy,
+      );
+    canvas.drawPath(
+      path,
+      Paint()
+        ..color = const Color(0xFF7C3AED)
+        ..strokeWidth = 3
+        ..style = PaintingStyle.stroke,
+    );
+    for (var i = 0; i < points.length; i += 1) {
+      final center = map(points[i]);
+      canvas.drawCircle(center, 8, Paint()..color = const Color(0xFF7C3AED));
+      final paragraph = TextPainter(
+        text: TextSpan(
+          text: '${i + 1}',
+          style: const TextStyle(color: Colors.white, fontSize: 9),
+        ),
+        textDirection: TextDirection.ltr,
+      )..layout();
+      paragraph.paint(
+          canvas, center - Offset(paragraph.width / 2, paragraph.height / 2));
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _MotionPathPainter oldDelegate) =>
+      oldDelegate.points != points;
+}
+
+class _AnimationTimingSlider extends StatelessWidget {
+  const _AnimationTimingSlider({
+    required this.label,
+    required this.value,
+    required this.min,
+    required this.max,
+    required this.onChanged,
+  });
+
+  final String label;
+  final double value;
+  final double min;
+  final double max;
+  final ValueChanged<double> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: <Widget>[
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: <Widget>[
+            Text(label, style: const TextStyle(fontWeight: FontWeight.w700)),
+            Text('${value.toStringAsFixed(1)} sn'),
+          ],
+        ),
+        Slider(
+          value: value.clamp(min, max),
+          min: min,
+          max: max,
+          divisions: ((max - min) * 10).round(),
+          activeColor: const Color(0xFF16A34A),
+          onChanged: onChanged,
+        ),
+      ],
+    );
+  }
+}
+
+class _AnimationEffectGrid extends StatelessWidget {
+  const _AnimationEffectGrid({
+    required this.title,
+    required this.color,
+    required this.options,
+    required this.current,
+    required this.onSelected,
+  });
+
+  final String title;
+  final Color color;
+  final List<(PresentationEntranceAnimation, String, IconData)> options;
+  final PresentationEntranceAnimation current;
+  final ValueChanged<PresentationEntranceAnimation> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Row(
+          children: <Widget>[
+            Container(
+              width: 9,
+              height: 9,
+              decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+            ),
+            const SizedBox(width: 7),
+            Text(title, style: const TextStyle(fontWeight: FontWeight.w800)),
+          ],
+        ),
+        const SizedBox(height: 9),
+        GridView.builder(
+          itemCount: options.length,
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            mainAxisSpacing: 10,
+            crossAxisSpacing: 10,
+            mainAxisExtent: 78,
+          ),
+          itemBuilder: (context, index) {
+            final (value, label, icon) = options[index];
+            return _EntranceAnimationTile(
+              label: label,
+              icon: icon,
+              color: color,
+              selected: current == value,
+              onTap: () => onSelected(value),
+            );
+          },
+        ),
+      ],
+    );
+  }
+}
+
+class _EntranceAnimationTile extends StatelessWidget {
+  const _EntranceAnimationTile({
+    required this.label,
+    required this.icon,
+    required this.color,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final IconData icon;
+  final Color color;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: selected
+          ? color.withValues(alpha: .13)
+          : context.colors.surfaceElevated,
+      borderRadius: BorderRadius.circular(14),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(14),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 8),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: selected ? color : context.sutolColors.outline,
+              width: selected ? 2 : 1,
+            ),
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: <Widget>[
+              Icon(icon, color: color, size: 21),
+              const SizedBox(height: 4),
+              Text(
+                label,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 11,
+                  height: 1.12,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ],
           ),
@@ -10060,35 +11448,44 @@ class _HtmlStageDimensionsControls extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: <Widget>[
-            Text(
-              'SAHNE ÖLÇÜLERİ VE FORMAT',
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w800,
-                letterSpacing: 0.8,
-                color: context._htmlMuted,
+            Expanded(
+              child: Text(
+                'SAHNE ÖLÇÜLERİ VE FORMAT',
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 0.8,
+                  color: context._htmlMuted,
+                ),
               ),
             ),
             if (currentRatio != 'custom')
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: context.colors.primary.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Text(
-                  'Aktif: $currentRatio',
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
-                    color: context.colors.primary,
+              Padding(
+                padding: const EdgeInsets.only(left: 8),
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: context.colors.primary.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    'Aktif: $currentRatio',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: context.colors.primary,
+                    ),
                   ),
                 ),
               ),
           ],
         ),
         const SizedBox(height: 12),
-        for (final (ratio, label, subtitle, icon, badge) in presets) ...<Widget>[
+        for (final (ratio, label, subtitle, icon, badge)
+            in presets) ...<Widget>[
           _StageDimensionPresetCard(
             title: label,
             subtitle: subtitle,

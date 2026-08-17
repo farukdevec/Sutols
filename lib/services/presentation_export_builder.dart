@@ -29,9 +29,11 @@ String buildPresentationExportHtml({
 
   for (var index = 0; index < pages.length; index += 1) {
     final page = pages[index];
+    final transitionAfter =
+        page.transitionAfter ?? effectSettings.transitionKind;
     slidesMarkup
       ..writeln(
-        '<section class="sutol-export-slide${index == 0 ? ' is-active' : ''}" data-index="$index" data-page-id="${_escapeAttribute(page.id)}" aria-label="Slayt ${index + 1}" aria-hidden="${index == 0 ? 'false' : 'true'}">',
+        '<section class="sutol-export-slide${index == 0 ? ' is-active' : ''}" data-index="$index" data-page-id="${_escapeAttribute(page.id)}" data-transition-after="${_transitionShellClass(transitionAfter)}" aria-label="Slayt ${index + 1}" aria-hidden="${index == 0 ? 'false' : 'true'}">',
       )
       ..writeln('<div class="sutol-export-stage-frame">')
       ..writeln(
@@ -164,7 +166,19 @@ int _revealStepCountForPage(PresentationPage page) {
       maxStep = block.revealStep;
     }
   }
-  return maxStep;
+  final clickAnimations = <Object>[
+    ...page.textBlocks,
+    ...page.componentBlocks,
+  ].where((block) {
+    if (block is PresentationTextBlock) {
+      return block.entranceAnimation != PresentationEntranceAnimation.none &&
+          block.animationTrigger == PresentationAnimationTrigger.onClick;
+    }
+    final component = block as PresentationComponentBlock;
+    return component.entranceAnimation != PresentationEntranceAnimation.none &&
+        component.animationTrigger == PresentationAnimationTrigger.onClick;
+  }).length;
+  return maxStep + clickAnimations;
 }
 
 String _escapeHtml(String value) =>
@@ -363,6 +377,16 @@ body {
   animation-fill-mode: both;
 }
 
+.sutol-export-slide.is-leaving {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  pointer-events: none;
+  animation-duration: var(--sutol-transition-duration);
+  animation-timing-function: cubic-bezier(.22, 1, .36, 1);
+  animation-fill-mode: both;
+}
+
 .sutol-export-shell.transition-none .sutol-export-slide.is-active {
   animation-name: none;
 }
@@ -384,11 +408,23 @@ body {
 }
 
 .sutol-export-shell.transition-fade .sutol-export-slide.is-active {
-  animation-name: sutolTransitionFade;
+  z-index: 2;
+  animation-name: sutolTransitionFadeIn;
+}
+
+.sutol-export-shell.transition-fade .sutol-export-slide.is-leaving {
+  z-index: 1;
+  animation-name: sutolTransitionFadeOut;
 }
 
 .sutol-export-shell.transition-slide .sutol-export-slide.is-active {
-  animation-name: sutolTransitionSlide;
+  z-index: 2;
+  animation-name: sutolTransitionPushIn;
+}
+
+.sutol-export-shell.transition-slide .sutol-export-slide.is-leaving {
+  z-index: 1;
+  animation-name: sutolTransitionPushOut;
 }
 
 .sutol-export-shell.transition-zoom .sutol-export-slide.is-active {
@@ -416,10 +452,22 @@ body {
 }
 
 .sutol-export-shell.transition-cover .sutol-export-slide.is-active {
+  z-index: 2;
   animation-name: sutolTransitionCover;
 }
 
+.sutol-export-shell.transition-cover .sutol-export-slide.is-leaving {
+  z-index: 1;
+  animation-name: none;
+}
+
 .sutol-export-shell.transition-uncover .sutol-export-slide.is-active {
+  z-index: 1;
+  animation-name: none;
+}
+
+.sutol-export-shell.transition-uncover .sutol-export-slide.is-leaving {
+  z-index: 2;
   animation-name: sutolTransitionUncover;
 }
 
@@ -579,9 +627,14 @@ body {
   background: #0a6fe6;
 }
 
-@keyframes sutolTransitionFade {
+@keyframes sutolTransitionFadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
+}
+
+@keyframes sutolTransitionFadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
 }
 
 @keyframes sutolTransitionSmoothIn {
@@ -594,9 +647,14 @@ body {
   to { opacity: 0; }
 }
 
-@keyframes sutolTransitionSlide {
-  from { opacity: 0; transform: translateY(22px) scale(0.985); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
+@keyframes sutolTransitionPushIn {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+@keyframes sutolTransitionPushOut {
+  from { transform: translateX(0); }
+  to { transform: translateX(-100%); }
 }
 
 @keyframes sutolTransitionZoom {
@@ -651,8 +709,8 @@ body {
 }
 
 @keyframes sutolTransitionUncover {
-  from { opacity: 0; transform: translateX(-18%); }
-  to { opacity: 1; transform: translateX(0); }
+  from { transform: translateX(0); box-shadow: 18px 0 32px rgba(0,0,0,.28); }
+  to { transform: translateX(-100%); box-shadow: 18px 0 32px rgba(0,0,0,0); }
 }
 
 @keyframes sutolTransitionFlip {
@@ -977,19 +1035,38 @@ String _exportScript({
     return Number.isFinite(value) ? value : fallback;
   }
 
-  function beginSmoothTransition(fromIndex, toIndex) {
-    if (!smoothTransition || fromIndex === toIndex) return;
+  function beginSceneTransition(fromIndex, toIndex) {
+    if (fromIndex === toIndex) return;
     const outgoing = slides[fromIndex];
     const incoming = slides[toIndex];
     if (!outgoing || !incoming) return;
 
-    slides.forEach((slide) => slide.classList.remove('is-leaving'));
-    outgoing.classList.add('is-leaving');
-    if (leavingTimer !== null) window.clearTimeout(leavingTimer);
-    leavingTimer = window.setTimeout(() => {
-      outgoing.classList.remove('is-leaving');
-    }, transitionDurationMs + 80);
+    const transitionSource = slides[Math.min(fromIndex, toIndex)];
+    const transitionClass = transitionSource?.dataset?.transitionAfter;
+    if (shell && transitionClass) {
+      Array.from(shell.classList)
+        .filter((name) => name.startsWith('transition-'))
+        .forEach((name) => shell.classList.remove(name));
+      shell.classList.add(transitionClass);
+    }
 
+    slides.forEach((slide) => slide.classList.remove('is-leaving'));
+    const transitionDisabled = shell?.classList.contains('transition-none') ||
+      shell?.classList.contains('reduce-motion');
+    if (!transitionDisabled) {
+      outgoing.classList.add('is-leaving');
+      if (leavingTimer !== null) window.clearTimeout(leavingTimer);
+      leavingTimer = window.setTimeout(() => {
+        outgoing.classList.remove('is-leaving');
+      }, transitionDurationMs + 80);
+    }
+
+    if (shell?.classList.contains('transition-smooth')) {
+      beginSmoothTransition(outgoing, incoming);
+    }
+  }
+
+  function beginSmoothTransition(outgoing, incoming) {
     const sourceGroups = new Map();
     outgoing.querySelectorAll('[data-sutol-model-id]').forEach((element) => {
       const id = element.dataset.sutolModelId;
@@ -1086,7 +1163,59 @@ String _exportScript({
         }
       });
 
+      slide.querySelectorAll('[data-animation-step]').forEach((element) => {
+        const animationStep = Number(element.dataset.animationStep || '0');
+        element.classList.toggle(
+          'is-element-animation-pending',
+          !active || animationStep > fragmentStep,
+        );
+      });
+
     });
+  }
+
+  let lastAnimatedSlideIndex = -1;
+  let lastAnimatedFragmentStep = -1;
+
+  function restartTextAnimation(element) {
+    if (!element) return;
+    const hasTextAnimation = Array.from(element.classList).some((name) =>
+      name.indexOf('text-animation-') === 0 && name !== 'text-animation-none'
+    );
+    const hasEntranceAnimation = Array.from(element.classList).some((name) =>
+      name.indexOf('entrance-animation-') === 0 && name !== 'entrance-animation-none'
+    );
+    if (!hasTextAnimation && !hasEntranceAnimation) return;
+    const animatedParts = [
+      element,
+      ...element.querySelectorAll('.sutol-typewriter-word, .sutol-animation-segment'),
+    ];
+    animatedParts.forEach((part) => {
+      part.style.setProperty('animation', 'none', 'important');
+    });
+    void element.offsetWidth;
+    animatedParts.forEach((part) => {
+      part.style.removeProperty('animation');
+    });
+  }
+
+  function playCurrentTextAnimations() {
+    const slideChanged = lastAnimatedSlideIndex !== index;
+    const stepChanged = lastAnimatedFragmentStep !== fragmentStep;
+    if (!slideChanged && !stepChanged) return;
+
+    const slide = slides[index];
+    if (!slide) return;
+    const animatedTexts = slide.querySelectorAll(
+      '.sutol-html-block[class*="text-animation-"], [class*="entrance-animation-"]',
+    );
+    animatedTexts.forEach((element) => {
+      const step = Number(element.dataset.animationStep || element.dataset.revealStep || '0');
+      const shouldPlay = slideChanged ? step <= fragmentStep : step === fragmentStep;
+      if (shouldPlay) restartTextAnimation(element);
+    });
+    lastAnimatedSlideIndex = index;
+    lastAnimatedFragmentStep = fragmentStep;
   }
 
   function render() {
@@ -1108,6 +1237,7 @@ String _exportScript({
       dot.setAttribute('aria-current', active ? 'true' : 'false');
     });
     renderRevealState();
+    playCurrentTextAnimations();
     if (prevBtn) {
       const disabled = index === 0 && fragmentStep === 0;
       prevBtn.disabled = disabled;
@@ -1150,7 +1280,7 @@ String _exportScript({
     const next = Math.max(0, Math.min(nextIndex, slides.length - 1));
     if (next !== index) {
       setZoomed(false);
-      beginSmoothTransition(index, next);
+      beginSceneTransition(index, next);
       playTransitionSound();
     }
     index = next;
@@ -1232,8 +1362,12 @@ String _exportScript({
   slides.forEach((slide) => {
     const frame = slide.querySelector('.sutol-export-stage-frame');
     frame?.addEventListener('click', (event) => {
-      if (!zoomEnabled || !slide.classList.contains('is-active')) return;
-      toggleZoom(event.clientX, event.clientY);
+      if (!slide.classList.contains('is-active')) return;
+      if (zoomEnabled) {
+        toggleZoom(event.clientX, event.clientY);
+      } else {
+        goNext();
+      }
     });
   });
 

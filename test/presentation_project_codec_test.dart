@@ -40,6 +40,7 @@ void main() {
         id: 'page-4',
         backgroundKind: PresentationBackgroundKind.solarEnergyScene,
         speakerNotes: 'Konusmaci notu',
+        transitionAfter: PresentationTransitionKind.cover,
         textBlocks: <PresentationTextBlock>[
           PresentationTextBlock(
             id: 'text-7',
@@ -107,6 +108,10 @@ void main() {
 
     expect(project.pages, hasLength(1));
     expect(project.pages.single.id, 'page-4');
+    expect(
+      project.pages.single.transitionAfter,
+      PresentationTransitionKind.cover,
+    );
     expect(
       project.pages.single.backgroundKind,
       PresentationBackgroundKind.solarEnergyScene,
@@ -273,6 +278,85 @@ void main() {
     expect(
       project.pages.single.backgroundKind,
       PresentationBackgroundKind.chemistry,
+    );
+  });
+
+  test('persists entrance animations for text and visual elements', () {
+    final project = PresentationProject(
+      pages: const <PresentationPage>[
+        PresentationPage(
+          id: 'animated-page',
+          textBlocks: <PresentationTextBlock>[
+            PresentationTextBlock(
+              id: 'animated-text',
+              text: 'Merhaba',
+              position: Offset(.1, .1),
+              fontSize: 42,
+              type: PresentationTextType.title,
+              widthFactor: .4,
+              entranceAnimation: PresentationEntranceAnimation.fadeIn,
+              animationTrigger: PresentationAnimationTrigger.onClick,
+              animationDuration: 1.4,
+              animationDelay: .3,
+              animationOrder: 2,
+              textGrouping: PresentationTextGrouping.byWord,
+              groupDelay: .12,
+              motionPathPoints: <Offset>[
+                Offset.zero,
+                Offset(.1, -.2),
+                Offset(.2, .15),
+                Offset(.4, 0),
+              ],
+            ),
+          ],
+          componentBlocks: <PresentationComponentBlock>[
+            PresentationComponentBlock(
+              id: 'animated-component',
+              position: Offset(.3, .3),
+              size: Size(.3, .3),
+              entranceAnimation: PresentationEntranceAnimation.flyInLeft,
+            ),
+          ],
+        ),
+      ],
+      effectSettings: const PresentationEffectSettings(),
+    );
+
+    final restored = PresentationProjectCodec.decodeProject(
+      PresentationProjectCodec.encodeProject(
+        pages: project.pages,
+        effectSettings: project.effectSettings,
+      ),
+    );
+
+    expect(
+      restored.pages.single.textBlocks.single.entranceAnimation,
+      PresentationEntranceAnimation.fadeIn,
+    );
+    expect(
+      restored.pages.single.textBlocks.single.animationTrigger,
+      PresentationAnimationTrigger.onClick,
+    );
+    expect(restored.pages.single.textBlocks.single.animationDuration, 1.4);
+    expect(restored.pages.single.textBlocks.single.animationDelay, .3);
+    expect(restored.pages.single.textBlocks.single.animationOrder, 2);
+    expect(
+      restored.pages.single.textBlocks.single.textGrouping,
+      PresentationTextGrouping.byWord,
+    );
+    expect(restored.pages.single.textBlocks.single.groupDelay, .12);
+    expect(
+      restored.pages.single.textBlocks.single.motionPathPoints,
+      const <Offset>[
+        Offset.zero,
+        Offset(.1, -.2),
+        Offset(.2, .15),
+        Offset(.4, 0),
+      ],
+    );
+    expect(
+      restored.pages.single.componentBlocks.single.entranceAnimation,
+      PresentationEntranceAnimation.flyInLeft,
     );
   });
 }

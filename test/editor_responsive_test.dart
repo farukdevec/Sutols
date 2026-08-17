@@ -136,7 +136,8 @@ void main() {
     ('Bileşen', 'Bileşenler'),
   ]) {
     for (final w in <double>[360, 390]) {
-      testWidgets('"${tool.$1}" alet paneli ${w.toInt()}px bottom sheet taşmaz', (
+      testWidgets('"${tool.$1}" alet paneli ${w.toInt()}px bottom sheet taşmaz',
+          (
         tester,
       ) async {
         await pumpAt(tester, Size(w, 844));
@@ -254,7 +255,8 @@ void main() {
   testWidgets('mobil araç paneli klavye açıkken görünür ve taşmasız kalır',
       (tester) async {
     await pumpAt(tester, const Size(390, 844));
-    await openToolSmart(tester, dockLabel: 'Modeller', moreLabel: '3B Modeller');
+    await openToolSmart(tester,
+        dockLabel: 'Modeller', moreLabel: '3B Modeller');
 
     final searchField = find.byWidgetPredicate(
       (widget) =>
@@ -327,7 +329,8 @@ void main() {
       }
 
       await pumpAt(tester, const Size(580, 800));
-      expect(visibleCount(), greaterThanOrEqualTo(1), reason: 'geniş mobil ekranda araçlar dockta');
+      expect(visibleCount(), greaterThanOrEqualTo(1),
+          reason: 'geniş mobil ekranda araçlar dockta');
       expect(tester.takeException(), isNull);
 
       await pumpAt(tester, const Size(320, 800));
@@ -368,10 +371,13 @@ void main() {
       expect(counts[414]!, lessThanOrEqualTo(counts[580]!));
     });
 
-    testWidgets('Modeller dock kısayolu modeller panelini açar', (tester) async {
+    testWidgets('Modeller dock kısayolu modeller panelini açar',
+        (tester) async {
       await pumpAt(tester, const Size(390, 844));
-      await openToolSmart(tester, dockLabel: 'Modeller', moreLabel: '3B Modeller');
-      expect(find.byKey(const ValueKey<String>('model-library-panel')), findsOneWidget);
+      await openToolSmart(tester,
+          dockLabel: 'Modeller', moreLabel: '3B Modeller');
+      expect(find.byKey(const ValueKey<String>('model-library-panel')),
+          findsOneWidget);
       expect(tester.takeException(), isNull);
     });
 
@@ -836,7 +842,13 @@ void main() {
         );
 
         // Dock araçları: öncelik sırasıyla görünür; gizlenenler menüde.
-        const labels = <String>['Şablon', 'Arka Plan', 'Metin', 'Modeller', 'Bileşen'];
+        const labels = <String>[
+          'Şablon',
+          'Arka Plan',
+          'Metin',
+          'Modeller',
+          'Bileşen'
+        ];
         final visible =
             labels.where((l) => find.text(l).evaluate().isNotEmpty).toList();
         expect(visible, isNotEmpty, reason: 'dock boş olmamalı @$size');
@@ -921,14 +933,14 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('"Animasyonlar" menü öğesi Geçişler panelini açar', (
+  testWidgets('"Animasyonlar" menü öğesi öğe animasyonu panelini açar', (
     tester,
   ) async {
     await pumpAt(tester, const Size(390, 844));
     await openMoreMenu(tester);
     await tester.tap(find.text('Animasyonlar').last);
     await tester.pumpAndSettle();
-    expect(find.text('Geçişler'), findsOneWidget);
+    expect(find.text('Öğe Animasyonu'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 }

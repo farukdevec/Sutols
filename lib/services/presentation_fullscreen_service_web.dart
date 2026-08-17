@@ -2,6 +2,11 @@
 
 import 'dart:html' as html;
 
+Stream<bool> presentationFullscreenChanges() =>
+    html.document.onFullscreenChange.map(
+      (_) => html.document.fullscreenElement != null,
+    );
+
 Future<void> requestPresentationFullscreen() async {
   final element = html.document.documentElement;
   if (element == null || html.document.fullscreenElement != null) {

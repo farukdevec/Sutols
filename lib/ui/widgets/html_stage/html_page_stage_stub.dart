@@ -3,6 +3,30 @@ import 'package:flutter/material.dart';
 import '../../../models/slide_model.dart';
 import 'html_stage_document.dart';
 
+class HtmlPageTransitionStage extends StatelessWidget {
+  const HtmlPageTransitionStage({
+    super.key,
+    required this.from,
+    required this.to,
+    required this.kind,
+    required this.durationMs,
+    this.onReady,
+  });
+
+  final PresentationPage from;
+  final PresentationPage to;
+  final PresentationTransitionKind kind;
+  final int durationMs;
+  final VoidCallback? onReady;
+
+  @override
+  Widget build(BuildContext context) => HtmlPageStage(
+        page: to,
+        showBadge: false,
+        renderMode: HtmlStageRenderMode.preview,
+      );
+}
+
 class HtmlBackgroundPreview extends StatelessWidget {
   const HtmlBackgroundPreview({
     super.key,
@@ -42,6 +66,10 @@ class HtmlPageStage extends StatelessWidget {
     this.showBadge = true,
     this.renderMode = HtmlStageRenderMode.full,
     this.onTap,
+    this.cssTransform = 'none',
+    this.cssOpacity = 1,
+    this.cssClipPath,
+    this.cssTransformOrigin = 'center center',
   });
 
   final PresentationPage page;
@@ -52,6 +80,10 @@ class HtmlPageStage extends StatelessWidget {
   final bool showBadge;
   final HtmlStageRenderMode renderMode;
   final VoidCallback? onTap;
+  final String cssTransform;
+  final double cssOpacity;
+  final String? cssClipPath;
+  final String cssTransformOrigin;
 
   @override
   Widget build(BuildContext context) {
