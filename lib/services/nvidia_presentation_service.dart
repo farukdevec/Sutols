@@ -125,15 +125,15 @@ class NvidiaPresentation {
 
 class NvidiaPresentationService {
   static const String defaultProxyUrl = 'https://sutols.online/';
-  static const String defaultModelName = 'deepseek-ai/deepseek-r1';
+  static const String defaultModelName = 'nvidia/nemotron-3.5-lightning-30b-a3b';
   static const Duration _requestTimeout = Duration(seconds: 60);
   static const int _maxAttempts = 2;
 
   static const List<String> defaultCandidateModels = [
-    'deepseek-ai/deepseek-r1',
-    'deepseek-ai/deepseek-v3',
-    'nvidia/llama-3.1-nemotron-70b-instruct',
-    'meta/llama-3.1-70b-instruct',
+    'nvidia/nemotron-3.5-lightning-30b-a3b',
+    'nvidia/llama-3.3-nemotron-super-49b-v1',
+    'meta/llama-3.1-8b-instruct',
+    'nvidia/nemotron-3-nano-30b-a3b',
   ];
 
   final String proxyUrl;
