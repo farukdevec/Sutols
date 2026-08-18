@@ -147,7 +147,14 @@ class PresentationDeckBuilder {
     return pages;
   }
 
-
+  Future<List<PresentationPage>> buildPagesAsync({
+    required String topic,
+    required List<DeckSlide> slides,
+  }) async {
+    final pages = buildPages(topic: topic, slides: slides);
+    await hydratePresentationModelSources(pages);
+    return pages;
+  }
 
   static PresentationBackgroundKind _bestBackground({
     required String topic,
@@ -186,6 +193,24 @@ class PresentationDeckBuilder {
       topic: topic,
       slides: slides,
     );
+    controller.replaceDeck(
+      pages,
+      effectSettings: const PresentationEffectSettings(
+        transitionKind: PresentationTransitionKind.slide,
+      ),
+    );
+    return controller;
+  }
+
+  static Future<PresentationController> buildControllerAsync({
+    required String topic,
+    required List<DeckSlide> slides,
+  }) async {
+    final pages = await const PresentationDeckBuilder().buildPagesAsync(
+      topic: topic,
+      slides: slides,
+    );
+    final controller = PresentationController();
     controller.replaceDeck(
       pages,
       effectSettings: const PresentationEffectSettings(

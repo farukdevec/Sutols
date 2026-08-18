@@ -17,6 +17,7 @@ class ModelCatalogEntry {
     this.tagsEn = const <String>[],
     required this.category,
     required this.tier,
+    this.excludeTags = const <String>[],
   });
 
   final String id;
@@ -27,6 +28,12 @@ class ModelCatalogEntry {
   final List<String> tagsEn;
   final String category;
   final String tier;
+
+  /// Bu modelin ASLA eşleşmemesi gereken kelimeler (yanlış-domain koruması).
+  /// Örn. bir "Embriyo Gelişimi" modeline `["kahve", "gastronomi", "yemek"]`
+  /// eklenirse, gastronomi slaytlarında bu model hiçbir zaman aday olmaz —
+  /// skorlama ne derse desin.
+  final List<String> excludeTags;
 }
 
 class ModelRepository {
@@ -84,6 +91,7 @@ class ModelRepository {
           tagsEn: FirestoreRestHelper.arrayField(fields, 'tags_en'),
           category: FirestoreRestHelper.stringField(fields, 'category'),
           tier: FirestoreRestHelper.stringField(fields, 'tier'),
+          excludeTags: FirestoreRestHelper.arrayField(fields, 'excludeTags'),
         ));
       }
 

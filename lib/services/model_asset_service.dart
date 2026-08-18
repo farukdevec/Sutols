@@ -26,22 +26,53 @@ class ModelAssetService {
     _inFlightRequests.clear();
   }
 
+  /// Checks whether a given URL is a valid (unexpired) signed URL.
+  static bool isSignedUrlValid(String? url) {
+    if (url == null || url.trim().isEmpty) return false;
+    final trimmed = url.trim();
+    final hasToken = trimmed.contains('token=') || trimmed.contains('sig=');
+    if (!hasToken) return false;
+
+    try {
+      final uri = Uri.tryParse(trimmed);
+      if (uri != null) {
+        final expiresStr = uri.queryParameters['expires'];
+        if (expiresStr != null) {
+          final expiresSec = int.tryParse(expiresStr);
+          if (expiresSec != null) {
+            final expiresTime = DateTime.fromMillisecondsSinceEpoch(expiresSec * 1000);
+            if (DateTime.now().isAfter(expiresTime.subtract(const Duration(seconds: 30)))) {
+              return false;
+            }
+          }
+        }
+      }
+    } catch (_) {}
+
+    return true;
+  }
+
   /// Extract object key (e.g. "110_megafon.glb" or "thumbnails/110_megafon.webp")
   /// from a full URL, object path, or raw field.
   static String extractKey(String? raw) {
     final value = (raw ?? '').trim();
     if (value.isEmpty) return '';
 
+    String key = value;
     try {
       final uri = Uri.tryParse(value);
       if (uri != null && uri.hasScheme && uri.host.isNotEmpty) {
         var path = uri.path;
         path = path.replaceAll(RegExp(r'^/+'), '');
-        return path;
+        key = path;
       }
     } catch (_) {}
 
-    final key = value.replaceAll(RegExp(r'^/+'), '');
+    key = key.replaceAll(RegExp(r'^/+'), '');
+    try {
+      key = Uri.decodeComponent(key);
+    } catch (_) {}
+
     return key;
   }
 
@@ -65,7 +96,7 @@ class ModelAssetService {
       }
     } catch (_) {}
 
-    final key = value.replaceAll(RegExp(r'^/+'), '');
+    final key = extractKey(value);
     final fileName = key.split('/').last;
     return '$_base/$fileName';
   }
@@ -79,7 +110,7 @@ class ModelAssetService {
   }) async {
     final trimmed = rawKey.trim();
     if (trimmed.isEmpty) return null;
-    if (trimmed.contains('sig=') && trimmed.contains('expires=')) {
+    if (!forceRefresh && isSignedUrlValid(trimmed)) {
       return trimmed;
     }
 

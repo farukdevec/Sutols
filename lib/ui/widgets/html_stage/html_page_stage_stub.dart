@@ -20,11 +20,16 @@ class HtmlPageTransitionStage extends StatelessWidget {
   final VoidCallback? onReady;
 
   @override
-  Widget build(BuildContext context) => HtmlPageStage(
-        page: to,
-        showBadge: false,
-        renderMode: HtmlStageRenderMode.preview,
-      );
+  Widget build(BuildContext context) {
+    if (onReady != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => onReady?.call());
+    }
+    return HtmlPageStage(
+      page: to,
+      showBadge: false,
+      renderMode: HtmlStageRenderMode.preview,
+    );
+  }
 }
 
 class HtmlBackgroundPreview extends StatelessWidget {

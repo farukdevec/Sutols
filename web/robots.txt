@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /p/*
+
+Sitemap: https://sutols.com/sitemap.xml

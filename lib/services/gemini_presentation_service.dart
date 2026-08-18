@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_ai/firebase_ai.dart';
 
+import 'presentation_content_quality.dart';
 import 'presentation_prompt_builder.dart';
 
 /// Gemini'nin response_schema ile zorladığı tek slayt yapısı.
@@ -18,10 +19,11 @@ class GeminiSlide {
   });
 
   factory GeminiSlide.fromJson(Map<String, dynamic> json) {
+    final rawTitle = json['title'] as String? ?? '';
     return GeminiSlide(
-      title: json['title'] as String,
-      content: json['content'] as String,
-      keywords: (json['keywords'] as List).cast<String>(),
+      title: PresentationContentQuality.sanitizeTitle(rawTitle),
+      content: json['content'] as String? ?? '',
+      keywords: (json['keywords'] as List? ?? const []).cast<String>(),
     );
   }
 }
@@ -89,7 +91,7 @@ class GeminiPresentationService {
     String language = 'turkish',
   }) async {
     final systemInstruction = PresentationPromptBuilder.buildSystemInstruction();
-    final maxTokens = (slideCount * 180 + 200).clamp(300, 8192);
+    final maxTokens = (slideCount * 800 + 1000).clamp(3000, 16384);
 
     final model = _ai.generativeModel(
       model: modelName,
@@ -126,8 +128,37 @@ class GeminiPresentationService {
       throw Exception('Gemini boş yanıt döndürdü.');
     }
 
-    final json = jsonDecode(_stripCodeFence(text)) as Map<String, dynamic>;
+    final json = _parseGeminiJson(text);
     return GeminiPresentation.fromJson(json);
+  }
+
+  static Map<String, dynamic> _parseGeminiJson(String rawText) {
+    var cleaned = _stripCodeFence(rawText);
+    try {
+      final decoded = jsonDecode(cleaned);
+      if (decoded is Map<String, dynamic>) {
+        if (decoded.containsKey('slides') && decoded['slides'] is List) {
+          return decoded;
+        }
+        for (final key in const ['sunum', 'slaytlar', 'presentation', 'items', 'data']) {
+          if (decoded[key] is List) {
+            return {'slides': decoded[key]};
+          }
+        }
+        return decoded;
+      } else if (decoded is List) {
+        return {'slides': decoded};
+      }
+    } on FormatException {
+      final slideMatch = RegExp(r'\{[^{}]*"slides"\s*:\s*\[[\s\S]*\]\}').firstMatch(cleaned);
+      if (slideMatch != null) {
+        try {
+          final extracted = jsonDecode(slideMatch.group(0)!);
+          if (extracted is Map<String, dynamic>) return extracted;
+        } catch (_) {}
+      }
+    }
+    throw const FormatException('Gemini yanıtı geçerli JSON formatında değil.');
   }
 
   /// Konuyla en yakın eşleşen (basit keyword eşleşmesi) ve `wasExported ==

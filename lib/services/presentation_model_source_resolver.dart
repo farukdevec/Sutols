@@ -34,6 +34,21 @@ Future<void> hydratePresentationModelSources(
     }
   }
 
+  // Fallback for missing model IDs not found in catalog or catalog asset paths
+  for (final id in missingIds) {
+    if (!resolvedSources.containsKey(id)) {
+      final fallbackSource = RemoteModelSources.sourceFor(id) ?? id;
+      if (!fallbackSource.startsWith('assets/') && !fallbackSource.startsWith('packages/')) {
+        try {
+          final signedUrl = await ModelAssetService.generateSignedUrl(fallbackSource);
+          if (signedUrl != null && signedUrl.trim().isNotEmpty) {
+            resolvedSources[id] = signedUrl.trim();
+          }
+        } catch (_) {}
+      }
+    }
+  }
+
   if (resolvedSources.isNotEmpty) {
     RemoteModelSources.registerAll(resolvedSources);
   }

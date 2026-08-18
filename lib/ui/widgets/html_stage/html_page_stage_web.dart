@@ -60,6 +60,12 @@ class _HtmlPageTransitionStageState extends State<HtmlPageTransitionStage> {
       _viewType,
       (int viewId) => _iframe,
     );
+    // Safety fallback: ensure onReady fires even if onLoad doesn't trigger for srcdoc
+    Timer.run(() {
+      if (mounted) {
+        widget.onReady?.call();
+      }
+    });
   }
 
   @override
@@ -228,12 +234,14 @@ class _HtmlPageStageState extends State<HtmlPageStage> {
   html.IFrameElement? _pendingIframeElement;
   StreamSubscription<html.Event>? _pendingLoadSubscription;
   StreamSubscription<html.MouseEvent>? _tapSubscription;
-  var _renderGeneration = 0;
-  var _hasRendered = false;
-
+  int _renderGeneration = 0;
+  bool _hasRendered = false;
+  StreamSubscription<html.Event>? _initialLoadSubscription;
+  Timer? _initialLoadTimer;
   @override
   void initState() {
     super.initState();
+    RemoteModelSources.revision.addListener(_onRemoteSourcesChanged);
     _viewType = 'sutol-html-stage-${_viewCounter++}';
     _hostElement = html.DivElement()
       ..className = 'sutol-html-host'
@@ -241,9 +249,11 @@ class _HtmlPageStageState extends State<HtmlPageStage> {
       ..style.height = '100%'
       ..style.position = 'relative'
       ..style.pointerEvents = widget.onTap == null ? 'none' : 'auto'
-      ..style.overflow = 'hidden';
+      ..style.overflow = 'hidden'
+      ..style.backgroundColor = '#FFFFFF';
     _applyVisualStyle();
-    _iframeElement = _createIframe();
+    _iframeElement = _createIframe()
+      ..style.opacity = '0';
     _hostElement.children.add(_iframeElement);
     if (widget.onTap != null) {
       final overlay = html.DivElement()
@@ -273,6 +283,12 @@ class _HtmlPageStageState extends State<HtmlPageStage> {
     _render();
   }
 
+  void _onRemoteSourcesChanged() {
+    if (mounted) {
+      _render();
+    }
+  }
+
   html.IFrameElement _createIframe() {
     final iframe = html.IFrameElement()
       ..style.width = '100%'
@@ -281,7 +297,7 @@ class _HtmlPageStageState extends State<HtmlPageStage> {
       ..style.top = '0'
       ..style.left = '0'
       ..style.border = '0'
-      ..style.backgroundColor = 'transparent'
+      ..style.backgroundColor = '#FFFFFF'
       ..style.pointerEvents = 'none'
       ..setAttribute('scrolling', 'no');
     if (widget.onTap != null) {
@@ -315,6 +331,11 @@ class _HtmlPageStageState extends State<HtmlPageStage> {
     if (pendingLoadSubscription != null) {
       unawaited(pendingLoadSubscription.cancel());
     }
+    final initialLoadSubscription = _initialLoadSubscription;
+    if (initialLoadSubscription != null) {
+      unawaited(initialLoadSubscription.cancel());
+    }
+    _initialLoadTimer?.cancel();
     _pendingIframeElement?.remove();
     final tapSubscription = _tapSubscription;
     if (tapSubscription != null) {
@@ -337,11 +358,18 @@ class _HtmlPageStageState extends State<HtmlPageStage> {
       imageSourcesById: RemoteImageSources.all,
     );
 
-    // İlk sahnede değiştirecek eski bir kare yoktur; doğrudan yükle.
+    // İlk sahnede değiştirecek eski bir kare yoktur; yükle.
     if (!_hasRendered) {
       _hasRendered = true;
       _iframeElement.style.pointerEvents =
           widget.renderMode == HtmlStageRenderMode.full ? 'auto' : 'none';
+      _initialLoadSubscription = _iframeElement.onLoad.listen((_) {
+        _initialLoadTimer?.cancel();
+        _iframeElement.style.opacity = '1';
+      });
+      _initialLoadTimer = Timer(const Duration(milliseconds: 50), () {
+        _iframeElement.style.opacity = '1';
+      });
       _iframeElement.srcdoc = document;
       return;
     }

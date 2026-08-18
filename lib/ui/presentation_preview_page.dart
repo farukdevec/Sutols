@@ -88,9 +88,10 @@ class _PresentationPreviewPageState extends State<PresentationPreviewPage>
         !widget.controller.effectSettings.reducedMotion;
     final generation = ++_transitionGeneration;
     _activeTransitionGeneration = generation;
-    _pageTransitionController.duration = Duration(
+    final duration = Duration(
       milliseconds: widget.controller.effectSettings.transitionDurationMs,
     );
+    _pageTransitionController.duration = duration;
     _pageTransitionController.value = shouldAnimate ? 0 : 1;
     setState(() {
       _transitionFromPage = previousPage;
@@ -108,6 +109,13 @@ class _PresentationPreviewPageState extends State<PresentationPreviewPage>
       setState(() => _transitionFromPage = null);
       return;
     }
+    // Safety timer: ensure transition state always cleanly resolves
+    Future.delayed(duration + const Duration(milliseconds: 100), () {
+      if (!mounted || generation != _transitionGeneration) return;
+      if (_transitionFromPage != null) {
+        setState(() => _transitionFromPage = null);
+      }
+    });
   }
 
   void _startLoadedTransition() {
@@ -1532,7 +1540,7 @@ Widget _buildPreviewTransition({
         child: SizeTransition(
           sizeFactor: curved,
           axis: Axis.horizontal,
-          alignment: Alignment.center,
+          axisAlignment: 0.0,
           child: child,
         ),
       );

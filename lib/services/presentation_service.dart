@@ -6,7 +6,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:http/http.dart' as http;
 
 import '../state/presentation_controller.dart';
+import 'deepseek_presentation_service.dart';
 import 'fallback_slide_generator.dart';
+import 'grok_presentation_service.dart';
 import 'gemini_presentation_service.dart';
 import 'nvidia_presentation_service.dart';
 import 'layout_service.dart';
@@ -30,7 +32,7 @@ class PresentationGenerationResult {
   final String presentationId;
   final PresentationController controller;
 
-  /// AI (Gemini) çalışmadığında kelime tabanlı yedek kullanıldıysa true.
+  /// AI (DeepSeek/Nvidia/Gemini/Grok) çalışmadığında kelime tabanlı yedek kullanıldıysa true.
   final bool usedFallback;
 }
 
@@ -51,6 +53,7 @@ class PresentationService {
 
   final _nvidia = NvidiaPresentationService();
   final _gemini = GeminiPresentationService();
+  final _grok = GrokPresentationService();
   final _matcher = ModelMatchingService();
   final _layout = LayoutService();
 
@@ -66,7 +69,7 @@ class PresentationService {
       throw Exception('Slayt sayısı 1 ile 30 arasında olmalıdır.');
     }
 
-    // 0. Günlük kota kontrolü (Gemini çağrısından önce)
+    // 0. Günlük kota kontrolü (AI çağrısından önce)
     final userDoc =
         await FirebaseFirestore.instance.collection('users').doc(userId).get();
     final tier = userDoc.data()?['tier'] as String? ?? 'free';
@@ -84,13 +87,8 @@ class PresentationService {
           'Günlük sunum oluşturma hakkınız doldu. Yarın tekrar deneyin veya planınızı yükseltin.');
     }
 
-    // Model kataloğu AI içeriği üretilirken paralel yüklensin. Normalde bu
-    // ağ isteği AI yanıtından sonra başlıyor ve kullanıcıya ek bekleme olarak
-    // yansıyordu. Repository aynı devam eden isteği paylaştığı için ikinci bir
-    // Firestore okuması oluşturmaz.
     final modelCatalogWarmup = ModelRepository.instance.getModels();
-    // 1. NVIDIA / Cloudflare'dan slayt içeriklerini al
-    // Çalışmazsa Gemini'ye, o da çalışmazsa kelime tabanlı yedeğe düş
+    // 1. NVIDIA -> Gemini -> Grok -> Kelime tabanlı yedek sıralaması ile slayt içeriklerini al
     // ignore: avoid_print
     print('ADIM 1: NVIDIA çağrısı başlıyor');
     GeminiPresentation resultPresentation;
@@ -112,18 +110,39 @@ class PresentationService {
       _ensureContentQuality(resultPresentation, provider: 'NVIDIA');
     } catch (e) {
       // ignore: avoid_print
-      print('NVIDIA/Cloudflare HATASI: $e — Gemini deneniyor');
+      print('NVIDIA HATASI: $e — Gemini deneniyor');
       try {
         resultPresentation =
             await _gemini.generatePresentation(topic, slideCount: slideCount);
         _ensureContentQuality(resultPresentation, provider: 'Gemini');
       } catch (e2) {
         // ignore: avoid_print
-        print(
-            'AI HATASI (Gemini vb.): $e2 — kelime tabanlı yedek kullanılıyor');
-        usedFallback = true;
-        resultPresentation = FallbackSlideGenerator.generatePresentation(topic,
-            slideCount: slideCount);
+        print('Gemini HATASI: $e2 — Grok deneniyor');
+        try {
+          final grokResult =
+              await _grok.generatePresentation(topic, slideCount: slideCount);
+          resultPresentation = GeminiPresentation(
+            slides: grokResult.slides
+                .map(
+                  (slide) => GeminiSlide(
+                    title: slide.title,
+                    content: slide.content,
+                    keywords: slide.keywords,
+                  ),
+                )
+                .toList(growable: false),
+          );
+          _ensureContentQuality(resultPresentation, provider: 'Grok');
+        } catch (e3) {
+          // ignore: avoid_print
+          print(
+              'AI HATASI (Nvidia, Gemini, Grok): $e3 — kelime tabanlı yedek kullanılıyor');
+          usedFallback = true;
+          resultPresentation = FallbackSlideGenerator.generatePresentation(
+            topic,
+            slideCount: slideCount,
+          );
+        }
       }
     }
     if (resultPresentation.slides.length != slideCount) {
@@ -175,6 +194,8 @@ class PresentationService {
       );
 
       if (selectedModel == null && allAvailableCatalog.isNotEmpty) {
+        // Aşama 2: Slayt bazlı eşleşme yoksa, sunumun genel konu başlığı
+        // kelimelerine göre katalogda ara.
         final topicMatches = ModelMatchingService.rankCatalogModels(
           models: allAvailableCatalog,
           keywords: PresentationKeywordCatalog.words(topic),
@@ -184,27 +205,20 @@ class PresentationService {
           usedModelIds,
         );
 
-        if (selectedModel == null) {
-          for (final entry in allAvailableCatalog) {
-            if (!usedModelIds.contains(entry.id)) {
-              selectedModel = ModelMatch(
-                id: entry.id,
-                name: entry.name,
-                modelUrl: entry.modelUrl,
-                thumbnailUrl: entry.thumbnailUrl,
-                score: 1,
-              );
-              break;
-            }
-          }
-          selectedModel ??= ModelMatch(
-            id: allAvailableCatalog.first.id,
-            name: allAvailableCatalog.first.name,
-            modelUrl: allAvailableCatalog.first.modelUrl,
-            thumbnailUrl: allAvailableCatalog.first.thumbnailUrl,
-            score: 1,
-          );
-        }
+        // ÖNEMLİ: Burada BİLİNÇLİ OLARAK "hiçbir şey eşleşmezse kataloktan
+        // rastgele/ilk kullanılmamış modeli zorla seç" adımı YOK.
+        //
+        // Önceki sürümde tam bu noktada, gerçek bir eşleşme bulunamadığında
+        // bile kataloktaki ilk kullanılmamış model koşulsuz seçiliyordu. Bu
+        // yüzden "Türk Kahvesinin Gelişimi" gibi bir slayta, sadece kataloğun
+        // ilk sırasında olduğu için "Embriyo Gelişimi" gibi tamamen alakasız
+        // bir model atanabiliyordu.
+        //
+        // Artık gerçekten alakalı bir model bulunamazsa `selectedModel`
+        // null kalır ve aşağıdaki `_layout.decideLayout(selectedModels)`
+        // boş model listesiyle çağrılarak mimarideki Aşama 4'e (2D bileşen
+        // düzenine düşme) geçilir. Bu, "alakasız 3B model" göstermekten
+        // her zaman daha iyidir.
       }
 
       final selectedModels = selectedModel == null
@@ -233,7 +247,7 @@ class PresentationService {
     }
 
     // 2b. Düzenlenebilir deck'i oluştur (metin sol, 3B modeller sağ)
-    final controller = PresentationDeckBuilder.buildController(
+    final controller = await PresentationDeckBuilder.buildControllerAsync(
       topic: topic,
       slides: deckSlides,
     );

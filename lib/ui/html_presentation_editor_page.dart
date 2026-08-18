@@ -5036,11 +5036,14 @@ class _HtmlPageCard extends StatelessWidget {
                 aspectRatio: controller.effectSettings.calculatedAspectRatio,
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(6),
-                  child: IgnorePointer(
-                    child: HtmlPageStage(
-                      key: ValueKey<String>('page-thumbnail-${page.id}'),
-                      page: page,
-                      renderMode: HtmlStageRenderMode.snapshot,
+                  child: DecoratedBox(
+                    decoration: const BoxDecoration(color: Colors.white),
+                    child: IgnorePointer(
+                      child: HtmlPageStage(
+                        key: ValueKey<String>('page-thumbnail-${page.id}'),
+                        page: page,
+                        renderMode: HtmlStageRenderMode.snapshot,
+                      ),
                     ),
                   ),
                 ),
@@ -6179,7 +6182,17 @@ class _HtmlTransitionControls extends StatelessWidget {
     PresentationTransitionKind.cover,
     PresentationTransitionKind.uncover,
     PresentationTransitionKind.zoom,
+    PresentationTransitionKind.convex,
+    PresentationTransitionKind.concave,
     PresentationTransitionKind.flip,
+    PresentationTransitionKind.cube3d,
+    PresentationTransitionKind.morph,
+    PresentationTransitionKind.parallax,
+    PresentationTransitionKind.elastic,
+    PresentationTransitionKind.glitch,
+    PresentationTransitionKind.prism,
+    PresentationTransitionKind.radialWipe,
+    PresentationTransitionKind.rotateZoom,
   ];
 
   @override
@@ -6187,6 +6200,10 @@ class _HtmlTransitionControls extends StatelessWidget {
     final selectedGapIndex = controller.pages.length < 2
         ? -1
         : controller.selectedIndex.clamp(0, controller.pages.length - 2);
+    final activeKind = selectedGapIndex >= 0
+        ? controller.transitionAfterPage(selectedGapIndex)
+        : controller.effectSettings.transitionKind;
+
     return LayoutBuilder(
       builder: (context, constraints) {
         final columns = constraints.maxWidth >= 760 ? 2 : 1;
@@ -6197,20 +6214,54 @@ class _HtmlTransitionControls extends StatelessWidget {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            Text(
-              'Popüler Geçişler',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: context._htmlInk,
-                    fontWeight: FontWeight.w900,
+            Row(
+              children: <Widget>[
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Text(
+                        'Slayt Geçişleri',
+                        style:
+                            Theme.of(context).textTheme.titleMedium?.copyWith(
+                                  color: context._htmlInk,
+                                  fontWeight: FontWeight.w900,
+                                ),
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        selectedGapIndex >= 0
+                            ? '${selectedGapIndex + 1}. Slayt sonrasındaki geçiş efekti'
+                            : 'Tüm slaytlar için varsayılan geçiş efekti',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: context._htmlMuted,
+                              fontWeight: FontWeight.w600,
+                            ),
+                      ),
+                    ],
                   ),
-            ),
-            const SizedBox(height: 3),
-            Text(
-              'Geçiş kullanma veya popüler efektlerden birini seç.',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: context._htmlMuted,
-                    fontWeight: FontWeight.w600,
+                ),
+                if (controller.pages.length > 1)
+                  FilledButton.tonalIcon(
+                    onPressed: () {
+                      controller.applyTransitionToAllPages(activeKind);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            '${presentationTransitionLabel(activeKind)} geçişi tüm slaytlara uygulandı.',
+                          ),
+                          behavior: SnackBarBehavior.floating,
+                          duration: const Duration(seconds: 2),
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.copy_all_rounded, size: 16),
+                    label: const Text(
+                      'Tümüne Uygula',
+                      style: TextStyle(fontSize: 12),
+                    ),
                   ),
+              ],
             ),
             const SizedBox(height: 12),
             Container(
@@ -6260,8 +6311,8 @@ class _HtmlTransitionControls extends StatelessWidget {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: <Widget>[
-                        Text('Hızlı', style: TextStyle(fontSize: 11)),
-                        Text('Yavaş', style: TextStyle(fontSize: 11)),
+                        Text('Hızlı (0.2s)', style: TextStyle(fontSize: 11)),
+                        Text('Yavaş (3.0s)', style: TextStyle(fontSize: 11)),
                       ],
                     ),
                   ),
@@ -6277,9 +6328,10 @@ class _HtmlTransitionControls extends StatelessWidget {
                     width: cardWidth,
                     child: _TransitionLibraryCard(
                       kind: kind,
-                      isSelected: selectedGapIndex >= 0 &&
-                          controller.transitionAfterPage(selectedGapIndex) ==
-                              kind,
+                      isSelected: selectedGapIndex >= 0
+                          ? controller.transitionAfterPage(selectedGapIndex) ==
+                              kind
+                          : controller.effectSettings.transitionKind == kind,
                       onTap: () {
                         if (selectedGapIndex >= 0) {
                           controller.updateTransitionAfterPage(
@@ -8532,9 +8584,10 @@ class _HtmlStageCardState extends State<_HtmlStageCard>
     }
     final kind = widget.controller.transitionAfterPage(gap);
     if (kind == PresentationTransitionKind.none) return;
-    _transitionPreviewController.duration = Duration(
+    final duration = Duration(
       milliseconds: widget.controller.effectSettings.transitionDurationMs,
     );
+    _transitionPreviewController.duration = duration;
     setState(() {
       _transitionPreviewFrom = widget.controller.pages[gap];
       _transitionPreviewTo = widget.controller.pages[gap + 1];
@@ -8547,6 +8600,16 @@ class _HtmlStageCardState extends State<_HtmlStageCard>
         _transitionPreviewTo = null;
         _transitionPreviewKind = null;
       });
+    });
+    Future.delayed(duration + const Duration(milliseconds: 100), () {
+      if (!mounted) return;
+      if (_transitionPreviewFrom != null) {
+        setState(() {
+          _transitionPreviewFrom = null;
+          _transitionPreviewTo = null;
+          _transitionPreviewKind = null;
+        });
+      }
     });
   }
 
@@ -8615,37 +8678,35 @@ class _HtmlStageCardState extends State<_HtmlStageCard>
             // gösteriyordu. Sunum modundaki gerçek geçişler ayrı akıştadır.
             child: ClipRRect(
               borderRadius: BorderRadius.circular(28),
-              child: Stack(
-                fit: StackFit.expand,
-                children: <Widget>[
-                  IgnorePointer(
-                    child: HtmlPageStage(
-                      page: widget.controller.selectedPage,
-                      selectedTextBlockId:
-                          widget.controller.selectedTextBlockId,
-                      inlineEditingTextBlockId: _inlineEditingTextBlockId,
-                      selectedComponentBlockId:
-                          widget.controller.selectedComponentBlockId,
-                      renderMode: reduceMotion
-                          ? HtmlStageRenderMode.snapshot
-                          : HtmlStageRenderMode.preview,
+              child: DecoratedBox(
+                decoration: const BoxDecoration(color: Colors.white),
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: <Widget>[
+                    IgnorePointer(
+                      child: HtmlPageStage(
+                        page: widget.controller.selectedPage,
+                        selectedTextBlockId:
+                            widget.controller.selectedTextBlockId,
+                        inlineEditingTextBlockId: _inlineEditingTextBlockId,
+                        selectedComponentBlockId:
+                            widget.controller.selectedComponentBlockId,
+                        renderMode: reduceMotion
+                            ? HtmlStageRenderMode.snapshot
+                            : HtmlStageRenderMode.preview,
+                      ),
                     ),
-                  ),
                   if (_transitionPreviewFrom != null &&
                       _transitionPreviewTo != null &&
                       _transitionPreviewKind != null)
                     Positioned.fill(
                       child: IgnorePointer(
-                        child: AnimatedBuilder(
-                          animation: _transitionPreviewController,
-                          builder: (context, _) => _EditorTransitionPreview(
-                            from: _transitionPreviewFrom!,
-                            to: _transitionPreviewTo!,
-                            kind: _transitionPreviewKind!,
-                            progress: Curves.easeInOut.transform(
-                              _transitionPreviewController.value,
-                            ),
-                          ),
+                        child: _EditorTransitionPreview(
+                          from: _transitionPreviewFrom!,
+                          to: _transitionPreviewTo!,
+                          kind: _transitionPreviewKind!,
+                          durationMs: widget
+                              .controller.effectSettings.transitionDurationMs,
                         ),
                       ),
                     ),
@@ -8797,7 +8858,8 @@ class _HtmlStageCardState extends State<_HtmlStageCard>
                 ],
               ),
             ),
-          );
+          ),
+        );
           return Center(
             child: zoom > 1.0001 || pan != Offset.zero
                 ? Transform.translate(
@@ -8821,128 +8883,23 @@ class _EditorTransitionPreview extends StatelessWidget {
     required this.from,
     required this.to,
     required this.kind,
-    required this.progress,
+    required this.durationMs,
   });
 
   final PresentationPage from;
   final PresentationPage to;
   final PresentationTransitionKind kind;
-  final double progress;
+  final int durationMs;
 
   @override
-  Widget build(BuildContext context) {
-    final outgoing = _page(from);
-    final incoming = _page(to);
-    final t = progress.clamp(0.0, 1.0);
-
-    switch (kind) {
-      case PresentationTransitionKind.none:
-        return incoming;
-      case PresentationTransitionKind.fade:
-      case PresentationTransitionKind.smooth:
-        return Stack(
-          fit: StackFit.expand,
-          children: <Widget>[
-            Opacity(opacity: 1 - t, child: outgoing),
-            Opacity(opacity: t, child: incoming),
-          ],
-        );
-      case PresentationTransitionKind.slide:
-        return Stack(
-          fit: StackFit.expand,
-          children: <Widget>[
-            FractionalTranslation(
-              translation: Offset(-t, 0),
-              child: outgoing,
-            ),
-            FractionalTranslation(
-              translation: Offset(1 - t, 0),
-              child: incoming,
-            ),
-          ],
-        );
-      case PresentationTransitionKind.cover:
-        return Stack(
-          fit: StackFit.expand,
-          children: <Widget>[
-            outgoing,
-            FractionalTranslation(
-              translation: Offset(1 - t, 0),
-              child: incoming,
-            ),
-          ],
-        );
-      case PresentationTransitionKind.uncover:
-        return Stack(
-          fit: StackFit.expand,
-          children: <Widget>[
-            incoming,
-            FractionalTranslation(
-              translation: Offset(-t, 0),
-              child: outgoing,
-            ),
-          ],
-        );
-      case PresentationTransitionKind.wipe:
-        return Stack(
-          fit: StackFit.expand,
-          children: <Widget>[
-            outgoing,
-            ClipRect(
-              child: Align(
-                alignment: Alignment.centerLeft,
-                widthFactor: t,
-                child: incoming,
-              ),
-            ),
-          ],
-        );
-      case PresentationTransitionKind.split:
-        return Stack(
-          fit: StackFit.expand,
-          children: <Widget>[
-            outgoing,
-            ClipRect(
-              child: Align(
-                alignment: Alignment.center,
-                widthFactor: t,
-                child: incoming,
-              ),
-            ),
-          ],
-        );
-      case PresentationTransitionKind.reveal:
-        return Stack(
-          fit: StackFit.expand,
-          children: <Widget>[
-            outgoing,
-            FractionalTranslation(
-              translation: Offset(0, 1 - t),
-              child: incoming,
-            ),
-          ],
-        );
-      default:
-        return Stack(
-          fit: StackFit.expand,
-          children: <Widget>[
-            Opacity(opacity: 1 - t, child: outgoing),
-            Opacity(
-              opacity: t,
-              child: Transform.scale(
-                scale: .88 + (.12 * t),
-                child: incoming,
-              ),
-            ),
-          ],
-        );
-    }
-  }
-
-  Widget _page(PresentationPage page) => HtmlPageStage(
-        key: ValueKey<String>('transition-preview-${page.id}'),
-        page: page,
-        renderMode: HtmlStageRenderMode.preview,
+  Widget build(BuildContext context) => HtmlPageTransitionStage(
+        key: ValueKey<String>(
+          'editor-transition-${from.id}-${to.id}-${kind.name}',
+        ),
+        from: from,
+        to: to,
+        kind: kind,
+        durationMs: durationMs,
       );
 }
 
@@ -10934,7 +10891,10 @@ class _AnimationPane extends StatelessWidget {
             physics: const NeverScrollableScrollPhysics(),
             buildDefaultDragHandles: false,
             itemCount: items.length,
-            onReorderItem: (oldIndex, newIndex) {
+            onReorder: (oldIndex, newIndex) {
+              if (oldIndex < newIndex) {
+                newIndex -= 1;
+              }
               final ids = items.map((item) => item.id).toList();
               final moved = ids.removeAt(oldIndex);
               ids.insert(newIndex, moved);

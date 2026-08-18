@@ -26,3 +26,10 @@ coverage/
 **/*adminsdk*.json
 **/*service-account*.json
 functions/sutols-firebase-adminsdk-*.json
+
+# Environment & Secret files (Never commit to GitHub)
+.env
+.env.*
+*.env
+lib/env_config.dart
+

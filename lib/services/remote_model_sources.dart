@@ -1,4 +1,7 @@
+import 'package:flutter/foundation.dart';
+
 import '../models/presentation_3d_model_catalog.dart';
+import 'model_asset_service.dart';
 
 /// Eşleştirilen Firestore modellerinin sahne (model-viewer) tarafından
 /// çözülebilmesi için global kaynak kayıt defteri.
@@ -9,14 +12,24 @@ class RemoteModelSources {
   RemoteModelSources._();
 
   static final Map<String, String> _sources = <String, String>{};
+  static final ValueNotifier<int> revision = ValueNotifier<int>(0);
 
   static Map<String, String> get all =>
       Map<String, String>.unmodifiable(_sources);
 
   static void registerAll(Map<String, String> sources) {
+    var changed = false;
     for (final entry in sources.entries) {
       if (entry.key.trim().isEmpty || entry.value.trim().isEmpty) continue;
-      _sources[entry.key] = entry.value.trim();
+      final k = entry.key.trim();
+      final v = entry.value.trim();
+      if (_sources[k] != v) {
+        _sources[k] = v;
+        changed = true;
+      }
+    }
+    if (changed) {
+      revision.value += 1;
     }
   }
 
@@ -26,9 +39,10 @@ class RemoteModelSources {
     final registered = _sources[key];
     if (registered != null && registered.isNotEmpty) {
       if (registered.startsWith('assets/') ||
-          registered.startsWith('packages/') ||
-          registered.contains('token=') ||
-          registered.contains('sig=')) {
+          registered.startsWith('packages/')) {
+        return true;
+      }
+      if (ModelAssetService.isSignedUrlValid(registered)) {
         return true;
       }
     }

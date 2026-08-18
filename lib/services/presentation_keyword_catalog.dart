@@ -23,6 +23,53 @@ class PresentationKeywordCatalog {
         .toList(growable: false);
   }
 
+  /// Sunum metinlerinde sık geçen ama HİÇBİR modele özgü olmayan, ayırt
+  /// edicilik gücü ~0 olan "jenerik/dolgu" kelimeler.
+  ///
+  /// Bu liste olmadan "gelişim", "tarih", "farklı" gibi kelimeler slayt
+  /// konusuyla tamamen alakasız modelleri tetikleyebiliyordu — örn.
+  /// "Türk Kahvesinin Gelişimi" slaytı sadece "gelişim" kelimesi ortak
+  /// olduğu için "Embriyo Gelişimi" modeliyle eşleşiyordu. Bu kelimeler
+  /// eşleştirme skoruna hiç katkı sağlamamalı.
+  static const Set<String> genericStopwords = <String>{
+    // Soyut/İlerleme kelimeleri
+    'gelisim', 'gelisimi', 'gelisimini', 'gelisimine', 'gelisimiyle',
+    'surec', 'sureci', 'surecinde', 'donem', 'donemi', 'donemine',
+    // Önem / genellik / fark
+    'onemli', 'onemi', 'onemine', 'farkli', 'farklari', 'farklilik',
+    'genel', 'genelde', 'geneli', 'genellikle',
+    // Zaman / mekan / kapsam dolgu kelimeleri
+    'dunya', 'dunyada', 'dunyanin', 'dunyasi', 'dunyayla',
+    'tarih', 'tarihi', 'tarihte', 'tarihinde', 'tarihsel',
+    'yuzyil', 'yuzyilda', 'yuzyilin', 'gunumuzde', 'gunumuz', 'bugun', 'bugunku',
+    // Konu / yapı dolgu kelimeleri
+    'konu', 'konusu', 'konusunda', 'alan', 'alani',
+    'yapi', 'yapisi', 'sistem', 'sistemi', 'temel', 'temeli',
+    'cesit', 'cesidi', 'cesitleri', 'tur', 'turu', 'turleri', 'turlerini', 'turleriyle',
+    'ornek', 'ornegi', 'ornekleri', 'ozellik', 'ozelligi', 'ozellikleri',
+    // Yaygın fiil/edat/bağlaç kalıpları
+    'ortaya', 'cikarmistir', 'cikmistir', 'olusturmustur', 'olusmustur',
+    'tuketilmektedir', 'tuketilir', 'tuketim', 'kullanilmaktadir', 'kullanilir',
+    'ile', 've', 'bir', 'bu', 'su', 'icin', 'gibi', 'olarak', 'olan',
+    'daha', 'cok', 'az', 'her', 'tum', 'butun', 'ise', 'ama', 'fakat',
+    'ancak', 'veya', 'ya', 'de', 'da', 'ki',
+  };
+
+  /// [normalizedWord] eşleştirme için kullanılamayacak kadar jenerik mi?
+  /// (2 karakter ve altı kelimeler de gürültü kabul edilir.)
+  static bool isGenericWord(String normalizedWord) {
+    return normalizedWord.length <= 2 || genericStopwords.contains(normalizedWord);
+  }
+
+  /// [normalizedText] içindeki jenerik olmayan, gerçekten ayırt edici
+  /// kelimeleri döner. Model eşleştirme sorgularında yalnızca bu kelimeler
+  /// kullanılmalıdır.
+  static List<String> significantWords(String normalizedText) {
+    return words(normalizedText)
+        .where((word) => !isGenericWord(word))
+        .toList(growable: false);
+  }
+
   static bool textMatchesKeyword(
     String normalizedText,
     String normalizedKeyword,

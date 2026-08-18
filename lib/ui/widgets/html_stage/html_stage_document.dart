@@ -4,6 +4,7 @@ import 'dart:ui' show Offset;
 
 import '../../../models/slide_model.dart';
 import '../../../services/local_google_fonts_css.dart';
+import '../../../services/model_asset_service.dart';
 import 'background_scene_sources.dart';
 
 enum HtmlStageRenderMode {
@@ -114,7 +115,7 @@ body.sutol-transition-playing .sutol-transition-frame{animation-play-state:runni
 @keyframes sutolInFade{from{opacity:0}to{opacity:1}}
 @keyframes sutolOutPush{from{transform:translateX(0)}to{transform:translateX(-100%)}}
 @keyframes sutolInPush{from{transform:translateX(100%)}to{transform:translateX(0)}}
-@keyframes sutolStay{from{transform:translateX(0);opacity:1}to{transform:translateX(0);opacity:1}}
+@keyframes sutolStay{from{transform:none;opacity:1}to{transform:none;opacity:1}}
 @keyframes sutolOutUncover{from{transform:translateX(0)}to{transform:translateX(-100%)}}
 @keyframes sutolInWipe{from{clip-path:inset(0 100% 0 0)}to{clip-path:inset(0)}}
 @keyframes sutolInSplit{from{clip-path:inset(0 50%)}to{clip-path:inset(0)}}
@@ -123,11 +124,40 @@ body.sutol-transition-playing .sutol-transition-frame{animation-play-state:runni
 @keyframes sutolInCube{from{transform:perspective(1400px) rotateY(90deg);opacity:0}to{transform:perspective(1400px) rotateY(0);opacity:1}}
 @keyframes sutolOutZoom{from{transform:scale(1);opacity:1}to{transform:scale(1.18);opacity:0}}
 @keyframes sutolInZoom{from{transform:scale(.82);opacity:0}to{transform:scale(1);opacity:1}}
+@keyframes sutolOutConvex{from{transform:scale(1);opacity:1}to{transform:scale(0.84);opacity:0}}
+@keyframes sutolInConvex{from{transform:scale(1.18);opacity:0}to{transform:scale(1);opacity:1}}
+@keyframes sutolOutConcave{from{transform:scale(1);opacity:1}to{transform:scale(1.18);opacity:0}}
+@keyframes sutolInConcave{from{transform:scale(0.84);opacity:0}to{transform:scale(1);opacity:1}}
+@keyframes sutolOutMorph{from{transform:scale(1);filter:blur(0px);opacity:1}to{transform:scale(1.08);filter:blur(12px);opacity:0}}
+@keyframes sutolInMorph{from{transform:scale(0.92);filter:blur(12px);opacity:0}to{transform:scale(1);filter:blur(0px);opacity:1}}
+@keyframes sutolOutParallax{from{transform:translateX(0);opacity:1}to{transform:translateX(-35%);opacity:0.35}}
+@keyframes sutolInParallax{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
+@keyframes sutolOutElastic{from{transform:scale(1);opacity:1}to{transform:scale(0.88);opacity:0}}
+@keyframes sutolInElastic{0%{transform:scale(0.78);opacity:0}70%{transform:scale(1.04);opacity:1}100%{transform:scale(1);opacity:1}}
+@keyframes sutolOutGlitch{0%{transform:translate(0);opacity:1}30%{transform:translate(-8px,4px);filter:hue-rotate(90deg)}60%{transform:translate(8px,-4px);filter:hue-rotate(-90deg)}100%{transform:translate(0);opacity:0}}
+@keyframes sutolInGlitch{0%{transform:translate(6px,-4px);opacity:0;filter:hue-rotate(180deg)}50%{transform:translate(-4px,2px);opacity:0.8;filter:hue-rotate(45deg)}100%{transform:translate(0);opacity:1;filter:none}}
+@keyframes sutolInRadialWipe{from{clip-path:circle(0% at 50% 50%)}to{clip-path:circle(100% at 50% 50%)}}
+@keyframes sutolOutRotateZoom{from{transform:scale(1) rotate(0deg);opacity:1}to{transform:scale(0.4) rotate(-14deg);opacity:0}}
+@keyframes sutolInRotateZoom{from{transform:scale(1.4) rotate(14deg);opacity:0}to{transform:scale(1) rotate(0deg);opacity:1}}
 </style></head><body>
 <div class="sutol-transition-frame sutol-transition-out">$fromMarkup</div>
 <div class="sutol-transition-frame sutol-transition-in">$toMarkup</div>
 <script>$sutolHtmlStageBackgroundScript\n$sutolHtmlStageComponentScript</script>
-<script>window.addEventListener('load',function(){requestAnimationFrame(function(){requestAnimationFrame(function(){document.body.classList.add('sutol-transition-playing')})})})</script>
+<script>
+function __sutolStartTransition(){
+  requestAnimationFrame(function(){
+    requestAnimationFrame(function(){
+      document.body.classList.add('sutol-transition-playing');
+    });
+  });
+}
+if(document.readyState==='complete'||document.readyState==='interactive'){
+  __sutolStartTransition();
+}else{
+  window.addEventListener('DOMContentLoaded',__sutolStartTransition);
+  window.addEventListener('load',__sutolStartTransition);
+}
+</script>
 </body></html>''';
 }
 
@@ -149,8 +179,20 @@ body.sutol-transition-playing .sutol-transition-frame{animation-play-state:runni
           'sutolOutCube',
           'sutolInCube'
         ),
+      PresentationTransitionKind.zoom => ('sutolOutZoom', 'sutolInZoom'),
+      PresentationTransitionKind.convex => ('sutolOutConvex', 'sutolInConvex'),
+      PresentationTransitionKind.concave => ('sutolOutConcave', 'sutolInConcave'),
+      PresentationTransitionKind.morph => ('sutolOutMorph', 'sutolInMorph'),
+      PresentationTransitionKind.parallax => ('sutolOutParallax', 'sutolInParallax'),
+      PresentationTransitionKind.elastic => ('sutolOutElastic', 'sutolInElastic'),
+      PresentationTransitionKind.glitch => ('sutolOutGlitch', 'sutolInGlitch'),
+      PresentationTransitionKind.prism => ('sutolOutMorph', 'sutolInMorph'),
+      PresentationTransitionKind.radialWipe => ('sutolStay', 'sutolInRadialWipe'),
+      PresentationTransitionKind.rotateZoom => (
+          'sutolOutRotateZoom',
+          'sutolInRotateZoom'
+        ),
       PresentationTransitionKind.none => ('sutolStay', 'sutolStay'),
-      _ => ('sutolOutZoom', 'sutolInZoom'),
     };
 
 String buildHtmlStageDocument({
@@ -326,7 +368,12 @@ String buildHtmlStageMarkup({
     final has3D = resolvableSource != null;
 
     if (is3D) {
-      final sourceHasToken = resolvableSource?.contains('token=') ?? false;
+      final sourceHasToken = resolvableSource != null && ModelAssetService.isSignedUrlValid(resolvableSource);
+      final assetKey = ModelAssetService.extractKey(resolvableSource ?? modelId);
+      final uri = resolvableSource != null ? Uri.tryParse(resolvableSource) : null;
+      final host = uri?.host ?? '';
+      final expires = uri?.queryParameters['expires'] ?? '';
+      print('[MODEL_DEBUG] modelId=$modelId assetKey=$assetKey authSuccess=${resolvableSource != null} signed=$sourceHasToken signedUrlExists=${resolvableSource != null} signedUrlHost=$host signedUrlExpiration=$expires rendererSrcHost=$host rendererSrcIsSigned=$sourceHasToken');
       print('[MODEL_RENDER] id=$modelId signed=$sourceHasToken');
     }
 
@@ -898,8 +945,6 @@ final Map<PresentationBackgroundKind, String> _escapedBackgroundScenes =
     <PresentationBackgroundKind, String>{};
 
 const String _stageStyles = '''
-@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Bungee&family=Caveat:wght@400;600;700&family=Chakra+Petch:wght@600;700&family=Cinzel:wght@600;700;800;900&family=Cormorant+Garamond:wght@400;600&family=Exo+2:wght@700;900&family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400;500;600;700;800&family=Manrope:wght@400;500&family=Marcellus&family=Michroma&family=Mulish:wght@400;500&family=Nunito+Sans:wght@400;500&family=Orbitron:wght@500;700;900&family=Oswald:wght@400;700&family=Playfair+Display:wght@400;700;800&family=Poppins:wght@500;600;700&family=Rajdhani:wght@400;600&family=Righteous&family=Share+Tech+Mono&family=Sora:wght@500;700&family=Space+Grotesk:wght@400;500;700&family=Space+Mono:wght@400;700&family=Syne:wght@700;800&family=Titillium+Web:wght@400;600&family=Tinos:wght@400;700&family=Arimo:wght@400;700&family=Cousine:wght@400;700&family=Carlito:wght@400;700&family=Caladea:wght@400;700&family=EB+Garamond:wght@400;700&family=Libre+Baskerville:wght@400;700&family=Alegreya:wght@400;700&family=PT+Serif:wght@400;700&family=Merriweather:wght@400;900&family=Lora:wght@400;700&family=Great+Vibes&family=Dancing+Script:wght@400;700&family=Pacifico&family=Lobster&family=Unbounded:wght@400;700&display=swap');
-
 $sutolLocalGoogleFontsCss
 
 html, body {

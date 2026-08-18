@@ -909,10 +909,35 @@ class PresentationController extends ChangeNotifier {
 
   void updateTransitionKind(PresentationTransitionKind value) {
     if (_effectSettings.transitionKind == value) {
+      if (value != PresentationTransitionKind.none && _pages.length > 1) {
+        _transitionPreviewGapIndex =
+            _selectedPageIndex.clamp(0, _pages.length - 2);
+        _transitionPreviewRevision += 1;
+        notifyListeners();
+      }
       return;
     }
     _recordUndo();
     _effectSettings = _effectSettings.copyWith(transitionKind: value);
+    if (value != PresentationTransitionKind.none && _pages.length > 1) {
+      _transitionPreviewGapIndex =
+          _selectedPageIndex.clamp(0, _pages.length - 2);
+      _transitionPreviewRevision += 1;
+    }
+    notifyListeners();
+  }
+
+  void applyTransitionToAllPages(PresentationTransitionKind value) {
+    _recordUndo();
+    _effectSettings = _effectSettings.copyWith(transitionKind: value);
+    for (var i = 0; i < _pages.length; i++) {
+      _pages[i] = _pages[i].copyWith(transitionAfter: value);
+    }
+    if (value != PresentationTransitionKind.none && _pages.length > 1) {
+      _transitionPreviewGapIndex =
+          _selectedPageIndex.clamp(0, _pages.length - 2);
+      _transitionPreviewRevision += 1;
+    }
     notifyListeners();
   }
 

@@ -1,0 +1,333 @@
+[
+  {
+    "name": "Smoke Test (Frontend) (1 Eşzamanlı Kullanıcı)",
+    "total_requests": 3,
+    "successful_requests": 3,
+    "failed_requests": 0,
+    "success_rate_pct": 100.0,
+    "duration_sec": 2.086406707763672,
+    "rps": 1.437878812810935,
+    "total_kb": 20.2412109375,
+    "latency_ms": {
+      "min": 124.82139997882769,
+      "median": 166.41669999808073,
+      "avg": 213.0847333270746,
+      "p90": 348.0161000043154,
+      "p95": 348.0161000043154,
+      "p99": 348.0161000043154,
+      "max": 348.0161000043154,
+      "std_dev": 96.9102592813369
+    },
+    "status_codes": {
+      "200": 3
+    },
+    "errors": {}
+  },
+  {
+    "name": "Smoke Test (Assets) (1 Eşzamanlı Kullanıcı)",
+    "total_requests": 3,
+    "successful_requests": 0,
+    "failed_requests": 3,
+    "success_rate_pct": 0.0,
+    "duration_sec": 0.7499964237213135,
+    "rps": 4.000019073577278,
+    "total_kb": 0.03515625,
+    "latency_ms": {
+      "min": 81.57390000997111,
+      "median": 84.42440000362694,
+      "avg": 158.2814000042466,
+      "p90": 308.8458999991417,
+      "p95": 308.8458999991417,
+      "p99": 308.8458999991417,
+      "max": 308.8458999991417,
+      "std_dev": 106.47153870585333
+    },
+    "status_codes": {
+      "401": 3
+    },
+    "errors": {
+      "HTTP 401": 3
+    }
+  },
+  {
+    "name": "Smoke Test (AI Proxy) (1 Eşzamanlı İstek)",
+    "total_requests": 1,
+    "successful_requests": 1,
+    "failed_requests": 0,
+    "success_rate_pct": 100.0,
+    "duration_sec": 3.3173043727874756,
+    "rps": 0.30144957701295183,
+    "total_kb": 2.4453125,
+    "latency_ms": {
+      "min": 3051.319199963473,
+      "median": 3051.319199963473,
+      "avg": 3051.319199963473,
+      "p90": 3051.319199963473,
+      "p95": 3051.319199963473,
+      "p99": 3051.319199963473,
+      "max": 3051.319199963473,
+      "std_dev": 0.0
+    },
+    "status_codes": {
+      "200": 1
+    },
+    "errors": {}
+  },
+  {
+    "name": "Aşama 1 - Frontend (100 Eşzamanlı Kullanıcı)",
+    "total_requests": 100,
+    "successful_requests": 100,
+    "failed_requests": 0,
+    "success_rate_pct": 100.0,
+    "duration_sec": 2.0190367698669434,
+    "rps": 49.528568024340686,
+    "total_kb": 5442.578125,
+    "latency_ms": {
+      "min": 395.9348000353202,
+      "median": 821.2184999720193,
+      "avg": 799.3266130017582,
+      "p90": 1134.358200011775,
+      "p95": 1189.2546999733895,
+      "p99": 1563.4731000172906,
+      "max": 1711.463800049387,
+      "std_dev": 308.33296766625506
+    },
+    "status_codes": {
+      "200": 100
+    },
+    "errors": {}
+  },
+  {
+    "name": "Aşama 1 - Asset Proxy (100 Eşzamanlı Kullanıcı)",
+    "total_requests": 100,
+    "successful_requests": 0,
+    "failed_requests": 100,
+    "success_rate_pct": 0.0,
+    "duration_sec": 0.8192746639251709,
+    "rps": 122.05918772209655,
+    "total_kb": 1.171875,
+    "latency_ms": {
+      "min": 360.0622999947518,
+      "median": 441.1141999880783,
+      "avg": 443.0135619995417,
+      "p90": 513.7565999757499,
+      "p95": 525.3797999466769,
+      "p99": 532.2760000126436,
+      "max": 534.3050999799743,
+      "std_dev": 51.31897898717349
+    },
+    "status_codes": {
+      "401": 100
+    },
+    "errors": {
+      "HTTP 401": 100
+    }
+  },
+  {
+    "name": "Aşama 1 - AI Proxy (100 VU Trafiği) (25 Eşzamanlı İstek)",
+    "total_requests": 50,
+    "successful_requests": 46,
+    "failed_requests": 4,
+    "success_rate_pct": 92.0,
+    "duration_sec": 33.68087410926819,
+    "rps": 1.4845220417317249,
+    "total_kb": 149.505859375,
+    "latency_ms": {
+      "min": 104.22380000818521,
+      "median": 4790.340600011405,
+      "avg": 9200.338761999737,
+      "p90": 22169.466599996667,
+      "p95": 26146.10689994879,
+      "p99": 30003.84949997533,
+      "max": 30003.84949997533,
+      "std_dev": 8482.330037238366
+    },
+    "status_codes": {
+      "200": 46,
+      "429": 4
+    },
+    "errors": {
+      "429 Too Many Requests (Rate Limit / Quota Exceeded)": 4
+    }
+  },
+  {
+    "name": "Aşama 2 - Frontend (250 Eşzamanlı Kullanıcı)",
+    "total_requests": 250,
+    "successful_requests": 250,
+    "failed_requests": 0,
+    "success_rate_pct": 100.0,
+    "duration_sec": 3.4314982891082764,
+    "rps": 72.85447315929336,
+    "total_kb": 13606.4453125,
+    "latency_ms": {
+      "min": 987.5586999696679,
+      "median": 1780.4187999572605,
+      "avg": 1786.7840263992548,
+      "p90": 2563.74599999981,
+      "p95": 2713.435900048353,
+      "p99": 2802.744699991308,
+      "max": 2984.993599995505,
+      "std_dev": 550.5312519613719
+    },
+    "status_codes": {
+      "200": 250
+    },
+    "errors": {}
+  },
+  {
+    "name": "Aşama 2 - Asset Proxy (250 Eşzamanlı Kullanıcı)",
+    "total_requests": 250,
+    "successful_requests": 0,
+    "failed_requests": 250,
+    "success_rate_pct": 0.0,
+    "duration_sec": 2.404223918914795,
+    "rps": 103.98365894007227,
+    "total_kb": 2.9296875,
+    "latency_ms": {
+      "min": 785.9942999784835,
+      "median": 1200.8482000092044,
+      "avg": 1272.6686547969002,
+      "p90": 1809.9191000219434,
+      "p95": 1930.9039000072517,
+      "p99": 2027.4245999753475,
+      "max": 2046.6019999585114,
+      "std_dev": 346.39308114334307
+    },
+    "status_codes": {
+      "401": 250
+    },
+    "errors": {
+      "HTTP 401": 250
+    }
+  },
+  {
+    "name": "Aşama 2 - AI Proxy (250 VU) (50 Eşzamanlı İstek)",
+    "total_requests": 100,
+    "successful_requests": 2,
+    "failed_requests": 98,
+    "success_rate_pct": 2.0,
+    "duration_sec": 26.07029414176941,
+    "rps": 3.8357833423820713,
+    "total_kb": 10.0458984375,
+    "latency_ms": {
+      "min": 103.18499995628372,
+      "median": 168.59369998564944,
+      "avg": 675.7801400008611,
+      "p90": 444.96400002390146,
+      "p95": 476.82239999994636,
+      "p99": 15956.36440004455,
+      "max": 25794.931199983694,
+      "std_dev": 2972.0083458284653
+    },
+    "status_codes": {
+      "429": 98,
+      "200": 2
+    },
+    "errors": {
+      "429 Too Many Requests (Rate Limit / Quota Exceeded)": 98
+    }
+  },
+  {
+    "name": "Aşama 3 - Frontend (400 Eşzamanlı Kullanıcı)",
+    "total_requests": 500,
+    "successful_requests": 500,
+    "failed_requests": 0,
+    "success_rate_pct": 100.0,
+    "duration_sec": 7.367958307266235,
+    "rps": 67.86140463185073,
+    "total_kb": 27212.890625,
+    "latency_ms": {
+      "min": 289.7289000102319,
+      "median": 2487.101699982304,
+      "avg": 2771.8143824000144,
+      "p90": 4548.603100003675,
+      "p95": 5092.8490000078455,
+      "p99": 5762.173800030723,
+      "max": 6836.93819999462,
+      "std_dev": 1241.887299245721
+    },
+    "status_codes": {
+      "200": 500
+    },
+    "errors": {}
+  },
+  {
+    "name": "Aşama 3 - Asset Proxy (400 Eşzamanlı Kullanıcı)",
+    "total_requests": 500,
+    "successful_requests": 0,
+    "failed_requests": 500,
+    "success_rate_pct": 0.0,
+    "duration_sec": 8.041918516159058,
+    "rps": 62.17421862647865,
+    "total_kb": 5.859375,
+    "latency_ms": {
+      "min": 1337.5416000490077,
+      "median": 1908.6781999794766,
+      "avg": 2454.007383200689,
+      "p90": 4957.946299982723,
+      "p95": 5914.80580001371,
+      "p99": 6182.903599983547,
+      "max": 6282.864399952814,
+      "std_dev": 1331.9263971443545
+    },
+    "status_codes": {
+      "401": 500
+    },
+    "errors": {
+      "HTTP 401": 500
+    }
+  },
+  {
+    "name": "Aşama 3 - AI Proxy (500 VU) (75 Eşzamanlı İstek)",
+    "total_requests": 150,
+    "successful_requests": 36,
+    "failed_requests": 114,
+    "success_rate_pct": 24.0,
+    "duration_sec": 28.67653727531433,
+    "rps": 5.230757066653397,
+    "total_kb": 123.0009765625,
+    "latency_ms": {
+      "min": 97.37029997631907,
+      "median": 172.30550001841038,
+      "avg": 3048.8491166666304,
+      "p90": 5891.362399968784,
+      "p95": 23698.348900012206,
+      "p99": 27404.213000030722,
+      "max": 28428.626900014933,
+      "std_dev": 6862.439002133963
+    },
+    "status_codes": {
+      "429": 114,
+      "200": 36
+    },
+    "errors": {
+      "429 Too Many Requests (Rate Limit / Quota Exceeded)": 114
+    }
+  },
+  {
+    "name": "AI Limit Tüketme & Stres Testi (Burst Stress)",
+    "total_requests": 50,
+    "successful_requests": 0,
+    "failed_requests": 50,
+    "success_rate_pct": 0.0,
+    "duration_sec": 1.1106722354888916,
+    "rps": 45.01778148617462,
+    "total_kb": 2.05078125,
+    "latency_ms": {
+      "min": 288.28320000320673,
+      "median": 379.1647999896668,
+      "avg": 409.7080060024746,
+      "p90": 508.21470003575087,
+      "p95": 790.5282999854535,
+      "p99": 843.5507999965921,
+      "max": 843.5507999965921,
+      "std_dev": 135.85191229498332
+    },
+    "status_codes": {
+      "429": 50
+    },
+    "errors": {
+      "429 Too Many Requests (Rate Limit / Quota Exceeded)": 50
+    }
+  }
+]
