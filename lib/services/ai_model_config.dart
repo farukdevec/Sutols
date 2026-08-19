@@ -1,5 +1,3 @@
-import 'dart:async';
-
 /// AI Hata Sınıfları
 enum AiErrorType {
   timeout,
@@ -27,7 +25,8 @@ class AiModelConfig {
   static const String modelGptOss20b = 'openai/gpt-oss-20b';
   static const String modelNemotronNano = 'nvidia/nemotron-3-nano-30b-a3b';
   static const String modelLlama31_8b = 'meta/llama-3.1-8b-instruct';
-  static const String modelNemotronUltra = 'nvidia/nemotron-3-ultra-550b-a55b'; // Yalnızca premium/deep reasoning için
+  static const String modelNemotronUltra =
+      'nvidia/nemotron-3-ultra-550b-a55b'; // Yalnızca premium/deep reasoning için
 
   static const String modelGeminiFlash = 'gemini-3.6-flash';
 
@@ -35,14 +34,15 @@ class AiModelConfig {
   static const String modelGrok45 = 'grok-4.5';
   static const String modelGrok46 = 'grok-4.6';
 
-  // Normal Üretim NVIDIA Aday Sırası (Super 120B -> GPT-OSS 120B -> Llama 3.3 70B -> GPT-OSS 20B -> Nano -> Llama 3.1 8B)
+  // Genel fallback sırası. NvidiaPresentationService canlı testte doğrulanan
+  // Nano modelini ayrıca seçili model olarak bunun önüne ekler.
   static const List<String> defaultNvidiaCandidateModels = [
-    modelNemotronSuper, // PRIMARY 120B
-    modelGptOss120b,    // PRIMARY 120B ALTERNATIVE
-    modelLlama33_70b,   // FALLBACK 70B
-    modelGptOss20b,     // FALLBACK 20B
-    modelNemotronNano,  // FALLBACK 30B
-    modelLlama31_8b,    // FALLBACK 8B
+    modelNemotronSuper,
+    modelGptOss120b,
+    modelLlama33_70b,
+    modelGptOss20b,
+    modelNemotronNano,
+    modelLlama31_8b,
   ];
 
   // Normal Üretim Grok Aday Sırası (Mayıs 2026 sonrası güncel modeller)
@@ -69,15 +69,32 @@ class AiModelConfig {
   /// Bir model için geçerli zaman aşımı süresini döndürür.
   static Duration timeoutForModel(String model, {int slideCount = 5}) {
     final scale = slideCount > 6 ? 1.3 : 1.0;
-    if (model.contains('super')) return Duration(milliseconds: (timeoutSuper.inMilliseconds * scale).toInt());
-    if (model.contains('gpt-oss-120b')) return Duration(milliseconds: (timeoutGptOss120b.inMilliseconds * scale).toInt());
-    if (model.contains('llama-3.3-70b')) return Duration(milliseconds: (timeoutLlama33.inMilliseconds * scale).toInt());
-    if (model.contains('gpt-oss-20b') || model.contains('gpt-oss')) return Duration(milliseconds: (timeoutGptOss20b.inMilliseconds * scale).toInt());
-    if (model.contains('nano')) return Duration(milliseconds: (timeoutNano.inMilliseconds * scale).toInt());
-    if (model.contains('llama-3.1-8b') || model.contains('llama')) return Duration(milliseconds: (timeoutLlama31.inMilliseconds * scale).toInt());
-    if (model.contains('gemini')) return Duration(milliseconds: (timeoutGemini.inMilliseconds * scale).toInt());
-    if (model.contains('grok')) return Duration(milliseconds: (timeoutGrok.inMilliseconds * scale).toInt());
-    return Duration(milliseconds: (timeoutDefaultNvidia.inMilliseconds * scale).toInt());
+    if (model.contains('super'))
+      return Duration(
+          milliseconds: (timeoutSuper.inMilliseconds * scale).toInt());
+    if (model.contains('gpt-oss-120b'))
+      return Duration(
+          milliseconds: (timeoutGptOss120b.inMilliseconds * scale).toInt());
+    if (model.contains('llama-3.3-70b'))
+      return Duration(
+          milliseconds: (timeoutLlama33.inMilliseconds * scale).toInt());
+    if (model.contains('gpt-oss-20b') || model.contains('gpt-oss'))
+      return Duration(
+          milliseconds: (timeoutGptOss20b.inMilliseconds * scale).toInt());
+    if (model.contains('nano'))
+      return Duration(
+          milliseconds: (timeoutNano.inMilliseconds * scale).toInt());
+    if (model.contains('llama-3.1-8b') || model.contains('llama'))
+      return Duration(
+          milliseconds: (timeoutLlama31.inMilliseconds * scale).toInt());
+    if (model.contains('gemini'))
+      return Duration(
+          milliseconds: (timeoutGemini.inMilliseconds * scale).toInt());
+    if (model.contains('grok'))
+      return Duration(
+          milliseconds: (timeoutGrok.inMilliseconds * scale).toInt());
+    return Duration(
+        milliseconds: (timeoutDefaultNvidia.inMilliseconds * scale).toInt());
   }
 
   /// HTTP durum kodunu `AiErrorType` olarak sınıflandırır.
@@ -158,7 +175,8 @@ class AiModelConfig {
 class AiRouterLogger {
   const AiRouterLogger._();
 
-  static void logRequestStart({required String topic, required int slideCount}) {
+  static void logRequestStart(
+      {required String topic, required int slideCount}) {
     // ignore: avoid_print
     print('''
 [AI ROUTER]
@@ -201,9 +219,15 @@ Latency: ${latency.inMilliseconds}ms''');
     String? details,
   }) {
     final keyLine = key != null && key.isNotEmpty ? 'Key: $key\n' : '';
-    final statusStr = status ?? (errorType != null ? AiModelConfig.errorTypeLabel(errorType) : 'FAILED');
-    final actionLine = action != null && action.isNotEmpty ? '\nAction: $action' : '';
-    final errorLine = error != null && error.isNotEmpty ? '\nError: $error' : (details != null && details.isNotEmpty ? '\nError: $details' : '');
+    final statusStr = status ??
+        (errorType != null
+            ? AiModelConfig.errorTypeLabel(errorType)
+            : 'FAILED');
+    final actionLine =
+        action != null && action.isNotEmpty ? '\nAction: $action' : '';
+    final errorLine = error != null && error.isNotEmpty
+        ? '\nError: $error'
+        : (details != null && details.isNotEmpty ? '\nError: $details' : '');
     // ignore: avoid_print
     print('''
 [AI ROUTER]

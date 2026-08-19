@@ -99,7 +99,8 @@ class _AiDraftPageState extends State<AiDraftPage> {
     });
 
     try {
-      final slides = await _aiService.generateSlides(topic, slideCount: slideCount);
+      final slides =
+          await _aiService.generateSlides(topic, slideCount: slideCount);
 
       final drafts = <PresentationDraftPage>[];
 
@@ -117,9 +118,9 @@ class _AiDraftPageState extends State<AiDraftPage> {
 
       // Generated slides
       drafts.addAll(slides.map((s) => PresentationDraftPage(
-        title: s.title,
-        body: s.body,
-      )));
+            title: s.title,
+            body: s.body,
+          )));
 
       // Analysis slides
       if (result.includeAnalysis) {
@@ -135,25 +136,33 @@ class _AiDraftPageState extends State<AiDraftPage> {
           if (analysis.swot.isNotEmpty) {
             drafts.add(PresentationDraftPage(
               title: 'SWOT Analizi',
-              body: analysis.swot.map((i) => '${i.title}: ${i.content}').join('\n\n'),
+              body: analysis.swot
+                  .map((i) => '${i.title}: ${i.content}')
+                  .join('\n\n'),
             ));
           }
           if (analysis.keyStatistics.isNotEmpty) {
             drafts.add(PresentationDraftPage(
               title: 'Önemli İstatistikler',
-              body: analysis.keyStatistics.map((i) => '${i.title}: ${i.content}').join('\n\n'),
+              body: analysis.keyStatistics
+                  .map((i) => '${i.title}: ${i.content}')
+                  .join('\n\n'),
             ));
           }
           if (analysis.trends.isNotEmpty) {
             drafts.add(PresentationDraftPage(
               title: 'Güncel Trendler',
-              body: analysis.trends.map((i) => '${i.title}: ${i.content}').join('\n\n'),
+              body: analysis.trends
+                  .map((i) => '${i.title}: ${i.content}')
+                  .join('\n\n'),
             ));
           }
           if (analysis.recommendations.isNotEmpty) {
             drafts.add(PresentationDraftPage(
               title: 'Öneriler',
-              body: analysis.recommendations.map((i) => '${i.title}: ${i.content}').join('\n\n'),
+              body: analysis.recommendations
+                  .map((i) => '${i.title}: ${i.content}')
+                  .join('\n\n'),
             ));
           }
         } catch (_) {}
@@ -168,9 +177,7 @@ class _AiDraftPageState extends State<AiDraftPage> {
       final builder = const PresentationAutoBuilder();
       final pages = builder.buildPages(drafts);
 
-      final effectSettings = PresentationEffectSettings(
-        transitionKind: PresentationTransitionKind.slide,
-      );
+      const effectSettings = PresentationEffectSettings();
 
       final controller = PresentationController();
       controller.replaceDeck(pages, effectSettings: effectSettings);
@@ -295,7 +302,8 @@ class _AiDraftPageState extends State<AiDraftPage> {
             TextField(
               controller: _topicController,
               decoration: const InputDecoration(
-                hintText: 'Orn: Yapay Zeka, Iklim Degisikligi, Uzay Kesifleri...',
+                hintText:
+                    'Orn: Yapay Zeka, Iklim Degisikligi, Uzay Kesifleri...',
                 border: OutlineInputBorder(),
                 prefixIcon: Icon(Icons.topic),
               ),
@@ -358,38 +366,45 @@ class _AiDraftPageState extends State<AiDraftPage> {
               Text('Kaynaklar', style: theme.textTheme.titleSmall),
               const SizedBox(height: 8),
               ..._researchResponse!.results.map((r) => Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.surface,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                      color: theme.dividerColor.withValues(alpha: 0.3),
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.surface,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: theme.dividerColor.withValues(alpha: 0.3),
+                        ),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            r.title,
+                            style: const TextStyle(
+                                fontWeight: FontWeight.w600, fontSize: 13),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            r.snippet,
+                            style: TextStyle(
+                                fontSize: 12,
+                                color: theme.colorScheme.onSurfaceVariant),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            r.url,
+                            style: TextStyle(
+                                fontSize: 11, color: theme.colorScheme.primary),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(r.title,
-                        style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(r.snippet,
-                        style: TextStyle(fontSize: 12, color: theme.colorScheme.onSurfaceVariant),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 2),
-                      Text(r.url,
-                        style: TextStyle(fontSize: 11, color: theme.colorScheme.primary),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  ),
-                ),
-              )),
+                  )),
             ],
           ],
         ),
@@ -399,15 +414,18 @@ class _AiDraftPageState extends State<AiDraftPage> {
 
   void _applyToEditorFromPreview() {
     if (_generatedSlides == null || _generatedSlides!.isEmpty) return;
-    final drafts = _generatedSlides!.map((s) => PresentationDraftPage(
-      title: s.title,
-      body: s.body,
-    )).toList();
+    final drafts = _generatedSlides!
+        .map((s) => PresentationDraftPage(
+              title: s.title,
+              body: s.body,
+            ))
+        .toList();
     final pages = const PresentationAutoBuilder().buildPages(drafts);
     final controller = PresentationController();
-    controller.replaceDeck(pages, effectSettings: const PresentationEffectSettings(
-      transitionKind: PresentationTransitionKind.slide,
-    ));
+    controller.replaceDeck(
+      pages,
+      effectSettings: const PresentationEffectSettings(),
+    );
     if (!mounted) return;
     Navigator.of(context).push<void>(
       MaterialPageRoute<void>(
@@ -440,9 +458,11 @@ class _AiDraftPageState extends State<AiDraftPage> {
               leading: CircleAvatar(
                 backgroundColor: theme.colorScheme.primaryContainer,
                 child: Text('${i + 1}',
-                    style: TextStyle(color: theme.colorScheme.onPrimaryContainer)),
+                    style:
+                        TextStyle(color: theme.colorScheme.onPrimaryContainer)),
               ),
-              title: Text(slide.title, style: const TextStyle(fontWeight: FontWeight.w600)),
+              title: Text(slide.title,
+                  style: const TextStyle(fontWeight: FontWeight.w600)),
               subtitle: Text(
                 slide.body.length > 100
                     ? '${slide.body.substring(0, 100)}...'
@@ -463,9 +483,11 @@ class _AiDraftPageState extends State<AiDraftPage> {
                         const Divider(),
                         Row(
                           children: [
-                            Icon(Icons.mic, size: 16, color: theme.colorScheme.outline),
+                            Icon(Icons.mic,
+                                size: 16, color: theme.colorScheme.outline),
                             const SizedBox(width: 4),
-                            Text('Sunucu Notu:', style: theme.textTheme.labelMedium),
+                            Text('Sunucu Notu:',
+                                style: theme.textTheme.labelMedium),
                           ],
                         ),
                         const SizedBox(height: 4),

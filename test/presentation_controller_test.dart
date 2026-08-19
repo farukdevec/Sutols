@@ -132,7 +132,7 @@ void main() {
     controller.undo();
     expect(
       controller.effectSettings.transitionKind,
-      PresentationTransitionKind.slide,
+      PresentationTransitionKind.none,
     );
 
     controller.redo();

@@ -316,12 +316,16 @@ class _HtmlPageStageState extends State<HtmlPageStage> {
   }
 
   void _applyVisualStyle() {
+    final hasCompositedEffect = widget.cssTransform != 'none' ||
+        widget.cssOpacity < 1 ||
+        widget.cssClipPath != null;
     _hostElement.style
       ..transform = widget.cssTransform
       ..transformOrigin = widget.cssTransformOrigin
       ..opacity = widget.cssOpacity.clamp(0.0, 1.0).toString()
       ..clipPath = widget.cssClipPath ?? 'none'
-      ..willChange = 'transform, opacity, clip-path';
+      ..willChange =
+          hasCompositedEffect ? 'transform, opacity, clip-path' : 'auto';
   }
 
   @override

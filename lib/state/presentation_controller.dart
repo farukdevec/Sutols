@@ -729,12 +729,6 @@ class PresentationController extends ChangeNotifier {
 
       updatedPage = updatedPage.copyWith(textBlocks: updatedTextBlocks);
 
-      // Update transition settings
-      _effectSettings = _effectSettings.copyWith(
-        transitionKind: config.transitionKind,
-        transitionDurationMs: config.transitionDurationMs,
-      );
-
       return updatedPage;
     }).toList(growable: false);
 

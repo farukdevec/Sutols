@@ -38,8 +38,8 @@ class PresentationKeywordCatalog {
     // Önem / genellik / fark
     'onemli', 'onemi', 'onemine', 'farkli', 'farklari', 'farklilik',
     'genel', 'genelde', 'geneli', 'genellikle',
-    // Zaman / mekan / kapsam dolgu kelimeleri
-    'dunya', 'dunyada', 'dunyanin', 'dunyasi', 'dunyayla',
+    // Zaman / mekan / kapsam dolgu kelimeleri. "Dünya" katalogda gerçek bir
+    // gezegen modelini ifade ettiği için jenerik kabul edilmez.
     'tarih', 'tarihi', 'tarihte', 'tarihinde', 'tarihsel',
     'yuzyil', 'yuzyilda', 'yuzyilin', 'gunumuzde', 'gunumuz', 'bugun', 'bugunku',
     // Konu / yapı dolgu kelimeleri

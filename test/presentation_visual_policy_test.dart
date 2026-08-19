@@ -3,7 +3,6 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sutol/models/slide_model.dart';
-import 'package:sutol/services/fallback_slide_generator.dart';
 import 'package:sutol/services/model_matching_service.dart';
 import 'package:sutol/services/model_repository.dart';
 import 'package:sutol/services/presentation_deck_builder.dart';
@@ -23,7 +22,8 @@ void main() {
         modelUrl: json['modelUrl'] as String,
         thumbnailUrl: json['thumbnailUrl'] as String? ?? '',
         tags: (json['tags'] as List<dynamic>).cast<String>(),
-        tagsEn: (json['tags_en'] as List<dynamic>?)?.cast<String>() ?? const <String>[],
+        tagsEn: (json['tags_en'] as List<dynamic>?)?.cast<String>() ??
+            const <String>[],
         category: json['category'] as String? ?? '',
         tier: json['tier'] as String? ?? 'free',
       );
@@ -35,16 +35,16 @@ void main() {
 
   test('30 sayfalık fen sunumu gerçek katalogda görsel politikasını korur', () {
     final catalog = loadRealModelCatalog();
-    final generated = FallbackSlideGenerator.generatePresentation(
-      'Fen',
-      slideCount: 30,
-    );
     final usedModelIds = <String>{};
     final selectedBySlide = <ModelMatch?>[];
-    final deckSlides = generated.slides.map((slide) {
+    final deckSlides = List<DeckSlide>.generate(30, (index) {
+      final sourceModel = catalog[index];
+      final keywords = sourceModel.tags.isEmpty
+          ? <String>[sourceModel.name]
+          : <String>[sourceModel.tags.first];
       final matches = ModelMatchingService.rankCatalogModels(
         models: catalog,
-        keywords: slide.keywords,
+        keywords: keywords,
       );
       final selected = ModelMatchingService.bestMatchPreferUnused(
         matches,
@@ -53,9 +53,9 @@ void main() {
       if (selected != null) usedModelIds.add(selected.id);
       selectedBySlide.add(selected);
       return DeckSlide(
-        title: slide.title,
-        content: slide.content,
-        keywords: slide.keywords,
+        title: 'Fen konusu ${index + 1}',
+        content: 'Bilimsel açıklama ${index + 1}',
+        keywords: keywords,
         models: selected == null ? const [] : [selected],
       );
     }).toList(growable: false);

@@ -60,6 +60,19 @@ TEMEL SUNUM ANLATI VE YAPI KURALLARI:
 - JSON dışında hiçbir markdown kod bloğu, düşünce süreci veya ek açıklama yazma.''';
   }
 
+  /// Plan çağrısı ayrıntılı slayt içeriği üretmez. Ayrıntı kurallarını plan
+  /// istemine eklemek küçük modellerin token bütçesini tüketip JSON'u yarıda
+  /// kesmesine neden olur.
+  static String buildOutlineSystemInstruction() {
+    return '''Sen tutarlı sunum akışı hazırlayan uzman bir planlayıcısın.
+- İstenen slayt sayısına kesinlikle uy.
+- Her slayt için farklı, kısa ve konuya özgü bir başlık yaz.
+- content alanına yalnızca o slaytta anlatılacak bilgiyi belirleyen tek kısa cümle yaz.
+- keywords alanına 3-5 somut ve konuya özgü anahtar kelime yaz.
+- Ayrıntılı açıklama, madde listesi, Markdown veya ek metin üretme.
+- Yanıtı yalnızca istenen geçerli JSON şemasında döndür.''';
+  }
+
   /// Konuya özgü dinamik kullanıcı istemi.
   static String buildUserPrompt({
     required String topic,

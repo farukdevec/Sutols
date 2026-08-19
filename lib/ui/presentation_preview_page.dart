@@ -617,7 +617,7 @@ class _PreviewStageWithOrbitState extends State<_PreviewStageWithOrbit> {
   }
 }
 
-class _SmoothModelMorphStage extends StatelessWidget {
+class _SmoothModelMorphStage extends StatefulWidget {
   const _SmoothModelMorphStage({
     super.key,
     required this.fromPage,
@@ -632,17 +632,72 @@ class _SmoothModelMorphStage extends StatelessWidget {
   final Duration duration;
 
   @override
-  Widget build(BuildContext context) {
-    return TweenAnimationBuilder<double>(
-      tween: Tween<double>(begin: 0, end: 1),
-      duration: duration,
+  State<_SmoothModelMorphStage> createState() => _SmoothModelMorphStageState();
+}
+
+class _SmoothModelMorphStageState extends State<_SmoothModelMorphStage>
+    with SingleTickerProviderStateMixin {
+  static const int _frameIntervalMicros = 1000000 ~/ 30;
+
+  late final AnimationController _controller;
+  late Animation<double> _progress;
+  int _lastFrameMicros = -_frameIntervalMicros;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(vsync: this, duration: widget.duration)
+      ..addListener(_handleTick);
+    _progress = CurvedAnimation(
+      parent: _controller,
       curve: SutolMotion.easeInOut,
-      builder: (context, progress, _) => HtmlPageStage(
-        page: _interpolateModelPages(fromPage, toPage, progress),
-        visibleRevealStep: visibleRevealStep,
-        showBadge: false,
-        renderMode: HtmlStageRenderMode.preview,
+    );
+    _controller.forward();
+  }
+
+  @override
+  void didUpdateWidget(covariant _SmoothModelMorphStage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.duration != widget.duration) {
+      _controller.duration = widget.duration;
+    }
+    if (oldWidget.fromPage != widget.fromPage ||
+        oldWidget.toPage != widget.toPage) {
+      _lastFrameMicros = -_frameIntervalMicros;
+      _controller.forward(from: 0);
+    }
+  }
+
+  void _handleTick() {
+    final elapsedMicros = _controller.lastElapsedDuration?.inMicroseconds ?? 0;
+    final isComplete = _controller.status == AnimationStatus.completed;
+    if (!isComplete &&
+        elapsedMicros - _lastFrameMicros < _frameIntervalMicros) {
+      return;
+    }
+    _lastFrameMicros = elapsedMicros;
+    if (mounted) setState(() {});
+  }
+
+  @override
+  void dispose() {
+    _controller
+      ..removeListener(_handleTick)
+      ..dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return HtmlPageStage(
+      page: _interpolateModelPages(
+        widget.fromPage,
+        widget.toPage,
+        _progress.value,
       ),
+      visibleRevealStep: widget.visibleRevealStep,
+      showBadge: false,
+      renderMode: HtmlStageRenderMode.preview,
     );
   }
 }

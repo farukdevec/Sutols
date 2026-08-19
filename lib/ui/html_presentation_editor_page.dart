@@ -2332,11 +2332,6 @@ class _HtmlMobileToolDock extends StatelessWidget {
                           Icons.music_note_rounded,
                           'Ses',
                         );
-                        add(
-                          _MobileMoreTool.stageDimensions,
-                          Icons.aspect_ratio_rounded,
-                          'Sahne Ölçüleri',
-                        );
                         return entries;
                       },
                       child: _MobileDockButton(
@@ -3980,13 +3975,6 @@ class _HtmlToolRail extends StatelessWidget {
               isSelected: activeTab == _HtmlToolTab.transitions,
               onTap: () => onTabChanged(_HtmlToolTab.transitions),
             ),
-            const SizedBox(width: 8),
-            _RailButton(
-              label: tr('Sahne Ölçüsü', 'Canvas Size'),
-              icon: Icons.aspect_ratio_rounded,
-              isSelected: activeTab == _HtmlToolTab.stageDimensions,
-              onTap: () => onTabChanged(_HtmlToolTab.stageDimensions),
-            ),
           ],
         ),
       ),
@@ -5274,13 +5262,6 @@ class _HtmlTabStrip extends StatelessWidget {
               icon: Icons.animation_rounded,
               isSelected: activeTab == _HtmlToolTab.transitions,
               onTap: () => onTabChanged(_HtmlToolTab.transitions),
-            ),
-            const SizedBox(width: 6),
-            _HtmlTabButton(
-              label: tr('Sahne Ölçüsü', 'Canvas Size'),
-              icon: Icons.aspect_ratio_rounded,
-              isSelected: activeTab == _HtmlToolTab.stageDimensions,
-              onTap: () => onTabChanged(_HtmlToolTab.stageDimensions),
             ),
           ],
         ),

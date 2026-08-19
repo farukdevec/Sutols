@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'package:meta/meta.dart';
 
 /// Güvenli, çok aşamalı JSON çıkarma ve doğrulama motoru.
 class SafeJsonParser {
@@ -110,12 +109,14 @@ class SafeJsonParser {
   static void validateSchema(Map<String, dynamic> json) {
     final rawSlides = json['slides'];
     if (rawSlides is! List || rawSlides.isEmpty) {
-      throw const FormatException('Şema Hatası: "slides" dizisi bulunamadı veya boş.');
+      throw const FormatException(
+          'Şema Hatası: "slides" dizisi bulunamadı veya boş.');
     }
     for (var i = 0; i < rawSlides.length; i++) {
       final item = rawSlides[i];
       if (item is! Map) {
-        throw FormatException('Şema Hatası: slides[$i] geçerli bir nesne değil.');
+        throw FormatException(
+            'Şema Hatası: slides[$i] geçerli bir nesne değil.');
       }
       final title = item['title'] ?? item['baslik'];
       final content = item['content'] ?? item['icerik'];
@@ -191,7 +192,14 @@ class SafeJsonParser {
       };
     }
 
-    for (final key in const ['output', '/output', 'text', 'content', 'result', 'response']) {
+    for (final key in const [
+      'output',
+      '/output',
+      'text',
+      'content',
+      'result',
+      'response'
+    ]) {
       if (decoded[key] is String) {
         final innerText = (decoded[key] as String).trim();
         final innerMap = _tryDecodeMap(innerText);
@@ -232,8 +240,17 @@ class SafeJsonParser {
 
   static Map<String, dynamic> _standardizeSlideMap(Map<String, dynamic> map) {
     final title = map['title'] ?? map['baslik'] ?? '';
-    final rawContent = map['content'] ?? map['icerik'] ?? map['bullets'] ?? map['maddeler'] ?? map['points'] ?? '';
-    final rawType = map['type'] ?? map['slide_type'] ?? map['layout'] ?? map['tip'] ?? 'cards';
+    final rawContent = map['content'] ??
+        map['icerik'] ??
+        map['bullets'] ??
+        map['maddeler'] ??
+        map['points'] ??
+        '';
+    final rawType = map['type'] ??
+        map['slide_type'] ??
+        map['layout'] ??
+        map['tip'] ??
+        'cards';
     final keywords = map['keywords'] ?? map['anahtar_kelimeler'] ?? <dynamic>[];
 
     return {
@@ -249,7 +266,8 @@ class SafeJsonParser {
   }
 
   static bool _looksLikeSlideObject(Map<String, dynamic> decoded) {
-    final hasTitle = decoded.containsKey('title') || decoded.containsKey('baslik');
+    final hasTitle =
+        decoded.containsKey('title') || decoded.containsKey('baslik');
     final hasContent = decoded.containsKey('content') ||
         decoded.containsKey('icerik') ||
         decoded.containsKey('bullets') ||
@@ -324,7 +342,8 @@ class SafeJsonParser {
     return null;
   }
 
-  static List<Map<String, dynamic>> _extractSlidesFromFormattedText(String text) {
+  static List<Map<String, dynamic>> _extractSlidesFromFormattedText(
+      String text) {
     final slides = <Map<String, dynamic>>[];
 
     // 1. **[Title/Number]:** Content

@@ -21,6 +21,44 @@ const String sutolModelViewerScriptTag =
 
 String get sutolHtmlStageStyles =>
     '$_stageStyles\n\n$sutolCombinedTemplatesCSS\n\n$_transparentComponentOverrides';
+
+String sutolHtmlStageStylesForPages(Iterable<PresentationPage> pages) {
+  final families = <String>{};
+  for (final page in pages) {
+    for (final block in page.textBlocks) {
+      final styleClass = _textStyleClass(block.textStyle);
+      final baseFamily = _fontFamilyFromRule('.sutol-html-block.$styleClass');
+      final titleFamily = block.type == PresentationTextType.title
+          ? _fontFamilyFromRule(
+              '.sutol-html-block.$styleClass.is-title',
+            )
+          : null;
+      final effectiveFamily = titleFamily ?? baseFamily;
+      if (effectiveFamily != null) families.add(effectiveFamily);
+    }
+  }
+  final filteredFonts = sutolLocalGoogleFontsCssForFamilies(families);
+  final withoutGoogleImport = _stageStyles.replaceFirst(
+    RegExp(r"@import url\('https://fonts\.googleapis\.com/[^']+'\);\s*"),
+    '',
+  );
+  final filteredStageStyles = withoutGoogleImport.replaceFirst(
+    sutolLocalGoogleFontsCss,
+    filteredFonts,
+  );
+  return '$filteredStageStyles\n\n$sutolCombinedTemplatesCSS\n\n$_transparentComponentOverrides';
+}
+
+String? _fontFamilyFromRule(String selector) {
+  final rule = RegExp(
+    '${RegExp.escape(selector)}\\s*\\{([^}]*)\\}',
+  ).firstMatch(_stageStyles);
+  if (rule == null) return null;
+  return RegExp(
+    r'''font-family:\s*['"]?([^,'";]+)''',
+  ).firstMatch(rule.group(1)!)?.group(1)?.trim();
+}
+
 String get sutolHtmlStageBackgroundScript => _backgroundScript;
 String get sutolHtmlStageComponentScript => _stageComponentScript;
 String get sutolHtmlStagePatchScript => _stagePatchScript;
@@ -52,6 +90,12 @@ String buildHtmlBackgroundPreviewDocument(PresentationBackgroundKind kind) {
 <style data-sutol-background-preview>
 html, body { width: 100% !important; height: 100% !important; margin: 0 !important; overflow: hidden !important; }
 body { pointer-events: none !important; user-select: none !important; }
+/* Preset grids can contain many iframes. Keep previews static from the first
+   paint so opening the picker does not briefly animate every card at once. */
+*, *::before, *::after {
+  animation-play-state: paused !important;
+  transition: none !important;
+}
 </style>
 ''';
   const freezeScript = '''
@@ -63,7 +107,7 @@ window.addEventListener('load', function () {
       if (typeof svg.pauseAnimations === 'function') svg.pauseAnimations();
     });
     window.requestAnimationFrame = function () { return 0; };
-  }, 450);
+  }, 0);
 });
 </script>
 ''';
@@ -214,7 +258,8 @@ String buildHtmlStageDocument({
     ..writeln(
         '<meta name="viewport" content="width=device-width, initial-scale=1">')
     ..writeln(
-      page.componentBlocks.any((block) => block.modelAssetId != null)
+      renderMode != HtmlStageRenderMode.snapshot &&
+              page.componentBlocks.any((block) => block.modelAssetId != null)
           ? sutolModelViewerScriptTag
           : '',
     )
@@ -401,9 +446,10 @@ String buildHtmlStageMarkup({
     final hotspotAttr = block.hotspotTargetPageId == null
         ? ''
         : ' data-hotspot-target="${_escapeAttribute(block.hotspotTargetPageId!)}"';
+    final isSnapshot = renderMode == HtmlStageRenderMode.snapshot;
     final componentInner = isImage
         ? _uploadedImageMarkup(imageId, imageSourcesById[imageId] ?? '')
-        : has3D
+        : has3D && !isSnapshot
             ? _model3DMarkup(
                 modelId ?? '',
                 resolvableSource,
@@ -422,9 +468,11 @@ String buildHtmlStageMarkup({
                     ? ''
                     : componentHtml,
               )
-            : componentHtml.trim().isEmpty
-                ? '<span class="sutol-component-shape"></span>'
-                : '<div class="sutol-html-component-inner">$componentHtml</div>';
+            : has3D && componentHtml.trim().isNotEmpty
+                ? '<div class="sutol-html-component-inner">$componentHtml</div>'
+                : componentHtml.trim().isEmpty
+                    ? '<span class="sutol-component-shape"></span>'
+                    : '<div class="sutol-html-component-inner">$componentHtml</div>';
     final label = imageId ?? modelId ?? '';
     final modelAttr = !is3D
         ? ''
@@ -930,10 +978,15 @@ String _backgroundInnerMarkup(
 </div>
 ''';
   }
-  final scene = _escapedBackgroundScenes.putIfAbsent(
-    kind,
-    () => _escapeAttribute(presentationBackgroundSceneHtml(kind)),
-  );
+  final scene = renderMode == HtmlStageRenderMode.snapshot
+      ? _escapedSnapshotBackgroundScenes.putIfAbsent(
+          kind,
+          () => _escapeAttribute(buildHtmlBackgroundPreviewDocument(kind)),
+        )
+      : _escapedBackgroundScenes.putIfAbsent(
+          kind,
+          () => _escapeAttribute(presentationBackgroundSceneHtml(kind)),
+        );
   return '''
 <div class="sutol-stage-bg sutol-bg-imported" aria-hidden="true">
   <iframe class="sutol-bg-scene-frame" srcdoc="$scene" tabindex="-1"></iframe>
@@ -942,6 +995,8 @@ String _backgroundInnerMarkup(
 }
 
 final Map<PresentationBackgroundKind, String> _escapedBackgroundScenes =
+    <PresentationBackgroundKind, String>{};
+final Map<PresentationBackgroundKind, String> _escapedSnapshotBackgroundScenes =
     <PresentationBackgroundKind, String>{};
 
 const String _stageStyles = '''
@@ -2493,6 +2548,15 @@ body {
   animation: none !important;
   transform: none !important;
   opacity: 1 !important;
+}
+
+/* Scene-strip thumbnails are reference images, not miniature presentations.
+   Stop every CSS effect so each visible thumbnail costs only a static paint. */
+.sutol-stage-mode-snapshot *,
+.sutol-stage-mode-snapshot *::before,
+.sutol-stage-mode-snapshot *::after {
+  animation: none !important;
+  transition: none !important;
 }
 
 .sutol-html-block.is-selected {

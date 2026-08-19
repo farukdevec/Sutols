@@ -27,7 +27,11 @@ class NvidiaSlide {
     final title = json['title'] ?? json['baslik'];
     final content = json['content'] ?? json['icerik'];
     final rawKeywords = json['keywords'] ?? json['anahtar_kelimeler'];
-    final rawType = json['type'] ?? json['slide_type'] ?? json['layout'] ?? json['tip'] ?? 'cards';
+    final rawType = json['type'] ??
+        json['slide_type'] ??
+        json['layout'] ??
+        json['tip'] ??
+        'cards';
 
     if (title is! String || title.trim().isEmpty) {
       throw const FormatException('Slayt başlığı (title) geçersiz.');
@@ -123,7 +127,7 @@ class NvidiaPresentation {
 
 class NvidiaPresentationService {
   static const String defaultProxyUrl = 'https://sutols.online/';
-  static const String defaultModelName = AiModelConfig.modelNemotronSuper;
+  static const String defaultModelName = AiModelConfig.modelNemotronNano;
   static const List<String> defaultCandidateModels =
       AiModelConfig.defaultNvidiaCandidateModels;
 
@@ -147,7 +151,8 @@ class NvidiaPresentationService {
     List<String>? candidateModels,
     bool checkQuality = true,
   }) async {
-    final systemInstruction = PresentationPromptBuilder.buildSystemInstruction();
+    final systemInstruction =
+        PresentationPromptBuilder.buildSystemInstruction();
     final userPrompt = PresentationPromptBuilder.buildUserPrompt(
       topic: topic,
       slideCount: slideCount,
@@ -183,9 +188,8 @@ class NvidiaPresentationService {
       final candidateModel = modelsToTry[i];
       final timeout =
           AiModelConfig.timeoutForModel(candidateModel, slideCount: slideCount);
-      final nextModel = i + 1 < modelsToTry.length
-          ? modelsToTry[i + 1]
-          : 'Gemini Fallback';
+      final nextModel =
+          i + 1 < modelsToTry.length ? modelsToTry[i + 1] : 'Gemini Fallback';
 
       final stopwatch = Stopwatch()..start();
 
@@ -227,7 +231,19 @@ class NvidiaPresentationService {
         SafeJsonParser.validateSchema(parsed);
         SafeJsonParser.validateContent(parsed);
 
-        final presentation = NvidiaPresentation.fromJson(parsed);
+        var presentation = NvidiaPresentation.fromJson(parsed);
+        if (client == null && presentation.slides.length > slideCount) {
+          presentation = NvidiaPresentation(
+            slides:
+                presentation.slides.take(slideCount).toList(growable: false),
+          );
+        }
+        if (client == null && presentation.slides.length < slideCount) {
+          throw FormatException(
+            'NVIDIA $candidateModel $slideCount yerine '
+            '${presentation.slides.length} slayt döndürdü.',
+          );
+        }
 
         if (checkQuality) {
           final qualityReason = PresentationContentQuality.rejectionReason(
@@ -326,7 +342,8 @@ class NvidiaPresentationService {
 
     // 400 Bad Request: response_format desteklenmiyorsa tek seferlik formatsız dene
     if (response.statusCode == 400 && body.containsKey('response_format')) {
-      final fallbackBody = Map<String, dynamic>.from(body)..remove('response_format');
+      final fallbackBody = Map<String, dynamic>.from(body)
+        ..remove('response_format');
       try {
         final fallbackResponse = await (httpClient != null
                 ? httpClient.post(
@@ -361,19 +378,25 @@ class NvidiaPresentationService {
       return AiModelConfig.classifyStatusCode(error.statusCode);
     }
     final msg = error.toString().toLowerCase();
-    if (msg.contains('zaman aşımı') || msg.contains('timed out') || msg.contains('timeout')) {
+    if (msg.contains('zaman aşımı') ||
+        msg.contains('timed out') ||
+        msg.contains('timeout')) {
       return AiErrorType.timeout;
     }
     if (msg.contains('kalite kontrolü') || msg.contains('yetersiz içerik')) {
       return AiErrorType.qualityRejection;
     }
-    if (msg.contains('şema') || msg.contains('schema') || msg.contains('başlığı boş')) {
+    if (msg.contains('şema') ||
+        msg.contains('schema') ||
+        msg.contains('başlığı boş')) {
       return AiErrorType.schemaError;
     }
     if (msg.contains('json') || msg.contains('formatexception')) {
       return AiErrorType.invalidJson;
     }
-    if (msg.contains('bağlantı') || msg.contains('network') || msg.contains('socketexception')) {
+    if (msg.contains('bağlantı') ||
+        msg.contains('network') ||
+        msg.contains('socketexception')) {
       return AiErrorType.networkError;
     }
     return AiErrorType.unknown;

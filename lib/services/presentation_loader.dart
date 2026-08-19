@@ -49,9 +49,7 @@ Future<PresentationLoadResult> loadPresentationForEdit(
     }
     ctrl.replaceDeck(
       pages,
-      effectSettings: const PresentationEffectSettings(
-        transitionKind: PresentationTransitionKind.slide,
-      ),
+      effectSettings: const PresentationEffectSettings(),
     );
   }
 

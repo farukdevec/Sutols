@@ -285,18 +285,6 @@ class _SutolHomePageState extends State<SutolHomePage> {
         _isGenerating = false;
       });
 
-      if (result.usedFallback) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'AI servisi şu an sınırda; kelime tabanlı slaytlar oluşturuldu. '
-              'Slaytları düzenleyebilirsiniz.',
-            ),
-            duration: Duration(seconds: 5),
-          ),
-        );
-      }
-
       Navigator.of(context).push(
         MaterialPageRoute<void>(
           builder: (_) => HtmlPresentationEditorPage(
@@ -381,8 +369,10 @@ class _SutolHomePageState extends State<SutolHomePage> {
                         children: [
                           Text(
                             narrow
-                                ? tr('Fikirden sunuma,\ntek cümlede.', 'From idea to presentation,\nin a single sentence.')
-                                : tr('Fikirden sunuma, tek cümlede.', 'From idea to presentation, in a single sentence.'),
+                                ? tr('Fikirden sunuma,\ntek cümlede.',
+                                    'From idea to presentation,\nin a single sentence.')
+                                : tr('Fikirden sunuma, tek cümlede.',
+                                    'From idea to presentation, in a single sentence.'),
                             textAlign: TextAlign.center,
                             style: AppTypography.display.copyWith(
                               color: colors.textPrimary,
@@ -458,7 +448,8 @@ class _SutolHomePageState extends State<SutolHomePage> {
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
                             Text(
-                              tr('Fikirden sunuma,\ntek cümlede.', 'From idea to presentation,\nin a single sentence.'),
+                              tr('Fikirden sunuma,\ntek cümlede.',
+                                  'From idea to presentation,\nin a single sentence.'),
                               textAlign: TextAlign.center,
                               style: AppTypography.display.copyWith(
                                 color: colors.textPrimary,
@@ -469,7 +460,8 @@ class _SutolHomePageState extends State<SutolHomePage> {
                             if (!compact) ...[
                               const SizedBox(height: AppSpacing.s8),
                               Text(
-                                tr('Yeni sunumunu saniyeler içinde oluştur.', 'Create your new presentation in seconds.'),
+                                tr('Yeni sunumunu saniyeler içinde oluştur.',
+                                    'Create your new presentation in seconds.'),
                                 textAlign: TextAlign.center,
                                 style: AppTypography.bodyLarge.copyWith(
                                   color: colors.textSecondary,
@@ -488,7 +480,8 @@ class _SutolHomePageState extends State<SutolHomePage> {
                               Row(
                                 children: [
                                   Text(
-                                    tr('Son sunumların', 'Recent presentations'),
+                                    tr('Son sunumların',
+                                        'Recent presentations'),
                                     style: AppTypography.titleMedium.copyWith(
                                       color: colors.textPrimary,
                                     ),
@@ -548,9 +541,8 @@ class _SutolHomePageState extends State<SutolHomePage> {
                         keyboardDismissBehavior:
                             ScrollViewKeyboardDismissBehavior.onDrag,
                         padding: EdgeInsets.only(
-                          bottom: keyboardVisible
-                              ? AppSpacing.s24
-                              : AppSpacing.s16,
+                          bottom:
+                              keyboardVisible ? AppSpacing.s24 : AppSpacing.s16,
                         ),
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
@@ -1671,9 +1663,7 @@ class _UserAvatarState extends State<_UserAvatar> {
             height: 40,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              border: glow
-                  ? Border.all(color: Colors.white, width: 2)
-                  : null,
+              border: glow ? Border.all(color: Colors.white, width: 2) : null,
               gradient: LinearGradient(
                 colors: glow
                     ? [const Color(0xFF00E5FF), colors.primary]

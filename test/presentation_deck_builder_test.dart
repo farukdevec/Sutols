@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sutol/models/slide_model.dart';
 import 'package:sutol/services/model_matching_service.dart';
+import 'package:sutol/services/model_repository.dart';
 import 'package:sutol/services/presentation_deck_builder.dart';
 
 void main() {
@@ -158,6 +159,204 @@ void main() {
       ),
       0,
     );
+  });
+
+  test(
+      'presentation category prevents animal decks from using engineering models',
+      () {
+    const catalog = <ModelCatalogEntry>[
+      ModelCatalogEntry(
+        id: 'lion',
+        name: 'Aslan',
+        modelUrl: 'lion.glb',
+        thumbnailUrl: '',
+        tags: <String>['aslan', 'vahşi hayvan', 'memeli'],
+        category: 'Evcil Hayvanlar & Hayvan Dünyası',
+        tier: 'free',
+      ),
+      ModelCatalogEntry(
+        id: 'robot-arm',
+        name: 'Endüstriyel Robot Kolu',
+        modelUrl: 'robot.glb',
+        thumbnailUrl: '',
+        tags: <String>['mühendislik', 'fabrika', 'robot'],
+        category: 'Mühendislik',
+        tier: 'free',
+      ),
+    ];
+
+    final category = ModelMatchingService.inferPresentationCategory(
+      models: catalog,
+      presentationTitle: 'Hayvanlar Alemi',
+    );
+    final matches = ModelMatchingService.rankModelsInCategory(
+      models: catalog,
+      category: category!,
+      slideTitle: 'Aslanlar',
+      slideBody: 'Vahşi memelilerin yaşamı',
+    );
+
+    expect(category, 'Evcil Hayvanlar & Hayvan Dünyası');
+    expect(matches.map((match) => match.id), <String>['lion']);
+  });
+
+  test('slide title has priority over body while ranking category models', () {
+    const catalog = <ModelCatalogEntry>[
+      ModelCatalogEntry(
+        id: 'lion',
+        name: 'Aslan',
+        modelUrl: 'lion.glb',
+        thumbnailUrl: '',
+        tags: <String>['aslan'],
+        category: 'Hayvanlar',
+        tier: 'free',
+      ),
+      ModelCatalogEntry(
+        id: 'zebra',
+        name: 'Zebra',
+        modelUrl: 'zebra.glb',
+        thumbnailUrl: '',
+        tags: <String>['zebra'],
+        category: 'Hayvanlar',
+        tier: 'free',
+      ),
+    ];
+    final matches = ModelMatchingService.rankModelsInCategory(
+      models: catalog,
+      category: 'Hayvanlar',
+      slideTitle: 'Aslan',
+      slideBody: 'Zebra zebra zebra',
+    );
+
+    expect(matches.first.id, 'lion');
+  });
+
+  test('main deck topic blocks a technology model on an animal slide', () {
+    const catalog = <ModelCatalogEntry>[
+      ModelCatalogEntry(
+        id: 'lion',
+        name: 'Aslan',
+        modelUrl: 'lion.glb',
+        thumbnailUrl: '',
+        tags: <String>['aslan', 'hayvan', 'memeli'],
+        category: 'Hayvanlar ve Bitkiler',
+        tier: 'free',
+      ),
+      ModelCatalogEntry(
+        id: 'mobile-app',
+        name: 'Mobil Uygulama',
+        modelUrl: 'phone.glb',
+        thumbnailUrl: '',
+        tags: <String>['mobil', 'uygulama', 'teknoloji'],
+        // Simulate an incorrectly categorized remote catalog record.
+        category: 'Hayvanlar ve Bitkiler',
+        tier: 'free',
+      ),
+    ];
+
+    final matches = ModelMatchingService.rankModelsInCategory(
+      models: catalog,
+      category: 'Hayvanlar ve Bitkiler',
+      presentationTitle: 'Hayvanlar ve Bitkiler',
+      slideTitle: 'Uygulama Adimlari: hayvanlarin bitkilere etkisi',
+      slideBody: 'Hayvanlarin bitkilere etkisi degerlendirilir.',
+    );
+
+    expect(matches.map((match) => match.id), <String>['lion']);
+  });
+
+  test('compound deck topic keeps both animal and Earth model categories', () {
+    const catalog = <ModelCatalogEntry>[
+      ModelCatalogEntry(
+        id: 'lion',
+        name: 'Aslan',
+        modelUrl: 'lion.glb',
+        thumbnailUrl: '',
+        tags: <String>['hayvan', 'memeli'],
+        category: 'Hayvanlar',
+        tier: 'free',
+      ),
+      ModelCatalogEntry(
+        id: 'earth',
+        name: 'Dunya',
+        modelUrl: 'earth.glb',
+        thumbnailUrl: '',
+        tags: <String>['dunya', 'gezegen'],
+        category: 'Cografya ve Uzay',
+        tier: 'free',
+      ),
+      ModelCatalogEntry(
+        id: 'phone',
+        name: 'Telefon',
+        modelUrl: 'phone.glb',
+        thumbnailUrl: '',
+        tags: <String>['mobil', 'teknoloji'],
+        category: 'Teknoloji',
+        tier: 'free',
+      ),
+    ];
+
+    final categories = ModelMatchingService.inferPresentationCategories(
+      models: catalog,
+      presentationTitle: 'Hayvanlar alemi ve dunya',
+    );
+
+    expect(categories, containsAll(<String>['Hayvanlar', 'Cografya ve Uzay']));
+    expect(categories, isNot(contains('Teknoloji')));
+  });
+
+  test('a used model is skipped and is never repeated in the same deck', () {
+    final matches = <ModelMatch>[
+      model('lion', 10),
+      model('zebra', 8),
+    ];
+
+    expect(
+      ModelMatchingService.bestMatchPreferUnused(matches, <String>{'lion'})?.id,
+      'zebra',
+    );
+    expect(
+      ModelMatchingService.bestMatchPreferUnused(
+        matches,
+        <String>{'lion', 'zebra'},
+      ),
+      isNull,
+    );
+  });
+
+  test(
+      'an unused model from the deck category fills a slide without a direct match',
+      () {
+    const catalog = <ModelCatalogEntry>[
+      ModelCatalogEntry(
+        id: 'lion',
+        name: 'Aslan',
+        modelUrl: 'lion.glb',
+        thumbnailUrl: '',
+        tags: <String>['aslan'],
+        category: 'Hayvanlar',
+        tier: 'free',
+      ),
+      ModelCatalogEntry(
+        id: 'robot',
+        name: 'Robot',
+        modelUrl: 'robot.glb',
+        thumbnailUrl: '',
+        tags: <String>['robot'],
+        category: 'Mühendislik',
+        tier: 'free',
+      ),
+    ];
+
+    final matches = ModelMatchingService.rankModelsInCategory(
+      models: catalog,
+      category: 'Hayvanlar',
+      slideTitle: 'Ekolojik Denge',
+      slideBody: 'Canlıların dünya üzerindeki etkileri',
+    );
+
+    expect(matches.map((match) => match.id), <String>['lion']);
+    expect(matches.single.score, 1);
   });
 
   test('generated title and body boxes never overlap', () {

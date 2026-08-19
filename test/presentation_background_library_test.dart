@@ -43,6 +43,33 @@ void main() {
     );
   });
 
+  test('HTML export includes font files only for families used by the deck',
+      () {
+    const page = PresentationPage(
+      id: 'font-subset',
+      textBlocks: <PresentationTextBlock>[
+        PresentationTextBlock(
+          id: 'roboto-text',
+          text: 'Yalnızca Roboto',
+          position: Offset.zero,
+          fontSize: 32,
+          widthFactor: 0.8,
+          type: PresentationTextType.body,
+          textStyle: PresentationTextStyle.googleRoboto,
+        ),
+      ],
+    );
+
+    final document = buildPresentationExportHtml(
+      pages: const <PresentationPage>[page],
+      compact: false,
+    );
+
+    expect(document, contains('google_fonts/roboto-400'));
+    expect(document, isNot(contains('google_fonts/lora-400')));
+    expect(document, isNot(contains('fonts.googleapis.com/css2')));
+  });
+
   test('library exposes the 19 topic and 6 light backgrounds', () {
     expect(presentationBackgroundLibrary, hasLength(25));
     expect(

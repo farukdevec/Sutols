@@ -619,6 +619,7 @@ class PresentationAutoBuilder {
     required String title,
     required String body,
     required int maxComponents,
+    String? allowedCategory,
   }) {
     if (maxComponents <= 0) {
       return const <PresentationComponentKind>[];
@@ -629,6 +630,11 @@ class PresentationAutoBuilder {
     final candidates = <_AutoComponentCandidate>[];
 
     for (final definition in presentationComponentDefinitions) {
+      if (allowedCategory != null &&
+          PresentationKeywordCatalog.normalize(definition.category) !=
+              PresentationKeywordCatalog.normalize(allowedCategory)) {
+        continue;
+      }
       final score = _componentScore(
         definition,
         normalizedTitle: normalizedTitle,
@@ -786,11 +792,13 @@ class PresentationAutoBuilder {
 PresentationComponentKind? bestPresentationComponentForSlide({
   required String title,
   required String body,
+  String? allowedCategory,
 }) {
   final matches = const PresentationAutoBuilder()._bestComponentKinds(
     title: title,
     body: body,
     maxComponents: 1,
+    allowedCategory: allowedCategory,
   );
   return matches.isEmpty ? null : matches.single;
 }

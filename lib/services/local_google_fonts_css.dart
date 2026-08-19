@@ -1722,3 +1722,21 @@ const String sutolLocalGoogleFontsCss = r'''
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
 ''';
+
+String sutolLocalGoogleFontsCssForFamilies(Set<String> families) {
+  if (families.isEmpty) return '';
+  final normalized = families.map((family) => family.toLowerCase()).toSet();
+  final blocks = RegExp(r'@font-face\s*\{[\s\S]*?\n\}').allMatches(
+    sutolLocalGoogleFontsCss,
+  );
+  final selected = <String>[];
+  for (final block in blocks) {
+    final css = block.group(0)!;
+    final familyMatch = RegExp(
+      r'''font-family:\s*['"]([^'"]+)['"]''',
+    ).firstMatch(css);
+    final family = familyMatch?.group(1)?.toLowerCase();
+    if (family != null && normalized.contains(family)) selected.add(css);
+  }
+  return selected.join('\n\n');
+}

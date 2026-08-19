@@ -20,9 +20,11 @@ import 'ui/widgets/terms_consent_dialog.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   usePathUrlStrategy();
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.web);
-  await ThemeController.instance.init();
-  await LanguageController.instance.init();
+  await Future.wait<void>(<Future<void>>[
+    Firebase.initializeApp(options: DefaultFirebaseOptions.web),
+    ThemeController.instance.init(),
+    LanguageController.instance.init(),
+  ]);
   runApp(const SutolApp());
 }
 

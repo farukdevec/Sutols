@@ -21,6 +21,7 @@ String buildPresentationExportHtml({
     modelSourcesById: modelSourcesById,
     printMode: printMode,
   );
+  final exportStageStyles = sutolHtmlStageStylesForPages(pages);
   final slidesMarkup = StringBuffer();
   final dotsMarkup = StringBuffer();
   final zoomButtonMarkup = effectSettings.zoomEnabled
@@ -69,7 +70,7 @@ String buildPresentationExportHtml({
   <title>$escapedDocumentTitle</title>
   ${pages.any((page) => page.componentBlocks.any((block) => block.modelAssetId != null)) ? sutolModelViewerScriptTag : ''}
   <style>
-  $sutolHtmlStageStyles
+  $exportStageStyles
   ${_exportStyles(effectSettings)}
   ${printMode ? _printStyles : ''}
   </style>

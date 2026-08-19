@@ -403,7 +403,7 @@ class PresentationProjectCodec {
       transitionKind: _enumValue(
         PresentationTransitionKind.values,
         json['transitionKind'],
-        PresentationTransitionKind.slide,
+        PresentationTransitionKind.none,
       ),
       transitionDurationMs: _int(json['transitionDurationMs'], 420),
       zoomEnabled: _bool(json['zoomEnabled'], false),

@@ -335,7 +335,7 @@ enum PresentationTransitionKind {
 @immutable
 class PresentationEffectSettings {
   const PresentationEffectSettings({
-    this.transitionKind = PresentationTransitionKind.slide,
+    this.transitionKind = PresentationTransitionKind.none,
     this.transitionDurationMs = 420,
     this.zoomEnabled = false,
     this.zoomScale = 1.55,

@@ -1,4 +1,3 @@
-import '../models/presentation_3d_model_catalog.dart';
 import '../models/slide_model.dart';
 import 'model_repository.dart';
 import 'remote_model_sources.dart';
@@ -20,18 +19,34 @@ Future<void> hydratePresentationModelSources(
   final baseSources = modelSourcesForIds(missingIds, catalog);
 
   final resolvedSources = <String, String>{};
+  final remoteEntries = <MapEntry<String, String>>[];
   for (final entry in baseSources.entries) {
-    if (entry.value.startsWith('assets/') || entry.value.startsWith('packages/')) {
+    if (entry.value.startsWith('assets/') ||
+        entry.value.startsWith('packages/')) {
       resolvedSources[entry.key] = entry.value;
       continue;
     }
-    String? signedUrl;
-    try {
-      signedUrl = await ModelAssetService.generateSignedUrl(entry.value);
-    } catch (_) {}
-    if (signedUrl != null && signedUrl.trim().isNotEmpty) {
-      resolvedSources[entry.key] = signedUrl.trim();
-    }
+    remoteEntries.add(entry);
+  }
+
+  // Her modelin yetkilendirmesi birbirinden bağımsızdır. Bunları sırayla
+  // beklemek, model sayısı arttıkça üretim süresini doğrusal büyütüyordu.
+  final signedSources = await _mapConcurrentOrdered(
+    remoteEntries,
+    (entry) async {
+      try {
+        final signedUrl =
+            await ModelAssetService.generateSignedUrl(entry.value);
+        if (signedUrl != null && signedUrl.trim().isNotEmpty) {
+          return MapEntry(entry.key, signedUrl.trim());
+        }
+      } catch (_) {}
+      return null;
+    },
+    concurrency: 6,
+  );
+  for (final entry in signedSources.whereType<MapEntry<String, String>>()) {
+    resolvedSources[entry.key] = entry.value;
   }
 
   // Fallback for missing model IDs not found in catalog or catalog asset paths
@@ -52,6 +67,19 @@ Future<void> hydratePresentationModelSources(
   if (resolvedSources.isNotEmpty) {
     RemoteModelSources.registerAll(resolvedSources);
   }
+}
+
+Future<List<R>> _mapConcurrentOrdered<T, R>(
+  List<T> items,
+  Future<R> Function(T item) operation, {
+  required int concurrency,
+}) async {
+  final results = <R>[];
+  for (var start = 0; start < items.length; start += concurrency) {
+    final end = (start + concurrency).clamp(0, items.length);
+    results.addAll(await Future.wait(items.sublist(start, end).map(operation)));
+  }
+  return results;
 }
 
 Map<String, String> modelSourcesForIds(

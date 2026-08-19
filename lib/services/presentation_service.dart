@@ -7,7 +7,6 @@ import 'package:http/http.dart' as http;
 
 import '../state/presentation_controller.dart';
 import 'ai_model_config.dart';
-import 'fallback_slide_generator.dart';
 import 'grok_presentation_service.dart';
 import 'gemini_presentation_service.dart';
 import 'nvidia_presentation_service.dart';
@@ -15,7 +14,6 @@ import 'layout_service.dart';
 import 'model_matching_service.dart';
 import 'model_repository.dart';
 import 'presentation_deck_builder.dart';
-import 'presentation_content_quality.dart';
 import 'presentation_project_codec.dart';
 import 'presentation_keyword_catalog.dart';
 import 'usage_service.dart';
@@ -90,9 +88,12 @@ class PresentationService {
     final modelCatalogWarmup = ModelRepository.instance.getModels();
     AiRouterLogger.logRequestStart(topic: topic, slideCount: slideCount);
 
-    // 1. Sıralı Router: NVIDIA (Super 120B -> GPT-OSS 120B -> Llama 3.3 70B -> GPT-OSS 20B -> Nano -> Llama 3.1 8B) -> Gemini -> Grok -> Kelime Tabanlı Yedek
+    // 1. Sıralı Router: NVIDIA ana servis; Grok ve Gemini yalnızca yedek.
+    // Çevrimdışı içerik üretilmez: tüm sağlayıcılar başarısızsa gerçek hata
+    // kullanıcıya iletilir.
     GeminiPresentation resultPresentation;
-    var usedFallback = false;
+    Object? nvidiaError;
+    Object? grokError;
     try {
       final nvidiaResult =
           await _nvidia.generatePresentation(topic, slideCount: slideCount);
@@ -107,40 +108,40 @@ class PresentationService {
             )
             .toList(growable: false),
       );
-    } catch (_) {
+    } catch (error) {
+      nvidiaError = error;
       try {
-        resultPresentation =
-            await _gemini.generatePresentation(topic, slideCount: slideCount);
-      } catch (_) {
+        final grokResult =
+            await _grok.generatePresentation(topic, slideCount: slideCount);
+        resultPresentation = GeminiPresentation(
+          slides: grokResult.slides
+              .map(
+                (slide) => GeminiSlide(
+                  title: slide.title,
+                  content: slide.content,
+                  keywords: slide.keywords,
+                ),
+              )
+              .toList(growable: false),
+        );
+      } catch (error) {
+        grokError = error;
         try {
-          final grokResult =
-              await _grok.generatePresentation(topic, slideCount: slideCount);
-          resultPresentation = GeminiPresentation(
-            slides: grokResult.slides
-                .map(
-                  (slide) => GeminiSlide(
-                    title: slide.title,
-                    content: slide.content,
-                    keywords: slide.keywords,
-                  ),
-                )
-                .toList(growable: false),
-          );
-        } catch (_) {
-          usedFallback = true;
-          resultPresentation = FallbackSlideGenerator.generatePresentation(
+          resultPresentation = await _gemini.generatePresentation(
             topic,
             slideCount: slideCount,
+          );
+        } catch (geminiError) {
+          throw Exception(
+            'Sunum yapay zekâ servisleri yanıt veremedi. '
+            'NVIDIA: $nvidiaError Grok: $grokError Gemini: $geminiError',
           );
         }
       }
     }
     if (resultPresentation.slides.length != slideCount) {
-      // AI sağlayıcısı istenen adedi döndürmezse kullanıcının seçimini koru.
-      usedFallback = true;
-      resultPresentation = FallbackSlideGenerator.generatePresentation(
-        topic,
-        slideCount: slideCount,
+      throw FormatException(
+        'AI $slideCount yerine ${resultPresentation.slides.length} slayt döndürdü.',
       );
     }
 
@@ -163,7 +164,8 @@ class PresentationService {
       ];
     }).toList(growable: false);
 
-    final matchesBySlide = await _matcher.matchModelsForSlides(searchKeywordsBySlide);
+    final matchesBySlide =
+        await _matcher.matchModelsForSlides(searchKeywordsBySlide);
     for (var slideIndex = 0;
         slideIndex < resultPresentation.slides.length;
         slideIndex += 1) {
@@ -377,7 +379,7 @@ class PresentationService {
     return PresentationGenerationResult(
       presentationId: presentationId,
       controller: controller,
-      usedFallback: usedFallback,
+      usedFallback: false,
     );
   }
 
@@ -388,25 +390,6 @@ class PresentationService {
       }, SetOptions(merge: true));
     } catch (_) {
       // Best-effort: sayım hatası sunum oluşturmayı bozmamalı.
-    }
-  }
-
-  static void _ensureContentQuality(
-    GeminiPresentation presentation, {
-    required String provider,
-  }) {
-    final reason = PresentationContentQuality.rejectionReason(
-      presentation.slides
-          .map(
-            (slide) => PresentationContentSample(
-              title: slide.title,
-              content: slide.content,
-            ),
-          )
-          .toList(growable: false),
-    );
-    if (reason != null) {
-      throw FormatException('$provider sunum kalite kontrolü: $reason');
     }
   }
 

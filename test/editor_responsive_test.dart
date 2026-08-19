@@ -882,7 +882,6 @@ void main() {
           'Fotoğraf',
           'Ses',
           'Animasyonlar',
-          'Sahne Ölçüleri',
         ];
         for (final m in menuItems) {
           expect(

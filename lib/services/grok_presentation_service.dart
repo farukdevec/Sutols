@@ -4,7 +4,6 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:meta/meta.dart';
 
-import '../env_config.dart';
 import 'ai_model_config.dart';
 import 'presentation_content_quality.dart';
 import 'presentation_prompt_builder.dart';
@@ -28,7 +27,11 @@ class GrokSlide {
     final title = json['title'] ?? json['baslik'];
     final content = json['content'] ?? json['icerik'];
     final rawKeywords = json['keywords'] ?? json['anahtar_kelimeler'];
-    final rawType = json['type'] ?? json['slide_type'] ?? json['layout'] ?? json['tip'] ?? 'cards';
+    final rawType = json['type'] ??
+        json['slide_type'] ??
+        json['layout'] ??
+        json['tip'] ??
+        'cards';
 
     if (title is! String || title.trim().isEmpty) {
       throw const FormatException('Slayt başlığı (title) geçersiz.');
@@ -132,9 +135,6 @@ class GrokPresentationService {
     if (apiKey.isNotEmpty) {
       return apiKey;
     }
-    if (EnvConfig.grokApiKey.isNotEmpty) {
-      return EnvConfig.grokApiKey;
-    }
     return _envApiKey;
   }
 
@@ -158,7 +158,8 @@ class GrokPresentationService {
       );
     }
 
-    final systemInstruction = PresentationPromptBuilder.buildSystemInstruction();
+    final systemInstruction =
+        PresentationPromptBuilder.buildSystemInstruction();
     final userPrompt = PresentationPromptBuilder.buildUserPrompt(
       topic: topic,
       slideCount: slideCount,
@@ -167,16 +168,19 @@ class GrokPresentationService {
     final maxTokens = (slideCount * 800 + 1000).clamp(2000, 8192);
 
     final selectedModel = model ?? modelName;
-    final modelsToTry = candidateModels ?? [
-      selectedModel,
-      ...defaultCandidateModels.where((m) => m != selectedModel),
-    ];
+    final modelsToTry = candidateModels ??
+        [
+          selectedModel,
+          ...defaultCandidateModels.where((m) => m != selectedModel),
+        ];
 
     String lastError = '';
 
     for (var i = 0; i < modelsToTry.length; i++) {
       final candidateModel = modelsToTry[i];
-      final nextModel = i + 1 < modelsToTry.length ? modelsToTry[i + 1] : 'Kelime Tabanlı Yedek';
+      final nextModel = i + 1 < modelsToTry.length
+          ? modelsToTry[i + 1]
+          : 'Kelime Tabanlı Yedek';
       final stopwatch = Stopwatch()..start();
 
       try {
@@ -214,7 +218,8 @@ class GrokPresentationService {
         final content = _extractAssistantContent(responseJson);
 
         if (content == null || content.isEmpty) {
-          throw const FormatException('Grok yanıtında choices[0].message.content boş döndü.');
+          throw const FormatException(
+              'Grok yanıtında choices[0].message.content boş döndü.');
         }
 
         final parsed = SafeJsonParser.parsePresentationPayload(content);
@@ -235,7 +240,8 @@ class GrokPresentationService {
                 .toList(growable: false),
           );
           if (qualityReason != null) {
-            throw FormatException('Grok kalite kontrolü reddedildi: $qualityReason');
+            throw FormatException(
+                'Grok kalite kontrolü reddedildi: $qualityReason');
           }
         }
 
@@ -274,9 +280,8 @@ class GrokPresentationService {
       }
     }
 
-    throw Exception(lastError.isEmpty
-        ? 'Grok sunum üretimi başarısız oldu.'
-        : lastError);
+    throw Exception(
+        lastError.isEmpty ? 'Grok sunum üretimi başarısız oldu.' : lastError);
   }
 
   Future<http.Response> _postWithTimeout({
@@ -325,7 +330,8 @@ class GrokPresentationService {
 
     // 400 Bad Request: response_format kaldırıp tek seferlik dene
     if (response.statusCode == 400 && body.containsKey('response_format')) {
-      final fallbackBody = Map<String, dynamic>.from(body)..remove('response_format');
+      final fallbackBody = Map<String, dynamic>.from(body)
+        ..remove('response_format');
       try {
         final fallbackResponse = await (httpClient != null
                 ? httpClient.post(
@@ -360,13 +366,17 @@ class GrokPresentationService {
       return AiModelConfig.classifyStatusCode(error.statusCode);
     }
     final msg = error.toString().toLowerCase();
-    if (msg.contains('zaman aşımı') || msg.contains('timed out') || msg.contains('timeout')) {
+    if (msg.contains('zaman aşımı') ||
+        msg.contains('timed out') ||
+        msg.contains('timeout')) {
       return AiErrorType.timeout;
     }
     if (msg.contains('kalite kontrolü') || msg.contains('yetersiz içerik')) {
       return AiErrorType.qualityRejection;
     }
-    if (msg.contains('şema') || msg.contains('schema') || msg.contains('başlığı boş')) {
+    if (msg.contains('şema') ||
+        msg.contains('schema') ||
+        msg.contains('başlığı boş')) {
       return AiErrorType.schemaError;
     }
     if (msg.contains('json') || msg.contains('formatexception')) {
