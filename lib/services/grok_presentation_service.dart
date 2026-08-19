@@ -5,25 +5,31 @@ import 'package:http/http.dart' as http;
 import 'package:meta/meta.dart';
 
 import '../env_config.dart';
+import 'ai_model_config.dart';
 import 'presentation_content_quality.dart';
 import 'presentation_prompt_builder.dart';
+import 'safe_json_parser.dart';
 
 /// Grok'tan dönen slayt yapısı.
 class GrokSlide {
   final String title;
   final String content;
   final List<String> keywords;
+  final String type;
 
   const GrokSlide({
     required this.title,
     required this.content,
     required this.keywords,
+    this.type = 'cards',
   });
 
   factory GrokSlide.fromJson(Map<String, dynamic> json) {
-    final title = json['title'];
-    final content = json['content'];
-    final rawKeywords = json['keywords'];
+    final title = json['title'] ?? json['baslik'];
+    final content = json['content'] ?? json['icerik'];
+    final rawKeywords = json['keywords'] ?? json['anahtar_kelimeler'];
+    final rawType = json['type'] ?? json['slide_type'] ?? json['layout'] ?? json['tip'] ?? 'cards';
+
     if (title is! String || title.trim().isEmpty) {
       throw const FormatException('Slayt başlığı (title) geçersiz.');
     }
@@ -32,14 +38,16 @@ class GrokSlide {
     if (normalizedContent.isEmpty) {
       throw const FormatException('Slayt içeriği (content) geçersiz.');
     }
-    if (rawKeywords is! List) {
-      throw const FormatException(
-          'Slayt anahtar kelimeleri (keywords) geçersiz.');
-    }
+
+    final keywordsList = rawKeywords is List
+        ? rawKeywords.map((k) => k.toString()).toList(growable: false)
+        : const <String>[];
+
     return GrokSlide(
       title: cleanedTitle,
       content: normalizedContent,
-      keywords: rawKeywords.whereType<String>().toList(growable: false),
+      keywords: keywordsList,
+      type: rawType.toString().toLowerCase().trim(),
     );
   }
 
@@ -90,7 +98,6 @@ class GrokPresentation {
 }
 
 class GrokPresentationService {
-  /// --dart-define=GROK_API_KEY=... ile geçilen anahtar
   static const String _envApiKey = String.fromEnvironment('GROK_API_KEY');
 
   /// Grok API Anahtarı (xAI API Key).
@@ -100,24 +107,22 @@ class GrokPresentationService {
   static String proxyUrl = 'https://sutols.online/';
 
   static const String _defaultApiUrl = 'https://api.x.ai/v1/chat/completions';
-  static const String _defaultModel = 'grok-4.3';
-  static const Duration _requestTimeout = Duration(seconds: 60);
-  static const int _maxAttempts = 2;
+  static const String _defaultModel = AiModelConfig.modelGrokDefault;
+  static const Duration _requestTimeout = AiModelConfig.timeoutGrok;
 
-  static const List<String> defaultCandidateModels = [
-    'grok-4.3',
-    'grok-4.1-fast',
-    'grok-beta',
-  ];
+  static const List<String> defaultCandidateModels =
+      AiModelConfig.defaultGrokCandidateModels;
 
   final String? customApiKey;
   final String? customProxyUrl;
   final String modelName;
+  final http.Client? client;
 
   GrokPresentationService({
     this.customApiKey,
     this.customProxyUrl,
     this.modelName = _defaultModel,
+    this.client,
   });
 
   String get effectiveApiKey {
@@ -141,6 +146,7 @@ class GrokPresentationService {
     String language = 'turkish',
     String? model,
     List<String>? candidateModels,
+    bool checkQuality = true,
   }) async {
     final proxy = effectiveProxyUrl.trim();
     final key = effectiveApiKey.trim();
@@ -148,7 +154,7 @@ class GrokPresentationService {
     if (proxy.isEmpty && (key.isEmpty || key == 'YOUR_GROK_API_KEY_HERE')) {
       throw Exception(
         'Grok API Key veya Proxy URL tanımlanmamış. '
-        'Lütfen GrokPresentationService.apiKey veya GrokPresentationService.proxyUrl alanını yapılandırın.',
+        'Lütfen GrokPresentationService.proxyUrl veya apiKey alanını yapılandırın.',
       );
     }
 
@@ -168,7 +174,11 @@ class GrokPresentationService {
 
     String lastError = '';
 
-    for (final candidateModel in modelsToTry) {
+    for (var i = 0; i < modelsToTry.length; i++) {
+      final candidateModel = modelsToTry[i];
+      final nextModel = i + 1 < modelsToTry.length ? modelsToTry[i + 1] : 'Kelime Tabanlı Yedek';
+      final stopwatch = Stopwatch()..start();
+
       try {
         final body = {
           'model': candidateModel,
@@ -184,7 +194,7 @@ class GrokPresentationService {
               'content': userPrompt,
             },
           ],
-          'temperature': 0.65,
+          'temperature': 0.5,
           'max_tokens': maxTokens,
           'response_format': {
             'type': 'json_object',
@@ -192,7 +202,7 @@ class GrokPresentationService {
           'stream': false,
         };
 
-        final response = await _postWithRetry(
+        final response = await _postWithTimeout(
           body: body,
           key: key,
           proxyUrl: proxy,
@@ -204,14 +214,63 @@ class GrokPresentationService {
         final content = _extractAssistantContent(responseJson);
 
         if (content == null || content.isEmpty) {
-          lastError = 'Grok ($candidateModel) yanıtında choices[0].message.content boş döndü.';
-          continue;
+          throw const FormatException('Grok yanıtında choices[0].message.content boş döndü.');
         }
 
-        final parsed = _parsePresentationPayload(content);
-        return GrokPresentation.fromJson(parsed);
+        final parsed = SafeJsonParser.parsePresentationPayload(content);
+        SafeJsonParser.validateSchema(parsed);
+        SafeJsonParser.validateContent(parsed);
+
+        final presentation = GrokPresentation.fromJson(parsed);
+
+        if (checkQuality) {
+          final qualityReason = PresentationContentQuality.rejectionReason(
+            presentation.slides
+                .map(
+                  (s) => PresentationContentSample(
+                    title: s.title,
+                    content: s.content,
+                  ),
+                )
+                .toList(growable: false),
+          );
+          if (qualityReason != null) {
+            throw FormatException('Grok kalite kontrolü reddedildi: $qualityReason');
+          }
+        }
+
+        stopwatch.stop();
+        AiRouterLogger.logSuccess(
+          provider: 'Grok',
+          model: candidateModel,
+          attempt: i + 1,
+          status: 200,
+          latency: stopwatch.elapsed,
+          jsonValid: true,
+          schemaValid: true,
+          qualityPass: true,
+        );
+
+        return presentation;
       } catch (e) {
+        stopwatch.stop();
         lastError = e.toString();
+        final errorType = _classifyError(e);
+
+        final is403 = lastError.contains('403');
+        final details = is403
+            ? 'Grok 403 Forbidden: Team credits/licenses eksikliği (xAI API credits / license missing), model hatası değil.'
+            : lastError;
+
+        AiRouterLogger.logFailure(
+          provider: 'Grok',
+          model: candidateModel,
+          attempt: i + 1,
+          errorType: errorType,
+          latency: stopwatch.elapsed,
+          details: details,
+          action: 'FALLBACK → $nextModel',
+        );
       }
     }
 
@@ -220,93 +279,101 @@ class GrokPresentationService {
         : lastError);
   }
 
-  Future<http.Response> _postWithRetry({
+  Future<http.Response> _postWithTimeout({
     required Map<String, dynamic> body,
     required String key,
     required String proxyUrl,
   }) async {
     final useProxy = proxyUrl.isNotEmpty;
     final targetUri = Uri.parse(useProxy ? proxyUrl : _defaultApiUrl);
+    final httpClient = client;
 
     final headers = <String, String>{
       'Content-Type': 'application/json',
-      if (useProxy) 'Origin': 'https://sutols.com',
+      'Accept': 'application/json',
       if (!useProxy && key.isNotEmpty) 'Authorization': 'Bearer $key',
     };
 
-    var lastError = '';
-    for (var attempt = 1; attempt <= _maxAttempts; attempt += 1) {
-      try {
-        final response = await http
-            .post(
-              targetUri,
-              headers: headers,
-              body: jsonEncode(body),
-            )
-            .timeout(
-              _requestTimeout,
-              onTimeout: () => throw TimeoutException(
-                'Grok isteği ${_requestTimeout.inSeconds} saniyede zaman aşımına uğradı.',
-              ),
-            );
-
-        if (response.statusCode == 200) {
-          return response;
-        }
-
-        if (response.statusCode == 404 && useProxy && key.isNotEmpty) {
-          // Fall back to direct xAI endpoint if proxy returns 404
-          final directHeaders = {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer $key',
-          };
-          final directResponse = await http
-              .post(
-                Uri.parse(_defaultApiUrl),
-                headers: directHeaders,
-                body: jsonEncode(body),
-              )
-              .timeout(
-                _requestTimeout,
-                onTimeout: () => throw TimeoutException(
-                  'Grok isteği ${_requestTimeout.inSeconds} saniyede zaman aşımına uğradı.',
-                ),
-              );
-          if (directResponse.statusCode == 200) {
-            return directResponse;
-          }
-        }
-
-        lastError = _statusErrorMessage(
-          statusCode: response.statusCode,
-          responseBody: response.body,
-        );
-        if (!_isRetriableStatus(response.statusCode) ||
-            attempt == _maxAttempts) {
-          throw Exception(lastError);
-        }
-      } on TimeoutException catch (e) {
-        lastError = e.message ?? 'Grok isteği zaman aşımına uğradı.';
-        if (attempt == _maxAttempts) {
-          throw Exception(lastError);
-        }
-      } on http.ClientException catch (e) {
-        lastError = 'Grok bağlantı hatası: ${e.message}';
-        if (attempt == _maxAttempts) {
-          throw Exception(lastError);
-        }
-      }
-
-      await Future<void>.delayed(Duration(milliseconds: 500 * attempt));
+    http.Response response;
+    try {
+      response = await (httpClient != null
+              ? httpClient.post(
+                  targetUri,
+                  headers: headers,
+                  body: jsonEncode(body),
+                )
+              : http.post(
+                  targetUri,
+                  headers: headers,
+                  body: jsonEncode(body),
+                ))
+          .timeout(
+        _requestTimeout,
+        onTimeout: () => throw TimeoutException(
+          'Grok isteği ${_requestTimeout.inSeconds} saniyede zaman aşımına uğradı.',
+        ),
+      );
+    } on TimeoutException {
+      rethrow;
+    } catch (e) {
+      throw Exception('Grok bağlantı hatası: $e');
     }
 
-    throw Exception(lastError.isEmpty
-        ? 'Grok isteği başarısız oldu.'
-        : lastError);
+    if (response.statusCode == 200) {
+      return response;
+    }
+
+    // 400 Bad Request: response_format kaldırıp tek seferlik dene
+    if (response.statusCode == 400 && body.containsKey('response_format')) {
+      final fallbackBody = Map<String, dynamic>.from(body)..remove('response_format');
+      try {
+        final fallbackResponse = await (httpClient != null
+                ? httpClient.post(
+                    targetUri,
+                    headers: headers,
+                    body: jsonEncode(fallbackBody),
+                  )
+                : http.post(
+                    targetUri,
+                    headers: headers,
+                    body: jsonEncode(fallbackBody),
+                  ))
+            .timeout(_requestTimeout);
+        if (fallbackResponse.statusCode == 200) {
+          return fallbackResponse;
+        }
+      } catch (_) {}
+    }
+
+    throw HttpExceptionWithStatus(
+      statusCode: response.statusCode,
+      message: _statusErrorMessage(
+        statusCode: response.statusCode,
+        responseBody: response.body,
+      ),
+    );
   }
 
-  static bool _isRetriableStatus(int statusCode) =>
-      statusCode == 429 || statusCode >= 500;
+  static AiErrorType _classifyError(dynamic error) {
+    if (error is TimeoutException) return AiErrorType.timeout;
+    if (error is HttpExceptionWithStatus) {
+      return AiModelConfig.classifyStatusCode(error.statusCode);
+    }
+    final msg = error.toString().toLowerCase();
+    if (msg.contains('zaman aşımı') || msg.contains('timed out') || msg.contains('timeout')) {
+      return AiErrorType.timeout;
+    }
+    if (msg.contains('kalite kontrolü') || msg.contains('yetersiz içerik')) {
+      return AiErrorType.qualityRejection;
+    }
+    if (msg.contains('şema') || msg.contains('schema') || msg.contains('başlığı boş')) {
+      return AiErrorType.schemaError;
+    }
+    if (msg.contains('json') || msg.contains('formatexception')) {
+      return AiErrorType.invalidJson;
+    }
+    return AiErrorType.unknown;
+  }
 
   static String _statusErrorMessage({
     required int statusCode,
@@ -316,13 +383,15 @@ class GrokPresentationService {
     final bodySuffix = body.isEmpty ? '' : ' Detay: $body';
     switch (statusCode) {
       case 400:
-        return 'Grok AI isteği geçersiz (400). Model veya isteği kontrol edin.$bodySuffix';
+        return 'Grok AI isteği geçersiz (400).$bodySuffix';
       case 401:
-        return 'Grok AI yetkilendirme hatası (401). API key (xAI API Key) geçersiz veya eksik.$bodySuffix';
+        return 'Grok AI yetkilendirme hatası (401).$bodySuffix';
       case 403:
-        return 'Grok AI erişim engellendi (403). İzinleri veya hesabı kontrol edin.$bodySuffix';
+        return 'Grok AI erişim engellendi (403 Forbidden). Team credits/licenses eksikliği (xAI API credits / license missing), model hatası değil.$bodySuffix';
+      case 404:
+        return 'Grok AI endpoint bulunamadı (404).$bodySuffix';
       case 429:
-        return 'Grok AI hız sınırına takıldı (429). Lütfen daha sonra tekrar deneyin.$bodySuffix';
+        return 'Grok AI hız sınırına takıldı (429).$bodySuffix';
       default:
         if (statusCode >= 500) {
           return 'Grok AI sunucu hatası ($statusCode).$bodySuffix';
@@ -337,6 +406,9 @@ class GrokPresentationService {
   }) {
     final decoded = jsonDecode(raw);
     if (decoded is! Map<String, dynamic>) {
+      if (decoded is Map) {
+        return decoded.map((k, v) => MapEntry(k.toString(), v));
+      }
       throw FormatException(onError);
     }
     return decoded;
@@ -344,155 +416,7 @@ class GrokPresentationService {
 
   @visibleForTesting
   static Map<String, dynamic> parsePresentationPayload(String rawContent) =>
-      _parsePresentationPayload(rawContent);
-
-  static Map<String, dynamic> _parsePresentationPayload(String rawContent) {
-    var cleaned = rawContent.trim();
-
-    if (cleaned.contains('```')) {
-      final match = RegExp(r'```(?:json)?\s*([\s\S]*?)\s*```').firstMatch(cleaned);
-      if (match != null) {
-        cleaned = match.group(1)!.trim();
-      } else if (cleaned.startsWith('```')) {
-        final firstNewline = cleaned.indexOf('\n');
-        if (firstNewline != -1) {
-          cleaned = cleaned.substring(firstNewline + 1);
-        }
-        cleaned = cleaned.replaceFirst(RegExp(r'```\s*$'), '').trim();
-      }
-    }
-
-    final directMap = _tryDecodeMap(cleaned);
-    if (directMap != null) {
-      return _normalizePresentationPayload(directMap);
-    }
-
-    final directList = _tryDecodeList(cleaned);
-    if (directList != null) {
-      return _normalizeSlideList(directList);
-    }
-
-    final extractedSlides = _extractAllSlidesFromText(cleaned);
-    if (extractedSlides.isNotEmpty) {
-      return {'slides': extractedSlides};
-    }
-
-    throw Exception(
-      'Grok yanıtı JSON olarak ayrıştırılamadı. İçerik: $cleaned',
-    );
-  }
-
-  static List<Map<String, dynamic>> _extractAllSlidesFromText(String text) {
-    final slides = <Map<String, dynamic>>[];
-
-    final slideMatches = RegExp(r'\{[^{}]*"slides"\s*:\s*\[[\s\S]*?\][^{}]*\}').allMatches(text);
-    for (final match in slideMatches) {
-      final map = _tryDecodeMap(match.group(0)!);
-      if (map != null && map['slides'] is List) {
-        for (final item in map['slides'] as List) {
-          if (item is Map) {
-            final m = item.map((k, v) => MapEntry(k.toString(), v));
-            if (_looksLikeSlideObject(m)) slides.add(m);
-          }
-        }
-      }
-    }
-    if (slides.isNotEmpty) return slides;
-
-    final objMatches = RegExp(r'\{[^{}]*"title"\s*:[^{}]*"content"\s*:[^{}]*\}').allMatches(text);
-    for (final match in objMatches) {
-      final map = _tryDecodeMap(match.group(0)!);
-      if (map != null && _looksLikeSlideObject(map)) {
-        slides.add(map);
-      }
-    }
-    if (slides.isNotEmpty) return slides;
-
-    return _decodeJsonObjectSequence(text);
-  }
-
-  static List<dynamic>? _tryDecodeList(String raw) {
-    try {
-      final decoded = jsonDecode(raw);
-      if (decoded is List) return decoded;
-    } catch (_) {}
-    return null;
-  }
-
-  static Map<String, dynamic> _normalizeSlideList(List<dynamic> list) {
-    final validSlides = <Map<String, dynamic>>[];
-    for (final item in list) {
-      if (item is Map) {
-        final map = item.map((key, value) => MapEntry(key.toString(), value));
-        if (_looksLikeSlideObject(map)) {
-          validSlides.add(map);
-        }
-      }
-    }
-    if (validSlides.isEmpty) {
-      throw const FormatException('AI yanıtında geçerli slayt bulunamadı.');
-    }
-    return {'slides': validSlides};
-  }
-
-  static Map<String, dynamic> _normalizePresentationPayload(
-    Map<String, dynamic> decoded,
-  ) {
-    for (final key in const ['slides', 'sunum', 'slaytlar', 'presentation', 'items', 'data']) {
-      if (decoded[key] is List) {
-        return {'slides': decoded[key]};
-      }
-    }
-
-    for (final entry in decoded.entries) {
-      if (entry.value is List) {
-        final list = entry.value as List;
-        if (list.isNotEmpty &&
-            list.any((item) => item is Map && _looksLikeSlideObject(item.map((k, v) => MapEntry(k.toString(), v))))) {
-          return {'slides': list};
-        }
-      }
-    }
-
-    if (_looksLikeSlideObject(decoded)) {
-      return {
-        'slides': [decoded]
-      };
-    }
-    throw const FormatException(
-        'AI yanıtı geçerli sunum JSON formatında değil.');
-  }
-
-  static Map<String, dynamic>? _tryDecodeMap(String raw) {
-    try {
-      return _decodeJsonMap(
-        raw,
-        onError: 'AI yanıtı JSON sunum formatında değil.',
-      );
-    } on FormatException {
-      return null;
-    }
-  }
-
-  static bool _looksLikeSlideObject(Map<String, dynamic> decoded) =>
-      decoded.containsKey('title') && decoded.containsKey('content');
-
-  static List<Map<String, dynamic>> _decodeJsonObjectSequence(String raw) {
-    final matches = RegExp(r'\{[\s\S]*?\}(?=\s*\{|$)', multiLine: true)
-        .allMatches(raw)
-        .map((match) => match.group(0)!.trim())
-        .where((part) => part.isNotEmpty)
-        .toList(growable: false);
-    final slides = <Map<String, dynamic>>[];
-    for (final part in matches) {
-      final decoded = _tryDecodeMap(part);
-      if (decoded == null || !_looksLikeSlideObject(decoded)) {
-        continue;
-      }
-      slides.add(decoded);
-    }
-    return slides;
-  }
+      SafeJsonParser.parsePresentationPayload(rawContent);
 
   static String? _extractAssistantContent(Map<String, dynamic> responseJson) {
     final choices = responseJson['choices'];
@@ -510,4 +434,17 @@ class GrokPresentationService {
     final content = message['content'];
     return content is String ? content : null;
   }
+}
+
+class HttpExceptionWithStatus implements Exception {
+  final int statusCode;
+  final String message;
+
+  const HttpExceptionWithStatus({
+    required this.statusCode,
+    required this.message,
+  });
+
+  @override
+  String toString() => message;
 }

@@ -2,17 +2,18 @@ import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
+import 'package:sutol/services/ai_model_config.dart';
 import 'package:sutol/services/nvidia_presentation_service.dart';
 
 void main() {
-  group('NvidiaPresentationService JSON parsing tests', () {
+  group('NvidiaPresentationService JSON parsing and routing tests', () {
     test('parses standard slides object payload', () {
       const jsonStr = '''
       {
         "slides": [
           {
             "title": "Giriş",
-            "content": "- İlk madde\\n- İkinci madde",
+            "content": "- Evrenin temel yapıtaşları\\n- Yıldızlar ve galaksiler\\n- Karadeliklerin gizemi",
             "keywords": ["dunya", "uzay"]
           }
         ]
@@ -31,7 +32,7 @@ void main() {
       [
         {
           "title": "Giriş",
-          "content": "- Detay madde 1\\n- Detay madde 2",
+          "content": "- Güneş merkezli model\\n- Gezegenlerin yörüngeleri\\n- Çekim kuvveti yasaları",
           "keywords": ["dunya"]
         }
       ]
@@ -49,7 +50,7 @@ void main() {
         "sunum": [
           {
             "title": "Giriş",
-            "content": "- İçerik",
+            "content": "- Klasik fizik temelleri\\n- Kuantum teorisinin doğuşu\\n- Modern fizik uygulamaları",
             "keywords": ["kavram"]
           }
         ]
@@ -62,103 +63,35 @@ void main() {
       expect(pres.slides.first.title, 'Giriş');
     });
 
-    test('parses payload wrapped in markdown code blocks and preamble', () {
-      const rawStr = '''
-      Harika! İşte istediğiniz sunum:
-      ```json
-      {
-        "slides": [
-          {
-            "title": "Giriş",
-            "content": "- Madde 1",
-            "keywords": ["test"]
-          }
-        ]
-      }
-      ```
-      Umarım beğenirsiniz.
-      ''';
-      final pres = NvidiaPresentation.fromJson(
-        NvidiaPresentationService.parsePresentationPayload(rawStr),
-      );
-      expect(pres.slides.length, 1);
-      expect(pres.slides.first.title, 'Giriş');
-    });
-
-    test('tryParsePresentationPayload returns null for plain Markdown/text response', () {
-      const markdownStr = '''
-      ** Slayt 1 :**
-      ** Giriş :**
-      ** Sinan Akçıl'ın Maaş ve Ekonomi Üzerine Bir Analiz **
-      - Madde 1
-      - Madde 2
-      ''';
-      final parsed = NvidiaPresentationService.tryParsePresentationPayload(markdownStr);
-      expect(parsed, isNull);
-    });
-
-    test('tryParsePresentationPayload returns non-null map for valid JSON', () {
-      const jsonStr = '''
-      {
-        "slides": [
-          {
-            "title": "Ekonomi Analizi",
-            "content": "- Madde 1\\n- Madde 2",
-            "keywords": ["ekonomi", "maas"]
-          }
-        ]
-      }
-      ''';
-      final parsed = NvidiaPresentationService.tryParsePresentationPayload(jsonStr);
-      expect(parsed, isNotNull);
-      expect(parsed!['slides'], isA<List>());
-    });
-
-    test('generatePresentation triggers JSON ONLY retry when initial response is Markdown', () async {
+    test('parses payload wrapped in markdown code blocks and preamble in 0 extra AI calls', () async {
       int requestCount = 0;
       final mockClient = MockClient((request) async {
         requestCount++;
-        final reqBody = jsonDecode(request.body) as Map<String, dynamic>;
-        
-        // First call: returns Markdown
-        if (requestCount == 1) {
-          return http.Response(
-            jsonEncode({
-              'choices': [
-                {
-                  'message': {
-                    'content': "** Slayt 1 :**\n** Giriş :**\n** Sinan Akçıl'ın Maaş ve Ekonomi Üzerine Bir Analiz **",
-                  }
-                }
-              ]
-            }),
-            200,
-            headers: {'content-type': 'application/json; charset=utf-8'},
-          );
+        const rawMarkdown = '''
+        İşte sunumunuz:
+        ```json
+        {
+          "slides": [
+            {
+              "title": "Giriş: Yapay Zeka",
+              "content": "- Makine öğrenimi algoritmaları\\n- Doğal dil işleme modelleri\\n- Bilgisayarlı görü teknikleri",
+              "keywords": ["test"]
+            }
+          ]
         }
-
-        // Second call (correction retry): verify assistant message is included in correction request
-        final messages = reqBody['messages'] as List;
-        expect(messages.any((m) => m['role'] == 'assistant'), isTrue);
-
-        return http.Response(
-          jsonEncode({
+        ```
+        Umarım beğenirsiniz.
+        ''';
+        return http.Response.bytes(
+          utf8.encode(jsonEncode({
             'choices': [
               {
                 'message': {
-                  'content': jsonEncode({
-                    'slides': [
-                      {
-                        'title': 'Giriş: Ekonomi',
-                        'content': '- Sinan Akçıl maaş analizi',
-                        'keywords': ['ekonomi', 'maas'],
-                      }
-                    ]
-                  }),
+                  'content': rawMarkdown,
                 }
               }
             ]
-          }),
+          })),
           200,
           headers: {'content-type': 'application/json; charset=utf-8'},
         );
@@ -166,70 +99,79 @@ void main() {
 
       final service = NvidiaPresentationService(
         client: mockClient,
-        customCandidateModels: ['meta/llama-3.1-8b-instruct'],
+        customCandidateModels: [AiModelConfig.modelNemotronNano],
       );
 
-      final result = await service.generatePresentation('Sinan Akçıl Maaş');
-      expect(requestCount, 2);
+      final result = await service.generatePresentation('Test Konusu');
+      // Should succeed in exactly 1 request via local SafeJsonParser (no 2nd AI call)
+      expect(requestCount, 1);
       expect(result.slides.length, 1);
-      expect(result.slides.first.title, 'Giriş: Ekonomi');
+      expect(result.slides.first.title, 'Giriş: Yapay Zeka');
     });
 
-    test('generatePresentation falls back to next candidate model if JSON retry fails', () async {
-      final requestedModels = <String>[];
+    test('candidate fallback: Super 120B fails -> GPT-OSS 120B succeeds -> Llama NOT called', () async {
+      final calledModels = <String>[];
       final mockClient = MockClient((request) async {
         final reqBody = jsonDecode(request.body) as Map<String, dynamic>;
         final model = reqBody['model'] as String;
-        requestedModels.add(model);
+        calledModels.add(model);
 
-        if (model == 'model_a') {
-          // model_a returns plain Markdown on all calls
-          return http.Response(
-            jsonEncode({
+        if (model == AiModelConfig.modelNemotronSuper) {
+          // Super 120B 500 hatası döner
+          return http.Response('Server Error', 500);
+        }
+
+        if (model == AiModelConfig.modelGptOss120b) {
+          // GPT-OSS 120B başarılı döner
+          return http.Response.bytes(
+            utf8.encode(jsonEncode({
               'choices': [
                 {
                   'message': {
-                    'content': '** Slayt 1 :** Markdown format',
+                    'content': jsonEncode({
+                      'slides': [
+                        {
+                          'title': 'GPT-OSS 120B Başlık',
+                          'content': '- Model ağırlıkları ve mimari\n- Parametre optimizasyonu\n- Hızlı çıkarım performansı',
+                          'keywords': ['gpt'],
+                        }
+                      ]
+                    }),
                   }
                 }
               ]
-            }),
+            })),
             200,
+            headers: {'content-type': 'application/json; charset=utf-8'},
           );
         }
 
-        // model_b returns valid JSON
-        return http.Response(
-          jsonEncode({
-            'choices': [
-              {
-                'message': {
-                  'content': jsonEncode({
-                    'slides': [
-                      {
-                        'title': 'Model B Slayt',
-                        'content': '- Madde 1',
-                        'keywords': ['test'],
-                      }
-                    ]
-                  }),
-                }
-              }
-            ]
-          }),
-          200,
-        );
+        return http.Response('Unexpected', 400);
       });
 
       final service = NvidiaPresentationService(
         client: mockClient,
-        customCandidateModels: ['model_a', 'model_b'],
+        customCandidateModels: [
+          AiModelConfig.modelNemotronSuper,
+          AiModelConfig.modelGptOss120b,
+          AiModelConfig.modelLlama33_70b,
+        ],
       );
 
-      final result = await service.generatePresentation('Test Konusu');
-      expect(requestedModels, contains('model_a'));
-      expect(requestedModels, contains('model_b'));
-      expect(result.slides.first.title, 'Model B Slayt');
+      final result = await service.generatePresentation('Test');
+      expect(calledModels, [AiModelConfig.modelNemotronSuper, AiModelConfig.modelGptOss120b]);
+      expect(calledModels, isNot(contains(AiModelConfig.modelLlama33_70b)));
+      expect(result.slides.first.title, 'GPT-OSS 120B Başlık');
+    });
+
+    test('default candidates contains Super 120B, GPT-OSS 120B, Llama 3.3 70B, GPT-OSS 20B, Nano, Llama 3.1 8B and excludes Ultra', () {
+      expect(NvidiaPresentationService.defaultCandidateModels.first, AiModelConfig.modelNemotronSuper);
+      expect(NvidiaPresentationService.defaultCandidateModels, contains(AiModelConfig.modelGptOss120b));
+      expect(NvidiaPresentationService.defaultCandidateModels, contains(AiModelConfig.modelLlama33_70b));
+      expect(NvidiaPresentationService.defaultCandidateModels, contains(AiModelConfig.modelGptOss20b));
+      expect(NvidiaPresentationService.defaultCandidateModels, contains(AiModelConfig.modelNemotronNano));
+      expect(NvidiaPresentationService.defaultCandidateModels, contains(AiModelConfig.modelLlama31_8b));
+      expect(NvidiaPresentationService.defaultCandidateModels, isNot(contains(AiModelConfig.modelNemotronUltra)));
     });
   });
 }

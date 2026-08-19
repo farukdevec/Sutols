@@ -1,4 +1,7 @@
+import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
 import 'package:sutol/services/grok_presentation_service.dart';
 
 void main() {
@@ -9,7 +12,7 @@ void main() {
         "slides": [
           {
             "title": "Giriş",
-            "content": "- İlk madde\\n- İkinci madde",
+            "content": "- Evrenin temel yapıtaşları\\n- Yıldızlar ve galaksiler\\n- Karadeliklerin gizemi",
             "keywords": ["dunya", "uzay"]
           }
         ]
@@ -28,7 +31,7 @@ void main() {
       [
         {
           "title": "Giriş",
-          "content": "- Detay madde 1\\n- Detay madde 2",
+          "content": "- Güneş merkezli model\\n- Gezegenlerin yörüngeleri\\n- Çekim kuvveti yasaları",
           "keywords": ["dunya"]
         }
       ]
@@ -46,7 +49,7 @@ void main() {
         "sunum": [
           {
             "title": "Giriş",
-            "content": "- İçerik",
+            "content": "- Klasik fizik temelleri\\n- Kuantum teorisinin doğuşu\\n- Modern fizik uygulamaları",
             "keywords": ["kavram"]
           }
         ]
@@ -67,7 +70,7 @@ void main() {
         "slides": [
           {
             "title": "Giriş",
-            "content": "- Madde 1",
+            "content": "- Makine öğrenimi algoritmaları\\n- Doğal dil işleme modelleri\\n- Bilgisayarlı görü teknikleri",
             "keywords": ["test"]
           }
         ]
@@ -83,8 +86,8 @@ void main() {
   });
 
   group('GrokPresentationService API key configuration tests', () {
-    test('throws exception when API key is empty', () {
-      final service = GrokPresentationService(customApiKey: '');
+    test('throws exception when API key and proxy URL are both empty', () {
+      final service = GrokPresentationService(customApiKey: '', customProxyUrl: '');
       expect(
         () => service.generatePresentation('Yapay Zeka'),
         throwsA(isA<Exception>()),
@@ -113,6 +116,41 @@ void main() {
 
       // Reset static proxyUrl
       GrokPresentationService.proxyUrl = '';
+    });
+
+    test('generatePresentation succeeds when mockClient returns valid response', () async {
+      final mockClient = MockClient((request) async {
+        return http.Response.bytes(
+          utf8.encode(jsonEncode({
+            'choices': [
+              {
+                'message': {
+                  'content': jsonEncode({
+                    'slides': [
+                      {
+                        'title': 'Grok Slayt',
+                        'content': '- Model mimarisinin ilk temeli\n- İkinci derin analitik aşama\n- Üçüncü stratejik optimizasyon',
+                        'keywords': ['grok'],
+                      }
+                    ]
+                  }),
+                }
+              }
+            ]
+          })),
+          200,
+          headers: {'content-type': 'application/json; charset=utf-8'},
+        );
+      });
+
+      final service = GrokPresentationService(
+        customProxyUrl: 'https://sutols.online/',
+        client: mockClient,
+      );
+
+      final result = await service.generatePresentation('Grok Konu');
+      expect(result.slides.length, 1);
+      expect(result.slides.first.title, 'Grok Slayt');
     });
   });
 }

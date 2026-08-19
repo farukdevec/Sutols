@@ -1,141 +1,53 @@
-import 'dart:async';
 import 'package:flutter_test/flutter_test.dart';
-
-/// Simulated Key Health States
-enum KeyHealthState {
-  healthy,
-  rateLimited,
-  authenticationError,
-  temporarilyUnavailable,
-}
-
-/// Simulated Candidate: (Credential Key, Model)
-class AiCandidate {
-  final String keyId;
-  final String model;
-  KeyHealthState state;
-
-  AiCandidate({
-    required this.keyId,
-    required this.model,
-    this.state = KeyHealthState.healthy,
-  });
-}
+import 'package:sutol/services/ai_model_config.dart';
 
 /// Simulated AI Router Engine implementing candidate ranking, rate limit handling,
 /// auth error exclusion, zero-Firestore write in-memory state tracking, and sequential fallback.
 class AiRouterEngine {
-  final Map<String, KeyHealthState> keyHealth = {
-    'key1': KeyHealthState.healthy,
-    'key2': KeyHealthState.healthy,
-  };
+  final Map<String, AiErrorType?> modelErrors = {};
 
-  final List<String> availableModels = [
-    'model_a',
-    'model_b',
-    'model_c',
-  ];
+  final List<String> availableNvidiaModels =
+      AiModelConfig.defaultNvidiaCandidateModels;
 
-  final Map<String, List<String>> _callLogs = {
-    'key1': [],
-    'key2': [],
-    'gemini': [],
-    'grok': [],
-  };
+  final List<String> callLogs = [];
 
-  List<String> get callLogs => [
-        ..._callLogs['key1']!,
-        ..._callLogs['key2']!,
-        ..._callLogs['gemini']!,
-        ..._callLogs['grok']!,
-      ];
-
-  List<String> getProviderLogs() {
-    final list = <String>[];
-    for (final entry in _callLogs.entries) {
-      for (final item in entry.value) {
-        list.add('${entry.key}:$item');
-      }
-    }
-    return list;
-  }
-
-  /// Generate ordered candidate list: healthy key 1 models -> healthy key 2 models.
-  /// Excludes keys marked with authenticationError.
-  List<AiCandidate> buildCandidates(String requestedModel) {
-    final candidates = <AiCandidate>[];
-
-    final models = [
-      requestedModel,
-      ...availableModels.where((m) => m != requestedModel)
-    ];
-
-    final keys = ['key1', 'key2'];
-    for (final k in keys) {
-      if (keyHealth[k] == KeyHealthState.authenticationError) {
-        continue; // Exclude auth error key immediately
-      }
-      for (final m in models) {
-        candidates.add(AiCandidate(keyId: k, model: m, state: keyHealth[k]!));
-      }
-    }
-
-    // Sort: healthy keys first, then rate limited keys
-    candidates.sort((a, b) {
-      if (a.state != b.state) {
-        return a.state == KeyHealthState.healthy ? -1 : 1;
-      }
-      return 0; // maintain key1 -> key2 order
-    });
-
-    return candidates;
-  }
-
-  /// Execute sequential router request with mock responses handler per (keyId, model)
+  /// Execute sequential router request with mock responses handler
   Future<String> executeRequest({
-    required String requestedModel,
-    required Future<int> Function(String keyId, String model) mockNvidiaHandler,
+    required Future<int> Function(String model) mockNvidiaHandler,
     required Future<bool> Function() mockGeminiHandler,
     required Future<bool> Function() mockGrokHandler,
   }) async {
-    final candidates = buildCandidates(requestedModel);
+    // 1. Sequential loop over NVIDIA candidates: Super 120B -> GPT-OSS 120B -> Llama 3.3 70B -> GPT-OSS 20B -> Nano -> Llama 3.1 8B
+    for (final model in availableNvidiaModels) {
+      callLogs.add('nvidia:$model');
 
-    // Sequential loop over NVIDIA candidates
-    for (final candidate in candidates) {
-      _callLogs[candidate.keyId]!.add(candidate.model);
-
-      final statusCode = await mockNvidiaHandler(candidate.keyId, candidate.model);
+      final statusCode = await mockNvidiaHandler(model);
 
       if (statusCode == 200) {
-        keyHealth[candidate.keyId] = KeyHealthState.healthy;
-        return 'SUCCESS_NVIDIA_${candidate.keyId}_${candidate.model}';
-      } else if (statusCode == 429) {
-        keyHealth[candidate.keyId] = KeyHealthState.rateLimited;
-        continue;
-      } else if (statusCode == 401 || statusCode == 403) {
-        keyHealth[candidate.keyId] = KeyHealthState.authenticationError;
-        continue;
+        return 'SUCCESS_NVIDIA_$model';
       } else {
-        keyHealth[candidate.keyId] = KeyHealthState.temporarilyUnavailable;
+        modelErrors[model] = AiModelConfig.classifyStatusCode(statusCode);
         continue;
       }
     }
 
-    // NVIDIA Key 1 + Key 2 exhausted -> Gemini
-    _callLogs['gemini']!.add('gemini-3.6-flash');
+    // 2. NVIDIA candidates exhausted -> Gemini
+    callLogs.add('gemini:${AiModelConfig.modelGeminiFlash}');
     final geminiSuccess = await mockGeminiHandler();
     if (geminiSuccess) {
       return 'SUCCESS_GEMINI';
     }
 
-    // Gemini failed -> Grok
-    _callLogs['grok']!.add('grok-4.3');
+    // 3. Gemini failed -> Grok
+    callLogs.add('grok:${AiModelConfig.modelGrokDefault}');
     final grokSuccess = await mockGrokHandler();
     if (grokSuccess) {
       return 'SUCCESS_GROK';
     }
 
-    throw Exception('FINAL_ERROR: All providers failed');
+    // 4. All AI failed -> Fallback
+    callLogs.add('fallback:word_based');
+    return 'SUCCESS_FALLBACK';
   }
 }
 
@@ -147,108 +59,93 @@ void main() {
       router = AiRouterEngine();
     });
 
-    test('Test 1: Key 1 + Model A -> SUCCESS (Key 2, Gemini, Grok NOT called)', () async {
+    test('Scenario 1: Nemotron Super 120B -> SUCCESS (GPT-OSS, Llama, Gemini, Grok NOT called)', () async {
       final result = await router.executeRequest(
-        requestedModel: 'model_a',
-        mockNvidiaHandler: (keyId, model) async {
-          if (keyId == 'key1' && model == 'model_a') return 200;
-          return 500;
-        },
+        mockNvidiaHandler: (model) async => model == AiModelConfig.modelNemotronSuper ? 200 : 500,
         mockGeminiHandler: () async => true,
         mockGrokHandler: () async => true,
       );
 
-      expect(result, 'SUCCESS_NVIDIA_key1_model_a');
-      expect(router.getProviderLogs(), ['key1:model_a']);
-      expect(router.keyHealth['key1'], KeyHealthState.healthy);
+      expect(result, 'SUCCESS_NVIDIA_${AiModelConfig.modelNemotronSuper}');
+      expect(router.callLogs, ['nvidia:${AiModelConfig.modelNemotronSuper}']);
     });
 
-    test('Test 2: Key 1 + Model A -> 429 -> Key 1 + Model B -> SUCCESS', () async {
+    test('Scenario 2: Super 120B -> 429/500 -> GPT-OSS 120B -> SUCCESS (Other models NOT called)', () async {
       final result = await router.executeRequest(
-        requestedModel: 'model_a',
-        mockNvidiaHandler: (keyId, model) async {
-          if (keyId == 'key1' && model == 'model_a') return 429;
-          if (keyId == 'key1' && model == 'model_b') return 200;
+        mockNvidiaHandler: (model) async {
+          if (model == AiModelConfig.modelNemotronSuper) return 429;
+          if (model == AiModelConfig.modelGptOss120b) return 200;
           return 500;
         },
-        mockGeminiHandler: () async => false,
+        mockGeminiHandler: () async => true,
         mockGrokHandler: () async => false,
       );
 
-      expect(result, 'SUCCESS_NVIDIA_key1_model_b');
-      expect(router.getProviderLogs(), containsAllInOrder(['key1:model_a', 'key1:model_b']));
-      expect(router.getProviderLogs(), isNot(contains('gemini:gemini-3.6-flash')));
+      expect(result, 'SUCCESS_NVIDIA_${AiModelConfig.modelGptOss120b}');
+      expect(router.callLogs, [
+        'nvidia:${AiModelConfig.modelNemotronSuper}',
+        'nvidia:${AiModelConfig.modelGptOss120b}',
+      ]);
+      expect(router.callLogs, isNot(contains('nvidia:${AiModelConfig.modelLlama33_70b}')));
+      expect(router.callLogs, isNot(contains(contains('gemini'))));
+      expect(router.callLogs, isNot(contains(contains('grok'))));
     });
 
-    test('Test 3: Key 1 -> rate limited -> Key 2 + Model A -> SUCCESS', () async {
-      router.keyHealth['key1'] = KeyHealthState.rateLimited;
-
+    test('Scenario 3: Super + GPT-OSS 120B fail -> Llama 3.3 70B -> SUCCESS', () async {
       final result = await router.executeRequest(
-        requestedModel: 'model_a',
-        mockNvidiaHandler: (keyId, model) async {
-          if (keyId == 'key2' && model == 'model_a') return 200;
+        mockNvidiaHandler: (model) async {
+          if (model == AiModelConfig.modelNemotronSuper) return 500;
+          if (model == AiModelConfig.modelGptOss120b) return 500;
+          if (model == AiModelConfig.modelLlama33_70b) return 200;
           return 500;
         },
-        mockGeminiHandler: () async => false,
+        mockGeminiHandler: () async => true,
         mockGrokHandler: () async => false,
       );
 
-      expect(result, 'SUCCESS_NVIDIA_key2_model_a');
-      expect(router.getProviderLogs().first, startsWith('key2:'));
-      expect(router.getProviderLogs(), isNot(contains('gemini:gemini-3.6-flash')));
+      expect(result, 'SUCCESS_NVIDIA_${AiModelConfig.modelLlama33_70b}');
+      expect(router.callLogs, [
+        'nvidia:${AiModelConfig.modelNemotronSuper}',
+        'nvidia:${AiModelConfig.modelGptOss120b}',
+        'nvidia:${AiModelConfig.modelLlama33_70b}',
+      ]);
+      expect(router.callLogs, isNot(contains(contains('gemini'))));
+      expect(router.callLogs, isNot(contains(contains('grok'))));
     });
 
-    test('Test 4: Key 1 & Key 2 NVIDIA models fail -> Gemini -> SUCCESS', () async {
+    test('Scenario 4: All NVIDIA models fail -> Gemini -> SUCCESS (Grok NOT called)', () async {
       final result = await router.executeRequest(
-        requestedModel: 'model_a',
-        mockNvidiaHandler: (keyId, model) async => 500, // All NVIDIA fail
+        mockNvidiaHandler: (model) async => 500,
         mockGeminiHandler: () async => true,
         mockGrokHandler: () async => false,
       );
 
       expect(result, 'SUCCESS_GEMINI');
-      expect(router.getProviderLogs(), contains('gemini:gemini-3.6-flash'));
-      expect(router.getProviderLogs(), isNot(contains('grok:grok-4.3')));
+      expect(router.callLogs, contains('gemini:${AiModelConfig.modelGeminiFlash}'));
+      expect(router.callLogs, isNot(contains(contains('grok'))));
     });
 
-    test('Test 5: NVIDIA Key 1 & 2 fail -> Gemini fails -> Grok -> SUCCESS', () async {
+    test('Scenario 5: All NVIDIA fail -> Gemini fails -> Grok -> SUCCESS', () async {
       final result = await router.executeRequest(
-        requestedModel: 'model_a',
-        mockNvidiaHandler: (keyId, model) async => 500,
-        mockGeminiHandler: () async => false, // Gemini fails
-        mockGrokHandler: () async => true, // Grok succeeds
+        mockNvidiaHandler: (model) async => 500,
+        mockGeminiHandler: () async => false,
+        mockGrokHandler: () async => true,
       );
 
       expect(result, 'SUCCESS_GROK');
-      expect(router.getProviderLogs(), contains('grok:grok-4.3'));
+      expect(router.callLogs, contains('grok:${AiModelConfig.modelGrokDefault}'));
+      expect(router.callLogs, isNot(contains(contains('fallback'))));
     });
 
-    test('Test 6: Key 1 -> 401 (authentication_error) -> Key 2 used (No infinite retry)', () async {
-      await expectLater(
-        router.executeRequest(
-          requestedModel: 'model_a',
-          mockNvidiaHandler: (keyId, model) async {
-            if (keyId == 'key1') return 401; // Key 1 gets auth error
-            if (keyId == 'key2' && model == 'model_a') return 200; // Key 2 succeeds
-            return 500;
-          },
-          mockGeminiHandler: () async => false,
-          mockGrokHandler: () async => false,
-        ),
-        completion(equals('SUCCESS_NVIDIA_key2_model_a')),
+    test('Scenario 6: All AI services fail -> Word-based Fallback is used', () async {
+      final result = await router.executeRequest(
+        mockNvidiaHandler: (model) async => 500,
+        mockGeminiHandler: () async => false,
+        mockGrokHandler: () async => false,
       );
 
-      expect(router.keyHealth['key1'], KeyHealthState.authenticationError);
-
-      final nextLogs = <String>[];
-      final candidates = router.buildCandidates('model_a');
-
-      for (final c in candidates) {
-        nextLogs.add('${c.keyId}:${c.model}');
-      }
-
-      expect(nextLogs, isNot(contains(startsWith('key1:'))));
-      expect(candidates.every((c) => c.keyId != 'key1'), isTrue);
+      expect(result, 'SUCCESS_FALLBACK');
+      expect(router.callLogs.last, 'fallback:word_based');
     });
   });
 }

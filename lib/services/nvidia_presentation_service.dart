@@ -4,50 +4,50 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:meta/meta.dart';
 
+import 'ai_model_config.dart';
+import 'presentation_content_quality.dart';
 import 'presentation_prompt_builder.dart';
+import 'safe_json_parser.dart';
 
-/// Gemini'nin response_schema ile zorladığı tek slayt yapısı.
+/// Gemini / NVIDIA / Grok için standart slayt yapısı.
 class NvidiaSlide {
   final String title;
   final String content;
   final List<String> keywords;
+  final String type;
 
   const NvidiaSlide({
     required this.title,
     required this.content,
     required this.keywords,
+    this.type = 'cards',
   });
 
   factory NvidiaSlide.fromJson(Map<String, dynamic> json) {
-    final title = json['title'];
-    final content = json['content'];
-    final rawKeywords = json['keywords'];
+    final title = json['title'] ?? json['baslik'];
+    final content = json['content'] ?? json['icerik'];
+    final rawKeywords = json['keywords'] ?? json['anahtar_kelimeler'];
+    final rawType = json['type'] ?? json['slide_type'] ?? json['layout'] ?? json['tip'] ?? 'cards';
+
     if (title is! String || title.trim().isEmpty) {
       throw const FormatException('Slayt başlığı (title) geçersiz.');
     }
-    final cleanedTitle = _sanitizeTitle(title);
+    final cleanedTitle = PresentationContentQuality.sanitizeTitle(title);
     final normalizedContent = _normalizeContent(content);
     if (normalizedContent.isEmpty) {
       throw const FormatException('Slayt içeriği (content) geçersiz.');
     }
-    if (rawKeywords is! List) {
-      throw const FormatException(
-          'Slayt anahtar kelimeleri (keywords) geçersiz.');
-    }
+
+    final keywordsList = rawKeywords is List
+        ? rawKeywords.map((k) => k.toString()).toList(growable: false)
+        : const <String>[];
+
     return NvidiaSlide(
       title: cleanedTitle,
       content: normalizedContent,
-      keywords: rawKeywords.whereType<String>().toList(growable: false),
+      keywords: keywordsList,
+      type: rawType.toString().toLowerCase().trim(),
     );
-  }
-
-  static String _sanitizeTitle(String title) {
-    return title
-        .replaceFirst(
-          RegExp(r'^(?:slayt|slide)\s*\d+[\s:\-–—]*', caseSensitive: false),
-          '',
-        )
-        .trim();
   }
 
   static String _normalizeContent(Object? rawContent) {
@@ -73,9 +73,8 @@ class NvidiaSlide {
         }
       }
       return lines
-          .map((line) => line.startsWith('-') || line.startsWith('*')
-              ? line
-              : '- $line')
+          .map((line) =>
+              line.startsWith('-') || line.startsWith('*') ? line : '- $line')
           .join('\n');
     }
     if (rawContent is List) {
@@ -83,9 +82,8 @@ class NvidiaSlide {
           .whereType<String>()
           .map((line) => line.trim())
           .where((line) => line.isNotEmpty)
-          .map((line) => line.startsWith('-') || line.startsWith('*')
-              ? line
-              : '- $line')
+          .map((line) =>
+              line.startsWith('-') || line.startsWith('*') ? line : '- $line')
           .toList(growable: false);
       return lines.join('\n');
     }
@@ -125,16 +123,9 @@ class NvidiaPresentation {
 
 class NvidiaPresentationService {
   static const String defaultProxyUrl = 'https://sutols.online/';
-  static const String defaultModelName = 'nvidia/nemotron-3.5-lightning-30b-a3b';
-  static const Duration _requestTimeout = Duration(seconds: 60);
-  static const int _maxAttempts = 2;
-
-  static const List<String> defaultCandidateModels = [
-    'nvidia/nemotron-3.5-lightning-30b-a3b',
-    'nvidia/llama-3.3-nemotron-super-49b-v1',
-    'meta/llama-3.1-8b-instruct',
-    'nvidia/nemotron-3-nano-30b-a3b',
-  ];
+  static const String defaultModelName = AiModelConfig.modelNemotronSuper;
+  static const List<String> defaultCandidateModels =
+      AiModelConfig.defaultNvidiaCandidateModels;
 
   final String proxyUrl;
   final String modelName;
@@ -154,6 +145,7 @@ class NvidiaPresentationService {
     String language = 'turkish',
     String? model,
     List<String>? candidateModels,
+    bool checkQuality = true,
   }) async {
     final systemInstruction = PresentationPromptBuilder.buildSystemInstruction();
     final userPrompt = PresentationPromptBuilder.buildUserPrompt(
@@ -171,9 +163,32 @@ class NvidiaPresentationService {
           ...defaultCandidateModels.where((m) => m != selectedModel),
         ];
 
+    assert(() {
+      // ignore: avoid_print
+      print(
+        '[AI PROMPT DEBUG]\n'
+        'provider: nvidia\n'
+        'model: $selectedModel\n'
+        'system prompt length: ${systemInstruction.length}\n'
+        'user prompt length: ${userPrompt.length}\n'
+        'schema: slides[title, type, content, keywords]\n'
+        'slide count: $slideCount',
+      );
+      return true;
+    }());
+
     String lastError = '';
 
-    for (final candidateModel in modelsToTry) {
+    for (var i = 0; i < modelsToTry.length; i++) {
+      final candidateModel = modelsToTry[i];
+      final timeout =
+          AiModelConfig.timeoutForModel(candidateModel, slideCount: slideCount);
+      final nextModel = i + 1 < modelsToTry.length
+          ? modelsToTry[i + 1]
+          : 'Gemini Fallback';
+
+      final stopwatch = Stopwatch()..start();
+
       try {
         final body = {
           'model': candidateModel,
@@ -181,7 +196,7 @@ class NvidiaPresentationService {
             {
               'role': 'system',
               'content': '$systemInstruction\n\nİstenen sunumu KESİNLİKLE VE YALNIZCA TEK BİR GEÇERLİ JSON NESNESİ OLARAK DÖNDÜR. '
-                  'JSON Şeması: {"slides": [{"title": "Slayt Başlığı", "content": "- Açıklama 1\\n- Açıklama 2", "keywords": ["nesne1", "nesne2"]}]}. '
+                  'JSON Şeması: {"slides": [{"title": "Slayt Başlığı", "type": "hero|comparison|process|cards|timeline|statistic|summary", "content": "- Madde 1\\n- Madde 2", "keywords": ["nesne1", "nesne2"]}]}. '
                   'Yanıtında asla ekstra metin, açıklama veya markdown kod bloğu yazma.',
             },
             {
@@ -189,7 +204,7 @@ class NvidiaPresentationService {
               'content': userPrompt,
             },
           ],
-          'temperature': 0.65,
+          'temperature': 0.5,
           'max_tokens': maxTokens,
           'response_format': {
             'type': 'json_object',
@@ -197,427 +212,267 @@ class NvidiaPresentationService {
           'stream': false,
         };
 
-        final response = await _postWithRetry(body);
+        final response = await _postWithTimeout(body, timeout: timeout);
         final responseJson = _decodeJsonMap(
           response.body,
-          onError: 'Cloudflare Worker geçerli JSON döndürmedi.',
+          onError: 'NVIDIA API / Proxy geçerli JSON döndürmedi.',
         );
         final content = _extractAssistantContent(responseJson);
 
-        if (content == null || content.trim().isEmpty) {
-          lastError = 'Cloudflare Worker yanıtında choices[0].message.content boş döndü.';
-          continue;
+        if (content == null || content.isEmpty) {
+          throw const FormatException('choices[0].message.content boş döndü.');
         }
 
-        // 1. Önce response'un gerçekten geçerli bir JSON presentation payload olup olmadığını tespit et
-        final parsed = tryParsePresentationPayload(content);
-        if (parsed != null) {
-          return NvidiaPresentation.fromJson(parsed);
-        }
+        final parsed = SafeJsonParser.parsePresentationPayload(content);
+        SafeJsonParser.validateSchema(parsed);
+        SafeJsonParser.validateContent(parsed);
 
-        // 2. Eğer Markdown/plain text geldiyse: körlemesine parse etme, kontrollü "JSON ONLY" retry yap
-        // ignore: avoid_print
-        print('NVIDIA ($candidateModel) yanıtı Markdown/metin olarak geldi. JSON ONLY düzeltme isteği gönderiliyor...');
+        final presentation = NvidiaPresentation.fromJson(parsed);
 
-        final correctedContent = await _requestJsonOnlyCorrection(
-          model: candidateModel,
-          systemInstruction: systemInstruction,
-          userPrompt: userPrompt,
-          markdownContent: content,
-          maxTokens: maxTokens,
-        );
-
-        if (correctedContent != null && correctedContent.trim().isNotEmpty) {
-          final correctedParsed = tryParsePresentationPayload(correctedContent);
-          if (correctedParsed != null) {
-            return NvidiaPresentation.fromJson(correctedParsed);
+        if (checkQuality) {
+          final qualityReason = PresentationContentQuality.rejectionReason(
+            presentation.slides
+                .map(
+                  (s) => PresentationContentSample(
+                    title: s.title,
+                    content: s.content,
+                  ),
+                )
+                .toList(growable: false),
+          );
+          if (qualityReason != null) {
+            throw FormatException('Kalite kontrolü reddedildi: $qualityReason');
           }
         }
 
-        lastError = 'Nvidia ($candidateModel) yanıtı JSON olarak ayrıştırılamadı. İçerik: ${content.trim()}';
+        final keyHeader = response.headers['x-ai-key'] ?? 'key1';
+        final modelHeader = response.headers['x-ai-model'] ?? candidateModel;
+
+        stopwatch.stop();
+        AiRouterLogger.logSuccess(
+          provider: 'NVIDIA',
+          key: keyHeader,
+          model: modelHeader,
+          attempt: i + 1,
+          status: 200,
+          latency: stopwatch.elapsed,
+          jsonValid: true,
+          schemaValid: true,
+          qualityPass: true,
+        );
+
+        return presentation;
       } catch (e) {
+        stopwatch.stop();
         lastError = e.toString();
+        final errorType = _classifyError(e);
+
+        AiRouterLogger.logFailure(
+          provider: 'NVIDIA',
+          key: 'key1',
+          model: candidateModel,
+          attempt: i + 1,
+          errorType: errorType,
+          latency: stopwatch.elapsed,
+          details: lastError,
+          action: i == 0 ? 'FALLBACK_TO_KEY2' : 'FALLBACK → $nextModel',
+        );
       }
     }
 
-    throw Exception(lastError.isEmpty
-        ? 'NVIDIA sunum üretimi başarısız oldu.'
-        : lastError);
+    throw Exception(
+        lastError.isEmpty ? 'NVIDIA sunum üretimi başarısız oldu.' : lastError);
   }
 
-  Future<String?> _requestJsonOnlyCorrection({
-    required String model,
-    required String systemInstruction,
-    required String userPrompt,
-    required String markdownContent,
-    required int maxTokens,
+  Future<http.Response> _postWithTimeout(
+    Map<String, dynamic> body, {
+    required Duration timeout,
   }) async {
-    try {
-      final body = {
-        'model': model,
-        'messages': [
-          {
-            'role': 'system',
-            'content': '$systemInstruction\n\nİstenen sunumu KESİNLİKLE VE YALNIZCA TEK BİR GEÇERLİ JSON NESNESİ OLARAK DÖNDÜR. '
-                'JSON Şeması: {"slides": [{"title": "Slayt Başlığı", "content": "- Açıklama 1\\n- Açıklama 2", "keywords": ["nesne1", "nesne2"]}]}. '
-                'Yanıtında asla ekstra metin, açıklama veya markdown kod bloğu yazma.',
-          },
-          {
-            'role': 'user',
-            'content': userPrompt,
-          },
-          {
-            'role': 'assistant',
-            'content': markdownContent,
-          },
-          {
-            'role': 'user',
-            'content': 'Önceki yanıtın JSON formatında değil, metin/markdown veya üst-anlatı olarak geldi. '
-                'Lütfen yukarıdaki sunum içeriğini KESİNLİKLE VE YALNIZCA TEK BİR GEÇERLİ JSON NESNESİ OLARAK yeniden formatla. '
-                'İçeriği kısaltma veya sadeleştirme; sadece JSON söz dizimini düzelt, her slaytta en az 3 detaylı maddeyi ve bilgi zenginliğini KORU. '
-                'İçerikten "bu sunumda", "konuya genel bakış", "düşünce hattı" gibi plan/dolgu cümlelerini kesinlikle çıkar ve doğrudan somut slayt bilgilerini yaz. '
-                'Başlıklardan "Slayt N:" öneklerini temizle. "X gelişimiyle X hızlandı" gibi döngüsel/totolojik cümleleri KESİNLİKLE YAZMA. '
-                'Yanıtında SADECE JSON bulunsun, hiçbir markdown veya ek açıklama yazma. '
-                'Şema: {"slides": [{"title": "Slayt Başlığı", "content": "- Açıklama 1\\n- Açıklama 2\\n- Açıklama 3", "keywords": ["nesne1", "nesne2"]}]}',
-          },
-        ],
-        'temperature': 0.2,
-        'max_tokens': maxTokens,
-        'response_format': {
-          'type': 'json_object',
-        },
-        'stream': false,
-      };
-
-      final response = await _postWithRetry(body);
-      final responseJson = _decodeJsonMap(
-        response.body,
-        onError: 'Cloudflare Worker geçerli JSON döndürmedi.',
-      );
-      return _extractAssistantContent(responseJson);
-    } catch (_) {
-      return null;
-    }
-  }
-
-  Future<http.Response> _postWithRetry(Map<String, dynamic> body) async {
-    var lastError = '';
     final httpClient = client;
-    for (var attempt = 1; attempt <= _maxAttempts; attempt += 1) {
+    http.Response response;
+
+    final headers = const {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+    };
+
+    try {
+      response = await (httpClient != null
+              ? httpClient.post(
+                  Uri.parse(proxyUrl),
+                  headers: headers,
+                  body: jsonEncode(body),
+                )
+              : http.post(
+                  Uri.parse(proxyUrl),
+                  headers: headers,
+                  body: jsonEncode(body),
+                ))
+          .timeout(
+        timeout,
+        onTimeout: () => throw TimeoutException(
+          'NVIDIA ($proxyUrl) isteği ${timeout.inSeconds} saniyede zaman aşımına uğradı.',
+        ),
+      );
+    } on TimeoutException {
+      rethrow;
+    } catch (e) {
+      throw Exception('Bağlantı hatası: $e');
+    }
+
+    if (response.statusCode == 200) {
+      return response;
+    }
+
+    // 400 Bad Request: response_format desteklenmiyorsa tek seferlik formatsız dene
+    if (response.statusCode == 400 && body.containsKey('response_format')) {
+      final fallbackBody = Map<String, dynamic>.from(body)..remove('response_format');
       try {
-        final response = await (httpClient != null
+        final fallbackResponse = await (httpClient != null
                 ? httpClient.post(
                     Uri.parse(proxyUrl),
-                    headers: {
-                      'Content-Type': 'application/json',
-                      'Origin': 'https://sutols.com',
-                    },
-                    body: jsonEncode(body),
+                    headers: headers,
+                    body: jsonEncode(fallbackBody),
                   )
                 : http.post(
                     Uri.parse(proxyUrl),
-                    headers: {
-                      'Content-Type': 'application/json',
-                      'Origin': 'https://sutols.com',
-                    },
-                    body: jsonEncode(body),
+                    headers: headers,
+                    body: jsonEncode(fallbackBody),
                   ))
-            .timeout(
-              _requestTimeout,
-              onTimeout: () => throw TimeoutException(
-                'Cloudflare Worker isteği ${_requestTimeout.inSeconds} saniyede zaman aşımına uğradı.',
-              ),
-            );
-
-        if (response.statusCode == 200) {
-          return response;
+            .timeout(timeout);
+        if (fallbackResponse.statusCode == 200) {
+          return fallbackResponse;
         }
-
-        if (response.statusCode == 400 && body.containsKey('response_format')) {
-          final fallbackBody = Map<String, dynamic>.from(body)..remove('response_format');
-          final fallbackResponse = await (httpClient != null
-                  ? httpClient.post(
-                      Uri.parse(proxyUrl),
-                      headers: {
-                        'Content-Type': 'application/json',
-                        'Origin': 'https://sutols.com',
-                      },
-                      body: jsonEncode(fallbackBody),
-                    )
-                  : http.post(
-                      Uri.parse(proxyUrl),
-                      headers: {
-                        'Content-Type': 'application/json',
-                        'Origin': 'https://sutols.com',
-                      },
-                      body: jsonEncode(fallbackBody),
-                    ))
-              .timeout(
-                _requestTimeout,
-                onTimeout: () => throw TimeoutException(
-                  'Cloudflare Worker isteği ${_requestTimeout.inSeconds} saniyede zaman aşımına uğradı.',
-                ),
-              );
-          if (fallbackResponse.statusCode == 200) {
-            return fallbackResponse;
-          }
-        }
-
-        lastError = _statusErrorMessage(
-          statusCode: response.statusCode,
-          responseBody: response.body,
-        );
-        if (!_isRetriableStatus(response.statusCode) ||
-            attempt == _maxAttempts) {
-          throw Exception(lastError);
-        }
-      } on TimeoutException catch (e) {
-        lastError =
-            e.message ?? 'Cloudflare Worker isteği zaman aşımına uğradı.';
-        if (attempt == _maxAttempts) {
-          throw Exception(lastError);
-        }
-      } on http.ClientException catch (e) {
-        lastError = 'Cloudflare Worker bağlantı hatası: ${e.message}';
-        if (attempt == _maxAttempts) {
-          throw Exception(lastError);
-        }
-      }
-
-      await Future<void>.delayed(Duration(milliseconds: 500 * attempt));
+      } catch (_) {}
     }
 
-    throw Exception(lastError.isEmpty
-        ? 'Cloudflare Worker isteği başarısız oldu.'
-        : lastError);
+    throw HttpExceptionWithStatus(
+      statusCode: response.statusCode,
+      message: _statusErrorMessage(
+        statusCode: response.statusCode,
+        responseBody: response.body,
+      ),
+    );
   }
 
-  static bool _isRetriableStatus(int statusCode) =>
-      statusCode == 429 || statusCode >= 500;
+  static AiErrorType _classifyError(dynamic error) {
+    if (error is TimeoutException) return AiErrorType.timeout;
+    if (error is HttpExceptionWithStatus) {
+      return AiModelConfig.classifyStatusCode(error.statusCode);
+    }
+    final msg = error.toString().toLowerCase();
+    if (msg.contains('zaman aşımı') || msg.contains('timed out') || msg.contains('timeout')) {
+      return AiErrorType.timeout;
+    }
+    if (msg.contains('kalite kontrolü') || msg.contains('yetersiz içerik')) {
+      return AiErrorType.qualityRejection;
+    }
+    if (msg.contains('şema') || msg.contains('schema') || msg.contains('başlığı boş')) {
+      return AiErrorType.schemaError;
+    }
+    if (msg.contains('json') || msg.contains('formatexception')) {
+      return AiErrorType.invalidJson;
+    }
+    if (msg.contains('bağlantı') || msg.contains('network') || msg.contains('socketexception')) {
+      return AiErrorType.networkError;
+    }
+    return AiErrorType.unknown;
+  }
 
   static String _statusErrorMessage({
     required int statusCode,
     required String responseBody,
   }) {
-    final body = responseBody.trim();
-    final bodySuffix = body.isEmpty ? '' : ' Detay: $body';
+    final detail = _extractErrorDetail(responseBody);
     switch (statusCode) {
       case 400:
-        return 'AI isteği geçersiz (400). Model veya request formatını kontrol edin.$bodySuffix';
+        return 'AI isteği geçersiz (400). Detay: $detail';
       case 401:
-        return 'AI isteği yetkilendirilemedi (401). Worker kimlik doğrulamasını kontrol edin.$bodySuffix';
+        return 'AI kimlik doğrulaması başarısız (401). API anahtarını kontrol edin. Detay: $detail';
       case 403:
-        return 'AI isteği engellendi (403). Origin/CORS ayarlarını kontrol edin.$bodySuffix';
+        return 'AI erişim engellendi (403). Origin/CORS ayarlarını kontrol edin. Detay: $detail';
       case 429:
-        return 'AI isteği hız sınırına takıldı (429). Lütfen kısa süre sonra tekrar deneyin.$bodySuffix';
+        return 'AI hız limiti aşıldı (429 Rate Limit). Başka modele geçiliyor. Detay: $detail';
+      case 500:
+      case 502:
+      case 503:
+      case 504:
+        return 'AI sunucu hatası ($statusCode). Sağlayıcı yanıt vermedi. Detay: $detail';
       default:
-        if (statusCode >= 500) {
-          return 'Cloudflare Worker/NVIDIA servis hatası ($statusCode).$bodySuffix';
-        }
-        return 'AI isteği başarısız oldu ($statusCode).$bodySuffix';
+        return 'AI HTTP $statusCode hatası. Detay: $detail';
     }
+  }
+
+  static String _extractErrorDetail(String responseBody) {
+    if (responseBody.trim().isEmpty) return 'Yanıt gövdesi boş';
+    try {
+      final decoded = jsonDecode(responseBody);
+      if (decoded is Map<String, dynamic>) {
+        if (decoded['error'] is Map && decoded['error']['message'] != null) {
+          return decoded['error']['message'].toString();
+        }
+        if (decoded['error'] != null) {
+          return decoded['error'].toString();
+        }
+        if (decoded['message'] != null) {
+          return decoded['message'].toString();
+        }
+      }
+    } catch (_) {}
+    return responseBody.length > 200
+        ? '${responseBody.substring(0, 200)}...'
+        : responseBody;
   }
 
   static Map<String, dynamic> _decodeJsonMap(
     String raw, {
     required String onError,
   }) {
-    final decoded = jsonDecode(raw);
-    if (decoded is! Map<String, dynamic>) {
-      throw FormatException(onError);
-    }
-    return decoded;
-  }
-
-  @visibleForTesting
-  static Map<String, dynamic>? tryParsePresentationPayload(String rawContent) {
-    try {
-      final parsed = _parsePresentationPayload(rawContent);
-      NvidiaPresentation.fromJson(parsed);
-      return parsed;
-    } catch (_) {
-      return null;
-    }
-  }
-
-  @visibleForTesting
-  static Map<String, dynamic> parsePresentationPayload(String rawContent) =>
-      _parsePresentationPayload(rawContent);
-
-  static Map<String, dynamic> _parsePresentationPayload(String rawContent) {
-    var cleaned = rawContent.trim();
-
-    // 0. Remove DeepSeek reasoning tags (<think>...</think>) if present
-    if (cleaned.contains('</think>')) {
-      cleaned = cleaned.substring(cleaned.lastIndexOf('</think>') + 8).trim();
-    }
-
-    // 1. Remove markdown code fences if present (e.g. ```json ... ```)
-    if (cleaned.contains('```')) {
-      final match = RegExp(r'```(?:json)?\s*([\s\S]*?)\s*```').firstMatch(cleaned);
-      if (match != null) {
-        cleaned = match.group(1)!.trim();
-      } else if (cleaned.startsWith('```')) {
-        final firstNewline = cleaned.indexOf('\n');
-        if (firstNewline != -1) {
-          cleaned = cleaned.substring(firstNewline + 1);
-        }
-        cleaned = cleaned.replaceFirst(RegExp(r'```\s*$'), '').trim();
-      }
-    }
-
-    // 2. Direct object attempt
-    final directMap = _tryDecodeMap(cleaned);
-    if (directMap != null) {
-      return _normalizePresentationPayload(directMap);
-    }
-
-    // 3. Direct array attempt
-    final directList = _tryDecodeList(cleaned);
-    if (directList != null) {
-      return _normalizeSlideList(directList);
-    }
-
-    // 4. Extract all slides from any embedded JSON maps or lists
-    final extractedSlides = _extractAllSlidesFromText(cleaned);
-    if (extractedSlides.isNotEmpty) {
-      return {'slides': extractedSlides};
-    }
-
-    throw Exception(
-      'Nvidia yanıtı JSON olarak ayrıştırılamadı. İçerik: $cleaned',
-    );
-  }
-
-  static List<Map<String, dynamic>> _extractAllSlidesFromText(String text) {
-    final slides = <Map<String, dynamic>>[];
-
-    // 1. Look for any {"slides": [...]} structure
-    final slideMatches = RegExp(r'\{[^{}]*"slides"\s*:\s*\[[\s\S]*?\][^{}]*\}').allMatches(text);
-    for (final match in slideMatches) {
-      final map = _tryDecodeMap(match.group(0)!);
-      if (map != null && map['slides'] is List) {
-        for (final item in map['slides'] as List) {
-          if (item is Map) {
-            final m = item.map((k, v) => MapEntry(k.toString(), v));
-            if (_looksLikeSlideObject(m)) slides.add(m);
-          }
-        }
-      }
-    }
-    if (slides.isNotEmpty) return slides;
-
-    // 2. Look for individual slide objects {"title": ..., "content": ...}
-    final objMatches = RegExp(r'\{[^{}]*"title"\s*:[^{}]*"content"\s*:[^{}]*\}').allMatches(text);
-    for (final match in objMatches) {
-      final map = _tryDecodeMap(match.group(0)!);
-      if (map != null && _looksLikeSlideObject(map)) {
-        slides.add(map);
-      }
-    }
-    if (slides.isNotEmpty) return slides;
-
-    // 3. Fall back to greedy object sequence scanning
-    return _decodeJsonObjectSequence(text);
-  }
-
-  static List<dynamic>? _tryDecodeList(String raw) {
     try {
       final decoded = jsonDecode(raw);
-      if (decoded is List) return decoded;
-    } catch (_) {}
-    return null;
-  }
-
-  static Map<String, dynamic> _normalizeSlideList(List<dynamic> list) {
-    final validSlides = <Map<String, dynamic>>[];
-    for (final item in list) {
-      if (item is Map) {
-        final map = item.map((key, value) => MapEntry(key.toString(), value));
-        if (_looksLikeSlideObject(map)) {
-          validSlides.add(map);
-        }
+      if (decoded is Map<String, dynamic>) {
+        return decoded;
+      }
+      throw FormatException(onError);
+    } catch (_) {
+      try {
+        return SafeJsonParser.parsePresentationPayload(raw);
+      } catch (_) {
+        throw FormatException(onError);
       }
     }
-    if (validSlides.isEmpty) {
-      throw const FormatException('AI yanıtında geçerli slayt bulunamadı.');
-    }
-    return {'slides': validSlides};
-  }
-
-  static Map<String, dynamic> _normalizePresentationPayload(
-    Map<String, dynamic> decoded,
-  ) {
-    for (final key in const ['slides', 'sunum', 'slaytlar', 'presentation', 'items', 'data']) {
-      if (decoded[key] is List) {
-        return {'slides': decoded[key]};
-      }
-    }
-
-    for (final entry in decoded.entries) {
-      if (entry.value is List) {
-        final list = entry.value as List;
-        if (list.isNotEmpty &&
-            list.any((item) => item is Map && _looksLikeSlideObject(item.map((k, v) => MapEntry(k.toString(), v))))) {
-          return {'slides': list};
-        }
-      }
-    }
-
-    if (_looksLikeSlideObject(decoded)) {
-      return {
-        'slides': [decoded]
-      };
-    }
-    throw const FormatException(
-        'AI yanıtı geçerli sunum JSON formatında değil.');
-  }
-
-  static Map<String, dynamic>? _tryDecodeMap(String raw) {
-    try {
-      return _decodeJsonMap(
-        raw,
-        onError: 'AI yanıtı JSON sunum formatında değil.',
-      );
-    } on FormatException {
-      return null;
-    }
-  }
-
-  static bool _looksLikeSlideObject(Map<String, dynamic> decoded) =>
-      decoded.containsKey('title') && decoded.containsKey('content');
-
-  static List<Map<String, dynamic>> _decodeJsonObjectSequence(String raw) {
-    final matches = RegExp(r'\{[\s\S]*?\}(?=\s*\{|$)', multiLine: true)
-        .allMatches(raw)
-        .map((match) => match.group(0)!.trim())
-        .where((part) => part.isNotEmpty)
-        .toList(growable: false);
-    final slides = <Map<String, dynamic>>[];
-    for (final part in matches) {
-      final decoded = _tryDecodeMap(part);
-      if (decoded == null || !_looksLikeSlideObject(decoded)) {
-        continue;
-      }
-      slides.add(decoded);
-    }
-    return slides;
   }
 
   static String? _extractAssistantContent(Map<String, dynamic> responseJson) {
-    final choices = responseJson['choices'];
-    if (choices is! List || choices.isEmpty) {
-      return null;
+    if (responseJson['choices'] is List &&
+        (responseJson['choices'] as List).isNotEmpty) {
+      final choice = (responseJson['choices'] as List).first;
+      if (choice is Map && choice['message'] is Map) {
+        final message = choice['message'] as Map;
+        final content = message['content'];
+        if (content is String) return content;
+      }
     }
-    final firstChoice = choices.first;
-    if (firstChoice is! Map) {
-      return null;
-    }
-    final message = firstChoice['message'];
-    if (message is! Map) {
-      return null;
-    }
-    final content = message['content'];
-    return content is String ? content : null;
+    return null;
   }
+
+  static Map<String, dynamic> parsePresentationPayload(String raw) =>
+      SafeJsonParser.parsePresentationPayload(raw);
+
+  @visibleForTesting
+  static String normalizeContentForTesting(Object? content) =>
+      NvidiaSlide._normalizeContent(content);
+}
+
+class HttpExceptionWithStatus implements Exception {
+  final int statusCode;
+  final String message;
+
+  const HttpExceptionWithStatus({
+    required this.statusCode,
+    required this.message,
+  });
+
+  @override
+  String toString() => message;
 }

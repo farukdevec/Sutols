@@ -1,29 +1,49 @@
-import 'dart:convert';
+import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_ai/firebase_ai.dart';
 
+import 'ai_model_config.dart';
 import 'presentation_content_quality.dart';
 import 'presentation_prompt_builder.dart';
+import 'safe_json_parser.dart';
 
 /// Gemini'nin response_schema ile zorladığı tek slayt yapısı.
 class GeminiSlide {
   final String title;
   final String content;
   final List<String> keywords;
+  final String type;
 
   const GeminiSlide({
     required this.title,
     required this.content,
     required this.keywords,
+    this.type = 'cards',
   });
 
   factory GeminiSlide.fromJson(Map<String, dynamic> json) {
-    final rawTitle = json['title'] as String? ?? '';
+    final rawTitle = (json['title'] ?? json['baslik']) as String? ?? '';
+    final rawContent = json['content'] ?? json['icerik'];
+    final rawKeywords = json['keywords'] ?? json['anahtar_kelimeler'];
+    final rawType = json['type'] ?? json['slide_type'] ?? json['layout'] ?? json['tip'] ?? 'cards';
+
+    String contentStr = '';
+    if (rawContent is String) {
+      contentStr = rawContent;
+    } else if (rawContent is List) {
+      contentStr = rawContent.whereType<String>().join('\n');
+    }
+
+    final keywordsList = rawKeywords is List
+        ? rawKeywords.map((k) => k.toString()).toList(growable: false)
+        : const <String>[];
+
     return GeminiSlide(
       title: PresentationContentQuality.sanitizeTitle(rawTitle),
-      content: json['content'] as String? ?? '',
-      keywords: (json['keywords'] as List? ?? const []).cast<String>(),
+      content: contentStr,
+      keywords: keywordsList,
+      type: rawType.toString().toLowerCase().trim(),
     );
   }
 }
@@ -35,8 +55,9 @@ class GeminiPresentation {
   const GeminiPresentation({required this.slides});
 
   factory GeminiPresentation.fromJson(Map<String, dynamic> json) {
+    final rawSlides = json['slides'] as List? ?? const [];
     return GeminiPresentation(
-      slides: (json['slides'] as List)
+      slides: rawSlides
           .map((s) => GeminiSlide.fromJson(s as Map<String, dynamic>))
           .toList(),
     );
@@ -64,13 +85,14 @@ class GeminiPresentationService {
   final FirebaseAI _ai;
   final _db = FirebaseFirestore.instance;
 
-  // Güncel model listesi: https://firebase.google.com/docs/ai-logic/models
-  static const String modelName = 'gemini-3.6-flash';
+  static const String modelName = AiModelConfig.modelGeminiFlash;
+  static const Duration timeout = AiModelConfig.timeoutGemini;
 
   static Schema _slideSchema() {
     return Schema.object(
       properties: {
         'title': Schema.string(),
+        'type': Schema.string(),
         'content': Schema.string(),
         'keywords': Schema.array(items: Schema.string()),
       },
@@ -78,112 +100,122 @@ class GeminiPresentationService {
   }
 
   /// Konu metnine göre Gemini'den JSON sunum yapısı üretir.
-  ///
-  /// [slideCount] kadar slayt istenir; [language] ile çıktı dili belirlenir.
-  /// Yanıt, response_schema ile { slides: [{title, content, keywords}] }
-  /// biçimine zorlanır.
-  ///
-  /// İstekten önce, konuya en yakın geçmiş dışa aktarılmış sunumlar (en fazla
-  /// 2) aranır; bulunursa prompt'un başına referans yapısı eklenir.
   Future<GeminiPresentation> generatePresentation(
     String topic, {
     int slideCount = 5,
     String language = 'turkish',
+    bool checkQuality = true,
   }) async {
+    final stopwatch = Stopwatch()..start();
     final systemInstruction = PresentationPromptBuilder.buildSystemInstruction();
     final maxTokens = (slideCount * 800 + 1000).clamp(3000, 16384);
 
-    final model = _ai.generativeModel(
-      model: modelName,
-      systemInstruction: Content.system(systemInstruction),
-      generationConfig: GenerationConfig(
-        responseMimeType: 'application/json',
-        responseSchema: Schema.object(
-          properties: {
-            'slides': Schema.array(
-              items: _slideSchema(),
-              minItems: slideCount,
-              maxItems: slideCount,
-            ),
-          },
-        ),
-        maxOutputTokens: maxTokens,
-      ),
-    );
-
-    final references = await _findSimilarExported(topic);
-    final referenceBlock =
-        references.isEmpty ? '' : _buildReferenceBlock(references);
-
-    final prompt = PresentationPromptBuilder.buildUserPrompt(
-      topic: topic,
-      slideCount: slideCount,
-      language: language,
-      referenceBlock: referenceBlock,
-    );
-
-    final response = await model.generateContent([Content.text(prompt)]);
-    final text = response.text;
-    if (text == null || text.isEmpty) {
-      throw Exception('Gemini boş yanıt döndürdü.');
-    }
-
-    final json = _parseGeminiJson(text);
-    return GeminiPresentation.fromJson(json);
-  }
-
-  static Map<String, dynamic> _parseGeminiJson(String rawText) {
-    var cleaned = _stripCodeFence(rawText);
     try {
-      final decoded = jsonDecode(cleaned);
-      if (decoded is Map<String, dynamic>) {
-        if (decoded.containsKey('slides') && decoded['slides'] is List) {
-          return decoded;
-        }
-        for (final key in const ['sunum', 'slaytlar', 'presentation', 'items', 'data']) {
-          if (decoded[key] is List) {
-            return {'slides': decoded[key]};
-          }
-        }
-        return decoded;
-      } else if (decoded is List) {
-        return {'slides': decoded};
+      final model = _ai.generativeModel(
+        model: modelName,
+        systemInstruction: Content.system(systemInstruction),
+        generationConfig: GenerationConfig(
+          responseMimeType: 'application/json',
+          responseSchema: Schema.object(
+            properties: {
+              'slides': Schema.array(
+                items: _slideSchema(),
+                minItems: slideCount,
+                maxItems: slideCount,
+              ),
+            },
+          ),
+          maxOutputTokens: maxTokens,
+        ),
+      );
+
+      // Geçmiş referans aramasını 1.5s ile sınırla (üretimi geciktirmesin)
+      final references = await _findSimilarExported(topic)
+          .timeout(const Duration(milliseconds: 1500), onTimeout: () => const []);
+      final referenceBlock =
+          references.isEmpty ? '' : _buildReferenceBlock(references);
+
+      final prompt = PresentationPromptBuilder.buildUserPrompt(
+        topic: topic,
+        slideCount: slideCount,
+        language: language,
+        referenceBlock: referenceBlock,
+      );
+
+      final response = await model
+          .generateContent([Content.text(prompt)])
+          .timeout(timeout, onTimeout: () {
+        throw TimeoutException('Gemini isteği ${timeout.inSeconds} saniyede zaman aşımına uğradı.');
+      });
+
+      final text = response.text;
+      if (text == null || text.isEmpty) {
+        throw Exception('Gemini boş yanıt döndürdü.');
       }
-    } on FormatException {
-      final slideMatch = RegExp(r'\{[^{}]*"slides"\s*:\s*\[[\s\S]*\]\}').firstMatch(cleaned);
-      if (slideMatch != null) {
-        try {
-          final extracted = jsonDecode(slideMatch.group(0)!);
-          if (extracted is Map<String, dynamic>) return extracted;
-        } catch (_) {}
+
+      final json = SafeJsonParser.parsePresentationPayload(text);
+      SafeJsonParser.validateSchema(json);
+      SafeJsonParser.validateContent(json);
+
+      final presentation = GeminiPresentation.fromJson(json);
+
+      if (checkQuality) {
+        final reason = PresentationContentQuality.rejectionReason(
+          presentation.slides
+              .map(
+                (s) => PresentationContentSample(
+                  title: s.title,
+                  content: s.content,
+                ),
+              )
+              .toList(growable: false),
+        );
+        if (reason != null) {
+          throw FormatException('Gemini sunum kalite kontrolü: $reason');
+        }
       }
+
+      stopwatch.stop();
+      AiRouterLogger.logSuccess(
+        provider: 'Gemini',
+        model: modelName,
+        attempt: 1,
+        status: 200,
+        latency: stopwatch.elapsed,
+        jsonValid: true,
+        schemaValid: true,
+        qualityPass: true,
+      );
+
+      return presentation;
+    } catch (e) {
+      stopwatch.stop();
+      final errorType = e is TimeoutException ? AiErrorType.timeout : AiErrorType.unknown;
+      AiRouterLogger.logFailure(
+        provider: 'Gemini',
+        model: modelName,
+        attempt: 1,
+        errorType: errorType,
+        latency: stopwatch.elapsed,
+        details: e.toString(),
+        action: 'FALLBACK → Grok',
+      );
+      rethrow;
     }
-    throw const FormatException('Gemini yanıtı geçerli JSON formatında değil.');
   }
 
-  /// Konuyla en yakın eşleşen (basit keyword eşleşmesi) ve `wasExported ==
-  /// true` olan en fazla 2 geçmiş sunumu döndürür.
-  ///
-  /// Ön filtre: konu kelimelerinden basit bir anahtar kelime çıkarılır,
-  /// yalnızca o kelimeyi `topic` alanında içeren dokümanlar çekilir
-  /// (`>=` / `<=` aralık sorgusu ile). En fazla 50 doküman incelenir
-  /// (`.limit(50)`). Tam içerik (`content`) asla prompt'a eklenmez;
-  /// yalnızca slayt başlıkları (`title`) ve yerleşim (`layout`) kullanılır.
-  /// Hata durumunda boş liste döner (üretim bozulmaz).
+  /// Konuyla en yakın eşleşen ve `wasExported == true` olan en fazla 2 geçmiş sunumu döndürür.
   Future<List<_PastExample>> _findSimilarExported(String topic) async {
     try {
-      // Basit anahtar kelime çıkar (ilk anlamlı token)
       final tokens = _tokens(topic);
       if (tokens.isEmpty) return const [];
       final keyword = tokens.first;
 
-      // Ön filtre: keyword'i topic alanında içeren dokümanlar,
-      // en fazla 50 doküman çekilir.
       final snapshot = await _db
           .collection('presentations')
           .where('topic', isGreaterThanOrEqualTo: keyword)
           .where('topic', isLessThanOrEqualTo: '$keyword\uf8ff')
-          .limit(50)
+          .limit(20)
           .get();
 
       final topicTokens = _tokens(topic);
@@ -206,7 +238,6 @@ class GeminiPresentationService {
       final examples = <_PastExample>[];
       for (final entry in scored.take(2)) {
         final example = await _exampleFromDoc(entry.$2);
-        // İçerik (`content`) asla eklenmez; yalnızca başlık + layout.
         if (example.titles.isEmpty) {
           continue;
         }
@@ -218,8 +249,6 @@ class GeminiPresentationService {
     }
   }
 
-  /// Referans blok metnini üretir: başlıklar (ve yerleşimler) prompt'un
-  /// başına eklenir.
   static String _buildReferenceBlock(List<_PastExample> examples) {
     final parts = examples.map((e) {
       final titles = e.titles.join(', ');
@@ -231,10 +260,6 @@ class GeminiPresentationService {
 ''';
   }
 
-  /// Bir sunum dokümanından yalnızca slayt başlıklarını (`title`) ve
-  /// yerleşim türlerini (`layout`) okur. `content` alanı ASLA çekilmez
-  /// veya prompt'a eklenmez; bu, bir kullanıcının özel içeriğinin
-  /// başka bir kullanıcıya sızmasını engeller.
   Future<_PastExample> _exampleFromDoc(
     DocumentSnapshot<Map<String, dynamic>> doc,
   ) async {
@@ -244,7 +269,6 @@ class GeminiPresentationService {
     if (embedded is List) {
       slides = embedded
           .whereType<Map<dynamic, dynamic>>()
-          // `content` asla alınmaz; yalnızca başlık + layout.
           .map((slide) => {
                 'title': slide['title'] as String? ?? '',
                 'layout': slide['layout'] as String? ?? '',
@@ -294,8 +318,6 @@ class GeminiPresentationService {
         lower.contains('secili sayfa');
   }
 
-  /// Metni küçük harfli kelime tokene'larına böler (2 harften kısa bağlaç
-  /// benzeri sözcükler elenir).
   static List<String> _tokens(String text) {
     return RegExp(r'[a-zçğıöşü0-9]+')
         .allMatches(text.toLowerCase())
@@ -304,7 +326,6 @@ class GeminiPresentationService {
         .toList();
   }
 
-  /// [a]'daki tokene'ların kaç tanesi [b]'de geçiyor (basit eşleşme skoru).
   static int _tokenOverlap(List<String> a, List<String> b) {
     final set = b.toSet();
     var count = 0;
@@ -314,17 +335,5 @@ class GeminiPresentationService {
       }
     }
     return count;
-  }
-
-  static String _stripCodeFence(String text) {
-    final trimmed = text.trim();
-    if (trimmed.startsWith('```')) {
-      final firstLineEnd = trimmed.indexOf('\n');
-      return trimmed
-          .substring(firstLineEnd + 1)
-          .replaceFirst(RegExp(r'```\s*$'), '')
-          .trim();
-    }
-    return trimmed;
   }
 }

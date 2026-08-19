@@ -111,15 +111,15 @@ class PresentationContentQuality {
       return 'Jenerik/boş anlatım var.';
     }
 
-    // 1. Derinlik denetimi: Her slaytta en az 3 madde / satır olmalı
+    // 1. İçerik doluluk denetimi: Her slaytta anlamlı bir metin/madde olmalı
     for (final slide in slides) {
       final bullets = slide.content
           .split('\n')
           .map((line) => line.trim())
           .where((line) => line.isNotEmpty)
           .toList(growable: false);
-      if (bullets.length < 3) {
-        return 'Yetersiz içerik derinliği: Her slayt en az 3 madde içermelidir.';
+      if (bullets.isEmpty || slide.content.trim().length < 10) {
+        return 'Yetersiz içerik: Slayt içeriği boş veya çok kısa.';
       }
     }
 
@@ -140,6 +140,18 @@ class PresentationContentQuality {
     }
     if (repeatedTitles > allowedRepeats) {
       return 'Çok sayıda aynı başlık var.';
+    }
+
+    // 2b. Robotik kalıp denetimi ("Tanım / Amaç / Fark / Örnek" gibi kalıpların sürekli tekrarı)
+    var roboticPatternSlides = 0;
+    for (final slide in slides) {
+      final content = _normalize(slide.content);
+      if (content.contains('tanim:') && content.contains('amac:') && (content.contains('ornek:') || content.contains('fark:'))) {
+        roboticPatternSlides += 1;
+      }
+    }
+    if (slides.length >= 4 && roboticPatternSlides >= (slides.length + 1) ~/ 2) {
+      return 'Monoton ve robotik "Tanım / Amaç / Örnek" şablonu tekrar ediyor.';
     }
 
     // 3. Slaytlar arası Jaccard ve kapsama benzerliği denetimi (Jaccard > 0.60)
@@ -185,12 +197,13 @@ class PresentationContentQuality {
   static bool _isTautological(String title, String content) {
     final normContent = _normalize(content);
 
-    if (RegExp(r'gelişimiyle\s+(?:teknolojik\s+)?gelişmeler\s+(?:daha\s+da\s+)?hızlandı',
-            caseSensitive: false)
-        .hasMatch(normContent) ||
-        RegExp(r'gelişimiyle\s+.*?gelişti', caseSensitive: false)
+    if (RegExp(
+              r'gelisimiyle\s+(?:teknolojik\s+)?gelismeler\s+(?:daha\s+da\s+)?hizlandi',
+              caseSensitive: false,
+            ).hasMatch(normContent) ||
+        RegExp(r'gelisimiyle\s+.*?gelisti', caseSensitive: false)
             .hasMatch(normContent) ||
-        RegExp(r'etkileri\s+henüz\s+bilinmemektedir', caseSensitive: false)
+        RegExp(r'etkileri\s+henuz\s+bilinmemektedir', caseSensitive: false)
             .hasMatch(normContent)) {
       return true;
     }

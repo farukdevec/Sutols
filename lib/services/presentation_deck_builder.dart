@@ -10,8 +10,9 @@ import 'remote_model_sources.dart';
 import 'model_asset_service.dart';
 import 'presentation_model_source_resolver.dart';
 
-/// Gemini + model eşleştirme çıktısından gerçek bir sunum destesi (deck)
-/// üretir. Metin blokları sola, 3B modeller sağa yerleştirilir.
+/// Gemini / NVIDIA / Grok + model eşleştirme çıktısından gerçek bir sunum destesi (deck)
+/// üretir. Slayt arketipini (hero, comparison, process, cards, timeline, statistic, summary)
+/// inceleyerek arketipe özgü zengin görsel düzen ve metin hiyerarşisi oluşturur.
 class PresentationDeckBuilder {
   const PresentationDeckBuilder();
 
@@ -39,14 +40,12 @@ class PresentationDeckBuilder {
     for (final slide in slides) {
       final title = slide.title.trim();
       final content = slide.content.trim();
+      final slideType = (slide.type.isEmpty ? 'cards' : slide.type).toLowerCase().trim();
+
       if (title.isEmpty && content.isEmpty) {
         continue;
       }
 
-      // `kind` is also the HTML fallback rendered while a remote 3D source
-      // cannot be resolved. Calculate it for model-backed blocks as well;
-      // otherwise PresentationComponentBlock's historical default
-      // (edebiyat01 / open book) appears for every missing model.
       var selectedModel =
           slide.models.isEmpty || slide.models.first.modelUrl.trim().isEmpty
               ? null
@@ -75,37 +74,183 @@ class PresentationDeckBuilder {
           _bestBackground(topic: topic, title: title, content: content);
 
       final textBlocks = <PresentationTextBlock>[];
-      final titleLayout = _generatedTitleLayout(title);
-      final bodyTop = title.isEmpty ? 0.16 : titleLayout.bodyTop;
-      if (title.isNotEmpty) {
-        textBlocks.add(
-          PresentationTextBlock(
-            id: 'text-${textCounter++}',
-            text: title,
-            position: const Offset(0.07, 0.08),
-            fontSize: titleLayout.fontSize,
-            type: PresentationTextType.title,
-            textStyle: PresentationTextStyle.bilimTemiz,
-            textAnimation: PresentationTextAnimation.yavasBelirme,
-            widthFactor: hasVisual ? 0.58 : 0.84,
-            heightFactor: titleLayout.heightFactor,
-          ),
-        );
-      }
-      if (content.isNotEmpty) {
-        textBlocks.add(
-          PresentationTextBlock(
-            id: 'text-${textCounter++}',
-            text: content,
-            position: Offset(0.07, bodyTop),
-            fontSize: _generatedBodyFontSize(content),
-            type: PresentationTextType.body,
-            textStyle: PresentationTextStyle.bilimTemiz,
-            textAnimation: PresentationTextAnimation.bulaniktanNet,
-            widthFactor: hasVisual ? 0.5 : 0.84,
-            heightFactor: 0.9 - bodyTop,
-          ),
-        );
+
+      // ─── Arketipe Özgü Yerleşim Kuralları (Layout Generation) ─────────────
+      switch (slideType) {
+        case 'hero':
+          // Hero Layout: Büyük vurgulu başlık + Tek cümlelik çarpıcı vizyon/alt metin
+          if (title.isNotEmpty) {
+            textBlocks.add(
+              PresentationTextBlock(
+                id: 'text-${textCounter++}',
+                text: title,
+                position: const Offset(0.08, 0.22),
+                fontSize: 60,
+                type: PresentationTextType.title,
+                textStyle: PresentationTextStyle.bilimDramatik,
+                textAnimation: PresentationTextAnimation.yavasBelirme,
+                widthFactor: hasVisual ? 0.56 : 0.84,
+                heightFactor: 0.25,
+              ),
+            );
+          }
+          if (content.isNotEmpty) {
+            final cleanedContent = content.replaceAll(RegExp(r'^[-\*•]\s*', multiLine: true), '').trim();
+            textBlocks.add(
+              PresentationTextBlock(
+                id: 'text-${textCounter++}',
+                text: cleanedContent,
+                position: const Offset(0.08, 0.50),
+                fontSize: 28,
+                type: PresentationTextType.body,
+                textStyle: PresentationTextStyle.bilimTemiz,
+                textAnimation: PresentationTextAnimation.bulaniktanNet,
+                widthFactor: hasVisual ? 0.54 : 0.84,
+                heightFactor: 0.35,
+              ),
+            );
+          }
+          break;
+
+        case 'comparison':
+          // Comparison Layout: İki karşılaştırmalı taraf (Sol vs Sağ Kolon)
+          final titleLayout = _generatedTitleLayout(title);
+          if (title.isNotEmpty) {
+            textBlocks.add(
+              PresentationTextBlock(
+                id: 'text-${textCounter++}',
+                text: title,
+                position: const Offset(0.07, 0.08),
+                fontSize: titleLayout.fontSize,
+                type: PresentationTextType.title,
+                textStyle: PresentationTextStyle.bilimTemiz,
+                textAnimation: PresentationTextAnimation.yavasBelirme,
+                widthFactor: 0.86,
+                heightFactor: titleLayout.heightFactor,
+              ),
+            );
+          }
+          if (content.isNotEmpty) {
+            final splitComparison = _splitComparisonContent(content);
+            if (splitComparison != null && !hasVisual) {
+              // 2 Kolonlu Karşılaştırma Bloğu
+              textBlocks.add(
+                PresentationTextBlock(
+                  id: 'text-${textCounter++}',
+                  text: splitComparison.left,
+                  position: Offset(0.07, titleLayout.bodyTop),
+                  fontSize: 22,
+                  type: PresentationTextType.body,
+                  textStyle: PresentationTextStyle.bilimTemiz,
+                  textAnimation: PresentationTextAnimation.bulaniktanNet,
+                  widthFactor: 0.40,
+                  heightFactor: 0.88 - titleLayout.bodyTop,
+                ),
+              );
+              textBlocks.add(
+                PresentationTextBlock(
+                  id: 'text-${textCounter++}',
+                  text: splitComparison.right,
+                  position: Offset(0.51, titleLayout.bodyTop),
+                  fontSize: 22,
+                  type: PresentationTextType.body,
+                  textStyle: PresentationTextStyle.bilimTemiz,
+                  textAnimation: PresentationTextAnimation.bulaniktanNet,
+                  widthFactor: 0.40,
+                  heightFactor: 0.88 - titleLayout.bodyTop,
+                ),
+              );
+            } else {
+              textBlocks.add(
+                PresentationTextBlock(
+                  id: 'text-${textCounter++}',
+                  text: content,
+                  position: Offset(0.07, titleLayout.bodyTop),
+                  fontSize: _generatedBodyFontSize(content),
+                  type: PresentationTextType.body,
+                  textStyle: PresentationTextStyle.bilimTemiz,
+                  textAnimation: PresentationTextAnimation.bulaniktanNet,
+                  widthFactor: hasVisual ? 0.54 : 0.84,
+                  heightFactor: 0.9 - titleLayout.bodyTop,
+                ),
+              );
+            }
+          }
+          break;
+
+        case 'statistic':
+          // Statistic Layout: Büyük sayı/metrik + Alt açıklama
+          if (title.isNotEmpty) {
+            textBlocks.add(
+              PresentationTextBlock(
+                id: 'text-${textCounter++}',
+                text: title,
+                position: const Offset(0.08, 0.10),
+                fontSize: 44,
+                type: PresentationTextType.title,
+                textStyle: PresentationTextStyle.bilimTemiz,
+                textAnimation: PresentationTextAnimation.yavasBelirme,
+                widthFactor: hasVisual ? 0.56 : 0.84,
+                heightFactor: 0.20,
+              ),
+            );
+          }
+          if (content.isNotEmpty) {
+            textBlocks.add(
+              PresentationTextBlock(
+                id: 'text-${textCounter++}',
+                text: content,
+                position: const Offset(0.08, 0.35),
+                fontSize: 30,
+                type: PresentationTextType.body,
+                textStyle: PresentationTextStyle.bilimDramatik,
+                textAnimation: PresentationTextAnimation.bulaniktanNet,
+                widthFactor: hasVisual ? 0.54 : 0.84,
+                heightFactor: 0.50,
+              ),
+            );
+          }
+          break;
+
+        case 'process':
+        case 'timeline':
+        case 'cards':
+        case 'summary':
+        default:
+          // Standart Süreç / Kart / Özet Layout'u
+          final titleLayout = _generatedTitleLayout(title);
+          final bodyTop = title.isEmpty ? 0.16 : titleLayout.bodyTop;
+          if (title.isNotEmpty) {
+            textBlocks.add(
+              PresentationTextBlock(
+                id: 'text-${textCounter++}',
+                text: title,
+                position: const Offset(0.07, 0.08),
+                fontSize: titleLayout.fontSize,
+                type: PresentationTextType.title,
+                textStyle: PresentationTextStyle.bilimTemiz,
+                textAnimation: PresentationTextAnimation.yavasBelirme,
+                widthFactor: hasVisual ? 0.58 : 0.84,
+                heightFactor: titleLayout.heightFactor,
+              ),
+            );
+          }
+          if (content.isNotEmpty) {
+            textBlocks.add(
+              PresentationTextBlock(
+                id: 'text-${textCounter++}',
+                text: content,
+                position: Offset(0.07, bodyTop),
+                fontSize: _generatedBodyFontSize(content),
+                type: PresentationTextType.body,
+                textStyle: PresentationTextStyle.bilimTemiz,
+                textAnimation: PresentationTextAnimation.bulaniktanNet,
+                widthFactor: hasVisual ? 0.52 : 0.84,
+                heightFactor: 0.9 - bodyTop,
+              ),
+            );
+          }
+          break;
       }
 
       final componentBlocks = <PresentationComponentBlock>[];
@@ -145,6 +290,20 @@ class PresentationDeckBuilder {
     }
     hydratePresentationModelSources(pages);
     return pages;
+  }
+
+  static ({String left, String right})? _splitComparisonContent(String content) {
+    final lines = content
+        .split('\n')
+        .map((l) => l.trim())
+        .where((l) => l.isNotEmpty)
+        .toList();
+    if (lines.length < 2) return null;
+
+    final mid = (lines.length / 2).ceil();
+    final leftLines = lines.take(mid).join('\n');
+    final rightLines = lines.skip(mid).join('\n');
+    return (left: leftLines, right: rightLines);
   }
 
   Future<List<PresentationPage>> buildPagesAsync({
@@ -241,17 +400,19 @@ double _generatedBodyFontSize(String content) {
   return 26;
 }
 
-/// Sunum üretim akışının bir slaydı: başlık, içerik ve eşleşen modeller.
+/// Sunum üretim akışının bir slaydı: başlık, içerik, tip ve eşleşen modeller.
 class DeckSlide {
   const DeckSlide({
     required this.title,
     required this.content,
     required this.models,
     this.keywords = const <String>[],
+    this.type = 'cards',
   });
 
   final String title;
   final String content;
   final List<ModelMatch> models;
   final List<String> keywords;
+  final String type;
 }

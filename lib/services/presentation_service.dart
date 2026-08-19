@@ -6,7 +6,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:http/http.dart' as http;
 
 import '../state/presentation_controller.dart';
-import 'deepseek_presentation_service.dart';
+import 'ai_model_config.dart';
 import 'fallback_slide_generator.dart';
 import 'grok_presentation_service.dart';
 import 'gemini_presentation_service.dart';
@@ -32,7 +32,7 @@ class PresentationGenerationResult {
   final String presentationId;
   final PresentationController controller;
 
-  /// AI (DeepSeek/Nvidia/Gemini/Grok) çalışmadığında kelime tabanlı yedek kullanıldıysa true.
+  /// AI (Nvidia/Gemini/Grok) çalışmadığında kelime tabanlı yedek kullanıldıysa true.
   final bool usedFallback;
 }
 
@@ -88,9 +88,9 @@ class PresentationService {
     }
 
     final modelCatalogWarmup = ModelRepository.instance.getModels();
-    // 1. NVIDIA -> Gemini -> Grok -> Kelime tabanlı yedek sıralaması ile slayt içeriklerini al
-    // ignore: avoid_print
-    print('ADIM 1: NVIDIA çağrısı başlıyor');
+    AiRouterLogger.logRequestStart(topic: topic, slideCount: slideCount);
+
+    // 1. Sıralı Router: NVIDIA (Super 120B -> GPT-OSS 120B -> Llama 3.3 70B -> GPT-OSS 20B -> Nano -> Llama 3.1 8B) -> Gemini -> Grok -> Kelime Tabanlı Yedek
     GeminiPresentation resultPresentation;
     var usedFallback = false;
     try {
@@ -107,17 +107,11 @@ class PresentationService {
             )
             .toList(growable: false),
       );
-      _ensureContentQuality(resultPresentation, provider: 'NVIDIA');
-    } catch (e) {
-      // ignore: avoid_print
-      print('NVIDIA HATASI: $e — Gemini deneniyor');
+    } catch (_) {
       try {
         resultPresentation =
             await _gemini.generatePresentation(topic, slideCount: slideCount);
-        _ensureContentQuality(resultPresentation, provider: 'Gemini');
-      } catch (e2) {
-        // ignore: avoid_print
-        print('Gemini HATASI: $e2 — Grok deneniyor');
+      } catch (_) {
         try {
           final grokResult =
               await _grok.generatePresentation(topic, slideCount: slideCount);
@@ -132,11 +126,7 @@ class PresentationService {
                 )
                 .toList(growable: false),
           );
-          _ensureContentQuality(resultPresentation, provider: 'Grok');
-        } catch (e3) {
-          // ignore: avoid_print
-          print(
-              'AI HATASI (Nvidia, Gemini, Grok): $e3 — kelime tabanlı yedek kullanılıyor');
+        } catch (_) {
           usedFallback = true;
           resultPresentation = FallbackSlideGenerator.generatePresentation(
             topic,
@@ -153,8 +143,6 @@ class PresentationService {
         slideCount: slideCount,
       );
     }
-    // ignore: avoid_print
-    print('ADIM 1 TAMAM (yedek: $usedFallback)');
 
     // 2. Her slayt için model eşleştir ve layout belirle. Bütün slaytlar aynı
     // normalize edilmiş katalog indeksi üzerinden tek toplu geçişte işlenir.
@@ -234,12 +222,14 @@ class PresentationService {
         'title': slide.title,
         'content': slide.content,
         'layout': layout.name,
+        'type': slide.type,
         'modelIds': shownModelIds,
       });
       deckSlides.add(
         DeckSlide(
           title: slide.title,
           content: slide.content,
+          type: slide.type,
           models: selectedModels,
           keywords: slide.keywords,
         ),
