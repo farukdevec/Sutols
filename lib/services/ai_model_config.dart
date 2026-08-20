@@ -34,15 +34,14 @@ class AiModelConfig {
   static const String modelGrok45 = 'grok-4.5';
   static const String modelGrok46 = 'grok-4.6';
 
-  // Genel fallback sırası. NvidiaPresentationService canlı testte doğrulanan
-  // Nano modelini ayrıca seçili model olarak bunun önüne ekler.
+  // Genel fallback sırası: En hızlı, en kararlı ve en kaliteli modeller en başta.
   static const List<String> defaultNvidiaCandidateModels = [
+    modelLlama33_70b,
+    modelNemotronNano,
+    modelGptOss20b,
+    modelLlama31_8b,
     modelNemotronSuper,
     modelGptOss120b,
-    modelLlama33_70b,
-    modelGptOss20b,
-    modelNemotronNano,
-    modelLlama31_8b,
   ];
 
   // Normal Üretim Grok Aday Sırası (Mayıs 2026 sonrası güncel modeller)
@@ -52,19 +51,19 @@ class AiModelConfig {
     modelGrok46,
   ];
 
-  // Model Bazlı Zaman Aşımları (Timeouts) - En az 60s büyük modeller için
-  static const Duration timeoutSuper = Duration(seconds: 60);
-  static const Duration timeoutGptOss120b = Duration(seconds: 60);
-  static const Duration timeoutLlama33 = Duration(seconds: 60);
-  static const Duration timeoutGptOss20b = Duration(seconds: 30);
-  static const Duration timeoutNano = Duration(seconds: 25);
-  static const Duration timeoutLlama31 = Duration(seconds: 25);
-  static const Duration timeoutGemini = Duration(seconds: 25);
-  static const Duration timeoutGrok = Duration(seconds: 25);
-  static const Duration timeoutDefaultNvidia = Duration(seconds: 60);
+  // Model Bazlı Hızlı Zaman Aşımları (Timeouts) - Kullanıcıyı bekletmeyen dinamik süreler
+  static const Duration timeoutLlama33 = Duration(seconds: 25);
+  static const Duration timeoutNano = Duration(seconds: 18);
+  static const Duration timeoutGptOss20b = Duration(seconds: 20);
+  static const Duration timeoutLlama31 = Duration(seconds: 15);
+  static const Duration timeoutSuper = Duration(seconds: 35);
+  static const Duration timeoutGptOss120b = Duration(seconds: 35);
+  static const Duration timeoutGemini = Duration(seconds: 20);
+  static const Duration timeoutGrok = Duration(seconds: 20);
+  static const Duration timeoutDefaultNvidia = Duration(seconds: 25);
 
   // Router Global Maksimum Süre
-  static const Duration maxTotalAiTime = Duration(seconds: 180);
+  static const Duration maxTotalAiTime = Duration(seconds: 60);
 
   /// Bir model için geçerli zaman aşımı süresini döndürür.
   static Duration timeoutForModel(String model, {int slideCount = 5}) {

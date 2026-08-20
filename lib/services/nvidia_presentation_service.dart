@@ -193,7 +193,7 @@ class NvidiaPresentation {
 
 class NvidiaPresentationService {
   static const String defaultProxyUrl = 'https://sutols.online/';
-  static const String defaultModelName = AiModelConfig.modelNemotronNano;
+  static const String defaultModelName = AiModelConfig.modelLlama33_70b;
   static const List<String> defaultCandidateModels =
       AiModelConfig.defaultNvidiaCandidateModels;
 

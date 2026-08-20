@@ -544,11 +544,16 @@ class _PreviewStageWithOrbitState extends State<_PreviewStageWithOrbit> {
   }
 
   Widget _orbitOverlay(PresentationComponentBlock block, Size stageSize) {
+    if (stageSize.width <= 0 || stageSize.height <= 0) {
+      return const SizedBox.shrink();
+    }
+    final minW = math.min(54.0, stageSize.width);
+    final minH = math.min(44.0, stageSize.height);
     final width = (block.size.width * stageSize.width)
-        .clamp(54.0, stageSize.width)
+        .clamp(minW, stageSize.width)
         .toDouble();
     final height = (block.size.height * stageSize.height)
-        .clamp(44.0, stageSize.height)
+        .clamp(minH, stageSize.height)
         .toDouble();
     final left = (block.position.dx * stageSize.width)
         .clamp(0.0, math.max(0.0, stageSize.width - width))
@@ -1367,10 +1372,12 @@ Rect _componentHotspotRect(
 ) {
   final safeWidth = math.max(size.width, 1.0);
   final safeHeight = math.max(size.height, 1.0);
+  final minWidth = math.min(64.0, safeWidth);
+  final minHeight = math.min(48.0, safeHeight);
   final width =
-      (block.size.width * safeWidth).clamp(64.0, safeWidth).toDouble();
+      (block.size.width * safeWidth).clamp(minWidth, safeWidth).toDouble();
   final height =
-      (block.size.height * safeHeight).clamp(48.0, safeHeight).toDouble();
+      (block.size.height * safeHeight).clamp(minHeight, safeHeight).toDouble();
   final maxLeft = math.max(0.0, safeWidth - width);
   final maxTop = math.max(0.0, safeHeight - height);
 

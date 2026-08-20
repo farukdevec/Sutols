@@ -59,55 +59,55 @@ void main() {
       router = AiRouterEngine();
     });
 
-    test('Scenario 1: Nemotron Super 120B -> SUCCESS (GPT-OSS, Llama, Gemini, Grok NOT called)', () async {
+    test('Scenario 1: Llama 3.3 70B -> SUCCESS (Nano, GPT-OSS, Gemini, Grok NOT called)', () async {
       final result = await router.executeRequest(
-        mockNvidiaHandler: (model) async => model == AiModelConfig.modelNemotronSuper ? 200 : 500,
+        mockNvidiaHandler: (model) async => model == AiModelConfig.modelLlama33_70b ? 200 : 500,
         mockGeminiHandler: () async => true,
         mockGrokHandler: () async => true,
       );
 
-      expect(result, 'SUCCESS_NVIDIA_${AiModelConfig.modelNemotronSuper}');
-      expect(router.callLogs, ['nvidia:${AiModelConfig.modelNemotronSuper}']);
+      expect(result, 'SUCCESS_NVIDIA_${AiModelConfig.modelLlama33_70b}');
+      expect(router.callLogs, ['nvidia:${AiModelConfig.modelLlama33_70b}']);
     });
 
-    test('Scenario 2: Super 120B -> 429/500 -> GPT-OSS 120B -> SUCCESS (Other models NOT called)', () async {
+    test('Scenario 2: Llama 3.3 70B -> 429/500 -> Nemotron Nano -> SUCCESS (Other models NOT called)', () async {
       final result = await router.executeRequest(
         mockNvidiaHandler: (model) async {
-          if (model == AiModelConfig.modelNemotronSuper) return 429;
-          if (model == AiModelConfig.modelGptOss120b) return 200;
+          if (model == AiModelConfig.modelLlama33_70b) return 429;
+          if (model == AiModelConfig.modelNemotronNano) return 200;
           return 500;
         },
         mockGeminiHandler: () async => true,
         mockGrokHandler: () async => false,
       );
 
-      expect(result, 'SUCCESS_NVIDIA_${AiModelConfig.modelGptOss120b}');
+      expect(result, 'SUCCESS_NVIDIA_${AiModelConfig.modelNemotronNano}');
       expect(router.callLogs, [
-        'nvidia:${AiModelConfig.modelNemotronSuper}',
-        'nvidia:${AiModelConfig.modelGptOss120b}',
+        'nvidia:${AiModelConfig.modelLlama33_70b}',
+        'nvidia:${AiModelConfig.modelNemotronNano}',
       ]);
-      expect(router.callLogs, isNot(contains('nvidia:${AiModelConfig.modelLlama33_70b}')));
+      expect(router.callLogs, isNot(contains('nvidia:${AiModelConfig.modelGptOss20b}')));
       expect(router.callLogs, isNot(contains(contains('gemini'))));
       expect(router.callLogs, isNot(contains(contains('grok'))));
     });
 
-    test('Scenario 3: Super + GPT-OSS 120B fail -> Llama 3.3 70B -> SUCCESS', () async {
+    test('Scenario 3: Llama 3.3 + Nano fail -> GPT-OSS 20B -> SUCCESS', () async {
       final result = await router.executeRequest(
         mockNvidiaHandler: (model) async {
-          if (model == AiModelConfig.modelNemotronSuper) return 500;
-          if (model == AiModelConfig.modelGptOss120b) return 500;
-          if (model == AiModelConfig.modelLlama33_70b) return 200;
+          if (model == AiModelConfig.modelLlama33_70b) return 500;
+          if (model == AiModelConfig.modelNemotronNano) return 500;
+          if (model == AiModelConfig.modelGptOss20b) return 200;
           return 500;
         },
         mockGeminiHandler: () async => true,
         mockGrokHandler: () async => false,
       );
 
-      expect(result, 'SUCCESS_NVIDIA_${AiModelConfig.modelLlama33_70b}');
+      expect(result, 'SUCCESS_NVIDIA_${AiModelConfig.modelGptOss20b}');
       expect(router.callLogs, [
-        'nvidia:${AiModelConfig.modelNemotronSuper}',
-        'nvidia:${AiModelConfig.modelGptOss120b}',
         'nvidia:${AiModelConfig.modelLlama33_70b}',
+        'nvidia:${AiModelConfig.modelNemotronNano}',
+        'nvidia:${AiModelConfig.modelGptOss20b}',
       ]);
       expect(router.callLogs, isNot(contains(contains('gemini'))));
       expect(router.callLogs, isNot(contains(contains('grok'))));

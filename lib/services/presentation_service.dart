@@ -117,6 +117,7 @@ class PresentationService {
       );
     } catch (error) {
       nvidiaError = error;
+      try {
         final grokResult =
             await _grok.generatePresentation(topic, slideCount: slideCount);
         resultPresentation = GeminiPresentation(

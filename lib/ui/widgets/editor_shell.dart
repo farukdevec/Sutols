@@ -2112,10 +2112,12 @@ class _PresentationPageCanvasState extends State<PresentationPageCanvas> {
     )..layout(maxWidth: math.max(0, boxWidth - (paddingX * 2)));
 
     final naturalHeight = textPainter.height + (paddingY * 2);
+    final maxH = math.max(1.0, canvasSize.height * 0.86);
+    final minH = math.min(44.0, maxH);
     final boxHeight = block.heightFactor == null
         ? naturalHeight
         : (block.heightFactor! * canvasSize.height)
-            .clamp(44.0, canvasSize.height * 0.86)
+            .clamp(minH, maxH)
             .toDouble();
     return Rect.fromLTWH(
       leftPosition,
@@ -2129,11 +2131,16 @@ class _PresentationPageCanvasState extends State<PresentationPageCanvas> {
     PresentationComponentBlock block,
     Size canvasSize,
   ) {
+    if (canvasSize.width <= 0 || canvasSize.height <= 0) {
+      return Rect.zero;
+    }
+    final minW = math.min(54.0, canvasSize.width);
+    final minH = math.min(44.0, canvasSize.height);
     final width = (block.size.width * canvasSize.width)
-        .clamp(54.0, canvasSize.width)
+        .clamp(minW, canvasSize.width)
         .toDouble();
     final height = (block.size.height * canvasSize.height)
-        .clamp(44.0, canvasSize.height)
+        .clamp(minH, canvasSize.height)
         .toDouble();
     final left = (block.position.dx * canvasSize.width)
         .clamp(0.0, math.max(0.0, canvasSize.width - width))
@@ -2543,10 +2550,12 @@ class _PageTextBlock extends StatelessWidget {
       textDirection: Directionality.of(context),
     )..layout(maxWidth: math.max(0, boxWidth - (paddingX * 2)));
     final naturalHeight = textPainter.height + (paddingY * 2);
+    final maxH = math.max(1.0, canvasSize.height * 0.86);
+    final minH = math.min(44.0, maxH);
     final boxHeight = block.heightFactor == null
         ? naturalHeight
         : (block.heightFactor! * canvasSize.height)
-            .clamp(44.0, canvasSize.height * 0.86)
+            .clamp(minH, maxH)
             .toDouble();
     final topPosition = (block.position.dy * canvasSize.height)
         .clamp(0.0, math.max(0.0, canvasSize.height - boxHeight))
@@ -2685,12 +2694,17 @@ class _PageComponentBlock extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (canvasSize.width <= 0 || canvasSize.height <= 0) {
+      return const SizedBox.shrink();
+    }
     final isImage = _isCanvasImageBlock(block);
+    final minW = math.min(54.0, canvasSize.width);
+    final minH = math.min(44.0, canvasSize.height);
     final width = (block.size.width * canvasSize.width)
-        .clamp(54.0, canvasSize.width)
+        .clamp(minW, canvasSize.width)
         .toDouble();
     final height = (block.size.height * canvasSize.height)
-        .clamp(44.0, canvasSize.height)
+        .clamp(minH, canvasSize.height)
         .toDouble();
     final left = (block.position.dx * canvasSize.width)
         .clamp(0.0, math.max(0.0, canvasSize.width - width))
