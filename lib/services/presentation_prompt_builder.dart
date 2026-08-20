@@ -120,9 +120,9 @@ TEMEL PRENSİPLER:
   }) {
     final issuesBuffer = StringBuffer();
     for (final issue in issues) {
-      final slideNum = issue['slide'] ?? '?';
+      final slideNum = issue['slide'] ?? issue['slide_index'] ?? '?';
       final category = issue['category'] ?? 'quality';
-      final problem = issue['problem'] ?? '';
+      final problem = issue['problem'] ?? issue['issue'] ?? issue['description'] ?? '';
       issuesBuffer.writeln('- Slayt $slideNum ($category): $problem');
     }
     if (globalIssues.isNotEmpty) {

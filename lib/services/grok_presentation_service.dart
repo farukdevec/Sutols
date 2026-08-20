@@ -39,12 +39,12 @@ class GrokSlide {
     final title = json['title'] ?? json['baslik'];
     final subtitle = (json['subtitle'] ?? json['alt_baslik'] ?? json['sub_title'])?.toString();
     final rawContent = json['content'] ?? json['icerik'];
-    final rawKeywords = json['keywords'] ?? json['anahtar_kelimeler'];
+    final rawKeywords = json['visual_keywords'] ?? json['keywords'] ?? json['anahtar_kelimeler'];
     final rawType = json['type'] ??
         json['slide_type'] ??
         json['layout'] ??
         json['tip'] ??
-        'cards';
+        'concept';
     final purpose = (json['purpose'] ?? json['amac'] ?? json['role'])?.toString();
     final keyMessage = (json['key_message'] ?? json['keyMessage'] ?? json['ana_mesaj'])?.toString();
     final rawSections = json['sections'] ?? json['bolumler'];
@@ -121,6 +121,32 @@ class GrokSlide {
   static String _normalizeContent(Object? rawContent) {
     if (rawContent is String) {
       return PresentationContentQuality.normalizeContentBullets(rawContent);
+    }
+    if (rawContent is Map) {
+      final headline = rawContent['headline'] ?? rawContent['ana_fikir'] ?? '';
+      final supportingText = rawContent['supporting_text'] ?? rawContent['aciklama'] ?? '';
+      final rawKeyPoints = rawContent['key_points'] ?? rawContent['maddeler'];
+      final lines = <String>[];
+      final cleanHeadline = headline.toString().replaceAll('*', '').trim();
+      final cleanSupporting = supportingText.toString().replaceAll('*', '').trim();
+      if (cleanHeadline.isNotEmpty && cleanSupporting.isNotEmpty) {
+        lines.add('- **$cleanHeadline:** $cleanSupporting');
+      } else if (cleanHeadline.isNotEmpty) {
+        lines.add('- **$cleanHeadline**');
+      } else if (cleanSupporting.isNotEmpty) {
+        lines.add('- $cleanSupporting');
+      }
+      if (rawKeyPoints is List) {
+        for (final pt in rawKeyPoints) {
+          if (pt != null && pt.toString().trim().isNotEmpty) {
+            final cleanPt = pt.toString().trim();
+            lines.add(cleanPt.startsWith('-') ? cleanPt : '- $cleanPt');
+          }
+        }
+      }
+      if (lines.isNotEmpty) {
+        return PresentationContentQuality.normalizeContentBullets(lines.join('\n'));
+      }
     }
     if (rawContent is List) {
       final joined = rawContent.whereType<String>().join('\n');
