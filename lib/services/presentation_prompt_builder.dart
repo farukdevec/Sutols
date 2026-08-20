@@ -10,6 +10,12 @@ class PresentationPromptBuilder {
 
 GÖREV: Kullanıcının konusunu, hedef kitlesini ve istenen slayt sayısını analiz ederek; doğrudan izleyiciye sunulacak, yüksek pedagojik/kurumsal değere sahip, ekranda hızla anlaşılan, doğal anlatı akışına sahip modern bir sunum üretmek.
 
+ÖNEMLİ KURALLAR:
+1. YANIT FORMATI: YALNIZCA VE YALNIZCA GEÇERLİ JSON! Asla markdown, asla düz metin, asla açıklama.
+2. JSON İÇİNDE ** (yıldız) KARAKTERİ KULLANMA! Tüm vurgular "**Başlık:**" formatında olmalı.
+3. Her cümle tam ve anlaşıır olmalı. "ve:" gibi kesik ifadeler KESİNLİKLE YASAK.
+4. Noktalama işaretlerini doğru kullan. Cümle sonlarına nokta koy.
+
 ÖNEMLİ KURAL: Yanıtına ASLA iç düşünce süreci (<think>), planlama, giriş veya çıkış metni YAZMA. Doğrudan '{' karakteri ile başla ve '}' ile bitir.
 
 TEMEL PRENSİPLER:
@@ -20,18 +26,24 @@ TEMEL PRENSİPLER:
    - Seviyeye uygun somut kavramlar, günlük yaşam analojileri ve görselleştirilebilir açıklamalar kullan.
    - Örneğin ortaokul seviyesinde: Gaz taneciklerinin hareketi için "101,325 Pa atmosfer basıncı" veya "\$Q=mc\\Delta T" formülü YAZMA. Yerine "Gaz tanecikleri her yöne hızla hareket eder ve kabın duvarlarına çarpar; bu çarpışmalar gaz basıncını oluşturur." yaz.
 
-2. ANLATI AKIŞI VE SLAYT AMACI (SLIDE TYPE FOLLOWS CONTENT):
+2. METİN KALİTESİ VE YAPISI:
+   - Her cümle tamamlanmış olmalı. Kesik cümleler, anlamsız ifadeler YASAKTIR.
+   - "ve:", "ve", "veya:" gibi bağlantı kelimelerini doğru kullan.
+   - Her madde (bullet) net ve anlamlı olmalı.
+   - Aynı fikri tekrar etme. Her slayt benzersiz bilgi içermeli.
+
+3. ANLATI AKIŞI VE SLAYT AMACI (SLIDE TYPE FOLLOWS CONTENT):
    - Her slaytın açık bir amacı ("purpose") olmalıdır (Örn: "Katı maddelerde taneciklerin sabit konumda titreştiğini kavratmak").
    - Her konuya ezbere tek tip şablon veya zorlama tarih çizelgesi dayatma.
    - Slayt türü ("type") içeriğe göre seçilmelidir: "concept", "comparison", "process", "quiz", "cards", "data", "takeaway", "hero", "visual_breakdown".
 
-3. SUNUM DİLİ VE METİN YOĞUNLUĞU (WEB MAKALESİ DEĞİL, SUNUM METNİ):
+4. SUNUM DİLİ VE METİN YOĞUNLUĞU (WEB MAKALESİ DEĞİL, SUNUM METNİ):
    - Uzun paragraflar, ders kitabı tekrarları ve jenerik dolgu cümleleri KESİNLİKLE YASAKTIR.
    - Slayt metinleri ekranda hızlıca taranabilir, net ve vurucu olmalıdır.
-   - Bütün slaytları aynı "- **Başlık:** Açıklama" formatına zorlama! İhtiyaca göre tek güçlü ana fikir ("headline"), kısa destekleyici metin ("supporting_text"), 2-3 madde ("key_points"), karşılaştırma çiftleri veya soru-cevap formatı kullan.
+   - Bütün slaytları aynı "- Başlık: Açıklama" formatına zorlama! İhtiyaca göre tek güçlü ana fikir ("headline"), kısa destekleyici metin ("supporting_text"), 2-3 madde ("key_points"), karşılaştırma çiftleri veya soru-cevap formatı kullan.
    - Boşluk doldurmak için zayıf maddeler ekleme; 3 zayıf madde yerine 1 güçlü ve net fikir tercih et.
 
-4. GÖRSEL PLAN ("visual") VE SOMUT ANAHTAR KELİMELER ("visual_keywords"):
+5. GÖRSEL PLAN ("visual") VE SOMUT ANAHTAR KELİMELER ("visual_keywords"):
    - Her slayt için bir görsel plan tanımla:
      * "kind": "photo" | "object_3d" | "particle_diagram" | "process_diagram" | "comparison" | "chart" | "table" | "illustration" | "none"
      * "subject": Görselleştirilecek somut nesne veya şema konusu
@@ -39,7 +51,13 @@ TEMEL PRENSİPLER:
    - "visual_keywords" listesine ASLA soyut kelimeler ("strateji", "değerlendirme", "tarihçe", "önem") YAZMA!
    - Yalnızca fiziksel, görsel karşılığı olan nesneleri yaz (Örn: ["buz", "su", "buhar", "tanecik", "kristal"]).
 
-5. ÇIKTI ŞEMASI (TEK GEÇERLİ JSON NESNESİ):
+6. JSON FORMAT KURALLARI:
+   - Tüm string değerler çift tırnak (\") içinde olmalı.
+   - JSON geçersiz karakter içermez: asla tek tırnak, asla backtick, asla <think> bloğu.
+   - Her slayt nesnesi tam olmalı: title, content, type alanları ZORUNLU.
+   - content alanı string veya object olabilir. Object kullanırsan: headline, supporting_text, key_points.
+
+7. ÇIKTI ŞEMASI (TEK GEÇERLİ JSON NESNESİ):
 {
   "title": "Sunum Başlığı",
   "target_audience": "ortaokul | lise | universite | kurumsal | genel",
@@ -83,7 +101,10 @@ TEMEL PRENSİPLER:
 1. Konunun hedef kitlesini analiz et (ortaokul ise ortaokul dilinde, kurumsal ise kurumsal dilde yaz).
 2. Asla ders planı / öğretmen notu yazma; doğrudan izleyicinin göreceği sunum içeriğini üret.
 3. Her slayta net bir "purpose", amaca uygun "type", özlü "content", "visual" planı ve somut "visual_keywords" ver.
-4. Ön açıklama veya düşünce metni YAZMADAN doğrudan '{' karakteri ile başlayan geçerli JSON üret:
+4. Her cümle TAM ve ANLAŞILIR olmalı. "ve:", "ve", "veya:" gibi kesik ifadeler KESİNLİKLE YASAKTIR.
+5. JSON içinde ** (yıldız) karakteri KULLANMA. Vurgular için sadece "**Başlık:**" formatı.
+6. Her madde net ve anlamlı olmalı. Boş madde ekleme.
+7. Ön açıklama veya düşünce metni YAZMADAN doğrudan '{' karakteri ile başlayan geçerli JSON üret:
 {
   "title": "Sunum Başlığı",
   "target_audience": "ortaokul / lise / universite / kurumsal / genel",

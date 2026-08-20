@@ -221,7 +221,7 @@ class PresentationProjectCodec {
   static PresentationTextBlock _textBlockFromJson(Map<String, Object?> json) {
     return PresentationTextBlock(
       id: _string(json['id'], 'text-1'),
-      text: _string(json['text'], ''),
+      text: _string(json['text'], '').replaceAll('*', '').trim(),
       position: _offsetFromJson(json['position']),
       fontSize: _double(json['fontSize'], 42),
       type: _enumValue(

@@ -57,9 +57,9 @@ class GeminiSlide {
       final cleanHeadline = headline.toString().replaceAll('*', '').trim();
       final cleanSupporting = supportingText.toString().replaceAll('*', '').trim();
       if (cleanHeadline.isNotEmpty && cleanSupporting.isNotEmpty) {
-        lines.add('- **$cleanHeadline:** $cleanSupporting');
+        lines.add('- $cleanHeadline: $cleanSupporting');
       } else if (cleanHeadline.isNotEmpty) {
-        lines.add('- **$cleanHeadline**');
+        lines.add('- $cleanHeadline');
       } else if (cleanSupporting.isNotEmpty) {
         lines.add('- $cleanSupporting');
       }
@@ -93,11 +93,11 @@ class GeminiSlide {
           final heading = sec['heading'] ?? sec['title'] ?? sec['baslik'] ?? '';
           final desc = sec['description'] ?? sec['desc'] ?? sec['text'] ?? sec['aciklama'] ?? sec['content'] ?? '';
           if (heading.toString().trim().isNotEmpty && desc.toString().trim().isNotEmpty) {
-            lines.add('- **${heading.toString().trim()}:** ${desc.toString().trim()}');
+            lines.add('- ${heading.toString().trim()}: ${desc.toString().trim()}');
           } else if (desc.toString().trim().isNotEmpty) {
             lines.add('- ${desc.toString().trim()}');
           } else if (heading.toString().trim().isNotEmpty) {
-            lines.add('- **${heading.toString().trim()}**');
+            lines.add('- ${heading.toString().trim()}');
           }
         }
         if (lines.isNotEmpty) contentStr = lines.join('\n');

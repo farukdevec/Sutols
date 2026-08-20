@@ -1,5 +1,7 @@
 import 'dart:convert';
 
+import 'presentation_content_quality.dart';
+
 /// Güvenli, çok aşamalı JSON çıkarma ve doğrulama motoru.
 class SafeJsonParser {
   const SafeJsonParser._();
@@ -44,21 +46,24 @@ class SafeJsonParser {
     final directMap = _tryDecodeMap(cleaned);
     if (directMap != null) {
       final normalized = _tryNormalizePresentationPayload(directMap);
-      if (normalized != null) return normalized;
+      if (normalized != null) return _cleanAllContent(normalized);
+
     }
 
     // 3. Doğrudan List decode denemesi
     final directList = _tryDecodeList(cleaned);
     if (directList != null) {
       final normalized = _tryNormalizeSlideList(directList);
-      if (normalized != null) return normalized;
+      if (normalized != null) return _cleanAllContent(normalized);
+
     }
 
     // 4. Dengeli Parantez (Balanced Brace) JSON Çıkarımı
     final balancedMap = _extractBalancedJsonPayload(cleaned);
     if (balancedMap != null) {
       final normalized = _tryNormalizePresentationPayload(balancedMap);
-      if (normalized != null) return normalized;
+      if (normalized != null) return _cleanAllContent(normalized);
+
     }
 
     // 5. İlk '{' ile son '}' arasındaki alt dizgi denemesi (preamble/postscript temizleme)
@@ -70,7 +75,7 @@ class SafeJsonParser {
         final map = _tryDecodeMap(substring) ?? _tryDecodeMap(_repairTruncatedJson(substring));
         if (map != null) {
           final normalized = _tryNormalizePresentationPayload(map);
-          if (normalized != null) return normalized;
+          if (normalized != null) return _cleanAllContent(normalized);
         }
       }
     }
@@ -84,7 +89,7 @@ class SafeJsonParser {
         final list = _tryDecodeList(substring) ?? _tryDecodeList(_repairTruncatedJson(substring));
         if (list != null) {
           final normalized = _tryNormalizeSlideList(list);
-          if (normalized != null) return normalized;
+          if (normalized != null) return _cleanAllContent(normalized);
         }
       }
     }
@@ -111,10 +116,70 @@ class SafeJsonParser {
     try {
       final parsed = parsePresentationPayload(rawContent);
       validateSchema(parsed);
-      return parsed;
+      // Ek olarak content temizle
+      final cleaned = _cleanAllContent(parsed);
+      return cleaned;
     } catch (_) {
       return null;
     }
+  }
+
+  /// Tüm slayt içeriklerindeki yıldız karakterlerini ve bozuk formatlamaları temizler
+  static Map<String, dynamic> _cleanAllContent(Map<String, dynamic> json) {
+    final cleaned = Map<String, dynamic>.from(json);
+    
+    if (cleaned['slides'] is List) {
+      final cleanedSlides = <Map<String, dynamic>>[];
+      for (final slide in cleaned['slides'] as List) {
+        if (slide is Map) {
+          final cleanedSlide = Map<String, dynamic>.from(slide);
+          
+          // title temizle
+          if (cleanedSlide['title'] is String) {
+            cleanedSlide['title'] = cleanedSlide['title']
+                .toString()
+                .replaceAll('*', '')
+                .trim();
+          }
+          
+          // content temizle (string veya map olabilir)
+          if (cleanedSlide['content'] is String) {
+            cleanedSlide['content'] = PresentationContentQuality.normalizeContentBullets(
+              cleanedSlide['content'].toString()
+            );
+          } else if (cleanedSlide['content'] is Map) {
+            final contentMap = cleanedSlide['content'] as Map;
+            final cleanedContent = Map<String, dynamic>.from(contentMap);
+            
+            if (cleanedContent['headline'] is String) {
+              cleanedContent['headline'] = cleanedContent['headline']
+                  .toString()
+                  .replaceAll('*', '')
+                  .trim();
+            }
+            if (cleanedContent['supporting_text'] is String) {
+              cleanedContent['supporting_text'] = cleanedContent['supporting_text']
+                  .toString()
+                  .replaceAll('*', '')
+                  .trim();
+            }
+            if (cleanedContent['key_points'] is List) {
+              cleanedContent['key_points'] = (cleanedContent['key_points'] as List)
+                  .map((kp) => kp.toString().replaceAll('*', '').trim())
+                  .where((kp) => kp.isNotEmpty)
+                  .toList();
+            }
+            
+            cleanedSlide['content'] = cleanedContent;
+          }
+          
+          cleanedSlides.add(cleanedSlide);
+        }
+      }
+      cleaned['slides'] = cleanedSlides;
+    }
+    
+    return cleaned;
   }
 
   /// Şema Doğrulaması (Schema Validation)
@@ -182,11 +247,11 @@ class SafeJsonParser {
           final heading = sec['heading'] ?? sec['title'] ?? sec['baslik'] ?? '';
           final desc = sec['description'] ?? sec['desc'] ?? sec['text'] ?? sec['aciklama'] ?? sec['content'] ?? '';
           if (heading.toString().trim().isNotEmpty && desc.toString().trim().isNotEmpty) {
-            lines.add('- **${heading.toString().trim()}:** ${desc.toString().trim()}');
+            lines.add('- ${heading.toString().trim()}: ${desc.toString().trim()}');
           } else if (desc.toString().trim().isNotEmpty) {
             lines.add('- ${desc.toString().trim()}');
           } else if (heading.toString().trim().isNotEmpty) {
-            lines.add('- **${heading.toString().trim()}**');
+            lines.add('- ${heading.toString().trim()}');
           }
         } else if (sec is String && sec.trim().isNotEmpty) {
           final trimmed = sec.trim();
@@ -203,7 +268,7 @@ class SafeJsonParser {
 
     final headline = map['headline'] ?? map['ana_fikir'];
     if (headline != null && headline.toString().trim().isNotEmpty) {
-      return '- **${headline.toString().trim()}**';
+      return '- ${headline.toString().trim()}';
     }
 
     return '';
@@ -219,9 +284,9 @@ class SafeJsonParser {
       final cleanHeadline = headline.toString().replaceAll('*', '').trim();
       final cleanSupporting = supportingText.toString().replaceAll('*', '').trim();
       if (cleanHeadline.isNotEmpty && cleanSupporting.isNotEmpty) {
-        lines.add('- **$cleanHeadline:** $cleanSupporting');
+        lines.add('- $cleanHeadline: $cleanSupporting');
       } else if (cleanHeadline.isNotEmpty) {
-        lines.add('- **$cleanHeadline**');
+        lines.add('- $cleanHeadline');
       } else if (cleanSupporting.isNotEmpty) {
         lines.add('- $cleanSupporting');
       }
@@ -418,7 +483,7 @@ class SafeJsonParser {
         if (map != null) {
           if (map.containsKey('slides') || map.containsKey('sunum') || map.containsKey('slaytlar') || map.containsKey('presentation') || map.containsKey('data')) {
             final normalized = _tryNormalizePresentationPayload(map);
-            if (normalized != null) return normalized;
+            if (normalized != null) return _cleanAllContent(normalized);
           }
         }
         searchStart = braceIndex + 1;
@@ -430,7 +495,7 @@ class SafeJsonParser {
         if (map != null) {
           if (map.containsKey('slides') || map.containsKey('sunum') || map.containsKey('slaytlar') || map.containsKey('presentation') || map.containsKey('data')) {
             final normalized = _tryNormalizePresentationPayload(map);
-            if (normalized != null) return normalized;
+            if (normalized != null) return _cleanAllContent(normalized);
           }
         }
         break;

@@ -88,14 +88,17 @@ class _PresentationViewPageState extends State<PresentationViewPage> {
 
 
           for (final page in decoded.pages) {
-            final title = page.textBlocks.isNotEmpty
+            var title = page.textBlocks.isNotEmpty
                 ? page.textBlocks.first.text
                 : '';
-            final content = page.textBlocks
+            var content = page.textBlocks
                 .skip(1)
                 .map((b) => b.text)
                 .where((t) => t.isNotEmpty)
                 .join('\n');
+            // Remove markdown emphasis leftover ("**") and trim
+            title = title.replaceAll('*', '').trim();
+            content = content.replaceAll('*', '').trim();
             final modelIds = page.componentBlocks
                 .map((b) => b.modelAssetId)
                 .whereType<String>()
@@ -183,8 +186,8 @@ class _PresentationViewPageState extends State<PresentationViewPage> {
       final fields =
           (value as Map<String, dynamic>)['mapValue']?['fields'] as Map<String, dynamic>? ?? {};
       return {
-        'title': _stringField(fields, 'title'),
-        'content': _stringField(fields, 'content'),
+        'title': _stringField(fields, 'title').replaceAll('*', '').trim(),
+        'content': _stringField(fields, 'content').replaceAll('*', '').trim(),
         'layout': _stringField(fields, 'layout'),
         'modelIds': _stringArrayField(fields, 'modelIds'),
       };
@@ -352,12 +355,49 @@ class _SlideCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: AppSpacing.s12),
-          Text(
-            slide['content'] as String? ?? '',
-            style: AppTypography.bodyMedium.copyWith(
-              color: colors.textSecondary,
-            ),
-          ),
+          // Render content lines; detect any '**Header:**' patterns and render header bold without showing '**'
+          Builder(builder: (context) {
+            final content = (slide['content'] as String?) ?? '';
+            final lines = content.split('\n').map((l) => l.trim()).where((l) => l.isNotEmpty).toList();
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                for (final line in lines)
+                  () {
+                    final matches = RegExp(r'\*\*([^*]+)\:\*\*').allMatches(line).toList();
+                    if (matches.isEmpty) {
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 6),
+                        child: Text(line, style: AppTypography.bodyMedium.copyWith(color: colors.textSecondary)),
+                      );
+                    }
+
+                    // Build TextSpans: text segments and bold headers for each match
+                    final spans = <TextSpan>[];
+                    var lastIndex = 0;
+                    for (final m in matches) {
+                      if (m.start > lastIndex) {
+                        spans.add(TextSpan(text: line.substring(lastIndex, m.start)));
+                      }
+                      final header = m.group(1) ?? '';
+                      spans.add(TextSpan(text: header + ': ', style: const TextStyle(fontWeight: FontWeight.w700)));
+                      lastIndex = m.end;
+                    }
+                    if (lastIndex < line.length) spans.add(TextSpan(text: line.substring(lastIndex)));
+
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 6),
+                      child: RichText(
+                        text: TextSpan(
+                          style: AppTypography.bodyMedium.copyWith(color: colors.textSecondary),
+                          children: spans,
+                        ),
+                      ),
+                    );
+                  }(),
+              ],
+            );
+          }),
           const SizedBox(height: AppSpacing.s16),
           Wrap(
             spacing: AppSpacing.s8,

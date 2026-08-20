@@ -1752,7 +1752,29 @@ class _UserAvatarState extends State<_UserAvatar> {
     if (_user!.photoURL != null) {
       return ClipRRect(
         borderRadius: BorderRadius.circular(20),
-        child: Image.network(_user!.photoURL!, fit: BoxFit.cover),
+        child: Image.network(
+          _user!.photoURL!,
+          fit: BoxFit.cover,
+          // Show user initial if network image fails or is rate-limited
+          errorBuilder: (context, error, stackTrace) {
+            final initial = (_user!.displayName ?? _user!.email ?? '?')
+                .substring(0, 1)
+                .toUpperCase();
+            return Container(
+              color: Theme.of(context).colorScheme.primary,
+              alignment: Alignment.center,
+              child: Text(initial,
+                  style: const TextStyle(
+                      color: Colors.white, fontWeight: FontWeight.w600)),
+            );
+          },
+          loadingBuilder: (context, child, progress) =>
+              progress == null
+                  ? child
+                  : const Center(
+                      child: SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2)),
+                    ),
+        ),
       );
     }
     final initial = (_user!.displayName ?? _user!.email ?? '?')

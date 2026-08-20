@@ -146,15 +146,40 @@ class PresentationContentQuality {
         .trim();
   }
 
-  /// İçeriği profesyonel "- **Vurgulu Başlık:** Açıklama" formatına normalize eder.
+  /// İçeriği temiz "- Başlık: Açıklama" formatına normalize eder.
+  /// AŞAĞIDAKİ SORUNLARI DÜZELTİR:
+  /// - Yıldız karakterlerini temizler (markdown kalıntıları)
+  /// - "ve:" gibi bozuk formatlamaları düzeltilir
+  /// - Çift noktalama işaretlerini temizler
+  /// - Fazla boşlukları kaldırır
   static String normalizeContentBullets(String rawContent) {
     final text = rawContent.trim();
     if (text.isEmpty) return '';
 
-    // Eğer tek satırda birden fazla **Başlık:** yapıştırılmışsa böl
-    var preprocessed = text.replaceAllMapped(
-      RegExp(r'(?<=\S)\s*(?=\*\*[^*]+:\*\*)'),
-      (m) => '\n',
+    // 1. Tüm yıldız karakterlerini temizle (markdown kalıntıları)
+    // **klima** -> klima
+    // **Klima:** -> Klima:
+    var cleaned = text
+        .replaceAllMapped(RegExp(r'\*{2,}([^*]+?)\*{2,}'), (m) => m[1]!) // **metin** -> metin
+        .replaceAllMapped(RegExp(r'\*([^*]+?)\*'), (m) => m[1]!); // *metin* -> metin
+
+    // 2. "ve:" "ve " gibi bozuk formatlamaları düzelt
+    cleaned = cleaned
+        .replaceAllMapped(RegExp(r'(\w+)\s*:\s*'), (m) => '${m[1]}: ') // "ve:" -> "ve: "
+        .replaceAllMapped(RegExp(r'(\w+)\s*:\s*(\w+)'), (m) => '${m[1]}: ${m[2]}') // "ve:nemi" -> "ve: nemi"
+        .replaceAll(RegExp(r':\s+:'), ':') // "::" -> ":"
+        .replaceAll(RegExp(r'\s+:\s+'), ': '); // çoklu boşluk + : + çoklu boşluk -> ": "
+
+    // 3. Çift noktalama işaretlerini temizle
+    cleaned = cleaned
+        .replaceAllMapped(RegExp(r'[.,;:!\?]\s*[.,;:!\?]'), (Match m) => m[0]!.trim()) // "..." -> "."
+        .replaceAll(RegExp(r'\.\s+\.'), '.')
+        .replaceAll(RegExp(r':\s*:'), ':');
+
+    // 4. Eğer tek satırda birden fazla **Başlık:** yapıştırılmışsa böl
+    var preprocessed = cleaned.replaceAllMapped(
+      RegExp(r'(\S)\s*(\*\*[^*]+:\*\*)'),
+      (m) => '${m[1]}\n${m[2]}',
     );
 
     final lines = preprocessed
@@ -165,35 +190,67 @@ class PresentationContentQuality {
 
     final normalizedLines = <String>[];
     for (final line in lines) {
-      var cleaned = line.replaceFirst(RegExp(r'^\s*[\-\*\•\d\.\)]+\s*'), '').trim();
-      cleaned = cleaned.replaceAll(RegExp(r'^\*{2,}'), '**');
-      cleaned = cleaned.replaceAll(RegExp(r'\*{2,}$'), '');
-      if (cleaned.isEmpty) continue;
+      var lineCleaned = line.replaceFirst(RegExp(r'^\s*[\-\*\•\d\.\)]+\s*'), '').trim();
+      
+      // Yıldız temizleme - kalıntıları al
+      lineCleaned = lineCleaned.replaceAll(RegExp(r'^\*+|\*+$'), '');
+      
+      if (lineCleaned.isEmpty) continue;
 
-      if (RegExp(r'^\*\*[^*]+:\*\*\s*.+').hasMatch(cleaned)) {
-        normalizedLines.add('- $cleaned');
-      } else if (cleaned.contains(':') && !cleaned.startsWith('http')) {
-        final colonIdx = cleaned.indexOf(':');
-        final header = cleaned.substring(0, colonIdx).replaceAll('*', '').trim();
-        final body = cleaned.substring(colonIdx + 1).replaceAll('*', '').trim();
+      // "Başlık: Açıklama" formatını tespit et
+      if (RegExp(r'^[^:]+:\s*.+').hasMatch(lineCleaned)) {
+        final colonIdx = lineCleaned.indexOf(':');
+        final header = lineCleaned.substring(0, colonIdx).trim();
+        final body = lineCleaned.substring(colonIdx + 1).trim();
+        
+        // Header'da hala yıldız varsa temizle
+        final cleanHeader = header.replaceAll('*', '').trim();
+        final cleanBody = body.replaceAll('*', '').trim();
+        
+        if (cleanHeader.isNotEmpty && cleanBody.isNotEmpty) {
+          normalizedLines.add('- $cleanHeader: $cleanBody');
+        } else if (cleanHeader.isNotEmpty) {
+          normalizedLines.add('- $cleanHeader');
+        } else if (cleanBody.isNotEmpty) {
+          normalizedLines.add('- $cleanBody');
+        }
+      } else if (lineCleaned.contains(':') && !lineCleaned.startsWith('http')) {
+        final colonIdx = lineCleaned.indexOf(':');
+        final header = lineCleaned.substring(0, colonIdx).replaceAll('*', '').trim();
+        final body = lineCleaned.substring(colonIdx + 1).replaceAll('*', '').trim();
         if (header.isNotEmpty && body.isNotEmpty) {
-          normalizedLines.add('- **$header:** $body');
+          normalizedLines.add('- $header: $body');
         } else {
-          normalizedLines.add('- $cleaned');
+          normalizedLines.add('- $lineCleaned');
         }
       } else {
-        final words = cleaned.split(' ');
-        if (words.length >= 4) {
-          final header = words.take(2).join(' ');
-          final body = words.skip(2).join(' ');
-          normalizedLines.add('- **$header:** $body');
+        // Uzun cümleleri bölelim
+        if (lineCleaned.length > 80) {
+          // Nokta veya virgülle böl (lookbehind unsupported in Dart RegExp) — manual split preserving punctuation
+          final sentences = <String>[];
+          var rest = lineCleaned;
+          final regex = RegExp(r'([.!?])\s+');
+          while (true) {
+            final m = regex.firstMatch(rest);
+            if (m == null) {
+              if (rest.trim().isNotEmpty) sentences.add(rest.trim());
+              break;
+            }
+            final endIdx = m.start + 1; // include the punctuation
+            final sentence = rest.substring(0, endIdx).trim();
+            if (sentence.isNotEmpty) sentences.add(sentence);
+            rest = rest.substring(m.end);
+          }
+          for (final sent in sentences) {
+            normalizedLines.add('- ${sent.trim()}');
+          }
         } else {
-          normalizedLines.add('- $cleaned');
+          normalizedLines.add('- $lineCleaned');
         }
       }
     }
 
-    return normalizedLines.isEmpty ? text : normalizedLines.join('\n');
+    return normalizedLines.isEmpty ? cleaned : normalizedLines.join('\n');
   }
 
   /// 7 Boyutlu Kalite Değerlendirmesi Yapar (0-100)

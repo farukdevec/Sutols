@@ -199,8 +199,14 @@ def generate_slides(req: GenerateSlidesRequest):
     Verilen konu hakkinda {lang_instruction} olarak slayt icerigi uret.
     Her slayt icin:
     - title: Slayt basligi (kisa, dikkat cekici)
-    - body: Slayt icerigi (2-3 paragraf, bilgilendirici)
+    - body: Slayt icerigi (2-3 madde, net ve anlasilir)
     - speaker_notes: Sunucu notlari (istege bagli, detayli aciklama)
+
+    KESIN KURALLAR:
+    1. YALNIZCA JSON formatinda cevap ver. Asla markdown, asla aciklama.
+    2. Her cumle TAM ve ANLASILIR olmali. "ve:", "ve", "veya:" gibi kesik ifadeler YASAK.
+    3. Body icerisinde ** (yildiz) karakteri KULLANMA.
+    4. Her madde net ve bilgi dolu olmali.
 
     JSON formatinda {req.slide_count} slayt uret.
     """
@@ -211,10 +217,10 @@ def generate_slides(req: GenerateSlidesRequest):
     Once web'den bu konu hakkinda guncel bilgi topla, sonra slaytlari olustur.
     Slayt icerigi bilimsel ve dogru olmali.
 
-    JSON formatinda yanit ver:
+    YANIT FORMATI: YALNIZCA asagidaki JSON yapisini kullan:
     {{
         "slides": [
-            {{"title": "...", "body": "...", "speaker_notes": "..."}}
+            {{"title": "Baslik", "body": "- Madde 1\\n- Madde 2\\n- Madde 3", "speaker_notes": "Aciklama"}}
         ]
     }}
     """
@@ -230,11 +236,12 @@ def generate_slides(req: GenerateSlidesRequest):
 
     Yukaridaki bilgilere dayanarak {lang_instruction} slayt icerigi olustur.
     Slayt icerigi akademik duzeyde ve bilgilendirici olsun.
+    Her cumle tam olmali. "ve:" seklinde kesik ifadeler YASAKTIR.
 
-    JSON formatinda yanit ver:
+    YANIT FORMATI: YALNIZCA asagidaki JSON yapisini kullan:
     {{
         "slides": [
-            {{"title": "...", "body": "...", "speaker_notes": "..."}}
+            {{"title": "Baslik", "body": "- Madde 1\\n- Madde 2\\n- Madde 3", "speaker_notes": "Aciklama"}}
         ]
     }}
     """
