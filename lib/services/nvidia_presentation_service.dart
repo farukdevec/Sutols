@@ -6,6 +6,7 @@ import 'package:meta/meta.dart';
 
 import 'ai_model_config.dart';
 import 'presentation_content_quality.dart';
+import 'presentation_judge_service.dart';
 import 'presentation_prompt_builder.dart';
 import 'safe_json_parser.dart';
 
@@ -39,12 +40,12 @@ class NvidiaSlide {
     final title = json['title'] ?? json['baslik'];
     final subtitle = (json['subtitle'] ?? json['alt_baslik'] ?? json['sub_title'])?.toString();
     final rawContent = json['content'] ?? json['icerik'];
-    final rawKeywords = json['keywords'] ?? json['anahtar_kelimeler'];
+    final rawKeywords = json['visual_keywords'] ?? json['keywords'] ?? json['anahtar_kelimeler'];
     final rawType = json['type'] ??
         json['slide_type'] ??
         json['layout'] ??
         json['tip'] ??
-        'cards';
+        'concept';
     final purpose = (json['purpose'] ?? json['amac'] ?? json['role'])?.toString();
     final keyMessage = (json['key_message'] ?? json['keyMessage'] ?? json['ana_mesaj'])?.toString();
     final rawSections = json['sections'] ?? json['bolumler'];
@@ -122,40 +123,37 @@ class NvidiaSlide {
 
   static String _normalizeContent(Object? rawContent) {
     if (rawContent is String) {
-      final text = rawContent.trim();
-      final lines = text
-          .split('\n')
-          .map((line) => line.trim())
-          .where((line) => line.isNotEmpty)
-          .toList(growable: false);
-      if (lines.length == 1) {
-        final sentences = text
-            .split(RegExp(r'\.\s+'))
-            .map((s) => s.trim())
-            .where((s) => s.isNotEmpty)
-            .toList(growable: false);
-        if (sentences.length >= 2) {
-          return sentences
-              .map((s) => s.startsWith('-') || s.startsWith('*')
-                  ? s
-                  : '- ${s.endsWith('.') ? s : '$s.'}')
-              .join('\n');
+      return PresentationContentQuality.normalizeContentBullets(rawContent);
+    }
+    if (rawContent is Map) {
+      final headline = rawContent['headline'] ?? rawContent['ana_fikir'] ?? '';
+      final supportingText = rawContent['supporting_text'] ?? rawContent['aciklama'] ?? '';
+      final rawKeyPoints = rawContent['key_points'] ?? rawContent['maddeler'];
+      final lines = <String>[];
+      final cleanHeadline = headline.toString().replaceAll('*', '').trim();
+      final cleanSupporting = supportingText.toString().replaceAll('*', '').trim();
+      if (cleanHeadline.isNotEmpty && cleanSupporting.isNotEmpty) {
+        lines.add('- **$cleanHeadline:** $cleanSupporting');
+      } else if (cleanHeadline.isNotEmpty) {
+        lines.add('- **$cleanHeadline**');
+      } else if (cleanSupporting.isNotEmpty) {
+        lines.add('- $cleanSupporting');
+      }
+      if (rawKeyPoints is List) {
+        for (final pt in rawKeyPoints) {
+          if (pt != null && pt.toString().trim().isNotEmpty) {
+            final cleanPt = pt.toString().trim();
+            lines.add(cleanPt.startsWith('-') ? cleanPt : '- $cleanPt');
+          }
         }
       }
-      return lines
-          .map((line) =>
-              line.startsWith('-') || line.startsWith('*') ? line : '- $line')
-          .join('\n');
+      if (lines.isNotEmpty) {
+        return PresentationContentQuality.normalizeContentBullets(lines.join('\n'));
+      }
     }
     if (rawContent is List) {
-      final lines = rawContent
-          .whereType<String>()
-          .map((line) => line.trim())
-          .where((line) => line.isNotEmpty)
-          .map((line) =>
-              line.startsWith('-') || line.startsWith('*') ? line : '- $line')
-          .toList(growable: false);
-      return lines.join('\n');
+      final joined = rawContent.whereType<String>().join('\n');
+      return PresentationContentQuality.normalizeContentBullets(joined);
     }
     return '';
   }
@@ -179,7 +177,7 @@ class NvidiaPresentation {
     for (var i = 0; i < rawSlides.length; i += 1) {
       final rawSlide = rawSlides[i];
       if (rawSlide is! Map) {
-        throw FormatException('slides[$i] nesnesi geçersiz.');
+        throw FormatException('Slayt ${i + 1} geçerli bir JSON nesnesi değil.');
       }
       slides.add(
         NvidiaSlide.fromJson(
@@ -193,7 +191,7 @@ class NvidiaPresentation {
 
 class NvidiaPresentationService {
   static const String defaultProxyUrl = 'https://sutols.online/';
-  static const String defaultModelName = AiModelConfig.modelLlama33_70b;
+  static const String defaultModelName = AiModelConfig.modelNemotronSuper;
   static const List<String> defaultCandidateModels =
       AiModelConfig.defaultNvidiaCandidateModels;
 
@@ -224,7 +222,7 @@ class NvidiaPresentationService {
       slideCount: slideCount,
       language: language,
     );
-    final maxTokens = (slideCount * 600 + 1500).clamp(3000, 8192);
+    final maxTokens = (slideCount * 800 + 2000).clamp(4096, 8192);
 
     final selectedModel = model ?? modelName;
     final modelsToTry = candidateModels ??
@@ -302,28 +300,106 @@ class NvidiaPresentationService {
                 presentation.slides.take(slideCount).toList(growable: false),
           );
         }
-        if (client == null && presentation.slides.length < slideCount) {
+        final minAllowedSlides = (slideCount - 1).clamp(3, slideCount);
+        if (client == null && presentation.slides.length < minAllowedSlides) {
           throw FormatException(
             'NVIDIA $candidateModel $slideCount yerine '
             '${presentation.slides.length} slayt döndürdü.',
           );
         }
 
-        if (checkQuality) {
-          final qualityReason = PresentationContentQuality.rejectionReason(
-            presentation.slides
-                .map(
-                  (s) => PresentationContentSample(
-                    title: s.title,
-                    content: s.content,
-                  ),
-                )
-                .toList(growable: false),
+        final judgeService = PresentationJudgeService(
+          proxyUrl: proxyUrl,
+          client: client,
+        );
+
+        var qualityResult = await judgeService.judgePresentation(
+          presentation: presentation,
+          topic: topic,
+          targetAudience: topic,
+        );
+
+        AiRouterLogger.logDetailedQuality(
+          overall: qualityResult.overallScore,
+          accuracy: qualityResult.factualAccuracy,
+          audienceFit: qualityResult.audienceFit,
+          pedagogy: qualityResult.pedagogicalValue,
+          narrative: qualityResult.narrativeCoherence,
+          redundancy: qualityResult.redundancy,
+          readability: qualityResult.readability,
+          visual: qualityResult.visualPotential,
+        );
+
+        // Smart Revision Loop (75 - 84 band)
+        if (checkQuality && qualityResult.needsRevision) {
+          AiRouterLogger.logJudge(
+            score: qualityResult.overallScore,
+            revision: true,
+            issues: qualityResult.slideIssues
+                .map((e) => e['problem']?.toString() ?? '')
+                .where((e) => e.isNotEmpty)
+                .toList(),
           );
-          if (qualityReason != null) {
+
+          final revStopwatch = Stopwatch()..start();
+          try {
+            final revised = await judgeService.revisePresentation(
+              originalPresentation: presentation,
+              qualityResult: qualityResult,
+              topic: topic,
+              slideCount: slideCount,
+              language: language,
+              modelName: candidateModel,
+            );
+            revStopwatch.stop();
+
+            final revisedQuality = await judgeService.judgePresentation(
+              presentation: revised,
+              topic: topic,
+              targetAudience: topic,
+            );
+
+            if (revisedQuality.overallScore > qualityResult.overallScore) {
+              presentation = revised;
+              qualityResult = revisedQuality;
+              AiRouterLogger.logRevision(
+                attempt: 1,
+                status: 'SUCCESS',
+                latency: revStopwatch.elapsed,
+              );
+            } else {
+              AiRouterLogger.logRevision(
+                attempt: 1,
+                status: 'KEPT_ORIGINAL',
+                latency: revStopwatch.elapsed,
+              );
+            }
+          } catch (revError) {
+            revStopwatch.stop();
+            AiRouterLogger.logRevision(
+              attempt: 1,
+              status: 'FAILED ($revError)',
+              latency: revStopwatch.elapsed,
+            );
+          }
+        } else {
+          AiRouterLogger.logJudge(
+            score: qualityResult.overallScore,
+            revision: false,
+          );
+          AiRouterLogger.logRevision(
+            attempt: 0,
+            status: 'SKIPPED',
+          );
+        }
+
+        if (checkQuality) {
+          if (qualityResult.overallScore < 75) {
             final isLastCandidate = i == modelsToTry.length - 1;
             if (!isLastCandidate) {
-              throw FormatException('Kalite kontrolü reddedildi: $qualityReason');
+              throw FormatException(
+                'Kalite kontrolü ve denetçi reddetti (Skor: ${qualityResult.overallScore}/100, minimum 75 gereklidir).',
+              );
             }
           }
         }

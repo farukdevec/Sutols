@@ -15,7 +15,6 @@ import 'model_matching_service.dart';
 import 'model_repository.dart';
 import 'presentation_deck_builder.dart';
 import 'presentation_project_codec.dart';
-import 'presentation_keyword_catalog.dart';
 import 'usage_service.dart';
 import 'firestore_rest_helper.dart';
 
@@ -62,10 +61,13 @@ class PresentationService {
     required String userId,
     required String topic,
     int slideCount = 5,
+    void Function(String stepTitle, String stepDescription)? onProgress,
   }) async {
     if (slideCount < minSlideCount || slideCount > maxSlideCount) {
       throw Exception('Slayt sayısı 1 ile 30 arasında olmalıdır.');
     }
+
+    final totalStopwatch = Stopwatch()..start();
 
     // 0. Günlük kota kontrolü (AI çağrısından önce)
     final userDoc =
@@ -85,12 +87,14 @@ class PresentationService {
           'Günlük sunum oluşturma hakkınız doldu. Yarın tekrar deneyin veya planınızı yükseltin.');
     }
 
-    final modelCatalogWarmup = ModelRepository.instance.getModels();
     AiRouterLogger.logRequestStart(topic: topic, slideCount: slideCount);
 
+    onProgress?.call(
+      'İçerik Oluşturuluyor...',
+      'Yüksek kaliteli yapay zekâ modeli slayt içeriğini hazırlıyor.',
+    );
+
     // 1. Sıralı Router: NVIDIA ana servis; Grok ve Gemini yalnızca yedek.
-    // Çevrimdışı içerik üretilmez: tüm sağlayıcılar başarısızsa gerçek hata
-    // kullanıcıya iletilir.
     GeminiPresentation resultPresentation;
     Object? nvidiaError;
     Object? grokError;
@@ -146,6 +150,12 @@ class PresentationService {
             slideCount: slideCount,
           );
         } catch (geminiError) {
+          totalStopwatch.stop();
+          AiRouterLogger.logTotal(
+            latency: totalStopwatch.elapsed,
+            success: false,
+            details: 'NVIDIA: $nvidiaError Grok: $grokError Gemini: $geminiError',
+          );
           throw Exception(
             'Sunum yapay zekâ servisleri yanıt veremedi. '
             'NVIDIA: $nvidiaError Grok: $grokError Gemini: $geminiError',
@@ -153,21 +163,23 @@ class PresentationService {
         }
       }
     }
-    if (resultPresentation.slides.length != slideCount) {
+    final minAllowedSlides = (slideCount - 1).clamp(3, slideCount);
+    if (resultPresentation.slides.length < minAllowedSlides) {
       throw FormatException(
         'AI $slideCount yerine ${resultPresentation.slides.length} slayt döndürdü.',
       );
     }
 
-    // 2. Her slayt için model eşleştir ve layout belirle. Bütün slaytlar aynı
-    // normalize edilmiş katalog indeksi üzerinden tek toplu geçişte işlenir.
+    // 2. Her slayt için model eşleştir ve layout belirle
+    onProgress?.call(
+      'Görseller ve 3B Modeller Eşleştiriliyor...',
+      'Slayt konularına uygun 3B nesneler katalogdan seçiliyor.',
+    );
+
+    final matchingStopwatch = Stopwatch()..start();
     final slidesData = <Map<String, dynamic>>[];
     final deckSlides = <DeckSlide>[];
     final usedModelIds = <String>{};
-    final catalogEntries = await modelCatalogWarmup;
-    final allAvailableCatalog = catalogEntries.isNotEmpty
-        ? catalogEntries
-        : ModelMatchingService.localCatalogEntries;
 
     final searchKeywordsBySlide = resultPresentation.slides.map((slide) {
       return <String>[
@@ -184,46 +196,12 @@ class PresentationService {
         slideIndex < resultPresentation.slides.length;
         slideIndex += 1) {
       final slide = resultPresentation.slides[slideIndex];
-      // ignore: avoid_print
-      print('ADIM 2: Model eşleştirme başlıyor - ${slide.title}');
       final matches = matchesBySlide[slideIndex];
-      // ignore: avoid_print
-      print('ADIM 2 TAMAM - ${matches.length} eşleşme');
-      // Otomatik üretimde 3B modeller her zaman 2D bileşenlere önceliklidir.
-      // Slayta özel anahtar kelime eşleşmesi sağlayan en güçlü unused modeli seç.
-      // Eşleşme yoksa konu kelimelerine veya katalogdaki diğer 3B modellere başvur.
+
       var selectedModel = ModelMatchingService.bestMatchPreferUnused(
         matches,
         usedModelIds,
       );
-
-      if (selectedModel == null && allAvailableCatalog.isNotEmpty) {
-        // Aşama 2: Slayt bazlı eşleşme yoksa, sunumun genel konu başlığı
-        // kelimelerine göre katalogda ara.
-        final topicMatches = ModelMatchingService.rankCatalogModels(
-          models: allAvailableCatalog,
-          keywords: PresentationKeywordCatalog.words(topic),
-        );
-        selectedModel = ModelMatchingService.bestMatchPreferUnused(
-          topicMatches,
-          usedModelIds,
-        );
-
-        // ÖNEMLİ: Burada BİLİNÇLİ OLARAK "hiçbir şey eşleşmezse kataloktan
-        // rastgele/ilk kullanılmamış modeli zorla seç" adımı YOK.
-        //
-        // Önceki sürümde tam bu noktada, gerçek bir eşleşme bulunamadığında
-        // bile kataloktaki ilk kullanılmamış model koşulsuz seçiliyordu. Bu
-        // yüzden "Türk Kahvesinin Gelişimi" gibi bir slayta, sadece kataloğun
-        // ilk sırasında olduğu için "Embriyo Gelişimi" gibi tamamen alakasız
-        // bir model atanabiliyordu.
-        //
-        // Artık gerçekten alakalı bir model bulunamazsa `selectedModel`
-        // null kalır ve aşağıdaki `_layout.decideLayout(selectedModels)`
-        // boş model listesiyle çağrılarak mimarideki Aşama 4'e (2D bileşen
-        // düzenine düşme) geçilir. Bu, "alakasız 3B model" göstermekten
-        // her zaman daha iyidir.
-      }
 
       final selectedModels = selectedModel == null
           ? const <ModelMatch>[]
@@ -260,8 +238,19 @@ class PresentationService {
         ),
       );
     }
+    matchingStopwatch.stop();
+    AiRouterLogger.logStep(
+      stepName: 'MODEL MATCHING',
+      latency: matchingStopwatch.elapsed,
+    );
 
-    // 2b. Düzenlenebilir deck'i oluştur (metin sol, 3B modeller sağ)
+    // 2b. Düzenlenebilir deck'i oluştur
+    onProgress?.call(
+      'Sunum Düzeni Hazırlanıyor...',
+      'Slayt şablonları ve görsel yerleşimler oluşturuluyor.',
+    );
+
+    final deckStopwatch = Stopwatch()..start();
     final controller = await PresentationDeckBuilder.buildControllerAsync(
       topic: topic,
       slides: deckSlides,
@@ -270,10 +259,19 @@ class PresentationService {
       pages: controller.pages.toList(growable: false),
       effectSettings: controller.effectSettings,
     );
+    deckStopwatch.stop();
+    AiRouterLogger.logStep(
+      stepName: 'DECK',
+      latency: deckStopwatch.elapsed,
+    );
 
-    // 3. Firestore'a kaydet (REST API - Firestore SDK'sını bypass eder)
-    // ignore: avoid_print
-    print('ADIM 3: Firestore yazma başlıyor');
+    // 3. Firestore'a kaydet (REST API)
+    onProgress?.call(
+      'Sunum Kaydediliyor...',
+      'Sunum projesi veritabanına aktarılıyor.',
+    );
+
+    final firestoreStopwatch = Stopwatch()..start();
     final idToken = await _authToken();
     if (idToken == null) {
       throw Exception('Lütfen önce giriş yapın.');
@@ -325,9 +323,7 @@ class PresentationService {
     final docName = result['name'] as String;
     final presentationId = docName.split('/').last;
 
-    // 3b. Slaytları tek atomik commit ile yaz. Önceki uygulama her slayt için
-    // sırayla ayrı HTTP isteği yaptığı için sayfa sayısı arttıkça bekleme de
-    // doğrusal biçimde artıyordu (30 slayt = 30 ardışık ağ turu).
+    // 3b. Slaytları tek atomik commit ile yaz
     final slideWrites = <Map<String, dynamic>>[];
     for (var i = 0; i < slidesData.length; i += 1) {
       final slide = slidesData[i];
@@ -353,9 +349,6 @@ class PresentationService {
       });
     }
 
-    // İlk oluşturulan düzeni de aynı atomik commit içinde sakla. Aksi halde
-    // editörde ilk anda görünen 3B model/bileşenler sunum yeniden açıldığında
-    // yalnızca title/content kaydından kuruluyor ve kayboluyordu.
     final currentUser = FirebaseAuth.instance.currentUser;
     final updatedByName = (currentUser?.displayName ?? '').trim().isNotEmpty
         ? currentUser!.displayName!.trim()
@@ -392,11 +385,18 @@ class PresentationService {
             'Slaytlar kaydedilemedi (HTTP ${slideResponse.statusCode}): ${slideResponse.body}');
       }
     }
-    // ignore: avoid_print
-    print('ADIM 3 TAMAM');
+    firestoreStopwatch.stop();
+    AiRouterLogger.logStep(
+      stepName: 'FIRESTORE',
+      latency: firestoreStopwatch.elapsed,
+    );
 
-    // İstatistik sayacı sunumun açılmasını bekletmemeli. Metot zaten
-    // best-effort çalışır ve hata durumunda üretim sonucunu etkilemez.
+    totalStopwatch.stop();
+    AiRouterLogger.logTotal(
+      latency: totalStopwatch.elapsed,
+      success: true,
+    );
+
     unawaited(_incrementPresentationCount(userId));
 
     return PresentationGenerationResult(

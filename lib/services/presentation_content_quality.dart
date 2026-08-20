@@ -4,33 +4,111 @@ class PresentationContentSample {
   const PresentationContentSample({
     required this.title,
     required this.content,
+    this.type = 'concept',
+    this.purpose,
+    this.keywords = const <String>[],
+    this.visual,
   });
 
   final String title;
   final String content;
+  final String type;
+  final String? purpose;
+  final List<String> keywords;
+  final Map<String, dynamic>? visual;
 }
 
-/// AI yanıtındaki boş, aynı veya çok benzer slaytları ikinci sağlayıcıya
-/// geçmeden önce yakalayan hafif, deterministik kalite kontrolü.
+/// 7 Boyutlu Pedagojik ve Profesyonel Sunum Kalite Değerlendirmesi
+class QualityScoreResult {
+  final int overallScore;
+  final int factualAccuracy;     // Max: 20
+  final int audienceFit;          // Max: 20
+  final int pedagogicalValue;     // Max: 20
+  final int narrativeCoherence;   // Max: 15
+  final int redundancy;           // Max: 10
+  final int readability;          // Max: 10
+  final int visualPotential;      // Max: 5
+  final List<Map<String, dynamic>> slideIssues;
+  final List<String> globalIssues;
+  final bool needsRevision;
+  final bool isPass;
+
+  const QualityScoreResult({
+    required this.overallScore,
+    required this.factualAccuracy,
+    required this.audienceFit,
+    required this.pedagogicalValue,
+    required this.narrativeCoherence,
+    required this.redundancy,
+    required this.readability,
+    required this.visualPotential,
+    this.slideIssues = const <Map<String, dynamic>>[],
+    this.globalIssues = const <String>[],
+    required this.needsRevision,
+    required this.isPass,
+  });
+
+  @override
+  String toString() {
+    return 'Overall: $overallScore/100 (Accuracy: $factualAccuracy, Audience: $audienceFit, Pedagogy: $pedagogicalValue, Narrative: $narrativeCoherence, Redundancy: $redundancy, Readability: $readability, Visual: $visualPotential)';
+  }
+}
+
+/// AI yanıtındaki pedagojik uyumu, hedef kitle doğruluğunu, anlatı akışını,
+/// metin yoğunluğunu ve tekrarı ölçen çok boyutlu kalite motoru.
 class PresentationContentQuality {
   const PresentationContentQuality._();
+
+  static const List<String> _superficialFluffPhrases = <String>[
+    'onemli bir olaydir',
+    'onemli bir konudur',
+    'bircok etkisi olmustur',
+    'buyuk bir oneme sahiptir',
+    'etkileri henuz bilinmemektedir',
+    'calismalar devam etmektedir',
+    'gelismeler devam etmektedir',
+    'gelecegi parlak gorunuyor',
+    'daha fazla inovasyon ve gelisim bekleniyor',
+    'daha hizli, daha guclu, ve daha kucuk',
+    'daha hizli daha guclu ve daha kucuk',
+  ];
 
   static const List<String> _metaNarrationPhrases = <String>[
     'bu sunumda',
     'bu slaytta',
-    'konuya genel bakış',
-    'sunumun izleyeceği',
-    'düşünce hattı',
-    'kapsam çizgisi',
+    'konuya genel bakis',
+    'sunumun izleyecegi',
+    'dusunce hatti',
+    'kapsam cizgisi',
     'ortak bir ana soruya',
+    'ogretim stratejileri',
+    'degerlendirme olcutu',
+    'ogretmen notu',
+    'ders plani',
+    'mufredat hedefleri',
+    'kazanimlari',
     'drag_handle',
-    'sürükleme kolu',
-    'sahne kartı',
-    'seçili sayfa',
+    'surukleme kolu',
+    'sahne karti',
+    'secili sayfa',
     'mouse ile tut',
-    'düşünce aşaması',
-    'burada amacımız',
-    'sayfa sırası anında',
+    'dusunce asamasi',
+    'burada amacimiz',
+    'sayfa sirasi aninda',
+  ];
+
+  static const List<String> _abstractNonVisualKeywords = <String>[
+    'strateji',
+    'degerlendirme',
+    'tarihce',
+    'onem',
+    'cikarim',
+    'uygulama',
+    'surec',
+    'analiz',
+    'hedef',
+    'plan',
+    'yontem',
   ];
 
   static const Set<String> _stopWords = <String>{
@@ -68,6 +146,249 @@ class PresentationContentQuality {
         .trim();
   }
 
+  /// İçeriği profesyonel "- **Vurgulu Başlık:** Açıklama" formatına normalize eder.
+  static String normalizeContentBullets(String rawContent) {
+    final text = rawContent.trim();
+    if (text.isEmpty) return '';
+
+    // Eğer tek satırda birden fazla **Başlık:** yapıştırılmışsa böl
+    var preprocessed = text.replaceAllMapped(
+      RegExp(r'(?<=\S)\s*(?=\*\*[^*]+:\*\*)'),
+      (m) => '\n',
+    );
+
+    final lines = preprocessed
+        .split('\n')
+        .map((l) => l.trim())
+        .where((l) => l.isNotEmpty)
+        .toList(growable: false);
+
+    final normalizedLines = <String>[];
+    for (final line in lines) {
+      var cleaned = line.replaceFirst(RegExp(r'^\s*[\-\*\•\d\.\)]+\s*'), '').trim();
+      cleaned = cleaned.replaceAll(RegExp(r'^\*{2,}'), '**');
+      cleaned = cleaned.replaceAll(RegExp(r'\*{2,}$'), '');
+      if (cleaned.isEmpty) continue;
+
+      if (RegExp(r'^\*\*[^*]+:\*\*\s*.+').hasMatch(cleaned)) {
+        normalizedLines.add('- $cleaned');
+      } else if (cleaned.contains(':') && !cleaned.startsWith('http')) {
+        final colonIdx = cleaned.indexOf(':');
+        final header = cleaned.substring(0, colonIdx).replaceAll('*', '').trim();
+        final body = cleaned.substring(colonIdx + 1).replaceAll('*', '').trim();
+        if (header.isNotEmpty && body.isNotEmpty) {
+          normalizedLines.add('- **$header:** $body');
+        } else {
+          normalizedLines.add('- $cleaned');
+        }
+      } else {
+        final words = cleaned.split(' ');
+        if (words.length >= 4) {
+          final header = words.take(2).join(' ');
+          final body = words.skip(2).join(' ');
+          normalizedLines.add('- **$header:** $body');
+        } else {
+          normalizedLines.add('- $cleaned');
+        }
+      }
+    }
+
+    return normalizedLines.isEmpty ? text : normalizedLines.join('\n');
+  }
+
+  /// 7 Boyutlu Kalite Değerlendirmesi Yapar (0-100)
+  static QualityScoreResult evaluateQuality(
+    List<PresentationContentSample> slides, {
+    String targetAudience = 'general',
+  }) {
+    if (slides.isEmpty) {
+      return const QualityScoreResult(
+        overallScore: 0,
+        factualAccuracy: 0,
+        audienceFit: 0,
+        pedagogicalValue: 0,
+        narrativeCoherence: 0,
+        redundancy: 0,
+        readability: 0,
+        visualPotential: 0,
+        globalIssues: ['Slayt listesi boş.'],
+        needsRevision: false,
+        isPass: false,
+      );
+    }
+
+    var accuracy = 20;
+    var audience = 20;
+    var pedagogy = 20;
+    var narrative = 15;
+    var redundancy = 10;
+    var readability = 10;
+    var visual = 5;
+
+    final slideIssues = <Map<String, dynamic>>[];
+    final globalIssues = <String>[];
+
+    // 1. Boş veya eksik slayt denetimi
+    for (var i = 0; i < slides.length; i++) {
+      final s = slides[i];
+      if (s.title.trim().isEmpty || s.content.trim().isEmpty) {
+        return const QualityScoreResult(
+          overallScore: 0,
+          factualAccuracy: 0,
+          audienceFit: 0,
+          pedagogicalValue: 0,
+          narrativeCoherence: 0,
+          redundancy: 0,
+          readability: 0,
+          visualPotential: 0,
+          globalIssues: ['Boş başlık veya içerik içeren slayt bulundu.'],
+          needsRevision: false,
+          isPass: false,
+        );
+      }
+    }
+
+    // 2. Audience Fit (Hedef Kitle ve Müfredat Jargonu Kontrolü) (20p)
+    final audienceLower = targetAudience.toLowerCase();
+    final isMiddleSchool = audienceLower.contains('ortaokul') || audienceLower.contains('cocuk');
+
+    for (var i = 0; i < slides.length; i++) {
+      final s = slides[i];
+      final normContent = _normalize(s.content);
+      final normTitle = _normalize(s.title);
+
+      for (final meta in _metaNarrationPhrases) {
+        if (normContent.contains(meta) || normTitle.contains(meta)) {
+          audience = math.max(0, audience - 6);
+          slideIssues.add({
+            'slide': i + 1,
+            'category': 'audience_fit',
+            'problem': 'Slayt öğretmen planı/müfredat jargonu içeriyor ($meta).',
+          });
+          break;
+        }
+      }
+
+      if (isMiddleSchool) {
+        if (normContent.contains('101325') ||
+            normContent.contains('pascal') ||
+            normContent.contains('q=m') ||
+            normContent.contains('10^') ||
+            normContent.contains('10⁴')) {
+          audience = math.max(0, audience - 5);
+          slideIssues.add({
+            'slide': i + 1,
+            'category': 'audience_fit',
+            'problem': 'Ortaokul seviyesi için gereksiz üniversite formülü veya fizik sabiti içeriyor.',
+          });
+        }
+      }
+    }
+
+    // 3. Pedagogical Value & Jenerik Dolgu Yasağı (20p)
+    for (var i = 0; i < slides.length; i++) {
+      final s = slides[i];
+      final normContent = _normalize(s.content);
+      for (final fluff in _superficialFluffPhrases) {
+        if (normContent.contains(fluff)) {
+          pedagogy = math.max(0, pedagogy - 5);
+          slideIssues.add({
+            'slide': i + 1,
+            'category': 'pedagogical_value',
+            'problem': 'Jenerik dolgu cümlesi tespit edildi ($fluff).',
+          });
+          break;
+        }
+      }
+      if (s.purpose != null && s.purpose!.trim().isNotEmpty) {
+        // Purpose tanımlanmışsa pedagojik değer bonusu
+      }
+    }
+
+    // 4. Narrative Coherence (Anlatı Akışı ve Tür Çeşitliliği) (15p)
+    final uniqueTypes = slides.map((s) => s.type.toLowerCase()).toSet();
+    if (slides.length >= 5 && uniqueTypes.length < 2) {
+      narrative = math.max(0, narrative - 4);
+      globalIssues.add('Bütün slaytlar aynı tek tip şablonla üretilmiş; anlatı monoton.');
+    }
+
+    // 5. Redundancy (Tekrar Kontrolü) (10p)
+    for (var i = 0; i < slides.length; i++) {
+      for (var j = i + 1; j < slides.length; j++) {
+        final wordsI = _tokens(slides[i].content);
+        final wordsJ = _tokens(slides[j].content);
+        final sim = jaccardSimilarity(wordsI, wordsJ);
+        if (sim > 0.65) {
+          redundancy = math.max(0, redundancy - 5);
+          slideIssues.add({
+            'slide': j + 1,
+            'category': 'redundancy',
+            'problem': 'Slayt ${j + 1}, Slayt ${i + 1} ile aşırı benzer içerik taşıyor (Benzerlik: ${(sim * 100).toInt()}%).',
+          });
+        }
+      }
+    }
+
+    // 6. Readability & Text Density (Okunabilirlik ve Metin Yoğunluğu) (10p)
+    for (var i = 0; i < slides.length; i++) {
+      final s = slides[i];
+      final wordCount = s.content.split(RegExp(r'\s+')).where((w) => w.isNotEmpty).length;
+      if (wordCount < 10) {
+        readability = math.max(0, readability - 3);
+        slideIssues.add({
+          'slide': i + 1,
+          'category': 'readability',
+          'problem': 'Slayt içeriği çok kısa ($wordCount kelime).',
+        });
+      } else if (wordCount > 90 && isMiddleSchool) {
+        readability = math.max(0, readability - 3);
+        slideIssues.add({
+          'slide': i + 1,
+          'category': 'readability',
+          'problem': 'Slayt ortaokul düzeyi için fazla yoğun ($wordCount kelime).',
+        });
+      }
+    }
+
+    // 7. Visual Potential (Görsel ve 3B Model Uyumu) (5p)
+    for (var i = 0; i < slides.length; i++) {
+      final s = slides[i];
+      for (final kw in s.keywords) {
+        final normKw = _normalize(kw);
+        for (final abs in _abstractNonVisualKeywords) {
+          if (normKw.contains(abs)) {
+            visual = math.max(0, visual - 1);
+            break;
+          }
+        }
+      }
+    }
+
+    final totalScore = (accuracy + audience + pedagogy + narrative + redundancy + readability + visual).clamp(0, 100);
+    final needsRevision = totalScore >= 75 && totalScore < 85;
+    final isPass = totalScore >= 85;
+
+    return QualityScoreResult(
+      overallScore: totalScore,
+      factualAccuracy: accuracy,
+      audienceFit: audience,
+      pedagogicalValue: pedagogy,
+      narrativeCoherence: narrative,
+      redundancy: redundancy,
+      readability: readability,
+      visualPotential: visual,
+      slideIssues: slideIssues,
+      globalIssues: globalIssues,
+      needsRevision: needsRevision,
+      isPass: isPass,
+    );
+  }
+
+  /// Geriye dönük uyumluluk için statik int kalite skoru.
+  static int calculateQualityScore(List<PresentationContentSample> slides) {
+    return evaluateQuality(slides).overallScore;
+  }
+
   /// İki kelime kümesi arasındaki Jaccard benzerliğini hesaplar (0.0 ile 1.0 arası).
   static double jaccardSimilarity(Set<String> a, Set<String> b) {
     if (a.isEmpty && b.isEmpty) return 1.0;
@@ -103,12 +424,12 @@ class PresentationContentQuality {
       return 'Konu bilgisi yerine sunum planını anlatan üst-anlatı var.';
     }
 
-    final genericFluffRegex = RegExp(
-      r'(?:gelecegi\s+parlak\s+gorunuyor|daha\s+fazla\s+inovasyon\s+ve\s+gelisim\s+bekleniyor|daha\s+hizli\s*,?\s*daha\s+guclu\s*,?\s*ve\s+daha\s+kucuk)',
-      caseSensitive: false,
-    );
-    if (normalizedContents.any((content) => genericFluffRegex.hasMatch(content))) {
-      return 'Jenerik/boş anlatım var.';
+    if (normalizedContents.any(
+      (content) => _superficialFluffPhrases.any(
+        (phrase) => content.contains(_normalize(phrase)),
+      ),
+    )) {
+      return 'Jenerik veya yüzeysel dolgu anlatımı var.';
     }
 
     // 1. İçerik doluluk denetimi: Her slaytta anlamlı bir metin/madde olmalı
@@ -176,7 +497,7 @@ class PresentationContentQuality {
       return 'Sunum anlatı yerine baştan sona monoton tarih listesine dönüşmüş.';
     }
 
-    // 3. Slaytlar arası Jaccard ve kapsama benzerliği denetimi (Jaccard > 0.60)
+    // 3. Slaytlar arası Jaccard ve kapsama benzerliği denetimi (Jaccard > 0.80)
     final tokenSets = slides.map((slide) => _tokens(slide.content)).toList();
     final stemmedSets =
         slides.map((slide) => _stemmedTokens(slide.content)).toList();

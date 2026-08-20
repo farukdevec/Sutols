@@ -120,15 +120,11 @@ class GrokSlide {
 
   static String _normalizeContent(Object? rawContent) {
     if (rawContent is String) {
-      return rawContent.trim();
+      return PresentationContentQuality.normalizeContentBullets(rawContent);
     }
     if (rawContent is List) {
-      final lines = rawContent
-          .whereType<String>()
-          .map((line) => line.trim())
-          .where((line) => line.isNotEmpty)
-          .toList(growable: false);
-      return lines.join('\n');
+      final joined = rawContent.whereType<String>().join('\n');
+      return PresentationContentQuality.normalizeContentBullets(joined);
     }
     return '';
   }

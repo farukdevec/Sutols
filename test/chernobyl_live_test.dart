@@ -1,22 +1,11 @@
 import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:http/http.dart' as http;
-import 'package:sutol/services/ai_model_config.dart';
 import 'package:sutol/services/nvidia_presentation_service.dart';
 import 'package:sutol/services/presentation_deck_builder.dart';
 
 void main() {
   test('Live Real Generation Test: Çernobil Nükleer Faciası ve Sağlık Etkileri (10 Slides)', () async {
-    final client = http.Client();
-    final service = NvidiaPresentationService(
-      modelName: AiModelConfig.modelLlama33_70b,
-      customCandidateModels: [
-        AiModelConfig.modelLlama33_70b,
-        AiModelConfig.modelNemotronNano,
-        AiModelConfig.modelGptOss20b,
-      ],
-      client: client,
-    );
+    final service = NvidiaPresentationService();
 
     print('\n==================================================');
     print('CANLI ÇERNOBİL 10 SLAYT TESTİ BAŞLATILIYOR...');

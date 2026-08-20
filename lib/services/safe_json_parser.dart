@@ -201,11 +201,40 @@ class SafeJsonParser {
       return '- ${keyMessage.toString().trim()}';
     }
 
+    final headline = map['headline'] ?? map['ana_fikir'];
+    if (headline != null && headline.toString().trim().isNotEmpty) {
+      return '- **${headline.toString().trim()}**';
+    }
+
     return '';
   }
 
   static String _normalizeContentString(Object? rawContent) {
     if (rawContent is String) return rawContent;
+    if (rawContent is Map) {
+      final headline = rawContent['headline'] ?? rawContent['ana_fikir'] ?? '';
+      final supportingText = rawContent['supporting_text'] ?? rawContent['aciklama'] ?? '';
+      final rawKeyPoints = rawContent['key_points'] ?? rawContent['maddeler'];
+      final lines = <String>[];
+      final cleanHeadline = headline.toString().replaceAll('*', '').trim();
+      final cleanSupporting = supportingText.toString().replaceAll('*', '').trim();
+      if (cleanHeadline.isNotEmpty && cleanSupporting.isNotEmpty) {
+        lines.add('- **$cleanHeadline:** $cleanSupporting');
+      } else if (cleanHeadline.isNotEmpty) {
+        lines.add('- **$cleanHeadline**');
+      } else if (cleanSupporting.isNotEmpty) {
+        lines.add('- $cleanSupporting');
+      }
+      if (rawKeyPoints is List) {
+        for (final pt in rawKeyPoints) {
+          if (pt != null && pt.toString().trim().isNotEmpty) {
+            final cleanPt = pt.toString().trim();
+            lines.add(cleanPt.startsWith('-') ? cleanPt : '- $cleanPt');
+          }
+        }
+      }
+      if (lines.isNotEmpty) return lines.join('\n');
+    }
     if (rawContent is List) {
       return rawContent.whereType<String>().join('\n');
     }

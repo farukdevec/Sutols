@@ -36,6 +36,8 @@ class _SutolHomePageState extends State<SutolHomePage> {
   bool _isGenerating = false;
   bool _highlightLogin = false;
   Timer? _highlightTimer;
+  Timer? _generationTimer;
+  double _generationElapsedSeconds = 0.0;
   int _slideCount = 5;
   String _userTier = 'free';
   String _loadingStepTitle = '';
@@ -96,6 +98,7 @@ class _SutolHomePageState extends State<SutolHomePage> {
   @override
   void dispose() {
     _highlightTimer?.cancel();
+    _generationTimer?.cancel();
     _authSub.cancel();
     _titleController.dispose();
     _promptController.dispose();
@@ -260,25 +263,43 @@ class _SutolHomePageState extends State<SutolHomePage> {
       return;
     }
 
+    _generationTimer?.cancel();
+    final genStart = DateTime.now();
+    _generationTimer = Timer.periodic(const Duration(milliseconds: 100), (t) {
+      if (!mounted || !_isGenerating) {
+        t.cancel();
+        return;
+      }
+      setState(() {
+        _generationElapsedSeconds =
+            DateTime.now().difference(genStart).inMilliseconds / 1000.0;
+      });
+    });
+
     setState(() {
       _isGenerating = true;
+      _generationElapsedSeconds = 0.0;
       _loadingStepTitle = 'Sunum Oluşturuluyor...';
       _loadingStepDescription =
           'Yapay zeka konunuzu analiz edip slaytları hazırlıyor.';
     });
 
     try {
-      final userId = FirebaseAuth.instance.currentUser?.uid;
-      if (userId == null) {
-        throw Exception('Lütfen önce giriş yapın.');
-      }
-
       final presentationService = PresentationService();
       final result = await presentationService.createPresentation(
         userId: userId,
         topic: topic,
         slideCount: _slideCount,
+        onProgress: (stepTitle, stepDescription) {
+          if (!mounted) return;
+          setState(() {
+            _loadingStepTitle = stepTitle;
+            _loadingStepDescription = stepDescription;
+          });
+        },
       );
+
+      _generationTimer?.cancel();
 
       if (!mounted) return;
       setState(() {
@@ -295,6 +316,7 @@ class _SutolHomePageState extends State<SutolHomePage> {
       );
       _fetchRecentPresentations();
     } catch (e, stackTrace) {
+      _generationTimer?.cancel();
       // ignore: avoid_print
       print('SUNUM HATASI: $e');
       // ignore: avoid_print
@@ -407,6 +429,7 @@ class _SutolHomePageState extends State<SutolHomePage> {
                               ? _LoadingState(
                                   title: _loadingStepTitle,
                                   description: _loadingStepDescription,
+                                  elapsedSeconds: _generationElapsedSeconds,
                                 )
                               : PresentationCreationCard(
                                   key: const ValueKey<String>(
@@ -883,10 +906,12 @@ class _LoadingState extends StatelessWidget {
   const _LoadingState({
     required this.title,
     required this.description,
+    this.elapsedSeconds = 0.0,
   });
 
   final String title;
   final String description;
+  final double elapsedSeconds;
 
   @override
   Widget build(BuildContext context) {
@@ -904,7 +929,34 @@ class _LoadingState extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           const LoopingLoadingVideo(size: 120),
-          const SizedBox(height: AppSpacing.s32),
+          const SizedBox(height: AppSpacing.s16),
+          if (elapsedSeconds > 0) ...[
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+              decoration: BoxDecoration(
+                color: colors.primary.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(AppRadius.full),
+                border: Border.all(color: colors.primary.withValues(alpha: 0.25)),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.timer_outlined, size: 14, color: colors.primary),
+                  const SizedBox(width: 6),
+                  Text(
+                    '${elapsedSeconds.toStringAsFixed(1)}s',
+                    style: AppTypography.labelSmall.copyWith(
+                      color: colors.primary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: AppSpacing.s16),
+          ] else ...[
+            const SizedBox(height: AppSpacing.s16),
+          ],
           AnimatedSwitcher(
             duration: const Duration(milliseconds: 300),
             child: Text(

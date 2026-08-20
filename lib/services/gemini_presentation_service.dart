@@ -99,7 +99,7 @@ class GeminiSlide {
     return GeminiSlide(
       title: PresentationContentQuality.sanitizeTitle(rawTitle),
       subtitle: subtitle != null && subtitle.trim().isNotEmpty ? subtitle.trim() : null,
-      content: contentStr,
+      content: PresentationContentQuality.normalizeContentBullets(contentStr),
       keywords: keywordsList,
       type: rawType.toString().toLowerCase().trim(),
       purpose: purpose != null && purpose.trim().isNotEmpty ? purpose.trim() : null,

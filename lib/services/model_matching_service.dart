@@ -74,11 +74,11 @@ class ModelMatchingService {
     }
 
     List<ModelCatalogEntry> onlineModels = const <ModelCatalogEntry>[];
-    if (FirebaseAuth.instance.currentUser != null) {
-      try {
+    try {
+      if (FirebaseAuth.instance.currentUser != null) {
         onlineModels = await ModelRepository.instance.getModels();
-      } catch (_) {}
-    }
+      }
+    } catch (_) {}
 
     final allModels = <ModelCatalogEntry>[
       ...onlineModels,
