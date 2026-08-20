@@ -1,3 +1,5 @@
+import 'package:firebase_auth/firebase_auth.dart';
+
 import '../models/slide_model.dart';
 import 'model_repository.dart';
 import 'remote_model_sources.dart';
@@ -29,14 +31,21 @@ Future<void> hydratePresentationModelSources(
     remoteEntries.add(entry);
   }
 
+  String? idToken;
+  try {
+    idToken = await FirebaseAuth.instance.currentUser?.getIdToken();
+  } catch (_) {}
+
   // Her modelin yetkilendirmesi birbirinden bağımsızdır. Bunları sırayla
   // beklemek, model sayısı arttıkça üretim süresini doğrusal büyütüyordu.
   final signedSources = await _mapConcurrentOrdered(
     remoteEntries,
     (entry) async {
       try {
-        final signedUrl =
-            await ModelAssetService.generateSignedUrl(entry.value);
+        final signedUrl = await ModelAssetService.generateSignedUrl(
+          entry.value,
+          idToken: idToken,
+        );
         if (signedUrl != null && signedUrl.trim().isNotEmpty) {
           return MapEntry(entry.key, signedUrl.trim());
         }
@@ -52,10 +61,14 @@ Future<void> hydratePresentationModelSources(
   // Fallback for missing model IDs not found in catalog or catalog asset paths
   for (final id in missingIds) {
     if (!resolvedSources.containsKey(id)) {
-      final fallbackSource = RemoteModelSources.sourceFor(id) ?? id;
-      if (!fallbackSource.startsWith('assets/') && !fallbackSource.startsWith('packages/')) {
+      final fallbackSource = RemoteModelSources.sourceForRefresh(id) ?? id;
+      if (!fallbackSource.startsWith('assets/') &&
+          !fallbackSource.startsWith('packages/')) {
         try {
-          final signedUrl = await ModelAssetService.generateSignedUrl(fallbackSource);
+          final signedUrl = await ModelAssetService.generateSignedUrl(
+            fallbackSource,
+            idToken: idToken,
+          );
           if (signedUrl != null && signedUrl.trim().isNotEmpty) {
             resolvedSources[id] = signedUrl.trim();
           }

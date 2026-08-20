@@ -50,6 +50,16 @@ bool _isUploadedImageBlock(PresentationComponentBlock block) {
           RemoteImageSources.sourceFor(block.modelAssetId!) != null);
 }
 
+bool _isRenderable3DModelBlock(PresentationComponentBlock block) {
+  final modelId = block.modelAssetId;
+  return modelId != null && RemoteModelSources.hasSignedSource(modelId);
+}
+
+bool _isVisuallyBlankPage(PresentationPage page) {
+  return page.componentBlocks.isEmpty &&
+      page.textBlocks.every((block) => block.text.trim().isEmpty);
+}
+
 const Color _studioHeaderBrandStart = Color(0xFF0A7E82);
 const Color _studioHeaderBrandEnd = Color(0xFF006471);
 const Color _studioHeaderForeground = Color(0xFFF7FFFF);
@@ -154,6 +164,11 @@ class _HtmlPresentationEditorPageState
   bool _showMobileHint = true;
   Timer? _hintTimer;
 
+  /// Model links are short lived. A background/template change rebuilds the
+  /// HTML stage, so refresh expired links before the rebuilt iframe needs
+  /// them instead of letting the model fall back to its 2D catalog artwork.
+  bool _modelHydrationInProgress = false;
+
   /// Salt okunur (admin) mod: Firestore'dan yükleme durumu.
   bool _adminLoading = false;
   String? _adminLoadError;
@@ -219,6 +234,7 @@ class _HtmlPresentationEditorPageState
     widget.controller.addListener(_syncTabWithSelection);
     widget.controller.addListener(_onMobilePageChanged);
     widget.controller.addListener(_trackEdits);
+    widget.controller.addListener(_refreshModelSourcesIfNeeded);
     _lastMobilePageId = widget.controller.selectedPage.id;
     _textController = TextEditingController(
       text: widget.controller.selectedTextBlock?.text ?? '',
@@ -250,9 +266,26 @@ class _HtmlPresentationEditorPageState
   }
 
   Future<void> _hydrateModels() async {
-    await hydratePresentationModelSources(widget.controller.pages);
-    if (mounted) {
-      setState(() {});
+    if (_modelHydrationInProgress) return;
+    _modelHydrationInProgress = true;
+    try {
+      await hydratePresentationModelSources(widget.controller.pages);
+      if (mounted) {
+        setState(() {});
+      }
+    } finally {
+      _modelHydrationInProgress = false;
+    }
+  }
+
+  void _refreshModelSourcesIfNeeded() {
+    final needsRefresh = widget.controller.pages
+        .expand((page) => page.componentBlocks)
+        .map((block) => block.modelAssetId)
+        .whereType<String>()
+        .any((id) => !RemoteModelSources.hasSignedSource(id));
+    if (needsRefresh) {
+      unawaited(_hydrateModels());
     }
   }
 
@@ -300,6 +333,7 @@ class _HtmlPresentationEditorPageState
     widget.controller.removeListener(_syncTabWithSelection);
     widget.controller.removeListener(_onMobilePageChanged);
     widget.controller.removeListener(_trackEdits);
+    widget.controller.removeListener(_refreshModelSourcesIfNeeded);
     _textController.dispose();
     final presentationId = widget.presentationId;
     if (presentationId != null && !widget.adminReadOnly) {
@@ -423,7 +457,7 @@ class _HtmlPresentationEditorPageState
       selectionKey = 'component:${componentBlock.id}';
       targetTab = _isUploadedImageBlock(componentBlock)
           ? _HtmlToolTab.photo
-          : componentBlock.modelAssetId != null
+          : _isRenderable3DModelBlock(componentBlock)
               ? _HtmlToolTab.models3d
               : _HtmlToolTab.components;
     }
@@ -5027,11 +5061,23 @@ class _HtmlPageCard extends StatelessWidget {
                   child: DecoratedBox(
                     decoration: const BoxDecoration(color: Colors.white),
                     child: IgnorePointer(
-                      child: HtmlPageStage(
-                        key: ValueKey<String>('page-thumbnail-${page.id}'),
-                        page: page,
-                        renderMode: HtmlStageRenderMode.snapshot,
-                      ),
+                      child: _isVisuallyBlankPage(page)
+                          ? PresentationPageCanvas(
+                              key: ValueKey<String>(
+                                'blank-page-thumbnail-${page.id}',
+                              ),
+                              page: page,
+                              showHint: false,
+                              showEmptyState: false,
+                              showSelectionBorder: false,
+                            )
+                          : HtmlPageStage(
+                              key: ValueKey<String>(
+                                'page-thumbnail-${page.id}',
+                              ),
+                              page: page,
+                              renderMode: HtmlStageRenderMode.snapshot,
+                            ),
                     ),
                   ),
                 ),
@@ -8605,6 +8651,8 @@ class _HtmlStageCardState extends State<_HtmlStageCard>
       context,
       widget.controller.effectSettings,
     );
+    final isVisuallyBlank =
+        _isVisuallyBlankPage(widget.controller.selectedPage);
     final zoom = math.max(1.0, widget.canvasZoom);
 
     // Yakınlaşınca tuvali sabitleyen çağrıların sürükleme deltalarını
@@ -8665,35 +8713,62 @@ class _HtmlStageCardState extends State<_HtmlStageCard>
                   fit: StackFit.expand,
                   children: <Widget>[
                     IgnorePointer(
-                      child: HtmlPageStage(
-                        page: widget.controller.selectedPage,
-                        selectedTextBlockId:
-                            widget.controller.selectedTextBlockId,
-                        inlineEditingTextBlockId: _inlineEditingTextBlockId,
-                        selectedComponentBlockId:
-                            widget.controller.selectedComponentBlockId,
-                        renderMode: reduceMotion
-                            ? HtmlStageRenderMode.snapshot
-                            : HtmlStageRenderMode.preview,
-                      ),
+                      child: isVisuallyBlank
+                          ? PresentationPageCanvas(
+                              page: widget.controller.selectedPage,
+                              showHint: false,
+                              showEmptyState: false,
+                              showSelectionBorder: false,
+                              textOpacity: 0,
+                            )
+                          : HtmlPageStage(
+                              page: widget.controller.selectedPage,
+                              selectedTextBlockId:
+                                  widget.controller.selectedTextBlockId,
+                              inlineEditingTextBlockId:
+                                  _inlineEditingTextBlockId,
+                              selectedComponentBlockId:
+                                  widget.controller.selectedComponentBlockId,
+                              renderMode: reduceMotion
+                                  ? HtmlStageRenderMode.snapshot
+                                  : HtmlStageRenderMode.preview,
+                            ),
                     ),
-                  if (_transitionPreviewFrom != null &&
-                      _transitionPreviewTo != null &&
-                      _transitionPreviewKind != null)
-                    Positioned.fill(
-                      child: IgnorePointer(
-                        child: _EditorTransitionPreview(
-                          from: _transitionPreviewFrom!,
-                          to: _transitionPreviewTo!,
-                          kind: _transitionPreviewKind!,
-                          durationMs: widget
-                              .controller.effectSettings.transitionDurationMs,
+                    if (_transitionPreviewFrom != null &&
+                        _transitionPreviewTo != null &&
+                        _transitionPreviewKind != null)
+                      Positioned.fill(
+                        child: IgnorePointer(
+                          child: _EditorTransitionPreview(
+                            from: _transitionPreviewFrom!,
+                            to: _transitionPreviewTo!,
+                            kind: _transitionPreviewKind!,
+                            durationMs: widget
+                                .controller.effectSettings.transitionDurationMs,
+                          ),
                         ),
                       ),
-                    ),
-                  if (widget.readOnly)
-                    IgnorePointer(
-                      child: PresentationPageCanvas(
+                    if (widget.readOnly)
+                      IgnorePointer(
+                        child: PresentationPageCanvas(
+                          page: widget.controller.selectedPage,
+                          selectedTextBlockId:
+                              widget.controller.selectedTextBlockId,
+                          selectedTextBlockIds:
+                              widget.controller.selectedTextBlockIds,
+                          selectedComponentBlockId:
+                              widget.controller.selectedComponentBlockId,
+                          selectedComponentBlockIds:
+                              widget.controller.selectedComponentBlockIds,
+                          interactive: false,
+                          showHint: false,
+                          showSurface: false,
+                          showEmptyState: false,
+                          textOpacity: isVisuallyBlank ? 1 : 0,
+                        ),
+                      )
+                    else
+                      PresentationPageCanvas(
                         page: widget.controller.selectedPage,
                         selectedTextBlockId:
                             widget.controller.selectedTextBlockId,
@@ -8703,144 +8778,128 @@ class _HtmlStageCardState extends State<_HtmlStageCard>
                             widget.controller.selectedComponentBlockId,
                         selectedComponentBlockIds:
                             widget.controller.selectedComponentBlockIds,
-                        interactive: false,
-                        showHint: false,
+                        interactive: widget.interactive,
+                        showHint: widget.showHint,
                         showSurface: false,
                         showEmptyState: false,
-                        textOpacity: 0,
+                        textOpacity: isVisuallyBlank ? 1 : 0,
+                        onSelectTextBlock: widget.controller.selectTextBlock,
+                        onSelectComponentBlock:
+                            widget.controller.selectComponentBlock,
+                        onDragSelectedText: (delta, size) =>
+                            widget.controller.moveSelectedText(
+                          localDelta(delta),
+                          size,
+                        ),
+                        onInlineTextChanged:
+                            widget.controller.updateSelectedText,
+                        onInlineEditingChanged: _setInlineEditingTextBlock,
+                        onResizeSelectedText: (delta, size,
+                                {required renderedHeightFactor,
+                                required fromLeft,
+                                required fromTop,
+                                required fromRight,
+                                required fromBottom}) =>
+                            widget.controller.resizeSelectedTextByHandle(
+                          localDelta(delta),
+                          size,
+                          renderedHeightFactor: renderedHeightFactor,
+                          fromLeft: fromLeft,
+                          fromTop: fromTop,
+                          fromRight: fromRight,
+                          fromBottom: fromBottom,
+                        ),
+                        onResizeSelectedComponent: (delta, size,
+                                {required fromLeft,
+                                required fromTop,
+                                required fromRight,
+                                required fromBottom}) =>
+                            widget.controller.resizeSelectedComponentByHandle(
+                          localDelta(delta),
+                          size,
+                          fromLeft: fromLeft,
+                          fromTop: fromTop,
+                          fromRight: fromRight,
+                          fromBottom: fromBottom,
+                        ),
+                        onMarqueeSelectionChanged: ({
+                          required textBlockIds,
+                          required componentBlockIds,
+                        }) =>
+                            widget.controller.selectItems(
+                          textBlockIds: textBlockIds,
+                          componentBlockIds: componentBlockIds,
+                        ),
+                        onClearSelection: widget.controller.clearSelection,
+                        onSecondaryTapTextBlock: (itemId, globalPosition) {
+                          if (!widget.controller.selectedTextBlockIds
+                              .contains(itemId)) {
+                            widget.controller.selectTextBlock(itemId);
+                          }
+                          _showStageItemContextMenu(
+                            context,
+                            widget.controller,
+                            globalPosition,
+                          );
+                        },
+                        onSecondaryTapComponentBlock: (itemId, globalPosition) {
+                          if (!widget.controller.selectedComponentBlockIds
+                              .contains(itemId)) {
+                            widget.controller.selectComponentBlock(itemId);
+                          }
+                          _showStageItemContextMenu(
+                            context,
+                            widget.controller,
+                            globalPosition,
+                          );
+                        },
+                        onSecondaryTapCanvas: (globalPosition) {
+                          _showCanvasContextMenu(
+                            context,
+                            widget.controller,
+                            globalPosition,
+                          );
+                        },
+                        onToggleModelOrbit: (itemId) {
+                          if (widget.controller.selectedComponentBlockId !=
+                              itemId) {
+                            widget.controller.selectComponentBlock(itemId);
+                          }
+                          widget.controller.toggleSelectedModelOrbit();
+                        },
+                        onRotateModel: (itemId, delta) {
+                          if (widget.controller.selectedComponentBlockId !=
+                              itemId) {
+                            widget.controller.selectComponentBlock(itemId);
+                          }
+                          widget.controller
+                              .rotateSelectedModel(localDelta(delta));
+                        },
+                        onBeginModelOrbit: (itemId) {
+                          if (widget.controller.selectedComponentBlockId !=
+                              itemId) {
+                            widget.controller.selectComponentBlock(itemId);
+                          }
+                          widget.controller.beginSelectedModelOrbitGesture();
+                        },
+                        onEndModelOrbit:
+                            widget.controller.endSelectedModelOrbitGesture,
                       ),
-                    )
-                  else
-                    PresentationPageCanvas(
-                      page: widget.controller.selectedPage,
-                      selectedTextBlockId:
-                          widget.controller.selectedTextBlockId,
-                      selectedTextBlockIds:
-                          widget.controller.selectedTextBlockIds,
-                      selectedComponentBlockId:
-                          widget.controller.selectedComponentBlockId,
-                      selectedComponentBlockIds:
-                          widget.controller.selectedComponentBlockIds,
-                      interactive: widget.interactive,
-                      showHint: widget.showHint,
-                      showSurface: false,
-                      showEmptyState: false,
-                      textOpacity: 0,
-                      onSelectTextBlock: widget.controller.selectTextBlock,
-                      onSelectComponentBlock:
-                          widget.controller.selectComponentBlock,
-                      onDragSelectedText: (delta, size) =>
-                          widget.controller.moveSelectedText(
-                        localDelta(delta),
-                        size,
+                    if (!widget.readOnly)
+                      IgnorePointer(
+                        child: _StageAnimationOrderBadges(
+                          page: widget.controller.selectedPage,
+                          selectedTextIds:
+                              widget.controller.selectedTextBlockIds,
+                          selectedComponentIds:
+                              widget.controller.selectedComponentBlockIds,
+                        ),
                       ),
-                      onInlineTextChanged: widget.controller.updateSelectedText,
-                      onInlineEditingChanged: _setInlineEditingTextBlock,
-                      onResizeSelectedText: (delta, size,
-                              {required renderedHeightFactor,
-                              required fromLeft,
-                              required fromTop,
-                              required fromRight,
-                              required fromBottom}) =>
-                          widget.controller.resizeSelectedTextByHandle(
-                        localDelta(delta),
-                        size,
-                        renderedHeightFactor: renderedHeightFactor,
-                        fromLeft: fromLeft,
-                        fromTop: fromTop,
-                        fromRight: fromRight,
-                        fromBottom: fromBottom,
-                      ),
-                      onResizeSelectedComponent: (delta, size,
-                              {required fromLeft,
-                              required fromTop,
-                              required fromRight,
-                              required fromBottom}) =>
-                          widget.controller.resizeSelectedComponentByHandle(
-                        localDelta(delta),
-                        size,
-                        fromLeft: fromLeft,
-                        fromTop: fromTop,
-                        fromRight: fromRight,
-                        fromBottom: fromBottom,
-                      ),
-                      onMarqueeSelectionChanged: ({
-                        required textBlockIds,
-                        required componentBlockIds,
-                      }) =>
-                          widget.controller.selectItems(
-                        textBlockIds: textBlockIds,
-                        componentBlockIds: componentBlockIds,
-                      ),
-                      onClearSelection: widget.controller.clearSelection,
-                      onSecondaryTapTextBlock: (itemId, globalPosition) {
-                        if (!widget.controller.selectedTextBlockIds
-                            .contains(itemId)) {
-                          widget.controller.selectTextBlock(itemId);
-                        }
-                        _showStageItemContextMenu(
-                          context,
-                          widget.controller,
-                          globalPosition,
-                        );
-                      },
-                      onSecondaryTapComponentBlock: (itemId, globalPosition) {
-                        if (!widget.controller.selectedComponentBlockIds
-                            .contains(itemId)) {
-                          widget.controller.selectComponentBlock(itemId);
-                        }
-                        _showStageItemContextMenu(
-                          context,
-                          widget.controller,
-                          globalPosition,
-                        );
-                      },
-                      onSecondaryTapCanvas: (globalPosition) {
-                        _showCanvasContextMenu(
-                          context,
-                          widget.controller,
-                          globalPosition,
-                        );
-                      },
-                      onToggleModelOrbit: (itemId) {
-                        if (widget.controller.selectedComponentBlockId !=
-                            itemId) {
-                          widget.controller.selectComponentBlock(itemId);
-                        }
-                        widget.controller.toggleSelectedModelOrbit();
-                      },
-                      onRotateModel: (itemId, delta) {
-                        if (widget.controller.selectedComponentBlockId !=
-                            itemId) {
-                          widget.controller.selectComponentBlock(itemId);
-                        }
-                        widget.controller
-                            .rotateSelectedModel(localDelta(delta));
-                      },
-                      onBeginModelOrbit: (itemId) {
-                        if (widget.controller.selectedComponentBlockId !=
-                            itemId) {
-                          widget.controller.selectComponentBlock(itemId);
-                        }
-                        widget.controller.beginSelectedModelOrbitGesture();
-                      },
-                      onEndModelOrbit:
-                          widget.controller.endSelectedModelOrbitGesture,
-                    ),
-                  if (!widget.readOnly)
-                    IgnorePointer(
-                      child: _StageAnimationOrderBadges(
-                        page: widget.controller.selectedPage,
-                        selectedTextIds: widget.controller.selectedTextBlockIds,
-                        selectedComponentIds:
-                            widget.controller.selectedComponentBlockIds,
-                      ),
-                    ),
-                ],
+                  ],
+                ),
               ),
             ),
-          ),
-        );
+          );
           return Center(
             child: zoom > 1.0001 || pan != Offset.zero
                 ? Transform.translate(
@@ -8972,7 +9031,7 @@ class _SelectionContextBarSection extends StatelessWidget {
           contentKey = 'component:${componentBlock.id}';
           children = _isUploadedImageBlock(componentBlock)
               ? _imageChildren()
-              : componentBlock.modelAssetId != null
+              : _isRenderable3DModelBlock(componentBlock)
                   ? _modelChildren(context, componentBlock)
                   : _componentChildren();
         }
@@ -10571,7 +10630,10 @@ class _HtmlEntranceAnimationControls extends StatelessWidget {
         ? 'Seçili metin'
         : controller.selectedComponentBlock?.imageAssetId != null
             ? 'Seçili fotoğraf'
-            : controller.selectedComponentBlock?.modelAssetId != null
+            : controller.selectedComponentBlock != null &&
+                    _isRenderable3DModelBlock(
+                      controller.selectedComponentBlock!,
+                    )
                 ? 'Seçili 3D model'
                 : 'Seçili bileşen';
 
@@ -10813,7 +10875,7 @@ List<_AnimationPaneItem> _animationPaneItems(PresentationPage page) {
           id: block.id,
           name: block.imageAssetId != null
               ? 'Fotoğraf'
-              : block.modelAssetId != null
+              : _isRenderable3DModelBlock(block)
                   ? '3D model'
                   : 'Bileşen',
           animation: block.entranceAnimation,

@@ -5,6 +5,7 @@ import 'package:flutter/scheduler.dart';
 
 import '../../models/slide_model.dart';
 import '../../services/remote_image_sources.dart';
+import '../../services/remote_model_sources.dart';
 import '../../state/presentation_controller.dart';
 import '../design/design_system.dart';
 import '../design/sutol_widgets.dart';
@@ -37,6 +38,11 @@ bool _isCanvasImageBlock(PresentationComponentBlock block) {
   return block.imageAssetId != null ||
       (block.modelAssetId != null &&
           RemoteImageSources.sourceFor(block.modelAssetId!) != null);
+}
+
+bool _isRenderableCanvasModelBlock(PresentationComponentBlock block) {
+  final modelId = block.modelAssetId;
+  return modelId != null && RemoteModelSources.hasSignedSource(modelId);
 }
 
 typedef CanvasTextResizeChanged = void Function(
@@ -2250,7 +2256,7 @@ class _PresentationPageCanvasState extends State<PresentationPageCanvas> {
                     ? null
                     : () => widget.onToggleModelOrbit!(block.id),
                 onOrbitPanStart: widget.interactive &&
-                        block.modelAssetId != null &&
+                        _isRenderableCanvasModelBlock(block) &&
                         !_isCanvasImageBlock(block) &&
                         block.modelOrbitEnabled &&
                         widget.onRotateModel != null
@@ -2262,7 +2268,7 @@ class _PresentationPageCanvasState extends State<PresentationPageCanvas> {
                       }
                     : null,
                 onOrbitPanUpdate: widget.interactive &&
-                        block.modelAssetId != null &&
+                        _isRenderableCanvasModelBlock(block) &&
                         !_isCanvasImageBlock(block) &&
                         block.modelOrbitEnabled &&
                         widget.onRotateModel != null
@@ -2270,23 +2276,24 @@ class _PresentationPageCanvasState extends State<PresentationPageCanvas> {
                         widget.onRotateModel!(block.id, details.delta)
                     : null,
                 onOrbitPanEnd: widget.interactive &&
-                        block.modelAssetId != null &&
+                        _isRenderableCanvasModelBlock(block) &&
                         !_isCanvasImageBlock(block) &&
                         block.modelOrbitEnabled &&
                         widget.onRotateModel != null
                     ? (_) => widget.onEndModelOrbit?.call()
                     : null,
-                onPanUpdate: widget.interactive && widget.onDragSelectedText != null
-                    ? (details) {
-                        if (!selectedComponentIds.contains(block.id)) {
-                          widget.onSelectComponentBlock?.call(block.id);
-                        }
-                        widget.onDragSelectedText!(
-                          details.delta,
-                          canvasSize,
-                        );
-                      }
-                    : null,
+                onPanUpdate:
+                    widget.interactive && widget.onDragSelectedText != null
+                        ? (details) {
+                            if (!selectedComponentIds.contains(block.id)) {
+                              widget.onSelectComponentBlock?.call(block.id);
+                            }
+                            widget.onDragSelectedText!(
+                              details.delta,
+                              canvasSize,
+                            );
+                          }
+                        : null,
                 onResizeUpdate: widget.interactive &&
                         widget.onResizeSelectedComponent != null
                     ? (handle, details) {
@@ -2733,7 +2740,8 @@ class _PageComponentBlock extends StatelessWidget {
             height: height,
             child: MouseRegion(
               cursor: interactive
-                  ? (block.modelAssetId != null && block.modelOrbitEnabled
+                  ? (_isRenderableCanvasModelBlock(block) &&
+                          block.modelOrbitEnabled
                       ? SystemMouseCursors.grab
                       : isSelected
                           ? SystemMouseCursors.move
@@ -2779,7 +2787,7 @@ class _PageComponentBlock extends StatelessWidget {
                       borderRadius: BorderRadius.circular(isImage ? 6 : 16),
                       child: isImage
                           ? const SizedBox.expand()
-                          : block.modelAssetId == null
+                          : !_isRenderableCanvasModelBlock(block)
                               ? CustomPaint(
                                   painter: ComponentBlockPreviewPainter(
                                       kind: block.kind),
@@ -2813,7 +2821,7 @@ class _PageComponentBlock extends StatelessWidget {
             ),
           ),
           if (showHandles &&
-              block.modelAssetId != null &&
+              _isRenderableCanvasModelBlock(block) &&
               !isImage &&
               onToggleOrbit != null)
             Align(

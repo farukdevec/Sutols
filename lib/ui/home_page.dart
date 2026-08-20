@@ -28,6 +28,19 @@ class SutolHomePage extends StatefulWidget {
 }
 
 class _SutolHomePageState extends State<SutolHomePage> {
+  static const List<String> _displayThinkingSteps = <String>[
+    'Konuyu anlamlandırıyor...',
+    'Ana fikirleri belirliyor...',
+    'İlgili başlıkları araştırıyor...',
+    'Bilgileri önceliklendiriyor...',
+    'Anlatı akışını planlıyor...',
+    'İçeriği sayfalara ayırıyor...',
+    'Slaytların odağını netleştiriyor...',
+    'Görsel fikirleri değerlendiriyor...',
+    'Sunum düzenini şekillendiriyor...',
+    'İçeriği gözden geçiriyor...',
+  ];
+
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _promptController = TextEditingController();
   final FocusNode _titleFocusNode = FocusNode(debugLabel: 'presentation-title');
@@ -40,8 +53,6 @@ class _SutolHomePageState extends State<SutolHomePage> {
   double _generationElapsedSeconds = 0.0;
   int _slideCount = 5;
   String _userTier = 'free';
-  String _loadingStepTitle = '';
-  String _loadingStepDescription = '';
 
   User? _user;
   late final StreamSubscription<User?> _authSub;
@@ -279,9 +290,6 @@ class _SutolHomePageState extends State<SutolHomePage> {
     setState(() {
       _isGenerating = true;
       _generationElapsedSeconds = 0.0;
-      _loadingStepTitle = 'Sunum Oluşturuluyor...';
-      _loadingStepDescription =
-          'Yapay zeka konunuzu analiz edip slaytları hazırlıyor.';
     });
 
     try {
@@ -290,13 +298,6 @@ class _SutolHomePageState extends State<SutolHomePage> {
         userId: userId,
         topic: topic,
         slideCount: _slideCount,
-        onProgress: (stepTitle, stepDescription) {
-          if (!mounted) return;
-          setState(() {
-            _loadingStepTitle = stepTitle;
-            _loadingStepDescription = stepDescription;
-          });
-        },
       );
 
       _generationTimer?.cancel();
@@ -421,14 +422,18 @@ class _SutolHomePageState extends State<SutolHomePage> {
                     }
 
                     Widget inputCard() {
+                      final thinkingStep = _displayThinkingSteps[
+                          (_generationElapsedSeconds / 2.2).floor() %
+                              _displayThinkingSteps.length];
                       return ConstrainedBox(
                         constraints: const BoxConstraints(maxWidth: 700),
                         child: AnimatedSwitcher(
                           duration: AppMotion.standard,
                           child: _isGenerating
                               ? _LoadingState(
-                                  title: _loadingStepTitle,
-                                  description: _loadingStepDescription,
+                                  title: thinkingStep,
+                                  description:
+                                      'Sunumunuz adım adım şekilleniyor.',
                                   elapsedSeconds: _generationElapsedSeconds,
                                 )
                               : PresentationCreationCard(
@@ -936,7 +941,8 @@ class _LoadingState extends StatelessWidget {
               decoration: BoxDecoration(
                 color: colors.primary.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(AppRadius.full),
-                border: Border.all(color: colors.primary.withValues(alpha: 0.25)),
+                border:
+                    Border.all(color: colors.primary.withValues(alpha: 0.25)),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,

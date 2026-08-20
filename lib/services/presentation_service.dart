@@ -14,6 +14,7 @@ import 'layout_service.dart';
 import 'model_matching_service.dart';
 import 'presentation_deck_builder.dart';
 import 'presentation_project_codec.dart';
+import 'presentation_retention_service.dart';
 import 'usage_service.dart';
 import 'firestore_rest_helper.dart';
 
@@ -153,7 +154,8 @@ class PresentationService {
           AiRouterLogger.logTotal(
             latency: totalStopwatch.elapsed,
             success: false,
-            details: 'NVIDIA: $nvidiaError Grok: $grokError Gemini: $geminiError',
+            details:
+                'NVIDIA: $nvidiaError Grok: $grokError Gemini: $geminiError',
           );
           throw Exception(
             'Sunum yapay zekâ servisleri yanıt veremedi. '
@@ -383,6 +385,19 @@ class PresentationService {
         throw Exception(
             'Slaytlar kaydedilemedi (HTTP ${slideResponse.statusCode}): ${slideResponse.body}');
       }
+    }
+
+    // Plan kotasının üzerindeki en eski sunumları alt koleksiyonlarıyla
+    // birlikte temizle. Temizlik hatası yeni oluşturulan sunumu geçersiz
+    // kılmamalı; bir sonraki üretimde yeniden denenecek.
+    try {
+      await PresentationRetentionService.enforceForUser(
+        userId: userId,
+        tier: tier,
+      );
+    } catch (error) {
+      // ignore: avoid_print
+      print('SUNUM SAKLAMA SINIRI UYGULANAMADI: $error');
     }
     firestoreStopwatch.stop();
     AiRouterLogger.logStep(

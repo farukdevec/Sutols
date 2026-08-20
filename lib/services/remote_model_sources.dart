@@ -14,8 +14,17 @@ class RemoteModelSources {
   static final Map<String, String> _sources = <String, String>{};
   static final ValueNotifier<int> revision = ValueNotifier<int>(0);
 
-  static Map<String, String> get all =>
-      Map<String, String>.unmodifiable(_sources);
+  static Map<String, String> get all => Map<String, String>.unmodifiable(
+        <String, String>{
+          for (final entry in _sources.entries)
+            if (_isRenderableSource(entry.value)) entry.key: entry.value,
+        },
+      );
+
+  static bool _isRenderableSource(String source) =>
+      source.startsWith('assets/') ||
+      source.startsWith('packages/') ||
+      ModelAssetService.isSignedUrlValid(source);
 
   static void registerAll(Map<String, String> sources) {
     var changed = false;
@@ -37,15 +46,7 @@ class RemoteModelSources {
     final key = modelId.trim();
     if (key.isEmpty) return false;
     final registered = _sources[key];
-    if (registered != null && registered.isNotEmpty) {
-      if (registered.startsWith('assets/') ||
-          registered.startsWith('packages/')) {
-        return true;
-      }
-      if (ModelAssetService.isSignedUrlValid(registered)) {
-        return true;
-      }
-    }
+    if (registered != null && _isRenderableSource(registered)) return true;
     return findPresentation3DModelAsset(key) != null;
   }
 
@@ -53,7 +54,9 @@ class RemoteModelSources {
     final key = modelId.trim();
     if (key.isEmpty) return null;
     final registered = _sources[key];
-    if (registered != null && registered.isNotEmpty) return registered;
+    if (registered != null && _isRenderableSource(registered)) {
+      return registered;
+    }
 
     final localAsset = findPresentation3DModelAsset(key);
     if (localAsset != null && localAsset.assetPath.isNotEmpty) {
@@ -62,5 +65,13 @@ class RemoteModelSources {
     }
 
     return null;
+  }
+
+  /// Yetkilendirme yenilenirken daha önce kaydedilmiş ham veya süresi dolmuş
+  /// adresin nesne anahtarını kurtarmak için kullanılır. Render katmanına bu
+  /// değer doğrudan verilmez.
+  static String? sourceForRefresh(String modelId) {
+    final source = _sources[modelId.trim()];
+    return source == null || source.isEmpty ? null : source;
   }
 }

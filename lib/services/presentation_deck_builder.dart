@@ -6,8 +6,6 @@ import 'model_matching_service.dart';
 import 'presentation_auto_builder.dart';
 import 'presentation_keyword_catalog.dart';
 
-import 'remote_model_sources.dart';
-import 'model_asset_service.dart';
 import 'presentation_model_source_resolver.dart';
 
 /// Gemini / NVIDIA / Grok + model eşleştirme çıktısından gerçek bir sunum destesi (deck)
@@ -20,18 +18,6 @@ class PresentationDeckBuilder {
     required String topic,
     required List<DeckSlide> slides,
   }) {
-    final sources = <String, String>{};
-    for (final slide in slides) {
-      for (final model in slide.models.take(1)) {
-        if (model.id.isNotEmpty && model.modelUrl.trim().isNotEmpty) {
-          sources[model.id] = ModelAssetService.modelUrlFromField(model.modelUrl);
-        }
-      }
-    }
-    if (sources.isNotEmpty) {
-      RemoteModelSources.registerAll(sources);
-    }
-
     var pageCounter = 1;
     var textCounter = 1;
     var componentCounter = 1;
@@ -41,7 +27,8 @@ class PresentationDeckBuilder {
       final title = slide.title.trim();
       final subtitle = slide.subtitle?.trim() ?? '';
       final content = slide.content.trim();
-      final slideType = (slide.type.isEmpty ? 'cards' : slide.type).toLowerCase().trim();
+      final slideType =
+          (slide.type.isEmpty ? 'cards' : slide.type).toLowerCase().trim();
 
       if (title.isEmpty && content.isEmpty && subtitle.isEmpty) {
         continue;
@@ -112,7 +99,9 @@ class PresentationDeckBuilder {
             );
           }
           if (content.isNotEmpty) {
-            final cleanedContent = content.replaceAll(RegExp(r'^[-\*•]\s*', multiLine: true), '').trim();
+            final cleanedContent = content
+                .replaceAll(RegExp(r'^[-\*•]\s*', multiLine: true), '')
+                .trim();
             final top = subtitle.isNotEmpty ? 0.56 : 0.42;
             textBlocks.add(
               PresentationTextBlock(
@@ -148,11 +137,15 @@ class PresentationDeckBuilder {
             );
           }
           if (content.isNotEmpty) {
-            final cleanedQuote = content.replaceAll(RegExp(r'^[-\*•]\s*', multiLine: true), '').trim();
+            final cleanedQuote = content
+                .replaceAll(RegExp(r'^[-\*•]\s*', multiLine: true), '')
+                .trim();
             textBlocks.add(
               PresentationTextBlock(
                 id: 'text-${textCounter++}',
-                text: cleanedQuote.startsWith('"') ? cleanedQuote : '"$cleanedQuote"',
+                text: cleanedQuote.startsWith('"')
+                    ? cleanedQuote
+                    : '"$cleanedQuote"',
                 position: const Offset(0.08, 0.32),
                 fontSize: 28,
                 textItalic: true,
@@ -385,7 +378,8 @@ class PresentationDeckBuilder {
     return pages;
   }
 
-  static ({String left, String right})? _splitComparisonContent(String content) {
+  static ({String left, String right})? _splitComparisonContent(
+      String content) {
     final lines = content
         .split('\n')
         .map((l) => l.trim())

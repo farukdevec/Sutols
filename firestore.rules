@@ -60,7 +60,8 @@ service cloud.firestore {
                     && (isAdmin() || (
                          parentWritable(request.auth.uid, presentationId)
                          && request.resource.data.updatedByUid == request.auth.uid));
-      allow delete: if false;
+      allow delete: if request.auth != null && isNotSuspended(request.auth.uid)
+                    && (isAdmin() || parentWritable(request.auth.uid, presentationId));
     }
 
 

@@ -32,7 +32,7 @@ class PresentationProjectCodec {
         .toSet();
     final modelSourcesById = <String, String>{
       for (final modelId in usedModelIds)
-        if (RemoteModelSources.sourceFor(modelId) case final source?)
+        if (RemoteModelSources.sourceForRefresh(modelId) case final source?)
           modelId: source,
     };
     final data = <String, Object?>{

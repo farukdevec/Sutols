@@ -31,7 +31,12 @@ void main() {
     expect(source, contains('"modelSourcesById"'));
     expect(source, contains(modelUrl));
     PresentationProjectCodec.decodeProject(source);
-    expect(RemoteModelSources.sourceFor(modelId), modelUrl);
+    expect(RemoteModelSources.sourceForRefresh(modelId), modelUrl);
+    expect(
+      RemoteModelSources.sourceFor(modelId),
+      isNull,
+      reason: 'İmzasız uzak adres doğrudan 3B renderer kaynağı olmamalı.',
+    );
   });
 
   test('round trips presentation project json', () {
