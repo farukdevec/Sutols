@@ -149,6 +149,52 @@ class HtmlBackgroundPreview extends StatefulWidget {
   State<HtmlBackgroundPreview> createState() => _HtmlBackgroundPreviewState();
 }
 
+class HtmlComponentPreview extends StatefulWidget {
+  const HtmlComponentPreview({
+    super.key,
+    required this.kind,
+  });
+
+  final PresentationComponentKind kind;
+
+  @override
+  State<HtmlComponentPreview> createState() => _HtmlComponentPreviewState();
+}
+
+class _HtmlComponentPreviewState extends State<HtmlComponentPreview> {
+  html.IFrameElement? _iframe;
+
+  void _applyDocument() {
+    _iframe?.srcdoc = buildHtmlComponentPreviewDocument(widget.kind);
+  }
+
+  @override
+  void didUpdateWidget(covariant HtmlComponentPreview oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.kind != widget.kind) _applyDocument();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return HtmlElementView.fromTagName(
+      tagName: 'iframe',
+      onElementCreated: (element) {
+        final iframe = element as html.IFrameElement
+          ..style.width = '100%'
+          ..style.height = '100%'
+          ..style.border = '0'
+          ..style.pointerEvents = 'none'
+          ..style.backgroundColor = 'transparent'
+          ..setAttribute('loading', 'lazy')
+          ..setAttribute('scrolling', 'no')
+          ..setAttribute('sandbox', 'allow-scripts');
+        _iframe = iframe;
+        _applyDocument();
+      },
+    );
+  }
+}
+
 class _HtmlBackgroundPreviewState extends State<HtmlBackgroundPreview> {
   static int _viewCounter = 0;
 
@@ -252,8 +298,7 @@ class _HtmlPageStageState extends State<HtmlPageStage> {
       ..style.overflow = 'hidden'
       ..style.backgroundColor = '#FFFFFF';
     _applyVisualStyle();
-    _iframeElement = _createIframe()
-      ..style.opacity = '0';
+    _iframeElement = _createIframe()..style.opacity = '0';
     _hostElement.children.add(_iframeElement);
     if (widget.onTap != null) {
       final overlay = html.DivElement()

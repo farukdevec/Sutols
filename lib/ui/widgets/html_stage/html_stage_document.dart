@@ -63,6 +63,34 @@ String get sutolHtmlStageBackgroundScript => _backgroundScript;
 String get sutolHtmlStageComponentScript => _stageComponentScript;
 String get sutolHtmlStagePatchScript => _stagePatchScript;
 
+/// Bileşen kütüphanesindeki küçük kartlar için hafif ve etkileşimsiz belge.
+/// Tam sahne CSS'i ve arka plan iframe'i özellikle eklenmez.
+String buildHtmlComponentPreviewDocument(PresentationComponentKind kind) {
+  final component = _normalizeCatalogComponentScripts(
+    presentationComponentHtml(kind),
+  );
+  return '''<!doctype html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:transparent}
+body{pointer-events:none;user-select:none}
+.sutol-component-preview{position:relative;width:100%;height:100%;overflow:hidden;container-type:inline-size}
+.sutol-component-preview>*{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;max-width:none!important;max-height:none!important;margin:0!important}
+*,*::before,*::after{animation:none!important;transition:none!important}
+</style>
+<script>
+(function(){
+  let frames=0;
+  const nativeRaf=window.requestAnimationFrame.bind(window);
+  window.requestAnimationFrame=function(callback){
+    if(frames++>=4)return 0;
+    return nativeRaf(callback);
+  };
+  window.setInterval=function(){return 0;};
+})();
+</script></head><body><div class="sutol-component-preview">$component</div></body></html>''';
+}
+
 const String _transparentComponentOverrides = '''
 /* Template themes may style generic component placeholders as cards. Real
    catalog/media components must keep only their own artwork. */
@@ -225,13 +253,25 @@ if(document.readyState==='complete'||document.readyState==='interactive'){
         ),
       PresentationTransitionKind.zoom => ('sutolOutZoom', 'sutolInZoom'),
       PresentationTransitionKind.convex => ('sutolOutConvex', 'sutolInConvex'),
-      PresentationTransitionKind.concave => ('sutolOutConcave', 'sutolInConcave'),
+      PresentationTransitionKind.concave => (
+          'sutolOutConcave',
+          'sutolInConcave'
+        ),
       PresentationTransitionKind.morph => ('sutolOutMorph', 'sutolInMorph'),
-      PresentationTransitionKind.parallax => ('sutolOutParallax', 'sutolInParallax'),
-      PresentationTransitionKind.elastic => ('sutolOutElastic', 'sutolInElastic'),
+      PresentationTransitionKind.parallax => (
+          'sutolOutParallax',
+          'sutolInParallax'
+        ),
+      PresentationTransitionKind.elastic => (
+          'sutolOutElastic',
+          'sutolInElastic'
+        ),
       PresentationTransitionKind.glitch => ('sutolOutGlitch', 'sutolInGlitch'),
       PresentationTransitionKind.prism => ('sutolOutMorph', 'sutolInMorph'),
-      PresentationTransitionKind.radialWipe => ('sutolStay', 'sutolInRadialWipe'),
+      PresentationTransitionKind.radialWipe => (
+          'sutolStay',
+          'sutolInRadialWipe'
+        ),
       PresentationTransitionKind.rotateZoom => (
           'sutolOutRotateZoom',
           'sutolInRotateZoom'
@@ -413,12 +453,16 @@ String buildHtmlStageMarkup({
     final has3D = resolvableSource != null;
 
     if (is3D) {
-      final sourceHasToken = resolvableSource != null && ModelAssetService.isSignedUrlValid(resolvableSource);
-      final assetKey = ModelAssetService.extractKey(resolvableSource ?? modelId);
-      final uri = resolvableSource != null ? Uri.tryParse(resolvableSource) : null;
+      final sourceHasToken = resolvableSource != null &&
+          ModelAssetService.isSignedUrlValid(resolvableSource);
+      final assetKey =
+          ModelAssetService.extractKey(resolvableSource ?? modelId);
+      final uri =
+          resolvableSource != null ? Uri.tryParse(resolvableSource) : null;
       final host = uri?.host ?? '';
       final expires = uri?.queryParameters['expires'] ?? '';
-      print('[MODEL_DEBUG] modelId=$modelId assetKey=$assetKey authSuccess=${resolvableSource != null} signed=$sourceHasToken signedUrlExists=${resolvableSource != null} signedUrlHost=$host signedUrlExpiration=$expires rendererSrcHost=$host rendererSrcIsSigned=$sourceHasToken');
+      print(
+          '[MODEL_DEBUG] modelId=$modelId assetKey=$assetKey authSuccess=${resolvableSource != null} signed=$sourceHasToken signedUrlExists=${resolvableSource != null} signedUrlHost=$host signedUrlExpiration=$expires rendererSrcHost=$host rendererSrcIsSigned=$sourceHasToken');
       print('[MODEL_RENDER] id=$modelId signed=$sourceHasToken');
     }
 

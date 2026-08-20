@@ -7635,10 +7635,14 @@ class _ComponentLibraryCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(color: context.sutolColors.outlineVariant),
                 ),
-                child: Icon(
-                  presentationComponentIcon(definition.kind),
-                  color: context._htmlAccent,
-                  size: 22,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(11),
+                  child: HtmlComponentPreview(
+                    key: ValueKey<String>(
+                      'component-preview-${definition.id}',
+                    ),
+                    kind: definition.kind,
+                  ),
                 ),
               ),
               const SizedBox(width: 10),

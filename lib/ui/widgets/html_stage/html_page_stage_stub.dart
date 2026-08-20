@@ -60,6 +60,32 @@ class HtmlBackgroundPreview extends StatelessWidget {
   }
 }
 
+class HtmlComponentPreview extends StatelessWidget {
+  const HtmlComponentPreview({
+    super.key,
+    required this.kind,
+  });
+
+  final PresentationComponentKind kind;
+
+  @override
+  Widget build(BuildContext context) => DecoratedBox(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: presentationComponentPreviewColors(kind),
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+        ),
+        child: Center(
+          child: Icon(
+            presentationComponentIcon(kind),
+            size: 20,
+          ),
+        ),
+      );
+}
+
 class HtmlPageStage extends StatelessWidget {
   const HtmlPageStage({
     super.key,
