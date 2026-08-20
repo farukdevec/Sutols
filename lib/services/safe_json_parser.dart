@@ -256,7 +256,9 @@ class SafeJsonParser {
         final list = decoded[key] as List;
         final validList = _filterValidSlideMaps(list);
         if (validList.isNotEmpty) {
-          return {'slides': validList};
+          final result = Map<String, dynamic>.from(decoded);
+          result['slides'] = validList;
+          return result;
         }
       }
     }
@@ -266,7 +268,9 @@ class SafeJsonParser {
         final list = entry.value as List;
         final validList = _filterValidSlideMaps(list);
         if (validList.isNotEmpty) {
-          return {'slides': validList};
+          final result = Map<String, dynamic>.from(decoded);
+          result['slides'] = validList;
+          return result;
         }
       }
     }

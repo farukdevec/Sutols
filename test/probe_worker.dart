@@ -3,9 +3,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 
 void main() {
-  test('Probe sutols.online directly', () async {
-    final client = http.Client();
-    final url = Uri.parse('https://sutols.online/');
+  test(
+    'Probe sutols.online directly',
+    () async {
+      final client = http.Client();
+      final url = Uri.parse('https://sutols.online/');
 
     final payload = {
       'model': 'meta/llama-3.3-70b-instruct',
@@ -33,5 +35,5 @@ void main() {
     print('Latency: ${stopwatch.elapsedMilliseconds}ms');
     print('Headers: ${response.headers}');
     print('Body:\n${response.body}');
-  });
+  }, timeout: const Timeout(Duration(minutes: 2)));
 }

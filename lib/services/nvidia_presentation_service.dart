@@ -159,13 +159,24 @@ class NvidiaSlide {
   }
 }
 
-/// Üst düzey yanıt yapısı: { "slides": [...] }
+/// Üst düzey yanıt yapısı: { "title": "...", "target_audience": "...", "learning_objective": "...", "slides": [...] }
 class NvidiaPresentation {
+  final String? title;
+  final String? targetAudience;
+  final String? learningObjective;
   final List<NvidiaSlide> slides;
 
-  const NvidiaPresentation({required this.slides});
+  const NvidiaPresentation({
+    this.title,
+    this.targetAudience,
+    this.learningObjective,
+    required this.slides,
+  });
 
   factory NvidiaPresentation.fromJson(Map<String, dynamic> json) {
+    final title = (json['title'] ?? json['baslik'])?.toString();
+    final targetAudience = (json['target_audience'] ?? json['hedef_kitle'])?.toString();
+    final learningObjective = (json['learning_objective'] ?? json['ogrenme_hedefi'])?.toString();
     final rawSlides = json['slides'];
     if (rawSlides is! List) {
       throw const FormatException('Yanıtta "slides" listesi bulunamadı.');
@@ -185,7 +196,12 @@ class NvidiaPresentation {
         ),
       );
     }
-    return NvidiaPresentation(slides: slides);
+    return NvidiaPresentation(
+      title: title != null && title.trim().isNotEmpty ? title.trim() : null,
+      targetAudience: targetAudience != null && targetAudience.trim().isNotEmpty ? targetAudience.trim() : null,
+      learningObjective: learningObjective != null && learningObjective.trim().isNotEmpty ? learningObjective.trim() : null,
+      slides: slides,
+    );
   }
 }
 
