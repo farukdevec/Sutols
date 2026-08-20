@@ -54,13 +54,20 @@ class SafeJsonParser {
       if (normalized != null) return normalized;
     }
 
-    // 4. İlk '{' ile son '}' arasındaki alt dizgi denemesi (preamble/postscript temizleme)
+    // 4. Dengeli Parantez (Balanced Brace) JSON Çıkarımı
+    final balancedMap = _extractBalancedJsonPayload(cleaned);
+    if (balancedMap != null) {
+      final normalized = _tryNormalizePresentationPayload(balancedMap);
+      if (normalized != null) return normalized;
+    }
+
+    // 5. İlk '{' ile son '}' arasındaki alt dizgi denemesi (preamble/postscript temizleme)
     if (cleaned.contains('{') && cleaned.contains('}')) {
       final firstBrace = cleaned.indexOf('{');
       final lastBrace = cleaned.lastIndexOf('}');
       if (firstBrace != -1 && lastBrace > firstBrace) {
         final substring = cleaned.substring(firstBrace, lastBrace + 1);
-        final map = _tryDecodeMap(substring);
+        final map = _tryDecodeMap(substring) ?? _tryDecodeMap(_repairTruncatedJson(substring));
         if (map != null) {
           final normalized = _tryNormalizePresentationPayload(map);
           if (normalized != null) return normalized;
@@ -68,13 +75,13 @@ class SafeJsonParser {
       }
     }
 
-    // 5. İlk '[' ile son ']' arasındaki alt dizgi denemesi
+    // 6. İlk '[' ile son ']' arasındaki alt dizgi denemesi
     if (cleaned.contains('[') && cleaned.contains(']')) {
       final firstBracket = cleaned.indexOf('[');
       final lastBracket = cleaned.lastIndexOf(']');
       if (firstBracket != -1 && lastBracket > firstBracket) {
         final substring = cleaned.substring(firstBracket, lastBracket + 1);
-        final list = _tryDecodeList(substring);
+        final list = _tryDecodeList(substring) ?? _tryDecodeList(_repairTruncatedJson(substring));
         if (list != null) {
           final normalized = _tryNormalizeSlideList(list);
           if (normalized != null) return normalized;
@@ -82,10 +89,16 @@ class SafeJsonParser {
       }
     }
 
-    // 6. Gömülü JSON slayt nesnelerini regex ile ayıklama
+    // 7. Gömülü veya yarıda kesilmiş JSON slayt nesnelerini ayıklama
     final extractedSlides = _extractAllSlidesFromText(cleaned);
     if (extractedSlides.isNotEmpty) {
       return {'slides': extractedSlides};
+    }
+
+    // 8. Markdown metin başlıklarından slayt kurtarma
+    final formattedSlides = _extractSlidesFromFormattedText(cleaned);
+    if (formattedSlides.isNotEmpty) {
+      return {'slides': formattedSlides};
     }
 
     throw FormatException(
@@ -328,40 +341,189 @@ class SafeJsonParser {
     return hasTitle && hasContent;
   }
 
-  static List<Map<String, dynamic>> _extractAllSlidesFromText(String text) {
-    final slides = <Map<String, dynamic>>[];
+  /// Metin içerisinden dengeli parantezli (balanced brace) JSON payload nesnesini çıkarır.
+  static Map<String, dynamic>? _extractBalancedJsonPayload(String text) {
+    var searchStart = 0;
+    while (searchStart < text.length) {
+      final braceIndex = text.indexOf('{', searchStart);
+      if (braceIndex == -1) break;
 
-    // 1. {"slides": [...]} veya {"sunum": [...]}
-    final slideMatches = RegExp(
-      r'\{[^{}]*"(?:slides|sunum|slaytlar)"\s*:\s*\[[\s\S]*?\][^{}]*\}',
-      caseSensitive: false,
-    ).allMatches(text);
+      var depth = 0;
+      var inString = false;
+      var isEscaped = false;
+      int? endIndex;
 
-    for (final match in slideMatches) {
-      final map = _tryDecodeMap(match.group(0)!);
-      if (map != null) {
-        final normalized = _tryNormalizePresentationPayload(map);
-        if (normalized != null && normalized['slides'] is List) {
-          for (final item in normalized['slides'] as List) {
-            if (item is Map<String, dynamic>) slides.add(item);
+      for (var i = braceIndex; i < text.length; i++) {
+        final char = text[i];
+        if (isEscaped) {
+          isEscaped = false;
+          continue;
+        }
+        if (char == '\\' && inString) {
+          isEscaped = true;
+          continue;
+        }
+        if (char == '"') {
+          inString = !inString;
+          continue;
+        }
+        if (!inString) {
+          if (char == '{') depth++;
+          if (char == '}') {
+            depth--;
+            if (depth == 0) {
+              endIndex = i;
+              break;
+            }
+          }
+        }
+      }
+
+      if (endIndex != null) {
+        final candidate = text.substring(braceIndex, endIndex + 1);
+        final map = _tryDecodeMap(candidate);
+        if (map != null) {
+          if (map.containsKey('slides') || map.containsKey('sunum') || map.containsKey('slaytlar') || map.containsKey('presentation') || map.containsKey('data')) {
+            final normalized = _tryNormalizePresentationPayload(map);
+            if (normalized != null) return normalized;
+          }
+        }
+        searchStart = braceIndex + 1;
+      } else {
+        // Yarıda kesilmiş JSON (Truncated JSON) - onar ve dene
+        final candidate = text.substring(braceIndex);
+        final repaired = _repairTruncatedJson(candidate);
+        final map = _tryDecodeMap(repaired);
+        if (map != null) {
+          if (map.containsKey('slides') || map.containsKey('sunum') || map.containsKey('slaytlar') || map.containsKey('presentation') || map.containsKey('data')) {
+            final normalized = _tryNormalizePresentationPayload(map);
+            if (normalized != null) return normalized;
+          }
+        }
+        break;
+      }
+    }
+    return null;
+  }
+
+  /// Kesilmiş/tamamlanmamış JSON çıktısını açık tırnak ve parantezleri kapatıp kurtarır.
+  static String _repairTruncatedJson(String raw) {
+    var inString = false;
+    var isEscaped = false;
+    final openBrackets = <String>[];
+
+    for (var i = 0; i < raw.length; i++) {
+      final char = raw[i];
+      if (isEscaped) {
+        isEscaped = false;
+        continue;
+      }
+      if (char == '\\' && inString) {
+        isEscaped = true;
+        continue;
+      }
+      if (char == '"') {
+        inString = !inString;
+        continue;
+      }
+      if (!inString) {
+        if (char == '{') openBrackets.add('}');
+        if (char == '[') openBrackets.add(']');
+        if (char == '}' || char == ']') {
+          if (openBrackets.isNotEmpty && openBrackets.last == char) {
+            openBrackets.removeLast();
           }
         }
       }
     }
-    if (slides.isNotEmpty) return slides;
 
-    // 2. Ayrı ayrı slide nesneleri {"title": ..., "content": ...}
-    final objMatches = RegExp(
-      r'\{[^{}]*"(?:title|baslik)"\s*:[^{}]*"(?:content|icerik)"\s*:[^{}]*\}',
-      caseSensitive: false,
-    ).allMatches(text);
+    var result = raw.trim();
+    if (inString) {
+      result += '"';
+    }
+    // Açık parantezleri ters sırada kapat
+    for (final closeChar in openBrackets.reversed) {
+      result += closeChar;
+    }
+    return result;
+  }
 
-    for (final match in objMatches) {
-      final map = _tryDecodeMap(match.group(0)!);
-      if (map != null && _looksLikeSlideObject(map)) {
-        slides.add(_standardizeSlideMap(map));
+  static List<Map<String, dynamic>> _extractAllSlidesFromText(String text) {
+    final slides = <Map<String, dynamic>>[];
+
+    // 1. Dengeli parantez tarayıcısı ile tüm geçerli veya onarılabilir slide nesnelerini topla
+    var searchStart = 0;
+    while (searchStart < text.length) {
+      final braceIndex = text.indexOf('{', searchStart);
+      if (braceIndex == -1) break;
+
+      var depth = 0;
+      var inString = false;
+      var isEscaped = false;
+      int? endIndex;
+
+      for (var i = braceIndex; i < text.length; i++) {
+        final char = text[i];
+        if (isEscaped) {
+          isEscaped = false;
+          continue;
+        }
+        if (char == '\\' && inString) {
+          isEscaped = true;
+          continue;
+        }
+        if (char == '"') {
+          inString = !inString;
+          continue;
+        }
+        if (!inString) {
+          if (char == '{') depth++;
+          if (char == '}') {
+            depth--;
+            if (depth == 0) {
+              endIndex = i;
+              break;
+            }
+          }
+        }
+      }
+
+      if (endIndex != null) {
+        final candidate = text.substring(braceIndex, endIndex + 1);
+        final map = _tryDecodeMap(candidate);
+        if (map != null) {
+          if (map.containsKey('slides') || map.containsKey('sunum') || map.containsKey('slaytlar')) {
+            final normalized = _tryNormalizePresentationPayload(map);
+            if (normalized != null && normalized['slides'] is List) {
+              for (final item in normalized['slides'] as List) {
+                if (item is Map<String, dynamic>) slides.add(item);
+              }
+            }
+          } else if (_looksLikeSlideObject(map)) {
+            slides.add(_standardizeSlideMap(map));
+          }
+        }
+        searchStart = endIndex + 1;
+      } else {
+        final candidate = text.substring(braceIndex);
+        final repaired = _repairTruncatedJson(candidate);
+        final map = _tryDecodeMap(repaired);
+        if (map != null) {
+          if (map.containsKey('slides') || map.containsKey('sunum') || map.containsKey('slaytlar')) {
+            final normalized = _tryNormalizePresentationPayload(map);
+            if (normalized != null && normalized['slides'] is List) {
+              for (final item in normalized['slides'] as List) {
+                if (item is Map<String, dynamic>) slides.add(item);
+              }
+            }
+          } else if (_looksLikeSlideObject(map)) {
+            slides.add(_standardizeSlideMap(map));
+          }
+        }
+        break;
       }
     }
+
     if (slides.isNotEmpty) return slides;
 
     return _decodeJsonObjectSequence(text);
@@ -375,7 +537,7 @@ class SafeJsonParser {
         .toList(growable: false);
     final slides = <Map<String, dynamic>>[];
     for (final part in matches) {
-      final decoded = _tryDecodeMap(part);
+      final decoded = _tryDecodeMap(part) ?? _tryDecodeMap(_repairTruncatedJson(part));
       if (decoded != null && _looksLikeSlideObject(decoded)) {
         slides.add(_standardizeSlideMap(decoded));
       }

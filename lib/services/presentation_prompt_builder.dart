@@ -8,6 +8,8 @@ class PresentationPromptBuilder {
     return '''Sen profesyonel sunumlar tasarlayan kıdemli bir sunum direktörüsün.
 GÖREV: Kullanıcının konusunu zengin bir anlatı (storytelling), güçlü ritim ve çeşitli slayt türleriyle sunuma dönüştürmek.
 
+ÖNEMLİ: Yanıtına ASLA iç düşünce süreci, planlama, akıl yürütme veya giriş açıklaması YAZMA. Yanıtına doğrudan '{' karakteri ile başla ve '}' ile bitir.
+
 KURALLAR:
 1. ANLATI AKIŞI: Giriş/Vizyon → Bağlam → Mekanizma/Süreç → Kanıt/Veri → Sonuç/Özet. Slaytlar birbirini tamamlayan bir akış olmalıdır.
 2. SLAYT ÇEŞİTLİLİĞİ: Bütün slaytlar aynı formatta olamaz. Aynı slayt türü ardışık kullanılamaz.
@@ -15,7 +17,7 @@ KURALLAR:
 3. DİNAMİK BAŞLIKLAR: Kuru indeks başlıkları yerine anlatı odaklı merak uyandırıcı başlıklar kullan.
 4. METİN: Vurucu ve öz olmalı; gereksiz dolgu cümlelerden arındırılmış, doğru Türkçe terimlerle yazılmalıdır.
 
-ÇIKTI: YALNIZCA TEK BİR GEÇERLİ JSON NESNESİ:
+ÇIKTI FORMATI: YALNIZCA VE DOĞRUDAN GEÇERLİ TEK BİR JSON NESNESİ:
 {
   "slides": [
     {
@@ -66,20 +68,20 @@ KURALLAR:
 Slayt Sayısı: $slideCount
 Çıktı Dili: $language
 
-Lütfen tam $slideCount adet slayt içeren, zengin anlatı akışına ve çeşitli slayt tiplerine sahip profesyonel tek bir JSON nesnesi üret. Yanıtın kökünde mutlaka "slides" dizisi olmalı ve bu dizi tam $slideCount eleman içermelidir:
+ÖNEMLİ: Ön açıklama veya düşünce metni YAZMADAN, doğrudan '{' karakteri ile başlayan ve tam $slideCount slayt içeren geçerli JSON nesnesi üret:
 {
   "slides": [
     {
       "title": "Slayt Başlığı",
       "subtitle": "Kısa alt başlık",
-      "type": "hero|timeline|comparison|process|cause_effect|statistic|cards|quote|image_focus|chart|summary",
+      "type": "hero | timeline | comparison | process | cause_effect | statistic | cards | quote | image_focus | chart | summary",
       "purpose": "Slaydın amacı",
       "key_message": "Ana mesaj",
-      "sections": [{"heading": "Başlık", "description": "Açıklama"}],
-      "visual": {"type": "cards", "data": ["Veri 1", "Veri 2"]},
-      "content": "- **Başlık:** Açıklama",
-      "keywords": ["anahtar1", "anahtar2"],
-      "sources": ["Kaynak"]
+      "sections": [{"heading": "Vurgulu Başlık", "description": "Öz ve etkileyici açıklama metni"}],
+      "visual": {"type": "cards", "data": ["Öğe 1", "Öğe 2"]},
+      "content": "- **Vurgulu Başlık:** Öz ve etkileyici açıklama metni",
+      "keywords": ["somut_nesne1", "somut_nesne2"],
+      "sources": ["Güvenilir Kurum / Rapor"]
     }
   ]
 }''';

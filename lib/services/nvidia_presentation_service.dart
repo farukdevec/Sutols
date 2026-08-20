@@ -224,7 +224,7 @@ class NvidiaPresentationService {
       slideCount: slideCount,
       language: language,
     );
-    final maxTokens = (slideCount * 380 + 600).clamp(1500, 4096);
+    final maxTokens = (slideCount * 600 + 1500).clamp(3000, 8192);
 
     final selectedModel = model ?? modelName;
     final modelsToTry = candidateModels ??
@@ -272,7 +272,7 @@ class NvidiaPresentationService {
               'content': userPrompt,
             },
           ],
-          'temperature': 0.5,
+          'temperature': 0.2,
           'max_tokens': maxTokens,
           'response_format': {
             'type': 'json_object',
@@ -321,7 +321,10 @@ class NvidiaPresentationService {
                 .toList(growable: false),
           );
           if (qualityReason != null) {
-            throw FormatException('Kalite kontrolü reddedildi: $qualityReason');
+            final isLastCandidate = i == modelsToTry.length - 1;
+            if (!isLastCandidate) {
+              throw FormatException('Kalite kontrolü reddedildi: $qualityReason');
+            }
           }
         }
 

@@ -156,5 +156,66 @@ void main() {
       };
       expect(() => SafeJsonParser.validateContent(emptyTitle), throwsA(isA<FormatException>()));
     });
+
+    test('Scenario 9: Reasoning preamble before unnested slide objects (Nemotron style)', () {
+      const raw = '''
+      We need to produce JSON with slides array of exactly 2 items.
+      Let's design:
+      Slide1: {
+        "title": "Maddenin Halleri",
+        "subtitle": "Temel Kavramlar",
+        "type": "hero",
+        "content": "- **Katı:** Sabit şekil\\n- **Sıvı:** Akışkan\\n- **Gaz:** Serbest",
+        "keywords": ["katı", "sıvı", "gaz"]
+      }
+      Slide2: {
+        "title": "Hal Değişimleri",
+        "type": "process",
+        "content": "- **Erime:** Katıdan sıvıya\\n- **Buharlaşma:** Sıvıdan gaza",
+        "keywords": ["erime", "buharlaşma"]
+      }
+      ''';
+
+      final parsed = SafeJsonParser.parsePresentationPayload(raw);
+      final slides = parsed['slides'] as List;
+      expect(slides.length, 2);
+      expect(slides[0]['title'], 'Maddenin Halleri');
+      expect(slides[1]['title'], 'Hal Değişimleri');
+    });
+
+    test('Scenario 10: Truncated JSON recovery when model hits token limit', () {
+      const raw = '''
+      {
+        "slides": [
+          {
+            "title": "Güneş Enerjisi",
+            "content": "- **Fotovoltaik:** Işığı elektriğe dönüştürür",
+            "keywords": ["güneş"]
+          },
+          {
+            "title": "Rüzgar Enerjisi",
+            "content": "- **Türbinler:** Kinetik enerjiyi elektriğe
+      ''';
+
+      final parsed = SafeJsonParser.parsePresentationPayload(raw);
+      final slides = parsed['slides'] as List;
+      expect(slides.isNotEmpty, true);
+      expect(slides.first['title'], 'Güneş Enerjisi');
+    });
+
+    test('Scenario 11: Complex nested JSON with reasoning text and balanced brace extraction', () {
+      const raw = '''
+      Plan: Produce high quality presentation for middle school.
+      Step 1: Introduction.
+      {"slides": [{"title": "Atomun Yapısı", "subtitle": "Mikro Dünya", "type": "cards", "sections": [{"heading": "Proton", "description": "Çekirdekte bulunur"}], "content": "- **Proton:** Çekirdekte bulunur", "keywords": ["atom"]}]}
+      I hope this helps!
+      ''';
+
+      final parsed = SafeJsonParser.parsePresentationPayload(raw);
+      final slides = parsed['slides'] as List;
+      expect(slides.length, 1);
+      expect(slides.first['title'], 'Atomun Yapısı');
+      expect(slides.first['sections'], isA<List>());
+    });
   });
 }

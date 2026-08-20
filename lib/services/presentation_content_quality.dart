@@ -190,7 +190,7 @@ class PresentationContentQuality {
         final jaccard = jaccardSimilarity(currentStemmed, stemmedSets[j]);
         final containment =
             _containmentSimilarity(currentTokens, tokenSets[j]);
-        if (jaccard > 0.60 || containment >= 0.82) {
+        if (jaccard > 0.80 || containment >= 0.92) {
           isDuplicate = true;
           break;
         }
