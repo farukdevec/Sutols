@@ -306,6 +306,9 @@ enum PresentationBackgroundKind {
   lightTechnology,
   lightCreative,
   lightWarm,
+  modernMinimalist,
+  geometricAbstract,
+  corporateBlue,
 }
 
 enum PresentationTransitionKind {
@@ -1487,6 +1490,68 @@ const List<PresentationBackgroundDefinition> presentationBackgroundLibrary =
         Color(0xFFE9855B)
       ],
       icon: Icons.wb_sunny_rounded),
+  PresentationBackgroundDefinition(
+    kind: PresentationBackgroundKind.modernMinimalist,
+    label: 'Modern Minimal',
+    category: 'Kurumsal',
+    tags: <String>[
+      'modern',
+      'minimal',
+      'profesyonel',
+      'temiz',
+      'iş',
+      'minimalist',
+      'clean',
+      'professional'
+    ],
+    previewColors: <Color>[
+      Color(0xFFFFFFFF),
+      Color(0xFFF5F7FA),
+      Color(0xFF2563EB)
+    ],
+    icon: Icons.grid_view_rounded,
+  ),
+  PresentationBackgroundDefinition(
+    kind: PresentationBackgroundKind.geometricAbstract,
+    label: 'Geometrik Soyut',
+    category: 'Yaratıcı',
+    tags: <String>[
+      'geometrik',
+      'soyut',
+      'modern',
+      'şekiller',
+      'hexagon',
+      'triangle',
+      'abstract',
+      'geometric'
+    ],
+    previewColors: <Color>[
+      Color(0xFF1A1A2E),
+      Color(0xFF16213E),
+      Color(0xFFE94560)
+    ],
+    icon: Icons.hexagon_rounded,
+  ),
+  PresentationBackgroundDefinition(
+    kind: PresentationBackgroundKind.corporateBlue,
+    label: 'Kurumsal Mavi',
+    category: 'Kurumsal',
+    tags: <String>[
+      'kurumsal',
+      'mavi',
+      'iş',
+      'profesyonel',
+      'business',
+      'corporate',
+      'blue'
+    ],
+    previewColors: <Color>[
+      Color(0xFFE3F2FD),
+      Color(0xFFBBDEFB),
+      Color(0xFF1976D2)
+    ],
+    icon: Icons.business_rounded,
+  ),
 ];
 
 PresentationBackgroundDefinition? presentationBackgroundDefinition(
