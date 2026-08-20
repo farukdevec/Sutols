@@ -39,10 +39,11 @@ class PresentationDeckBuilder {
 
     for (final slide in slides) {
       final title = slide.title.trim();
+      final subtitle = slide.subtitle?.trim() ?? '';
       final content = slide.content.trim();
       final slideType = (slide.type.isEmpty ? 'cards' : slide.type).toLowerCase().trim();
 
-      if (title.isEmpty && content.isEmpty) {
+      if (title.isEmpty && content.isEmpty && subtitle.isEmpty) {
         continue;
       }
 
@@ -54,6 +55,7 @@ class PresentationDeckBuilder {
         final searchKeywords = <String>[
           ...slide.keywords,
           ...title.split(' '),
+          ...subtitle.split(' '),
           ...content.split(' '),
           ...topic.split(' '),
         ];
@@ -67,7 +69,7 @@ class PresentationDeckBuilder {
       }
       final fallbackComponent = bestPresentationComponentForSlide(
         title: title,
-        body: '${slide.keywords.join(' ')} $content',
+        body: '${slide.keywords.join(' ')} $subtitle $content',
       );
       final hasVisual = selectedModel != null || fallbackComponent != null;
       final background =
@@ -78,42 +80,95 @@ class PresentationDeckBuilder {
       // ─── Arketipe Özgü Yerleşim Kuralları (Layout Generation) ─────────────
       switch (slideType) {
         case 'hero':
-          // Hero Layout: Büyük vurgulu başlık + Tek cümlelik çarpıcı vizyon/alt metin
+          // Hero Layout: Büyük vurgulu başlık + Alt başlık + Vurucu vizyon/alt metin
           if (title.isNotEmpty) {
             textBlocks.add(
               PresentationTextBlock(
                 id: 'text-${textCounter++}',
                 text: title,
-                position: const Offset(0.08, 0.22),
-                fontSize: 60,
+                position: const Offset(0.08, 0.16),
+                fontSize: 54,
                 type: PresentationTextType.title,
                 textStyle: PresentationTextStyle.bilimDramatik,
                 textAnimation: PresentationTextAnimation.yavasBelirme,
                 widthFactor: hasVisual ? 0.56 : 0.84,
-                heightFactor: 0.25,
+                heightFactor: 0.22,
+              ),
+            );
+          }
+          if (subtitle.isNotEmpty) {
+            textBlocks.add(
+              PresentationTextBlock(
+                id: 'text-${textCounter++}',
+                text: subtitle,
+                position: const Offset(0.08, 0.40),
+                fontSize: 26,
+                type: PresentationTextType.subtitle,
+                textStyle: PresentationTextStyle.bilimDeneysel,
+                textAnimation: PresentationTextAnimation.yavasBelirme,
+                widthFactor: hasVisual ? 0.54 : 0.84,
+                heightFactor: 0.14,
               ),
             );
           }
           if (content.isNotEmpty) {
             final cleanedContent = content.replaceAll(RegExp(r'^[-\*•]\s*', multiLine: true), '').trim();
+            final top = subtitle.isNotEmpty ? 0.56 : 0.42;
             textBlocks.add(
               PresentationTextBlock(
                 id: 'text-${textCounter++}',
                 text: cleanedContent,
-                position: const Offset(0.08, 0.50),
-                fontSize: 28,
+                position: Offset(0.08, top),
+                fontSize: 24,
                 type: PresentationTextType.body,
                 textStyle: PresentationTextStyle.bilimTemiz,
                 textAnimation: PresentationTextAnimation.bulaniktanNet,
                 widthFactor: hasVisual ? 0.54 : 0.84,
-                heightFactor: 0.35,
+                heightFactor: 0.88 - top,
+              ),
+            );
+          }
+          break;
+
+        case 'quote':
+          // Quote Layout: İtalik alıntı metni + Başlık/Kaynak
+          if (title.isNotEmpty) {
+            textBlocks.add(
+              PresentationTextBlock(
+                id: 'text-${textCounter++}',
+                text: title,
+                position: const Offset(0.08, 0.10),
+                fontSize: 34,
+                type: PresentationTextType.title,
+                textStyle: PresentationTextStyle.bilimTemiz,
+                textAnimation: PresentationTextAnimation.yavasBelirme,
+                widthFactor: hasVisual ? 0.56 : 0.84,
+                heightFactor: 0.18,
+              ),
+            );
+          }
+          if (content.isNotEmpty) {
+            final cleanedQuote = content.replaceAll(RegExp(r'^[-\*•]\s*', multiLine: true), '').trim();
+            textBlocks.add(
+              PresentationTextBlock(
+                id: 'text-${textCounter++}',
+                text: cleanedQuote.startsWith('"') ? cleanedQuote : '"$cleanedQuote"',
+                position: const Offset(0.08, 0.32),
+                fontSize: 28,
+                textItalic: true,
+                type: PresentationTextType.body,
+                textStyle: PresentationTextStyle.klasikLora,
+                textAnimation: PresentationTextAnimation.bulaniktanNet,
+                widthFactor: hasVisual ? 0.54 : 0.84,
+                heightFactor: 0.56,
               ),
             );
           }
           break;
 
         case 'comparison':
-          // Comparison Layout: İki karşılaştırmalı taraf (Sol vs Sağ Kolon)
+        case 'cause_effect':
+          // Comparison & Cause-Effect Layout: İki karşılaştırmalı sütun
           final titleLayout = _generatedTitleLayout(title);
           if (title.isNotEmpty) {
             textBlocks.add(
@@ -133,7 +188,7 @@ class PresentationDeckBuilder {
           if (content.isNotEmpty) {
             final splitComparison = _splitComparisonContent(content);
             if (splitComparison != null && !hasVisual) {
-              // 2 Kolonlu Karşılaştırma Bloğu
+              // 2 Kolonlu Blok
               textBlocks.add(
                 PresentationTextBlock(
                   id: 'text-${textCounter++}',
@@ -201,7 +256,7 @@ class PresentationDeckBuilder {
                 id: 'text-${textCounter++}',
                 text: content,
                 position: const Offset(0.08, 0.35),
-                fontSize: 30,
+                fontSize: 28,
                 type: PresentationTextType.body,
                 textStyle: PresentationTextStyle.bilimDramatik,
                 textAnimation: PresentationTextAnimation.bulaniktanNet,
@@ -212,12 +267,48 @@ class PresentationDeckBuilder {
           }
           break;
 
+        case 'image_focus':
+          // Image Focus Layout: Görsel / 3B Model öncelikli düzen
+          final titleLayout = _generatedTitleLayout(title);
+          if (title.isNotEmpty) {
+            textBlocks.add(
+              PresentationTextBlock(
+                id: 'text-${textCounter++}',
+                text: title,
+                position: const Offset(0.07, 0.08),
+                fontSize: titleLayout.fontSize,
+                type: PresentationTextType.title,
+                textStyle: PresentationTextStyle.bilimTemiz,
+                textAnimation: PresentationTextAnimation.yavasBelirme,
+                widthFactor: hasVisual ? 0.50 : 0.84,
+                heightFactor: titleLayout.heightFactor,
+              ),
+            );
+          }
+          if (content.isNotEmpty) {
+            textBlocks.add(
+              PresentationTextBlock(
+                id: 'text-${textCounter++}',
+                text: content,
+                position: Offset(0.07, titleLayout.bodyTop),
+                fontSize: _generatedBodyFontSize(content),
+                type: PresentationTextType.body,
+                textStyle: PresentationTextStyle.bilimTemiz,
+                textAnimation: PresentationTextAnimation.bulaniktanNet,
+                widthFactor: hasVisual ? 0.48 : 0.84,
+                heightFactor: 0.9 - titleLayout.bodyTop,
+              ),
+            );
+          }
+          break;
+
         case 'process':
         case 'timeline':
+        case 'chart':
         case 'cards':
         case 'summary':
         default:
-          // Standart Süreç / Kart / Özet Layout'u
+          // Standart Süreç / Kart / Zaman Çizelgesi / Özet Layout'u
           final titleLayout = _generatedTitleLayout(title);
           final bodyTop = title.isEmpty ? 0.16 : titleLayout.bodyTop;
           if (title.isNotEmpty) {
@@ -244,7 +335,9 @@ class PresentationDeckBuilder {
                 fontSize: _generatedBodyFontSize(content),
                 type: PresentationTextType.body,
                 textStyle: PresentationTextStyle.bilimTemiz,
-                textAnimation: PresentationTextAnimation.bulaniktanNet,
+                textAnimation: slideType == 'timeline'
+                    ? PresentationTextAnimation.soldanKayma
+                    : PresentationTextAnimation.bulaniktanNet,
                 widthFactor: hasVisual ? 0.52 : 0.84,
                 heightFactor: 0.9 - bodyTop,
               ),
@@ -404,15 +497,27 @@ double _generatedBodyFontSize(String content) {
 class DeckSlide {
   const DeckSlide({
     required this.title,
+    this.subtitle,
     required this.content,
     required this.models,
     this.keywords = const <String>[],
     this.type = 'cards',
+    this.purpose,
+    this.keyMessage,
+    this.sections,
+    this.visual,
+    this.sources = const <String>[],
   });
 
   final String title;
+  final String? subtitle;
   final String content;
   final List<ModelMatch> models;
   final List<String> keywords;
   final String type;
+  final String? purpose;
+  final String? keyMessage;
+  final List<Map<String, dynamic>>? sections;
+  final Map<String, dynamic>? visual;
+  final List<String> sources;
 }

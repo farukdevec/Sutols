@@ -154,6 +154,28 @@ class PresentationContentQuality {
       return 'Monoton ve robotik "Tanım / Amaç / Örnek" şablonu tekrar ediyor.';
     }
 
+    // 2c. Kuru kronoloji / salt tarih listesi denetimi (Tüm sunumun yalnızca kuru tarihlerden oluşması)
+    var dateBulletCount = 0;
+    var totalBulletCount = 0;
+    final dateBulletRegex = RegExp(
+      r'^\s*-\s*\*{0,2}\d{1,2}\s+(?:ocak|subat|mart|nisan|mayis|haziran|temmuz|agustos|eylul|ekim|kasim|aralik|\d{4})[\s:\*–—]',
+      caseSensitive: false,
+    );
+    for (final slide in slides) {
+      for (final line in slide.content.split('\n')) {
+        final trimmed = line.trim();
+        if (trimmed.isNotEmpty) {
+          totalBulletCount += 1;
+          if (dateBulletRegex.hasMatch(_normalize(trimmed))) {
+            dateBulletCount += 1;
+          }
+        }
+      }
+    }
+    if (slides.length >= 6 && totalBulletCount > 0 && (dateBulletCount / totalBulletCount) >= 0.85) {
+      return 'Sunum anlatı yerine baştan sona monoton tarih listesine dönüşmüş.';
+    }
+
     // 3. Slaytlar arası Jaccard ve kapsama benzerliği denetimi (Jaccard > 0.60)
     final tokenSets = slides.map((slide) => _tokens(slide.content)).toList();
     final stemmedSets =

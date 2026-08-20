@@ -11,22 +11,40 @@ import 'safe_json_parser.dart';
 /// Gemini'nin response_schema ile zorladığı tek slayt yapısı.
 class GeminiSlide {
   final String title;
+  final String? subtitle;
   final String content;
   final List<String> keywords;
   final String type;
+  final String? purpose;
+  final String? keyMessage;
+  final List<Map<String, dynamic>>? sections;
+  final Map<String, dynamic>? visual;
+  final List<String> sources;
 
   const GeminiSlide({
     required this.title,
+    this.subtitle,
     required this.content,
     required this.keywords,
     this.type = 'cards',
+    this.purpose,
+    this.keyMessage,
+    this.sections,
+    this.visual,
+    this.sources = const <String>[],
   });
 
   factory GeminiSlide.fromJson(Map<String, dynamic> json) {
     final rawTitle = (json['title'] ?? json['baslik']) as String? ?? '';
+    final subtitle = (json['subtitle'] ?? json['alt_baslik'] ?? json['sub_title'])?.toString();
     final rawContent = json['content'] ?? json['icerik'];
     final rawKeywords = json['keywords'] ?? json['anahtar_kelimeler'];
     final rawType = json['type'] ?? json['slide_type'] ?? json['layout'] ?? json['tip'] ?? 'cards';
+    final purpose = (json['purpose'] ?? json['amac'] ?? json['role'])?.toString();
+    final keyMessage = (json['key_message'] ?? json['keyMessage'] ?? json['ana_mesaj'])?.toString();
+    final rawSections = json['sections'] ?? json['bolumler'];
+    final rawVisual = json['visual'] ?? json['gorsel'];
+    final rawSources = json['sources'] ?? json['kaynaklar'];
 
     String contentStr = '';
     if (rawContent is String) {
@@ -35,15 +53,60 @@ class GeminiSlide {
       contentStr = rawContent.whereType<String>().join('\n');
     }
 
+    List<Map<String, dynamic>>? sectionsList;
+    if (rawSections is List) {
+      sectionsList = <Map<String, dynamic>>[];
+      for (final sec in rawSections) {
+        if (sec is Map) {
+          sectionsList.add(sec.map((k, v) => MapEntry(k.toString(), v)));
+        }
+      }
+    }
+
+    if (contentStr.trim().isEmpty) {
+      if (sectionsList != null && sectionsList.isNotEmpty) {
+        final lines = <String>[];
+        for (final sec in sectionsList) {
+          final heading = sec['heading'] ?? sec['title'] ?? sec['baslik'] ?? '';
+          final desc = sec['description'] ?? sec['desc'] ?? sec['text'] ?? sec['aciklama'] ?? sec['content'] ?? '';
+          if (heading.toString().trim().isNotEmpty && desc.toString().trim().isNotEmpty) {
+            lines.add('- **${heading.toString().trim()}:** ${desc.toString().trim()}');
+          } else if (desc.toString().trim().isNotEmpty) {
+            lines.add('- ${desc.toString().trim()}');
+          } else if (heading.toString().trim().isNotEmpty) {
+            lines.add('- **${heading.toString().trim()}**');
+          }
+        }
+        if (lines.isNotEmpty) contentStr = lines.join('\n');
+      } else if (keyMessage != null && keyMessage.trim().isNotEmpty) {
+        contentStr = '- ${keyMessage.trim()}';
+      }
+    }
+
     final keywordsList = rawKeywords is List
         ? rawKeywords.map((k) => k.toString()).toList(growable: false)
         : const <String>[];
 
+    final sourcesList = rawSources is List
+        ? rawSources.map((s) => s.toString()).toList(growable: false)
+        : const <String>[];
+
+    Map<String, dynamic>? visualMap;
+    if (rawVisual is Map) {
+      visualMap = rawVisual.map((k, v) => MapEntry(k.toString(), v));
+    }
+
     return GeminiSlide(
       title: PresentationContentQuality.sanitizeTitle(rawTitle),
+      subtitle: subtitle != null && subtitle.trim().isNotEmpty ? subtitle.trim() : null,
       content: contentStr,
       keywords: keywordsList,
       type: rawType.toString().toLowerCase().trim(),
+      purpose: purpose != null && purpose.trim().isNotEmpty ? purpose.trim() : null,
+      keyMessage: keyMessage != null && keyMessage.trim().isNotEmpty ? keyMessage.trim() : null,
+      sections: sectionsList,
+      visual: visualMap,
+      sources: sourcesList,
     );
   }
 }

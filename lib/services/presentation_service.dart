@@ -102,15 +102,21 @@ class PresentationService {
             .map(
               (slide) => GeminiSlide(
                 title: slide.title,
+                subtitle: slide.subtitle,
                 content: slide.content,
                 keywords: slide.keywords,
+                type: slide.type,
+                purpose: slide.purpose,
+                keyMessage: slide.keyMessage,
+                sections: slide.sections,
+                visual: slide.visual,
+                sources: slide.sources,
               ),
             )
             .toList(growable: false),
       );
     } catch (error) {
       nvidiaError = error;
-      try {
         final grokResult =
             await _grok.generatePresentation(topic, slideCount: slideCount);
         resultPresentation = GeminiPresentation(
@@ -118,8 +124,15 @@ class PresentationService {
               .map(
                 (slide) => GeminiSlide(
                   title: slide.title,
+                  subtitle: slide.subtitle,
                   content: slide.content,
                   keywords: slide.keywords,
+                  type: slide.type,
+                  purpose: slide.purpose,
+                  keyMessage: slide.keyMessage,
+                  sections: slide.sections,
+                  visual: slide.visual,
+                  sources: slide.sources,
                 ),
               )
               .toList(growable: false),
@@ -222,16 +235,25 @@ class PresentationService {
 
       slidesData.add({
         'title': slide.title,
+        if (slide.subtitle != null) 'subtitle': slide.subtitle,
         'content': slide.content,
         'layout': layout.name,
         'type': slide.type,
+        if (slide.purpose != null) 'purpose': slide.purpose,
+        if (slide.keyMessage != null) 'key_message': slide.keyMessage,
         'modelIds': shownModelIds,
       });
       deckSlides.add(
         DeckSlide(
           title: slide.title,
+          subtitle: slide.subtitle,
           content: slide.content,
           type: slide.type,
+          purpose: slide.purpose,
+          keyMessage: slide.keyMessage,
+          sections: slide.sections,
+          visual: slide.visual,
+          sources: slide.sources,
           models: selectedModels,
           keywords: slide.keywords,
         ),

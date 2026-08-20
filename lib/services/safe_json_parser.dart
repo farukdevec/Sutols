@@ -105,7 +105,7 @@ class SafeJsonParser {
   }
 
   /// Şema Doğrulaması (Schema Validation)
-  /// `slides` listesi var mı, her slayt `title`, `content`, `keywords` alanlarına sahip mi?
+  /// `slides` listesi var mı, her slayt `title` ve (`content` / `sections` / `key_message`) alanlarına sahip mi?
   static void validateSchema(Map<String, dynamic> json) {
     final rawSlides = json['slides'];
     if (rawSlides is! List || rawSlides.isEmpty) {
@@ -119,12 +119,19 @@ class SafeJsonParser {
             'Şema Hatası: slides[$i] geçerli bir nesne değil.');
       }
       final title = item['title'] ?? item['baslik'];
-      final content = item['content'] ?? item['icerik'];
+      final content = item['content'] ??
+          item['icerik'] ??
+          item['sections'] ??
+          item['bolumler'] ??
+          item['key_message'] ??
+          item['keyMessage'] ??
+          item['ana_mesaj'] ??
+          item['bullets'];
       if (title == null) {
         throw FormatException('Şema Hatası: slides[$i] "title" alanı eksik.');
       }
       if (content == null) {
-        throw FormatException('Şema Hatası: slides[$i] "content" alanı eksik.');
+        throw FormatException('Şema Hatası: slides[$i] "content" veya "sections" alanı eksik.');
       }
     }
   }
@@ -136,8 +143,7 @@ class SafeJsonParser {
     for (var i = 0; i < rawSlides.length; i++) {
       final item = rawSlides[i] as Map;
       final title = (item['title'] ?? item['baslik']).toString().trim();
-      final rawContent = item['content'] ?? item['icerik'];
-      final content = _normalizeContentString(rawContent).trim();
+      final content = _extractOrSynthesizeContent(item).trim();
 
       if (title.isEmpty) {
         throw FormatException('İçerik Hatası: slides[$i] başlığı boş.');
@@ -146,6 +152,43 @@ class SafeJsonParser {
         throw FormatException('İçerik Hatası: slides[$i] içeriği boş.');
       }
     }
+  }
+
+  static String _extractOrSynthesizeContent(Map<dynamic, dynamic> map) {
+    final rawContent = map['content'] ?? map['icerik'] ?? map['bullets'] ?? map['maddeler'] ?? map['points'];
+    if (rawContent != null) {
+      final s = _normalizeContentString(rawContent).trim();
+      if (s.isNotEmpty) return s;
+    }
+
+    final rawSections = map['sections'] ?? map['bolumler'];
+    if (rawSections is List && rawSections.isNotEmpty) {
+      final lines = <String>[];
+      for (final sec in rawSections) {
+        if (sec is Map) {
+          final heading = sec['heading'] ?? sec['title'] ?? sec['baslik'] ?? '';
+          final desc = sec['description'] ?? sec['desc'] ?? sec['text'] ?? sec['aciklama'] ?? sec['content'] ?? '';
+          if (heading.toString().trim().isNotEmpty && desc.toString().trim().isNotEmpty) {
+            lines.add('- **${heading.toString().trim()}:** ${desc.toString().trim()}');
+          } else if (desc.toString().trim().isNotEmpty) {
+            lines.add('- ${desc.toString().trim()}');
+          } else if (heading.toString().trim().isNotEmpty) {
+            lines.add('- **${heading.toString().trim()}**');
+          }
+        } else if (sec is String && sec.trim().isNotEmpty) {
+          final trimmed = sec.trim();
+          lines.add(trimmed.startsWith('-') || trimmed.startsWith('*') ? trimmed : '- $trimmed');
+        }
+      }
+      if (lines.isNotEmpty) return lines.join('\n');
+    }
+
+    final keyMessage = map['key_message'] ?? map['keyMessage'] ?? map['ana_mesaj'];
+    if (keyMessage != null && keyMessage.toString().trim().isNotEmpty) {
+      return '- ${keyMessage.toString().trim()}';
+    }
+
+    return '';
   }
 
   static String _normalizeContentString(Object? rawContent) {
@@ -239,28 +282,32 @@ class SafeJsonParser {
   }
 
   static Map<String, dynamic> _standardizeSlideMap(Map<String, dynamic> map) {
-    final title = map['title'] ?? map['baslik'] ?? '';
-    final rawContent = map['content'] ??
-        map['icerik'] ??
-        map['bullets'] ??
-        map['maddeler'] ??
-        map['points'] ??
-        '';
-    final rawType = map['type'] ??
-        map['slide_type'] ??
-        map['layout'] ??
-        map['tip'] ??
-        'cards';
+    final title = (map['title'] ?? map['baslik'] ?? '').toString();
+    final subtitle = (map['subtitle'] ?? map['alt_baslik'] ?? map['sub_title'])?.toString();
+    final rawType = map['type'] ?? map['slide_type'] ?? map['layout'] ?? map['tip'] ?? 'cards';
+    final purpose = (map['purpose'] ?? map['amac'] ?? map['role'])?.toString();
+    final keyMessage = (map['key_message'] ?? map['keyMessage'] ?? map['ana_mesaj'])?.toString();
+    final rawSections = map['sections'] ?? map['bolumler'];
+    final rawVisual = map['visual'] ?? map['gorsel'];
     final keywords = map['keywords'] ?? map['anahtar_kelimeler'] ?? <dynamic>[];
+    final sources = map['sources'] ?? map['kaynaklar'] ?? <dynamic>[];
+
+    final contentStr = _extractOrSynthesizeContent(map);
 
     return {
-      'title': title.toString(),
+      'title': title,
+      if (subtitle != null && subtitle.trim().isNotEmpty) 'subtitle': subtitle.trim(),
       'type': rawType.toString().toLowerCase().trim(),
-      'content': rawContent is List
-          ? rawContent.whereType<String>().toList(growable: false)
-          : rawContent.toString(),
+      if (purpose != null && purpose.trim().isNotEmpty) 'purpose': purpose.trim(),
+      if (keyMessage != null && keyMessage.trim().isNotEmpty) 'key_message': keyMessage.trim(),
+      if (rawSections is List) 'sections': rawSections,
+      if (rawVisual is Map) 'visual': rawVisual,
+      'content': contentStr,
       'keywords': keywords is List
           ? keywords.map((k) => k.toString()).toList(growable: false)
+          : <String>[],
+      'sources': sources is List
+          ? sources.map((s) => s.toString()).toList(growable: false)
           : <String>[],
     };
   }
@@ -270,6 +317,11 @@ class SafeJsonParser {
         decoded.containsKey('title') || decoded.containsKey('baslik');
     final hasContent = decoded.containsKey('content') ||
         decoded.containsKey('icerik') ||
+        decoded.containsKey('sections') ||
+        decoded.containsKey('bolumler') ||
+        decoded.containsKey('key_message') ||
+        decoded.containsKey('keyMessage') ||
+        decoded.containsKey('ana_mesaj') ||
         decoded.containsKey('bullets') ||
         decoded.containsKey('maddeler') ||
         decoded.containsKey('points');
