@@ -12,6 +12,7 @@ import '../services/model_asset_service.dart';
 import '../services/model_repository.dart';
 
 import '../services/presentation_export_service.dart';
+import '../services/pexels_service.dart';
 import '../services/presentation_auto_builder.dart';
 import '../services/presentation_fullscreen_service.dart';
 import '../services/presentation_loader.dart';
@@ -22,6 +23,7 @@ import '../services/presentation_project_store.dart';
 import '../services/presentation_tracking_service.dart';
 import '../services/remote_image_sources.dart';
 import '../services/remote_model_sources.dart';
+import '../services/url_launcher_service.dart';
 import '../state/presentation_controller.dart';
 import '../state/theme_controller.dart';
 import '../state/language_controller.dart';
@@ -226,6 +228,7 @@ class _HtmlPresentationEditorPageState
   @override
   void initState() {
     super.initState();
+    LanguageController.instance.currentLanguage.addListener(_onLanguageChanged);
     HardwareKeyboard.instance.addHandler(_handleGlobalKeyEvent);
     FocusManager.instance.addListener(_handlePrimaryFocusChanged);
     _openedAt = DateTime.now();
@@ -323,8 +326,15 @@ class _HtmlPresentationEditorPageState
     }
   }
 
+  void _onLanguageChanged() {
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
   @override
   void dispose() {
+    LanguageController.instance.currentLanguage.removeListener(_onLanguageChanged);
     HardwareKeyboard.instance.removeHandler(_handleGlobalKeyEvent);
     FocusManager.instance.removeListener(_handlePrimaryFocusChanged);
     _editorFocusNode.dispose();
@@ -873,7 +883,10 @@ class _HtmlPresentationEditorPageState
                     _handleNextPageShortcut,
               },
         child: AnimatedBuilder(
-          animation: widget.controller,
+          animation: Listenable.merge([
+            widget.controller,
+            LanguageController.instance.currentLanguage,
+          ]),
           builder: (context, _) {
             final pageCount = widget.controller.pages.length;
             final blockCount = widget.controller.selectedPageBlockCount;
@@ -1112,7 +1125,10 @@ class _HtmlHeader extends StatelessWidget {
             ),
             const SizedBox(height: 4),
             Text(
-              'Arka plan, metin, akis ve efekt ayarlarini ayni sahnede duzenle.',
+              tr(
+                'Arka plan, metin, akış ve efekt ayarlarını aynı sahnede düzenle.',
+                'Edit background, text, layout and effects in the same slide.',
+              ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -1158,7 +1174,7 @@ class _HtmlHeader extends StatelessWidget {
       if (adminReadOnly)
         _HeaderAction(
           icon: Icons.html_rounded,
-          label: tr('HTML Disa Aktar', 'Export HTML'),
+          label: tr('HTML Dışa Aktar', 'Export HTML'),
           onTap: onExport,
         ),
       if (adminReadOnly) const _AdminReadOnlyBadge(),
@@ -1221,7 +1237,7 @@ class _HtmlHeader extends StatelessWidget {
                   children: <Widget>[
                     _MobileHeaderIconButton(
                       icon: Icons.arrow_back_rounded,
-                      tooltip: 'Geri',
+                      tooltip: tr('Geri', 'Back'),
                       size: iconSize,
                       branded: true,
                       onTap: () => Navigator.of(context).maybePop(),
@@ -1251,30 +1267,30 @@ class _HtmlHeader extends StatelessWidget {
                             branded: true,
                           ),
                         _MobileHeaderIconButton(
-                          tooltip: 'Sunum Modu',
+                          tooltip: tr('Sunum Modu', 'Presentation Mode'),
                           icon: Icons.slideshow_rounded,
                           size: iconSize,
                           branded: true,
                           onTap: onPreview,
                         ),
                         PopupMenuButton<_MobileHeaderAction>(
-                          tooltip: 'Dışa Aktar',
+                          tooltip: tr('Dışa Aktar', 'Export'),
                           padding: EdgeInsets.zero,
                           onSelected: handleAction,
                           itemBuilder: (context) =>
                               <PopupMenuEntry<_MobileHeaderAction>>[
                             PopupMenuItem<_MobileHeaderAction>(
                               value: _MobileHeaderAction.exportHtml,
-                              child: const ListTile(
-                                leading: Icon(Icons.html_rounded),
-                                title: Text('HTML Dışa Aktar'),
+                              child: ListTile(
+                                leading: const Icon(Icons.html_rounded),
+                                title: Text(tr('HTML Dışa Aktar', 'Export HTML')),
                               ),
                             ),
                             PopupMenuItem<_MobileHeaderAction>(
                               value: _MobileHeaderAction.exportPdf,
-                              child: const ListTile(
-                                leading: Icon(Icons.picture_as_pdf_rounded),
-                                title: Text('PDF Olarak Yazdır'),
+                              child: ListTile(
+                                leading: const Icon(Icons.picture_as_pdf_rounded),
+                                title: Text(tr('PDF Olarak Yazdır', 'Print as PDF')),
                               ),
                             ),
                           ],
@@ -1290,31 +1306,31 @@ class _HtmlHeader extends StatelessWidget {
                           const _AdminReadOnlyBadge(compact: true)
                         else
                           PopupMenuButton<_MobileHeaderAction>(
-                            tooltip: 'Diğer işlemler',
+                            tooltip: tr('Diğer işlemler', 'More actions'),
                             padding: EdgeInsets.zero,
                             onSelected: handleAction,
                             itemBuilder: (context) =>
                                 <PopupMenuEntry<_MobileHeaderAction>>[
                               PopupMenuItem<_MobileHeaderAction>(
                                 value: _MobileHeaderAction.settings,
-                                child: const ListTile(
-                                  leading: Icon(Icons.settings_outlined),
-                                  title: Text('Ayarlar'),
+                                child: ListTile(
+                                  leading: const Icon(Icons.settings_outlined),
+                                  title: Text(tr('Ayarlar', 'Settings')),
                                 ),
                               ),
                               const PopupMenuDivider(),
                               PopupMenuItem<_MobileHeaderAction>(
                                 value: _MobileHeaderAction.save,
-                                child: const ListTile(
-                                  leading: Icon(Icons.save_alt_rounded),
-                                  title: Text('Projeyi Kaydet'),
+                                child: ListTile(
+                                  leading: const Icon(Icons.save_alt_rounded),
+                                  title: Text(tr('Projeyi Kaydet', 'Save Project')),
                                 ),
                               ),
                               PopupMenuItem<_MobileHeaderAction>(
                                 value: _MobileHeaderAction.load,
-                                child: const ListTile(
-                                  leading: Icon(Icons.upload_file_rounded),
-                                  title: Text('Proje Yükle'),
+                                child: ListTile(
+                                  leading: const Icon(Icons.upload_file_rounded),
+                                  title: Text(tr('Proje Yükle', 'Load Project')),
                                 ),
                               ),
                             ],
@@ -1346,7 +1362,7 @@ class _HtmlHeader extends StatelessWidget {
             if (adminReadOnly)
               _HeaderAction(
                 icon: Icons.html_rounded,
-                label: tr('HTML Disa Aktar', 'Export HTML'),
+                label: tr('HTML Dışa Aktar', 'Export HTML'),
                 onTap: onExport,
                 branded: true,
               ),
@@ -3170,7 +3186,7 @@ class _HistoryButtons extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
           IconButton(
-            tooltip: 'Geri al',
+            tooltip: tr('Geri al', 'Undo'),
             onPressed: canUndo ? onUndo : null,
             icon: Icon(
               Icons.undo_rounded,
@@ -3178,7 +3194,7 @@ class _HistoryButtons extends StatelessWidget {
             ),
           ),
           IconButton(
-            tooltip: 'Yinele',
+            tooltip: tr('Yinele', 'Redo'),
             onPressed: canRedo ? onRedo : null,
             icon: Icon(
               Icons.redo_rounded,
@@ -3264,7 +3280,7 @@ class _MobileHistoryButtons extends StatelessWidget {
       children: <Widget>[
         _MobileHeaderIconButton(
           icon: Icons.undo_rounded,
-          tooltip: 'Geri al',
+          tooltip: tr('Geri al', 'Undo'),
           enabled: canUndo,
           onTap: onUndo,
           size: size,
@@ -3272,7 +3288,7 @@ class _MobileHistoryButtons extends StatelessWidget {
         ),
         _MobileHeaderIconButton(
           icon: Icons.redo_rounded,
-          tooltip: 'Yinele',
+          tooltip: tr('Yinele', 'Redo'),
           enabled: canRedo,
           onTap: onRedo,
           size: size,
@@ -3346,7 +3362,7 @@ class _HtmlStudioHeader extends StatelessWidget {
       child: Row(
         children: <Widget>[
           IconButton(
-            tooltip: 'Geri',
+            tooltip: tr('Geri', 'Back'),
             onPressed: () => Navigator.of(context).maybePop(),
             icon: const Icon(
               Icons.arrow_back_rounded,
@@ -3415,8 +3431,8 @@ class _HtmlStudioHeader extends StatelessWidget {
             children: <Widget>[
               Text(
                 lastEditorLabel == null || lastEditorLabel!.isEmpty
-                    ? 'Kaydedildi'
-                    : 'Kaydedildi · $lastEditorLabel',
+                    ? tr('Kaydedildi', 'Saved')
+                    : '${tr('Kaydedildi', 'Saved')} · $lastEditorLabel',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: _studioHeaderMuted,
                       fontWeight: FontWeight.w700,
@@ -3502,7 +3518,7 @@ class _HeaderBrandMark extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.colors;
     return PopupMenuButton<_HeaderBrandMenuAction>(
-      tooltip: 'Sutols menüsü',
+      tooltip: tr('Sutols menüsü', 'Sutols menu'),
       position: PopupMenuPosition.under,
       offset: const Offset(0, 6),
       color: colors.surfaceElevated,
@@ -3541,7 +3557,7 @@ class _HeaderBrandMark extends StatelessWidget {
       child: Semantics(
         key: showLabel ? null : const ValueKey<String>('sutols-wordmark'),
         button: true,
-        label: 'Sutols menüsünü aç',
+        label: tr('Sutols menüsünü aç', 'Open Sutols menu'),
         child: SizedBox(
           height: size,
           child: Padding(
@@ -3762,7 +3778,7 @@ class _StudioPreviewButton extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               Text(
-                'Sunum Modu',
+                tr('Sunum Modu', 'Presentation Mode'),
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: _studioHeaderBrandEnd,
                       fontWeight: FontWeight.w800,
@@ -3789,7 +3805,7 @@ class _StudioSaveButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return PopupMenuButton<_FileMenuAction>(
       key: const ValueKey<String>('studio-save-button'),
-      tooltip: 'Kaydet',
+      tooltip: tr('Kaydet', 'Save'),
       onSelected: (action) {
         switch (action) {
           case _FileMenuAction.exportHtml:
@@ -3803,21 +3819,21 @@ class _StudioSaveButton extends StatelessWidget {
             break;
         }
       },
-      itemBuilder: (context) => const <PopupMenuEntry<_FileMenuAction>>[
+      itemBuilder: (context) => <PopupMenuEntry<_FileMenuAction>>[
         PopupMenuItem<_FileMenuAction>(
-          key: ValueKey<String>('save-as-html'),
+          key: const ValueKey<String>('save-as-html'),
           value: _FileMenuAction.exportHtml,
           child: ListTile(
-            leading: Icon(Icons.html_rounded),
-            title: Text('HTML formatı'),
+            leading: const Icon(Icons.html_rounded),
+            title: Text(tr('HTML formatı', 'HTML format')),
           ),
         ),
         PopupMenuItem<_FileMenuAction>(
-          key: ValueKey<String>('save-as-pdf'),
+          key: const ValueKey<String>('save-as-pdf'),
           value: _FileMenuAction.exportPdf,
           child: ListTile(
-            leading: Icon(Icons.picture_as_pdf_rounded),
-            title: Text('PDF formatı (animasyonlar çalışmaz)'),
+            leading: const Icon(Icons.picture_as_pdf_rounded),
+            title: Text(tr('PDF formatı (animasyonlar çalışmaz)', 'PDF format (animations disabled)')),
           ),
         ),
       ],
@@ -3836,7 +3852,7 @@ class _StudioSaveButton extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               Text(
-                'Kaydet',
+                tr('Kaydet', 'Save'),
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: _studioHeaderForeground,
                       fontWeight: FontWeight.w800,
@@ -4470,7 +4486,7 @@ class _HtmlPageSidebar extends StatelessWidget {
               children: <Widget>[
                 Expanded(
                   child: Text(
-                    'Sahneler',
+                    tr('Sahneler', 'Slides'),
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                           color: context._htmlInk,
                           fontWeight: FontWeight.w900,
@@ -4576,7 +4592,7 @@ class _HtmlPageSidebar extends StatelessWidget {
                 child: OutlinedButton.icon(
                   onPressed: controller.addPage,
                   icon: const Icon(Icons.add_rounded, size: 18),
-                  label: const Text('Yeni sahne'),
+                  label: Text(tr('Yeni sahne', 'New slide')),
                 ),
               ),
               const SizedBox(height: 6),
@@ -4585,7 +4601,7 @@ class _HtmlPageSidebar extends StatelessWidget {
                     ? controller.removeSelectedPage
                     : null,
                 icon: const Icon(Icons.delete_outline_rounded, size: 17),
-                label: const Text('Seçili sahneyi sil'),
+                label: Text(tr('Seçili sahneyi sil', 'Delete selected slide')),
               ),
             ],
           ],
@@ -4864,20 +4880,20 @@ void _showPageContextMenu(
       PopupMenuItem<String>(
         value: 'add',
         child: Row(
-          children: const <Widget>[
-            Icon(Icons.add_circle_outline_rounded, size: 18),
-            SizedBox(width: 10),
-            Text('Araya Yeni Slayt Ekle'),
+          children: <Widget>[
+            const Icon(Icons.add_circle_outline_rounded, size: 18),
+            const SizedBox(width: 10),
+            Text(tr('Araya Yeni Slayt Ekle', 'Insert New Slide')),
           ],
         ),
       ),
       PopupMenuItem<String>(
         value: 'duplicate',
         child: Row(
-          children: const <Widget>[
-            Icon(Icons.content_copy_rounded, size: 18),
-            SizedBox(width: 10),
-            Text('Slaytı Çoğalt'),
+          children: <Widget>[
+            const Icon(Icons.content_copy_rounded, size: 18),
+            const SizedBox(width: 10),
+            Text(tr('Slaytı Çoğalt', 'Duplicate Slide')),
           ],
         ),
       ),
@@ -4886,10 +4902,10 @@ void _showPageContextMenu(
         value: 'move_up',
         enabled: index > 0,
         child: Row(
-          children: const <Widget>[
-            Icon(Icons.arrow_upward_rounded, size: 18),
-            SizedBox(width: 10),
-            Text('Yukarı Taşı'),
+          children: <Widget>[
+            const Icon(Icons.arrow_upward_rounded, size: 18),
+            const SizedBox(width: 10),
+            Text(tr('Yukarı Taşı', 'Move Up')),
           ],
         ),
       ),
@@ -4897,10 +4913,10 @@ void _showPageContextMenu(
         value: 'move_down',
         enabled: index < controller.pages.length - 1,
         child: Row(
-          children: const <Widget>[
-            Icon(Icons.arrow_downward_rounded, size: 18),
-            SizedBox(width: 10),
-            Text('Aşağı Taşı'),
+          children: <Widget>[
+            const Icon(Icons.arrow_downward_rounded, size: 18),
+            const SizedBox(width: 10),
+            Text(tr('Aşağı Taşı', 'Move Down')),
           ],
         ),
       ),
@@ -4909,11 +4925,12 @@ void _showPageContextMenu(
         value: 'delete',
         enabled: controller.canRemovePage,
         child: Row(
-          children: const <Widget>[
-            Icon(Icons.delete_outline_rounded,
+          children: <Widget>[
+            const Icon(Icons.delete_outline_rounded,
                 size: 18, color: Colors.redAccent),
-            SizedBox(width: 10),
-            Text('Slaytı Sil', style: TextStyle(color: Colors.redAccent)),
+            const SizedBox(width: 10),
+            Text(tr('Slaytı Sil', 'Delete Slide'),
+                style: const TextStyle(color: Colors.redAccent)),
           ],
         ),
       ),
@@ -5594,14 +5611,14 @@ class _Html3DModelControlsState extends State<_Html3DModelControls> {
     final selectedModelId =
         widget.controller.selectedComponentBlock?.modelAssetId;
     final filtered = _filtered;
-    const categories = <(String, String)>[
-      ('', 'Tümü'),
-      ('analiz-modeli', 'Analiz Modeli'),
-      ('grafik', 'Grafik'),
-      ('diyagram', 'Diyagram'),
-      ('sembol', 'Sembol'),
-      ('ikon-3d', 'İkon 3D'),
-      ('diger', 'Diğer'),
+    final categories = <(String, String)>[
+      ('', tr('Tümü', 'All')),
+      ('analiz-modeli', tr('Analiz Modeli', 'Analysis Model')),
+      ('grafik', tr('Grafik', 'Chart')),
+      ('diyagram', tr('Diyagram', 'Diagram')),
+      ('sembol', tr('Sembol', 'Symbol')),
+      ('ikon-3d', tr('İkon 3D', '3D Icon')),
+      ('diger', tr('Diğer', 'Other')),
     ];
 
     final isExpandedMode = widget.expandResults || widget.isExpanded;
@@ -5623,6 +5640,10 @@ class _Html3DModelControlsState extends State<_Html3DModelControls> {
         children: <Widget>[
           _ModelSearchField(
             controller: _searchController,
+            hintText: tr(
+              'Model ara: isim, etiket, kategori...',
+              'Search models: name, tag, category...',
+            ),
             onChanged: (value) => setState(() => _query = value),
             onClear: () {
               _searchController.clear();
@@ -5651,8 +5672,8 @@ class _Html3DModelControlsState extends State<_Html3DModelControls> {
               children: <Widget>[
                 Text(
                   _loading
-                      ? 'Yükleniyor...'
-                      : '${filtered.length} model${_query.isNotEmpty ? ' bulundu' : ''}',
+                      ? tr('Yükleniyor...', 'Loading...')
+                      : '${filtered.length} ${tr('model', 'models')}${_query.isNotEmpty ? tr(' bulundu', ' found') : ''}',
                   style: Theme.of(context).textTheme.labelMedium?.copyWith(
                         color: context._htmlMuted,
                         fontWeight: FontWeight.w700,
@@ -5660,7 +5681,7 @@ class _Html3DModelControlsState extends State<_Html3DModelControls> {
                 ),
                 const Spacer(),
                 IconButton(
-                  tooltip: 'Yenile',
+                  tooltip: tr('Yenile', 'Refresh'),
                   iconSize: 18,
                   onPressed: _loading ? null : _load,
                   icon: const Icon(Icons.refresh_rounded),
@@ -5742,7 +5763,7 @@ class _Html3DModelControlsState extends State<_Html3DModelControls> {
               OutlinedButton.icon(
                 onPressed: _load,
                 icon: const Icon(Icons.refresh_rounded, size: 16),
-                label: const Text('Tekrar Dene'),
+                label: Text(tr('Tekrar Dene', 'Retry')),
               ),
             ],
           ),
@@ -5759,8 +5780,8 @@ class _Html3DModelControlsState extends State<_Html3DModelControls> {
             const SizedBox(height: 8),
             Text(
               _query.isEmpty && _category.isEmpty
-                  ? 'Bulutta model bulunamadı.'
-                  : 'Bu filtrelerle model bulunamadı.',
+                  ? tr('Bulutta model bulunamadı.', 'No models found in cloud.')
+                  : tr('Bu filtrelerle model bulunamadı.', 'No models found with these filters.'),
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: context._htmlMuted,
@@ -5916,7 +5937,7 @@ class _ModelSearchField extends StatelessWidget {
           ),
           if (controller.text.isNotEmpty)
             IconButton(
-              tooltip: 'Temizle',
+              tooltip: tr('Temizle', 'Clear'),
               iconSize: 16,
               visualDensity: VisualDensity.compact,
               onPressed: onClear,
@@ -5960,142 +5981,710 @@ class _HtmlPhotoControls extends StatefulWidget {
 }
 
 class _HtmlPhotoControlsState extends State<_HtmlPhotoControls> {
-  final List<_UploadedPhotoEntry> _photos = <_UploadedPhotoEntry>[];
-  bool _picking = false;
-  String? _error;
+  final _pexels = PexelsService();
+  final _searchController = TextEditingController();
+  final List<_UploadedPhotoEntry> _localPhotos = <_UploadedPhotoEntry>[];
+
+  List<PexelsPhoto> _pexelsPhotos = <PexelsPhoto>[];
+  bool _searchingPexels = false;
+  int _pexelsPage = 1;
+  int _totalPexelsResults = 0;
+  String? _currentPexelsQuery;
+  String? _pexelsError;
+
+  bool _pickingLocal = false;
+  String? _localError;
+  int _activeTab = 0; // 0: Pexels, 1: Cihazdan
 
   @override
   void initState() {
     super.initState();
     RemoteImageSources.all.forEach((id, dataUrl) {
-      _photos.add(
-        _UploadedPhotoEntry(id: id, dataUrl: dataUrl, name: id),
-      );
+      if (!id.startsWith('pexels-')) {
+        _localPhotos.add(
+          _UploadedPhotoEntry(id: id, dataUrl: dataUrl, name: id),
+        );
+      }
     });
+    _loadInitialPexels();
   }
 
-  Future<void> _pickPhoto() async {
-    if (_picking) return;
+  void _loadInitialPexels() {
+    final chips = _extractSlideKeywords();
+    if (chips.isNotEmpty) {
+      _searchController.text = chips.first;
+      _searchPexels(chips.first);
+    } else {
+      _loadCuratedPexels();
+    }
+  }
+
+  List<String> _extractSlideKeywords() {
+    final page = widget.controller.selectedPage;
+    final keywords = <String>{};
+    for (final tb in page.textBlocks) {
+      final words = tb.text
+          .split(RegExp(r'\s+'))
+          .map((w) => w.replaceAll(RegExp(r'[^\w\s\u00C0-\u017F]', unicode: true), '').trim())
+          .where((w) => w.length >= 3 && !_isStopWord(w));
+      for (final w in words.take(2)) {
+        keywords.add(w);
+      }
+    }
+    return keywords.take(5).toList();
+  }
+
+  static bool _isStopWord(String w) {
+    final l = w.toLowerCase();
+    return const {
+      've', 'veya', 'ile', 'için', 'bir', 'bu', 'şu', 'giriş', 'sonuç',
+      'özet', 'hakkında', 'nedir', 'nasıl', 'neden', 'the', 'and', 'for'
+    }.contains(l);
+  }
+
+  Future<void> _searchPexels(String query, {bool loadMore = false}) async {
+    final clean = query.trim();
+    if (clean.isEmpty) return;
+
+    final targetPage = loadMore ? (_pexelsPage + 1) : 1;
+
     setState(() {
-      _picking = true;
-      _error = null;
+      _searchingPexels = true;
+      _pexelsError = null;
+      if (!loadMore) {
+        _pexelsPage = 1;
+        _currentPexelsQuery = clean;
+      }
+    });
+
+    try {
+      final result = await _pexels.searchPhotos(
+        clean,
+        page: targetPage,
+        perPage: 12,
+        orientation: 'landscape',
+      );
+
+      if (!mounted) return;
+
+      setState(() {
+        if (result != null) {
+          _pexelsPage = targetPage;
+          if (loadMore) {
+            _pexelsPhotos.addAll(result.photos);
+          } else {
+            _pexelsPhotos = result.photos;
+          }
+          _totalPexelsResults = result.totalResults;
+        } else {
+          if (!loadMore) {
+            _pexelsPhotos = <PexelsPhoto>[];
+          }
+        }
+      });
+    } catch (e) {
+      if (mounted) setState(() => _pexelsError = '$e');
+    } finally {
+      if (mounted) setState(() => _searchingPexels = false);
+    }
+  }
+
+  Future<void> _loadCuratedPexels({bool loadMore = false}) async {
+    final targetPage = loadMore ? (_pexelsPage + 1) : 1;
+
+    setState(() {
+      _searchingPexels = true;
+      _pexelsError = null;
+      if (!loadMore) {
+        _pexelsPage = 1;
+        _currentPexelsQuery = null;
+      }
+    });
+
+    try {
+      final result = await _pexels.getCuratedPhotos(
+        page: targetPage,
+        perPage: 12,
+      );
+
+      if (!mounted) return;
+
+      setState(() {
+        if (result != null) {
+          _pexelsPage = targetPage;
+          if (loadMore) {
+            _pexelsPhotos.addAll(result.photos);
+          } else {
+            _pexelsPhotos = result.photos;
+          }
+          _totalPexelsResults = result.totalResults;
+        } else {
+          if (!loadMore) {
+            _pexelsPhotos = <PexelsPhoto>[];
+          }
+        }
+      });
+    } catch (e) {
+      if (mounted) setState(() => _pexelsError = '$e');
+    } finally {
+      if (mounted) setState(() => _searchingPexels = false);
+    }
+  }
+
+  void _addPexelsPhotoToSlide(PexelsPhoto photo) {
+    RemoteImageSources.register(photo.sourceId, photo.bestDisplayUrl);
+    widget.controller.addUploadedImageBlock(
+      photo.sourceId,
+      aspectRatio: photo.aspectRatio,
+    );
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Pexels görseli slayta eklendi (${photo.photographer})'),
+        duration: const Duration(seconds: 2),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
+  Future<void> _pickLocalPhoto() async {
+    if (_pickingLocal) return;
+    setState(() {
+      _pickingLocal = true;
+      _localError = null;
     });
     try {
       final entry = await pickLocalPhotoIntoController(widget.controller);
       if (entry == null) return;
       if (!mounted) return;
-      setState(() => _photos.add(entry));
+      setState(() => _localPhotos.add(entry));
     } catch (e) {
       if (!mounted) return;
-      setState(() => _error = '$e');
+      setState(() => _localError = '$e');
     } finally {
-      if (mounted) setState(() => _picking = false);
+      if (mounted) setState(() => _pickingLocal = false);
     }
   }
 
-  void _removePhoto(_UploadedPhotoEntry photo) {
+  void _removeLocalPhoto(_UploadedPhotoEntry photo) {
     RemoteImageSources.remove(photo.id);
     setState(() {
-      _photos.removeWhere((entry) => entry.id == photo.id);
-      if (_error != null && !_photos.any((e) => e.id == photo.id)) {
-        _error = null;
+      _localPhotos.removeWhere((entry) => entry.id == photo.id);
+      if (_localError != null && !_localPhotos.any((e) => e.id == photo.id)) {
+        _localError = null;
       }
     });
   }
 
   @override
   void dispose() {
+    _searchController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final chips = _extractSlideKeywords();
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
+        // Segmented Tab Toggle
         Container(
-          padding: const EdgeInsets.all(14),
+          padding: const EdgeInsets.all(4),
           decoration: BoxDecoration(
-            color: context.sutolColors.surface,
-            borderRadius: BorderRadius.circular(16),
+            color: context.sutolColors.surfaceSubtle,
+            borderRadius: BorderRadius.circular(12),
             border: Border.all(color: context.sutolColors.outline),
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
+          child: Row(
             children: <Widget>[
-              _ToolbarBadge(
-                icon: Icons.add_photo_alternate_rounded,
-                label: 'Fotoğraf Yükle',
+              Expanded(
+                child: InkWell(
+                  onTap: () => setState(() => _activeTab = 0),
+                  borderRadius: BorderRadius.circular(8),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    decoration: BoxDecoration(
+                      color: _activeTab == 0
+                          ? context.sutolColors.surface
+                          : Colors.transparent,
+                      borderRadius: BorderRadius.circular(8),
+                      boxShadow: _activeTab == 0
+                          ? <BoxShadow>[
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.06),
+                                blurRadius: 4,
+                                offset: const Offset(0, 1),
+                              ),
+                            ]
+                          : null,
+                    ),
+                    alignment: Alignment.center,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: <Widget>[
+                        Icon(
+                          Icons.image_search_rounded,
+                          size: 16,
+                          color: _activeTab == 0
+                              ? context._htmlAccent
+                              : context._htmlMuted,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          tr('Pexels Stok', 'Pexels Stock'),
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w800,
+                            color: _activeTab == 0
+                                ? context._htmlInk
+                                : context._htmlMuted,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
               ),
-              const SizedBox(height: 12),
-              OutlinedButton.icon(
-                onPressed: _picking ? null : _pickPhoto,
-                icon: _picking
-                    ? const SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : Icon(
-                        Icons.upload_rounded,
-                        size: 18,
-                        color: context._htmlAccent,
+              Expanded(
+                child: InkWell(
+                  onTap: () => setState(() => _activeTab = 1),
+                  borderRadius: BorderRadius.circular(8),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    decoration: BoxDecoration(
+                      color: _activeTab == 1
+                          ? context.sutolColors.surface
+                          : Colors.transparent,
+                      borderRadius: BorderRadius.circular(8),
+                      boxShadow: _activeTab == 1
+                          ? <BoxShadow>[
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.06),
+                                blurRadius: 4,
+                                offset: const Offset(0, 1),
+                              ),
+                            ]
+                          : null,
+                    ),
+                    alignment: Alignment.center,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: <Widget>[
+                        Icon(
+                          Icons.upload_file_rounded,
+                          size: 16,
+                          color: _activeTab == 1
+                              ? context._htmlAccent
+                              : context._htmlMuted,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          '${tr('Cihazdan', 'From Device')} (${_localPhotos.length})',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w800,
+                            color: _activeTab == 1
+                                ? context._htmlInk
+                                : context._htmlMuted,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
+
+        if (_activeTab == 0) ...<Widget>[
+          // Pexels Search Box
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+            decoration: BoxDecoration(
+              color: context.sutolColors.surface,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: context.sutolColors.outline),
+            ),
+            child: Row(
+              children: <Widget>[
+                Icon(
+                  Icons.search_rounded,
+                  size: 20,
+                  color: context._htmlMuted,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: TextField(
+                    controller: _searchController,
+                    textInputAction: TextInputAction.search,
+                    onSubmitted: (val) => _searchPexels(val),
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: context._htmlInk,
+                    ),
+                    decoration: InputDecoration(
+                      hintText: tr(
+                        'Pexels görseli ara (örn. teknoloji, uzay)...',
+                        'Search Pexels photos (e.g. tech, space)...',
                       ),
-                label: Text(
-                    _picking ? 'Yükleniyor...' : 'Cihazdan Fotoğraf Yükle'),
+                      hintStyle: TextStyle(
+                        fontSize: 13,
+                        color: context._htmlMuted,
+                      ),
+                      border: InputBorder.none,
+                      isDense: true,
+                      contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                    ),
+                  ),
+                ),
+                if (_searchController.text.isNotEmpty)
+                  IconButton(
+                    icon: const Icon(Icons.clear_rounded, size: 16),
+                    visualDensity: VisualDensity.compact,
+                    onPressed: () {
+                      _searchController.clear();
+                      _loadCuratedPexels();
+                    },
+                  ),
+                IconButton(
+                  icon: _searchingPexels
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : Icon(
+                          Icons.arrow_forward_rounded,
+                          size: 18,
+                          color: context._htmlAccent,
+                        ),
+                  visualDensity: VisualDensity.compact,
+                  onPressed: _searchingPexels
+                      ? null
+                      : () => _searchPexels(_searchController.text),
+                ),
+              ],
+            ),
+          ),
+
+          // Suggestion Chips from Slide
+          if (chips.isNotEmpty) ...<Widget>[
+            const SizedBox(height: 10),
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: <Widget>[
+                  Text(
+                    tr('Önerilen:', 'Suggested:'),
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: context._htmlMuted,
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  for (final chip in chips)
+                    Padding(
+                      padding: const EdgeInsets.only(right: 6),
+                      child: ActionChip(
+                        label: Text(
+                          chip,
+                          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
+                        ),
+                        padding: EdgeInsets.zero,
+                        visualDensity: VisualDensity.compact,
+                        onPressed: () {
+                          _searchController.text = chip;
+                          _searchPexels(chip);
+                        },
+                      ),
+                    ),
+                ],
               ),
-              const SizedBox(height: 8),
-              Text(
-                'PNG, JPG, WebP, GIF. En fazla 6 MB.',
+            ),
+          ],
+
+          const SizedBox(height: 12),
+
+          // Pexels Results List
+          if (_searchingPexels && _pexelsPhotos.isEmpty)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 36),
+              child: Center(
+                child: CircularProgressIndicator(),
+              ),
+            )
+          else if (_pexelsPhotos.isEmpty)
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: context.sutolColors.surface,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: context.sutolColors.outline),
+              ),
+              child: Column(
+                children: <Widget>[
+                  Icon(
+                    Icons.photo_library_outlined,
+                    size: 36,
+                    color: context._htmlMuted,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    _pexelsError ??
+                        tr(
+                          'Aramanıza uygun Pexels fotoğrafı bulunamadı.',
+                          'No Pexels photos found matching your search.',
+                        ),
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: context._htmlMuted,
+                          fontWeight: FontWeight.w600,
+                        ),
+                  ),
+                ],
+              ),
+            )
+          else ...<Widget>[
+            for (final photo in _pexelsPhotos)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: _PexelsPhotoCard(
+                  photo: photo,
+                  onAdd: () => _addPexelsPhotoToSlide(photo),
+                ),
+              ),
+
+            if (_totalPexelsResults > _pexelsPhotos.length)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: OutlinedButton.icon(
+                  onPressed: _searchingPexels
+                      ? null
+                      : () {
+                          if (_currentPexelsQuery != null) {
+                            _searchPexels(_currentPexelsQuery!, loadMore: true);
+                          } else {
+                            _loadCuratedPexels(loadMore: true);
+                          }
+                        },
+                  icon: _searchingPexels
+                      ? const SizedBox(
+                          width: 14,
+                          height: 14,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.expand_more_rounded, size: 18),
+                  label: Text(tr('Daha Fazla Göster', 'Show More')),
+                ),
+              ),
+          ],
+        ] else ...<Widget>[
+          // Local Upload View
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: context.sutolColors.surface,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: context.sutolColors.outline),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: <Widget>[
+                _ToolbarBadge(
+                  icon: Icons.add_photo_alternate_rounded,
+                  label: tr('Fotoğraf Yükle', 'Upload Photo'),
+                ),
+                const SizedBox(height: 12),
+                OutlinedButton.icon(
+                  onPressed: _pickingLocal ? null : _pickLocalPhoto,
+                  icon: _pickingLocal
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : Icon(
+                          Icons.upload_rounded,
+                          size: 18,
+                          color: context._htmlAccent,
+                        ),
+                  label: Text(
+                    _pickingLocal
+                        ? tr('Yükleniyor...', 'Uploading...')
+                        : tr('Cihazdan Fotoğraf Yükle', 'Upload Photo from Device'),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  tr(
+                    'PNG, JPG, WebP, GIF. En fazla 6 MB.',
+                    'PNG, JPG, WebP, GIF. Max 6 MB.',
+                  ),
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: context._htmlMuted,
+                        fontWeight: FontWeight.w600,
+                      ),
+                ),
+                if (_localError != null) ...<Widget>[
+                  const SizedBox(height: 8),
+                  Text(
+                    _localError!,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: context._htmlAccent,
+                          fontWeight: FontWeight.w700,
+                        ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          const SizedBox(height: 14),
+          _ToolbarBadge(
+            icon: Icons.photo_library_rounded,
+            label: '${tr('Yüklenen Fotoğraflar', 'Uploaded Photos')} (${_localPhotos.length})',
+          ),
+          const SizedBox(height: 10),
+          if (_localPhotos.isEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 18),
+              child: Text(
+                tr(
+                  'Henüz yerel fotoğraf yüklemedin. Bir fotoğraf seç, otomatik olarak slayta eklenir.',
+                  'You haven\'t uploaded any photos yet. Select a photo to automatically add to slide.',
+                ),
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: context._htmlMuted,
                       fontWeight: FontWeight.w600,
                     ),
               ),
-              if (_error != null) ...<Widget>[
-                const SizedBox(height: 8),
-                Text(
-                  _error!,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: context._htmlAccent,
-                        fontWeight: FontWeight.w700,
-                      ),
+            )
+          else
+            for (final photo in _localPhotos)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: _UploadedPhotoCard(
+                  photo: photo,
+                  onAdd: () => widget.controller.addUploadedImageBlock(
+                    photo.id,
+                    aspectRatio: photo.aspectRatio,
+                  ),
+                  onRemove: () => _removeLocalPhoto(photo),
                 ),
-              ],
+              ),
+        ],
+      ],
+    );
+  }
+}
+
+/// Pexels Görsel Kartı (Küçük tıklanabilir Pexels bağlantısı ve fotoğrafçı adı ile)
+class _PexelsPhotoCard extends StatelessWidget {
+  const _PexelsPhotoCard({
+    required this.photo,
+    required this.onAdd,
+  });
+
+  final PexelsPhoto photo;
+  final VoidCallback onAdd;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: context.sutolColors.surface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: context.sutolColors.outline),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          Stack(
+            children: <Widget>[
+              AspectRatio(
+                aspectRatio: photo.aspectRatio.clamp(1.3, 2.2),
+                child: Image.network(
+                  photo.thumbnailDisplayUrl,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => Container(
+                    color: context.sutolColors.surfaceSubtle,
+                    alignment: Alignment.center,
+                    child: const Icon(Icons.image_not_supported_rounded),
+                  ),
+                ),
+              ),
+              Positioned(
+                top: 8,
+                right: 8,
+                child: FilledButton.icon(
+                  onPressed: onAdd,
+                  style: FilledButton.styleFrom(
+                    backgroundColor: Colors.black.withValues(alpha: 0.75),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    visualDensity: VisualDensity.compact,
+                  ),
+                  icon: const Icon(Icons.add_rounded, size: 16),
+                  label: Text(
+                    tr('Slayta Ekle', 'Add to Slide'),
+                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+                  ),
+                ),
+              ),
             ],
           ),
-        ),
-        const SizedBox(height: 14),
-        _ToolbarBadge(
-          icon: Icons.photo_library_rounded,
-          label: 'Yüklenen Fotoğraflar (${_photos.length})',
-        ),
-        const SizedBox(height: 10),
-        if (_photos.isEmpty)
           Padding(
-            padding: const EdgeInsets.symmetric(vertical: 18),
-            child: Text(
-              'Henüz fotoğraf yüklemedin. Bir fotoğraf seç, otomatik olarak slayta eklenir.',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: context._htmlMuted,
-                    fontWeight: FontWeight.w600,
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+            child: Row(
+              children: <Widget>[
+                Expanded(
+                  child: Text(
+                    photo.photographer,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                          color: context._htmlInk,
+                          fontWeight: FontWeight.w700,
+                        ),
                   ),
-            ),
-          )
-        else
-          for (final photo in _photos)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 10),
-              child: _UploadedPhotoCard(
-                photo: photo,
-                onAdd: () => widget.controller.addUploadedImageBlock(
-                  photo.id,
-                  aspectRatio: photo.aspectRatio,
                 ),
-                onRemove: () => _removePhoto(photo),
-              ),
+                const SizedBox(width: 8),
+                InkWell(
+                  onTap: () => UrlLauncherService.openUrl(photo.url),
+                  borderRadius: BorderRadius.circular(4),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: <Widget>[
+                        Text(
+                          'Pexels',
+                          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                color: context._htmlAccent,
+                                fontWeight: FontWeight.w800,
+                                decoration: TextDecoration.underline,
+                              ),
+                        ),
+                        const SizedBox(width: 3),
+                        Icon(
+                          Icons.open_in_new_rounded,
+                          size: 11,
+                          color: context._htmlAccent,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             ),
-      ],
+          ),
+        ],
+      ),
     );
   }
 }
@@ -6171,7 +6760,7 @@ class _UploadedPhotoCard extends StatelessWidget {
                 Text(
                   photo.sizeBytes > 0
                       ? '${(photo.sizeBytes / 1024).toStringAsFixed(0)} KB'
-                      : 'Oturum fotografı',
+                      : tr('Oturum fotoğrafı', 'Session photo'),
                   style: Theme.of(context).textTheme.labelSmall?.copyWith(
                         color: context._htmlMuted,
                         fontWeight: FontWeight.w700,
@@ -6181,13 +6770,13 @@ class _UploadedPhotoCard extends StatelessWidget {
             ),
           ),
           IconButton(
-            tooltip: 'Slayta Ekle',
+            tooltip: tr('Slayta Ekle', 'Add to Slide'),
             onPressed: onAdd,
             visualDensity: VisualDensity.compact,
             icon: const Icon(Icons.add_circle_outline_rounded),
           ),
           IconButton(
-            tooltip: 'Kaldır',
+            tooltip: tr('Kaldır', 'Remove'),
             onPressed: onRemove,
             visualDensity: VisualDensity.compact,
             icon: const Icon(Icons.delete_outline_rounded),
@@ -7256,10 +7845,10 @@ class _HtmlBackgroundControlsState extends State<_HtmlBackgroundControls> {
           children: <Widget>[
             Row(
               children: <Widget>[
-                const Expanded(
+                Expanded(
                   child: _ToolbarBadge(
                     icon: Icons.wallpaper_rounded,
-                    label: 'Sutols Sahne Koleksiyonu',
+                    label: tr('Sutols Sahne Koleksiyonu', 'Sutols Scene Collection'),
                   ),
                 ),
                 const SizedBox(width: 10),
@@ -7271,7 +7860,7 @@ class _HtmlBackgroundControlsState extends State<_HtmlBackgroundControls> {
                     borderRadius: BorderRadius.circular(999),
                   ),
                   child: Text(
-                    '${sutolStudioBackgroundLibrary.length} tema',
+                    '${sutolStudioBackgroundLibrary.length} ${tr('tema', 'themes')}',
                     style: Theme.of(context).textTheme.labelSmall?.copyWith(
                           color: context._htmlAccent,
                           fontWeight: FontWeight.w900,
@@ -7282,7 +7871,10 @@ class _HtmlBackgroundControlsState extends State<_HtmlBackgroundControls> {
             ),
             const SizedBox(height: 10),
             Text(
-              'Sunum metnini öne çıkaran, hareketli ve çevrimdışı HTML sahneleri.',
+              tr(
+                'Sunum metnini öne çıkaran, hareketli ve çevrimdışı HTML sahneleri.',
+                'Animated and offline HTML scenes that make your text stand out.',
+              ),
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: context._htmlMuted,
                     fontWeight: FontWeight.w600,
@@ -7291,7 +7883,10 @@ class _HtmlBackgroundControlsState extends State<_HtmlBackgroundControls> {
             const SizedBox(height: 14),
             _ModelSearchField(
               controller: _searchController,
-              hintText: 'Tema ara: teknoloji, sağlık, eğitim...',
+              hintText: tr(
+                'Tema ara: teknoloji, sağlık, eğitim...',
+                'Search themes: technology, health, education...',
+              ),
               onChanged: (value) => setState(() => _query = value),
               onClear: () {
                 _searchController.clear();
@@ -7304,7 +7899,10 @@ class _HtmlBackgroundControlsState extends State<_HtmlBackgroundControls> {
                 padding: const EdgeInsets.symmetric(vertical: 28),
                 child: Center(
                   child: Text(
-                    'Bu aramayla eşleşen tema bulunamadı.',
+                    tr(
+                      'Bu aramayla eşleşen tema bulunamadı.',
+                      'No themes found matching this search.',
+                    ),
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: context._htmlMuted,
                           fontWeight: FontWeight.w700,
@@ -8022,7 +8620,7 @@ class _TextColorPickerPanelState extends State<_TextColorPickerPanel> {
               mainAxisSize: MainAxisSize.min,
               children: <Widget>[
                 Text(
-                  'HEX Renk Kodu',
+                  tr('HEX Renk Kodu', 'HEX Color Code'),
                   style: Theme.of(context).textTheme.labelSmall?.copyWith(
                         color: context._htmlMuted,
                         fontSize: 10,
@@ -8038,7 +8636,7 @@ class _TextColorPickerPanelState extends State<_TextColorPickerPanel> {
                         fontFamily: 'monospace',
                       ),
                   decoration: InputDecoration(
-                    hintText: 'Otomatik (#HEX)',
+                    hintText: tr('Otomatik (#HEX)', 'Automatic (#HEX)'),
                     hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           color: context._htmlMuted,
                           fontStyle: FontStyle.italic,
@@ -8055,7 +8653,7 @@ class _TextColorPickerPanelState extends State<_TextColorPickerPanel> {
           ),
           if (!_isAuto)
             IconButton(
-              tooltip: 'Otomatik renge sıfırla',
+              tooltip: tr('Otomatik renge sıfırla', 'Reset to automatic color'),
               icon: const Icon(Icons.refresh_rounded, size: 18),
               onPressed: _selectAuto,
               visualDensity: VisualDensity.compact,
@@ -8330,7 +8928,7 @@ class _HtmlTextControlsState extends State<_HtmlTextControls> {
           key: const ValueKey<String>('add-text-box-button'),
           onPressed: controller.addTextBlock,
           icon: const Icon(Icons.add_rounded, size: 21),
-          label: const Text('Metin Kutusu Ekle'),
+          label: Text(tr('Metin Kutusu Ekle', 'Add Text Box')),
           style: FilledButton.styleFrom(
             minimumSize: const Size.fromHeight(48),
             backgroundColor: context._htmlAccent,
@@ -8346,7 +8944,7 @@ class _HtmlTextControlsState extends State<_HtmlTextControls> {
         const SizedBox(height: 14),
         if (selectedTextCount > 1) ...<Widget>[
           Text(
-            '$selectedTextCount metin seçili',
+            '$selectedTextCount ${tr('metin seçili', 'texts selected')}',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: context._htmlMuted,
                   fontWeight: FontWeight.w700,
@@ -8361,7 +8959,7 @@ class _HtmlTextControlsState extends State<_HtmlTextControls> {
         ),
         const SizedBox(height: 18),
         Text(
-          'Metin Rengi',
+          tr('Metin Rengi', 'Text Color'),
           style: Theme.of(context).textTheme.titleMedium?.copyWith(
                 color: context._htmlInk,
                 fontWeight: FontWeight.w800,
@@ -8374,7 +8972,7 @@ class _HtmlTextControlsState extends State<_HtmlTextControls> {
         ),
         const SizedBox(height: 18),
         Text(
-          'Yazı Tipleri',
+          tr('Yazı Tipleri', 'Fonts'),
           style: Theme.of(context).textTheme.titleMedium?.copyWith(
                 color: context._htmlInk,
                 fontWeight: FontWeight.w800,
@@ -8383,7 +8981,10 @@ class _HtmlTextControlsState extends State<_HtmlTextControls> {
         const SizedBox(height: 10),
         _ModelSearchField(
           controller: _fontSearchController,
-          hintText: 'Yazı tipi ara: klasik, serif, kaligrafi...',
+          hintText: tr(
+            'Yazı tipi ara: klasik, serif, kaligrafi...',
+            'Search fonts: classic, serif, calligraphy...',
+          ),
           onChanged: (value) => setState(() => _fontQuery = value),
           onClear: _clearFontSearch,
         ),
@@ -8392,7 +8993,7 @@ class _HtmlTextControlsState extends State<_HtmlTextControls> {
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 12),
             child: Text(
-              'Eşleşen yazı tipi bulunamadı.',
+              tr('Eşleşen yazı tipi bulunamadı.', 'No matching fonts found.'),
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: context._htmlMuted,
                     fontWeight: FontWeight.w700,
@@ -8495,7 +9096,7 @@ class _TextFieldControl extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return _ControlFieldShell(
-      label: 'Metin',
+      label: tr('Metin', 'Text'),
       child: TextField(
         controller: controller,
         enabled: enabled,
@@ -8504,7 +9105,10 @@ class _TextFieldControl extends StatelessWidget {
           color: context._htmlInk,
           fontWeight: FontWeight.w700,
         ),
-        decoration: _inputDecoration(context, 'Buraya metin yazın'),
+        decoration: _inputDecoration(
+          context,
+          tr('Buraya metin yazın', 'Type text here'),
+        ),
       ),
     );
   }
@@ -9100,7 +9704,9 @@ class _SelectionContextBarSection extends StatelessWidget {
         icon: animationEnabled
             ? Icons.motion_photos_on_rounded
             : Icons.motion_photos_off_rounded,
-        label: animationEnabled ? 'Animasyon Açık' : 'Animasyon Kapalı',
+        label: animationEnabled
+            ? tr('Animasyon Açık', 'Animation On')
+            : tr('Animasyon Kapalı', 'Animation Off'),
         active: animationEnabled,
         onTap: () => controller.updateSelectedBackgroundAnimationEnabled(
           !animationEnabled,
@@ -9126,7 +9732,7 @@ class _SelectionContextBarSection extends StatelessWidget {
       const MiniToolDivider(),
       MiniToolAction(
         icon: Icons.remove_rounded,
-        tooltip: 'Yazı Boyutunu Küçült',
+        tooltip: tr('Yazı Boyutunu Küçült', 'Decrease Font Size'),
         onTap: block.fontSize > 18
             ? () => controller.updateSelectedFontSize(
                   math.max(18, block.fontSize - 2),
@@ -9137,7 +9743,7 @@ class _SelectionContextBarSection extends StatelessWidget {
         width: 32,
         child: Center(
           child: Tooltip(
-            message: 'Yazı Boyutu',
+            message: tr('Yazı Boyutu', 'Font Size'),
             child: Text(
               '${block.fontSize.round()}',
               style: Theme.of(context).textTheme.labelLarge?.copyWith(
@@ -9150,7 +9756,7 @@ class _SelectionContextBarSection extends StatelessWidget {
       ),
       MiniToolAction(
         icon: Icons.add_rounded,
-        tooltip: 'Yazı Boyutunu Büyüt',
+        tooltip: tr('Yazı Boyutunu Büyüt', 'Increase Font Size'),
         onTap: block.fontSize < PresentationController.maxTextFontSize
             ? () => controller.updateSelectedFontSize(
                   math.min(
@@ -9163,19 +9769,19 @@ class _SelectionContextBarSection extends StatelessWidget {
       const MiniToolDivider(),
       MiniToolToggle(
         icon: Icons.format_bold_rounded,
-        tooltip: 'Kalın',
+        tooltip: tr('Kalın', 'Bold'),
         active: block.textBold,
         onTap: () => controller.updateSelectedTextBold(!block.textBold),
       ),
       MiniToolToggle(
         icon: Icons.format_italic_rounded,
-        tooltip: 'İtalik',
+        tooltip: tr('İtalik', 'Italic'),
         active: block.textItalic,
         onTap: () => controller.updateSelectedTextItalic(!block.textItalic),
       ),
       MiniToolToggle(
         icon: Icons.format_underline_rounded,
-        tooltip: 'Altı Çizili',
+        tooltip: tr('Altı Çizili', 'Underline'),
         active: block.textUnderline,
         onTap: () =>
             controller.updateSelectedTextUnderline(!block.textUnderline),
@@ -9183,21 +9789,21 @@ class _SelectionContextBarSection extends StatelessWidget {
       const MiniToolDivider(),
       MiniToolToggle(
         icon: Icons.format_align_left_rounded,
-        tooltip: 'Sola Hizala',
+        tooltip: tr('Sola Hizala', 'Align Left'),
         active: block.textAlign == PresentationTextAlign.left,
         onTap: () =>
             controller.updateSelectedTextAlign(PresentationTextAlign.left),
       ),
       MiniToolToggle(
         icon: Icons.format_align_center_rounded,
-        tooltip: 'Ortala',
+        tooltip: tr('Ortala', 'Align Center'),
         active: block.textAlign == PresentationTextAlign.center,
         onTap: () =>
             controller.updateSelectedTextAlign(PresentationTextAlign.center),
       ),
       MiniToolToggle(
         icon: Icons.format_align_right_rounded,
-        tooltip: 'Sağa Hizala',
+        tooltip: tr('Sağa Hizala', 'Align Right'),
         active: block.textAlign == PresentationTextAlign.right,
         onTap: () =>
             controller.updateSelectedTextAlign(PresentationTextAlign.right),
@@ -9225,7 +9831,7 @@ class _SelectionContextBarSection extends StatelessWidget {
     return <Widget>[
       MiniToolLabeledToggle(
         icon: Icons.autorenew_rounded,
-        label: 'Kendi Etrafında Dönme',
+        label: tr('Kendi Etrafında Dönme', 'Auto Rotate'),
         active: block.modelAutoRotate,
         onTap: () =>
             controller.updateSelectedModelAutoRotate(!block.modelAutoRotate),
@@ -9235,7 +9841,7 @@ class _SelectionContextBarSection extends StatelessWidget {
       if (block.modelAutoRotate) ...<Widget>[
         const SizedBox(width: 4),
         Tooltip(
-          message: 'Dönme Hızı',
+          message: tr('Dönme Hızı', 'Rotation Speed'),
           child: Container(
             height: 34,
             padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -9274,7 +9880,7 @@ class _SelectionContextBarSection extends StatelessWidget {
                 SizedBox(
                   width: 44,
                   child: Text(
-                    '${block.modelRotationSpeed.round()}°/sn',
+                    '${block.modelRotationSpeed.round()}°/${tr('sn', 's')}',
                     textAlign: TextAlign.end,
                     style: Theme.of(context).textTheme.labelSmall?.copyWith(
                           fontWeight: FontWeight.w700,
@@ -9290,7 +9896,7 @@ class _SelectionContextBarSection extends StatelessWidget {
       const SizedBox(width: 4),
       MiniToolLabeledToggle(
         icon: Icons.movie_rounded,
-        label: 'Model Animasyonu',
+        label: tr('Model Animasyonu', 'Model Animation'),
         active: block.modelAnimationEnabled,
         onTap: () => controller
             .updateSelectedModelAnimationEnabled(!block.modelAnimationEnabled),
@@ -9298,7 +9904,7 @@ class _SelectionContextBarSection extends StatelessWidget {
       const SizedBox(width: 4),
       MiniToolLabeledToggle(
         icon: Icons.open_with_rounded,
-        label: 'Manuel Kontrol',
+        label: tr('Manuel Kontrol', 'Manual Control'),
         active: block.modelOrbitEnabled,
         onTap: () => controller
             .updateSelectedModelOrbitEnabled(!block.modelOrbitEnabled),
@@ -9310,18 +9916,18 @@ class _SelectionContextBarSection extends StatelessWidget {
     return <Widget>[
       MiniToolAction(
         icon: Icons.flip_to_front_rounded,
-        tooltip: 'Öne Getir',
+        tooltip: tr('Öne Getir', 'Bring to Front'),
         onTap: () => controller.moveSelectedComponentLayer(forward: true),
       ),
       MiniToolAction(
         icon: Icons.flip_to_back_rounded,
-        tooltip: 'Arkaya Gönder',
+        tooltip: tr('Arkaya Gönder', 'Send to Back'),
         onTap: () => controller.moveSelectedComponentLayer(forward: false),
       ),
       const MiniToolDivider(),
       MiniToolAction(
         icon: Icons.delete_outline_rounded,
-        tooltip: 'Sil',
+        tooltip: tr('Sil', 'Delete'),
         onTap: controller.removeSelectedComponentBlock,
       ),
     ];
@@ -9329,26 +9935,26 @@ class _SelectionContextBarSection extends StatelessWidget {
 
   List<Widget> _imageChildren() {
     return <Widget>[
-      const MiniToolAction(
+      MiniToolAction(
         icon: Icons.photo_rounded,
-        tooltip: 'Fotoğraf',
+        tooltip: tr('Fotoğraf', 'Photo'),
         onTap: null,
       ),
       const MiniToolDivider(),
       MiniToolAction(
         icon: Icons.flip_to_front_rounded,
-        tooltip: 'Öne Getir',
+        tooltip: tr('Öne Getir', 'Bring to Front'),
         onTap: () => controller.moveSelectedComponentLayer(forward: true),
       ),
       MiniToolAction(
         icon: Icons.flip_to_back_rounded,
-        tooltip: 'Arkaya Gönder',
+        tooltip: tr('Arkaya Gönder', 'Send to Back'),
         onTap: () => controller.moveSelectedComponentLayer(forward: false),
       ),
       const MiniToolDivider(),
       MiniToolAction(
         icon: Icons.delete_outline_rounded,
-        tooltip: 'Fotoğrafı Sil',
+        tooltip: tr('Fotoğrafı Sil', 'Delete Photo'),
         onTap: controller.removeSelectedComponentBlock,
       ),
     ];
@@ -9382,7 +9988,7 @@ class _BackgroundAnimationSpeedControl extends StatelessWidget {
           Icon(Icons.speed_rounded, size: 18, color: color),
           const SizedBox(width: 6),
           Text(
-            'Hız',
+            tr('Hız', 'Speed'),
             style: Theme.of(context).textTheme.labelMedium?.copyWith(
                   color: color,
                   fontWeight: FontWeight.w700,
@@ -9444,7 +10050,7 @@ class _SelectedTextToolbarField extends StatelessWidget {
               fontWeight: FontWeight.w700,
             ),
         decoration: InputDecoration(
-          hintText: 'Metin yazın',
+          hintText: tr('Metin yazın', 'Type text'),
           isDense: true,
           contentPadding: const EdgeInsets.symmetric(
             horizontal: 12,
@@ -9484,7 +10090,7 @@ class _TextColorPopupButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final currentColor = _parseTextColorHex(currentHex);
     return Tooltip(
-      message: 'Metin Rengi (Color Picker & HEX)',
+      message: tr('Metin Rengi (Color Picker & HEX)', 'Text Color (Color Picker & HEX)'),
       child: InkWell(
         onTap: () {
           _showTextColorPickerDialog(context, controller, currentHex);
@@ -9557,7 +10163,7 @@ void _showTextColorPickerDialog(
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
-                              'Metin Rengi Seçin',
+                              tr('Metin Rengi Seçin', 'Select Text Color'),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: Theme.of(context)
@@ -9602,12 +10208,12 @@ class _TextGlowPopupButton extends StatelessWidget {
     required this.compact,
   });
 
-  static final Map<double, String> _options = <double, String>{
-    0: 'Kapalı',
-    0.5: 'Hafif',
-    1: 'Normal',
-    1.5: 'Güçlü',
-    2: 'Çok güçlü',
+  static Map<double, String> get _options => <double, String>{
+    0: tr('Kapalı', 'Off'),
+    0.5: tr('Hafif', 'Low'),
+    1: tr('Normal', 'Normal'),
+    1.5: tr('Güçlü', 'High'),
+    2: tr('Çok güçlü', 'Very high'),
   };
 
   final PresentationController controller;
@@ -9616,19 +10222,20 @@ class _TextGlowPopupButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final selectedValue = _options.keys.reduce(
+    final options = _options;
+    final selectedValue = options.keys.reduce(
       (a, b) => (current - a).abs() <= (current - b).abs() ? a : b,
     );
     final active = current > 0;
     final colors = context.colors;
     return PopupMenuButton<double>(
-      tooltip: 'Metin parlaklığı',
+      tooltip: tr('Metin parlaklığı', 'Text glow'),
       initialValue: selectedValue,
       position: PopupMenuPosition.under,
       constraints: const BoxConstraints(minWidth: 190, maxWidth: 220),
       onSelected: controller.updateSelectedGlowIntensity,
       itemBuilder: (context) => <PopupMenuEntry<double>>[
-        for (final option in _options.entries)
+        for (final option in options.entries)
           CheckedPopupMenuItem<double>(
             key: ValueKey<String>('text-glow-${option.key}'),
             value: option.key,
@@ -9654,7 +10261,7 @@ class _TextGlowPopupButton extends StatelessWidget {
             if (!compact) ...<Widget>[
               const SizedBox(width: 7),
               Text(
-                'Parlaklık',
+                tr('Parlaklık', 'Glow'),
                 style: Theme.of(context).textTheme.labelMedium?.copyWith(
                       fontWeight: FontWeight.w700,
                       color: active ? colors.surface : colors.onSurfaceVariant,
@@ -9709,34 +10316,34 @@ Future<void> _showStageItemContextMenu(
       Offset.zero & overlay.size,
     ),
     items: <PopupMenuEntry<_StageItemContextAction>>[
-      const PopupMenuItem<_StageItemContextAction>(
+      PopupMenuItem<_StageItemContextAction>(
         value: _StageItemContextAction.copy,
         child: _StageContextMenuRow(
           icon: Icons.content_copy_rounded,
-          label: 'Kopyala',
+          label: tr('Kopyala', 'Copy'),
         ),
       ),
       PopupMenuItem<_StageItemContextAction>(
         value: controller.canPasteItems ? _StageItemContextAction.paste : null,
         enabled: controller.canPasteItems,
-        child: const _StageContextMenuRow(
+        child: _StageContextMenuRow(
           icon: Icons.content_paste_rounded,
-          label: 'Yapıştır',
+          label: tr('Yapıştır', 'Paste'),
         ),
       ),
-      const PopupMenuItem<_StageItemContextAction>(
+      PopupMenuItem<_StageItemContextAction>(
         value: _StageItemContextAction.duplicate,
         child: _StageContextMenuRow(
           icon: Icons.control_point_duplicate_rounded,
-          label: 'Çoğalt',
+          label: tr('Çoğalt', 'Duplicate'),
         ),
       ),
       const PopupMenuDivider(),
-      const PopupMenuItem<_StageItemContextAction>(
+      PopupMenuItem<_StageItemContextAction>(
         value: _StageItemContextAction.delete,
         child: _StageContextMenuRow(
           icon: Icons.delete_outline_rounded,
-          label: 'Sil',
+          label: tr('Sil', 'Delete'),
           destructive: true,
         ),
       ),
@@ -9753,9 +10360,9 @@ Future<void> _showStageItemContextMenu(
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()
         ..showSnackBar(
-          const SnackBar(
-            content: Text('Seçili öğeler kopyalandı.'),
-            duration: Duration(milliseconds: 1400),
+          SnackBar(
+            content: Text(tr('Seçili öğeler kopyalandı.', 'Selected items copied.')),
+            duration: const Duration(milliseconds: 1400),
           ),
         );
     case _StageItemContextAction.paste:
@@ -9793,16 +10400,16 @@ Future<void> _showCanvasContextMenu(
       PopupMenuItem<_CanvasContextAction>(
         value: controller.canPasteItems ? _CanvasContextAction.paste : null,
         enabled: controller.canPasteItems,
-        child: const _StageContextMenuRow(
+        child: _StageContextMenuRow(
           icon: Icons.content_paste_rounded,
-          label: 'Yapıştır',
+          label: tr('Yapıştır', 'Paste'),
         ),
       ),
-      const PopupMenuItem<_CanvasContextAction>(
+      PopupMenuItem<_CanvasContextAction>(
         value: _CanvasContextAction.selectAll,
         child: _StageContextMenuRow(
           icon: Icons.select_all_rounded,
-          label: 'Tümünü Seç',
+          label: tr('Tümünü Seç', 'Select All'),
         ),
       ),
     ],
@@ -9863,23 +10470,23 @@ bool _shouldReduceHtmlMotion(
 String _studioPanelTitle(_HtmlToolTab tab) {
   switch (tab) {
     case _HtmlToolTab.templates:
-      return 'Sunum Şablonları';
+      return tr('Sunum Şablonları', 'Presentation Templates');
     case _HtmlToolTab.backgrounds:
-      return 'Arka Plan Kutuphanesi';
+      return tr('Arka Plan Kütüphanesi', 'Background Library');
     case _HtmlToolTab.components:
-      return 'Bilesen Kutuphanesi';
+      return tr('Bileşen Kütüphanesi', 'Component Library');
     case _HtmlToolTab.text:
-      return 'Metin Duzenleme';
+      return tr('Metin Düzenleme', 'Edit Text');
     case _HtmlToolTab.models3d:
-      return '3D Modeller';
+      return tr('3D Modeller', '3D Models');
     case _HtmlToolTab.photo:
-      return 'Fotoğraflar';
+      return tr('Fotoğraflar', 'Photos');
     case _HtmlToolTab.animations:
-      return 'Animasyonlar';
+      return tr('Animasyonlar', 'Animations');
     case _HtmlToolTab.transitions:
-      return 'Geçişler';
+      return tr('Geçişler', 'Transitions');
     case _HtmlToolTab.stageDimensions:
-      return 'Sahne Ölçüleri';
+      return tr('Sahne Ölçüleri', 'Slide Dimensions');
   }
 }
 
@@ -10160,14 +10767,17 @@ Future<void> _showStageDimensionsDialog(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
                       Text(
-                        'Sahne Ölçüleri & Format',
+                        tr('Sahne Ölçüleri & Format', 'Slide Dimensions & Format'),
                         style: Theme.of(ctx).textTheme.titleMedium?.copyWith(
                               fontWeight: FontWeight.w900,
                               color: ctx._htmlInk,
                             ),
                       ),
                       Text(
-                        'Sunum tuval boyutunu ve formatını özelleştirin',
+                        tr(
+                          'Sunum tuval boyutunu ve formatını özelleştirin',
+                          'Customize presentation canvas dimensions and format',
+                        ),
                         style: Theme.of(ctx).textTheme.bodySmall?.copyWith(
                               color: ctx._htmlMuted,
                             ),
@@ -10179,7 +10789,7 @@ Future<void> _showStageDimensionsDialog(
             ),
             const SizedBox(height: 18),
             Text(
-              'HAZIR FORMATLAR (PRESETS)',
+              tr('HAZIR FORMATLAR (PRESETS)', 'PRESET FORMATS'),
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w800,
@@ -10189,9 +10799,11 @@ Future<void> _showStageDimensionsDialog(
             ),
             const SizedBox(height: 10),
             _StageDimensionPresetCard(
-              title: 'Mobil Dikey',
-              subtitle:
-                  'Telefonlar için dikey responsive HTML sahne (1080×1920 px)',
+              title: tr('Mobil Dikey', 'Mobile Portrait'),
+              subtitle: tr(
+                'Telefonlar için dikey responsive HTML sahne (1080×1920 px)',
+                'Vertical responsive HTML slide for mobile phones (1080×1920 px)',
+              ),
               icon: Icons.smartphone_rounded,
               isSelected: selectedPreset == '9:16',
               badgeText: '9:16',
@@ -10203,8 +10815,11 @@ Future<void> _showStageDimensionsDialog(
             ),
             const SizedBox(height: 8),
             _StageDimensionPresetCard(
-              title: 'Standart Sunum',
-              subtitle: 'Masaüstü, TV & Projeksiyon ekranları (1920×1080 px)',
+              title: tr('Standart Sunum', 'Standard Presentation'),
+              subtitle: tr(
+                'Masaüstü, TV & Projeksiyon ekranları (1920×1080 px)',
+                'Desktop, TV & projector screens (1920×1080 px)',
+              ),
               icon: Icons.desktop_windows_rounded,
               isSelected: selectedPreset == '16:9',
               badgeText: '16:9',
@@ -10215,8 +10830,11 @@ Future<void> _showStageDimensionsDialog(
             ),
             const SizedBox(height: 8),
             _StageDimensionPresetCard(
-              title: 'Klasik Sunum',
-              subtitle: 'Klasik ekranlar & PDF çıktısı (1024×768 px)',
+              title: tr('Klasik Sunum', 'Classic Presentation'),
+              subtitle: tr(
+                'Klasik ekranlar & PDF çıktısı (1024×768 px)',
+                'Classic screens & PDF print (1024×768 px)',
+              ),
               icon: Icons.aspect_ratio_rounded,
               isSelected: selectedPreset == '4:3',
               badgeText: '4:3',
@@ -10227,8 +10845,11 @@ Future<void> _showStageDimensionsDialog(
             ),
             const SizedBox(height: 8),
             _StageDimensionPresetCard(
-              title: 'Kare Format',
-              subtitle: 'Sosyal medya & tablet kart formatı (1080×1080 px)',
+              title: tr('Kare Format', 'Square Format'),
+              subtitle: tr(
+                'Sosyal medya & tablet kart formatı (1080×1080 px)',
+                'Social media & tablet card format (1080×1080 px)',
+              ),
               icon: Icons.crop_square_rounded,
               isSelected: selectedPreset == '1:1',
               badgeText: '1:1',
@@ -10239,11 +10860,14 @@ Future<void> _showStageDimensionsDialog(
             ),
             const SizedBox(height: 8),
             _StageDimensionPresetCard(
-              title: 'Özel Sahne Ölçüsü',
-              subtitle: 'Piksel bazlı genişlik ve yükseklik tanımlayın',
+              title: tr('Özel Sahne Ölçüsü', 'Custom Slide Dimensions'),
+              subtitle: tr(
+                'Piksel bazlı genişlik ve yükseklik tanımlayın',
+                'Define pixel-based width and height',
+              ),
               icon: Icons.tune_rounded,
               isSelected: selectedPreset == 'custom',
-              badgeText: 'Özel',
+              badgeText: tr('Özel', 'Custom'),
               onTap: () => setState(() => selectedPreset = 'custom'),
             ),
             if (selectedPreset == 'custom') ...<Widget>[
@@ -10263,7 +10887,7 @@ Future<void> _showStageDimensionsDialog(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
                     Text(
-                      'PİKSEL BOYUTLARI',
+                      tr('PİKSEL BOYUTLARI', 'PIXEL DIMENSIONS'),
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w800,
@@ -10279,7 +10903,7 @@ Future<void> _showStageDimensionsDialog(
                             controller: widthController,
                             keyboardType: TextInputType.number,
                             decoration: _inputDecoration(ctx, '1920')
-                                .copyWith(labelText: 'Genişlik (px)'),
+                                .copyWith(labelText: tr('Genişlik (px)', 'Width (px)')),
                             onChanged: (_) => setState(() {}),
                           ),
                         ),
@@ -10298,7 +10922,7 @@ Future<void> _showStageDimensionsDialog(
                             controller: heightController,
                             keyboardType: TextInputType.number,
                             decoration: _inputDecoration(ctx, '1080')
-                                .copyWith(labelText: 'Yükseklik (px)'),
+                                .copyWith(labelText: tr('Yükseklik (px)', 'Height (px)')),
                             onChanged: (_) => setState(() {}),
                           ),
                         ),
@@ -10353,8 +10977,8 @@ Future<void> _showStageDimensionsDialog(
                       children: <Widget>[
                         Text(
                           isPortrait
-                              ? '📱 Mobil Dikey Sahne Modu'
-                              : '🖥️ Yatay / Masaüstü Sahne Modu',
+                              ? tr('📱 Mobil Dikey Sahne Modu', '📱 Mobile Portrait Slide Mode')
+                              : tr('🖥️ Yatay / Masaüstü Sahne Modu', '🖥️ Landscape / Desktop Slide Mode'),
                           style: TextStyle(
                             fontWeight: FontWeight.w800,
                             fontSize: 13,
@@ -10367,7 +10991,7 @@ Future<void> _showStageDimensionsDialog(
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          'Görünüm Oranı: ${ratio.toStringAsFixed(2)}:1 • ${isPortrait ? "Telefon ekranları için optimize edildi" : "Standart sunumlar için optimize edildi"}',
+                          '${tr('Görünüm Oranı', 'Aspect Ratio')}: ${ratio.toStringAsFixed(2)}:1 • ${isPortrait ? tr('Telefon ekranları için optimize edildi', 'Optimized for mobile phones') : tr('Standart sunumlar için optimize edildi', 'Optimized for standard presentations')}',
                           style: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
@@ -10390,12 +11014,12 @@ Future<void> _showStageDimensionsDialog(
               children: <Widget>[
                 TextButton(
                   onPressed: () => Navigator.of(ctx).pop(),
-                  child: const Text('İptal'),
+                  child: Text(tr('İptal', 'Cancel')),
                 ),
                 const SizedBox(width: 10),
                 ElevatedButton.icon(
                   icon: const Icon(Icons.check_rounded, size: 18),
-                  label: const Text('Uygula'),
+                  label: Text(tr('Uygula', 'Apply')),
                   style: ElevatedButton.styleFrom(
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14),
@@ -10629,87 +11253,139 @@ class _HtmlEntranceAnimationControls extends StatelessWidget {
 
   final PresentationController controller;
 
-  static const options = <(PresentationEntranceAnimation, String, IconData)>[
-    (PresentationEntranceAnimation.none, 'Animasyon yok', Icons.block_rounded),
-    (PresentationEntranceAnimation.fadeIn, 'Belirme', Icons.blur_on_rounded),
+  static List<(PresentationEntranceAnimation, String, IconData)> get options =>
+      <(PresentationEntranceAnimation, String, IconData)>[
+    (
+      PresentationEntranceAnimation.none,
+      _entranceAnimationLabel(PresentationEntranceAnimation.none),
+      Icons.block_rounded,
+    ),
+    (
+      PresentationEntranceAnimation.fadeIn,
+      _entranceAnimationLabel(PresentationEntranceAnimation.fadeIn),
+      Icons.blur_on_rounded,
+    ),
     (
       PresentationEntranceAnimation.flyInLeft,
-      'Soldan uç',
-      Icons.arrow_forward_rounded
+      _entranceAnimationLabel(PresentationEntranceAnimation.flyInLeft),
+      Icons.arrow_forward_rounded,
     ),
     (
       PresentationEntranceAnimation.flyInRight,
-      'Sağdan uç',
-      Icons.arrow_back_rounded
+      _entranceAnimationLabel(PresentationEntranceAnimation.flyInRight),
+      Icons.arrow_back_rounded,
     ),
     (
       PresentationEntranceAnimation.flyInTop,
-      'Yukarıdan uç',
-      Icons.arrow_downward_rounded
+      _entranceAnimationLabel(PresentationEntranceAnimation.flyInTop),
+      Icons.arrow_downward_rounded,
     ),
     (
       PresentationEntranceAnimation.flyInBottom,
-      'Aşağıdan uç',
-      Icons.arrow_upward_rounded
+      _entranceAnimationLabel(PresentationEntranceAnimation.flyInBottom),
+      Icons.arrow_upward_rounded,
     ),
-    (PresentationEntranceAnimation.zoomIn, 'Yakınlaşma', Icons.zoom_in_rounded),
+    (
+      PresentationEntranceAnimation.zoomIn,
+      _entranceAnimationLabel(PresentationEntranceAnimation.zoomIn),
+      Icons.zoom_in_rounded,
+    ),
   ];
-  static const emphasisOptions =
+
+  static List<(PresentationEntranceAnimation, String, IconData)> get emphasisOptions =>
       <(PresentationEntranceAnimation, String, IconData)>[
-    (PresentationEntranceAnimation.pulse, 'Nabız', Icons.favorite_rounded),
-    (PresentationEntranceAnimation.shake, 'Sallanma', Icons.vibration_rounded),
+    (
+      PresentationEntranceAnimation.pulse,
+      _entranceAnimationLabel(PresentationEntranceAnimation.pulse),
+      Icons.favorite_rounded,
+    ),
+    (
+      PresentationEntranceAnimation.shake,
+      _entranceAnimationLabel(PresentationEntranceAnimation.shake),
+      Icons.vibration_rounded,
+    ),
     (
       PresentationEntranceAnimation.growShrink,
-      'Büyüt-Küçült',
-      Icons.expand_rounded
+      _entranceAnimationLabel(PresentationEntranceAnimation.growShrink),
+      Icons.expand_rounded,
     ),
-    (PresentationEntranceAnimation.spin, 'Döndür', Icons.rotate_right_rounded),
-    (PresentationEntranceAnimation.glow, 'Parla', Icons.wb_sunny_rounded),
+    (
+      PresentationEntranceAnimation.spin,
+      _entranceAnimationLabel(PresentationEntranceAnimation.spin),
+      Icons.rotate_right_rounded,
+    ),
+    (
+      PresentationEntranceAnimation.glow,
+      _entranceAnimationLabel(PresentationEntranceAnimation.glow),
+      Icons.wb_sunny_rounded,
+    ),
   ];
-  static const exitOptions =
+
+  static List<(PresentationEntranceAnimation, String, IconData)> get exitOptions =>
       <(PresentationEntranceAnimation, String, IconData)>[
-    (PresentationEntranceAnimation.fadeOut, 'Kaybol', Icons.blur_off_rounded),
-    (PresentationEntranceAnimation.flyOutLeft, 'Sola uç', Icons.west_rounded),
-    (PresentationEntranceAnimation.flyOutRight, 'Sağa uç', Icons.east_rounded),
-    (PresentationEntranceAnimation.flyOutTop, 'Yukarı uç', Icons.north_rounded),
+    (
+      PresentationEntranceAnimation.fadeOut,
+      _entranceAnimationLabel(PresentationEntranceAnimation.fadeOut),
+      Icons.blur_off_rounded,
+    ),
+    (
+      PresentationEntranceAnimation.flyOutLeft,
+      _entranceAnimationLabel(PresentationEntranceAnimation.flyOutLeft),
+      Icons.west_rounded,
+    ),
+    (
+      PresentationEntranceAnimation.flyOutRight,
+      _entranceAnimationLabel(PresentationEntranceAnimation.flyOutRight),
+      Icons.east_rounded,
+    ),
+    (
+      PresentationEntranceAnimation.flyOutTop,
+      _entranceAnimationLabel(PresentationEntranceAnimation.flyOutTop),
+      Icons.north_rounded,
+    ),
     (
       PresentationEntranceAnimation.flyOutBottom,
-      'Aşağı uç',
-      Icons.south_rounded
+      _entranceAnimationLabel(PresentationEntranceAnimation.flyOutBottom),
+      Icons.south_rounded,
     ),
     (
       PresentationEntranceAnimation.shrinkOut,
-      'Küçülerek çık',
-      Icons.close_fullscreen_rounded
+      _entranceAnimationLabel(PresentationEntranceAnimation.shrinkOut),
+      Icons.close_fullscreen_rounded,
     ),
     (
       PresentationEntranceAnimation.zoomOut,
-      'Uzaklaşarak çık',
-      Icons.zoom_out_rounded
+      _entranceAnimationLabel(PresentationEntranceAnimation.zoomOut),
+      Icons.zoom_out_rounded,
     ),
     (
       PresentationEntranceAnimation.spinOut,
-      'Dönerek çık',
-      Icons.rotate_left_rounded
+      _entranceAnimationLabel(PresentationEntranceAnimation.spinOut),
+      Icons.rotate_left_rounded,
     ),
   ];
-  static const motionOptions =
+
+  static List<(PresentationEntranceAnimation, String, IconData)> get motionOptions =>
       <(PresentationEntranceAnimation, String, IconData)>[
     (
       PresentationEntranceAnimation.motionLine,
-      'Düz çizgi',
-      Icons.trending_flat_rounded
+      _entranceAnimationLabel(PresentationEntranceAnimation.motionLine),
+      Icons.trending_flat_rounded,
     ),
     (
       PresentationEntranceAnimation.motionCircle,
-      'Daire',
-      Icons.circle_outlined
+      _entranceAnimationLabel(PresentationEntranceAnimation.motionCircle),
+      Icons.circle_outlined,
     ),
-    (PresentationEntranceAnimation.motionWave, 'Dalga', Icons.waves_rounded),
+    (
+      PresentationEntranceAnimation.motionWave,
+      _entranceAnimationLabel(PresentationEntranceAnimation.motionWave),
+      Icons.waves_rounded,
+    ),
     (
       PresentationEntranceAnimation.motionCustom,
-      'Özel yol',
-      Icons.gesture_rounded
+      _entranceAnimationLabel(PresentationEntranceAnimation.motionCustom),
+      Icons.gesture_rounded,
     ),
   ];
 
@@ -10726,12 +11402,15 @@ class _HtmlEntranceAnimationControls extends StatelessWidget {
               borderRadius: BorderRadius.circular(16),
               border: Border.all(color: context.sutolColors.outline),
             ),
-            child: const Column(
+            child: Column(
               children: <Widget>[
-                Icon(Icons.touch_app_rounded, size: 34),
-                SizedBox(height: 12),
+                const Icon(Icons.touch_app_rounded, size: 34),
+                const SizedBox(height: 12),
                 Text(
-                  'Animasyon eklemek için sahneden bir öğe seçin.',
+                  tr(
+                    'Animasyon eklemek için sahneden bir öğe seçin.',
+                    'Select an element on the slide to add animation.',
+                  ),
                   textAlign: TextAlign.center,
                 ),
               ],
@@ -10746,35 +11425,38 @@ class _HtmlEntranceAnimationControls extends StatelessWidget {
     final current = controller.selectedEntranceAnimation ??
         PresentationEntranceAnimation.none;
     final targetName = controller.selectedTextBlock != null
-        ? 'Seçili metin'
+        ? tr('Seçili metin', 'Selected text')
         : controller.selectedComponentBlock?.imageAssetId != null
-            ? 'Seçili fotoğraf'
+            ? tr('Seçili fotoğraf', 'Selected photo')
             : controller.selectedComponentBlock != null &&
                     _isRenderable3DModelBlock(
                       controller.selectedComponentBlock!,
                     )
-                ? 'Seçili 3D model'
-                : 'Seçili bileşen';
+                ? tr('Seçili 3D model', 'Selected 3D model')
+                : tr('Seçili bileşen', 'Selected component');
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         Text(
-          'Öğe Animasyonu',
+          tr('Öğe Animasyonu', 'Element Animation'),
           style: Theme.of(context).textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.w800,
               ),
         ),
         const SizedBox(height: 6),
         Text(
-          '$targetName için giriş, vurgu, çıkış veya hareket yolu seçin.',
+          tr(
+            '$targetName için giriş, vurgu, çıkış veya hareket yolu seçin.',
+            'Choose entrance, emphasis, exit, or motion path for $targetName.',
+          ),
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: context.colors.onSurfaceVariant,
               ),
         ),
         const SizedBox(height: 16),
         _AnimationEffectGrid(
-          title: 'Giriş',
+          title: tr('Giriş', 'Entrance'),
           color: const Color(0xFF16A34A),
           options: options,
           current: current,
@@ -10782,7 +11464,7 @@ class _HtmlEntranceAnimationControls extends StatelessWidget {
         ),
         const SizedBox(height: 18),
         _AnimationEffectGrid(
-          title: 'Vurgu',
+          title: tr('Vurgu', 'Emphasis'),
           color: const Color(0xFFEAB308),
           options: emphasisOptions,
           current: current,
@@ -10790,7 +11472,7 @@ class _HtmlEntranceAnimationControls extends StatelessWidget {
         ),
         const SizedBox(height: 18),
         _AnimationEffectGrid(
-          title: 'Çıkış',
+          title: tr('Çıkış', 'Exit'),
           color: const Color(0xFFDC2626),
           options: exitOptions,
           current: current,
@@ -10798,7 +11480,7 @@ class _HtmlEntranceAnimationControls extends StatelessWidget {
         ),
         const SizedBox(height: 18),
         _AnimationEffectGrid(
-          title: 'Hareket Yolu',
+          title: tr('Hareket Yolu', 'Motion Path'),
           color: const Color(0xFF7C3AED),
           options: motionOptions,
           current: current,
@@ -10807,14 +11489,17 @@ class _HtmlEntranceAnimationControls extends StatelessWidget {
         if (current == PresentationEntranceAnimation.motionCustom) ...<Widget>[
           const SizedBox(height: 16),
           Text(
-            'Özel Yol Düzenleyici',
+            tr('Özel Yol Düzenleyici', 'Custom Path Editor'),
             style: Theme.of(context).textTheme.titleSmall?.copyWith(
                   fontWeight: FontWeight.w800,
                 ),
           ),
           const SizedBox(height: 8),
           Text(
-            'Mor noktaları sürükleyerek hareket yolunu şekillendirin.',
+            tr(
+              'Mor noktaları sürükleyerek hareket yolunu şekillendirin.',
+              'Drag the purple points to shape the motion path.',
+            ),
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: context.colors.onSurfaceVariant,
                 ),
@@ -10841,12 +11526,12 @@ class _HtmlEntranceAnimationControls extends StatelessWidget {
                     controller.selectedComponentBlock?.id,
               ),
               icon: const Icon(Icons.play_arrow_rounded),
-              label: const Text('Seçili efekti oynat'),
+              label: Text(tr('Seçili efekti oynat', 'Play selected effect')),
             ),
           ),
           const SizedBox(height: 22),
           Text(
-            'Zamanlama',
+            tr('Zamanlama', 'Timing'),
             style: Theme.of(context).textTheme.titleSmall?.copyWith(
                   fontWeight: FontWeight.w800,
                 ),
@@ -10855,19 +11540,19 @@ class _HtmlEntranceAnimationControls extends StatelessWidget {
           DropdownButtonFormField<PresentationAnimationTrigger>(
             initialValue: controller.selectedAnimationTrigger ??
                 PresentationAnimationTrigger.withPrevious,
-            decoration: _inputDecoration(context, 'Başlatma'),
-            items: const <DropdownMenuItem<PresentationAnimationTrigger>>[
+            decoration: _inputDecoration(context, tr('Başlatma', 'Start trigger')),
+            items: <DropdownMenuItem<PresentationAnimationTrigger>>[
               DropdownMenuItem(
                 value: PresentationAnimationTrigger.onClick,
-                child: Text('Tıklamayla başlat'),
+                child: Text(tr('Tıklamayla başlat', 'Start on click')),
               ),
               DropdownMenuItem(
                 value: PresentationAnimationTrigger.withPrevious,
-                child: Text('Öncekiyle birlikte'),
+                child: Text(tr('Öncekiyle birlikte', 'With previous')),
               ),
               DropdownMenuItem(
                 value: PresentationAnimationTrigger.afterPrevious,
-                child: Text('Öncekinden sonra'),
+                child: Text(tr('Öncekinden sonra', 'After previous')),
               ),
             ],
             onChanged: (value) {
@@ -10878,7 +11563,7 @@ class _HtmlEntranceAnimationControls extends StatelessWidget {
           ),
           const SizedBox(height: 18),
           _AnimationTimingSlider(
-            label: 'Süre',
+            label: tr('Süre', 'Duration'),
             value: controller.selectedAnimationDuration ?? .8,
             min: .1,
             max: 5,
@@ -10887,7 +11572,7 @@ class _HtmlEntranceAnimationControls extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           _AnimationTimingSlider(
-            label: 'Gecikme',
+            label: tr('Gecikme', 'Delay'),
             value: controller.selectedAnimationDelay ?? 0,
             min: 0,
             max: 5,
@@ -10897,7 +11582,7 @@ class _HtmlEntranceAnimationControls extends StatelessWidget {
           if (controller.selectedTextBlock != null) ...<Widget>[
             const SizedBox(height: 20),
             Text(
-              'Metni Böl',
+              tr('Metni Böl', 'Split Text'),
               style: Theme.of(context).textTheme.titleSmall?.copyWith(
                     fontWeight: FontWeight.w800,
                   ),
@@ -10906,23 +11591,26 @@ class _HtmlEntranceAnimationControls extends StatelessWidget {
             DropdownButtonFormField<PresentationTextGrouping>(
               initialValue: controller.selectedTextGrouping ??
                   PresentationTextGrouping.asObject,
-              decoration: _inputDecoration(context, 'Metin gruplaması'),
-              items: const <DropdownMenuItem<PresentationTextGrouping>>[
+              decoration: _inputDecoration(
+                context,
+                tr('Metin gruplaması', 'Text grouping'),
+              ),
+              items: <DropdownMenuItem<PresentationTextGrouping>>[
                 DropdownMenuItem(
                   value: PresentationTextGrouping.asObject,
-                  child: Text('Tek nesne olarak'),
+                  child: Text(tr('Tek nesne olarak', 'As a single object')),
                 ),
                 DropdownMenuItem(
                   value: PresentationTextGrouping.byParagraph,
-                  child: Text('Paragraf paragraf'),
+                  child: Text(tr('Paragraf paragraf', 'By paragraph')),
                 ),
                 DropdownMenuItem(
                   value: PresentationTextGrouping.byWord,
-                  child: Text('Kelime kelime'),
+                  child: Text(tr('Kelime kelime', 'By word')),
                 ),
                 DropdownMenuItem(
                   value: PresentationTextGrouping.byLetter,
-                  child: Text('Harf harf'),
+                  child: Text(tr('Harf harf', 'By letter')),
                 ),
               ],
               onChanged: (value) {
@@ -10936,7 +11624,7 @@ class _HtmlEntranceAnimationControls extends StatelessWidget {
                 PresentationTextGrouping.asObject) ...<Widget>[
               const SizedBox(height: 14),
               _AnimationTimingSlider(
-                label: 'Parça gecikmesi',
+                label: tr('Parça gecikmesi', 'Fragment delay'),
                 value: controller.selectedTextGroupDelay ?? .08,
                 min: .05,
                 max: .5,
@@ -10981,7 +11669,7 @@ List<_AnimationPaneItem> _animationPaneItems(PresentationPage page) {
       if (block.entranceAnimation != PresentationEntranceAnimation.none)
         _AnimationPaneItem(
           id: block.id,
-          name: block.text.trim().isEmpty ? 'Metin kutusu' : block.text.trim(),
+          name: block.text.trim().isEmpty ? tr('Metin kutusu', 'Text box') : block.text.trim(),
           animation: block.entranceAnimation,
           trigger: block.animationTrigger,
           duration: block.animationDuration,
@@ -10993,10 +11681,10 @@ List<_AnimationPaneItem> _animationPaneItems(PresentationPage page) {
         _AnimationPaneItem(
           id: block.id,
           name: block.imageAssetId != null
-              ? 'Fotoğraf'
+              ? tr('Fotoğraf', 'Photo')
               : _isRenderable3DModelBlock(block)
-                  ? '3D model'
-                  : 'Bileşen',
+                  ? tr('3D model', '3D model')
+                  : tr('Bileşen', 'Component'),
           animation: block.entranceAnimation,
           trigger: block.animationTrigger,
           duration: block.animationDuration,
@@ -11026,7 +11714,7 @@ class _AnimationPane extends StatelessWidget {
           children: <Widget>[
             Expanded(
               child: Text(
-                'Animasyon Bölmesi',
+                tr('Animasyon Bölmesi', 'Animation Pane'),
                 style: Theme.of(context).textTheme.titleSmall?.copyWith(
                       fontWeight: FontWeight.w800,
                     ),
@@ -11037,14 +11725,14 @@ class _AnimationPane extends StatelessWidget {
                   ? null
                   : () => controller.previewEntranceAnimations(),
               icon: const Icon(Icons.play_arrow_rounded, size: 18),
-              label: const Text('Tümünü Oynat'),
+              label: Text(tr('Tümünü Oynat', 'Play All')),
             ),
           ],
         ),
         const SizedBox(height: 8),
         if (items.isEmpty)
           Text(
-            'Bu sahnede henüz öğe animasyonu yok.',
+            tr('Bu sahnede henüz öğe animasyonu yok.', 'No element animations on this slide yet.'),
             style: TextStyle(color: context.colors.onSurfaceVariant),
           )
         else
@@ -11122,7 +11810,7 @@ class _AnimationPaneRow extends StatelessWidget {
                     Text(item.name,
                         maxLines: 1, overflow: TextOverflow.ellipsis),
                     Text(
-                      '${_entranceAnimationLabel(item.animation)} • ${_animationTriggerShortLabel(item.trigger)} • ${item.duration.toStringAsFixed(1)} sn',
+                      '${_entranceAnimationLabel(item.animation)} • ${_animationTriggerShortLabel(item.trigger)} • ${item.duration.toStringAsFixed(1)} ${tr('sn', 's')}',
                       style: Theme.of(context).textTheme.labelSmall?.copyWith(
                             color: context.colors.onSurfaceVariant,
                           ),
@@ -11131,7 +11819,7 @@ class _AnimationPaneRow extends StatelessWidget {
                 ),
               ),
               IconButton(
-                tooltip: 'Bu animasyonu oynat',
+                tooltip: tr('Bu animasyonu oynat', 'Play this animation'),
                 onPressed: onPlay,
                 icon: const Icon(Icons.play_arrow_rounded),
               ),
@@ -11152,30 +11840,30 @@ class _AnimationPaneRow extends StatelessWidget {
 
 String _entranceAnimationLabel(PresentationEntranceAnimation animation) {
   return switch (animation) {
-    PresentationEntranceAnimation.none => 'Animasyon yok',
-    PresentationEntranceAnimation.fadeIn => 'Belirme',
-    PresentationEntranceAnimation.flyInLeft => 'Soldan uç',
-    PresentationEntranceAnimation.flyInRight => 'Sağdan uç',
-    PresentationEntranceAnimation.flyInTop => 'Yukarıdan uç',
-    PresentationEntranceAnimation.flyInBottom => 'Aşağıdan uç',
-    PresentationEntranceAnimation.zoomIn => 'Yakınlaşma',
-    PresentationEntranceAnimation.pulse => 'Nabız',
-    PresentationEntranceAnimation.shake => 'Sallanma',
-    PresentationEntranceAnimation.growShrink => 'Büyüt-Küçült',
-    PresentationEntranceAnimation.spin => 'Döndür',
-    PresentationEntranceAnimation.glow => 'Parla',
-    PresentationEntranceAnimation.fadeOut => 'Kaybol',
-    PresentationEntranceAnimation.flyOutLeft => 'Sola uç',
-    PresentationEntranceAnimation.flyOutRight => 'Sağa uç',
-    PresentationEntranceAnimation.flyOutTop => 'Yukarı uç',
-    PresentationEntranceAnimation.flyOutBottom => 'Aşağı uç',
-    PresentationEntranceAnimation.shrinkOut => 'Küçülerek çık',
-    PresentationEntranceAnimation.zoomOut => 'Uzaklaşarak çık',
-    PresentationEntranceAnimation.spinOut => 'Dönerek çık',
-    PresentationEntranceAnimation.motionLine => 'Düz çizgi',
-    PresentationEntranceAnimation.motionCircle => 'Daire',
-    PresentationEntranceAnimation.motionWave => 'Dalga',
-    PresentationEntranceAnimation.motionCustom => 'Özel yol',
+    PresentationEntranceAnimation.none => tr('Animasyon yok', 'No animation'),
+    PresentationEntranceAnimation.fadeIn => tr('Belirme', 'Fade in'),
+    PresentationEntranceAnimation.flyInLeft => tr('Soldan uç', 'Fly in left'),
+    PresentationEntranceAnimation.flyInRight => tr('Sağdan uç', 'Fly in right'),
+    PresentationEntranceAnimation.flyInTop => tr('Yukarıdan uç', 'Fly in top'),
+    PresentationEntranceAnimation.flyInBottom => tr('Aşağıdan uç', 'Fly in bottom'),
+    PresentationEntranceAnimation.zoomIn => tr('Yakınlaşma', 'Zoom in'),
+    PresentationEntranceAnimation.pulse => tr('Nabız', 'Pulse'),
+    PresentationEntranceAnimation.shake => tr('Sallanma', 'Shake'),
+    PresentationEntranceAnimation.growShrink => tr('Büyüt-Küçült', 'Grow-Shrink'),
+    PresentationEntranceAnimation.spin => tr('Döndür', 'Spin'),
+    PresentationEntranceAnimation.glow => tr('Parla', 'Glow'),
+    PresentationEntranceAnimation.fadeOut => tr('Kaybol', 'Fade out'),
+    PresentationEntranceAnimation.flyOutLeft => tr('Sola uç', 'Fly out left'),
+    PresentationEntranceAnimation.flyOutRight => tr('Sağa uç', 'Fly out right'),
+    PresentationEntranceAnimation.flyOutTop => tr('Yukarı uç', 'Fly out top'),
+    PresentationEntranceAnimation.flyOutBottom => tr('Aşağı uç', 'Fly out bottom'),
+    PresentationEntranceAnimation.shrinkOut => tr('Küçülerek çık', 'Shrink out'),
+    PresentationEntranceAnimation.zoomOut => tr('Uzaklaşarak çık', 'Zoom out'),
+    PresentationEntranceAnimation.spinOut => tr('Dönerek çık', 'Spin out'),
+    PresentationEntranceAnimation.motionLine => tr('Düz çizgi', 'Line'),
+    PresentationEntranceAnimation.motionCircle => tr('Daire', 'Circle'),
+    PresentationEntranceAnimation.motionWave => tr('Dalga', 'Wave'),
+    PresentationEntranceAnimation.motionCustom => tr('Özel yol', 'Custom path'),
   };
 }
 
@@ -11222,9 +11910,9 @@ IconData _animationCategoryIcon(PresentationEntranceAnimation animation) {
 
 String _animationTriggerShortLabel(PresentationAnimationTrigger trigger) {
   return switch (trigger) {
-    PresentationAnimationTrigger.onClick => 'Tıklamayla',
-    PresentationAnimationTrigger.withPrevious => 'Öncekiyle',
-    PresentationAnimationTrigger.afterPrevious => 'Öncekinden sonra',
+    PresentationAnimationTrigger.onClick => tr('Tıklamayla', 'On click'),
+    PresentationAnimationTrigger.withPrevious => tr('Öncekiyle', 'With previous'),
+    PresentationAnimationTrigger.afterPrevious => tr('Öncekinden sonra', 'After previous'),
   };
 }
 
@@ -11383,7 +12071,7 @@ class _AnimationTimingSlider extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: <Widget>[
             Text(label, style: const TextStyle(fontWeight: FontWeight.w700)),
-            Text('${value.toStringAsFixed(1)} sn'),
+            Text('${value.toStringAsFixed(1)} ${tr('sn', 's')}'),
           ],
         ),
         Slider(
@@ -11531,32 +12219,32 @@ class _HtmlStageDimensionsControls extends StatelessWidget {
     final effectSettings = controller.effectSettings;
     final currentRatio = effectSettings.aspectRatio;
 
-    const presets = <(String, String, String, IconData, String)>[
+    final presets = <(String, String, String, IconData, String)>[
       (
         '9:16',
-        'Mobil Dikey',
-        '1080×1920 px • Telefon ekranları',
+        tr('Mobil Dikey', 'Mobile Portrait'),
+        tr('1080×1920 px • Telefon ekranları', '1080×1920 px • Phone screens'),
         Icons.smartphone_rounded,
         '9:16',
       ),
       (
         '16:9',
-        'Standart Sunum',
-        '1920×1080 px • Masaüstü & TV ekranları',
+        tr('Standart Sunum', 'Standard Presentation'),
+        tr('1920×1080 px • Masaüstü & TV ekranları', '1920×1080 px • Desktop & TV screens'),
         Icons.desktop_windows_rounded,
         '16:9',
       ),
       (
         '4:3',
-        'Klasik Sunum',
-        '1024×768 px • Klasik projeksiyon',
+        tr('Klasik Sunum', 'Classic Presentation'),
+        tr('1024×768 px • Klasik projeksiyon', '1024×768 px • Classic projector'),
         Icons.aspect_ratio_rounded,
         '4:3',
       ),
       (
         '1:1',
-        'Kare Format',
-        '1080×1080 px • Sosyal medya & kart',
+        tr('Kare Format', 'Square Format'),
+        tr('1080×1080 px • Sosyal medya & kart', '1080×1080 px • Social media & cards'),
         Icons.crop_square_rounded,
         '1:1',
       ),
@@ -11572,7 +12260,7 @@ class _HtmlStageDimensionsControls extends StatelessWidget {
           children: <Widget>[
             Expanded(
               child: Text(
-                'SAHNE ÖLÇÜLERİ VE FORMAT',
+                tr('SAHNE ÖLÇÜLERİ VE FORMAT', 'SLIDE DIMENSIONS AND FORMAT'),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
@@ -11594,7 +12282,7 @@ class _HtmlStageDimensionsControls extends StatelessWidget {
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Text(
-                    'Aktif: $currentRatio',
+                    '${tr('Aktif', 'Active')}: $currentRatio',
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.bold,

@@ -40,6 +40,7 @@ class SutolApp extends StatelessWidget {
           builder: (context, themeMode, _) {
             return MaterialApp(
               title: 'Sutols',
+              locale: Locale(language == AppLanguage.tr ? 'tr' : 'en'),
               debugShowCheckedModeBanner: false,
               navigatorKey: appNavigatorKey,
               theme: sutolLightTheme,

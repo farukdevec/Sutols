@@ -5,6 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:http/http.dart' as http;
 
+import '../state/language_controller.dart';
 import '../state/presentation_controller.dart';
 import 'ai_model_config.dart';
 import 'grok_presentation_service.dart';
@@ -12,11 +13,18 @@ import 'gemini_presentation_service.dart';
 import 'nvidia_presentation_service.dart';
 import 'layout_service.dart';
 import 'model_matching_service.dart';
+import 'pexels_service.dart';
 import 'presentation_deck_builder.dart';
 import 'presentation_project_codec.dart';
 import 'presentation_retention_service.dart';
 import 'usage_service.dart';
 import 'firestore_rest_helper.dart';
+
+/// Sunum üretimi sırasında aşama bildirimleri için callback tipi.
+typedef PresentationProgressCallback = void Function(
+  String stepTitle,
+  String stepDescription,
+);
 
 /// createPresentation sonucu: Firestore doküman ID'si + düzenlenebilir deck.
 class PresentationGenerationResult {
@@ -53,54 +61,72 @@ class PresentationService {
   final _grok = GrokPresentationService();
   final _matcher = ModelMatchingService();
   final _layout = LayoutService();
+  final _pexels = PexelsService();
 
   static const String _apiBase =
       'https://firestore.googleapis.com/v1/projects/sutols/databases/(default)/documents';
 
   Future<PresentationGenerationResult> createPresentation({
-    required String userId,
+    String? userId,
     required String topic,
     int slideCount = 5,
-    void Function(String stepTitle, String stepDescription)? onProgress,
+    PresentationProgressCallback? onProgress,
   }) async {
+    final uid = userId ?? FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) {
+      throw Exception(tr('Lütfen önce giriş yapın.', 'Please sign in first.'));
+    }
+
     if (slideCount < minSlideCount || slideCount > maxSlideCount) {
-      throw Exception('Slayt sayısı 1 ile 30 arasında olmalıdır.');
+      throw Exception(tr('Slayt sayısı 1 ile 30 arasında olmalıdır.', 'Slide count must be between 1 and 30.'));
     }
 
     final totalStopwatch = Stopwatch()..start();
 
-    // 0. Günlük kota kontrolü (AI çağrısından önce)
+    // 0. Günlük kota kontrolü
     final userDoc =
-        await FirebaseFirestore.instance.collection('users').doc(userId).get();
+        await FirebaseFirestore.instance.collection('users').doc(uid).get();
     final tier = userDoc.data()?['tier'] as String? ?? 'free';
     if (!canUseSlideCount(tier, slideCount)) {
       throw Exception(
-        'Ücretsiz planda en fazla 7 slayt oluşturabilirsiniz. '
-        '8-30 slayt için Plus plana geçin.',
+        tr(
+          'Ücretsiz planda en fazla 7 slayt oluşturabilirsiniz. 8-30 slayt için Plus plana geçin.',
+          'You can create up to 7 slides on the Free plan. Upgrade to Plus for 8-30 slides.',
+        ),
       );
     }
     final dailyLimit = UsageService.dailyLimitForTier(tier);
     final allowed =
-        await UsageService().tryConsumeDailyQuota(userId, dailyLimit);
+        await UsageService().tryConsumeDailyQuota(uid, dailyLimit);
     if (!allowed) {
       throw Exception(
-          'Günlük sunum oluşturma hakkınız doldu. Yarın tekrar deneyin veya planınızı yükseltin.');
+        tr(
+          'Günlük sunum oluşturma hakkınız doldu. Yarın tekrar deneyin veya planınızı yükseltin.',
+          'Daily presentation quota reached. Try again tomorrow or upgrade your plan.',
+        ),
+      );
     }
 
     AiRouterLogger.logRequestStart(topic: topic, slideCount: slideCount);
 
     onProgress?.call(
-      'İçerik Oluşturuluyor...',
-      'Yüksek kaliteli yapay zekâ modeli slayt içeriğini hazırlıyor.',
+      tr('İçerik Oluşturuluyor...', 'Generating Content...'),
+      tr('Yüksek kaliteli yapay zekâ modeli slayt içeriğini hazırlıyor.', 'AI model is crafting slide content.'),
     );
 
-    // 1. Sıralı Router: NVIDIA ana servis; Grok ve Gemini yalnızca yedek.
+    final selectedLanguage =
+        LanguageController.instance.isEnglish ? 'english' : 'turkish';
+
+    // 1. Sıralı Router
     GeminiPresentation resultPresentation;
     Object? nvidiaError;
     Object? grokError;
     try {
-      final nvidiaResult =
-          await _nvidia.generatePresentation(topic, slideCount: slideCount);
+      final nvidiaResult = await _nvidia.generatePresentation(
+        topic,
+        slideCount: slideCount,
+        language: selectedLanguage,
+      );
       resultPresentation = GeminiPresentation(
         slides: nvidiaResult.slides
             .map(
@@ -122,8 +148,11 @@ class PresentationService {
     } catch (error) {
       nvidiaError = error;
       try {
-        final grokResult =
-            await _grok.generatePresentation(topic, slideCount: slideCount);
+        final grokResult = await _grok.generatePresentation(
+          topic,
+          slideCount: slideCount,
+          language: selectedLanguage,
+        );
         resultPresentation = GeminiPresentation(
           slides: grokResult.slides
               .map(
@@ -148,33 +177,27 @@ class PresentationService {
           resultPresentation = await _gemini.generatePresentation(
             topic,
             slideCount: slideCount,
+            language: selectedLanguage,
           );
         } catch (geminiError) {
           totalStopwatch.stop();
           AiRouterLogger.logTotal(
             latency: totalStopwatch.elapsed,
             success: false,
-            details:
-                'NVIDIA: $nvidiaError Grok: $grokError Gemini: $geminiError',
+            details: 'NVIDIA: $nvidiaError Grok: $grokError Gemini: $geminiError',
           );
           throw Exception(
-            'Sunum yapay zekâ servisleri yanıt veremedi. '
+            '${tr('Sunum yapay zekâ servisleri yanıt veremedi.', 'AI presentation services failed to respond.')} '
             'NVIDIA: $nvidiaError Grok: $grokError Gemini: $geminiError',
           );
         }
       }
     }
-    final minAllowedSlides = (slideCount - 1).clamp(3, slideCount);
-    if (resultPresentation.slides.length < minAllowedSlides) {
-      throw FormatException(
-        'AI $slideCount yerine ${resultPresentation.slides.length} slayt döndürdü.',
-      );
-    }
 
     // 2. Her slayt için model eşleştir ve layout belirle
     onProgress?.call(
-      'Görseller ve 3B Modeller Eşleştiriliyor...',
-      'Slayt konularına uygun 3B nesneler katalogdan seçiliyor.',
+      tr('Görseller ve 3B Modeller Eşleştiriliyor...', 'Matching Visuals & 3D Models...'),
+      tr('Slayt konularına uygun 3B nesneler katalogdan seçiliyor.', 'Matching 3D objects and visuals from catalog.'),
     );
 
     final matchingStopwatch = Stopwatch()..start();
@@ -204,6 +227,26 @@ class PresentationService {
         usedModelIds,
       );
 
+      PexelsPhoto? matchedPhoto;
+      if (selectedModel == null) {
+        try {
+          final visualSubject = slide.visual?['subject']?.toString();
+          final searchTerms = <String>[
+            if (visualSubject != null && visualSubject.trim().isNotEmpty)
+              visualSubject,
+            ...slide.keywords,
+            slide.title,
+          ];
+          matchedPhoto = await _pexels.matchPhotoForSlide(
+            keywords: searchTerms,
+            title: slide.title,
+            topic: topic,
+          );
+        } catch (_) {
+          matchedPhoto = null;
+        }
+      }
+
       final selectedModels = selectedModel == null
           ? const <ModelMatch>[]
           : <ModelMatch>[selectedModel];
@@ -222,6 +265,8 @@ class PresentationService {
         if (slide.purpose != null) 'purpose': slide.purpose,
         if (slide.keyMessage != null) 'key_message': slide.keyMessage,
         'modelIds': shownModelIds,
+        if (matchedPhoto != null) 'imageAssetId': matchedPhoto.sourceId,
+        if (matchedPhoto != null) 'imageAspectRatio': matchedPhoto.aspectRatio,
       });
       deckSlides.add(
         DeckSlide(
@@ -236,22 +281,19 @@ class PresentationService {
           sources: slide.sources,
           models: selectedModels,
           keywords: slide.keywords,
+          imageAssetId: matchedPhoto?.sourceId,
+          imageAspectRatio: matchedPhoto?.aspectRatio,
         ),
       );
     }
     matchingStopwatch.stop();
-    AiRouterLogger.logStep(
-      stepName: 'MODEL MATCHING',
-      latency: matchingStopwatch.elapsed,
-    );
 
     // 2b. Düzenlenebilir deck'i oluştur
     onProgress?.call(
-      'Sunum Düzeni Hazırlanıyor...',
-      'Slayt şablonları ve görsel yerleşimler oluşturuluyor.',
+      tr('Sunum Düzeni Hazırlanıyor...', 'Preparing Presentation Layout...'),
+      tr('Slayt şablonları ve görsel yerleşimler oluşturuluyor.', 'Generating slide templates and visual layouts.'),
     );
 
-    final deckStopwatch = Stopwatch()..start();
     final controller = await PresentationDeckBuilder.buildControllerAsync(
       topic: topic,
       slides: deckSlides,
@@ -260,27 +302,22 @@ class PresentationService {
       pages: controller.pages.toList(growable: false),
       effectSettings: controller.effectSettings,
     );
-    deckStopwatch.stop();
-    AiRouterLogger.logStep(
-      stepName: 'DECK',
-      latency: deckStopwatch.elapsed,
-    );
 
-    // 3. Firestore'a kaydet (REST API)
+    // 3. Firestore'a kaydet
     onProgress?.call(
-      'Sunum Kaydediliyor...',
-      'Sunum projesi veritabanına aktarılıyor.',
+      tr('Sunum Kaydediliyor...', 'Saving Presentation...'),
+      tr('Sunum projesi veritabanına aktarılıyor.', 'Saving presentation project to database.'),
     );
 
     final firestoreStopwatch = Stopwatch()..start();
     final idToken = await _authToken();
     if (idToken == null) {
-      throw Exception('Lütfen önce giriş yapın.');
+      throw Exception(tr('Lütfen önce giriş yapın.', 'Please sign in first.'));
     }
 
     final body = jsonEncode({
       'fields': {
-        'userId': {'stringValue': userId},
+        'userId': {'stringValue': uid},
         'userEmail': {
           'stringValue': FirebaseAuth.instance.currentUser?.email ?? '',
         },
@@ -317,7 +354,7 @@ class PresentationService {
 
     if (response.statusCode != 200) {
       throw Exception(
-          'Sunum kaydedilemedi (HTTP ${response.statusCode}): ${response.body}');
+          '${tr('Sunum kaydedilemedi', 'Could not save presentation')} (HTTP ${response.statusCode}): ${response.body}');
     }
 
     final result = jsonDecode(response.body) as Map<String, dynamic>;
@@ -364,7 +401,7 @@ class PresentationService {
             'timestampValue':
                 FirestoreRestHelper.toFirestoreTimestamp(DateTime.now()),
           },
-          'updatedByUid': {'stringValue': currentUser?.uid ?? userId},
+          'updatedByUid': {'stringValue': currentUser?.uid ?? uid},
           'updatedByName': {'stringValue': updatedByName},
           'updatedByEmail': {'stringValue': currentUser?.email ?? ''},
         },
@@ -383,18 +420,14 @@ class PresentationService {
 
       if (slideResponse.statusCode != 200) {
         throw Exception(
-            'Slaytlar kaydedilemedi (HTTP ${slideResponse.statusCode}): ${slideResponse.body}');
+            '${tr('Slaytlar kaydedilemedi', 'Could not save slides')} (HTTP ${slideResponse.statusCode}): ${slideResponse.body}');
       }
     }
 
     // Plan kotasının üzerindeki en eski sunumları alt koleksiyonlarıyla
-    // birlikte temizle. Temizlik hatası yeni oluşturulan sunumu geçersiz
-    // kılmamalı; bir sonraki üretimde yeniden denenecek.
+    // birlikte temizle.
     try {
-      await PresentationRetentionService.enforceForUser(
-        userId: userId,
-        tier: tier,
-      );
+      await PresentationRetentionService().enforceLimit(uid, tier);
     } catch (error) {
       // ignore: avoid_print
       print('SUNUM SAKLAMA SINIRI UYGULANAMADI: $error');
@@ -411,7 +444,7 @@ class PresentationService {
       success: true,
     );
 
-    unawaited(_incrementPresentationCount(userId));
+    unawaited(_incrementPresentationCount(uid));
 
     return PresentationGenerationResult(
       presentationId: presentationId,

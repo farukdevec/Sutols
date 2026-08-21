@@ -26,7 +26,7 @@ class SutolHomePage extends StatefulWidget {
 }
 
 class _SutolHomePageState extends State<SutolHomePage> {
-  static const List<String> _displayThinkingSteps = <String>[
+  static const List<String> _displayThinkingStepsTr = <String>[
     'Konuyu anlamlandırıyor...',
     'Ana fikirleri belirliyor...',
     'İlgili başlıkları araştırıyor...',
@@ -37,6 +37,19 @@ class _SutolHomePageState extends State<SutolHomePage> {
     'Görsel fikirleri değerlendiriyor...',
     'Sunum düzenini şekillendiriyor...',
     'İçeriği gözden geçiriyor...',
+  ];
+
+  static const List<String> _displayThinkingStepsEn = <String>[
+    'Analyzing the topic...',
+    'Identifying core ideas...',
+    'Researching relevant subjects...',
+    'Prioritizing information...',
+    'Planning narrative flow...',
+    'Dividing content into slides...',
+    'Refining slide focus...',
+    'Evaluating visual concepts...',
+    'Shaping presentation layout...',
+    'Reviewing final content...',
   ];
 
   final TextEditingController _titleController = TextEditingController();
@@ -328,7 +341,11 @@ class _SutolHomePageState extends State<SutolHomePage> {
         _isGenerating = false;
       });
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Sunum oluşturulamadı: $e')),
+        SnackBar(
+          content: Text(
+            '${tr('Sunum oluşturulamadı', 'Failed to create presentation')}: $e',
+          ),
+        ),
       );
     }
   }
@@ -423,9 +440,12 @@ class _SutolHomePageState extends State<SutolHomePage> {
                     }
 
                     Widget inputCard() {
-                      final thinkingStep = _displayThinkingSteps[
+                      final steps = LanguageController.instance.isEnglish
+                          ? _displayThinkingStepsEn
+                          : _displayThinkingStepsTr;
+                      final thinkingStep = steps[
                           (_generationElapsedSeconds / 2.2).floor() %
-                              _displayThinkingSteps.length];
+                              steps.length];
                       return ConstrainedBox(
                         constraints: const BoxConstraints(maxWidth: 700),
                         child: AnimatedSwitcher(
@@ -433,8 +453,10 @@ class _SutolHomePageState extends State<SutolHomePage> {
                           child: _isGenerating
                               ? _LoadingState(
                                   title: thinkingStep,
-                                  description:
-                                      'Sunumunuz adım adım şekilleniyor.',
+                                  description: tr(
+                                    'Sunumunuz adım adım şekilleniyor.',
+                                    'Your presentation is coming together step by step.',
+                                  ),
                                   elapsedSeconds: _generationElapsedSeconds,
                                 )
                               : PresentationCreationCard(
@@ -880,7 +902,7 @@ class _SlideCountSelector extends StatelessWidget {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text('$count sayfa'),
+                    Text('$count ${tr('sayfa', 'slides')}'),
                     if (requiresPlus) ...[
                       const SizedBox(width: 8),
                       Text(
@@ -1007,7 +1029,7 @@ class _RecentPresentationTile extends StatelessWidget {
 
   final _RecentPresentation item;
 
-  static const List<String> _months = [
+  static const List<String> _monthsTr = [
     'Ocak',
     'Şubat',
     'Mart',
@@ -1022,11 +1044,31 @@ class _RecentPresentationTile extends StatelessWidget {
     'Aralık',
   ];
 
+  static const List<String> _monthsEn = [
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
+  ];
+
   String _formatDate(String iso) {
     final date = DateTime.tryParse(iso);
     if (date == null) return '';
     final local = date.toLocal();
-    return '${local.day} ${_months[local.month - 1]} ${local.year}';
+    final isEn = LanguageController.instance.isEnglish;
+    final months = isEn ? _monthsEn : _monthsTr;
+    final monthName = months[local.month - 1];
+    return isEn
+        ? '$monthName ${local.day}, ${local.year}'
+        : '${local.day} $monthName ${local.year}';
   }
 
   @override
@@ -1051,7 +1093,7 @@ class _RecentPresentationTile extends StatelessWidget {
           child: Text(
             [
               if (createdAt.isNotEmpty) createdAt,
-              '${item.slideCount} slayt',
+              '${item.slideCount} ${tr('slayt', 'slides')}',
             ].join(' • '),
             style: AppTypography.bodyMedium.copyWith(
               color: colors.textSecondary,
@@ -1121,7 +1163,7 @@ class _TierBadgeState extends State<_TierBadge> {
     final hasPlus = PresentationService.hasPlusSlideAccess(_tier);
     final (label, color, icon) = switch (_tier) {
       'plus' || 'premium' || 'pro' => ('Plus', _plusGold, Icons.star_rounded),
-      _ => ('Ücretsiz', const Color(0xFF616161), Icons.circle_outlined),
+      _ => (tr('Ücretsiz', 'Free'), const Color(0xFF616161), Icons.circle_outlined),
     };
 
     // Dar ekranda taşmaması için Wrap; geniş ekranda Row gibi içerik
@@ -1242,7 +1284,7 @@ class _PlanStatusBarState extends State<_PlanStatusBar> {
             ),
             const SizedBox(width: 6),
             Text(
-              hasPlus ? 'Plus plan' : 'Ücretsiz plan',
+              hasPlus ? tr('Plus plan', 'Plus plan') : tr('Ücretsiz plan', 'Free plan'),
               style: AppTypography.labelMedium.copyWith(
                 color: colors.textSecondary,
                 fontWeight: FontWeight.w500,
@@ -1257,7 +1299,7 @@ class _PlanStatusBarState extends State<_PlanStatusBar> {
                       size: 14, color: upgradeColor),
                   const SizedBox(width: 4),
                   Text(
-                    'Yükselt',
+                    tr('Yükselt', 'Upgrade'),
                     style: AppTypography.labelMedium.copyWith(
                       color: upgradeColor,
                       fontWeight: FontWeight.w700,
@@ -1350,7 +1392,7 @@ class _UpgradeButtonState extends State<_UpgradeButton> {
               ),
               const SizedBox(width: 4),
               Text(
-                'Yükselt',
+                tr('Yükselt', 'Upgrade'),
                 style: AppTypography.labelMedium.copyWith(
                   color: Colors.white,
                   fontWeight: FontWeight.w700,
@@ -1445,8 +1487,8 @@ Future<void> _showHomeSettings(BuildContext context) {
                             style: TextStyle(
                               fontSize: 11,
                               color: Theme.of(context)
-                                  .colorScheme
-                                  .onSurfaceVariant,
+                                   .colorScheme
+                                   .onSurfaceVariant,
                             ),
                           ),
                         ),
@@ -1480,7 +1522,7 @@ class _HomeSettingsButton extends StatelessWidget {
         padding: const EdgeInsets.all(8),
         minimumSize: const Size(40, 40),
       ),
-      tooltip: 'Ayarlar',
+      tooltip: tr('Ayarlar', 'Settings'),
       onPressed: () => _showHomeSettings(context),
       icon: const Icon(Icons.settings_outlined),
     );
@@ -1551,8 +1593,11 @@ class _MyPresentationsButtonState extends State<_MyPresentationsButton> {
 
     return Tooltip(
       message: hasPresentations
-          ? 'Sunumlarım'
-          : 'Henüz sunum oluşturmadınız. İlk sunumunuzu oluşturduktan sonra bu sayfayı kullanabilirsiniz.',
+          ? tr('Sunumlarım', 'My Presentations')
+          : tr(
+              'Henüz sunum oluşturmadınız. İlk sunumunuzu oluşturduktan sonra bu sayfayı kullanabilirsiniz.',
+              'You have not created any presentations yet. You can use this page after creating your first presentation.',
+            ),
       child: IconButton(
         onPressed: () async {
           await Navigator.of(context).pushNamed(AppRoutes.myPresentations);
@@ -1810,7 +1855,7 @@ class _UserAvatarState extends State<_UserAvatar> {
                   await AuthService.instance.signOut();
                 },
                 icon: const Icon(Icons.logout_rounded, size: 18),
-                label: const Text('Çıkış Yap'),
+                label: Text(tr('Çıkış Yap', 'Sign Out')),
               ),
             ),
           ],

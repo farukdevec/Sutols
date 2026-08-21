@@ -2,13 +2,21 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:sutol/services/presentation_retention_service.dart';
 
 void main() {
-  test('ücretsiz kullanıcılar en fazla 3 sunum saklar', () {
-    expect(PresentationRetentionService.limitForTier('free'), 3);
-    expect(PresentationRetentionService.limitForTier(''), 3);
+  final service = PresentationRetentionService();
+
+  test('ücretsiz kullanıcılar en fazla 10 sunum saklar', () {
+    expect(service.limitForTier('free'), 10);
+    expect(service.limitForTier(''), 10);
   });
 
-  test('Plus kullanıcılar en fazla 15 sunum saklar', () {
-    expect(PresentationRetentionService.limitForTier('plus'), 15);
-    expect(PresentationRetentionService.limitForTier('PLUS'), 15);
+  test('Plus kullanıcılar en fazla 25 sunum saklar', () {
+    expect(service.limitForTier('plus'), 25);
+    expect(service.limitForTier('PLUS'), 25);
+    expect(service.limitForTier('pro'), 25);
+  });
+
+  test('Premium kullanıcılar en fazla 200 sunum saklar', () {
+    expect(service.limitForTier('premium'), 200);
+    expect(service.limitForTier('PREMIUM'), 200);
   });
 }

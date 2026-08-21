@@ -1,25 +1,32 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 import 'firestore_rest_helper.dart';
 
-/// Keeps only the newest presentations allowed by the user's plan.
 class PresentationRetentionService {
-  PresentationRetentionService._();
+  PresentationRetentionService({FirebaseFirestore? db}) : _customDb = db;
 
-  static const int freeLimit = 3;
-  static const int plusLimit = 15;
+  final FirebaseFirestore? _customDb;
+  // ignore: unused_element
+  FirebaseFirestore get _db => _customDb ?? FirebaseFirestore.instance;
 
-  static int limitForTier(String tier) {
-    final normalized = tier.trim().toLowerCase();
-    return normalized == 'plus' ||
-            normalized == 'pro' ||
-            normalized == 'premium'
-        ? plusLimit
-        : freeLimit;
+  int limitForTier(String tier) {
+    switch (tier.trim().toLowerCase()) {
+      case 'premium':
+        return 200;
+      case 'plus':
+      case 'pro':
+        return 25;
+      default:
+        return 10;
+    }
   }
 
-  static Future<void> enforceForUser({
-    required String userId,
-    required String tier,
-  }) async {
+  Future<void> enforceLimit(String userId, String tier) async {
+    final limit = limitForTier(tier);
+
+    // presentations koleksiyonundan bu kullanıcının TÜM sunumlarını
+    // .where/.orderBy KULLANMADAN çek (Int64 riski), Dart tarafında
+    // createdAt'e göre sırala (REST helper üzerinden)
     final documents = await FirestoreRestHelper.runQuery({
       'from': [
         {'collectionId': 'presentations'},
@@ -31,18 +38,27 @@ class PresentationRetentionService {
           'value': {'stringValue': userId},
         },
       },
-      'orderBy': [
-        {
-          'field': {'fieldPath': 'createdAt'},
-          'direction': 'DESCENDING',
-        },
-      ],
     });
 
-    final limit = limitForTier(tier);
     if (documents.length <= limit) return;
 
-    for (final document in documents.skip(limit)) {
+    // Dart tarafında createdAt'e göre yeniden eskiye (azalan) sırala
+    documents.sort((a, b) {
+      final aFields = a['fields'] as Map<String, dynamic>? ?? const {};
+      final bFields = b['fields'] as Map<String, dynamic>? ?? const {};
+      final aTime = FirestoreRestHelper.timestampField(aFields, 'createdAt');
+      final bTime = FirestoreRestHelper.timestampField(bFields, 'createdAt');
+      final aDate =
+          DateTime.tryParse(aTime) ?? DateTime.fromMillisecondsSinceEpoch(0);
+      final bDate =
+          DateTime.tryParse(bTime) ?? DateTime.fromMillisecondsSinceEpoch(0);
+      return bDate.compareTo(aDate);
+    });
+
+    // Sıralı listede limit'i aşan (en eski) sunumları bul
+    final excessDocs = documents.skip(limit);
+
+    for (final document in excessDocs) {
       final presentationId =
           (document['name'] as String? ?? '').split('/').last;
       if (presentationId.isEmpty) continue;
@@ -50,26 +66,39 @@ class PresentationRetentionService {
     }
   }
 
-  static Future<void> _deletePresentationTree(String presentationId) async {
-    for (final collectionId in const <String>['slides', 'project']) {
-      final children = await FirestoreRestHelper.runQuery({
+  Future<void> _deletePresentationTree(String presentationId) async {
+    // 1. presentations/{id}/project/data alt dokümanını sil
+    try {
+      await FirestoreRestHelper.deleteDocument(
+        'presentations/$presentationId/project/data',
+      );
+    } catch (_) {}
+
+    // 2. presentations/{id}/slides/* alt dokümanlarını sil
+    try {
+      final slides = await FirestoreRestHelper.runQuery({
         'from': [
           {
-            'collectionId': collectionId,
+            'collectionId': 'slides',
             'parent': 'presentations/$presentationId',
           },
         ],
       });
-      for (final child in children) {
-        final childId = (child['name'] as String? ?? '').split('/').last;
-        if (childId.isNotEmpty) {
-          await FirestoreRestHelper.deleteDocument(
-            'presentations/$presentationId/$collectionId/$childId',
-          );
+      for (final slide in slides) {
+        final slideId = (slide['name'] as String? ?? '').split('/').last;
+        if (slideId.isNotEmpty) {
+          try {
+            await FirestoreRestHelper.deleteDocument(
+              'presentations/$presentationId/slides/$slideId',
+            );
+          } catch (_) {}
         }
       }
-    }
+    } catch (_) {}
 
-    await FirestoreRestHelper.deleteDocument('presentations/$presentationId');
+    // 3. presentations/{id} ana dokümanını sil
+    try {
+      await FirestoreRestHelper.deleteDocument('presentations/$presentationId');
+    } catch (_) {}
   }
 }

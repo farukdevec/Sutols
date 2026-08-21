@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
+import '../routes.dart';
 import '../services/ip_location_service.dart';
 import '../services/shared_prefs_service.dart';
+import '../services/web_url_service.dart';
 
 enum AppLanguage { tr, en }
 
@@ -23,6 +25,14 @@ class LanguageController {
 
   /// SharedPreferences ve konum sorgusundan dil durumunu yükler.
   Future<void> init({IpLocationService? locationService}) async {
+    // 1. Web URL kontrolü: URL /en ile başlıyorsa hemen İngilizce yap ve sabitle
+    final currentPath = getCurrentBrowserPath();
+    if (currentPath == '/en' || currentPath.startsWith('/en/')) {
+      currentLanguage.value = AppLanguage.en;
+      isManuallySelected = true;
+      return;
+    }
+
     try {
       final prefs = await SharedPrefsService.instance.prefs;
       final saved = prefs.getString(_prefsKey);
@@ -69,8 +79,8 @@ class LanguageController {
     }
   }
 
-  /// Kullanıcı dil tercihini değiştirdiğinde çağrılır ve kaydedilir.
-  Future<void> setLanguage(AppLanguage language) async {
+  /// Kullanıcı dil tercihini değiştirdiğinde çağrılır, kaydedilir ve URL senkronize edilir.
+  Future<void> setLanguage(AppLanguage language, {bool syncUrl = true}) async {
     currentLanguage.value = language;
     isManuallySelected = true;
     try {
@@ -78,6 +88,14 @@ class LanguageController {
       await prefs.setString(_prefsKey, language == AppLanguage.tr ? 'tr' : 'en');
     } catch (_) {
       // Kayıt hatası akışı bozmamalı.
+    }
+
+    if (syncUrl) {
+      try {
+        final currentPath = getCurrentBrowserPath();
+        final newPath = AppRoutes.getLocalizedPath(currentPath, language);
+        replaceBrowserUrl(path: newPath);
+      } catch (_) {}
     }
   }
 

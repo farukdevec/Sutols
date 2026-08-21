@@ -65,7 +65,7 @@ class _MembershipPageState extends State<MembershipPage> {
         title: Text(tr('Üyelik Planları', 'Membership Plans')),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded),
-          tooltip: 'Geri',
+          tooltip: tr('Geri', 'Back'),
           onPressed: () => AppRoutes.handleAppBack(context),
         ),
       ),
@@ -150,7 +150,7 @@ class _MembershipPageState extends State<MembershipPage> {
                       );
                       final plusCard = _MembershipCard(
                         title: 'Plus',
-                        price: '\$2 / ay',
+                        price: tr('\$2 / ay', '\$2 / month'),
                         features: [
                           tr('Günde 15 sunum', '15 presentations per day'),
                           tr('Genişletilmiş model kütüphanesi', 'Extended model library'),
@@ -253,7 +253,7 @@ class _MembershipCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(AppRadius.full),
                   ),
                   child: Text(
-                    'Öne Çıkan',
+                    tr('Öne Çıkan', 'Featured'),
                     style: AppTypography.labelSmall.copyWith(
                       color: colors.primary,
                       fontWeight: FontWeight.w600,
@@ -308,14 +308,21 @@ class _MembershipCard extends StatelessWidget {
                   : buttonEnabled
                       ? () {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                                content:
-                                    Text('Ödeme sistemi yakında aktif olacak')),
+                            SnackBar(
+                              content: Text(
+                                tr(
+                                  'Ödeme sistemi yakında aktif olacak.',
+                                  'Payment system will be available soon.',
+                                ),
+                              ),
+                            ),
                           );
                         }
                       : null,
               child: Text(
-                buttonLabel.isEmpty ? 'Plan yükleniyor...' : buttonLabel,
+                buttonLabel.isEmpty
+                    ? tr('Plan yükleniyor...', 'Loading plan...')
+                    : buttonLabel,
               ),
             ),
           ),

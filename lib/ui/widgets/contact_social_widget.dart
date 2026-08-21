@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../services/url_launcher_service.dart';
+import '../../state/language_controller.dart';
 import '../design/design_system.dart';
 
 /// Gerçek Instagram Kamera Vektör İkonu (CustomPainter)
@@ -120,7 +121,7 @@ void showSutolContactDialog(BuildContext context) {
                       color: colors.primary.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(AppRadius.md),
                     ),
-                    child: Center(
+                    child: const Center(
                       child: SutolsMailIcon(size: 22),
                     ),
                   ),
@@ -130,14 +131,14 @@ void showSutolContactDialog(BuildContext context) {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'İletişim & Sosyal Medya',
+                          tr('İletişim & Sosyal Medya', 'Contact & Social Media'),
                           style: AppTypography.titleMedium.copyWith(
                             color: colors.textPrimary,
                             fontWeight: FontWeight.w700,
                           ),
                         ),
                         Text(
-                          'Bizimle doğrudan bağlantı kurun.',
+                          tr('Bizimle doğrudan bağlantı kurun.', 'Connect with us directly.'),
                           style: AppTypography.labelMedium.copyWith(
                             color: colors.textSecondary,
                           ),
@@ -158,7 +159,7 @@ void showSutolContactDialog(BuildContext context) {
                 alignment: Alignment.centerRight,
                 child: TextButton(
                   onPressed: () => Navigator.of(ctx).pop(),
-                  child: const Text('Kapat'),
+                  child: Text(tr('Kapat', 'Close')),
                 ),
               ),
             ],
@@ -190,7 +191,7 @@ class SutolContactChips extends StatelessWidget {
       children: [
         if (showTitle) ...[
           Text(
-            'Bizimle İletişime Geçin',
+            tr('Bizimle İletişime Geçin', 'Get in Touch with Us'),
             style: AppTypography.titleMedium.copyWith(
               color: colors.textPrimary,
               fontWeight: FontWeight.w600,
@@ -230,7 +231,8 @@ class _InstagramChipState extends State<_InstagramChip> {
     final colors = context.colors;
 
     return Tooltip(
-      message: 'Instagram\'da Bizi Takip Edin (${widget.handle})',
+      message:
+          '${tr('Instagram\'da Bizi Takip Edin', 'Follow Us on Instagram')} (${widget.handle})',
       child: MouseRegion(
         cursor: SystemMouseCursors.click,
         onEnter: (_) => setState(() => _isHovered = true),
@@ -335,7 +337,9 @@ class _EmailChipState extends State<_EmailChip> {
           children: [
             const Icon(Icons.check_circle_rounded, color: Colors.white, size: 18),
             const SizedBox(width: 8),
-            Text('${widget.email} kopyalandı!'),
+            Text(
+              tr('${widget.email} kopyalandı!', '${widget.email} copied!'),
+            ),
           ],
         ),
         duration: const Duration(seconds: 2),
@@ -349,7 +353,7 @@ class _EmailChipState extends State<_EmailChip> {
     final colors = context.colors;
 
     return Tooltip(
-      message: 'E-posta Gönder (${widget.email})',
+      message: '${tr('E-posta Gönder', 'Send Email')} (${widget.email})',
       child: MouseRegion(
         cursor: SystemMouseCursors.click,
         onEnter: (_) => setState(() => _isHovered = true),
@@ -413,7 +417,7 @@ class _EmailChipState extends State<_EmailChip> {
                 ),
                 const SizedBox(width: 6.0),
                 Tooltip(
-                  message: 'Adresi Kopyala',
+                  message: tr('Adresi Kopyala', 'Copy Address'),
                   child: InkWell(
                     onTap: () => _copyToClipboard(context),
                     borderRadius: BorderRadius.circular(10),
@@ -481,14 +485,17 @@ class SutolContactCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'İletişime Geçin',
+                    tr('İletişime Geçin', 'Contact Us'),
                     style: AppTypography.titleMedium.copyWith(
                       color: colors.textPrimary,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
                   Text(
-                    'Görüşleriniz ve sorularınız için bizimle bağlantı kurun.',
+                    tr(
+                      'Görüşleriniz ve sorularınız için bizimle bağlantı kurun.',
+                      'Connect with us for inquiries and feedback.',
+                    ),
                     style: AppTypography.labelMedium.copyWith(
                       color: colors.textSecondary,
                     ),

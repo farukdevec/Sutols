@@ -5,13 +5,17 @@ import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sutol/services/ip_location_service.dart';
+import 'package:sutol/services/presentation_prompt_builder.dart';
+import 'package:sutol/services/shared_prefs_service.dart';
 import 'package:sutol/state/language_controller.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  setUp(() {
+  setUp(() async {
     SharedPreferences.setMockInitialValues({});
+    final prefs = await SharedPrefsService.instance.prefs;
+    await prefs.clear();
     LanguageController.instance.isManuallySelected = false;
     LanguageController.instance.detectedLocationInfo = null;
   });
@@ -81,5 +85,20 @@ void main() {
     // Yeni yüklemede kaydedilen tercih korunmalıdır.
     await controller.init();
     expect(controller.currentLanguage.value, AppLanguage.en);
+  });
+
+  test('PresentationPromptBuilder İngilizce talimatlar üretir', () {
+    final systemPrompt =
+        PresentationPromptBuilder.buildSystemInstruction(language: 'english');
+    expect(systemPrompt, contains('You are a senior presentation director'));
+    expect(systemPrompt, contains('CRITICAL RULES'));
+
+    final userPrompt = PresentationPromptBuilder.buildUserPrompt(
+      topic: 'Quantum Computing',
+      slideCount: 5,
+      language: 'english',
+    );
+    expect(userPrompt, contains('Topic: Quantum Computing'));
+    expect(userPrompt, contains('Output Language: English'));
   });
 }

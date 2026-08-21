@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'state/language_controller.dart';
 import 'state/presentation_controller.dart';
 import 'ui/admin/admin_gate.dart';
 import 'ui/auth_page.dart';
@@ -29,16 +30,116 @@ class AppRoutes {
   static const String faq = '/sss';
 
   /// Verilen konu başlığı ve ID için SEO ve kullanıcı dostu sunum URL'i üretir.
-  /// Örn: /cernobil-nukleer-faciasi-id54445484 veya /slide54445484
-  static String presentationUrl({required String id, String? topic}) {
+  /// Örn: /cernobil-nukleer-faciasi-id54445484 veya /en/slide54445484
+  static String presentationUrl({
+    required String id,
+    String? topic,
+    bool? isEnglish,
+  }) {
     final cleanId = id.trim();
+    final en = isEnglish ?? LanguageController.instance.isEnglish;
+    final prefix = en ? '/en' : '';
     if (topic != null && topic.trim().isNotEmpty) {
       final slug = createTopicSlug(topic);
       if (slug.isNotEmpty) {
-        return '/$slug-id$cleanId';
+        return '$prefix/$slug-id$cleanId';
       }
     }
-    return '/slide$cleanId';
+    return '$prefix/slide$cleanId';
+  }
+
+  /// Aktif rota yolunu hedef dile göre yerelleştirilmiş URL formatına dönüştürür.
+  /// Örn: '/' & en -> '/en'
+  ///      '/en' & tr -> '/'
+  ///      '/uyelik' & en -> '/en/pricing'
+  ///      '/en/pricing' & tr -> '/uyelik'
+  ///      '/editor/123' & en -> '/en/editor/123'
+  ///      '/en/editor/123' & tr -> '/editor/123'
+  ///      '/slide123' & en -> '/en/slide123'
+  static String getLocalizedPath(String currentPath, AppLanguage language) {
+    var raw = currentPath.trim();
+    if (raw.isEmpty) raw = '/';
+    if (raw.length > 1 && raw.endsWith('/')) {
+      raw = raw.substring(0, raw.length - 1);
+    }
+
+    final isEn = language == AppLanguage.en;
+
+    // Eğer zaten /en ile başlıyorsa temizleyelim
+    var normalized = raw;
+    if (normalized == '/en') {
+      normalized = '/';
+    } else if (normalized.startsWith('/en/')) {
+      normalized = normalized.substring('/en'.length);
+    }
+
+    if (!isEn) {
+      // Türkçe canonical rotalar
+      switch (normalized) {
+        case '/pricing':
+        case '/membership':
+        case '/fiyatlandirma':
+        case '/planlar':
+          return membership;
+        case '/my-presentations':
+        case '/presentations':
+          return myPresentations;
+        case '/redeem':
+          return redeem;
+        case '/privacy':
+        case '/privacy-policy':
+          return privacy;
+        case '/terms':
+        case '/terms-of-service':
+          return terms;
+        case '/faq':
+          return faq;
+        case '/auth':
+        case '/register':
+        case '/kayit':
+        case '/giris':
+          return login;
+        default:
+          return normalized;
+      }
+    } else {
+      // İngilizce canonical rotalar (/en/...)
+      switch (normalized) {
+        case '/':
+          return '/en';
+        case '/uyelik':
+        case '/membership':
+        case '/fiyatlandirma':
+        case '/planlar':
+          return '/en/pricing';
+        case '/sunumlarim':
+        case '/my-presentations':
+        case '/presentations':
+          return '/en/my-presentations';
+        case '/kod-kullan':
+        case '/redeem':
+          return '/en/redeem';
+        case '/gizlilik':
+        case '/privacy':
+        case '/privacy-policy':
+          return '/en/privacy';
+        case '/sartlar':
+        case '/terms':
+        case '/terms-of-service':
+          return '/en/terms';
+        case '/sss':
+        case '/faq':
+          return '/en/faq';
+        case '/login':
+        case '/auth':
+        case '/register':
+        case '/giris':
+        case '/kayit':
+          return '/en/login';
+        default:
+          return '/en$normalized';
+      }
+    }
   }
 
   /// Konu başlığından URL dostu slug üretir.
@@ -72,6 +173,28 @@ class AppRoutes {
         terms: (_) => const TermsOfServicePage(),
         faq: (_) => const FaqPage(),
 
+        // /en ve İngilizce doğrudan rotalar
+        '/en': (_) => const SutolHomePage(),
+        '/en/login': (_) => const AuthPage(),
+        '/en/auth': (_) => const AuthPage(),
+        '/en/register': (_) => const AuthPage(),
+        '/en/pricing': (_) => const MembershipPage(),
+        '/en/membership': (_) => const MembershipPage(),
+        '/en/my-presentations': (_) => const MyPresentationsPage(),
+        '/en/presentations': (_) => const MyPresentationsPage(),
+        '/en/redeem': (_) => const RedeemCodePage(),
+        '/en/privacy': (_) => const PrivacyPolicyPage(),
+        '/en/privacy-policy': (_) => const PrivacyPolicyPage(),
+        '/en/terms': (_) => const TermsOfServicePage(),
+        '/en/terms-of-service': (_) => const TermsOfServicePage(),
+        '/en/faq': (_) => const FaqPage(),
+        '/en/sunumlarim': (_) => const MyPresentationsPage(),
+        '/en/uyelik': (_) => const MembershipPage(),
+        '/en/kod-kullan': (_) => const RedeemCodePage(),
+        '/en/gizlilik': (_) => const PrivacyPolicyPage(),
+        '/en/sartlar': (_) => const TermsOfServicePage(),
+        '/en/sss': (_) => const FaqPage(),
+
         // Alternatif / İngilizce takma adlar (Aliases)
         '/auth': (_) => const AuthPage(),
         '/giris': (_) => const AuthPage(),
@@ -104,7 +227,16 @@ class AppRoutes {
       path = path.substring(0, path.length - 1);
     }
 
-    // 1. Bilinen statik rota eşleşmelerini öncelikle kontrol et
+    // /en öneki algılama ve dil senkronizasyonu
+    final isEnRoute = path == '/en' || path.startsWith('/en/');
+    if (isEnRoute) {
+      if (LanguageController.instance.currentLanguage.value != AppLanguage.en) {
+        LanguageController.instance.currentLanguage.value = AppLanguage.en;
+        LanguageController.instance.isManuallySelected = true;
+      }
+    }
+
+    // 1. Bilinen statik rota eşleşmelerini öncelikle kontrol et (tam yol ile)
     final staticBuilder = routes[path];
     if (staticBuilder != null) {
       return MaterialPageRoute<dynamic>(
@@ -113,8 +245,24 @@ class AppRoutes {
       );
     }
 
+    // /en önekini soyup standart alt rotaları çözümle
+    var lookupPath = path;
+    if (path == '/en') {
+      lookupPath = '/';
+    } else if (path.startsWith('/en/')) {
+      lookupPath = path.substring('/en'.length);
+    }
+
+    final strippedStaticBuilder = routes[lookupPath];
+    if (strippedStaticBuilder != null) {
+      return MaterialPageRoute<dynamic>(
+        settings: settings,
+        builder: strippedStaticBuilder,
+      );
+    }
+
     // 2. /editor rotası (boş sunum veya ID ile açılış)
-    if (path == editor) {
+    if (lookupPath == editor) {
       return MaterialPageRoute<void>(
         settings: settings,
         builder: (_) => HtmlPresentationEditorPage(
@@ -123,8 +271,8 @@ class AppRoutes {
       );
     }
 
-    if (path.startsWith('/editor/')) {
-      final id = path.substring('/editor/'.length).trim();
+    if (lookupPath.startsWith('/editor/')) {
+      final id = lookupPath.substring('/editor/'.length).trim();
       if (id.isNotEmpty) {
         return MaterialPageRoute<void>(
           settings: settings,
@@ -134,8 +282,8 @@ class AppRoutes {
     }
 
     // 3. /slide{id} veya /slide/{id} (Örn: /slide12345, /slide/12345)
-    if (path.startsWith('/slide')) {
-      var id = path.substring('/slide'.length).trim();
+    if (lookupPath.startsWith('/slide')) {
+      var id = lookupPath.substring('/slide'.length).trim();
       if (id.startsWith('/')) {
         id = id.substring(1).trim();
       }
@@ -148,8 +296,8 @@ class AppRoutes {
     }
 
     // 4. /p/{id} paylaşım rotası (Geriye dönük uyumluluk)
-    if (path.startsWith('/p/')) {
-      final id = path.substring('/p/'.length).trim();
+    if (lookupPath.startsWith('/p/')) {
+      final id = lookupPath.substring('/p/'.length).trim();
       if (id.isNotEmpty) {
         return MaterialPageRoute<void>(
           settings: settings,
@@ -159,8 +307,8 @@ class AppRoutes {
     }
 
     // 5. /s/{id} kısa paylaşım rotası
-    if (path.startsWith('/s/')) {
-      final id = path.substring('/s/'.length).trim();
+    if (lookupPath.startsWith('/s/')) {
+      final id = lookupPath.substring('/s/'.length).trim();
       if (id.isNotEmpty) {
         return MaterialPageRoute<void>(
           settings: settings,
@@ -170,8 +318,8 @@ class AppRoutes {
     }
 
     // 6. /presentation/{id} rotası
-    if (path.startsWith('/presentation/')) {
-      final id = path.substring('/presentation/'.length).trim();
+    if (lookupPath.startsWith('/presentation/')) {
+      final id = lookupPath.substring('/presentation/'.length).trim();
       if (id.isNotEmpty) {
         return MaterialPageRoute<void>(
           settings: settings,
@@ -182,7 +330,7 @@ class AppRoutes {
 
     // 7. Konu adı + id formatı (Örn: /cernobil-nukleer-faciasi-id54445484 veya /maddenin-halleriid54445484 veya /id54445484)
     final topicIdMatch =
-        RegExp(r'^/(?:[a-zA-Z0-9_\-]*?)id([a-zA-Z0-9_\-]+)$').firstMatch(path);
+        RegExp(r'^/(?:[a-zA-Z0-9_\-]*?)id([a-zA-Z0-9_\-]+)$').firstMatch(lookupPath);
     if (topicIdMatch != null) {
       final id = topicIdMatch.group(1);
       if (id != null && id.isNotEmpty) {
@@ -198,6 +346,11 @@ class AppRoutes {
 
   /// Bilinmeyen URL durumunda ana sayfaya yönlendirir
   static Route<dynamic> onUnknownRoute(RouteSettings settings) {
+    final rawName = settings.name ?? '';
+    if (rawName == '/en' || rawName.startsWith('/en/')) {
+      LanguageController.instance.currentLanguage.value = AppLanguage.en;
+      LanguageController.instance.isManuallySelected = true;
+    }
     return MaterialPageRoute<void>(
       settings: settings,
       builder: (_) => const SutolHomePage(),
@@ -209,7 +362,8 @@ class AppRoutes {
     if (Navigator.of(context).canPop()) {
       Navigator.of(context).pop();
     } else {
-      Navigator.of(context).pushReplacementNamed(home);
+      final isEn = LanguageController.instance.isEnglish;
+      Navigator.of(context).pushReplacementNamed(isEn ? '/en' : home);
     }
   }
 }

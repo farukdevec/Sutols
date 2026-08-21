@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 
 import '../routes.dart';
+import '../state/language_controller.dart';
 import 'design/design_system.dart';
 import 'widgets/contact_social_widget.dart';
 
-/// SSS (Sıkça Sorulan Sorular) sayfası (/sss).
+/// SSS (Sıkça Sorulan Sorular) sayfası (/sss veya /en/faq).
 /// Sorular kategorilere ayrılmış akordiyon kartlarıyla sunulur.
 class FaqPage extends StatelessWidget {
   const FaqPage({super.key});
@@ -12,16 +13,19 @@ class FaqPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final isEn = LanguageController.instance.isEnglish;
+    final categories = isEn ? _categoriesEn : _categoriesTr;
+
     return Title(
-      title: 'Sıkça Sorulan Sorular – Sutols',
+      title: '${tr('Sıkça Sorulan Sorular', 'Frequently Asked Questions')} – Sutols',
       color: colors.accent,
       child: Scaffold(
         backgroundColor: colors.surface,
         appBar: AppBar(
-          title: const Text('Sıkça Sorulan Sorular'),
+          title: Text(tr('Sıkça Sorulan Sorular', 'Frequently Asked Questions')),
           leading: IconButton(
             icon: const Icon(Icons.arrow_back_rounded),
-            tooltip: 'Geri',
+            tooltip: tr('Geri', 'Back'),
             onPressed: () => AppRoutes.handleAppBack(context),
           ),
         ),
@@ -57,7 +61,7 @@ class FaqPage extends StatelessWidget {
                             ),
                             const SizedBox(width: 6),
                             Text(
-                              'SSS',
+                              tr('SSS', 'FAQ'),
                               style: AppTypography.labelMedium.copyWith(
                                 color: colors.accent,
                                 fontWeight: FontWeight.w700,
@@ -69,7 +73,7 @@ class FaqPage extends StatelessWidget {
                     ),
                     const SizedBox(height: AppSpacing.s16),
                     Text(
-                      'Sıkça Sorulan Sorular',
+                      tr('Sıkça Sorulan Sorular', 'Frequently Asked Questions'),
                       textAlign: TextAlign.center,
                       style: AppTypography.headline.copyWith(
                         fontWeight: FontWeight.w800,
@@ -78,14 +82,17 @@ class FaqPage extends StatelessWidget {
                     ),
                     const SizedBox(height: AppSpacing.s8),
                     Text(
-                      'Sutols hakkında merak edilen her şey tek sayfada.',
+                      tr(
+                        'Sutols hakkında merak edilen her şey tek sayfada.',
+                        'Everything you want to know about Sutols, all on one page.',
+                      ),
                       textAlign: TextAlign.center,
                       style: AppTypography.bodyLarge.copyWith(
                         color: colors.textSecondary,
                       ),
                     ),
                     const SizedBox(height: AppSpacing.s48),
-                    ..._categories.map(
+                    ...categories.map(
                       (category) => _FaqCategorySection(category: category),
                     ),
                     const SizedBox(height: AppSpacing.s24),
@@ -135,7 +142,7 @@ class _FaqBlock {
   final String? lead;
 }
 
-const List<_FaqCategory> _categories = [
+const List<_FaqCategory> _categoriesTr = [
   _FaqCategory(
     label: 'GENEL',
     items: [
@@ -347,6 +354,217 @@ const List<_FaqCategory> _categories = [
         blocks: [
           _FaqBlock.paragraph(
             ' e-posta adresinden veya Instagram\'da @sutolscom hesabımızdan bize dilediğiniz zaman ulaşabilirsiniz.',
+            lead: 'contact@sutols.com',
+          ),
+        ],
+      ),
+    ],
+  ),
+];
+
+const List<_FaqCategory> _categoriesEn = [
+  _FaqCategory(
+    label: 'GENERAL',
+    items: [
+      _FaqItem(
+        question: 'What is Sutols?',
+        blocks: [
+          _FaqBlock.paragraph(
+            'Sutols is an AI-powered presentation platform that creates '
+            'professional presentations from a single prompt. Type your '
+            'topic, let AI research and generate the slides, and customize '
+            'freely in the editor.',
+          ),
+        ],
+      ),
+      _FaqItem(
+        question: 'Who can use Sutols?',
+        blocks: [
+          _FaqBlock.paragraph(
+            'Students, teachers, entrepreneurs, marketers, consultants — '
+            'anyone who needs compelling presentations. You can start '
+            'immediately with our free tier.',
+          ),
+        ],
+      ),
+      _FaqItem(
+        question: 'How long does it take to generate a presentation?',
+        blocks: [
+          _FaqBlock.paragraph(
+            'After typing your topic and clicking "Create", AI generates '
+            'all slides within seconds. You can then edit and fine-tune '
+            'as much as you want.',
+          ),
+        ],
+      ),
+    ],
+  ),
+  _FaqCategory(
+    label: 'WHY SUTOLS',
+    items: [
+      _FaqItem(
+        question: 'What sets Sutols apart from other presentation tools '
+            '(Canva, Gamma, PowerPoint)?',
+        blocks: [
+          _FaqBlock.paragraph(
+            'interactive 3D model library.',
+            lead: 'Our biggest differentiator: ',
+          ),
+          _FaqBlock.paragraph(
+            'Most presentation tools only offer static images, 2D icons, or '
+            'flat drawings. Sutols includes thousands of true 3D models — '
+            'analysis frameworks (SWOT cubes, PESTEL wheels), 3D diagrams, '
+            'charts, and symbols — directly embedded in your slides. These models:',
+          ),
+          _FaqBlock.bullet(
+            'Can be rotated and viewed from any angle — genuine 3D objects, '
+            'not flat pictures.',
+          ),
+          _FaqBlock.bullet(
+            'Are live during presentations — your audience experiences an '
+            'interactive visual presentation.',
+          ),
+          _FaqBlock.bullet(
+            'Are automatically matched to your topic by AI.',
+          ),
+        ],
+      ),
+      _FaqItem(
+        question: 'What other benefits does Sutols offer?',
+        blocks: [
+          _FaqBlock.bullet(
+            'No need to search for templates or build layouts from scratch — '
+            'just enter your topic.',
+            lead: 'Single-prompt startup: ',
+          ),
+          _FaqBlock.bullet(
+            'Sutols gathers relevant and accurate insights while structuring '
+            'your presentation narrative.',
+            lead: 'AI deep research: ',
+          ),
+          _FaqBlock.bullet(
+            'The platform continuously refines layout and design choices '
+            'based on top-performing templates.',
+            lead: 'Evolving intelligence: ',
+          ),
+          _FaqBlock.bullet(
+            'Start for free and upgrade seamlessly as your requirements grow.',
+            lead: 'Flexible tiers: ',
+          ),
+        ],
+      ),
+      _FaqItem(
+        question: 'Where do the 3D models come from and what is their quality?',
+        blocks: [
+          _FaqBlock.paragraph(
+            'Our 3D library consists of carefully curated, optimized, and '
+            'professionally crafted assets, with new models added continuously.',
+          ),
+        ],
+      ),
+    ],
+  ),
+  _FaqCategory(
+    label: 'ACCOUNT & BILLING',
+    items: [
+      _FaqItem(
+        question: 'What is included in the Free tier?',
+        blocks: [
+          _FaqBlock.paragraph(
+            'You can generate daily presentations, access the essential 3D '
+            'model library, and create up to 7 slides per deck.',
+          ),
+        ],
+      ),
+      _FaqItem(
+        question: 'What do I get by upgrading to Plus?',
+        blocks: [
+          _FaqBlock.paragraph(
+            'You receive a higher daily generation quota, access to extended '
+            'and premium 3D assets, and can generate comprehensive presentations '
+            'up to 30 slides.',
+          ),
+        ],
+      ),
+      _FaqItem(
+        question: 'Can I change my plan anytime?',
+        blocks: [
+          _FaqBlock.paragraph(
+            'Yes, you can upgrade or modify your membership tier whenever you choose.',
+          ),
+        ],
+      ),
+    ],
+  ),
+  _FaqCategory(
+    label: 'CONTENT & USAGE',
+    items: [
+      _FaqItem(
+        question: 'Where can I access my saved presentations?',
+        blocks: [
+          _FaqBlock.paragraph(
+            'You can view all presentations created with your account under '
+            'the "My Presentations" section in the top menu.',
+          ),
+        ],
+      ),
+      _FaqItem(
+        question: 'How can I share or export my presentations?',
+        blocks: [
+          _FaqBlock.paragraph(
+            'Use the "Export" button in the editor to download self-contained '
+            'HTML presentations or share online links playable on any modern browser.',
+          ),
+        ],
+      ),
+      _FaqItem(
+        question: 'Can I download 3D models separately?',
+        blocks: [
+          _FaqBlock.paragraph(
+            'No, 3D assets are licensed strictly for interactive rendering '
+            'within Sutols presentations and cannot be extracted standalone.',
+          ),
+        ],
+      ),
+      _FaqItem(
+        question: 'Will my generated presentation duplicate someone else’s?',
+        blocks: [
+          _FaqBlock.paragraph(
+            'No, AI generates unique content and slide arrangements tailored '
+            'to every distinct prompt and context.',
+          ),
+        ],
+      ),
+    ],
+  ),
+  _FaqCategory(
+    label: 'TECHNICAL',
+    items: [
+      _FaqItem(
+        question: 'Which devices and browsers are supported?',
+        blocks: [
+          _FaqBlock.paragraph(
+            'Sutols runs entirely in the browser across desktops, laptops, '
+            'tablets, and mobile devices without requiring any installation.',
+          ),
+        ],
+      ),
+      _FaqItem(
+        question: 'Is my data secure?',
+        blocks: [
+          _FaqBlock.paragraph(
+            'your presentations and account credentials are encrypted and stored '
+            'on enterprise-grade infrastructure (Google Firebase). See our '
+            'Privacy Policy for full details.',
+            lead: 'Yes, ',
+          ),
+        ],
+      ),
+      _FaqItem(
+        question: 'How do I contact support if I run into an issue?',
+        blocks: [
+          _FaqBlock.paragraph(
+            ' or direct message us on Instagram @sutolscom anytime.',
             lead: 'contact@sutols.com',
           ),
         ],

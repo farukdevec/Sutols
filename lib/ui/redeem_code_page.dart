@@ -3,8 +3,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import '../routes.dart';
-import 'design/design_system.dart';
 import '../services/plan_tier_service.dart';
+import '../state/language_controller.dart';
+import 'design/design_system.dart';
 
 /// Kullanıcının promosyon kodunu anında kullandığı sayfa.
 ///
@@ -38,14 +39,20 @@ class _RedeemCodePageState extends State<RedeemCodePage> {
   Future<void> _redeem() async {
     final code = _codeController.text.trim().toUpperCase();
     if (code.isEmpty) {
-      _showMessage('Lütfen bir kod girin.', isError: true);
+      _showMessage(
+        tr('Lütfen bir kod girin.', 'Please enter a code.'),
+        isError: true,
+      );
       return;
     }
     if (_busy) return;
 
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
-      _showMessage('Lütfen önce giriş yapın.', isError: true);
+      _showMessage(
+        tr('Lütfen önce giriş yapın.', 'Please sign in first.'),
+        isError: true,
+      );
       return;
     }
 
@@ -56,13 +63,19 @@ class _RedeemCodePageState extends State<RedeemCodePage> {
         final codeSnap =
             await transaction.get(db.collection('promoCodes').doc(code));
         if (!codeSnap.exists) {
-          throw const _RedeemException(
-              'Geçersiz kod. Kontrol edip tekrar deneyin.');
+          throw _RedeemException(
+            tr(
+              'Geçersiz kod. Kontrol edip tekrar deneyin.',
+              'Invalid code. Please check and try again.',
+            ),
+          );
         }
         final data = codeSnap.data()!;
 
         if (data['active'] != true) {
-          throw const _RedeemException('Bu kod şu anda aktif değil.');
+          throw _RedeemException(
+            tr('Bu kod şu anda aktif değil.', 'This code is not active.'),
+          );
         }
 
         final expiresAtValue = data['expiresAt'];
@@ -72,20 +85,32 @@ class _RedeemCodePageState extends State<RedeemCodePage> {
                 ? expiresAtValue
                 : null;
         if (expiresAt != null && !expiresAt.isAfter(DateTime.now().toUtc())) {
-          throw const _RedeemException('Bu kodun süresi dolmuş.');
+          throw _RedeemException(
+            tr('Bu kodun süresi dolmuş.', 'This code has expired.'),
+          );
         }
 
         final maxUses = data['maxUses'] as int?;
         final usedCount = (data['usedCount'] as int?) ?? 0;
         if (maxUses != null && usedCount >= maxUses) {
-          throw const _RedeemException('Bu kodun kullanım limiti doldu.');
+          throw _RedeemException(
+            tr(
+              'Bu kodun kullanım limiti doldu.',
+              'This code has reached its usage limit.',
+            ),
+          );
         }
 
         final targetUid = data['targetUid'] as String?;
         if (targetUid != null &&
             targetUid.isNotEmpty &&
             targetUid != user.uid) {
-          throw const _RedeemException('Bu kod başka bir kullanıcıya özeldir.');
+          throw _RedeemException(
+            tr(
+              'Bu kod başka bir kullanıcıya özeldir.',
+              'This code is reserved for another user.',
+            ),
+          );
         }
 
         final grantsTier = data['grantsTier'] as String? ?? '';
@@ -93,15 +118,20 @@ class _RedeemCodePageState extends State<RedeemCodePage> {
             await transaction.get(db.collection('users').doc(user.uid));
         final currentTier = (userSnap.data()?['tier'] as String?) ?? 'free';
         if (!PlanTierService.isSupportedPromoGrant(grantsTier)) {
-          throw const _RedeemException(
-            'Bu kod güncel Plus planıyla uyumlu değil.',
+          throw _RedeemException(
+            tr(
+              'Bu kod güncel Plus planıyla uyumlu değil.',
+              'This code is not compatible with the current Plus plan.',
+            ),
           );
         }
         if (!PlanTierService.canRedeemPlus(
           grantsTier: grantsTier,
           currentTier: currentTier,
         )) {
-          throw const _RedeemException('Zaten Plus planındasınız.');
+          throw _RedeemException(
+            tr('Zaten Plus planındasınız.', 'You are already on the Plus plan.'),
+          );
         }
 
         transaction.set(
@@ -120,12 +150,20 @@ class _RedeemCodePageState extends State<RedeemCodePage> {
 
       if (!mounted) return;
       _codeController.clear();
-      _showMessage('Kod başarıyla kullanıldı, planınız güncellendi!',
-          isError: false);
+      _showMessage(
+        tr(
+          'Kod başarıyla kullanıldı, planınız güncellendi!',
+          'Code redeemed successfully, your plan has been updated!',
+        ),
+        isError: false,
+      );
     } on _RedeemException catch (e) {
       _showMessage(e.message, isError: true);
     } catch (e) {
-      _showMessage('Kod kullanılamadı: $e', isError: true);
+      _showMessage(
+        '${tr('Kod kullanılamadı', 'Could not redeem code')}: $e',
+        isError: true,
+      );
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -148,15 +186,15 @@ class _RedeemCodePageState extends State<RedeemCodePage> {
     final narrow = MediaQuery.sizeOf(context).width < 600;
 
     return Title(
-      title: 'Kod Kullan – Sutols',
+      title: '${tr('Kod Kullan', 'Redeem Code')} – Sutols',
       color: colors.accent,
       child: Scaffold(
         backgroundColor: colors.surface,
         appBar: AppBar(
-          title: const Text('Kod Kullan'),
+          title: Text(tr('Kod Kullan', 'Redeem Code')),
           leading: IconButton(
             icon: const Icon(Icons.arrow_back_rounded),
-            tooltip: 'Geri',
+            tooltip: tr('Geri', 'Back'),
             onPressed: () => AppRoutes.handleAppBack(context),
           ),
         ),
@@ -175,7 +213,7 @@ class _RedeemCodePageState extends State<RedeemCodePage> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     Text(
-                      'Promosyon Kodunuzu Girin',
+                      tr('Promosyon Kodunuzu Girin', 'Enter Your Promo Code'),
                       textAlign: TextAlign.center,
                       style: AppTypography.titleLarge.copyWith(
                         color: colors.textPrimary,
@@ -183,7 +221,10 @@ class _RedeemCodePageState extends State<RedeemCodePage> {
                     ),
                     const SizedBox(height: AppSpacing.s8),
                     Text(
-                      'Kod doğrulanır ve planınız anında güncellenir.',
+                      tr(
+                        'Kod doğrulanır ve planınız anında güncellenir.',
+                        'Your code will be verified and plan updated instantly.',
+                      ),
                       textAlign: TextAlign.center,
                       style: AppTypography.bodyMedium.copyWith(
                         color: colors.textSecondary,
@@ -194,9 +235,9 @@ class _RedeemCodePageState extends State<RedeemCodePage> {
                       controller: _codeController,
                       enabled: !_busy,
                       textCapitalization: TextCapitalization.characters,
-                      decoration: const InputDecoration(
-                        hintText: 'KOD1234',
-                        prefixIcon: Icon(Icons.redeem_outlined),
+                      decoration: InputDecoration(
+                        hintText: tr('KOD1234', 'CODE1234'),
+                        prefixIcon: const Icon(Icons.redeem_outlined),
                       ),
                       onSubmitted: (_) => _redeem(),
                     ),
@@ -210,7 +251,11 @@ class _RedeemCodePageState extends State<RedeemCodePage> {
                               child: CircularProgressIndicator(strokeWidth: 2),
                             )
                           : const Icon(Icons.check_rounded),
-                      label: Text(_busy ? 'Kullanılıyor...' : 'Kodu Kullan'),
+                      label: Text(
+                        _busy
+                            ? tr('Kullanılıyor...', 'Redeeming...')
+                            : tr('Kodu Kullan', 'Redeem Code'),
+                      ),
                     ),
                   ],
                 ),

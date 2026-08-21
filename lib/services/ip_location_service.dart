@@ -32,7 +32,8 @@ class IpLocation {
       city: _string(json['city']),
       region: _string(json['region']),
       country: _string(json['country']),
-      countryCode: _string(json['countryCode']).toUpperCase(),
+      countryCode:
+          _string(json['countryCode'] ?? json['country_code']).toUpperCase(),
     );
   }
 

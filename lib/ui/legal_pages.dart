@@ -1,17 +1,74 @@
 import 'package:flutter/material.dart';
 
 import '../routes.dart';
+import '../state/language_controller.dart';
 import 'design/design_system.dart';
 import 'widgets/contact_social_widget.dart';
 
-/// Gizlilik Politikası (/gizlilik) ve Kullanım Şartları (/sartlar) sayfaları.
-/// Metinler başlangıç taslağıdır; yasal inceleme sonrası güncellenmelidir.
+/// Gizlilik Politikası (/gizlilik, /en/privacy) ve Kullanım Şartları (/sartlar, /en/terms) sayfaları.
 
 class PrivacyPolicyPage extends StatelessWidget {
   const PrivacyPolicyPage({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final isEn = LanguageController.instance.isEnglish;
+
+    if (isEn) {
+      return const LegalPageScaffold(
+        title: 'Privacy Policy',
+        updatedLabel: 'Last updated: August 2026',
+        children: [
+          _Section(
+            title: 'Introduction',
+            paragraphs: [
+              'This policy explains what information is collected and how it is used when you use Sutols.',
+            ],
+          ),
+          _Section(
+            title: 'Information We Collect',
+            bullets: [
+              'Account information: email address, display name (profile details if signed in with Google)',
+              'Usage data: generated presentations, edits made to slides, export frequency, and editor session duration',
+              'Technical data: approximate city, region, and country derived from IP address and browser client data (for security and service quality). Precise GPS location is never collected.',
+            ],
+          ),
+          _Section(
+            title: 'Why We Collect This Information',
+            bullets: [
+              'To manage your account and securely store your presentations',
+              'To improve our service: analyzing design and content structures favored by users to optimize future slide generation. This analysis is aggregated and anonymized; individual content is never sold or shared with third parties.',
+              'To comply with legal obligations',
+            ],
+          ),
+          _Section(
+            title: 'Third-Party Services',
+            paragraphs: [
+              'We rely on the following third-party infrastructure providers to deliver Sutols:',
+            ],
+            bullets: [
+              'Google Firebase (authentication, database, hosting)',
+              'Google Gemini AI (presentation content generation — topic prompt is transmitted to Google for slide creation)',
+              'Cloudflare (3D model asset CDN and content delivery)',
+              'IPWho (approximate geographic lookup from IP address)',
+            ],
+            paragraphsAfter: [
+              'Each third-party service operates under its respective privacy policy.',
+            ],
+          ),
+          _Section(
+            title: 'Your Rights',
+            bullets: [
+              'Request a copy of your stored data',
+              'Request deletion of your account and associated presentations',
+              'Opt out of optional usage collection (certain features may be limited)',
+            ],
+          ),
+          _ContactSection(),
+        ],
+      );
+    }
+
     return const LegalPageScaffold(
       title: 'Gizlilik Politikası',
       updatedLabel: 'Son güncelleme: Ağustos 2026',
@@ -72,6 +129,66 @@ class TermsOfServicePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isEn = LanguageController.instance.isEnglish;
+
+    if (isEn) {
+      return const LegalPageScaffold(
+        title: 'Terms of Service',
+        updatedLabel: 'Last updated: August 2026',
+        children: [
+          _Section(
+            title: 'General',
+            paragraphs: [
+              'By accessing or using Sutols, you agree to be bound by the following terms.',
+            ],
+          ),
+          _TermsItem(
+            number: '1',
+            title: 'Account',
+            text:
+                'You must register with accurate information and maintain the confidentiality of your account credentials.',
+          ),
+          _TermsItem(
+            number: '2',
+            title: 'Content',
+            text:
+                'You are solely responsible for the content of your presentations. You may not use Sutols to generate unlawful, infringing, or harmful material.',
+          ),
+          _TermsItem(
+            number: '3',
+            title: '3D Model Library',
+            text:
+                '3D assets on Sutols are licensed exclusively for presentation creation within the platform. Extracting, downloading, redistributing, or using 3D models outside Sutols is strictly prohibited.',
+          ),
+          _TermsItem(
+            number: '4',
+            title: 'Usage Data',
+            text:
+                'Presentations created on Sutols and user interactions (editing, exporting, etc.) may be analyzed in aggregate to refine and improve the service.',
+          ),
+          _TermsItem(
+            number: '5',
+            title: 'Membership Tiers',
+            text:
+                'The Free tier has daily quota limits. Upgrades, subscriptions, and cancellation terms are outlined on the Pricing page.',
+          ),
+          _TermsItem(
+            number: '6',
+            title: 'No Warranty',
+            text:
+                'Sutols is provided "as is" without warranty of uninterrupted or error-free operation.',
+          ),
+          _TermsItem(
+            number: '7',
+            title: 'Modifications',
+            text:
+                'These terms may be updated periodically. Material changes will be communicated to users.',
+          ),
+          _ContactSection(),
+        ],
+      );
+    }
+
     return const LegalPageScaffold(
       title: 'Kullanım Şartları',
       updatedLabel: 'Son güncelleme: Ağustos 2026',
@@ -154,7 +271,7 @@ class LegalPageScaffold extends StatelessWidget {
           title: Text(title),
           leading: IconButton(
             icon: const Icon(Icons.arrow_back_rounded),
-            tooltip: 'Geri',
+            tooltip: tr('Geri', 'Back'),
             onPressed: () => AppRoutes.handleAppBack(context),
           ),
         ),

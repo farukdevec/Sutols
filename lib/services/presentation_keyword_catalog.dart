@@ -53,6 +53,18 @@ class PresentationKeywordCatalog {
     'ile', 've', 'bir', 'bu', 'su', 'icin', 'gibi', 'olarak', 'olan',
     'daha', 'cok', 'az', 'her', 'tum', 'butun', 'ise', 'ama', 'fakat',
     'ancak', 'veya', 'ya', 'de', 'da', 'ki',
+    // English generic stopwords & abstract filler
+    'the', 'and', 'with', 'from', 'about', 'for', 'this', 'that',
+    'into', 'over', 'after', 'before', 'between', 'through', 'during',
+    'without', 'again', 'further', 'then', 'once', 'here', 'there',
+    'when', 'where', 'why', 'how', 'all', 'any', 'both', 'each',
+    'few', 'more', 'most', 'other', 'some', 'such', 'only', 'own',
+    'same', 'so', 'than', 'too', 'very', 'can', 'will', 'just',
+    'should', 'now', 'development', 'process', 'period', 'history',
+    'historical', 'important', 'importance', 'different', 'differences',
+    'general', 'generally', 'structure', 'system', 'basic', 'basics',
+    'type', 'types', 'example', 'examples', 'feature', 'features',
+    'introduction', 'overview', 'summary', 'conclusion',
   };
 
   /// [normalizedWord] eşleştirme için kullanılamayacak kadar jenerik mi?

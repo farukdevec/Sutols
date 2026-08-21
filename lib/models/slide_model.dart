@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../state/language_controller.dart';
 import 'presentation_component_catalog.dart';
 
 export 'presentation_component_catalog.dart';
@@ -780,94 +781,94 @@ const Object _copySentinel = Object();
 String presentationTransitionLabel(PresentationTransitionKind kind) {
   switch (kind) {
     case PresentationTransitionKind.none:
-      return 'Geçiş Yok';
+      return tr('Geçiş Yok', 'No Transition');
     case PresentationTransitionKind.smooth:
-      return 'Yumuşak Geçiş';
+      return tr('Yumuşak Geçiş', 'Smooth');
     case PresentationTransitionKind.fade:
-      return 'Fade';
+      return tr('Fade', 'Fade');
     case PresentationTransitionKind.slide:
-      return 'İtme';
+      return tr('İtme', 'Push');
     case PresentationTransitionKind.zoom:
-      return 'Zoom';
+      return tr('Zoom', 'Zoom');
     case PresentationTransitionKind.convex:
-      return 'Convex';
+      return tr('Convex', 'Convex');
     case PresentationTransitionKind.concave:
-      return 'Concave';
+      return tr('Concave', 'Concave');
     case PresentationTransitionKind.wipe:
-      return 'Silme';
+      return tr('Silme', 'Wipe');
     case PresentationTransitionKind.split:
-      return 'Bölme';
+      return tr('Bölme', 'Split');
     case PresentationTransitionKind.reveal:
-      return 'Açığa Çıkarma';
+      return tr('Açığa Çıkarma', 'Reveal');
     case PresentationTransitionKind.cover:
-      return 'Kaplama';
+      return tr('Kaplama', 'Cover');
     case PresentationTransitionKind.uncover:
-      return 'Örtüyü Kaldırma';
+      return tr('Örtüyü Kaldırma', 'Uncover');
     case PresentationTransitionKind.flip:
-      return 'Çevirme';
+      return tr('Çevirme', 'Flip');
     case PresentationTransitionKind.cube3d:
-      return '3D Küp';
+      return tr('3D Küp', '3D Cube');
     case PresentationTransitionKind.morph:
-      return 'Cam Blur Morph';
+      return tr('Cam Blur Morph', 'Glass Blur Morph');
     case PresentationTransitionKind.parallax:
-      return 'Parallaks Derinlik';
+      return tr('Parallaks Derinlik', 'Parallax Depth');
     case PresentationTransitionKind.elastic:
-      return 'Esnek Sıçrama';
+      return tr('Esnek Sıçrama', 'Elastic Bounce');
     case PresentationTransitionKind.glitch:
-      return 'Siber Titreşim';
+      return tr('Siber Titreşim', 'Cyber Glitch');
     case PresentationTransitionKind.prism:
-      return 'Prizma Işığı';
+      return tr('Prizma Işığı', 'Prism Light');
     case PresentationTransitionKind.radialWipe:
-      return 'Dairesel Süpürme';
+      return tr('Dairesel Süpürme', 'Radial Wipe');
     case PresentationTransitionKind.rotateZoom:
-      return '3D Dönel Yakınlaşma';
+      return tr('3D Dönel Yakınlaşma', '3D Rotate Zoom');
   }
 }
 
 String presentationTransitionSubtitle(PresentationTransitionKind kind) {
   switch (kind) {
     case PresentationTransitionKind.none:
-      return 'Sahneler animasyon olmadan doğrudan değiştirilir';
+      return tr('Sahneler animasyon olmadan doğrudan değiştirilir', 'Slides change directly without animation');
     case PresentationTransitionKind.smooth:
-      return 'Aynı 3D modeli ve sahneyi akıcı biçimde dönüştürür';
+      return tr('Aynı 3D modeli ve sahneyi akıcı biçimde dönüştürür', 'Smoothly morphs the same 3D model and scene');
     case PresentationTransitionKind.fade:
-      return 'Sahneler birbirinin üzerinde yumuşakça kaybolup belirir';
+      return tr('Sahneler birbirinin üzerinde yumuşakça kaybolup belirir', 'Slides gently cross-fade over each other');
     case PresentationTransitionKind.slide:
-      return 'Yeni sahne eskisini aynı doğrultuda ekran dışına iter';
+      return tr('Yeni sahne eskisini aynı doğrultuda ekran dışına iter', 'New slide pushes the old slide out in the same direction');
     case PresentationTransitionKind.zoom:
-      return 'Sahneye yakinlasarak giris';
+      return tr('Sahneye yakınlaşarak giriş', 'Zoom into the slide on transition');
     case PresentationTransitionKind.convex:
-      return 'Disa dogru 3B kart hissi';
+      return tr('Dışa doğru 3B kart hissi', '3D convex card-folding effect');
     case PresentationTransitionKind.concave:
-      return 'Ice dogru 3B kart hissi';
+      return tr('İçe doğru 3B kart hissi', '3D concave card-folding effect');
     case PresentationTransitionKind.wipe:
-      return 'Slaytı soldan sağa doğru açar';
+      return tr('Slaytı soldan sağa doğru açar', 'Wipes the slide from left to right');
     case PresentationTransitionKind.split:
-      return 'Slaytı merkezden iki yana doğru açar';
+      return tr('Slaytı merkezden iki yana doğru açar', 'Splits the slide outward from center');
     case PresentationTransitionKind.reveal:
-      return 'Yeni slaytı alttan akıcı biçimde gösterir';
+      return tr('Yeni slaytı alttan akıcı biçimde gösterir', 'Smoothly reveals the new slide from below');
     case PresentationTransitionKind.cover:
-      return 'Yeni sahne eskisinin üzerine bir örtü gibi kapanır';
+      return tr('Yeni sahne eskisinin üzerine bir örtü gibi kapanır', 'New slide covers the previous one like a sheet');
     case PresentationTransitionKind.uncover:
-      return 'Eski sahne çekilir, altındaki yeni sahne ortaya çıkar';
+      return tr('Eski sahne çekilir, altındaki yeni sahne ortaya çıkar', 'Old slide slides away to reveal the new slide underneath');
     case PresentationTransitionKind.flip:
-      return 'Slaytı 3B kart gibi çevirir';
+      return tr('Slaytı 3B kart gibi çevirir', 'Flips the slide like a 3D card');
     case PresentationTransitionKind.cube3d:
-      return 'Slaytları 3B küp yüzeyi gibi döndürür';
+      return tr('Slaytları 3B küp yüzeyi gibi döndürür', 'Rotates slides like faces of a 3D cube');
     case PresentationTransitionKind.morph:
-      return 'Bulanıklaşan cam efektiyle odak değiştirir';
+      return tr('Bulanıklaşan cam efektiyle odak değiştirir', 'Shifts focus with a frosted glass blur effect');
     case PresentationTransitionKind.parallax:
-      return 'Derinlikli katman kayması yaratır';
+      return tr('Derinlikli katman kayması yaratır', 'Creates layered depth parallax shift');
     case PresentationTransitionKind.elastic:
-      return 'Yay esnekliğinde sıçrayışlı geçiş yapar';
+      return tr('Yay esnekliğinde sıçrayışlı geçiş yapar', 'Springy elastic bounce transition');
     case PresentationTransitionKind.glitch:
-      return 'Dijital siber parazit ve renk kırılması';
+      return tr('Dijital siber parazit ve renk kırılması', 'Digital cyber glitch and chromatic aberration');
     case PresentationTransitionKind.prism:
-      return 'Prizmatik parlak ışık hüzmesi geçişi';
+      return tr('Prizmatik parlak ışık hüzmesi geçişi', 'Prismatic bright light flare transition');
     case PresentationTransitionKind.radialWipe:
-      return 'Merkezden dışa dairesel açılış efekti';
+      return tr('Merkezden dışa dairesel açılış efekti', 'Circular radial wipe from center outwards');
     case PresentationTransitionKind.rotateZoom:
-      return '3B eksende dönerek ekrana yaklaşır';
+      return tr('3B eksende dönerek ekrana yaklaşır', 'Approaches screen rotating on 3D axes');
   }
 }
 

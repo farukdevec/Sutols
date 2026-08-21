@@ -193,7 +193,8 @@ class GeminiPresentationService {
     bool checkQuality = true,
   }) async {
     final stopwatch = Stopwatch()..start();
-    final systemInstruction = PresentationPromptBuilder.buildSystemInstruction();
+    final systemInstruction =
+        PresentationPromptBuilder.buildSystemInstruction(language: language);
     final maxTokens = (slideCount * 800 + 1000).clamp(3000, 16384);
 
     try {

@@ -58,7 +58,9 @@ class PresentationDeckBuilder {
         title: title,
         body: '${slide.keywords.join(' ')} $subtitle $content',
       );
-      final hasVisual = selectedModel != null || fallbackComponent != null;
+      final hasVisual = selectedModel != null ||
+          slide.imageAssetId != null ||
+          fallbackComponent != null;
       final background =
           _bestBackground(topic: topic, title: title, content: content);
 
@@ -354,6 +356,31 @@ class PresentationDeckBuilder {
             size: const Size(0.29, 0.62),
           ),
         );
+      } else if (slide.imageAssetId != null) {
+        final imgAspect = (slide.imageAspectRatio ?? (16 / 9)).clamp(0.4, 3.0);
+        var heightFactor = 0.52;
+        var widthFactor = heightFactor * imgAspect / (16 / 9);
+        if (widthFactor > 0.36) {
+          widthFactor = 0.36;
+          heightFactor = widthFactor * (16 / 9) / imgAspect;
+        }
+        if (heightFactor > 0.60) {
+          heightFactor = 0.60;
+          widthFactor = heightFactor * imgAspect / (16 / 9);
+        }
+        componentBlocks.add(
+          PresentationComponentBlock(
+            id: 'component-${componentCounter++}',
+            imageAssetId: slide.imageAssetId,
+            imageAspectRatio: imgAspect,
+            position: Offset(
+              (0.68 + (0.29 - widthFactor) / 2).clamp(0.45, 0.95 - widthFactor),
+              (0.50 - heightFactor / 2).clamp(0.12, 0.40),
+            ),
+            size: Size(widthFactor, heightFactor),
+            entranceAnimation: PresentationEntranceAnimation.fadeIn,
+          ),
+        );
       } else if (fallbackComponent != null) {
         componentBlocks.add(
           PresentationComponentBlock(
@@ -501,6 +528,8 @@ class DeckSlide {
     this.sections,
     this.visual,
     this.sources = const <String>[],
+    this.imageAssetId,
+    this.imageAspectRatio,
   });
 
   final String title;
@@ -514,4 +543,6 @@ class DeckSlide {
   final List<Map<String, dynamic>>? sections;
   final Map<String, dynamic>? visual;
   final List<String> sources;
+  final String? imageAssetId;
+  final double? imageAspectRatio;
 }

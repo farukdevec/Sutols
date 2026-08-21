@@ -50,7 +50,7 @@ class _AuthPageState extends State<AuthPage> {
       } else {
         if (_passwordController.text != _confirmPasswordController.text) {
           setState(() {
-            _error = 'Şifreler eşleşmiyor.';
+            _error = tr('Şifreler eşleşmiyor.', 'Passwords do not match.');
           });
           return;
         }
@@ -67,7 +67,10 @@ class _AuthPageState extends State<AuthPage> {
       if (mounted) AppRoutes.handleAppBack(context);
     } on TermsConsentNotApprovedException {
       setState(() {
-        _error = 'Kullanım Şartları onaylanmadan kayıt tamamlanamaz.';
+        _error = tr(
+          'Kullanım Şartları onaylanmadan kayıt tamamlanamaz.',
+          'Registration cannot be completed without agreeing to Terms of Service.',
+        );
       });
     } on FirebaseAuthException catch (e) {
       setState(() {
@@ -75,7 +78,10 @@ class _AuthPageState extends State<AuthPage> {
       });
     } catch (e) {
       setState(() {
-        _error = 'Bir hata oluştu. Lütfen tekrar deneyin.';
+        _error = tr(
+          'Bir hata oluştu. Lütfen tekrar deneyin.',
+          'An error occurred. Please try again.',
+        );
       });
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -102,7 +108,10 @@ class _AuthPageState extends State<AuthPage> {
       });
     } catch (e) {
       setState(() {
-        _error = 'Bir hata oluştu. Lütfen tekrar deneyin.';
+        _error = tr(
+          'Bir hata oluştu. Lütfen tekrar deneyin.',
+          'An error occurred. Please try again.',
+        );
       });
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -113,25 +122,28 @@ class _AuthPageState extends State<AuthPage> {
     switch (code) {
       case 'user-not-found':
       case 'invalid-credential':
-        return 'E-posta veya şifre hatalı.';
+        return tr('E-posta veya şifre hatalı.', 'Invalid email or password.');
       case 'wrong-password':
-        return 'Şifre hatalı.';
+        return tr('Şifre hatalı.', 'Wrong password.');
       case 'email-already-in-use':
-        return 'Bu e-posta zaten kayıtlı.';
+        return tr('Bu e-posta zaten kayıtlı.', 'This email is already in use.');
       case 'weak-password':
-        return 'Şifre en az 6 karakter olmalıdır.';
+        return tr('Şifre en az 6 karakter olmalıdır.', 'Password must be at least 6 characters.');
       case 'invalid-email':
-        return 'Geçersiz e-posta adresi.';
+        return tr('Geçersiz e-posta adresi.', 'Invalid email address.');
       case 'user-disabled':
-        return 'Bu hesap devre dışı bırakılmış.';
+        return tr('Bu hesap devre dışı bırakılmış.', 'This account has been disabled.');
       case 'operation-not-allowed':
-        return 'Bu giriş yöntemi şu an aktif değil.';
+        return tr('Bu giriş yöntemi şu an aktif değil.', 'This sign-in method is currently disabled.');
       case 'account-exists-with-different-credential':
-        return 'Bu e-posta ile farklı bir giriş yöntemi kullanılmış.';
+        return tr(
+          'Bu e-posta ile farklı bir giriş yöntemi kullanılmış.',
+          'An account already exists with a different credential.',
+        );
       case 'popup-closed-by-user':
-        return 'Giriş işlemi iptal edildi.';
+        return tr('Giriş işlemi iptal edildi.', 'Sign in was cancelled.');
       default:
-        return 'Bir hata oluştu: $code';
+        return tr('Bir hata oluştu: $code', 'An error occurred: $code');
     }
   }
 
@@ -315,7 +327,7 @@ class _AuthPageState extends State<AuthPage> {
                   borderRadius: BorderRadius.circular(AppRadius.md - 1),
                 ),
                 child: Text(
-                  'Giriş Yap',
+                  tr('Giriş Yap', 'Sign In'),
                   textAlign: TextAlign.center,
                   style: AppTypography.labelLarge.copyWith(
                     color: _isLogin ? colors.onPrimary : colors.textSecondary,
@@ -339,7 +351,7 @@ class _AuthPageState extends State<AuthPage> {
                   borderRadius: BorderRadius.circular(AppRadius.md - 1),
                 ),
                 child: Text(
-                  'Kayıt Ol',
+                  tr('Kayıt Ol', 'Sign Up'),
                   textAlign: TextAlign.center,
                   style: AppTypography.labelLarge.copyWith(
                     color: !_isLogin ? colors.onPrimary : colors.textSecondary,

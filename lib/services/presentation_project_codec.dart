@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 
 import '../models/slide_model.dart';
+import 'remote_image_sources.dart';
 import 'remote_model_sources.dart';
 
 @immutable
@@ -35,11 +36,22 @@ class PresentationProjectCodec {
         if (RemoteModelSources.sourceForRefresh(modelId) case final source?)
           modelId: source,
     };
+    final usedImageIds = pages
+        .expand((page) => page.componentBlocks)
+        .map((block) => block.imageAssetId)
+        .whereType<String>()
+        .toSet();
+    final imageSourcesById = <String, String>{
+      for (final imageId in usedImageIds)
+        if (RemoteImageSources.sourceFor(imageId) case final source?)
+          imageId: source,
+    };
     final data = <String, Object?>{
       'format': 'sutol.presentation',
       'version': version,
       'effectSettings': _effectSettingsToJson(effectSettings),
       'modelSourcesById': modelSourcesById,
+      'imageSourcesById': imageSourcesById,
       'pages': pages.map(_pageToJson).toList(growable: false),
     };
 
@@ -61,6 +73,14 @@ class PresentationProjectCodec {
     if (modelSourcesJson is Map<String, Object?>) {
       RemoteModelSources.registerAll(<String, String>{
         for (final entry in modelSourcesJson.entries)
+          if (entry.value is String) entry.key: entry.value! as String,
+      });
+    }
+
+    final imageSourcesJson = decoded['imageSourcesById'];
+    if (imageSourcesJson is Map<String, Object?>) {
+      RemoteImageSources.registerAll(<String, String>{
+        for (final entry in imageSourcesJson.entries)
           if (entry.value is String) entry.key: entry.value! as String,
       });
     }

@@ -5,10 +5,10 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
 import '../services/firestore_rest_helper.dart';
+import '../services/presentation_loader.dart';
 import '../services/presentation_model_source_resolver.dart';
 import '../services/presentation_project_codec.dart';
-
-import '../services/presentation_loader.dart';
+import '../state/language_controller.dart';
 import 'design/design_system.dart';
 import 'html_presentation_editor_page.dart';
 import 'widgets/share_presentation_dialog.dart';
@@ -46,7 +46,7 @@ class _PresentationViewPageState extends State<PresentationViewPage> {
   Future<Map<String, dynamic>> _fetchPresentation(String presentationId) async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
-      throw Exception('Lütfen önce giriş yapın.');
+      throw Exception(tr('Lütfen önce giriş yapın.', 'Please sign in first.'));
     }
 
     final idToken = await user.getIdToken();
@@ -56,7 +56,9 @@ class _PresentationViewPageState extends State<PresentationViewPage> {
     );
 
     if (response.statusCode != 200) {
-      throw Exception('Sunum yüklenemedi (HTTP ${response.statusCode}): ${response.body}');
+      throw Exception(
+        '${tr('Sunum yüklenemedi', 'Could not load presentation')} (HTTP ${response.statusCode}): ${response.body}',
+      );
     }
 
     final doc = jsonDecode(response.body) as Map<String, dynamic>;
@@ -85,7 +87,6 @@ class _PresentationViewPageState extends State<PresentationViewPage> {
         try {
           final decoded = PresentationProjectCodec.decodeProject(projectJson);
           await hydratePresentationModelSources(decoded.pages);
-
 
           for (final page in decoded.pages) {
             var title = page.textBlocks.isNotEmpty
@@ -122,9 +123,6 @@ class _PresentationViewPageState extends State<PresentationViewPage> {
     }
 
     // Yedek 2: slides alt koleksiyonu (order alanıyla).
-    // Admin için kural bazen 403 dönebilir (rule değişimi geçiş dönemi);
-    // hata durumunda boş listeyle devam et, değilse kullanıcının görmesi
-    // gereken slaytlar yok zaten (ana belge/project doluysa).
     if (slides.isEmpty) {
       try {
         final slideDocs = await FirestoreRestHelper.runQuery({
@@ -149,61 +147,76 @@ class _PresentationViewPageState extends State<PresentationViewPage> {
           };
         }).toList();
       } catch (_) {
-        // Kural 403 döndürürse sessizce yut: yukarıdaki yedeklerden
-        // slayt gelmişse onlarla devam edilir, yoksa boş liste gösterilir.
+        slides = [];
       }
     }
 
     return {
       'topic': _stringField(fields, 'topic'),
       'slides': slides,
-      'updatedByName': updatedByName ?? '',
+      if (updatedByName != null && updatedByName.isNotEmpty)
+        'updatedByName': updatedByName,
     };
   }
 
-  Future<void> _openShareDialog() async {
-    final user = FirebaseAuth.instance.currentUser;
-    final info = _shareInfo;
-    if (user == null || info == null) return;
-
-    await showDialog<void>(
-      context: context,
-      builder: (_) => SharePresentationDialog(
-        presentationId: widget.presentationId,
-        isOwner: info['userId'] == user.uid,
-        initialShared: info['shared'] == true,
-      ),
-    );
-    if (!mounted) return;
-    setState(() {
-      _future = _fetchPresentation(widget.presentationId);
-    });
+  static String _stringField(Map<String, dynamic> fields, String key) {
+    final value = fields[key];
+    if (value is Map<String, dynamic>) {
+      final s = value['stringValue'];
+      if (s is String) return s;
+    }
+    return '';
   }
 
-  static List<Map<String, dynamic>> _slidesField(dynamic field) {
-    final values = field?['arrayValue']?['values'] as List? ?? const [];
-    return values.map((value) {
-      final fields =
-          (value as Map<String, dynamic>)['mapValue']?['fields'] as Map<String, dynamic>? ?? {};
+  static List<Map<String, dynamic>> _slidesField(dynamic raw) {
+    if (raw is! Map<String, dynamic>) return [];
+    final arrayValue = raw['arrayValue'];
+    if (arrayValue is! Map<String, dynamic>) return [];
+    final values = arrayValue['values'];
+    if (values is! List) return [];
+
+    return values.map<Map<String, dynamic>>((item) {
+      if (item is! Map<String, dynamic>) return {};
+      final mapValue = item['mapValue'];
+      if (mapValue is! Map<String, dynamic>) return {};
+      final fields = mapValue['fields'];
+      if (fields is! Map<String, dynamic>) return {};
+
+      final modelIdsRaw = fields['modelIds'];
+      final modelIds = <String>[];
+      if (modelIdsRaw is Map<String, dynamic>) {
+        final arr = modelIdsRaw['arrayValue'];
+        if (arr is Map<String, dynamic> && arr['values'] is List) {
+          for (final v in arr['values'] as List) {
+            if (v is Map<String, dynamic> && v['stringValue'] is String) {
+              modelIds.add(v['stringValue'] as String);
+            }
+          }
+        }
+      }
+
       return {
-        'title': _stringField(fields, 'title').replaceAll('*', '').trim(),
-        'content': _stringField(fields, 'content').replaceAll('*', '').trim(),
+        'title': _stringField(fields, 'title'),
+        'content': _stringField(fields, 'content'),
         'layout': _stringField(fields, 'layout'),
-        'modelIds': _stringArrayField(fields, 'modelIds'),
+        'modelIds': modelIds,
       };
     }).toList();
   }
 
-  static String _stringField(Map<String, dynamic> fields, String key) {
-    return fields[key]?['stringValue'] as String? ?? '';
-  }
+  void _openShareDialog() {
+    final user = FirebaseAuth.instance.currentUser;
+    final isOwner = _shareInfo?['userId'] == user?.uid;
+    final initialShared = _shareInfo?['shared'] as bool? ?? false;
 
-  static List<String> _stringArrayField(Map<String, dynamic> fields, String key) {
-    final values = fields[key]?['arrayValue']?['values'] as List? ?? const [];
-    return values
-        .map((v) => (v as Map<String, dynamic>)['stringValue'] as String? ?? '')
-        .where((v) => v.isNotEmpty)
-        .toList();
+    showDialog<void>(
+      context: context,
+      builder: (_) => SharePresentationDialog(
+        presentationId: widget.presentationId,
+        isOwner: isOwner,
+        initialShared: initialShared,
+      ),
+    );
   }
 
   @override
@@ -213,12 +226,12 @@ class _PresentationViewPageState extends State<PresentationViewPage> {
     return Scaffold(
       backgroundColor: colors.surface,
       appBar: AppBar(
-        title: const Text('Sunum'),
+        title: Text(tr('Sunum', 'Presentation')),
         backgroundColor: colors.surface,
         actions: [
           if (!widget.adminView)
             IconButton(
-              tooltip: 'Editörde Düzenle',
+              tooltip: tr('Editörde Düzenle', 'Edit in Editor'),
               icon: const Icon(Icons.edit_note_rounded),
               onPressed: () async {
                 final result = await loadPresentationForEdit(widget.presentationId);
@@ -236,7 +249,7 @@ class _PresentationViewPageState extends State<PresentationViewPage> {
             ),
           if (_shareInfo != null && !widget.adminView)
             IconButton(
-              tooltip: 'Paylaş',
+              tooltip: tr('Paylaş', 'Share'),
               icon: const Icon(Icons.share_outlined),
               onPressed: _openShareDialog,
             ),
@@ -254,7 +267,7 @@ class _PresentationViewPageState extends State<PresentationViewPage> {
               child: Padding(
                 padding: const EdgeInsets.all(AppSpacing.s32),
                 child: Text(
-                  'Sunum yüklenemedi: ${snapshot.error}',
+                  '${tr('Sunum yüklenemedi', 'Could not load presentation')}: ${snapshot.error}',
                   textAlign: TextAlign.center,
                   style: AppTypography.bodyLarge.copyWith(
                     color: colors.textSecondary,
@@ -268,7 +281,7 @@ class _PresentationViewPageState extends State<PresentationViewPage> {
           if (data == null) {
             return Center(
               child: Text(
-                'Sunum bulunamadı.',
+                tr('Sunum bulunamadı.', 'Presentation not found.'),
                 style: AppTypography.bodyLarge.copyWith(
                   color: colors.textSecondary,
                 ),
@@ -290,10 +303,10 @@ class _PresentationViewPageState extends State<PresentationViewPage> {
               const SizedBox(height: AppSpacing.s8),
               Text(
                 [
-                  '${slides.length} slayt',
+                  '${slides.length} ${tr('slayt', 'slides')}',
                   '• ${widget.presentationId}',
                   if ((data['updatedByName'] as String? ?? '').isNotEmpty)
-                    '• Son düzenleme: ${data['updatedByName']}',
+                    '• ${tr('Son düzenleme:', 'Last edited by:')} ${data['updatedByName']}',
                 ].join(' '),
                 style: AppTypography.bodyMedium.copyWith(
                   color: colors.textSecondary,

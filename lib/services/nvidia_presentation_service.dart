@@ -232,7 +232,7 @@ class NvidiaPresentationService {
     bool checkQuality = true,
   }) async {
     final systemInstruction =
-        PresentationPromptBuilder.buildSystemInstruction();
+        PresentationPromptBuilder.buildSystemInstruction(language: language);
     final userPrompt = PresentationPromptBuilder.buildUserPrompt(
       topic: topic,
       slideCount: slideCount,

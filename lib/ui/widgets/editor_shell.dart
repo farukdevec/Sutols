@@ -6,6 +6,7 @@ import 'package:flutter/scheduler.dart';
 import '../../models/slide_model.dart';
 import '../../services/remote_image_sources.dart';
 import '../../services/remote_model_sources.dart';
+import '../../state/language_controller.dart';
 import '../../state/presentation_controller.dart';
 import '../design/design_system.dart';
 import '../design/sutol_widgets.dart';
@@ -1527,7 +1528,7 @@ class _LabeledTextField extends StatelessWidget {
           fontWeight: FontWeight.w700,
         ),
         decoration: InputDecoration(
-          hintText: 'Buraya metin yazin',
+          hintText: tr('Buraya metin yazın', 'Type text here'),
           hintStyle: TextStyle(color: context.onSurfaceVariant),
           isDense: true,
           filled: true,
@@ -2086,8 +2087,9 @@ class _PresentationPageCanvasState extends State<PresentationPageCanvas> {
   }
 
   Rect _textBlockRect(PresentationTextBlock block, Size canvasSize) {
-    final displayText =
-        block.text.trim().isEmpty ? 'Buraya metin yazin' : block.text;
+    final displayText = block.text.trim().isEmpty
+        ? tr('Buraya metin yazın', 'Type text here')
+        : block.text;
     final paddingX = math.max(10.0, canvasSize.width * 0.014);
     final paddingY = math.max(8.0, canvasSize.height * 0.016);
     final baseFontSize =
@@ -2482,8 +2484,9 @@ class _PageTextBlock extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final displayText =
-        block.text.trim().isEmpty ? 'Buraya metin yazin' : block.text;
+    final displayText = block.text.trim().isEmpty
+        ? tr('Buraya metin yazın', 'Type text here')
+        : block.text;
     final paddingX = math.max(10.0, canvasSize.width * 0.014);
     final paddingY = math.max(8.0, canvasSize.height * 0.016);
     final baseFontSize =
@@ -2540,7 +2543,7 @@ class _PageTextBlock extends StatelessWidget {
               border: InputBorder.none,
               enabledBorder: InputBorder.none,
               focusedBorder: InputBorder.none,
-              hintText: 'Buraya metin yazin',
+              hintText: tr('Buraya metin yazın', 'Type text here'),
               hintStyle: TextStyle(
                 color: resolvedTextColor.withValues(alpha: 0.52),
                 fontWeight: FontWeight.w600,

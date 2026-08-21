@@ -1,6 +1,7 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
+import '../../state/language_controller.dart';
 import '../design/design_system.dart';
 
 /// Uygulama geneli dialog gösterimi / yönlendirme için kullanılan
@@ -28,9 +29,15 @@ class TermsConsentBox extends StatefulWidget {
 
 class _TermsConsentBoxState extends State<TermsConsentBox> {
   late final TapGestureRecognizer _termsRecognizer =
-      TapGestureRecognizer()..onTap = () => _openRoute('/sartlar');
+      TapGestureRecognizer()..onTap = () {
+        final route = LanguageController.instance.isEnglish ? '/en/terms' : '/sartlar';
+        _openRoute(route);
+      };
   late final TapGestureRecognizer _privacyRecognizer =
-      TapGestureRecognizer()..onTap = () => _openRoute('/gizlilik');
+      TapGestureRecognizer()..onTap = () {
+        final route = LanguageController.instance.isEnglish ? '/en/privacy' : '/gizlilik';
+        _openRoute(route);
+      };
 
   void _openRoute(String route) {
     if (!mounted) return;
@@ -65,6 +72,7 @@ class _TermsConsentBoxState extends State<TermsConsentBox> {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final isEn = LanguageController.instance.isEnglish;
 
     return Material(
       color: Colors.transparent,
@@ -98,12 +106,19 @@ class _TermsConsentBoxState extends State<TermsConsentBox> {
                       style: AppTypography.bodyMedium.copyWith(
                         color: colors.textPrimary,
                       ),
-                      children: [
-                        _linkSpan('Kullanım Şartları', _termsRecognizer),
-                        const TextSpan(text: "'nı ve "),
-                        _linkSpan('Gizlilik Politikası', _privacyRecognizer),
-                        const TextSpan(text: "'nı okudum, kabul ediyorum"),
-                      ],
+                      children: isEn
+                          ? [
+                              const TextSpan(text: 'I have read and accept the '),
+                              _linkSpan('Terms of Service', _termsRecognizer),
+                              const TextSpan(text: ' and '),
+                              _linkSpan('Privacy Policy', _privacyRecognizer),
+                            ]
+                          : [
+                              _linkSpan('Kullanım Şartları', _termsRecognizer),
+                              const TextSpan(text: "'nı ve "),
+                              _linkSpan('Gizlilik Politikası', _privacyRecognizer),
+                              const TextSpan(text: "'nı okudum, kabul ediyorum"),
+                            ],
                     ),
                   ),
                 ),
@@ -117,14 +132,7 @@ class _TermsConsentBoxState extends State<TermsConsentBox> {
 }
 
 /// Kayıt öncesi Kullanım Şartları / Gizlilik Politikası onay dialogunu
-/// gösterir. Kullanıcı "Devam Et" butonuna basana kadar dialog
-/// kapatılamaz (barrier dismissible değil, geri tuşu engelli).
-///
-/// Onaylandığında `true` döner; gösterim mümkün olmazsa `false`.
-///
-/// Not: kayıt formunda onay artık kutu (TermsConsentBox) ile satır içi
-/// alındığı için bu dialog yalnızca "Giriş Yap" sekmesinden Google ile
-/// ilk kez giriş yapan kullanıcılar için güvenlik ağı olarak kalır.
+/// gösterir.
 Future<bool> showTermsConsentDialog() async {
   final navigator = appNavigatorKey.currentState;
   if (navigator == null) return false;
@@ -132,7 +140,7 @@ Future<bool> showTermsConsentDialog() async {
     DialogRoute<bool>(
       context: navigator.context,
       barrierDismissible: false,
-      barrierLabel: 'Kullanım Şartları onayı',
+      barrierLabel: tr('Kullanım Şartları onayı', 'Terms of Service consent'),
       builder: (_) => const TermsConsentDialog(),
     ),
   );
@@ -150,9 +158,15 @@ class _TermsConsentDialogState extends State<TermsConsentDialog> {
   bool _agreed = false;
 
   late final TapGestureRecognizer _termsRecognizer =
-      TapGestureRecognizer()..onTap = () => _openRoute('/sartlar');
+      TapGestureRecognizer()..onTap = () {
+        final route = LanguageController.instance.isEnglish ? '/en/terms' : '/sartlar';
+        _openRoute(route);
+      };
   late final TapGestureRecognizer _privacyRecognizer =
-      TapGestureRecognizer()..onTap = () => _openRoute('/gizlilik');
+      TapGestureRecognizer()..onTap = () {
+        final route = LanguageController.instance.isEnglish ? '/en/privacy' : '/gizlilik';
+        _openRoute(route);
+      };
 
   void _openRoute(String route) {
     if (!mounted) return;
@@ -183,6 +197,7 @@ class _TermsConsentDialogState extends State<TermsConsentDialog> {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final isEn = LanguageController.instance.isEnglish;
 
     return PopScope(
       // Kullanıcı geri tuşuyla / dışarı tıklayarak dialogu kapatamasın.
@@ -194,7 +209,7 @@ class _TermsConsentDialogState extends State<TermsConsentDialog> {
           borderRadius: BorderRadius.circular(AppRadius.xl),
         ),
         title: Text(
-          'Devam etmeden önce',
+          tr('Devam etmeden önce', 'Before you continue'),
           style: AppTypography.titleMedium.copyWith(color: colors.textPrimary),
         ),
         content: SingleChildScrollView(
@@ -207,13 +222,21 @@ class _TermsConsentDialogState extends State<TermsConsentDialog> {
                   style: AppTypography.bodyMedium.copyWith(
                     color: colors.textSecondary,
                   ),
-                  children: [
-                    const TextSpan(text: "Sutols'u kullanmaya başlamak için "),
-                    _linkSpan("Kullanım Şartları'nı", _termsRecognizer),
-                    const TextSpan(text: ' ve '),
-                    _linkSpan("Gizlilik Politikası'nı", _privacyRecognizer),
-                    const TextSpan(text: ' kabul etmeniz gerekiyor.'),
-                  ],
+                  children: isEn
+                      ? [
+                          const TextSpan(text: 'To start using Sutols, you must accept the '),
+                          _linkSpan('Terms of Service', _termsRecognizer),
+                          const TextSpan(text: ' and '),
+                          _linkSpan('Privacy Policy', _privacyRecognizer),
+                          const TextSpan(text: '.'),
+                        ]
+                      : [
+                          const TextSpan(text: "Sutols'u kullanmaya başlamak için "),
+                          _linkSpan("Kullanım Şartları'nı", _termsRecognizer),
+                          const TextSpan(text: ' ve '),
+                          _linkSpan("Gizlilik Politikası'nı", _privacyRecognizer),
+                          const TextSpan(text: ' kabul etmeniz gerekiyor.'),
+                        ],
                 ),
               ),
               const SizedBox(height: AppSpacing.s16),
@@ -228,7 +251,7 @@ class _TermsConsentDialogState extends State<TermsConsentDialog> {
           FilledButton(
             // Onay işaretlenmeden devam edilemez.
             onPressed: _agreed ? () => Navigator.of(context).pop(true) : null,
-            child: const Text('Devam Et'),
+            child: Text(tr('Devam Et', 'Continue')),
           ),
         ],
       ),

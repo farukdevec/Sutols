@@ -4,6 +4,7 @@ import '../routes.dart';
 import '../services/firestore_rest_helper.dart';
 import '../services/presentation_loader.dart';
 import '../services/web_url_service.dart';
+import '../state/language_controller.dart';
 import 'design/design_system.dart';
 import 'html_presentation_editor_page.dart';
 
@@ -35,8 +36,11 @@ class _PresentationOpenPageState extends State<PresentationOpenPage> {
         'presentations/${widget.presentationId}',
       );
       if (doc == null) {
-        throw const PresentationLoadException(
-          'Sunum bulunamadı veya erişiminiz yok.',
+        throw PresentationLoadException(
+          tr(
+            'Sunum bulunamadı veya erişiminiz yok.',
+            'Presentation not found or access denied.',
+          ),
         );
       }
 
@@ -51,7 +55,7 @@ class _PresentationOpenPageState extends State<PresentationOpenPage> {
       );
       updateBrowserUrl(
         path: targetUrl,
-        title: topic.isNotEmpty ? topic : 'Sunum',
+        title: topic.isNotEmpty ? topic : tr('Sunum', 'Presentation'),
       );
 
       if (!mounted) return;
@@ -74,7 +78,8 @@ class _PresentationOpenPageState extends State<PresentationOpenPage> {
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _error = 'Sunum yüklenemedi: $e';
+        _error =
+            '${tr('Sunum yüklenemedi', 'Could not load presentation')}: $e';
         _loading = false;
       });
     }
@@ -86,7 +91,7 @@ class _PresentationOpenPageState extends State<PresentationOpenPage> {
 
     return Scaffold(
       backgroundColor: colors.surface,
-      appBar: AppBar(title: const Text('Sunum')),
+      appBar: AppBar(title: Text(tr('Sunum', 'Presentation'))),
       body: Center(
         child: _loading
             ? const CircularProgressIndicator()
@@ -102,7 +107,8 @@ class _PresentationOpenPageState extends State<PresentationOpenPage> {
                     ),
                     const SizedBox(height: AppSpacing.s16),
                     Text(
-                      _error ?? 'Sunum yüklenemedi.',
+                      _error ??
+                          tr('Sunum yüklenemedi.', 'Could not load presentation.'),
                       textAlign: TextAlign.center,
                       style: AppTypography.bodyLarge.copyWith(
                         color: colors.textSecondary,

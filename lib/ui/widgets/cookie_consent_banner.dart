@@ -2,6 +2,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 
 import '../../services/cookie_consent_service.dart';
+import '../../state/language_controller.dart';
 import '../design/design_system.dart';
 
 /// Çerez onayı katmanı — uygulama ana widget'ını sarmalar
@@ -249,12 +250,13 @@ class _CookieConsentBannerState extends State<_CookieConsentBanner>
 
   Widget _buildDescription(
       BuildContext context, AppColors appColors, bool isDark) {
+    final privacyRoute = LanguageController.instance.isEnglish ? '/en/privacy' : '/gizlilik';
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Çerez Tercihleriniz ve Gizliliğiniz',
+          tr('Çerez Tercihleriniz ve Gizliliğiniz', 'Cookie Preferences & Privacy'),
           style: TextStyle(
             color: appColors.textPrimary,
             fontSize: 13.5,
@@ -271,19 +273,21 @@ class _CookieConsentBannerState extends State<_CookieConsentBanner>
               height: 1.4,
             ),
             children: [
-              const TextSpan(
-                text:
-                    'Sutols, platform performansını ve deneyiminizi iyileştirmek için çerezler kullanır. ',
+              TextSpan(
+                text: tr(
+                  'Sutols, platform performansını ve deneyiminizi iyileştirmek için çerezler kullanır. ',
+                  'Sutols uses cookies to improve platform performance and user experience. ',
+                ),
               ),
               WidgetSpan(
                 alignment: PlaceholderAlignment.baseline,
                 baseline: TextBaseline.alphabetic,
                 child: GestureDetector(
                   onTap: () {
-                    Navigator.of(context).pushNamed('/gizlilik');
+                    Navigator.of(context).pushNamed(privacyRoute);
                   },
                   child: Text(
-                    'Gizlilik Politikası',
+                    tr('Gizlilik Politikası', 'Privacy Policy'),
                     style: TextStyle(
                       color: isDark
                           ? const Color(0xFF38BDF8)
@@ -312,7 +316,7 @@ class _CookieConsentBannerState extends State<_CookieConsentBanner>
         color: appColors.textPrimary,
       ),
       label: Text(
-        'Özelleştir',
+        tr('Özelleştir', 'Customize'),
         style: TextStyle(
           color: appColors.textPrimary,
           fontSize: 12,
@@ -346,7 +350,7 @@ class _CookieConsentBannerState extends State<_CookieConsentBanner>
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       ),
       child: Text(
-        'Sadece Zorunlu',
+        tr('Sadece Zorunlu', 'Essential Only'),
         style: TextStyle(
           fontSize: 12,
           fontWeight: FontWeight.w500,
@@ -372,9 +376,9 @@ class _CookieConsentBannerState extends State<_CookieConsentBanner>
           borderRadius: BorderRadius.circular(8),
         ),
       ),
-      child: const Text(
-        'Tümünü Kabul Et',
-        style: TextStyle(
+      child: Text(
+        tr('Tümünü Kabul Et', 'Accept All'),
+        style: const TextStyle(
           fontSize: 12,
           fontWeight: FontWeight.w600,
           color: Colors.white,
@@ -452,7 +456,7 @@ class _CookiePreferencesSheetState extends State<_CookiePreferencesSheet> {
                       const SizedBox(width: 10),
                       Flexible(
                         child: Text(
-                          'Çerez Tercihleri',
+                          tr('Çerez Tercihleri', 'Cookie Preferences'),
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
@@ -473,13 +477,16 @@ class _CookiePreferencesSheetState extends State<_CookiePreferencesSheet> {
                   ),
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),
-                  tooltip: 'Kapat',
+                  tooltip: tr('Kapat', 'Close'),
                 ),
               ],
             ),
             const SizedBox(height: 10),
             Text(
-              'Kullanılan çerez türlerini inceleyebilir ve tercihlerinizi güncelleyebilirsiniz.',
+              tr(
+                'Kullanılan çerez türlerini inceleyebilir ve tercihlerinizi güncelleyebilirsiniz.',
+                'Review cookie categories and update your consent preferences.',
+              ),
               style: TextStyle(
                 fontSize: 12.5,
                 color: appColors.textSecondary,
@@ -497,9 +504,11 @@ class _CookiePreferencesSheetState extends State<_CookiePreferencesSheet> {
             _buildPreferenceTile(
               appColors: appColors,
               isDark: isDark,
-              title: 'Zorunlu Çerezler',
-              subtitle:
-                  'Oturum yönetimi ve güvenlik için gereklidir. Devre dışı bırakılamaz.',
+              title: tr('Zorunlu Çerezler', 'Essential Cookies'),
+              subtitle: tr(
+                'Oturum yönetimi ve güvenlik için gereklidir. Devre dışı bırakılamaz.',
+                'Required for session management and core security. Cannot be disabled.',
+              ),
               value: true,
               onChanged: null,
             ),
@@ -510,9 +519,14 @@ class _CookiePreferencesSheetState extends State<_CookiePreferencesSheet> {
             _buildPreferenceTile(
               appColors: appColors,
               isDark: isDark,
-              title: 'Analitik & Performans Çerezleri',
-              subtitle:
-                  'Kullanım istatistiklerini anonim olarak ölçümleyerek platformu geliştirmemize yardımcı olur.',
+              title: tr(
+                'Analitik & Performans Çerezleri',
+                'Analytics & Performance Cookies',
+              ),
+              subtitle: tr(
+                'Kullanım istatistiklerini anonim olarak ölçümleyerek platformu geliştirmemize yardımcı olur.',
+                'Helps us enhance the platform by anonymously measuring usage telemetry.',
+              ),
               value: _analyticsAllowed,
               onChanged: (val) {
                 setState(() {
@@ -533,7 +547,7 @@ class _CookiePreferencesSheetState extends State<_CookiePreferencesSheet> {
                     Navigator.of(context).pop();
                   },
                   child: Text(
-                    'Tümünü Reddet',
+                    tr('Tümünü Reddet', 'Reject All'),
                     style: TextStyle(
                       color: appColors.textSecondary,
                       fontSize: 12.5,
@@ -561,9 +575,9 @@ class _CookiePreferencesSheetState extends State<_CookiePreferencesSheet> {
                       borderRadius: BorderRadius.circular(8),
                     ),
                   ),
-                  child: const Text(
-                    'Seçimleri Kaydet',
-                    style: TextStyle(
+                  child: Text(
+                    tr('Seçimleri Kaydet', 'Save Preferences'),
+                    style: const TextStyle(
                       fontSize: 12.5,
                       fontWeight: FontWeight.w600,
                     ),
@@ -625,7 +639,7 @@ class _CookiePreferencesSheetState extends State<_CookiePreferencesSheet> {
           Switch.adaptive(
             value: value,
             onChanged: onChanged,
-            activeColor: isDark ? appColors.primary : const Color(0xFF0F172A),
+            activeTrackColor: isDark ? appColors.primary : const Color(0xFF0F172A),
           ),
         ],
       ),

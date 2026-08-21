@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sutol/routes.dart';
+import 'package:sutol/state/language_controller.dart';
 import 'package:sutol/ui/auth_page.dart';
 import 'package:sutol/ui/faq_page.dart';
 import 'package:sutol/ui/home_page.dart';
@@ -187,19 +188,102 @@ void main() {
       );
     });
 
-    testWidgets('Unknown route fallback', (tester) async {
+    testWidgets('English /en and /en/... routes resolution and language state update', (tester) async {
       await tester.pumpWidget(
         MaterialApp(
           home: Builder(
             builder: (context) {
-              final route = AppRoutes.onUnknownRoute(
-                const RouteSettings(name: '/some-random-unknown-path'),
+              // /en
+              final enHome = AppRoutes.onGenerateRoute(
+                const RouteSettings(name: '/en'),
               ) as MaterialPageRoute;
-              expect(route.builder(context), isA<SutolHomePage>());
+              expect(enHome.builder(context), isA<SutolHomePage>());
+
+              // /en/pricing
+              final enPricing = AppRoutes.onGenerateRoute(
+                const RouteSettings(name: '/en/pricing'),
+              ) as MaterialPageRoute;
+              expect(enPricing.builder(context), isA<MembershipPage>());
+
+              // /en/login
+              final enLogin = AppRoutes.onGenerateRoute(
+                const RouteSettings(name: '/en/login'),
+              ) as MaterialPageRoute;
+              expect(enLogin.builder(context), isA<AuthPage>());
+
+              // /en/editor
+              final enEditor = AppRoutes.onGenerateRoute(
+                const RouteSettings(name: '/en/editor'),
+              ) as MaterialPageRoute;
+              expect(enEditor.builder(context), isA<HtmlPresentationEditorPage>());
+
+              // /en/slide/sample123
+              final enSlide = AppRoutes.onGenerateRoute(
+                const RouteSettings(name: '/en/slide/sample123'),
+              ) as MaterialPageRoute;
+              final slideWidget = enSlide.builder(context) as PresentationOpenPage;
+              expect(slideWidget.presentationId, 'sample123');
+
+              // /en/faq
+              final enFaq = AppRoutes.onGenerateRoute(
+                const RouteSettings(name: '/en/faq'),
+              ) as MaterialPageRoute;
+              expect(enFaq.builder(context), isA<FaqPage>());
+
               return const SizedBox.shrink();
             },
           ),
         ),
+      );
+    });
+
+    test('getLocalizedPath converts paths accurately between TR and EN', () {
+      // Home
+      expect(AppRoutes.getLocalizedPath('/', AppLanguage.en), '/en');
+      expect(AppRoutes.getLocalizedPath('/en', AppLanguage.tr), '/');
+
+      // Membership / Pricing
+      expect(AppRoutes.getLocalizedPath('/uyelik', AppLanguage.en), '/en/pricing');
+      expect(AppRoutes.getLocalizedPath('/en/pricing', AppLanguage.tr), '/uyelik');
+      expect(AppRoutes.getLocalizedPath('/pricing', AppLanguage.tr), '/uyelik');
+
+      // Presentations
+      expect(AppRoutes.getLocalizedPath('/sunumlarim', AppLanguage.en), '/en/my-presentations');
+      expect(AppRoutes.getLocalizedPath('/en/my-presentations', AppLanguage.tr), '/sunumlarim');
+
+      // Editor
+      expect(AppRoutes.getLocalizedPath('/editor', AppLanguage.en), '/en/editor');
+      expect(AppRoutes.getLocalizedPath('/en/editor', AppLanguage.tr), '/editor');
+      expect(AppRoutes.getLocalizedPath('/editor/doc123', AppLanguage.en), '/en/editor/doc123');
+      expect(AppRoutes.getLocalizedPath('/en/editor/doc123', AppLanguage.tr), '/editor/doc123');
+
+      // Slide
+      expect(AppRoutes.getLocalizedPath('/slide123', AppLanguage.en), '/en/slide123');
+      expect(AppRoutes.getLocalizedPath('/en/slide123', AppLanguage.tr), '/slide123');
+
+      // FAQ
+      expect(AppRoutes.getLocalizedPath('/sss', AppLanguage.en), '/en/faq');
+      expect(AppRoutes.getLocalizedPath('/en/faq', AppLanguage.tr), '/sss');
+
+      // Privacy / Terms
+      expect(AppRoutes.getLocalizedPath('/gizlilik', AppLanguage.en), '/en/privacy');
+      expect(AppRoutes.getLocalizedPath('/en/privacy', AppLanguage.tr), '/gizlilik');
+      expect(AppRoutes.getLocalizedPath('/sartlar', AppLanguage.en), '/en/terms');
+      expect(AppRoutes.getLocalizedPath('/en/terms', AppLanguage.tr), '/sartlar');
+    });
+
+    test('presentationUrl respects isEnglish and active language', () {
+      expect(
+        AppRoutes.presentationUrl(id: '54445484', topic: 'Matter States', isEnglish: true),
+        '/en/matter-states-id54445484',
+      );
+      expect(
+        AppRoutes.presentationUrl(id: '54445484', topic: '', isEnglish: true),
+        '/en/slide54445484',
+      );
+      expect(
+        AppRoutes.presentationUrl(id: '54445484', topic: 'Maddenin Halleri', isEnglish: false),
+        '/maddenin-halleri-id54445484',
       );
     });
   });

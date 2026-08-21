@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../routes.dart';
 import '../../services/presentation_project_store.dart';
+import '../../state/language_controller.dart';
 import '../design/design_system.dart';
 
 /// Sunum paylaşım dialogu: bağlantı oluşturur, sahip ise
@@ -27,7 +29,10 @@ class _SharePresentationDialogState extends State<SharePresentationDialog> {
   late bool _shared;
   bool _saving = false;
 
-  String get _link => '${Uri.base.origin}/slide${widget.presentationId}';
+  String get _link {
+    final path = AppRoutes.presentationUrl(id: widget.presentationId, topic: '');
+    return '${Uri.base.origin}$path';
+  }
 
   @override
   void initState() {
@@ -51,7 +56,11 @@ class _SharePresentationDialogState extends State<SharePresentationDialog> {
         _saving = false;
       });
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Paylaşım güncellenemedi: $e')),
+        SnackBar(
+          content: Text(
+            '${tr('Paylaşım güncellenemedi', 'Could not update sharing')}: $e',
+          ),
+        ),
       );
     }
   }
@@ -60,7 +69,11 @@ class _SharePresentationDialogState extends State<SharePresentationDialog> {
     await Clipboard.setData(ClipboardData(text: _link));
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Bağlantı kopyalandı.')),
+      SnackBar(
+        content: Text(
+          tr('Bağlantı kopyalandı.', 'Link copied to clipboard.'),
+        ),
+      ),
     );
   }
 
@@ -69,7 +82,7 @@ class _SharePresentationDialogState extends State<SharePresentationDialog> {
     final colors = context.colors;
 
     return AlertDialog(
-      title: const Text('Sunumu Paylaş'),
+      title: Text(tr('Sunumu Paylaş', 'Share Presentation')),
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -78,11 +91,19 @@ class _SharePresentationDialogState extends State<SharePresentationDialog> {
             if (widget.isOwner) ...[
               SwitchListTile(
                 contentPadding: EdgeInsets.zero,
-                title: const Text('Bağlantıyla düzenlemeye aç'),
+                title: Text(
+                  tr('Bağlantıyla düzenlemeye aç', 'Allow editing via link'),
+                ),
                 subtitle: Text(
                   _shared
-                      ? 'Bağlantıya sahip olanlar editörden düzenleyebilir.'
-                      : 'Kapalı: yalnızca siz düzenleyebilirsiniz.',
+                      ? tr(
+                          'Bağlantıya sahip olanlar editörden düzenleyebilir.',
+                          'Anyone with the link can edit in the editor.',
+                        )
+                      : tr(
+                          'Kapalı: yalnızca siz düzenleyebilirsiniz.',
+                          'Off: Only you can edit.',
+                        ),
                 ),
                 value: _shared,
                 onChanged: _saving ? null : _toggle,
@@ -90,7 +111,7 @@ class _SharePresentationDialogState extends State<SharePresentationDialog> {
               const SizedBox(height: AppSpacing.s8),
             ],
             Text(
-              'Paylaşım bağlantısı:',
+              tr('Paylaşım bağlantısı:', 'Share link:'),
               style: AppTypography.labelMedium.copyWith(
                 color: colors.textSecondary,
               ),
@@ -113,8 +134,14 @@ class _SharePresentationDialogState extends State<SharePresentationDialog> {
             const SizedBox(height: AppSpacing.s8),
             Text(
               widget.isOwner && !_shared
-                  ? 'Bağlantıyı açtığınızda kullanıcılar editörden düzenleyebilir; son düzenleyenin adı görünür.'
-                  : 'Bağlantıyı kopyalayıp paylaşın. Bağlantıya sahip olanlar sunumu açar.',
+                  ? tr(
+                      'Bağlantıyı açtığınızda kullanıcılar editörden düzenleyebilir; son düzenleyenin adı görünür.',
+                      'When enabled, anyone with the link can edit in the editor; the last editor\'s name will be displayed.',
+                    )
+                  : tr(
+                      'Bağlantıyı kopyalayıp paylaşın. Bağlantıya sahip olanlar sunumu açar.',
+                      'Copy and share the link. Anyone with the link can open the presentation.',
+                    ),
               style: AppTypography.labelSmall.copyWith(
                 color: colors.textSecondary,
               ),
@@ -125,12 +152,12 @@ class _SharePresentationDialogState extends State<SharePresentationDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Kapat'),
+          child: Text(tr('Kapat', 'Close')),
         ),
         FilledButton.icon(
           onPressed: _copy,
           icon: const Icon(Icons.copy_rounded, size: 18),
-          label: const Text('Kopyala'),
+          label: Text(tr('Kopyala', 'Copy Link')),
         ),
       ],
     );

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../models/slide_model.dart';
+import '../state/language_controller.dart';
 import 'presentation_keyword_catalog.dart';
 
 class PresentationDraftPage {
@@ -102,322 +103,322 @@ enum PresentationTemplate {
 String presentationTemplateLabel(PresentationTemplate template) {
   switch (template) {
     case PresentationTemplate.automatic:
-      return 'Otomatik';
+      return tr('Otomatik', 'Automatic');
     case PresentationTemplate.academic:
-      return 'Akademik';
+      return tr('Akademik', 'Academic');
     case PresentationTemplate.corporate:
-      return 'Kurumsal';
+      return tr('Kurumsal', 'Corporate');
     case PresentationTemplate.creative:
-      return 'Yaratıcı';
+      return tr('Yaratıcı', 'Creative');
     case PresentationTemplate.minimal:
-      return 'Minimal';
+      return tr('Minimal', 'Minimal');
     case PresentationTemplate.darkCorporate:
-      return 'Koyu Kurumsal';
+      return tr('Koyu Kurumsal', 'Dark Corporate');
     case PresentationTemplate.techStartup:
-      return 'Teknoloji Girişimi';
+      return tr('Teknoloji Girişimi', 'Tech Startup');
     case PresentationTemplate.cyberpunk:
-      return 'Siberpunk Neon';
+      return tr('Siberpunk Neon', 'Cyberpunk Neon');
     case PresentationTemplate.glassmorphism:
-      return 'Buzlu Cam (Glassmorphism)';
+      return tr('Buzlu Cam (Glassmorphism)', 'Glassmorphism');
     case PresentationTemplate.luxuryGold:
-      return 'Lüks Altın & Premium';
+      return tr('Lüks Altın & Premium', 'Luxury Gold & Premium');
     case PresentationTemplate.ecoGreen:
-      return 'Eko Doğa & Yeşil';
+      return tr('Eko Doğa & Yeşil', 'Eco Green & Nature');
     case PresentationTemplate.synthwave:
-      return 'Retro Synthwave 80s';
+      return tr('Retro Synthwave 80s', 'Retro Synthwave 80s');
     case PresentationTemplate.gradientMesh:
-      return 'Gradyan Renk Ağları';
+      return tr('Gradyan Renk Ağları', 'Gradient Mesh');
     case PresentationTemplate.editorial:
-      return 'Dergi Tipografi (Editorial)';
+      return tr('Dergi Tipografi (Editorial)', 'Editorial Typography');
     case PresentationTemplate.bauhaus:
-      return 'Bauhaus Geometrik';
+      return tr('Bauhaus Geometrik', 'Bauhaus Geometric');
     case PresentationTemplate.dataTech:
-      return 'Finansal & Veri Analitiği';
+      return tr('Finansal & Veri Analitiği', 'Data & Finance Analytics');
     case PresentationTemplate.deepSpace:
-      return 'Koyu Kozmik & Kuantum';
+      return tr('Koyu Kozmik & Kuantum', 'Dark Cosmic & Quantum');
     case PresentationTemplate.scientific:
-      return 'Bilimsel';
+      return tr('Bilimsel', 'Scientific');
     case PresentationTemplate.elegant:
-      return 'Şık';
+      return tr('Şık', 'Elegant');
     case PresentationTemplate.bold:
-      return 'Cesur';
+      return tr('Cesur', 'Bold');
     case PresentationTemplate.pastel:
-      return 'Pastel';
+      return tr('Pastel', 'Pastel');
     case PresentationTemplate.highContrast:
-      return 'Yüksek Kontrast';
+      return tr('Yüksek Kontrast', 'High Contrast');
     case PresentationTemplate.astronomi:
-      return 'Astronomi';
+      return tr('Astronomi', 'Astronomy');
     case PresentationTemplate.beslenme:
-      return 'Beslenme';
+      return tr('Beslenme', 'Nutrition');
     case PresentationTemplate.biyoloji:
-      return 'Biyoloji';
+      return tr('Biyoloji', 'Biology');
     case PresentationTemplate.cevre:
-      return 'Çevre';
+      return tr('Çevre', 'Environment');
     case PresentationTemplate.cografya:
-      return 'Coğrafya';
+      return tr('Coğrafya', 'Geography');
     case PresentationTemplate.deniz:
-      return 'Deniz';
+      return tr('Deniz', 'Ocean & Sea');
     case PresentationTemplate.dijital:
-      return 'Dijital';
+      return tr('Dijital', 'Digital');
     case PresentationTemplate.doga:
-      return 'Doğa';
+      return tr('Doğa', 'Nature');
     case PresentationTemplate.edebiyat:
-      return 'Edebiyat';
+      return tr('Edebiyat', 'Literature');
     case PresentationTemplate.egitim:
-      return 'Eğitim';
+      return tr('Eğitim', 'Education');
     case PresentationTemplate.ekoloji:
-      return 'Ekoloji';
+      return tr('Ekoloji', 'Ecology');
     case PresentationTemplate.enerji:
-      return 'Enerji';
+      return tr('Enerji', 'Energy');
     case PresentationTemplate.evcilHayvan:
-      return 'Evcil Hayvan';
+      return tr('Evcil Hayvan', 'Pets & Animals');
     case PresentationTemplate.felsefe:
-      return 'Felsefe';
+      return tr('Felsefe', 'Philosophy');
     case PresentationTemplate.fizik:
-      return 'Fizik';
+      return tr('Fizik', 'Physics');
     case PresentationTemplate.fotograf:
-      return 'Fotoğraf';
+      return tr('Fotoğraf', 'Photography');
     case PresentationTemplate.futuristik:
-      return 'Fütüristik';
+      return tr('Fütüristik', 'Futuristic');
     case PresentationTemplate.gastronomi:
-      return 'Gastronomi';
+      return tr('Gastronomi', 'Gastronomy');
     case PresentationTemplate.girisimcilik:
-      return 'Girişimcilik';
+      return tr('Girişimcilik', 'Entrepreneurship');
     case PresentationTemplate.havacilik:
-      return 'Havacılık';
+      return tr('Havacılık', 'Aviation');
     case PresentationTemplate.hukuk:
-      return 'Hukuk';
+      return tr('Hukuk', 'Law & Justice');
     case PresentationTemplate.isHayati:
-      return 'İş Hayatı';
+      return tr('İş Hayatı', 'Business');
     case PresentationTemplate.kimya:
-      return 'Kimya';
+      return tr('Kimya', 'Chemistry');
     case PresentationTemplate.liderlik:
-      return 'Liderlik';
+      return tr('Liderlik', 'Leadership');
     case PresentationTemplate.matematik:
-      return 'Matematik';
+      return tr('Matematik', 'Mathematics');
     case PresentationTemplate.meteoroloji:
-      return 'Meteoroloji';
+      return tr('Meteoroloji', 'Meteorology');
     case PresentationTemplate.mitoloji:
-      return 'Mitoloji';
+      return tr('Mitoloji', 'Mythology');
     case PresentationTemplate.moda:
-      return 'Moda';
+      return tr('Moda', 'Fashion');
     case PresentationTemplate.muhendislik:
-      return 'Mühendislik';
+      return tr('Mühendislik', 'Engineering');
     case PresentationTemplate.muzik:
-      return 'Müzik';
+      return tr('Müzik', 'Music');
     case PresentationTemplate.oyun:
-      return 'Oyun';
+      return tr('Oyun', 'Gaming');
     case PresentationTemplate.optik:
-      return 'Optik';
+      return tr('Optik', 'Optics');
     case PresentationTemplate.pazarlama:
-      return 'Pazarlama';
+      return tr('Pazarlama', 'Marketing');
     case PresentationTemplate.psikoloji:
-      return 'Psikoloji';
+      return tr('Psikoloji', 'Psychology');
     case PresentationTemplate.robotik:
-      return 'Robotik';
+      return tr('Robotik', 'Robotics');
     case PresentationTemplate.saglik:
-      return 'Sağlık';
+      return tr('Sağlık', 'Healthcare');
     case PresentationTemplate.sanat:
-      return 'Sanat';
+      return tr('Sanat', 'Art');
     case PresentationTemplate.sehir:
-      return 'Şehir';
+      return tr('Şehir', 'Urban & Cities');
     case PresentationTemplate.seyahat:
-      return 'Seyahat';
+      return tr('Seyahat', 'Travel');
     case PresentationTemplate.sinema:
-      return 'Sinema';
+      return tr('Sinema', 'Cinema');
     case PresentationTemplate.spor:
-      return 'Spor';
+      return tr('Spor', 'Sports');
     case PresentationTemplate.tarih:
-      return 'Tarih';
+      return tr('Tarih', 'History');
     case PresentationTemplate.tip:
-      return 'Tıp';
+      return tr('Tıp', 'Medicine');
     case PresentationTemplate.tiyatro:
-      return 'Tiyatro';
+      return tr('Tiyatro', 'Theater');
     case PresentationTemplate.toplum:
-      return 'Toplum';
+      return tr('Toplum', 'Society');
     case PresentationTemplate.ulasim:
-      return 'Ulaşım';
+      return tr('Ulaşım', 'Transportation');
     case PresentationTemplate.uzay:
-      return 'Uzay';
+      return tr('Uzay', 'Space');
     case PresentationTemplate.vintage:
-      return 'Vintage';
+      return tr('Vintage', 'Vintage');
     case PresentationTemplate.yapayZeka:
-      return 'Yapay Zeka';
+      return tr('Yapay Zeka', 'Artificial Intelligence');
     case PresentationTemplate.yazilim:
-      return 'Yazılım';
+      return tr('Yazılım', 'Software');
     case PresentationTemplate.bentoGrid:
-      return 'Bento Grid Kartlar';
+      return tr('Bento Grid Kartlar', 'Bento Grid Cards');
     case PresentationTemplate.auroraBorealis:
-      return 'Aurora Yeşil & Mor Işıltı';
+      return tr('Aurora Yeşil & Mor Işıltı', 'Aurora Borealis Glow');
     case PresentationTemplate.neomorphism:
-      return 'Neumorphic Yumuşak 3D';
+      return tr('Neumorphic Yumuşak 3D', 'Neumorphic Soft 3D');
     case PresentationTemplate.holographic:
-      return 'Holografik Siber Işıltı';
+      return tr('Holografik Siber Işıltı', 'Holographic Cyber Glow');
     case PresentationTemplate.nordicMinimal:
-      return 'İskandinav Tipografik Minimal';
+      return tr('İskandinav Tipografik Minimal', 'Nordic Typographic Minimal');
     case PresentationTemplate.claymorphism:
-      return 'Kil 3D Pasteller (Claymorphism)';
+      return tr('Kil 3D Pasteller (Claymorphism)', 'Claymorphism 3D Pastels');
   }
 }
 
 String presentationTemplateDescription(PresentationTemplate template) {
   switch (template) {
     case PresentationTemplate.automatic:
-      return 'Konuya göre seçilir';
+      return tr('Konuya göre seçilir', 'Automatically chosen based on topic');
     case PresentationTemplate.academic:
-      return 'Dengeli, açıklayıcı düzen';
+      return tr('Dengeli, açıklayıcı düzen', 'Balanced, explanatory layout');
     case PresentationTemplate.corporate:
-      return 'Net ve profesyonel görünüm';
+      return tr('Net ve profesyonel görünüm', 'Clear and professional look');
     case PresentationTemplate.creative:
-      return 'Vurucu, görsel odaklı sahne';
+      return tr('Vurucu, görsel odaklı sahne', 'Striking, visual-focused scenes');
     case PresentationTemplate.minimal:
-      return 'Sade, metin odaklı düzen';
+      return tr('Sade, metin odaklı düzen', 'Simple, text-focused layout');
     case PresentationTemplate.darkCorporate:
-      return 'Koyu tema, executive sunumlar';
+      return tr('Koyu tema, executive sunumlar', 'Dark theme for executive decks');
     case PresentationTemplate.techStartup:
-      return 'Modern, teknoloji odaklı';
+      return tr('Modern, teknoloji odaklı', 'Modern, technology-driven');
     case PresentationTemplate.scientific:
-      return 'Veri ve bilim odaklı temiz tasarım';
+      return tr('Veri ve bilim odaklı temiz tasarım', 'Data and science focused clean design');
     case PresentationTemplate.elegant:
-      return 'Zarfı, yüksek estetik';
+      return tr('Zarif, yüksek estetik', 'Graceful, high-aesthetic layout');
     case PresentationTemplate.bold:
-      return 'Güçlü, dikkat çekici';
+      return tr('Güçlü, dikkat çekici', 'Strong, eye-catching style');
     case PresentationTemplate.pastel:
-      return 'Yumuşak, dostane tonlar';
+      return tr('Yumuşak, dostane tonlar', 'Soft, friendly tones');
     case PresentationTemplate.highContrast:
-      return 'Maksimum okunabilirlik';
+      return tr('Maksimum okunabilirlik', 'Maximum readability');
     case PresentationTemplate.astronomi:
-      return 'Uzay ve gök bilimi odaklı dramatik sunum';
+      return tr('Uzay ve gök bilimi odaklı dramatik sunum', 'Dramatic presentation for space and astronomy');
     case PresentationTemplate.beslenme:
-      return 'Sağlıklı yaşam ve beslenme odaklı doğal tasarım';
+      return tr('Sağlıklı yaşam ve beslenme odaklı doğal tasarım', 'Natural design for healthy living and nutrition');
     case PresentationTemplate.biyoloji:
-      return 'Canlı bilimi ve genetik odaklı modern görünüm';
+      return tr('Canlı bilimi ve genetik odaklı modern görünüm', 'Modern look for life sciences and genetics');
     case PresentationTemplate.cevre:
-      return 'Çevre bilinci ve sürdürülebilirlik temalı';
+      return tr('Çevre bilinci ve sürdürülebilirlik temalı', 'Environmental awareness and sustainability');
     case PresentationTemplate.cografya:
-      return 'Coğrafi keşif ve harita odaklı düzen';
+      return tr('Coğrafi keşif ve harita odaklı düzen', 'Geographical exploration and map layout');
     case PresentationTemplate.deniz:
-      return 'Deniz ve okyanus temalı akıcı sahne';
+      return tr('Deniz ve okyanus temalı akıcı sahne', 'Fluid scene for oceans and marine topics');
     case PresentationTemplate.dijital:
-      return 'Modern dijital dönüşüm ve teknoloji odaklı';
+      return tr('Modern dijital dönüşüm ve teknoloji odaklı', 'Digital transformation and modern tech');
     case PresentationTemplate.doga:
-      return 'Doğal güzellikler ve organik yaşam temalı';
+      return tr('Doğal güzellikler ve organik yaşam temalı', 'Natural beauty and organic lifestyle');
     case PresentationTemplate.edebiyat:
-      return 'Edebi metin ve şiir odaklı zarif düzen';
+      return tr('Edebi metin ve şiir odaklı zarif düzen', 'Refined layout for literature and poetry');
     case PresentationTemplate.egitim:
-      return 'Ders ve akademik içerik için temiz tasarım';
+      return tr('Ders ve akademik içerik için temiz tasarım', 'Clean design for courses and education');
     case PresentationTemplate.ekoloji:
-      return 'Ekosistem ve biyolojik çeşitlilik odaklı';
+      return tr('Ekosistem ve biyolojik çeşitlilik odaklı', 'Ecosystems and biodiversity focus');
     case PresentationTemplate.enerji:
-      return 'Yenilenebilir enerji ve güç sistemleri temalı';
+      return tr('Yenilenebilir enerji ve güç sistemleri temalı', 'Renewable energy and power systems');
     case PresentationTemplate.evcilHayvan:
-      return 'Hayvan dostu sıcak ve samimi sunum';
+      return tr('Hayvan dostu sıcak ve samimi sunum', 'Warm and friendly presentation for pets');
     case PresentationTemplate.felsefe:
-      return 'Derin düşünce ve felsefi sorgulama odaklı';
+      return tr('Derin düşünce ve felsefi sorgulama odaklı', 'Deep thought and philosophical inquiry');
     case PresentationTemplate.fizik:
-      return 'Fizik yasaları ve mekanik odaklı bilimsel düzen';
+      return tr('Fizik yasaları ve mekanik odaklı bilimsel düzen', 'Scientific layout for physics and mechanics');
     case PresentationTemplate.fotograf:
-      return 'Görsel sanatlar ve fotoğrafçılık odaklı yaratıcı sahne';
+      return tr('Görsel sanatlar ve fotoğrafçılık odaklı yaratıcı sahne', 'Creative scene for visual arts and photography');
     case PresentationTemplate.futuristik:
-      return 'Gelecek teknolojileri ve yenilikçi vizyon temalı';
+      return tr('Gelecek teknolojileri ve yenilikçi vizyon temalı', 'Future tech and innovative vision');
     case PresentationTemplate.gastronomi:
-      return 'Yemek kültürü ve mutfak sanatları odaklı sıcak düzen';
+      return tr('Yemek kültürü ve mutfak sanatları odaklı sıcak düzen', 'Warm layout for culinary arts and food culture');
     case PresentationTemplate.girisimcilik:
-      return 'Startup ve yenilikçi iş fikirleri için dinamik tasarım';
+      return tr('Startup ve yenilikçi iş fikirleri için dinamik tasarım', 'Dynamic design for startups and pitch decks');
     case PresentationTemplate.havacilik:
-      return 'Havacılık ve uzay mühendisliği odaklı teknik görünüm';
+      return tr('Havacılık ve uzay mühendisliği odaklı teknik görünüm', 'Technical look for aerospace and aviation');
     case PresentationTemplate.hukuk:
-      return 'Adalet ve hukuk sistemi odaklı resmi düzen';
+      return tr('Adalet ve hukuk sistemi odaklı resmi düzen', 'Formal layout for legal and justice systems');
     case PresentationTemplate.isHayati:
-      return 'Profesyonel iş dünyası ve yönetici sunumları';
+      return tr('Profesyonel iş dünyası ve yönetici sunumları', 'Professional business and executive presentations');
     case PresentationTemplate.kimya:
-      return 'Kimyasal reaksiyonlar ve laboratuvar odaklı tasarım';
+      return tr('Kimyasal reaksiyonlar ve laboratuvar odaklı tasarım', 'Lab and chemical reaction focused design');
     case PresentationTemplate.liderlik:
-      return 'Güçlü liderlik ve vizyoner yönetim temalı';
+      return tr('Güçlü liderlik ve vizyoner yönetim temalı', 'Strong leadership and visionary management');
     case PresentationTemplate.matematik:
-      return 'Matematiksel düşünce ve geometri odaklı düzen';
+      return tr('Matematiksel düşünce ve geometri odaklı düzen', 'Mathematical thinking and geometry');
     case PresentationTemplate.meteoroloji:
-      return 'Hava durumu ve iklim bilimi odaklı dinamik sahne';
+      return tr('Hava durumu ve iklim bilimi odaklı dinamik sahne', 'Dynamic scene for weather and climate science');
     case PresentationTemplate.mitoloji:
-      return 'Antik mitler ve fantastik hikayeler odaklı epik düzen';
+      return tr('Antik mitler ve fantastik hikayeler odaklı epik düzen', 'Epic layout for ancient myths and stories');
     case PresentationTemplate.moda:
-      return 'Moda ve stil odaklı yaratıcı görsel düzen';
+      return tr('Moda ve stil odaklı yaratıcı görsel düzen', 'Creative visual layout for fashion and style');
     case PresentationTemplate.muhendislik:
-      return 'Mühendislik ve teknik projeler için modern tasarım';
+      return tr('Mühendislik ve teknik projeler için modern tasarım', 'Modern design for engineering and technical projects');
     case PresentationTemplate.muzik:
-      return 'Müzik ve ritim odaklı enerjik sunum';
+      return tr('Müzik ve ritim odaklı enerjik sunum', 'Energetic presentation for music and rhythm');
     case PresentationTemplate.oyun:
-      return 'Oyun ve eğlence odaklı renkli dinamik düzen';
+      return tr('Oyun ve eğlence odaklı renkli dinamik düzen', 'Colorful dynamic layout for gaming and entertainment');
     case PresentationTemplate.optik:
-      return 'Işık ve optik bilimi odaklı parlak görünüm';
+      return tr('Işık ve optik bilimi odaklı parlak görünüm', 'Bright look for optics and light science');
     case PresentationTemplate.pazarlama:
-      return 'Pazarlama stratejileri ve marka odaklı düzen';
+      return tr('Pazarlama stratejileri ve marka odaklı düzen', 'Marketing strategies and brand-focused layout');
     case PresentationTemplate.psikoloji:
-      return 'İnsan zihni ve davranış bilimi odaklı sakin düzen';
+      return tr('İnsan zihni ve davranış bilimi odaklı sakin düzen', 'Calm layout for psychology and behavioral science');
     case PresentationTemplate.robotik:
-      return 'Robot teknolojisi ve otomasyon odaklı futuristik sahne';
+      return tr('Robot teknolojisi ve otomasyon odaklı futuristik sahne', 'Futuristic scene for robotics and automation');
     case PresentationTemplate.saglik:
-      return 'Sağlık hizmetleri ve tıbbi içerik için temiz tasarım';
+      return tr('Sağlık hizmetleri ve tıbbi içerik için temiz tasarım', 'Clean design for healthcare and medical topics');
     case PresentationTemplate.sanat:
-      return 'Sanat ve yaratıcı ifade odaklı özgür düzen';
+      return tr('Sanat ve yaratıcı ifade odaklı özgür düzen', 'Expressive layout for art and creativity');
     case PresentationTemplate.sehir:
-      return 'Kentsel yaşam ve şehir planlaması odaklı modern düzen';
+      return tr('Kentsel yaşam ve şehir planlaması odaklı modern düzen', 'Modern layout for urban life and city planning');
     case PresentationTemplate.seyahat:
-      return 'Seyahat ve turizm odaklı keşif temalı sunum';
+      return tr('Seyahat ve turizm odaklı keşif temalı sunum', 'Exploration-themed presentation for travel and tourism');
     case PresentationTemplate.sinema:
-      return 'Film ve sinema sanatı odaklı dramatik düzen';
+      return tr('Film ve sinema sanatı odaklı dramatik düzen', 'Dramatic layout for cinema and film arts');
     case PresentationTemplate.spor:
-      return 'Spor ve atletizm odaklı dinamik enerjik sunum';
+      return tr('Spor ve atletizm odaklı dinamik enerjik sunum', 'Dynamic energetic presentation for sports');
     case PresentationTemplate.tarih:
-      return 'Tarihsel olaylar ve medeniyetler odaklı klasik düzen';
+      return tr('Tarihsel olaylar ve medeniyetler odaklı klasik düzen', 'Classic layout for historical events and civilizations');
     case PresentationTemplate.tip:
-      return 'Tıp ve klinik bilimler odaklı güvenilir tasarım';
+      return tr('Tıp ve klinik bilimler odaklı güvenilir tasarım', 'Reliable design for medical and clinical sciences');
     case PresentationTemplate.tiyatro:
-      return 'Sahne sanatları ve dramatik anlatım odaklı düzen';
+      return tr('Sahne sanatları ve dramatik anlatım odaklı düzen', 'Dramatic storytelling and stage arts');
     case PresentationTemplate.toplum:
-      return 'Sosyal bilimler ve toplumsal konular odaklı düzen';
+      return tr('Sosyal bilimler ve toplumsal konular odaklı düzen', 'Layout for social sciences and community issues');
     case PresentationTemplate.ulasim:
-      return 'Ulaşım ve lojistik odaklı teknik endüstriyel görünüm';
+      return tr('Ulaşım ve lojistik odaklı teknik endüstriyel görünüm', 'Industrial technical look for transit and logistics');
     case PresentationTemplate.uzay:
-      return 'Uzay keşfi ve astronot odaklı görkemli sunum';
+      return tr('Uzay keşfi ve astronot odaklı görkemli sunum', 'Grand presentation for space exploration');
     case PresentationTemplate.vintage:
-      return 'Geçmiş dönem estetiği ve retro odaklı sıcak düzen';
+      return tr('Geçmiş dönem estetiği ve retro odaklı sıcak düzen', 'Warm retro layout with vintage aesthetics');
     case PresentationTemplate.yapayZeka:
-      return 'Yapay zeka ve makine öğrenmesi odaklı teknoloji sahnesi';
+      return tr('Yapay zeka ve makine öğrenmesi odaklı teknoloji sahnesi', 'Tech scene for AI and machine learning');
     case PresentationTemplate.yazilim:
-      return 'Yazılım geliştirme ve programlama odaklı modern düzen';
+      return tr('Yazılım geliştirme ve programlama odaklı modern düzen', 'Modern layout for software development and coding');
     case PresentationTemplate.cyberpunk:
-      return 'Karanlık ve parlayan neon efektli siberpunk tasarım';
+      return tr('Karanlık ve parlayan neon efektli siberpunk tasarım', 'Dark cyberpunk design with glowing neon accents');
     case PresentationTemplate.glassmorphism:
-      return 'Buzlu cam katmanlı, ultra modern şeffaf tasarım';
+      return tr('Buzlu cam katmanlı, ultra modern şeffaf tasarım', 'Frosted glass layers with modern transparency');
     case PresentationTemplate.luxuryGold:
-      return 'Lüks obsidian ve şampanya altını zarafeti';
+      return tr('Lüks obsidian ve şampanya altını zarafeti', 'Obsidian and champagne gold luxury elegance');
     case PresentationTemplate.ecoGreen:
-      return 'Doğa ve sürdürülebilirlik odaklı yeşil tema';
+      return tr('Doğa ve sürdürülebilirlik odaklı yeşil tema', 'Green theme for nature and sustainability');
     case PresentationTemplate.synthwave:
-      return '80ler retro neon ve dalga estetiği';
+      return tr('80ler retro neon ve dalga estetiği', '80s retro neon and synthwave aesthetics');
     case PresentationTemplate.gradientMesh:
-      return 'Dinamik akan gradyan renk ağı düzeni';
+      return tr('Dinamik akan gradyan renk ağı düzeni', 'Dynamic flowing gradient mesh layout');
     case PresentationTemplate.editorial:
-      return 'Dergi ve tipografi odaklı prestijli tasarım';
+      return tr('Dergi ve tipografi odaklı prestijli tasarım', 'Prestigious editorial design with rich typography');
     case PresentationTemplate.bauhaus:
-      return 'Geometrik yapı ve cesur renk kontrasti düzeni';
+      return tr('Geometrik yapı ve cesur renk kontrasti düzeni', 'Geometric structure and bold color contrast');
     case PresentationTemplate.dataTech:
-      return 'Finansal veri ve teknoloji analitiği odağı';
+      return tr('Finansal veri ve teknoloji analitiği odağı', 'Financial data and tech analytics focus');
     case PresentationTemplate.deepSpace:
-      return 'Derin uzay, kozmik ve kuantum temalı sahne';
+      return tr('Derin uzay, kozmik ve kuantum temalı sahne', 'Deep space, cosmic and quantum theme');
     case PresentationTemplate.bentoGrid:
-      return 'Bento box düzeninde modern modüler kart tasarımları';
+      return tr('Bento box düzeninde modern modüler kart tasarımları', 'Modern modular card designs in bento box layout');
     case PresentationTemplate.auroraBorealis:
-      return 'Kuzey ışıkları temalı ışıltılı canlı renk ağları';
+      return tr('Kuzey ışıkları temalı ışıltılı canlı renk ağları', 'Vibrant glowing aurora borealis color mesh');
     case PresentationTemplate.neomorphism:
-      return 'Yumuşak kabartmalı 3D neomorfik arayüz stili';
+      return tr('Yumuşak kabartmalı 3D neomorfik arayüz stili', 'Soft embossed 3D neumorphic interface style');
     case PresentationTemplate.holographic:
-      return 'Siber renk geçişleri ve holografik ışıltılar';
+      return tr('Siber renk geçişleri ve holografik ışıltılar', 'Cyber color transitions and holographic glows');
     case PresentationTemplate.nordicMinimal:
-      return 'Yüksek kontrastlı, sade ve mimari tipografi';
+      return tr('Yüksek kontrastlı, sade ve mimari tipografi', 'High-contrast, clean and architectural typography');
     case PresentationTemplate.claymorphism:
-      return '3D kil ve pastel tonlarında dost canlısı kabartmalar';
+      return tr('3D kil ve pastel tonlarında dost canlısı kabartmalar', 'Friendly embossed 3D clay and pastel tones');
   }
 }
 

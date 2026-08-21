@@ -22,3 +22,11 @@ void replaceBrowserUrl({required String path, String? title}) {
     html.window.history.replaceState(null, title ?? '', path);
   } catch (_) {}
 }
+
+String getCurrentBrowserPath() {
+  try {
+    return html.window.location.pathname ?? '/';
+  } catch (_) {
+    return '/';
+  }
+}
