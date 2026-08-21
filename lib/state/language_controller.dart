@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import '../services/ip_location_service.dart';
+import '../services/shared_prefs_service.dart';
 
 enum AppLanguage { tr, en }
 
@@ -24,7 +24,7 @@ class LanguageController {
   /// SharedPreferences ve konum sorgusundan dil durumunu yükler.
   Future<void> init({IpLocationService? locationService}) async {
     try {
-      final prefs = await SharedPreferences.getInstance();
+      final prefs = await SharedPrefsService.instance.prefs;
       final saved = prefs.getString(_prefsKey);
       if (saved == 'tr') {
         currentLanguage.value = AppLanguage.tr;
@@ -36,11 +36,12 @@ class LanguageController {
         return;
       }
     } catch (_) {
-      // SharedPreferences okunamadıysa konum sorgusuna geç
+      // SharedPreferences okunamadıysa varsayılan Türkçe olarak kalır
     }
 
     // Kullanıcı henüz elle tercih yapmamışsa konum bazlı otomatik seçim
-    await autoDetectLocation(locationService: locationService);
+    // BLOKE ETMEYEN: Arka planda çalıştır, uygulamayı bekletme
+    autoDetectLocation(locationService: locationService);
   }
 
   /// IP konum servisinden konumu alır ve TR ise Türkçe, diğer ülkeler ise İngilizce seçer.
@@ -73,7 +74,7 @@ class LanguageController {
     currentLanguage.value = language;
     isManuallySelected = true;
     try {
-      final prefs = await SharedPreferences.getInstance();
+      final prefs = await SharedPrefsService.instance.prefs;
       await prefs.setString(_prefsKey, language == AppLanguage.tr ? 'tr' : 'en');
     } catch (_) {
       // Kayıt hatası akışı bozmamalı.
@@ -84,7 +85,7 @@ class LanguageController {
   Future<void> resetToAutoDetect({IpLocationService? locationService}) async {
     isManuallySelected = false;
     try {
-      final prefs = await SharedPreferences.getInstance();
+      final prefs = await SharedPrefsService.instance.prefs;
       await prefs.remove(_prefsKey);
     } catch (_) {}
     await autoDetectLocation(locationService: locationService);

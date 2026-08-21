@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+
+import '../services/shared_prefs_service.dart';
 
 /// Uygulama geneli tema modu kontrolü (kalıcı: SharedPreferences).
 class ThemeController {
@@ -13,7 +14,7 @@ class ThemeController {
 
   Future<void> init() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
+      final prefs = await SharedPrefsService.instance.prefs;
       final saved = prefs.getString(_prefsKey);
       if (saved == 'dark') {
         mode.value = ThemeMode.dark;
@@ -28,7 +29,7 @@ class ThemeController {
         mode.value == ThemeMode.dark ? ThemeMode.light : ThemeMode.dark;
     mode.value = next;
     try {
-      final prefs = await SharedPreferences.getInstance();
+      final prefs = await SharedPrefsService.instance.prefs;
       await prefs.setString(
           _prefsKey, next == ThemeMode.dark ? 'dark' : 'light');
     } catch (_) {

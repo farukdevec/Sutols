@@ -90,6 +90,34 @@
     ],
     "rewrites": [
       {
+        "source": "/login",
+        "destination": "/index.html"
+      },
+      {
+        "source": "/slide**",
+        "destination": "/index.html"
+      },
+      {
+        "source": "/p/**",
+        "destination": "/index.html"
+      },
+      {
+        "source": "/admin",
+        "destination": "/index.html"
+      },
+      {
+        "source": "/gizlilik",
+        "destination": "/index.html"
+      },
+      {
+        "source": "/sartlar",
+        "destination": "/index.html"
+      },
+      {
+        "source": "/sss",
+        "destination": "/index.html"
+      },
+      {
         "source": "**",
         "destination": "/index.html"
       }

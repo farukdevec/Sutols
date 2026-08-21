@@ -15,7 +15,6 @@ import 'html_presentation_editor_page.dart';
 import 'widgets/looping_loading_video.dart';
 import 'design/design_system.dart';
 import 'design/sutol_widgets.dart';
-import 'auth_page.dart';
 import 'membership_page.dart';
 import 'my_presentations_page.dart';
 import 'widgets/contact_social_widget.dart';
@@ -154,11 +153,7 @@ class _SutolHomePageState extends State<SutolHomePage> {
         action: SnackBarAction(
           label: tr('Giriş Yap', 'Sign In'),
           textColor: const Color(0xFF00E5FF),
-          onPressed: () {
-            Navigator.of(context).push(
-              MaterialPageRoute<void>(builder: (_) => const AuthPage()),
-            );
-          },
+          onPressed: () => Navigator.of(context).pushNamed('/login'),
         ),
       ),
     );
@@ -1788,9 +1783,7 @@ class _UserAvatarState extends State<_UserAvatar> {
   }
 
   void _openAuthPage(BuildContext context) {
-    Navigator.of(context).push(
-      MaterialPageRoute<void>(builder: (_) => const AuthPage()),
-    );
+    Navigator.of(context).pushNamed('/login');
   }
 
   void _showUserMenu(BuildContext context) {
