@@ -9,11 +9,31 @@ String presentationBackgroundSceneHtml(PresentationBackgroundKind kind) {
   return _decodedBackgroundScenes.putIfAbsent(
     kind,
     () =>
+        (kind == PresentationBackgroundKind.plainWhite
+            ? _plainWhiteBackgroundScene
+            : null) ??
         sutolPremiumBackgroundScenes[kind] ??
         _lightBackgroundSceneHtml(kind) ??
         utf8.decode(base64Decode(_backgroundSceneBase64[kind]!)),
   );
 }
+
+const String _plainWhiteBackgroundScene = '''
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <style>
+    html, body, .sutol-scene {
+      width: 100%; height: 100%; margin: 0; overflow: hidden;
+      background: #FFFFFF;
+    }
+  </style>
+</head>
+<body><div class="sutol-scene" aria-label="Arka plansız beyaz sahne"></div></body>
+</html>
+''';
 
 final Map<PresentationBackgroundKind, String> _decodedBackgroundScenes =
     <PresentationBackgroundKind, String>{};

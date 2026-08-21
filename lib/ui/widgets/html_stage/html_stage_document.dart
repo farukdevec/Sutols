@@ -116,10 +116,28 @@ String buildHtmlBackgroundSceneDocument(
   PresentationBackgroundKind kind, {
   bool animationEnabled = true,
   double animationSpeed = 1,
+  bool colorsInverted = false,
 }) {
-  if (!animationEnabled) return buildHtmlBackgroundPreviewDocument(kind);
+  var document = animationEnabled
+      ? sutolHtmlBackgroundScene(kind)
+      : buildHtmlBackgroundPreviewDocument(kind);
+  if (colorsInverted) {
+    final resultIsDark = presentationBackgroundVariantIsDark(
+      kind,
+      colorsInverted: true,
+    );
+    final variantStyle = '''
+<style data-sutol-background-color-variant="inverted">
+html { background: ${resultIsDark ? '#09111F' : '#F7F9FC'} !important; }
+body { filter: invert(1) hue-rotate(180deg); }
+</style>
+''';
+    document = document.contains('</head>')
+        ? document.replaceFirst('</head>', '$variantStyle</head>')
+        : '$variantStyle$document';
+  }
+  if (!animationEnabled) return document;
   final speed = animationSpeed.clamp(0.25, 2.0).toDouble();
-  var document = sutolHtmlBackgroundScene(kind);
   if ((speed - 1).abs() < 0.001) return document;
   final speedText = speed.toStringAsFixed(2);
   final speedScript = '''
@@ -396,7 +414,11 @@ String buildHtmlStageMarkup({
     _backgroundStageClass(page.backgroundKind),
     'sutol-stage-mode-$renderModeName',
     if (!showBackground) 'sutol-stage-without-background',
-    if (_isDarkBackground(page.backgroundKind)) 'theme-dark',
+    if (_isDarkBackground(
+      page.backgroundKind,
+      colorsInverted: page.backgroundColorsInverted,
+    ))
+      'theme-dark',
     if (extraStageClass != null && extraStageClass.trim().isNotEmpty)
       extraStageClass.trim(),
   ].join(' ');
@@ -412,6 +434,7 @@ String buildHtmlStageMarkup({
               renderMode,
               animationEnabled: page.backgroundAnimationEnabled,
               animationSpeed: page.backgroundAnimationSpeed,
+              colorsInverted: page.backgroundColorsInverted,
               deferEmbeddedAssets: deferEmbeddedAssets,
             )
           : '',
@@ -1043,8 +1066,14 @@ String _renderModeName(HtmlStageRenderMode mode) {
   }
 }
 
-bool _isDarkBackground(PresentationBackgroundKind kind) {
-  return presentationBackgroundIsDark(kind);
+bool _isDarkBackground(
+  PresentationBackgroundKind kind, {
+  bool colorsInverted = false,
+}) {
+  return presentationBackgroundVariantIsDark(
+    kind,
+    colorsInverted: colorsInverted,
+  );
 }
 
 String _backgroundStageClass(PresentationBackgroundKind kind) {
@@ -1056,6 +1085,7 @@ String _backgroundInnerMarkup(
   HtmlStageRenderMode renderMode, {
   required bool animationEnabled,
   required double animationSpeed,
+  required bool colorsInverted,
   bool deferEmbeddedAssets = false,
 }) {
   if (deferEmbeddedAssets) {
@@ -1067,15 +1097,22 @@ String _backgroundInnerMarkup(
   }
   final scene = renderMode == HtmlStageRenderMode.snapshot || !animationEnabled
       ? _escapedSnapshotBackgroundScenes.putIfAbsent(
-          kind,
-          () => _escapeAttribute(buildHtmlBackgroundPreviewDocument(kind)),
+          '${kind.name}:$colorsInverted',
+          () => _escapeAttribute(
+            buildHtmlBackgroundSceneDocument(
+              kind,
+              animationEnabled: false,
+              colorsInverted: colorsInverted,
+            ),
+          ),
         )
       : _escapedBackgroundScenes.putIfAbsent(
-          '${kind.name}:${animationSpeed.toStringAsFixed(3)}',
+          '${kind.name}:${animationSpeed.toStringAsFixed(3)}:$colorsInverted',
           () => _escapeAttribute(
             buildHtmlBackgroundSceneDocument(
               kind,
               animationSpeed: animationSpeed,
+              colorsInverted: colorsInverted,
             ),
           ),
         );
@@ -1087,8 +1124,7 @@ String _backgroundInnerMarkup(
 }
 
 final Map<String, String> _escapedBackgroundScenes = <String, String>{};
-final Map<PresentationBackgroundKind, String> _escapedSnapshotBackgroundScenes =
-    <PresentationBackgroundKind, String>{};
+final Map<String, String> _escapedSnapshotBackgroundScenes = <String, String>{};
 
 const String _stageStyles = '''
 $sutolLocalGoogleFontsCss
@@ -1129,6 +1165,16 @@ body {
 
 .sutol-html-stage.sutol-stage-without-background::before,
 .sutol-html-stage.sutol-stage-without-background::after {
+  content: none;
+}
+
+.sutol-html-stage.bg-plain-white {
+  border-color: transparent;
+  background: #FFFFFF;
+}
+
+.sutol-html-stage.bg-plain-white::before,
+.sutol-html-stage.bg-plain-white::after {
   content: none;
 }
 

@@ -71,16 +71,28 @@ void main() {
   });
 
   test('library exposes the legacy collection and 20 studio backgrounds', () {
-    expect(presentationBackgroundLibrary, hasLength(48));
+    expect(presentationBackgroundLibrary, hasLength(49));
     expect(
       presentationBackgroundLibrary.map((item) => item.kind).toSet(),
-      hasLength(48),
+      hasLength(49),
     );
     expect(sutolStudioBackgroundLibrary, hasLength(20));
     expect(
       presentationBackgroundLibrary.every((item) => item.tags.isNotEmpty),
       isTrue,
     );
+  });
+
+  test('a page without a selected background uses a plain white scene', () {
+    const page = PresentationPage(
+      id: 'blank-white',
+      textBlocks: <PresentationTextBlock>[],
+    );
+    expect(page.backgroundKind, PresentationBackgroundKind.plainWhite);
+    final scene = presentationBackgroundSceneHtml(page.backgroundKind);
+    expect(scene, contains('background: #FFFFFF'));
+    final document = buildHtmlStageDocument(page: page);
+    expect(document, contains('bg-plain-white'));
   });
 
   test('every library background embeds its offline scene source', () {
@@ -159,6 +171,10 @@ void main() {
       page: animatedPage.copyWith(backgroundAnimationSpeed: 1.5),
       renderMode: HtmlStageRenderMode.preview,
     );
+    final lightVariantDocument = buildHtmlStageDocument(
+      page: animatedPage.copyWith(backgroundColorsInverted: true),
+      renderMode: HtmlStageRenderMode.preview,
+    );
 
     expect(
       animatedDocument,
@@ -168,6 +184,24 @@ void main() {
     expect(
       fasterDocument,
       contains('data-sutol-background-animation-speed=&quot;1.50&quot;'),
+    );
+    expect(
+      lightVariantDocument,
+      contains('data-sutol-background-color-variant=&quot;inverted&quot;'),
+    );
+    expect(
+      presentationBackgroundVariantIsDark(
+        PresentationBackgroundKind.studioTechnologyAi,
+        colorsInverted: true,
+      ),
+      isFalse,
+    );
+    expect(
+      presentationBackgroundVariantIsDark(
+        PresentationBackgroundKind.studioEducationAcademia,
+        colorsInverted: true,
+      ),
+      isTrue,
     );
   });
 

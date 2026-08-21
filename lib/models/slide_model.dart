@@ -282,6 +282,7 @@ enum PresentationTextGrouping {
 }
 
 enum PresentationBackgroundKind {
+  plainWhite,
   science,
   biology,
   natureEcology,
@@ -697,9 +698,10 @@ class PresentationPage {
     required this.id,
     required this.textBlocks,
     this.componentBlocks = const <PresentationComponentBlock>[],
-    this.backgroundKind = PresentationBackgroundKind.science,
+    this.backgroundKind = PresentationBackgroundKind.plainWhite,
     this.backgroundAnimationEnabled = true,
     this.backgroundAnimationSpeed = 1,
+    this.backgroundColorsInverted = false,
     this.speakerNotes = '',
     this.templateId,
     this.transitionAfter,
@@ -711,6 +713,7 @@ class PresentationPage {
   final PresentationBackgroundKind backgroundKind;
   final bool backgroundAnimationEnabled;
   final double backgroundAnimationSpeed;
+  final bool backgroundColorsInverted;
   final String speakerNotes;
   final String? templateId;
 
@@ -725,6 +728,7 @@ class PresentationPage {
     PresentationBackgroundKind? backgroundKind,
     bool? backgroundAnimationEnabled,
     double? backgroundAnimationSpeed,
+    bool? backgroundColorsInverted,
     String? speakerNotes,
     Object? templateId = _copySentinel,
     Object? transitionAfter = _copySentinel,
@@ -738,6 +742,8 @@ class PresentationPage {
           backgroundAnimationEnabled ?? this.backgroundAnimationEnabled,
       backgroundAnimationSpeed:
           backgroundAnimationSpeed ?? this.backgroundAnimationSpeed,
+      backgroundColorsInverted:
+          backgroundColorsInverted ?? this.backgroundColorsInverted,
       speakerNotes: speakerNotes ?? this.speakerNotes,
       templateId:
           templateId == _copySentinel ? this.templateId : templateId as String?,
@@ -828,47 +834,66 @@ String presentationTransitionLabel(PresentationTransitionKind kind) {
 String presentationTransitionSubtitle(PresentationTransitionKind kind) {
   switch (kind) {
     case PresentationTransitionKind.none:
-      return tr('Sahneler animasyon olmadan doğrudan değiştirilir', 'Slides change directly without animation');
+      return tr('Sahneler animasyon olmadan doğrudan değiştirilir',
+          'Slides change directly without animation');
     case PresentationTransitionKind.smooth:
-      return tr('Aynı 3D modeli ve sahneyi akıcı biçimde dönüştürür', 'Smoothly morphs the same 3D model and scene');
+      return tr('Aynı 3D modeli ve sahneyi akıcı biçimde dönüştürür',
+          'Smoothly morphs the same 3D model and scene');
     case PresentationTransitionKind.fade:
-      return tr('Sahneler birbirinin üzerinde yumuşakça kaybolup belirir', 'Slides gently cross-fade over each other');
+      return tr('Sahneler birbirinin üzerinde yumuşakça kaybolup belirir',
+          'Slides gently cross-fade over each other');
     case PresentationTransitionKind.slide:
-      return tr('Yeni sahne eskisini aynı doğrultuda ekran dışına iter', 'New slide pushes the old slide out in the same direction');
+      return tr('Yeni sahne eskisini aynı doğrultuda ekran dışına iter',
+          'New slide pushes the old slide out in the same direction');
     case PresentationTransitionKind.zoom:
-      return tr('Sahneye yakınlaşarak giriş', 'Zoom into the slide on transition');
+      return tr(
+          'Sahneye yakınlaşarak giriş', 'Zoom into the slide on transition');
     case PresentationTransitionKind.convex:
       return tr('Dışa doğru 3B kart hissi', '3D convex card-folding effect');
     case PresentationTransitionKind.concave:
       return tr('İçe doğru 3B kart hissi', '3D concave card-folding effect');
     case PresentationTransitionKind.wipe:
-      return tr('Slaytı soldan sağa doğru açar', 'Wipes the slide from left to right');
+      return tr('Slaytı soldan sağa doğru açar',
+          'Wipes the slide from left to right');
     case PresentationTransitionKind.split:
-      return tr('Slaytı merkezden iki yana doğru açar', 'Splits the slide outward from center');
+      return tr('Slaytı merkezden iki yana doğru açar',
+          'Splits the slide outward from center');
     case PresentationTransitionKind.reveal:
-      return tr('Yeni slaytı alttan akıcı biçimde gösterir', 'Smoothly reveals the new slide from below');
+      return tr('Yeni slaytı alttan akıcı biçimde gösterir',
+          'Smoothly reveals the new slide from below');
     case PresentationTransitionKind.cover:
-      return tr('Yeni sahne eskisinin üzerine bir örtü gibi kapanır', 'New slide covers the previous one like a sheet');
+      return tr('Yeni sahne eskisinin üzerine bir örtü gibi kapanır',
+          'New slide covers the previous one like a sheet');
     case PresentationTransitionKind.uncover:
-      return tr('Eski sahne çekilir, altındaki yeni sahne ortaya çıkar', 'Old slide slides away to reveal the new slide underneath');
+      return tr('Eski sahne çekilir, altındaki yeni sahne ortaya çıkar',
+          'Old slide slides away to reveal the new slide underneath');
     case PresentationTransitionKind.flip:
-      return tr('Slaytı 3B kart gibi çevirir', 'Flips the slide like a 3D card');
+      return tr(
+          'Slaytı 3B kart gibi çevirir', 'Flips the slide like a 3D card');
     case PresentationTransitionKind.cube3d:
-      return tr('Slaytları 3B küp yüzeyi gibi döndürür', 'Rotates slides like faces of a 3D cube');
+      return tr('Slaytları 3B küp yüzeyi gibi döndürür',
+          'Rotates slides like faces of a 3D cube');
     case PresentationTransitionKind.morph:
-      return tr('Bulanıklaşan cam efektiyle odak değiştirir', 'Shifts focus with a frosted glass blur effect');
+      return tr('Bulanıklaşan cam efektiyle odak değiştirir',
+          'Shifts focus with a frosted glass blur effect');
     case PresentationTransitionKind.parallax:
-      return tr('Derinlikli katman kayması yaratır', 'Creates layered depth parallax shift');
+      return tr('Derinlikli katman kayması yaratır',
+          'Creates layered depth parallax shift');
     case PresentationTransitionKind.elastic:
-      return tr('Yay esnekliğinde sıçrayışlı geçiş yapar', 'Springy elastic bounce transition');
+      return tr('Yay esnekliğinde sıçrayışlı geçiş yapar',
+          'Springy elastic bounce transition');
     case PresentationTransitionKind.glitch:
-      return tr('Dijital siber parazit ve renk kırılması', 'Digital cyber glitch and chromatic aberration');
+      return tr('Dijital siber parazit ve renk kırılması',
+          'Digital cyber glitch and chromatic aberration');
     case PresentationTransitionKind.prism:
-      return tr('Prizmatik parlak ışık hüzmesi geçişi', 'Prismatic bright light flare transition');
+      return tr('Prizmatik parlak ışık hüzmesi geçişi',
+          'Prismatic bright light flare transition');
     case PresentationTransitionKind.radialWipe:
-      return tr('Merkezden dışa dairesel açılış efekti', 'Circular radial wipe from center outwards');
+      return tr('Merkezden dışa dairesel açılış efekti',
+          'Circular radial wipe from center outwards');
     case PresentationTransitionKind.rotateZoom:
-      return tr('3B eksende dönerek ekrana yaklaşır', 'Approaches screen rotating on 3D axes');
+      return tr('3B eksende dönerek ekrana yaklaşır',
+          'Approaches screen rotating on 3D axes');
   }
 }
 
@@ -1245,6 +1270,14 @@ const List<PresentationBackgroundDefinition> sutolStudioBackgroundLibrary =
 
 const List<PresentationBackgroundDefinition> presentationBackgroundLibrary =
     <PresentationBackgroundDefinition>[
+  PresentationBackgroundDefinition(
+    kind: PresentationBackgroundKind.plainWhite,
+    label: 'Arka Plansız (Beyaz)',
+    category: 'Temel',
+    tags: <String>['arka plansız', 'beyaz', 'boş', 'sade', 'temiz'],
+    previewColors: <Color>[Colors.white, Colors.white, Colors.white],
+    icon: Icons.crop_square_rounded,
+  ),
   PresentationBackgroundDefinition(
       kind: PresentationBackgroundKind.science,
       label: 'Bilim',
@@ -1911,10 +1944,39 @@ bool presentationBackgroundIsDark(PresentationBackgroundKind kind) {
     case PresentationBackgroundKind.lightTechnology:
     case PresentationBackgroundKind.lightCreative:
     case PresentationBackgroundKind.lightWarm:
+    case PresentationBackgroundKind.plainWhite:
+    case PresentationBackgroundKind.studioEducationAcademia:
       return false;
     default:
       return true;
   }
+}
+
+bool presentationBackgroundVariantIsDark(
+  PresentationBackgroundKind kind, {
+  bool colorsInverted = false,
+}) {
+  final originalIsDark = presentationBackgroundIsDark(kind);
+  return colorsInverted ? !originalIsDark : originalIsDark;
+}
+
+List<Color> presentationBackgroundVariantPreviewColors(
+  PresentationBackgroundKind kind, {
+  bool colorsInverted = false,
+}) {
+  final colors = presentationBackgroundPreviewColors(kind);
+  if (!colorsInverted) return colors;
+  return colors
+      .map(
+        (color) => Color.from(
+          alpha: color.a,
+          red: 1 - color.r,
+          green: 1 - color.g,
+          blue: 1 - color.b,
+          colorSpace: color.colorSpace,
+        ),
+      )
+      .toList(growable: false);
 }
 
 String presentationBackgroundLabel(PresentationBackgroundKind kind) =>

@@ -66,17 +66,22 @@ class HtmlLiveBackground extends StatelessWidget {
     required this.kind,
     this.animationEnabled = true,
     this.animationSpeed = 1,
+    this.colorsInverted = false,
   });
 
   final PresentationBackgroundKind kind;
   final bool animationEnabled;
   final double animationSpeed;
+  final bool colorsInverted;
 
   @override
   Widget build(BuildContext context) => DecoratedBox(
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            colors: presentationBackgroundPreviewColors(kind),
+            colors: presentationBackgroundVariantPreviewColors(
+              kind,
+              colorsInverted: colorsInverted,
+            ),
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),

@@ -46,6 +46,7 @@ void main() {
         backgroundKind: PresentationBackgroundKind.solarEnergyScene,
         backgroundAnimationEnabled: false,
         backgroundAnimationSpeed: 1.75,
+        backgroundColorsInverted: true,
         speakerNotes: 'Konusmaci notu',
         transitionAfter: PresentationTransitionKind.cover,
         textBlocks: <PresentationTextBlock>[
@@ -125,6 +126,7 @@ void main() {
     );
     expect(project.pages.single.backgroundAnimationEnabled, isFalse);
     expect(project.pages.single.backgroundAnimationSpeed, 1.75);
+    expect(project.pages.single.backgroundColorsInverted, isTrue);
     expect(project.pages.single.textBlocks.single.text, 'Gunes');
     expect(
       project.pages.single.textBlocks.single.textStyle,

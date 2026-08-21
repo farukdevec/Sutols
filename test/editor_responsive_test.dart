@@ -301,11 +301,16 @@ void main() {
 
   testWidgets('arka plan sekmesi 1120px genişlikte taşmaz', (tester) async {
     final controller = await pumpAt(tester, const Size(1120, 800));
+    expect(
+      controller.selectedPage.backgroundKind,
+      PresentationBackgroundKind.plainWhite,
+    );
     expect(tester.takeException(), isNull);
     await tester.tap(find.text('Arka Planlar'));
     await tester.pumpAndSettle();
     expect(find.text('Sutols Sahne Koleksiyonu'), findsOneWidget);
     expect(find.text('20 tema'), findsOneWidget);
+    expect(find.text('Arka Plansız (Beyaz)'), findsOneWidget);
     expect(find.text('Teknoloji & Yapay Zeka'), findsOneWidget);
     await tester.ensureVisible(find.text('Teknoloji & Yapay Zeka'));
     await tester.pumpAndSettle();
@@ -322,6 +327,18 @@ void main() {
       liveBackground.kind,
       PresentationBackgroundKind.studioTechnologyAi,
       reason: 'Büyük önizleme seçilen gerçek HTML sahnesini kullanmalı',
+    );
+    expect(find.text('Açık Varyant'), findsOneWidget);
+    await tester.tap(
+      find.byKey(const ValueKey<String>('background-color-variant-toggle')),
+    );
+    await tester.pumpAndSettle();
+    expect(controller.selectedPage.backgroundColorsInverted, isTrue);
+    expect(
+      tester
+          .widget<HtmlLiveBackground>(find.byType(HtmlLiveBackground))
+          .colorsInverted,
+      isTrue,
     );
     expect(find.text('Animasyon Açık'), findsOneWidget);
     await tester.tap(

@@ -109,6 +109,7 @@ class PresentationProjectCodec {
       'backgroundKind': page.backgroundKind.name,
       'backgroundAnimationEnabled': page.backgroundAnimationEnabled,
       'backgroundAnimationSpeed': page.backgroundAnimationSpeed,
+      'backgroundColorsInverted': page.backgroundColorsInverted,
       'templateId': page.templateId,
       'speakerNotes': page.speakerNotes,
       'transitionAfter': page.transitionAfter?.name,
@@ -138,6 +139,7 @@ class PresentationProjectCodec {
       backgroundAnimationSpeed: _double(json['backgroundAnimationSpeed'], 1)
           .clamp(0.25, 2.0)
           .toDouble(),
+      backgroundColorsInverted: _bool(json['backgroundColorsInverted'], false),
       templateId: json['templateId'] as String?,
       speakerNotes: _string(json['speakerNotes'], ''),
       transitionAfter: json['transitionAfter'] == null
@@ -159,7 +161,7 @@ class PresentationProjectCodec {
     }
 
     const migrations = <String, PresentationBackgroundKind>{
-      'blankStudio': PresentationBackgroundKind.science,
+      'blankStudio': PresentationBackgroundKind.plainWhite,
       'scientificReasoning': PresentationBackgroundKind.science,
       'cosmicReasoning': PresentationBackgroundKind.spaceTechnology,
       'solarEnergy': PresentationBackgroundKind.solarEnergyScene,
@@ -212,7 +214,7 @@ class PresentationProjectCodec {
       'artColorEnergy': PresentationBackgroundKind.artDesign,
       'artPremiumAtelier': PresentationBackgroundKind.artDesign,
     };
-    return migrations[name] ?? PresentationBackgroundKind.science;
+    return migrations[name] ?? PresentationBackgroundKind.plainWhite;
   }
 
   static Map<String, Object?> _textBlockToJson(PresentationTextBlock block) {

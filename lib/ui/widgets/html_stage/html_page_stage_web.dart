@@ -146,11 +146,13 @@ class HtmlLiveBackground extends StatefulWidget {
     required this.kind,
     this.animationEnabled = true,
     this.animationSpeed = 1,
+    this.colorsInverted = false,
   });
 
   final PresentationBackgroundKind kind;
   final bool animationEnabled;
   final double animationSpeed;
+  final bool colorsInverted;
 
   @override
   State<HtmlLiveBackground> createState() => _HtmlLiveBackgroundState();
@@ -164,6 +166,7 @@ class _HtmlLiveBackgroundState extends State<HtmlLiveBackground> {
       widget.kind,
       animationEnabled: widget.animationEnabled,
       animationSpeed: widget.animationSpeed,
+      colorsInverted: widget.colorsInverted,
     );
   }
 
@@ -172,7 +175,8 @@ class _HtmlLiveBackgroundState extends State<HtmlLiveBackground> {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.kind != widget.kind ||
         oldWidget.animationEnabled != widget.animationEnabled ||
-        oldWidget.animationSpeed != widget.animationSpeed) {
+        oldWidget.animationSpeed != widget.animationSpeed ||
+        oldWidget.colorsInverted != widget.colorsInverted) {
       _applyDocument();
     }
   }
@@ -424,7 +428,9 @@ class _HtmlPageStageState extends State<HtmlPageStage> {
                 oldWidget.page.backgroundAnimationEnabled !=
                     widget.page.backgroundAnimationEnabled ||
                 oldWidget.page.backgroundAnimationSpeed !=
-                    widget.page.backgroundAnimationSpeed))) {
+                    widget.page.backgroundAnimationSpeed ||
+                oldWidget.page.backgroundColorsInverted !=
+                    widget.page.backgroundColorsInverted))) {
       _render(replaceImmediately: true);
       return;
     }

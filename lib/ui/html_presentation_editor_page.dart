@@ -334,7 +334,8 @@ class _HtmlPresentationEditorPageState
 
   @override
   void dispose() {
-    LanguageController.instance.currentLanguage.removeListener(_onLanguageChanged);
+    LanguageController.instance.currentLanguage
+        .removeListener(_onLanguageChanged);
     HardwareKeyboard.instance.removeHandler(_handleGlobalKeyEvent);
     FocusManager.instance.removeListener(_handlePrimaryFocusChanged);
     _editorFocusNode.dispose();
@@ -372,7 +373,7 @@ class _HtmlPresentationEditorPageState
     for (final page in controller.pages) {
       buf
         ..write(
-            '\n${page.id}|${page.backgroundKind.index}|${page.backgroundAnimationEnabled}|${page.backgroundAnimationSpeed}|${page.speakerNotes}');
+            '\n${page.id}|${page.backgroundKind.index}|${page.backgroundAnimationEnabled}|${page.backgroundAnimationSpeed}|${page.backgroundColorsInverted}|${page.speakerNotes}');
       for (final text in page.textBlocks) {
         buf
           ..write(
@@ -1283,14 +1284,17 @@ class _HtmlHeader extends StatelessWidget {
                               value: _MobileHeaderAction.exportHtml,
                               child: ListTile(
                                 leading: const Icon(Icons.html_rounded),
-                                title: Text(tr('HTML Dışa Aktar', 'Export HTML')),
+                                title:
+                                    Text(tr('HTML Dışa Aktar', 'Export HTML')),
                               ),
                             ),
                             PopupMenuItem<_MobileHeaderAction>(
                               value: _MobileHeaderAction.exportPdf,
                               child: ListTile(
-                                leading: const Icon(Icons.picture_as_pdf_rounded),
-                                title: Text(tr('PDF Olarak Yazdır', 'Print as PDF')),
+                                leading:
+                                    const Icon(Icons.picture_as_pdf_rounded),
+                                title: Text(
+                                    tr('PDF Olarak Yazdır', 'Print as PDF')),
                               ),
                             ),
                           ],
@@ -1323,14 +1327,17 @@ class _HtmlHeader extends StatelessWidget {
                                 value: _MobileHeaderAction.save,
                                 child: ListTile(
                                   leading: const Icon(Icons.save_alt_rounded),
-                                  title: Text(tr('Projeyi Kaydet', 'Save Project')),
+                                  title: Text(
+                                      tr('Projeyi Kaydet', 'Save Project')),
                                 ),
                               ),
                               PopupMenuItem<_MobileHeaderAction>(
                                 value: _MobileHeaderAction.load,
                                 child: ListTile(
-                                  leading: const Icon(Icons.upload_file_rounded),
-                                  title: Text(tr('Proje Yükle', 'Load Project')),
+                                  leading:
+                                      const Icon(Icons.upload_file_rounded),
+                                  title:
+                                      Text(tr('Proje Yükle', 'Load Project')),
                                 ),
                               ),
                             ],
@@ -3833,7 +3840,8 @@ class _StudioSaveButton extends StatelessWidget {
           value: _FileMenuAction.exportPdf,
           child: ListTile(
             leading: const Icon(Icons.picture_as_pdf_rounded),
-            title: Text(tr('PDF formatı (animasyonlar çalışmaz)', 'PDF format (animations disabled)')),
+            title: Text(tr('PDF formatı (animasyonlar çalışmaz)',
+                'PDF format (animations disabled)')),
           ),
         ),
       ],
@@ -5781,7 +5789,8 @@ class _Html3DModelControlsState extends State<_Html3DModelControls> {
             Text(
               _query.isEmpty && _category.isEmpty
                   ? tr('Bulutta model bulunamadı.', 'No models found in cloud.')
-                  : tr('Bu filtrelerle model bulunamadı.', 'No models found with these filters.'),
+                  : tr('Bu filtrelerle model bulunamadı.',
+                      'No models found with these filters.'),
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: context._htmlMuted,
@@ -6025,7 +6034,9 @@ class _HtmlPhotoControlsState extends State<_HtmlPhotoControls> {
     for (final tb in page.textBlocks) {
       final words = tb.text
           .split(RegExp(r'\s+'))
-          .map((w) => w.replaceAll(RegExp(r'[^\w\s\u00C0-\u017F]', unicode: true), '').trim())
+          .map((w) => w
+              .replaceAll(RegExp(r'[^\w\s\u00C0-\u017F]', unicode: true), '')
+              .trim())
           .where((w) => w.length >= 3 && !_isStopWord(w));
       for (final w in words.take(2)) {
         keywords.add(w);
@@ -6037,8 +6048,23 @@ class _HtmlPhotoControlsState extends State<_HtmlPhotoControls> {
   static bool _isStopWord(String w) {
     final l = w.toLowerCase();
     return const {
-      've', 'veya', 'ile', 'için', 'bir', 'bu', 'şu', 'giriş', 'sonuç',
-      'özet', 'hakkında', 'nedir', 'nasıl', 'neden', 'the', 'and', 'for'
+      've',
+      'veya',
+      'ile',
+      'için',
+      'bir',
+      'bu',
+      'şu',
+      'giriş',
+      'sonuç',
+      'özet',
+      'hakkında',
+      'nedir',
+      'nasıl',
+      'neden',
+      'the',
+      'and',
+      'for'
     }.contains(l);
   }
 
@@ -6393,7 +6419,8 @@ class _HtmlPhotoControlsState extends State<_HtmlPhotoControls> {
                       child: ActionChip(
                         label: Text(
                           chip,
-                          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
+                          style: const TextStyle(
+                              fontSize: 11, fontWeight: FontWeight.w600),
                         ),
                         padding: EdgeInsets.zero,
                         visualDensity: VisualDensity.compact,
@@ -6458,7 +6485,6 @@ class _HtmlPhotoControlsState extends State<_HtmlPhotoControls> {
                   onAdd: () => _addPexelsPhotoToSlide(photo),
                 ),
               ),
-
             if (_totalPexelsResults > _pexelsPhotos.length)
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 8),
@@ -6516,7 +6542,8 @@ class _HtmlPhotoControlsState extends State<_HtmlPhotoControls> {
                   label: Text(
                     _pickingLocal
                         ? tr('Yükleniyor...', 'Uploading...')
-                        : tr('Cihazdan Fotoğraf Yükle', 'Upload Photo from Device'),
+                        : tr('Cihazdan Fotoğraf Yükle',
+                            'Upload Photo from Device'),
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -6546,7 +6573,8 @@ class _HtmlPhotoControlsState extends State<_HtmlPhotoControls> {
           const SizedBox(height: 14),
           _ToolbarBadge(
             icon: Icons.photo_library_rounded,
-            label: '${tr('Yüklenen Fotoğraflar', 'Uploaded Photos')} (${_localPhotos.length})',
+            label:
+                '${tr('Yüklenen Fotoğraflar', 'Uploaded Photos')} (${_localPhotos.length})',
           ),
           const SizedBox(height: 10),
           if (_localPhotos.isEmpty)
@@ -6626,13 +6654,15 @@ class _PexelsPhotoCard extends StatelessWidget {
                   style: FilledButton.styleFrom(
                     backgroundColor: Colors.black.withValues(alpha: 0.75),
                     foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                     visualDensity: VisualDensity.compact,
                   ),
                   icon: const Icon(Icons.add_rounded, size: 16),
                   label: Text(
                     tr('Slayta Ekle', 'Add to Slide'),
-                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+                    style: const TextStyle(
+                        fontSize: 12, fontWeight: FontWeight.w700),
                   ),
                 ),
               ),
@@ -6658,17 +6688,19 @@ class _PexelsPhotoCard extends StatelessWidget {
                   onTap: () => UrlLauncherService.openUrl(photo.url),
                   borderRadius: BorderRadius.circular(4),
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: <Widget>[
                         Text(
                           'Pexels',
-                          style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                                color: context._htmlAccent,
-                                fontWeight: FontWeight.w800,
-                                decoration: TextDecoration.underline,
-                              ),
+                          style:
+                              Theme.of(context).textTheme.labelSmall?.copyWith(
+                                    color: context._htmlAccent,
+                                    fontWeight: FontWeight.w800,
+                                    decoration: TextDecoration.underline,
+                                  ),
                         ),
                         const SizedBox(width: 3),
                         Icon(
@@ -7819,7 +7851,11 @@ class _HtmlBackgroundControlsState extends State<_HtmlBackgroundControls> {
   @override
   Widget build(BuildContext context) {
     final query = _query.trim().toLowerCase();
-    final definitions = sutolStudioBackgroundLibrary.where((definition) {
+    final availableDefinitions = <PresentationBackgroundDefinition>[
+      presentationBackgroundDefinition(PresentationBackgroundKind.plainWhite)!,
+      ...sutolStudioBackgroundLibrary,
+    ];
+    final definitions = availableDefinitions.where((definition) {
       if (query.isEmpty) return true;
       return definition.label.toLowerCase().contains(query) ||
           definition.category.toLowerCase().contains(query) ||
@@ -7848,7 +7884,8 @@ class _HtmlBackgroundControlsState extends State<_HtmlBackgroundControls> {
                 Expanded(
                   child: _ToolbarBadge(
                     icon: Icons.wallpaper_rounded,
-                    label: tr('Sutols Sahne Koleksiyonu', 'Sutols Scene Collection'),
+                    label: tr(
+                        'Sutols Sahne Koleksiyonu', 'Sutols Scene Collection'),
                   ),
                 ),
                 const SizedBox(width: 10),
@@ -7868,17 +7905,6 @@ class _HtmlBackgroundControlsState extends State<_HtmlBackgroundControls> {
                   ),
                 ),
               ],
-            ),
-            const SizedBox(height: 10),
-            Text(
-              tr(
-                'Sunum metnini öne çıkaran, hareketli ve çevrimdışı HTML sahneleri.',
-                'Animated and offline HTML scenes that make your text stand out.',
-              ),
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: context._htmlMuted,
-                    fontWeight: FontWeight.w600,
-                  ),
             ),
             const SizedBox(height: 14),
             _ModelSearchField(
@@ -9340,6 +9366,8 @@ class _HtmlStageCardState extends State<_HtmlStageCard>
                             !reduceMotion,
                         animationSpeed: widget
                             .controller.selectedPage.backgroundAnimationSpeed,
+                        colorsInverted: widget
+                            .controller.selectedPage.backgroundColorsInverted,
                       ),
                     ),
                     IgnorePointer(
@@ -9656,10 +9684,12 @@ class _SelectionContextBarSection extends StatelessWidget {
           final componentBlock = controller.selectedComponentBlock;
           List<Widget>? children;
           String? contentKey;
-          if (activeTab == _HtmlToolTab.backgrounds) {
+          if (activeTab == _HtmlToolTab.backgrounds &&
+              controller.selectedPage.backgroundKind !=
+                  PresentationBackgroundKind.plainWhite) {
             final page = controller.selectedPage;
             contentKey =
-                'background:${page.backgroundKind.name}:${page.backgroundAnimationEnabled}';
+                'background:${page.backgroundKind.name}:${page.backgroundAnimationEnabled}:${page.backgroundColorsInverted}';
             children = _backgroundChildren(page);
           } else if (textBlock != null) {
             contentKey = 'text:${textBlock.id}:$compact';
@@ -9698,7 +9728,20 @@ class _SelectionContextBarSection extends StatelessWidget {
 
   List<Widget> _backgroundChildren(PresentationPage page) {
     final animationEnabled = page.backgroundAnimationEnabled;
+    final alternateIsDark = !presentationBackgroundIsDark(page.backgroundKind);
     return <Widget>[
+      MiniToolLabeledToggle(
+        key: const ValueKey<String>('background-color-variant-toggle'),
+        icon: alternateIsDark
+            ? Icons.dark_mode_rounded
+            : Icons.light_mode_rounded,
+        label: alternateIsDark ? 'Koyu Varyant' : 'Açık Varyant',
+        active: page.backgroundColorsInverted,
+        onTap: () => controller.updateSelectedBackgroundColorsInverted(
+          !page.backgroundColorsInverted,
+        ),
+      ),
+      const MiniToolDivider(),
       MiniToolLabeledToggle(
         key: const ValueKey<String>('background-animation-toggle'),
         icon: animationEnabled
@@ -10090,7 +10133,8 @@ class _TextColorPopupButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final currentColor = _parseTextColorHex(currentHex);
     return Tooltip(
-      message: tr('Metin Rengi (Color Picker & HEX)', 'Text Color (Color Picker & HEX)'),
+      message: tr('Metin Rengi (Color Picker & HEX)',
+          'Text Color (Color Picker & HEX)'),
       child: InkWell(
         onTap: () {
           _showTextColorPickerDialog(context, controller, currentHex);
@@ -10209,12 +10253,12 @@ class _TextGlowPopupButton extends StatelessWidget {
   });
 
   static Map<double, String> get _options => <double, String>{
-    0: tr('Kapalı', 'Off'),
-    0.5: tr('Hafif', 'Low'),
-    1: tr('Normal', 'Normal'),
-    1.5: tr('Güçlü', 'High'),
-    2: tr('Çok güçlü', 'Very high'),
-  };
+        0: tr('Kapalı', 'Off'),
+        0.5: tr('Hafif', 'Low'),
+        1: tr('Normal', 'Normal'),
+        1.5: tr('Güçlü', 'High'),
+        2: tr('Çok güçlü', 'Very high'),
+      };
 
   final PresentationController controller;
   final double current;
@@ -10361,7 +10405,8 @@ Future<void> _showStageItemContextMenu(
         ..hideCurrentSnackBar()
         ..showSnackBar(
           SnackBar(
-            content: Text(tr('Seçili öğeler kopyalandı.', 'Selected items copied.')),
+            content:
+                Text(tr('Seçili öğeler kopyalandı.', 'Selected items copied.')),
             duration: const Duration(milliseconds: 1400),
           ),
         );
@@ -10767,7 +10812,8 @@ Future<void> _showStageDimensionsDialog(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
                       Text(
-                        tr('Sahne Ölçüleri & Format', 'Slide Dimensions & Format'),
+                        tr('Sahne Ölçüleri & Format',
+                            'Slide Dimensions & Format'),
                         style: Theme.of(ctx).textTheme.titleMedium?.copyWith(
                               fontWeight: FontWeight.w900,
                               color: ctx._htmlInk,
@@ -10902,8 +10948,8 @@ Future<void> _showStageDimensionsDialog(
                           child: TextField(
                             controller: widthController,
                             keyboardType: TextInputType.number,
-                            decoration: _inputDecoration(ctx, '1920')
-                                .copyWith(labelText: tr('Genişlik (px)', 'Width (px)')),
+                            decoration: _inputDecoration(ctx, '1920').copyWith(
+                                labelText: tr('Genişlik (px)', 'Width (px)')),
                             onChanged: (_) => setState(() {}),
                           ),
                         ),
@@ -10921,8 +10967,8 @@ Future<void> _showStageDimensionsDialog(
                           child: TextField(
                             controller: heightController,
                             keyboardType: TextInputType.number,
-                            decoration: _inputDecoration(ctx, '1080')
-                                .copyWith(labelText: tr('Yükseklik (px)', 'Height (px)')),
+                            decoration: _inputDecoration(ctx, '1080').copyWith(
+                                labelText: tr('Yükseklik (px)', 'Height (px)')),
                             onChanged: (_) => setState(() {}),
                           ),
                         ),
@@ -10977,8 +11023,10 @@ Future<void> _showStageDimensionsDialog(
                       children: <Widget>[
                         Text(
                           isPortrait
-                              ? tr('📱 Mobil Dikey Sahne Modu', '📱 Mobile Portrait Slide Mode')
-                              : tr('🖥️ Yatay / Masaüstü Sahne Modu', '🖥️ Landscape / Desktop Slide Mode'),
+                              ? tr('📱 Mobil Dikey Sahne Modu',
+                                  '📱 Mobile Portrait Slide Mode')
+                              : tr('🖥️ Yatay / Masaüstü Sahne Modu',
+                                  '🖥️ Landscape / Desktop Slide Mode'),
                           style: TextStyle(
                             fontWeight: FontWeight.w800,
                             fontSize: 13,
@@ -11255,139 +11303,144 @@ class _HtmlEntranceAnimationControls extends StatelessWidget {
 
   static List<(PresentationEntranceAnimation, String, IconData)> get options =>
       <(PresentationEntranceAnimation, String, IconData)>[
-    (
-      PresentationEntranceAnimation.none,
-      _entranceAnimationLabel(PresentationEntranceAnimation.none),
-      Icons.block_rounded,
-    ),
-    (
-      PresentationEntranceAnimation.fadeIn,
-      _entranceAnimationLabel(PresentationEntranceAnimation.fadeIn),
-      Icons.blur_on_rounded,
-    ),
-    (
-      PresentationEntranceAnimation.flyInLeft,
-      _entranceAnimationLabel(PresentationEntranceAnimation.flyInLeft),
-      Icons.arrow_forward_rounded,
-    ),
-    (
-      PresentationEntranceAnimation.flyInRight,
-      _entranceAnimationLabel(PresentationEntranceAnimation.flyInRight),
-      Icons.arrow_back_rounded,
-    ),
-    (
-      PresentationEntranceAnimation.flyInTop,
-      _entranceAnimationLabel(PresentationEntranceAnimation.flyInTop),
-      Icons.arrow_downward_rounded,
-    ),
-    (
-      PresentationEntranceAnimation.flyInBottom,
-      _entranceAnimationLabel(PresentationEntranceAnimation.flyInBottom),
-      Icons.arrow_upward_rounded,
-    ),
-    (
-      PresentationEntranceAnimation.zoomIn,
-      _entranceAnimationLabel(PresentationEntranceAnimation.zoomIn),
-      Icons.zoom_in_rounded,
-    ),
-  ];
+        (
+          PresentationEntranceAnimation.none,
+          _entranceAnimationLabel(PresentationEntranceAnimation.none),
+          Icons.block_rounded,
+        ),
+        (
+          PresentationEntranceAnimation.fadeIn,
+          _entranceAnimationLabel(PresentationEntranceAnimation.fadeIn),
+          Icons.blur_on_rounded,
+        ),
+        (
+          PresentationEntranceAnimation.flyInLeft,
+          _entranceAnimationLabel(PresentationEntranceAnimation.flyInLeft),
+          Icons.arrow_forward_rounded,
+        ),
+        (
+          PresentationEntranceAnimation.flyInRight,
+          _entranceAnimationLabel(PresentationEntranceAnimation.flyInRight),
+          Icons.arrow_back_rounded,
+        ),
+        (
+          PresentationEntranceAnimation.flyInTop,
+          _entranceAnimationLabel(PresentationEntranceAnimation.flyInTop),
+          Icons.arrow_downward_rounded,
+        ),
+        (
+          PresentationEntranceAnimation.flyInBottom,
+          _entranceAnimationLabel(PresentationEntranceAnimation.flyInBottom),
+          Icons.arrow_upward_rounded,
+        ),
+        (
+          PresentationEntranceAnimation.zoomIn,
+          _entranceAnimationLabel(PresentationEntranceAnimation.zoomIn),
+          Icons.zoom_in_rounded,
+        ),
+      ];
 
-  static List<(PresentationEntranceAnimation, String, IconData)> get emphasisOptions =>
-      <(PresentationEntranceAnimation, String, IconData)>[
-    (
-      PresentationEntranceAnimation.pulse,
-      _entranceAnimationLabel(PresentationEntranceAnimation.pulse),
-      Icons.favorite_rounded,
-    ),
-    (
-      PresentationEntranceAnimation.shake,
-      _entranceAnimationLabel(PresentationEntranceAnimation.shake),
-      Icons.vibration_rounded,
-    ),
-    (
-      PresentationEntranceAnimation.growShrink,
-      _entranceAnimationLabel(PresentationEntranceAnimation.growShrink),
-      Icons.expand_rounded,
-    ),
-    (
-      PresentationEntranceAnimation.spin,
-      _entranceAnimationLabel(PresentationEntranceAnimation.spin),
-      Icons.rotate_right_rounded,
-    ),
-    (
-      PresentationEntranceAnimation.glow,
-      _entranceAnimationLabel(PresentationEntranceAnimation.glow),
-      Icons.wb_sunny_rounded,
-    ),
-  ];
+  static List<(PresentationEntranceAnimation, String, IconData)>
+      get emphasisOptions =>
+          <(PresentationEntranceAnimation, String, IconData)>[
+            (
+              PresentationEntranceAnimation.pulse,
+              _entranceAnimationLabel(PresentationEntranceAnimation.pulse),
+              Icons.favorite_rounded,
+            ),
+            (
+              PresentationEntranceAnimation.shake,
+              _entranceAnimationLabel(PresentationEntranceAnimation.shake),
+              Icons.vibration_rounded,
+            ),
+            (
+              PresentationEntranceAnimation.growShrink,
+              _entranceAnimationLabel(PresentationEntranceAnimation.growShrink),
+              Icons.expand_rounded,
+            ),
+            (
+              PresentationEntranceAnimation.spin,
+              _entranceAnimationLabel(PresentationEntranceAnimation.spin),
+              Icons.rotate_right_rounded,
+            ),
+            (
+              PresentationEntranceAnimation.glow,
+              _entranceAnimationLabel(PresentationEntranceAnimation.glow),
+              Icons.wb_sunny_rounded,
+            ),
+          ];
 
-  static List<(PresentationEntranceAnimation, String, IconData)> get exitOptions =>
-      <(PresentationEntranceAnimation, String, IconData)>[
-    (
-      PresentationEntranceAnimation.fadeOut,
-      _entranceAnimationLabel(PresentationEntranceAnimation.fadeOut),
-      Icons.blur_off_rounded,
-    ),
-    (
-      PresentationEntranceAnimation.flyOutLeft,
-      _entranceAnimationLabel(PresentationEntranceAnimation.flyOutLeft),
-      Icons.west_rounded,
-    ),
-    (
-      PresentationEntranceAnimation.flyOutRight,
-      _entranceAnimationLabel(PresentationEntranceAnimation.flyOutRight),
-      Icons.east_rounded,
-    ),
-    (
-      PresentationEntranceAnimation.flyOutTop,
-      _entranceAnimationLabel(PresentationEntranceAnimation.flyOutTop),
-      Icons.north_rounded,
-    ),
-    (
-      PresentationEntranceAnimation.flyOutBottom,
-      _entranceAnimationLabel(PresentationEntranceAnimation.flyOutBottom),
-      Icons.south_rounded,
-    ),
-    (
-      PresentationEntranceAnimation.shrinkOut,
-      _entranceAnimationLabel(PresentationEntranceAnimation.shrinkOut),
-      Icons.close_fullscreen_rounded,
-    ),
-    (
-      PresentationEntranceAnimation.zoomOut,
-      _entranceAnimationLabel(PresentationEntranceAnimation.zoomOut),
-      Icons.zoom_out_rounded,
-    ),
-    (
-      PresentationEntranceAnimation.spinOut,
-      _entranceAnimationLabel(PresentationEntranceAnimation.spinOut),
-      Icons.rotate_left_rounded,
-    ),
-  ];
+  static List<(PresentationEntranceAnimation, String, IconData)>
+      get exitOptions => <(PresentationEntranceAnimation, String, IconData)>[
+            (
+              PresentationEntranceAnimation.fadeOut,
+              _entranceAnimationLabel(PresentationEntranceAnimation.fadeOut),
+              Icons.blur_off_rounded,
+            ),
+            (
+              PresentationEntranceAnimation.flyOutLeft,
+              _entranceAnimationLabel(PresentationEntranceAnimation.flyOutLeft),
+              Icons.west_rounded,
+            ),
+            (
+              PresentationEntranceAnimation.flyOutRight,
+              _entranceAnimationLabel(
+                  PresentationEntranceAnimation.flyOutRight),
+              Icons.east_rounded,
+            ),
+            (
+              PresentationEntranceAnimation.flyOutTop,
+              _entranceAnimationLabel(PresentationEntranceAnimation.flyOutTop),
+              Icons.north_rounded,
+            ),
+            (
+              PresentationEntranceAnimation.flyOutBottom,
+              _entranceAnimationLabel(
+                  PresentationEntranceAnimation.flyOutBottom),
+              Icons.south_rounded,
+            ),
+            (
+              PresentationEntranceAnimation.shrinkOut,
+              _entranceAnimationLabel(PresentationEntranceAnimation.shrinkOut),
+              Icons.close_fullscreen_rounded,
+            ),
+            (
+              PresentationEntranceAnimation.zoomOut,
+              _entranceAnimationLabel(PresentationEntranceAnimation.zoomOut),
+              Icons.zoom_out_rounded,
+            ),
+            (
+              PresentationEntranceAnimation.spinOut,
+              _entranceAnimationLabel(PresentationEntranceAnimation.spinOut),
+              Icons.rotate_left_rounded,
+            ),
+          ];
 
-  static List<(PresentationEntranceAnimation, String, IconData)> get motionOptions =>
-      <(PresentationEntranceAnimation, String, IconData)>[
-    (
-      PresentationEntranceAnimation.motionLine,
-      _entranceAnimationLabel(PresentationEntranceAnimation.motionLine),
-      Icons.trending_flat_rounded,
-    ),
-    (
-      PresentationEntranceAnimation.motionCircle,
-      _entranceAnimationLabel(PresentationEntranceAnimation.motionCircle),
-      Icons.circle_outlined,
-    ),
-    (
-      PresentationEntranceAnimation.motionWave,
-      _entranceAnimationLabel(PresentationEntranceAnimation.motionWave),
-      Icons.waves_rounded,
-    ),
-    (
-      PresentationEntranceAnimation.motionCustom,
-      _entranceAnimationLabel(PresentationEntranceAnimation.motionCustom),
-      Icons.gesture_rounded,
-    ),
-  ];
+  static List<(PresentationEntranceAnimation, String, IconData)>
+      get motionOptions => <(PresentationEntranceAnimation, String, IconData)>[
+            (
+              PresentationEntranceAnimation.motionLine,
+              _entranceAnimationLabel(PresentationEntranceAnimation.motionLine),
+              Icons.trending_flat_rounded,
+            ),
+            (
+              PresentationEntranceAnimation.motionCircle,
+              _entranceAnimationLabel(
+                  PresentationEntranceAnimation.motionCircle),
+              Icons.circle_outlined,
+            ),
+            (
+              PresentationEntranceAnimation.motionWave,
+              _entranceAnimationLabel(PresentationEntranceAnimation.motionWave),
+              Icons.waves_rounded,
+            ),
+            (
+              PresentationEntranceAnimation.motionCustom,
+              _entranceAnimationLabel(
+                  PresentationEntranceAnimation.motionCustom),
+              Icons.gesture_rounded,
+            ),
+          ];
 
   @override
   Widget build(BuildContext context) {
@@ -11540,7 +11593,8 @@ class _HtmlEntranceAnimationControls extends StatelessWidget {
           DropdownButtonFormField<PresentationAnimationTrigger>(
             initialValue: controller.selectedAnimationTrigger ??
                 PresentationAnimationTrigger.withPrevious,
-            decoration: _inputDecoration(context, tr('Başlatma', 'Start trigger')),
+            decoration:
+                _inputDecoration(context, tr('Başlatma', 'Start trigger')),
             items: <DropdownMenuItem<PresentationAnimationTrigger>>[
               DropdownMenuItem(
                 value: PresentationAnimationTrigger.onClick,
@@ -11669,7 +11723,9 @@ List<_AnimationPaneItem> _animationPaneItems(PresentationPage page) {
       if (block.entranceAnimation != PresentationEntranceAnimation.none)
         _AnimationPaneItem(
           id: block.id,
-          name: block.text.trim().isEmpty ? tr('Metin kutusu', 'Text box') : block.text.trim(),
+          name: block.text.trim().isEmpty
+              ? tr('Metin kutusu', 'Text box')
+              : block.text.trim(),
           animation: block.entranceAnimation,
           trigger: block.animationTrigger,
           duration: block.animationDuration,
@@ -11732,7 +11788,8 @@ class _AnimationPane extends StatelessWidget {
         const SizedBox(height: 8),
         if (items.isEmpty)
           Text(
-            tr('Bu sahnede henüz öğe animasyonu yok.', 'No element animations on this slide yet.'),
+            tr('Bu sahnede henüz öğe animasyonu yok.',
+                'No element animations on this slide yet.'),
             style: TextStyle(color: context.colors.onSurfaceVariant),
           )
         else
@@ -11845,19 +11902,23 @@ String _entranceAnimationLabel(PresentationEntranceAnimation animation) {
     PresentationEntranceAnimation.flyInLeft => tr('Soldan uç', 'Fly in left'),
     PresentationEntranceAnimation.flyInRight => tr('Sağdan uç', 'Fly in right'),
     PresentationEntranceAnimation.flyInTop => tr('Yukarıdan uç', 'Fly in top'),
-    PresentationEntranceAnimation.flyInBottom => tr('Aşağıdan uç', 'Fly in bottom'),
+    PresentationEntranceAnimation.flyInBottom =>
+      tr('Aşağıdan uç', 'Fly in bottom'),
     PresentationEntranceAnimation.zoomIn => tr('Yakınlaşma', 'Zoom in'),
     PresentationEntranceAnimation.pulse => tr('Nabız', 'Pulse'),
     PresentationEntranceAnimation.shake => tr('Sallanma', 'Shake'),
-    PresentationEntranceAnimation.growShrink => tr('Büyüt-Küçült', 'Grow-Shrink'),
+    PresentationEntranceAnimation.growShrink =>
+      tr('Büyüt-Küçült', 'Grow-Shrink'),
     PresentationEntranceAnimation.spin => tr('Döndür', 'Spin'),
     PresentationEntranceAnimation.glow => tr('Parla', 'Glow'),
     PresentationEntranceAnimation.fadeOut => tr('Kaybol', 'Fade out'),
     PresentationEntranceAnimation.flyOutLeft => tr('Sola uç', 'Fly out left'),
     PresentationEntranceAnimation.flyOutRight => tr('Sağa uç', 'Fly out right'),
     PresentationEntranceAnimation.flyOutTop => tr('Yukarı uç', 'Fly out top'),
-    PresentationEntranceAnimation.flyOutBottom => tr('Aşağı uç', 'Fly out bottom'),
-    PresentationEntranceAnimation.shrinkOut => tr('Küçülerek çık', 'Shrink out'),
+    PresentationEntranceAnimation.flyOutBottom =>
+      tr('Aşağı uç', 'Fly out bottom'),
+    PresentationEntranceAnimation.shrinkOut =>
+      tr('Küçülerek çık', 'Shrink out'),
     PresentationEntranceAnimation.zoomOut => tr('Uzaklaşarak çık', 'Zoom out'),
     PresentationEntranceAnimation.spinOut => tr('Dönerek çık', 'Spin out'),
     PresentationEntranceAnimation.motionLine => tr('Düz çizgi', 'Line'),
@@ -11911,8 +11972,10 @@ IconData _animationCategoryIcon(PresentationEntranceAnimation animation) {
 String _animationTriggerShortLabel(PresentationAnimationTrigger trigger) {
   return switch (trigger) {
     PresentationAnimationTrigger.onClick => tr('Tıklamayla', 'On click'),
-    PresentationAnimationTrigger.withPrevious => tr('Öncekiyle', 'With previous'),
-    PresentationAnimationTrigger.afterPrevious => tr('Öncekinden sonra', 'After previous'),
+    PresentationAnimationTrigger.withPrevious =>
+      tr('Öncekiyle', 'With previous'),
+    PresentationAnimationTrigger.afterPrevious =>
+      tr('Öncekinden sonra', 'After previous'),
   };
 }
 
@@ -12230,21 +12293,24 @@ class _HtmlStageDimensionsControls extends StatelessWidget {
       (
         '16:9',
         tr('Standart Sunum', 'Standard Presentation'),
-        tr('1920×1080 px • Masaüstü & TV ekranları', '1920×1080 px • Desktop & TV screens'),
+        tr('1920×1080 px • Masaüstü & TV ekranları',
+            '1920×1080 px • Desktop & TV screens'),
         Icons.desktop_windows_rounded,
         '16:9',
       ),
       (
         '4:3',
         tr('Klasik Sunum', 'Classic Presentation'),
-        tr('1024×768 px • Klasik projeksiyon', '1024×768 px • Classic projector'),
+        tr('1024×768 px • Klasik projeksiyon',
+            '1024×768 px • Classic projector'),
         Icons.aspect_ratio_rounded,
         '4:3',
       ),
       (
         '1:1',
         tr('Kare Format', 'Square Format'),
-        tr('1080×1080 px • Sosyal medya & kart', '1080×1080 px • Social media & cards'),
+        tr('1080×1080 px • Sosyal medya & kart',
+            '1080×1080 px • Social media & cards'),
         Icons.crop_square_rounded,
         '1:1',
       ),

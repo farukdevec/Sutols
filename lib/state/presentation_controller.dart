@@ -677,7 +677,12 @@ class PresentationController extends ChangeNotifier {
     if (selectedPage.backgroundKind == value) {
       return;
     }
-    _replaceSelectedPage(selectedPage.copyWith(backgroundKind: value));
+    _replaceSelectedPage(
+      selectedPage.copyWith(
+        backgroundKind: value,
+        backgroundColorsInverted: false,
+      ),
+    );
     notifyListeners();
   }
 
@@ -702,13 +707,28 @@ class PresentationController extends ChangeNotifier {
     notifyListeners();
   }
 
+  void updateSelectedBackgroundColorsInverted(bool value) {
+    if (selectedPage.backgroundColorsInverted == value) {
+      return;
+    }
+    _replaceSelectedPage(
+      selectedPage.copyWith(backgroundColorsInverted: value),
+    );
+    notifyListeners();
+  }
+
   void updateAllPageBackgrounds(PresentationBackgroundKind value) {
     if (_pages.every((page) => page.backgroundKind == value)) {
       return;
     }
     _recordUndo();
     final updatedPages = _pages
-        .map((page) => page.copyWith(backgroundKind: value))
+        .map(
+          (page) => page.copyWith(
+            backgroundKind: value,
+            backgroundColorsInverted: false,
+          ),
+        )
         .toList(growable: false);
     _pages
       ..clear()
@@ -723,6 +743,9 @@ class PresentationController extends ChangeNotifier {
     final updatedPages = _pages.map((page) {
       var updatedPage = page.copyWith(
         backgroundKind: config.backgroundKind ?? page.backgroundKind,
+        backgroundColorsInverted: config.backgroundKind == null
+            ? page.backgroundColorsInverted
+            : false,
       );
 
       // Apply text styles and animations to all text blocks
@@ -1167,7 +1190,7 @@ class PresentationController extends ChangeNotifier {
 
   void addPage() {
     _recordUndo();
-    final inheritedBackground = selectedPage.backgroundKind;
+    final sourcePage = selectedPage;
     final textBlock = _createTextBlock(
       text: '',
       position: const Offset(0.12, 0.16),
@@ -1179,7 +1202,10 @@ class PresentationController extends ChangeNotifier {
       PresentationPage(
         id: 'page-$_pageCounter',
         textBlocks: <PresentationTextBlock>[textBlock],
-        backgroundKind: inheritedBackground,
+        backgroundKind: sourcePage.backgroundKind,
+        backgroundAnimationEnabled: sourcePage.backgroundAnimationEnabled,
+        backgroundAnimationSpeed: sourcePage.backgroundAnimationSpeed,
+        backgroundColorsInverted: sourcePage.backgroundColorsInverted,
       ),
     );
     _pageCounter += 1;
@@ -1209,7 +1235,7 @@ class PresentationController extends ChangeNotifier {
       return;
     }
     _recordUndo();
-    final inheritedBackground = _pages[index].backgroundKind;
+    final sourcePage = _pages[index];
     final textBlock = _createTextBlock(
       text: '',
       position: const Offset(0.12, 0.16),
@@ -1220,7 +1246,10 @@ class PresentationController extends ChangeNotifier {
     final newPage = PresentationPage(
       id: 'page-$_pageCounter',
       textBlocks: <PresentationTextBlock>[textBlock],
-      backgroundKind: inheritedBackground,
+      backgroundKind: sourcePage.backgroundKind,
+      backgroundAnimationEnabled: sourcePage.backgroundAnimationEnabled,
+      backgroundAnimationSpeed: sourcePage.backgroundAnimationSpeed,
+      backgroundColorsInverted: sourcePage.backgroundColorsInverted,
     );
     _pageCounter += 1;
     final insertIndex = index + 1;
@@ -1247,6 +1276,9 @@ class PresentationController extends ChangeNotifier {
       textBlocks: duplicatedTextBlocks,
       componentBlocks: duplicatedComponentBlocks,
       backgroundKind: source.backgroundKind,
+      backgroundAnimationEnabled: source.backgroundAnimationEnabled,
+      backgroundAnimationSpeed: source.backgroundAnimationSpeed,
+      backgroundColorsInverted: source.backgroundColorsInverted,
       speakerNotes: source.speakerNotes,
     );
     _pageCounter += 1;

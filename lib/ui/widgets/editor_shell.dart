@@ -2322,7 +2322,7 @@ class _PresentationPageCanvasState extends State<PresentationPageCanvas> {
                 interactive: widget.interactive,
                 showSelectionBorder: widget.showSelectionBorder,
                 darkSurface: _isDarkCanvasBackground(
-                  widget.page.backgroundKind,
+                  widget.page,
                 ),
                 textOpacity: widget.textOpacity,
                 editingController:
@@ -2400,8 +2400,10 @@ class _PresentationPageCanvasState extends State<PresentationPageCanvas> {
     return DecoratedBox(
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors:
-              presentationBackgroundPreviewColors(widget.page.backgroundKind),
+          colors: presentationBackgroundVariantPreviewColors(
+            widget.page.backgroundKind,
+            colorsInverted: widget.page.backgroundColorsInverted,
+          ),
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -2412,13 +2414,14 @@ class _PresentationPageCanvasState extends State<PresentationPageCanvas> {
           Positioned.fill(
             child: _CanvasBackgroundPreview(
               kind: widget.page.backgroundKind,
+              colorsInverted: widget.page.backgroundColorsInverted,
             ),
           ),
           Positioned.fill(
             child: DecoratedBox(
               decoration: BoxDecoration(
                 border: Border.all(
-                  color: _isDarkCanvasBackground(widget.page.backgroundKind)
+                  color: _isDarkCanvasBackground(widget.page)
                       ? Colors.white.withValues(alpha: 0.10)
                       : const Color(0xFFE3E9F2),
                 ),
@@ -2428,7 +2431,7 @@ class _PresentationPageCanvasState extends State<PresentationPageCanvas> {
           Positioned.fill(
             child: CustomPaint(
               painter: _PageGridPainter(
-                darkMode: _isDarkCanvasBackground(widget.page.backgroundKind),
+                darkMode: _isDarkCanvasBackground(widget.page),
               ),
             ),
           ),
@@ -3202,14 +3205,19 @@ class ComponentBlockPreviewPainter extends CustomPainter {
 class _CanvasBackgroundPreview extends StatelessWidget {
   const _CanvasBackgroundPreview({
     required this.kind,
+    required this.colorsInverted,
   });
 
   final PresentationBackgroundKind kind;
+  final bool colorsInverted;
 
   @override
   Widget build(BuildContext context) {
     return CustomPaint(
-      painter: _CanvasBackgroundPreviewPainter(kind: kind),
+      painter: _CanvasBackgroundPreviewPainter(
+        kind: kind,
+        colorsInverted: colorsInverted,
+      ),
     );
   }
 }
@@ -3217,13 +3225,18 @@ class _CanvasBackgroundPreview extends StatelessWidget {
 class _CanvasBackgroundPreviewPainter extends CustomPainter {
   const _CanvasBackgroundPreviewPainter({
     required this.kind,
+    required this.colorsInverted,
   });
 
   final PresentationBackgroundKind kind;
+  final bool colorsInverted;
 
   @override
   void paint(Canvas canvas, Size size) {
-    final accent = presentationBackgroundPreviewColors(kind).last;
+    final accent = presentationBackgroundVariantPreviewColors(
+      kind,
+      colorsInverted: colorsInverted,
+    ).last;
     final glowPaint = Paint()
       ..color = accent.withValues(alpha: 0.16)
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 18);
@@ -3272,7 +3285,8 @@ class _CanvasBackgroundPreviewPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _CanvasBackgroundPreviewPainter oldDelegate) {
-    return oldDelegate.kind != kind;
+    return oldDelegate.kind != kind ||
+        oldDelegate.colorsInverted != colorsInverted;
   }
 }
 
@@ -3322,8 +3336,11 @@ class _PageGridPainter extends CustomPainter {
   }
 }
 
-bool _isDarkCanvasBackground(PresentationBackgroundKind kind) {
-  return presentationBackgroundIsDark(kind);
+bool _isDarkCanvasBackground(PresentationPage page) {
+  return presentationBackgroundVariantIsDark(
+    page.backgroundKind,
+    colorsInverted: page.backgroundColorsInverted,
+  );
 }
 
 String _textStyleLabel(PresentationTextStyle style) {
