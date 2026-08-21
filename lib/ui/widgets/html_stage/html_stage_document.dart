@@ -112,6 +112,39 @@ const String _transparentComponentOverrides = '''
 String sutolHtmlBackgroundScene(PresentationBackgroundKind kind) =>
     presentationBackgroundSceneHtml(kind);
 
+String buildHtmlBackgroundSceneDocument(
+  PresentationBackgroundKind kind, {
+  bool animationEnabled = true,
+  double animationSpeed = 1,
+}) {
+  if (!animationEnabled) return buildHtmlBackgroundPreviewDocument(kind);
+  final speed = animationSpeed.clamp(0.25, 2.0).toDouble();
+  var document = sutolHtmlBackgroundScene(kind);
+  if ((speed - 1).abs() < 0.001) return document;
+  final speedText = speed.toStringAsFixed(2);
+  final speedScript = '''
+<script data-sutol-background-animation-speed="$speedText">
+(function () {
+  const rate = $speedText;
+  function applyPlaybackRate() {
+    document.getAnimations().forEach(function (animation) {
+      animation.playbackRate = rate;
+    });
+  }
+  window.addEventListener('load', function () {
+    applyPlaybackRate();
+    requestAnimationFrame(applyPlaybackRate);
+    window.setTimeout(applyPlaybackRate, 120);
+  });
+})();
+</script>
+''';
+  document = document.contains('</body>')
+      ? document.replaceFirst('</body>', '$speedScript</body>')
+      : '$document$speedScript';
+  return document;
+}
+
 String buildHtmlBackgroundPreviewDocument(PresentationBackgroundKind kind) {
   var document = sutolHtmlBackgroundScene(kind);
   const previewStyles = '''
@@ -286,6 +319,7 @@ String buildHtmlStageDocument({
   String? selectedComponentBlockId,
   int? visibleRevealStep,
   bool showBadge = true,
+  bool showBackground = true,
   HtmlStageRenderMode renderMode = HtmlStageRenderMode.full,
   Map<String, String> modelSourcesById = const <String, String>{},
   Map<String, String> imageSourcesById = const <String, String>{},
@@ -316,6 +350,7 @@ String buildHtmlStageDocument({
         selectedComponentBlockId: selectedComponentBlockId,
         visibleRevealStep: visibleRevealStep,
         showBadge: showBadge,
+        showBackground: showBackground,
         renderMode: renderMode,
         modelSourcesById: modelSourcesById,
         imageSourcesById: imageSourcesById,
@@ -339,6 +374,7 @@ String buildHtmlStageMarkup({
   String? selectedComponentBlockId,
   int? visibleRevealStep,
   bool showBadge = true,
+  bool showBackground = true,
   String? extraStageClass,
   HtmlStageRenderMode renderMode = HtmlStageRenderMode.full,
   Map<String, String> modelSourcesById = const <String, String>{},
@@ -359,6 +395,7 @@ String buildHtmlStageMarkup({
     if (templateClass.isNotEmpty) templateClass,
     _backgroundStageClass(page.backgroundKind),
     'sutol-stage-mode-$renderModeName',
+    if (!showBackground) 'sutol-stage-without-background',
     if (_isDarkBackground(page.backgroundKind)) 'theme-dark',
     if (extraStageClass != null && extraStageClass.trim().isNotEmpty)
       extraStageClass.trim(),
@@ -369,11 +406,15 @@ String buildHtmlStageMarkup({
       '<div class="$stageClasses"$templateAttr data-sutol-render-mode="$renderModeName">',
     )
     ..writeln(
-      _backgroundInnerMarkup(
-        page.backgroundKind,
-        renderMode,
-        deferEmbeddedAssets: deferEmbeddedAssets,
-      ),
+      showBackground
+          ? _backgroundInnerMarkup(
+              page.backgroundKind,
+              renderMode,
+              animationEnabled: page.backgroundAnimationEnabled,
+              animationSpeed: page.backgroundAnimationSpeed,
+              deferEmbeddedAssets: deferEmbeddedAssets,
+            )
+          : '',
     );
 
   if (page.textBlocks.isEmpty && page.componentBlocks.isEmpty) {
@@ -1013,6 +1054,8 @@ String _backgroundStageClass(PresentationBackgroundKind kind) {
 String _backgroundInnerMarkup(
   PresentationBackgroundKind kind,
   HtmlStageRenderMode renderMode, {
+  required bool animationEnabled,
+  required double animationSpeed,
   bool deferEmbeddedAssets = false,
 }) {
   if (deferEmbeddedAssets) {
@@ -1022,14 +1065,19 @@ String _backgroundInnerMarkup(
 </div>
 ''';
   }
-  final scene = renderMode == HtmlStageRenderMode.snapshot
+  final scene = renderMode == HtmlStageRenderMode.snapshot || !animationEnabled
       ? _escapedSnapshotBackgroundScenes.putIfAbsent(
           kind,
           () => _escapeAttribute(buildHtmlBackgroundPreviewDocument(kind)),
         )
       : _escapedBackgroundScenes.putIfAbsent(
-          kind,
-          () => _escapeAttribute(presentationBackgroundSceneHtml(kind)),
+          '${kind.name}:${animationSpeed.toStringAsFixed(3)}',
+          () => _escapeAttribute(
+            buildHtmlBackgroundSceneDocument(
+              kind,
+              animationSpeed: animationSpeed,
+            ),
+          ),
         );
   return '''
 <div class="sutol-stage-bg sutol-bg-imported" aria-hidden="true">
@@ -1038,8 +1086,7 @@ String _backgroundInnerMarkup(
 ''';
 }
 
-final Map<PresentationBackgroundKind, String> _escapedBackgroundScenes =
-    <PresentationBackgroundKind, String>{};
+final Map<String, String> _escapedBackgroundScenes = <String, String>{};
 final Map<PresentationBackgroundKind, String> _escapedSnapshotBackgroundScenes =
     <PresentationBackgroundKind, String>{};
 
@@ -1073,6 +1120,16 @@ body {
 
 .sutol-html-stage.theme-dark {
   border-color: rgba(255, 255, 255, 0.10);
+}
+
+.sutol-html-stage.sutol-stage-without-background {
+  border: 0;
+  background: transparent;
+}
+
+.sutol-html-stage.sutol-stage-without-background::before,
+.sutol-html-stage.sutol-stage-without-background::after {
+  content: none;
 }
 
 .sutol-stage-mode-preview,

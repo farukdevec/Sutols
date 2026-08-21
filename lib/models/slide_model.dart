@@ -309,6 +309,26 @@ enum PresentationBackgroundKind {
   modernMinimalist,
   geometricAbstract,
   corporateBlue,
+  studioTechnologyAi,
+  studioCorporateFinance,
+  studioHealthMedicine,
+  studioNatureBiology,
+  studioHistory,
+  studioGeography,
+  studioSports,
+  studioEducationAcademia,
+  studioLaw,
+  studioMarketingAdvertising,
+  studioEngineeringArchitecture,
+  studioSpaceAstronomy,
+  studioMusicArt,
+  studioFoodGastronomy,
+  studioTravelTourism,
+  studioEnvironmentSustainability,
+  studioReligionSpirituality,
+  studioPsychologyGrowth,
+  studioConstructionRealEstate,
+  studioGamingEntertainment,
 }
 
 enum PresentationTransitionKind {
@@ -677,6 +697,8 @@ class PresentationPage {
     required this.textBlocks,
     this.componentBlocks = const <PresentationComponentBlock>[],
     this.backgroundKind = PresentationBackgroundKind.science,
+    this.backgroundAnimationEnabled = true,
+    this.backgroundAnimationSpeed = 1,
     this.speakerNotes = '',
     this.templateId,
     this.transitionAfter,
@@ -686,6 +708,8 @@ class PresentationPage {
   final List<PresentationTextBlock> textBlocks;
   final List<PresentationComponentBlock> componentBlocks;
   final PresentationBackgroundKind backgroundKind;
+  final bool backgroundAnimationEnabled;
+  final double backgroundAnimationSpeed;
   final String speakerNotes;
   final String? templateId;
 
@@ -698,6 +722,8 @@ class PresentationPage {
     List<PresentationTextBlock>? textBlocks,
     List<PresentationComponentBlock>? componentBlocks,
     PresentationBackgroundKind? backgroundKind,
+    bool? backgroundAnimationEnabled,
+    double? backgroundAnimationSpeed,
     String? speakerNotes,
     Object? templateId = _copySentinel,
     Object? transitionAfter = _copySentinel,
@@ -707,6 +733,10 @@ class PresentationPage {
       textBlocks: textBlocks ?? this.textBlocks,
       componentBlocks: componentBlocks ?? this.componentBlocks,
       backgroundKind: backgroundKind ?? this.backgroundKind,
+      backgroundAnimationEnabled:
+          backgroundAnimationEnabled ?? this.backgroundAnimationEnabled,
+      backgroundAnimationSpeed:
+          backgroundAnimationSpeed ?? this.backgroundAnimationSpeed,
       speakerNotes: speakerNotes ?? this.speakerNotes,
       templateId:
           templateId == _copySentinel ? this.templateId : templateId as String?,
@@ -906,6 +936,311 @@ class PresentationBackgroundDefinition {
   final List<Color> previewColors;
   final IconData icon;
 }
+
+const List<PresentationBackgroundDefinition> sutolStudioBackgroundLibrary =
+    <PresentationBackgroundDefinition>[
+  PresentationBackgroundDefinition(
+    kind: PresentationBackgroundKind.studioTechnologyAi,
+    label: 'Teknoloji & Yapay Zeka',
+    category: 'Teknoloji',
+    tags: <String>[
+      'teknoloji',
+      'yapay zeka',
+      'veri akışı',
+      'devre',
+      'yazılım',
+      'ai'
+    ],
+    previewColors: <Color>[
+      Color(0xFF070B18),
+      Color(0xFF102C46),
+      Color(0xFF37E6FF)
+    ],
+    icon: Icons.memory_rounded,
+  ),
+  PresentationBackgroundDefinition(
+    kind: PresentationBackgroundKind.studioCorporateFinance,
+    label: 'Kurumsal Finans & İş Dünyası',
+    category: 'Finans',
+    tags: <String>[
+      'finans',
+      'iş dünyası',
+      'grafik',
+      'trend',
+      'yatırım',
+      'kurumsal'
+    ],
+    previewColors: <Color>[
+      Color(0xFF071B24),
+      Color(0xFF123B46),
+      Color(0xFF5FE0A2)
+    ],
+    icon: Icons.trending_up_rounded,
+  ),
+  PresentationBackgroundDefinition(
+    kind: PresentationBackgroundKind.studioHealthMedicine,
+    label: 'Sağlık & Tıp',
+    category: 'Sağlık',
+    tags: <String>['sağlık', 'tıp', 'nabız', 'hücre', 'doktor', 'hastane'],
+    previewColors: <Color>[
+      Color(0xFF071D27),
+      Color(0xFF17465A),
+      Color(0xFF57E1D0)
+    ],
+    icon: Icons.monitor_heart_rounded,
+  ),
+  PresentationBackgroundDefinition(
+    kind: PresentationBackgroundKind.studioNatureBiology,
+    label: 'Doğa & Biyoloji',
+    category: 'Doğa',
+    tags: <String>['doğa', 'biyoloji', 'yaprak', 'damar', 'organik', 'bitki'],
+    previewColors: <Color>[
+      Color(0xFF081C16),
+      Color(0xFF244A36),
+      Color(0xFF8ED081)
+    ],
+    icon: Icons.eco_rounded,
+  ),
+  PresentationBackgroundDefinition(
+    kind: PresentationBackgroundKind.studioHistory,
+    label: 'Tarih',
+    category: 'Tarih',
+    tags: <String>[
+      'tarih',
+      'parşömen',
+      'mürekkep',
+      'antik',
+      'arşiv',
+      'medeniyet'
+    ],
+    previewColors: <Color>[
+      Color(0xFF24170F),
+      Color(0xFF624128),
+      Color(0xFFD4A66A)
+    ],
+    icon: Icons.history_edu_rounded,
+  ),
+  PresentationBackgroundDefinition(
+    kind: PresentationBackgroundKind.studioGeography,
+    label: 'Coğrafya',
+    category: 'Coğrafya',
+    tags: <String>['coğrafya', 'topografik', 'harita', 'yeryüzü', 'arazi'],
+    previewColors: <Color>[
+      Color(0xFF071C26),
+      Color(0xFF17485A),
+      Color(0xFF64D6C5)
+    ],
+    icon: Icons.public_rounded,
+  ),
+  PresentationBackgroundDefinition(
+    kind: PresentationBackgroundKind.studioSports,
+    label: 'Spor',
+    category: 'Spor',
+    tags: <String>['spor', 'pist', 'hız', 'yarış', 'atlet', 'antrenman'],
+    previewColors: <Color>[
+      Color(0xFF111520),
+      Color(0xFF343A4C),
+      Color(0xFFFF6B4A)
+    ],
+    icon: Icons.sports_rounded,
+  ),
+  PresentationBackgroundDefinition(
+    kind: PresentationBackgroundKind.studioEducationAcademia,
+    label: 'Eğitim & Akademi',
+    category: 'Eğitim',
+    tags: <String>[
+      'eğitim',
+      'akademi',
+      'kitap',
+      'not defteri',
+      'kalem',
+      'okul'
+    ],
+    previewColors: <Color>[
+      Color(0xFF172038),
+      Color(0xFF38476A),
+      Color(0xFFFFD166)
+    ],
+    icon: Icons.school_rounded,
+  ),
+  PresentationBackgroundDefinition(
+    kind: PresentationBackgroundKind.studioLaw,
+    label: 'Hukuk',
+    category: 'Hukuk',
+    tags: <String>['hukuk', 'adalet', 'mühür', 'terazi', 'mahkeme', 'yasa'],
+    previewColors: <Color>[
+      Color(0xFF161424),
+      Color(0xFF3C3653),
+      Color(0xFFD9B96E)
+    ],
+    icon: Icons.balance_rounded,
+  ),
+  PresentationBackgroundDefinition(
+    kind: PresentationBackgroundKind.studioMarketingAdvertising,
+    label: 'Pazarlama & Reklamcılık',
+    category: 'Pazarlama',
+    tags: <String>[
+      'pazarlama',
+      'reklam',
+      'megafon',
+      'hedef',
+      'kampanya',
+      'marka'
+    ],
+    previewColors: <Color>[
+      Color(0xFF261133),
+      Color(0xFF5B245E),
+      Color(0xFFFF668F)
+    ],
+    icon: Icons.campaign_rounded,
+  ),
+  PresentationBackgroundDefinition(
+    kind: PresentationBackgroundKind.studioEngineeringArchitecture,
+    label: 'Mühendislik & Mimarlık',
+    category: 'Mühendislik',
+    tags: <String>[
+      'mühendislik',
+      'mimarlık',
+      'blueprint',
+      'cetvel',
+      'teknik çizim'
+    ],
+    previewColors: <Color>[
+      Color(0xFF071A2C),
+      Color(0xFF123E63),
+      Color(0xFF66C7F2)
+    ],
+    icon: Icons.architecture_rounded,
+  ),
+  PresentationBackgroundDefinition(
+    kind: PresentationBackgroundKind.studioSpaceAstronomy,
+    label: 'Uzay & Astronomi',
+    category: 'Uzay',
+    tags: <String>[
+      'uzay',
+      'astronomi',
+      'yıldız',
+      'yörünge',
+      'gezegen',
+      'galaksi'
+    ],
+    previewColors: <Color>[
+      Color(0xFF050714),
+      Color(0xFF191E4A),
+      Color(0xFF9687FF)
+    ],
+    icon: Icons.auto_awesome_rounded,
+  ),
+  PresentationBackgroundDefinition(
+    kind: PresentationBackgroundKind.studioMusicArt,
+    label: 'Müzik & Sanat',
+    category: 'Sanat',
+    tags: <String>['müzik', 'sanat', 'nota', 'fırça', 'ses dalgası', 'ritim'],
+    previewColors: <Color>[
+      Color(0xFF21102E),
+      Color(0xFF522750),
+      Color(0xFFFF75B5)
+    ],
+    icon: Icons.graphic_eq_rounded,
+  ),
+  PresentationBackgroundDefinition(
+    kind: PresentationBackgroundKind.studioFoodGastronomy,
+    label: 'Yemek & Gastronomi',
+    category: 'Gastronomi',
+    tags: <String>['yemek', 'gastronomi', 'baharat', 'mutfak', 'lezzet', 'şef'],
+    previewColors: <Color>[
+      Color(0xFF28150F),
+      Color(0xFF633528),
+      Color(0xFFF3A85B)
+    ],
+    icon: Icons.restaurant_rounded,
+  ),
+  PresentationBackgroundDefinition(
+    kind: PresentationBackgroundKind.studioTravelTourism,
+    label: 'Seyahat & Turizm',
+    category: 'Seyahat',
+    tags: <String>['seyahat', 'turizm', 'uçuş', 'rota', 'bavul', 'harita'],
+    previewColors: <Color>[
+      Color(0xFF071D2A),
+      Color(0xFF174B63),
+      Color(0xFFFFC857)
+    ],
+    icon: Icons.flight_takeoff_rounded,
+  ),
+  PresentationBackgroundDefinition(
+    kind: PresentationBackgroundKind.studioEnvironmentSustainability,
+    label: 'Çevre & Sürdürülebilirlik',
+    category: 'Çevre',
+    tags: <String>[
+      'çevre',
+      'sürdürülebilirlik',
+      'yaprak',
+      'su',
+      'geri dönüşüm'
+    ],
+    previewColors: <Color>[
+      Color(0xFF061D1A),
+      Color(0xFF0D3930),
+      Color(0xFF73E2A7)
+    ],
+    icon: Icons.recycling_rounded,
+  ),
+  PresentationBackgroundDefinition(
+    kind: PresentationBackgroundKind.studioReligionSpirituality,
+    label: 'Din & Maneviyat',
+    category: 'Maneviyat',
+    tags: <String>[
+      'din',
+      'maneviyat',
+      'inanç',
+      'mimari desen',
+      'ışık huzmesi',
+      'tefekkür'
+    ],
+    previewColors: <Color>[
+      Color(0xFF100D22),
+      Color(0xFF28204A),
+      Color(0xFFF2CE7E)
+    ],
+    icon: Icons.wb_twilight_rounded,
+  ),
+  PresentationBackgroundDefinition(
+    kind: PresentationBackgroundKind.studioPsychologyGrowth,
+    label: 'Psikoloji & Kişisel Gelişim',
+    category: 'Psikoloji',
+    tags: <String>['psikoloji', 'kişisel gelişim', 'nöron', 'düşünce', 'zihin'],
+    previewColors: <Color>[
+      Color(0xFF151127),
+      Color(0xFF312A50),
+      Color(0xFFC6A7FF)
+    ],
+    icon: Icons.psychology_rounded,
+  ),
+  PresentationBackgroundDefinition(
+    kind: PresentationBackgroundKind.studioConstructionRealEstate,
+    label: 'İnşaat & Emlak',
+    category: 'İnşaat',
+    tags: <String>['inşaat', 'emlak', 'kat planı', 'iskele', 'yapı', 'mimari'],
+    previewColors: <Color>[
+      Color(0xFF111820),
+      Color(0xFF263746),
+      Color(0xFFFFB454)
+    ],
+    icon: Icons.apartment_rounded,
+  ),
+  PresentationBackgroundDefinition(
+    kind: PresentationBackgroundKind.studioGamingEntertainment,
+    label: 'Oyun & Eğlence',
+    category: 'Gaming',
+    tags: <String>['oyun', 'eğlence', 'gaming', 'piksel', 'kontrolcü', 'skor'],
+    previewColors: <Color>[
+      Color(0xFF090A18),
+      Color(0xFF20194A),
+      Color(0xFFA6FF4D)
+    ],
+    icon: Icons.sports_esports_rounded,
+  ),
+];
 
 const List<PresentationBackgroundDefinition> presentationBackgroundLibrary =
     <PresentationBackgroundDefinition>[
@@ -1552,6 +1887,7 @@ const List<PresentationBackgroundDefinition> presentationBackgroundLibrary =
     ],
     icon: Icons.business_rounded,
   ),
+  ...sutolStudioBackgroundLibrary,
 ];
 
 PresentationBackgroundDefinition? presentationBackgroundDefinition(

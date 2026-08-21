@@ -681,6 +681,27 @@ class PresentationController extends ChangeNotifier {
     notifyListeners();
   }
 
+  void updateSelectedBackgroundAnimationEnabled(bool value) {
+    if (selectedPage.backgroundAnimationEnabled == value) {
+      return;
+    }
+    _replaceSelectedPage(
+      selectedPage.copyWith(backgroundAnimationEnabled: value),
+    );
+    notifyListeners();
+  }
+
+  void updateSelectedBackgroundAnimationSpeed(double value) {
+    final nextValue = value.clamp(0.25, 2.0).toDouble();
+    if ((selectedPage.backgroundAnimationSpeed - nextValue).abs() < 0.001) {
+      return;
+    }
+    _replaceSelectedPage(
+      selectedPage.copyWith(backgroundAnimationSpeed: nextValue),
+    );
+    notifyListeners();
+  }
+
   void updateAllPageBackgrounds(PresentationBackgroundKind value) {
     if (_pages.every((page) => page.backgroundKind == value)) {
       return;

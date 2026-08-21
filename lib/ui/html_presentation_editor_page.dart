@@ -362,7 +362,7 @@ class _HtmlPresentationEditorPageState
     for (final page in controller.pages) {
       buf
         ..write(
-            '\n${page.id}|${page.backgroundKind.index}|${page.speakerNotes}');
+            '\n${page.id}|${page.backgroundKind.index}|${page.backgroundAnimationEnabled}|${page.backgroundAnimationSpeed}|${page.speakerNotes}');
       for (final text in page.textBlocks) {
         buf
           ..write(
@@ -444,6 +444,15 @@ class _HtmlPresentationEditorPageState
   /// ilgili sekmeye otomatik geçirir (Canva tarzı bağlamsal panel).
   String? _lastAutoTabSelectionKey;
 
+  String? _currentSelectionKey() {
+    final controller = widget.controller;
+    final textBlock = controller.selectedTextBlock;
+    if (textBlock != null) return 'text:${textBlock.id}';
+    final componentBlock = controller.selectedComponentBlock;
+    if (componentBlock != null) return 'component:${componentBlock.id}';
+    return null;
+  }
+
   void _syncTabWithSelection() {
     final controller = widget.controller;
     String? selectionKey;
@@ -478,6 +487,11 @@ class _HtmlPresentationEditorPageState
   }
 
   void _setTab(_HtmlToolTab tab) {
+    // Kullanıcının bilinçli sekme seçimini, mevcut nesnenin sonraki model
+    // bildiriminde yeniden Metin/Bileşen sekmesine çekilmesine karşı koru.
+    // Gerçekten başka bir nesne seçildiğinde seçim anahtarı değişir ve
+    // bağlamsal otomatik geçiş yine çalışır.
+    _lastAutoTabSelectionKey = _currentSelectionKey();
     if (tab == _activeTab) {
       // Aynı ikona tekrar tıklandı: studio modunda panel açılır/kapanır.
       if (_studioWide) {
@@ -494,6 +508,7 @@ class _HtmlPresentationEditorPageState
   /// Mobil/tablet: alt araç iskelesinden seçilen aracın panelini alttan
   /// açılan sheet içinde gösterir. Tuval arka planda korunur.
   void _openMobileToolSheet(_HtmlToolTab tab) {
+    _lastAutoTabSelectionKey = _currentSelectionKey();
     setState(() => _activeTab = tab);
     showModalBottomSheet<void>(
       context: context,
@@ -1764,6 +1779,7 @@ class _HtmlMobileLayout extends StatelessWidget {
                     child: _SelectionContextBarSection(
                       controller: controller,
                       textController: textController,
+                      activeTab: activeTab,
                     ),
                   ),
                 ),
@@ -4207,6 +4223,7 @@ class _HtmlStageWorkspace extends StatelessWidget {
                   _SelectionContextBarSection(
                     controller: controller,
                     textController: textController,
+                    activeTab: activeTab,
                   ),
                 Expanded(
                   child: _HtmlStageCard(
@@ -5124,6 +5141,7 @@ class _HtmlWorkbench extends StatelessWidget {
             _SelectionContextBarSection(
               controller: controller,
               textController: textController,
+              activeTab: activeTab,
             ),
           ],
           Expanded(child: stage),
@@ -7190,9 +7208,7 @@ class _StaticTemplateThumbnailPainter extends CustomPainter {
 }
 
 class _HtmlBackgroundControls extends StatefulWidget {
-  const _HtmlBackgroundControls({
-    required this.controller,
-  });
+  const _HtmlBackgroundControls({required this.controller});
 
   final PresentationController controller;
 
@@ -7211,63 +7227,92 @@ class _HtmlBackgroundControlsState extends State<_HtmlBackgroundControls> {
     super.dispose();
   }
 
-  void _clearSearch() {
-    _searchController.clear();
-    setState(() => _query = '');
-  }
-
-  bool _matches(
-    PresentationBackgroundDefinition definition,
-    String query,
-  ) {
-    return presentationBackgroundLabel(definition.kind)
-            .toLowerCase()
-            .contains(query) ||
-        presentationBackgroundCategory(definition.kind)
-            .toLowerCase()
-            .contains(query);
-  }
-
   @override
   Widget build(BuildContext context) {
-    final controller = widget.controller;
-    final selected = controller.selectedPage.backgroundKind;
     final query = _query.trim().toLowerCase();
+    final definitions = sutolStudioBackgroundLibrary.where((definition) {
+      if (query.isEmpty) return true;
+      return definition.label.toLowerCase().contains(query) ||
+          definition.category.toLowerCase().contains(query) ||
+          definition.tags.any((tag) => tag.toLowerCase().contains(query));
+    }).toList(growable: false);
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        const gap = 10.0;
-        final columns = constraints.maxWidth >= 760
+        const gap = 12.0;
+        final columns = constraints.maxWidth >= 900
             ? 4
-            : constraints.maxWidth >= 520
+            : constraints.maxWidth >= 620
                 ? 3
-                : constraints.maxWidth >= 330
+                : constraints.maxWidth >= 340
                     ? 2
                     : 1;
         final cardWidth = columns == 1
             ? constraints.maxWidth
-            : (constraints.maxWidth - (gap * (columns - 1))) / columns;
-        final lightDefinitions = presentationBackgroundLibrary
-            .where(
-                (definition) => !presentationBackgroundIsDark(definition.kind))
-            .where((definition) => query.isEmpty || _matches(definition, query))
-            .toList(growable: false);
-        final topicDefinitions = presentationBackgroundLibrary
-            .where(
-                (definition) => presentationBackgroundIsDark(definition.kind))
-            .where((definition) => query.isEmpty || _matches(definition, query))
-            .toList(growable: false);
+            : (constraints.maxWidth - gap * (columns - 1)) / columns;
 
-        Widget backgroundGroup(
-          String title,
-          IconData icon,
-          List<PresentationBackgroundDefinition> definitions,
-        ) {
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              _ToolbarBadge(icon: icon, label: title),
-              const SizedBox(height: 10),
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: <Widget>[
+            Row(
+              children: <Widget>[
+                const Expanded(
+                  child: _ToolbarBadge(
+                    icon: Icons.wallpaper_rounded,
+                    label: 'Sutols Sahne Koleksiyonu',
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: context._htmlAccent.withValues(alpha: .10),
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: Text(
+                    '${sutolStudioBackgroundLibrary.length} tema',
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                          color: context._htmlAccent,
+                          fontWeight: FontWeight.w900,
+                        ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Text(
+              'Sunum metnini öne çıkaran, hareketli ve çevrimdışı HTML sahneleri.',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: context._htmlMuted,
+                    fontWeight: FontWeight.w600,
+                  ),
+            ),
+            const SizedBox(height: 14),
+            _ModelSearchField(
+              controller: _searchController,
+              hintText: 'Tema ara: teknoloji, sağlık, eğitim...',
+              onChanged: (value) => setState(() => _query = value),
+              onClear: () {
+                _searchController.clear();
+                setState(() => _query = '');
+              },
+            ),
+            const SizedBox(height: 16),
+            if (definitions.isEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 28),
+                child: Center(
+                  child: Text(
+                    'Bu aramayla eşleşen tema bulunamadı.',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: context._htmlMuted,
+                          fontWeight: FontWeight.w700,
+                        ),
+                  ),
+                ),
+              )
+            else
               Wrap(
                 spacing: gap,
                 runSpacing: gap,
@@ -7275,61 +7320,17 @@ class _HtmlBackgroundControlsState extends State<_HtmlBackgroundControls> {
                   for (final definition in definitions)
                     SizedBox(
                       width: cardWidth,
-                      child: _BackgroundPresetCard(
-                        kind: definition.kind,
-                        isSelected: selected == definition.kind,
-                        onTap: () => controller
+                      child: _StudioBackgroundCard(
+                        definition: definition,
+                        isSelected:
+                            widget.controller.selectedPage.backgroundKind ==
+                                definition.kind,
+                        onTap: () => widget.controller
                             .updateSelectedBackground(definition.kind),
                       ),
                     ),
                 ],
               ),
-            ],
-          );
-        }
-
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: <Widget>[
-            const _ToolbarBadge(
-              icon: Icons.wallpaper_rounded,
-              label: 'Arka Plan Kütüphanesi',
-            ),
-            const SizedBox(height: 14),
-            _ModelSearchField(
-              controller: _searchController,
-              hintText: 'Arka plan ara: isim, kategori...',
-              onChanged: (value) => setState(() => _query = value),
-              onClear: _clearSearch,
-            ),
-            const SizedBox(height: 14),
-            if (lightDefinitions.isEmpty && topicDefinitions.isEmpty)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                child: Text(
-                  'Eşleşen arka plan bulunamadı.',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: context._htmlMuted,
-                        fontWeight: FontWeight.w700,
-                      ),
-                ),
-              )
-            else ...<Widget>[
-              if (lightDefinitions.isNotEmpty) ...[
-                backgroundGroup(
-                  'Açık ve Ferah',
-                  Icons.light_mode_rounded,
-                  lightDefinitions,
-                ),
-                const SizedBox(height: 18),
-              ],
-              if (topicDefinitions.isNotEmpty)
-                backgroundGroup(
-                  'Koyu Konu Temaları',
-                  Icons.dark_mode_rounded,
-                  topicDefinitions,
-                ),
-            ],
           ],
         );
       },
@@ -7337,14 +7338,14 @@ class _HtmlBackgroundControlsState extends State<_HtmlBackgroundControls> {
   }
 }
 
-class _BackgroundPresetCard extends StatelessWidget {
-  const _BackgroundPresetCard({
-    required this.kind,
+class _StudioBackgroundCard extends StatelessWidget {
+  const _StudioBackgroundCard({
+    required this.definition,
     required this.isSelected,
     required this.onTap,
   });
 
-  final PresentationBackgroundKind kind;
+  final PresentationBackgroundDefinition definition;
   final bool isSelected;
   final VoidCallback onTap;
 
@@ -7353,26 +7354,26 @@ class _BackgroundPresetCard extends StatelessWidget {
     return Material(
       color: context.sutolColors.surface,
       borderRadius: BorderRadius.circular(16),
+      clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 180),
-          padding: const EdgeInsets.all(8),
+          padding: const EdgeInsets.all(7),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
               color: isSelected
                   ? context._htmlAccent
                   : context.sutolColors.outline,
-              width: isSelected ? 1.5 : 1,
+              width: isSelected ? 2 : 1,
             ),
             boxShadow: isSelected
-                ? const <BoxShadow>[
+                ? <BoxShadow>[
                     BoxShadow(
-                      color: Color(0x1F0B7BFF),
-                      blurRadius: 16,
-                      offset: Offset(0, 8),
+                      color: context._htmlAccent.withValues(alpha: .16),
+                      blurRadius: 18,
+                      offset: const Offset(0, 7),
                     ),
                   ]
                 : null,
@@ -7384,39 +7385,54 @@ class _BackgroundPresetCard extends StatelessWidget {
               AspectRatio(
                 aspectRatio: 16 / 9,
                 child: ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(11),
                   child: HtmlBackgroundPreview(
-                    kind: kind,
+                    kind: definition.kind,
                     onTap: onTap,
                   ),
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 9),
               Row(
                 children: <Widget>[
-                  Icon(
-                    presentationBackgroundIcon(kind),
-                    size: 16,
-                    color:
-                        isSelected ? context._htmlAccent : context._htmlMuted,
+                  Container(
+                    width: 27,
+                    height: 27,
+                    decoration: BoxDecoration(
+                      color:
+                          definition.previewColors.last.withValues(alpha: .14),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(
+                      definition.icon,
+                      size: 16,
+                      color: definition.previewColors.last,
+                    ),
                   ),
-                  const SizedBox(width: 6),
+                  const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      presentationBackgroundLabel(kind),
-                      maxLines: 1,
+                      definition.label,
+                      maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
                             color: context._htmlInk,
                             fontWeight: FontWeight.w900,
+                            height: 1.15,
                           ),
                     ),
                   ),
+                  if (isSelected)
+                    Icon(
+                      Icons.check_circle_rounded,
+                      size: 19,
+                      color: context._htmlAccent,
+                    ),
                 ],
               ),
-              const SizedBox(height: 3),
+              const SizedBox(height: 5),
               Text(
-                presentationBackgroundCategory(kind),
+                definition.category,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
@@ -8710,9 +8726,25 @@ class _HtmlStageCardState extends State<_HtmlStageCard>
                       ),
                     ),
                     IgnorePointer(
+                      child: HtmlLiveBackground(
+                        key: ValueKey<PresentationBackgroundKind>(
+                          widget.controller.selectedPage.backgroundKind,
+                        ),
+                        kind: widget.controller.selectedPage.backgroundKind,
+                        animationEnabled: widget.controller.selectedPage
+                                .backgroundAnimationEnabled &&
+                            !reduceMotion,
+                        animationSpeed: widget
+                            .controller.selectedPage.backgroundAnimationSpeed,
+                      ),
+                    ),
+                    IgnorePointer(
                       child: isVisuallyBlank
                           ? const SizedBox.shrink()
                           : HtmlPageStage(
+                              key: ValueKey<String>(
+                                'editor-content-${widget.controller.selectedPage.backgroundKind.name}',
+                              ),
                               page: widget.controller.selectedPage,
                               selectedTextBlockId:
                                   widget.controller.selectedTextBlockId,
@@ -8723,6 +8755,7 @@ class _HtmlStageCardState extends State<_HtmlStageCard>
                               renderMode: reduceMotion
                                   ? HtmlStageRenderMode.snapshot
                                   : HtmlStageRenderMode.preview,
+                              showBackground: false,
                             ),
                     ),
                     if (_transitionPreviewFrom != null &&
@@ -9001,52 +9034,85 @@ class _SelectionContextBarSection extends StatelessWidget {
   const _SelectionContextBarSection({
     required this.controller,
     required this.textController,
+    required this.activeTab,
   });
 
   final PresentationController controller;
   final TextEditingController textController;
+  final _HtmlToolTab activeTab;
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final compact = constraints.maxWidth < 980;
-        final textBlock = controller.selectedTextBlock;
-        final componentBlock = controller.selectedComponentBlock;
-        List<Widget>? children;
-        String? contentKey;
-        if (textBlock != null) {
-          contentKey = 'text:${textBlock.id}:$compact';
-          children = _textChildren(context, textBlock, compact: compact);
-        } else if (componentBlock != null) {
-          contentKey = 'component:${componentBlock.id}';
-          children = _isUploadedImageBlock(componentBlock)
-              ? _imageChildren()
-              : _isRenderable3DModelBlock(componentBlock)
-                  ? _modelChildren(context, componentBlock)
-                  : _componentChildren();
-        }
+    return ListenableBuilder(
+      listenable: controller,
+      builder: (context, _) => LayoutBuilder(
+        builder: (context, constraints) {
+          final compact = constraints.maxWidth < 980;
+          final textBlock = controller.selectedTextBlock;
+          final componentBlock = controller.selectedComponentBlock;
+          List<Widget>? children;
+          String? contentKey;
+          if (activeTab == _HtmlToolTab.backgrounds) {
+            final page = controller.selectedPage;
+            contentKey =
+                'background:${page.backgroundKind.name}:${page.backgroundAnimationEnabled}';
+            children = _backgroundChildren(page);
+          } else if (textBlock != null) {
+            contentKey = 'text:${textBlock.id}:$compact';
+            children = _textChildren(context, textBlock, compact: compact);
+          } else if (componentBlock != null) {
+            contentKey = 'component:${componentBlock.id}';
+            children = _isUploadedImageBlock(componentBlock)
+                ? _imageChildren()
+                : _isRenderable3DModelBlock(componentBlock)
+                    ? _modelChildren(context, componentBlock)
+                    : _componentChildren();
+          }
 
-        return AnimatedSwitcher(
-          duration: const Duration(milliseconds: 180),
-          transitionBuilder: (child, animation) => FadeTransition(
-            opacity: animation,
-            child: SizeTransition(
-              sizeFactor: animation,
-              axisAlignment: -1,
-              child: child,
+          return AnimatedSwitcher(
+            duration: const Duration(milliseconds: 180),
+            transitionBuilder: (child, animation) => FadeTransition(
+              opacity: animation,
+              child: SizeTransition(
+                sizeFactor: animation,
+                axisAlignment: -1,
+                child: child,
+              ),
             ),
-          ),
-          child: children == null
-              ? const SizedBox.shrink()
-              : Padding(
-                  key: ValueKey<String>(contentKey!),
-                  padding: const EdgeInsets.only(bottom: 10),
-                  child: SelectionContextBar(children: children),
-                ),
-        );
-      },
+            child: children == null
+                ? const SizedBox.shrink()
+                : Padding(
+                    key: ValueKey<String>(contentKey!),
+                    padding: const EdgeInsets.only(bottom: 10),
+                    child: SelectionContextBar(children: children),
+                  ),
+          );
+        },
+      ),
     );
+  }
+
+  List<Widget> _backgroundChildren(PresentationPage page) {
+    final animationEnabled = page.backgroundAnimationEnabled;
+    return <Widget>[
+      MiniToolLabeledToggle(
+        key: const ValueKey<String>('background-animation-toggle'),
+        icon: animationEnabled
+            ? Icons.motion_photos_on_rounded
+            : Icons.motion_photos_off_rounded,
+        label: animationEnabled ? 'Animasyon Açık' : 'Animasyon Kapalı',
+        active: animationEnabled,
+        onTap: () => controller.updateSelectedBackgroundAnimationEnabled(
+          !animationEnabled,
+        ),
+      ),
+      const MiniToolDivider(),
+      _BackgroundAnimationSpeedControl(
+        value: page.backgroundAnimationSpeed,
+        enabled: animationEnabled,
+        onChanged: controller.updateSelectedBackgroundAnimationSpeed,
+      ),
+    ];
   }
 
   List<Widget> _textChildren(BuildContext context, PresentationTextBlock block,
@@ -9286,6 +9352,68 @@ class _SelectionContextBarSection extends StatelessWidget {
         onTap: controller.removeSelectedComponentBlock,
       ),
     ];
+  }
+}
+
+class _BackgroundAnimationSpeedControl extends StatelessWidget {
+  const _BackgroundAnimationSpeedControl({
+    required this.value,
+    required this.enabled,
+    required this.onChanged,
+  });
+
+  final double value;
+  final bool enabled;
+  final ValueChanged<double> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final displayValue =
+        value.toStringAsFixed(2).replaceFirst(RegExp(r'0$'), '');
+    final color = enabled
+        ? context.colors.onSurfaceVariant
+        : context.colors.onSurfaceVariant.withValues(alpha: 0.42);
+    return SizedBox(
+      width: 250,
+      height: 36,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          Icon(Icons.speed_rounded, size: 18, color: color),
+          const SizedBox(width: 6),
+          Text(
+            'Hız',
+            style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                  color: color,
+                  fontWeight: FontWeight.w700,
+                ),
+          ),
+          Expanded(
+            child: Slider(
+              key: const ValueKey<String>('background-animation-speed-slider'),
+              min: 0.25,
+              max: 2,
+              divisions: 7,
+              value: value.clamp(0.25, 2.0).toDouble(),
+              label: '$displayValue×',
+              onChanged: enabled ? onChanged : null,
+            ),
+          ),
+          SizedBox(
+            width: 42,
+            child: Text(
+              '$displayValue×',
+              key: const ValueKey<String>('background-animation-speed-label'),
+              textAlign: TextAlign.right,
+              style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                    color: color,
+                    fontWeight: FontWeight.w800,
+                  ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 

@@ -87,6 +87,8 @@ class PresentationProjectCodec {
     return <String, Object?>{
       'id': page.id,
       'backgroundKind': page.backgroundKind.name,
+      'backgroundAnimationEnabled': page.backgroundAnimationEnabled,
+      'backgroundAnimationSpeed': page.backgroundAnimationSpeed,
       'templateId': page.templateId,
       'speakerNotes': page.speakerNotes,
       'transitionAfter': page.transitionAfter?.name,
@@ -111,6 +113,11 @@ class PresentationProjectCodec {
     return PresentationPage(
       id: _string(json['id'], 'page-1'),
       backgroundKind: _backgroundKindValue(json['backgroundKind']),
+      backgroundAnimationEnabled:
+          _bool(json['backgroundAnimationEnabled'], true),
+      backgroundAnimationSpeed: _double(json['backgroundAnimationSpeed'], 1)
+          .clamp(0.25, 2.0)
+          .toDouble(),
       templateId: json['templateId'] as String?,
       speakerNotes: _string(json['speakerNotes'], ''),
       transitionAfter: json['transitionAfter'] == null

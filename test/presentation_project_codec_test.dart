@@ -44,6 +44,8 @@ void main() {
       PresentationPage(
         id: 'page-4',
         backgroundKind: PresentationBackgroundKind.solarEnergyScene,
+        backgroundAnimationEnabled: false,
+        backgroundAnimationSpeed: 1.75,
         speakerNotes: 'Konusmaci notu',
         transitionAfter: PresentationTransitionKind.cover,
         textBlocks: <PresentationTextBlock>[
@@ -121,6 +123,8 @@ void main() {
       project.pages.single.backgroundKind,
       PresentationBackgroundKind.solarEnergyScene,
     );
+    expect(project.pages.single.backgroundAnimationEnabled, isFalse);
+    expect(project.pages.single.backgroundAnimationSpeed, 1.75);
     expect(project.pages.single.textBlocks.single.text, 'Gunes');
     expect(
       project.pages.single.textBlocks.single.textStyle,

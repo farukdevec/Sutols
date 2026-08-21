@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import '../../../models/slide_model.dart';
+import 'premium_background_scenes.dart';
 
 // Generated from the user-provided offline scene HTML files.
 // Keep the sources embedded so exported presentations remain self-contained.
@@ -8,6 +9,7 @@ String presentationBackgroundSceneHtml(PresentationBackgroundKind kind) {
   return _decodedBackgroundScenes.putIfAbsent(
     kind,
     () =>
+        sutolPremiumBackgroundScenes[kind] ??
         _lightBackgroundSceneHtml(kind) ??
         utf8.decode(base64Decode(_backgroundSceneBase64[kind]!)),
   );

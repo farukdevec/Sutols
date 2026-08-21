@@ -4,10 +4,12 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show FontLoader;
 import 'package:flutter_test/flutter_test.dart';
+import 'package:sutol/models/slide_model.dart';
 import 'package:sutol/state/presentation_controller.dart';
 import 'package:sutol/ui/html_presentation_editor_page.dart';
 import 'package:sutol/ui/widgets/editor_shell.dart';
 import 'package:sutol/ui/widgets/html_stage/html_page_stage.dart';
+import 'package:sutol/ui/widgets/selection_mini_toolbar.dart';
 
 import 'package:sutol/services/cookie_consent_service.dart';
 
@@ -31,7 +33,7 @@ void main() {
     }
   });
 
-  Future<void> pumpAt(
+  Future<PresentationController> pumpAt(
     WidgetTester tester,
     Size size,
   ) async {
@@ -60,6 +62,7 @@ void main() {
     if (captured != null) {
       FlutterError.dumpErrorToConsole(captured!, forceReport: true);
     }
+    return controller;
   }
 
   /// Birincil dock düğmesini açar.
@@ -297,10 +300,70 @@ void main() {
   });
 
   testWidgets('arka plan sekmesi 1120px genişlikte taşmaz', (tester) async {
-    await pumpAt(tester, const Size(1120, 800));
+    final controller = await pumpAt(tester, const Size(1120, 800));
     expect(tester.takeException(), isNull);
     await tester.tap(find.text('Arka Planlar'));
     await tester.pumpAndSettle();
+    expect(find.text('Sutols Sahne Koleksiyonu'), findsOneWidget);
+    expect(find.text('20 tema'), findsOneWidget);
+    expect(find.text('Teknoloji & Yapay Zeka'), findsOneWidget);
+    await tester.ensureVisible(find.text('Teknoloji & Yapay Zeka'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Teknoloji & Yapay Zeka'));
+    await tester.pumpAndSettle();
+    expect(
+      controller.selectedPage.backgroundKind,
+      PresentationBackgroundKind.studioTechnologyAi,
+    );
+    final liveBackground = tester.widget<HtmlLiveBackground>(
+      find.byType(HtmlLiveBackground),
+    );
+    expect(
+      liveBackground.kind,
+      PresentationBackgroundKind.studioTechnologyAi,
+      reason: 'Büyük önizleme seçilen gerçek HTML sahnesini kullanmalı',
+    );
+    expect(find.text('Animasyon Açık'), findsOneWidget);
+    await tester.tap(
+      find.byKey(const ValueKey<String>('background-animation-toggle')),
+    );
+    await tester.pumpAndSettle();
+    expect(controller.selectedPage.backgroundAnimationEnabled, isFalse);
+    expect(
+      tester
+          .widget<MiniToolLabeledToggle>(
+            find.byKey(
+              const ValueKey<String>('background-animation-toggle'),
+            ),
+          )
+          .label,
+      'Animasyon Kapalı',
+    );
+    expect(
+      tester
+          .widget<HtmlLiveBackground>(find.byType(HtmlLiveBackground))
+          .animationEnabled,
+      isFalse,
+    );
+    await tester.tap(
+      find.byKey(const ValueKey<String>('background-animation-toggle')),
+    );
+    await tester.pumpAndSettle();
+    final speedSlider = tester.widget<Slider>(
+      find.byKey(
+        const ValueKey<String>('background-animation-speed-slider'),
+      ),
+    );
+    speedSlider.onChanged!(1.5);
+    await tester.pumpAndSettle();
+    expect(controller.selectedPage.backgroundAnimationSpeed, 1.5);
+    expect(
+      tester
+          .widget<HtmlLiveBackground>(find.byType(HtmlLiveBackground))
+          .animationSpeed,
+      1.5,
+    );
+    expect(find.text('1.5×'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 

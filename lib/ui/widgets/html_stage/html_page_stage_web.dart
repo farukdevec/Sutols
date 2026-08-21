@@ -110,6 +110,7 @@ class HtmlPageStage extends StatefulWidget {
     this.selectedComponentBlockId,
     this.visibleRevealStep,
     this.showBadge = true,
+    this.showBackground = true,
     this.renderMode = HtmlStageRenderMode.full,
     this.onTap,
     this.cssTransform = 'none',
@@ -124,6 +125,7 @@ class HtmlPageStage extends StatefulWidget {
   final String? selectedComponentBlockId;
   final int? visibleRevealStep;
   final bool showBadge;
+  final bool showBackground;
   final HtmlStageRenderMode renderMode;
   final VoidCallback? onTap;
   final String cssTransform;
@@ -133,6 +135,66 @@ class HtmlPageStage extends StatefulWidget {
 
   @override
   State<HtmlPageStage> createState() => _HtmlPageStageState();
+}
+
+/// Renders the selected scene directly instead of through a nested `srcdoc`
+/// iframe. The editor uses this layer so every browser paints the chosen
+/// background immediately.
+class HtmlLiveBackground extends StatefulWidget {
+  const HtmlLiveBackground({
+    super.key,
+    required this.kind,
+    this.animationEnabled = true,
+    this.animationSpeed = 1,
+  });
+
+  final PresentationBackgroundKind kind;
+  final bool animationEnabled;
+  final double animationSpeed;
+
+  @override
+  State<HtmlLiveBackground> createState() => _HtmlLiveBackgroundState();
+}
+
+class _HtmlLiveBackgroundState extends State<HtmlLiveBackground> {
+  html.IFrameElement? _iframe;
+
+  void _applyDocument() {
+    _iframe?.srcdoc = buildHtmlBackgroundSceneDocument(
+      widget.kind,
+      animationEnabled: widget.animationEnabled,
+      animationSpeed: widget.animationSpeed,
+    );
+  }
+
+  @override
+  void didUpdateWidget(covariant HtmlLiveBackground oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.kind != widget.kind ||
+        oldWidget.animationEnabled != widget.animationEnabled ||
+        oldWidget.animationSpeed != widget.animationSpeed) {
+      _applyDocument();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return HtmlElementView.fromTagName(
+      tagName: 'iframe',
+      onElementCreated: (element) {
+        final iframe = element as html.IFrameElement
+          ..style.width = '100%'
+          ..style.height = '100%'
+          ..style.border = '0'
+          ..style.pointerEvents = 'none'
+          ..style.backgroundColor = 'transparent'
+          ..setAttribute('scrolling', 'no')
+          ..setAttribute('sandbox', 'allow-scripts');
+        _iframe = iframe;
+        _applyDocument();
+      },
+    );
+  }
 }
 
 class HtmlBackgroundPreview extends StatefulWidget {
@@ -279,6 +341,7 @@ class _HtmlPageStageState extends State<HtmlPageStage> {
   late html.IFrameElement _iframeElement;
   html.IFrameElement? _pendingIframeElement;
   StreamSubscription<html.Event>? _pendingLoadSubscription;
+  Timer? _pendingLoadTimer;
   StreamSubscription<html.MouseEvent>? _tapSubscription;
   int _renderGeneration = 0;
   bool _hasRendered = false;
@@ -355,6 +418,16 @@ class _HtmlPageStageState extends State<HtmlPageStage> {
   void didUpdateWidget(covariant HtmlPageStage oldWidget) {
     super.didUpdateWidget(oldWidget);
     _applyVisualStyle();
+    if (oldWidget.showBackground != widget.showBackground ||
+        (widget.showBackground &&
+            (oldWidget.page.backgroundKind != widget.page.backgroundKind ||
+                oldWidget.page.backgroundAnimationEnabled !=
+                    widget.page.backgroundAnimationEnabled ||
+                oldWidget.page.backgroundAnimationSpeed !=
+                    widget.page.backgroundAnimationSpeed))) {
+      _render(replaceImmediately: true);
+      return;
+    }
     if (!_patchInPlace(oldWidget)) {
       _render();
     }
@@ -376,10 +449,12 @@ class _HtmlPageStageState extends State<HtmlPageStage> {
   @override
   void dispose() {
     _renderGeneration += 1;
+    RemoteModelSources.revision.removeListener(_onRemoteSourcesChanged);
     final pendingLoadSubscription = _pendingLoadSubscription;
     if (pendingLoadSubscription != null) {
       unawaited(pendingLoadSubscription.cancel());
     }
+    _pendingLoadTimer?.cancel();
     final initialLoadSubscription = _initialLoadSubscription;
     if (initialLoadSubscription != null) {
       unawaited(initialLoadSubscription.cancel());
@@ -394,7 +469,7 @@ class _HtmlPageStageState extends State<HtmlPageStage> {
     super.dispose();
   }
 
-  void _render() {
+  void _render({bool replaceImmediately = false}) {
     final document = buildHtmlStageDocument(
       page: widget.page,
       selectedTextBlockId: widget.selectedTextBlockId,
@@ -402,6 +477,7 @@ class _HtmlPageStageState extends State<HtmlPageStage> {
       selectedComponentBlockId: widget.selectedComponentBlockId,
       visibleRevealStep: widget.visibleRevealStep,
       showBadge: widget.showBadge,
+      showBackground: widget.showBackground,
       renderMode: widget.renderMode,
       modelSourcesById: RemoteModelSources.all,
       imageSourcesById: RemoteImageSources.all,
@@ -417,6 +493,35 @@ class _HtmlPageStageState extends State<HtmlPageStage> {
       return;
     }
 
+    // Arka plan seçimi kullanıcıya anında yansımalıdır. Bu değişikliği load
+    // olayına bağlı çift-iframe geçişine bırakırsak Chrome iç içe srcdoc
+    // belgelerinde olayı kaçırıp eski sahneyi görünür tutabilir. Yeni iframe'i
+    // doğrudan görünür sahne yap; yüklenirken alttaki Flutter önizlemesi doğal
+    // bir placeholder görevi görür.
+    if (replaceImmediately) {
+      _renderGeneration += 1;
+      final pendingLoadSubscription = _pendingLoadSubscription;
+      if (pendingLoadSubscription != null) {
+        unawaited(pendingLoadSubscription.cancel());
+      }
+      _pendingLoadSubscription = null;
+      _pendingLoadTimer?.cancel();
+      _pendingLoadTimer = null;
+      _pendingIframeElement?.remove();
+      _pendingIframeElement = null;
+
+      final previousIframe = _iframeElement;
+      final nextIframe = _createIframe()
+        ..style.opacity = '1'
+        ..style.pointerEvents =
+            widget.renderMode == HtmlStageRenderMode.full ? 'auto' : 'none';
+      _hostElement.children.add(nextIframe);
+      nextIframe.srcdoc = document;
+      _iframeElement = nextIframe;
+      previousIframe.remove();
+      return;
+    }
+
     // Slayt değişiminde mevcut iframe'i boşaltmak gri bir ara kare üretir.
     // Yeni belgeyi görünmez ikinci iframe'de hazırla; load tamamlandığında
     // eskisini tek seferde değiştir. Hızlı art arda seçimlerde yalnızca en son
@@ -427,6 +532,8 @@ class _HtmlPageStageState extends State<HtmlPageStage> {
     if (previousPending != null) {
       unawaited(previousPending.cancel());
     }
+    _pendingLoadTimer?.cancel();
+    _pendingLoadTimer = null;
     _pendingIframeElement?.remove();
 
     final nextIframe = _createIframe()
@@ -438,8 +545,15 @@ class _HtmlPageStageState extends State<HtmlPageStage> {
       ..style.pointerEvents = 'none'
       ..style.opacity = '0.001';
     _pendingIframeElement = nextIframe;
-    _pendingLoadSubscription = nextIframe.onLoad.listen((_) {
-      if (!mounted || generation != _renderGeneration) return;
+
+    void commitPendingIframe() {
+      if (!mounted ||
+          generation != _renderGeneration ||
+          _pendingIframeElement != nextIframe) {
+        return;
+      }
+      _pendingLoadTimer?.cancel();
+      _pendingLoadTimer = null;
       final previousIframe = _iframeElement;
       nextIframe.style.opacity = '1';
       nextIframe.style.pointerEvents =
@@ -452,9 +566,20 @@ class _HtmlPageStageState extends State<HtmlPageStage> {
         unawaited(subscription.cancel());
       }
       previousIframe.remove();
-    });
-    nextIframe.srcdoc = document;
+    }
+
+    _pendingLoadSubscription =
+        nextIframe.onLoad.listen((_) => commitPendingIframe());
+    // Chrome, iç içe srcdoc iframe'lerinde srcdoc DOM'a bağlanmadan atanırsa
+    // load olayını kimi güncellemelerde kaçırabiliyor. Önce iframe'i sahneye
+    // bağla, ardından belgeyi ata.
     _hostElement.children.add(nextIframe);
+    // İç arka plan iframe'i ağır olduğunda veya tarayıcı load olayını hiç
+    // iletmediğinde yeni belge görünmez kalmamalı. Kısa bir güvenlik süresi
+    // sonunda geçişi tamamlayacak yedeği belge atanmadan önce kur.
+    _pendingLoadTimer =
+        Timer(const Duration(milliseconds: 250), commitPendingIframe);
+    nextIframe.srcdoc = document;
   }
 
   bool _patchInPlace(HtmlPageStage oldWidget) {

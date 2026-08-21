@@ -70,12 +70,13 @@ void main() {
     expect(document, isNot(contains('fonts.googleapis.com/css2')));
   });
 
-  test('library exposes the 19 topic and 6 light backgrounds', () {
-    expect(presentationBackgroundLibrary, hasLength(25));
+  test('library exposes the legacy collection and 20 studio backgrounds', () {
+    expect(presentationBackgroundLibrary, hasLength(48));
     expect(
       presentationBackgroundLibrary.map((item) => item.kind).toSet(),
-      hasLength(25),
+      hasLength(48),
     );
+    expect(sutolStudioBackgroundLibrary, hasLength(20));
     expect(
       presentationBackgroundLibrary.every((item) => item.tags.isNotEmpty),
       isTrue,
@@ -85,7 +86,11 @@ void main() {
   test('every library background embeds its offline scene source', () {
     for (final definition in presentationBackgroundLibrary) {
       final source = presentationBackgroundSceneHtml(definition.kind);
-      expect(source, contains('sutol-scene'), reason: definition.label);
+      if (sutolStudioBackgroundLibrary.contains(definition)) {
+        expect(source, contains('<svg'), reason: definition.label);
+      } else {
+        expect(source, contains('sutol-scene'), reason: definition.label);
+      }
 
       final markup = buildHtmlStageMarkup(
         page: PresentationPage(
@@ -96,6 +101,27 @@ void main() {
       );
       expect(markup, contains('sutol-bg-scene-frame'));
       expect(markup, contains('srcdoc='));
+    }
+  });
+
+  test('studio backgrounds satisfy the self-contained scene contract', () {
+    for (final definition in sutolStudioBackgroundLibrary) {
+      final source = presentationBackgroundSceneHtml(definition.kind);
+
+      expect(source, contains('--bg-primary'), reason: definition.label);
+      expect(source, contains('--bg-surface'), reason: definition.label);
+      expect(source, contains('--bg-accent'), reason: definition.label);
+      expect(source, contains('--bg-accent-soft'), reason: definition.label);
+      expect(source, contains('aspect-ratio:16/9'), reason: definition.label);
+      expect(source, contains('viewBox="0 0 1920 1080"'),
+          reason: definition.label);
+      expect(source, contains('preserveAspectRatio="xMidYMid slice"'),
+          reason: definition.label);
+      expect(source, contains('infinite'), reason: definition.label);
+      expect(source, contains('prefers-reduced-motion'),
+          reason: definition.label);
+      expect(source, isNot(contains('<script src=')), reason: definition.label);
+      expect(source, isNot(contains('<link rel=')), reason: definition.label);
     }
   });
 
@@ -113,6 +139,36 @@ void main() {
       expect(preview, contains('document.getAnimations()'));
       expect(preview, contains('svg.pauseAnimations'));
     }
+  });
+
+  test('page background animation setting switches to the frozen scene', () {
+    const animatedPage = PresentationPage(
+      id: 'animated-background',
+      textBlocks: <PresentationTextBlock>[],
+      backgroundKind: PresentationBackgroundKind.studioTechnologyAi,
+    );
+    final animatedDocument = buildHtmlStageDocument(
+      page: animatedPage,
+      renderMode: HtmlStageRenderMode.preview,
+    );
+    final frozenDocument = buildHtmlStageDocument(
+      page: animatedPage.copyWith(backgroundAnimationEnabled: false),
+      renderMode: HtmlStageRenderMode.preview,
+    );
+    final fasterDocument = buildHtmlStageDocument(
+      page: animatedPage.copyWith(backgroundAnimationSpeed: 1.5),
+      renderMode: HtmlStageRenderMode.preview,
+    );
+
+    expect(
+      animatedDocument,
+      isNot(contains('data-sutol-background-preview-freeze')),
+    );
+    expect(frozenDocument, contains('data-sutol-background-preview-freeze'));
+    expect(
+      fasterDocument,
+      contains('data-sutol-background-animation-speed=&quot;1.50&quot;'),
+    );
   });
 
   testWidgets('background thumbnail forwards taps to selection callback',

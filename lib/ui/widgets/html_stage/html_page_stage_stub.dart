@@ -60,6 +60,30 @@ class HtmlBackgroundPreview extends StatelessWidget {
   }
 }
 
+class HtmlLiveBackground extends StatelessWidget {
+  const HtmlLiveBackground({
+    super.key,
+    required this.kind,
+    this.animationEnabled = true,
+    this.animationSpeed = 1,
+  });
+
+  final PresentationBackgroundKind kind;
+  final bool animationEnabled;
+  final double animationSpeed;
+
+  @override
+  Widget build(BuildContext context) => DecoratedBox(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: presentationBackgroundPreviewColors(kind),
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+        ),
+      );
+}
+
 class HtmlComponentPreview extends StatelessWidget {
   const HtmlComponentPreview({
     super.key,
@@ -95,6 +119,7 @@ class HtmlPageStage extends StatelessWidget {
     this.selectedComponentBlockId,
     this.visibleRevealStep,
     this.showBadge = true,
+    this.showBackground = true,
     this.renderMode = HtmlStageRenderMode.full,
     this.onTap,
     this.cssTransform = 'none',
@@ -109,6 +134,7 @@ class HtmlPageStage extends StatelessWidget {
   final String? selectedComponentBlockId;
   final int? visibleRevealStep;
   final bool showBadge;
+  final bool showBackground;
   final HtmlStageRenderMode renderMode;
   final VoidCallback? onTap;
   final String cssTransform;
