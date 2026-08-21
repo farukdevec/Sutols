@@ -172,8 +172,7 @@ void main() {
     expect(controller.selectedPage.componentBlocks, hasLength(1));
   });
 
-  test('uploaded photos are separate from models and use their image ratio',
-      () {
+  test('uploaded photos start at image ratio and can then resize freely', () {
     final controller = PresentationController();
     addTearDown(controller.dispose);
 
@@ -195,9 +194,30 @@ void main() {
       fromBottom: false,
     );
     final resizedPortrait = controller.selectedComponentBlock!;
+    expect(resizedPortrait.size.width,
+        closeTo(portrait.size.width + 0.12, 0.0001));
+    expect(resizedPortrait.size.height, closeTo(portrait.size.height, 0.0001));
     expect(
       resizedPortrait.size.width / resizedPortrait.size.height,
-      closeTo(0.75 / (16 / 9), 0.0001),
+      isNot(closeTo(0.75 / (16 / 9), 0.0001)),
+    );
+
+    controller.resizeSelectedComponentByHandle(
+      const Offset(0, 56.25),
+      const Size(1000, 562.5),
+      fromLeft: false,
+      fromTop: false,
+      fromRight: false,
+      fromBottom: true,
+    );
+    final verticallyResizedPortrait = controller.selectedComponentBlock!;
+    expect(
+      verticallyResizedPortrait.size.width,
+      closeTo(resizedPortrait.size.width, 0.0001),
+    );
+    expect(
+      verticallyResizedPortrait.size.height,
+      closeTo(resizedPortrait.size.height + 0.10, 0.0001),
     );
 
     controller.addUploadedImageBlock('photo-landscape', aspectRatio: 2.0);

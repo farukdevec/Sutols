@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sutol/models/slide_model.dart';
 import 'package:sutol/services/presentation_export_builder.dart';
@@ -30,10 +32,7 @@ void main() {
       RegExp('class="sutol-export-slide(?: is-active)?"').allMatches(document),
       hasLength(30),
     );
-    expect(
-      RegExp('class="sutol-export-dot(?: is-active)?"').allMatches(document),
-      hasLength(30),
-    );
+    expect(document, isNot(contains('class="sutol-export-dot')));
     for (var index = 1; index <= 30; index += 1) {
       expect(document, contains('data-page-id="export-page-$index"'));
       expect(document, contains('Benzersiz Slayt $index'));
@@ -61,5 +60,40 @@ void main() {
     for (var index = 1; index <= 30; index += 1) {
       expect(document, contains('data-page-id="export-page-$index"'));
     }
+  });
+
+  test('HTML çıktısı görselin düzenlenmiş çerçeve ölçülerini korur', () {
+    const imageId = 'pexels-test-image';
+    final document = buildPresentationExportHtml(
+      pages: const <PresentationPage>[
+        PresentationPage(
+          id: 'image-page',
+          textBlocks: <PresentationTextBlock>[],
+          componentBlocks: <PresentationComponentBlock>[
+            PresentationComponentBlock(
+              id: 'image-block',
+              imageAssetId: imageId,
+              imageAspectRatio: 1.5,
+              position: Offset(.12, .18),
+              size: Size(.37, .42),
+            ),
+          ],
+        ),
+      ],
+      imageSourcesById: const <String, String>{
+        imageId: 'data:image/png;base64,AA==',
+      },
+    );
+
+    expect(
+      document,
+      contains(
+        'data-sutol-component-id="image-block" data-reveal-step="0" '
+        'data-animation-step="0" aria-label="pexels-test-image" '
+        'style="left:12.00%;top:18.00%;width:37.00%;height:42.00%;',
+      ),
+    );
+    expect(document, contains('object-fit: cover;'));
+    expect(document, isNot(contains('object-fit: contain;')));
   });
 }

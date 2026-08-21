@@ -384,6 +384,20 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('editör sahnesi içerik için gri platform iframe kurmaz', (
+    tester,
+  ) async {
+    await pumpAt(tester, const Size(1400, 900));
+    expect(
+      find.byType(HtmlPageStage),
+      findsNothing,
+      reason:
+          'Metin ve görseller Flutter katmanında çizilmeli; yalnızca sabit HTML arka planı kalmalı.',
+    );
+    expect(find.byType(HtmlLiveBackground), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   for (final w in <double>[700, 760, 800, 860, 900, 1000, 1080]) {
     testWidgets('arka plan paneli ${w.toInt()}px genişlikte taşmaz', (
       tester,

@@ -1142,8 +1142,7 @@ void main() {
     );
   });
 
-  test('HTML export uses a frameless fullscreen stage with bottom navigation',
-      () {
+  test('HTML export only shows navigation and fullscreen controls', () {
     final document = buildPresentationExportHtml(
       pages: const <PresentationPage>[
         PresentationPage(
@@ -1164,9 +1163,24 @@ void main() {
     expect(document, contains('height: 100vh'));
     expect(document, contains('id="sutolPrevBtn"'));
     expect(document, contains('id="sutolNextBtn"'));
+    expect(document, contains('id="sutolFullscreenBtn"'));
+    expect(document, isNot(contains('id="sutolZoomBtn"')));
+    expect(document, isNot(contains('id="sutolLaserBtn"')));
+    expect(document, isNot(contains('id="sutolOverviewBtn"')));
+    expect(document, isNot(contains('id="sutolNotesBtn"')));
+    expect(document, isNot(contains('class="sutol-export-dot')));
+    expect(document, contains(':fullscreen .sutol-export-stage-frame'));
     expect(
-      RegExp('class="sutol-export-dot(?: is-active)?"').allMatches(document),
-      hasLength(2),
+      document,
+      contains(
+        'width: max(100vw, calc(100vh * 1.7778));',
+      ),
+    );
+    expect(
+      document,
+      contains(
+        'height: max(100vh, calc(100vw / 1.7778));',
+      ),
     );
   });
 

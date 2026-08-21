@@ -12,6 +12,7 @@ import 'ui/membership_page.dart';
 import 'ui/my_presentations_page.dart';
 import 'ui/presentation_open_page.dart';
 import 'ui/redeem_code_page.dart';
+import 'ui/widgets/authenticated_route_guard.dart';
 
 /// Web ve mobil platformlar için merkezi rota ve URL yöneticisi.
 class AppRoutes {
@@ -265,8 +266,11 @@ class AppRoutes {
     if (lookupPath == editor) {
       return MaterialPageRoute<void>(
         settings: settings,
-        builder: (_) => HtmlPresentationEditorPage(
-          controller: PresentationController(),
+        builder: (_) => AuthenticatedRouteGuard(
+          redirectRoute: isEnRoute ? '/en' : home,
+          builder: (_) => HtmlPresentationEditorPage(
+            controller: PresentationController(),
+          ),
         ),
       );
     }
@@ -276,7 +280,10 @@ class AppRoutes {
       if (id.isNotEmpty) {
         return MaterialPageRoute<void>(
           settings: settings,
-          builder: (_) => PresentationOpenPage(presentationId: id),
+          builder: (_) => AuthenticatedRouteGuard(
+            redirectRoute: isEnRoute ? '/en' : home,
+            builder: (_) => PresentationOpenPage(presentationId: id),
+          ),
         );
       }
     }
@@ -329,8 +336,8 @@ class AppRoutes {
     }
 
     // 7. Konu adı + id formatı (Örn: /cernobil-nukleer-faciasi-id54445484 veya /maddenin-halleriid54445484 veya /id54445484)
-    final topicIdMatch =
-        RegExp(r'^/(?:[a-zA-Z0-9_\-]*?)id([a-zA-Z0-9_\-]+)$').firstMatch(lookupPath);
+    final topicIdMatch = RegExp(r'^/(?:[a-zA-Z0-9_\-]*?)id([a-zA-Z0-9_\-]+)$')
+        .firstMatch(lookupPath);
     if (topicIdMatch != null) {
       final id = topicIdMatch.group(1);
       if (id != null && id.isNotEmpty) {

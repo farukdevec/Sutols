@@ -159,14 +159,167 @@ class HtmlLiveBackground extends StatefulWidget {
 }
 
 class _HtmlLiveBackgroundState extends State<HtmlLiveBackground> {
-  html.IFrameElement? _iframe;
+  static int _viewCounter = 0;
 
-  void _applyDocument() {
-    _iframe?.srcdoc = buildHtmlBackgroundSceneDocument(
+  late final String _viewType;
+  late final html.DivElement _hostElement;
+  html.IFrameElement? _currentIframe;
+  html.IFrameElement? _pendingIframe;
+  StreamSubscription<html.Event>? _pendingLoadSubscription;
+  Timer? _readinessTimer;
+  int _renderGeneration = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _viewType = 'sutol-live-background-${_viewCounter++}';
+    _hostElement = html.DivElement()
+      ..style.width = '100%'
+      ..style.height = '100%'
+      ..style.position = 'relative'
+      ..style.overflow = 'hidden'
+      ..style.pointerEvents = 'none'
+      ..style.backgroundColor = 'transparent';
+    ui_web.platformViewRegistry.registerViewFactory(
+      _viewType,
+      (int viewId) => _hostElement,
+    );
+    _queueDocument();
+  }
+
+  html.IFrameElement _createIframe() => html.IFrameElement()
+    ..style.width = '100%'
+    ..style.height = '100%'
+    ..style.position = 'absolute'
+    ..style.top = '0'
+    ..style.right = '0'
+    ..style.bottom = '0'
+    ..style.left = '0'
+    ..style.border = '0'
+    ..style.pointerEvents = 'none'
+    ..style.backgroundColor = 'transparent'
+    ..style.opacity = '0'
+    ..style.visibility = 'hidden'
+    ..setAttribute('scrolling', 'no')
+    // The scene documents are bundled, trusted application HTML. Same-origin
+    // access lets us verify that the new frame is actually painted before the
+    // previous one is removed.
+    ..setAttribute('sandbox', 'allow-scripts allow-same-origin');
+
+  void _queueDocument() {
+    _renderGeneration += 1;
+    final generation = _renderGeneration;
+
+    final previousSubscription = _pendingLoadSubscription;
+    if (previousSubscription != null) {
+      unawaited(previousSubscription.cancel());
+    }
+    _pendingLoadSubscription = null;
+    _readinessTimer?.cancel();
+    _readinessTimer = null;
+    _pendingIframe?.remove();
+
+    final nextIframe = _createIframe();
+    _pendingIframe = nextIframe;
+    var document = buildHtmlBackgroundSceneDocument(
       widget.kind,
       animationEnabled: widget.animationEnabled,
       animationSpeed: widget.animationSpeed,
       colorsInverted: widget.colorsInverted,
+    );
+    final marker =
+        '<meta name="sutol-render-generation" content="$generation">';
+    document = document.contains('</head>')
+        ? document.replaceFirst('</head>', '$marker</head>')
+        : '$marker$document';
+
+    bool isReady() {
+      try {
+        final frameDocument =
+            (nextIframe.contentWindow as dynamic).document as html.Document?;
+        if (frameDocument == null || frameDocument.readyState != 'complete') {
+          return false;
+        }
+        return frameDocument
+                .querySelector('meta[name="sutol-render-generation"]')
+                ?.getAttribute('content') ==
+            '$generation';
+      } catch (_) {
+        return false;
+      }
+    }
+
+    void commitWhenPainted({bool loaded = false}) {
+      if (!mounted ||
+          generation != _renderGeneration ||
+          _pendingIframe != nextIframe ||
+          (!loaded && !isReady())) {
+        return;
+      }
+      // A completed document can still be one compositor frame away from
+      // appearing. Two animation frames keep Chrome's unpainted grey surface
+      // permanently hidden behind the previous background.
+      html.window.requestAnimationFrame((_) {
+        html.window.requestAnimationFrame((_) {
+          if (!mounted ||
+              generation != _renderGeneration ||
+              _pendingIframe != nextIframe) {
+            return;
+          }
+          _readinessTimer?.cancel();
+          _readinessTimer = null;
+          final subscription = _pendingLoadSubscription;
+          _pendingLoadSubscription = null;
+          if (subscription != null) {
+            unawaited(subscription.cancel());
+          }
+          nextIframe.style
+            ..visibility = 'visible'
+            ..opacity = '1';
+          final previousIframe = _currentIframe;
+          _currentIframe = nextIframe;
+          _pendingIframe = null;
+          previousIframe?.remove();
+        });
+      });
+    }
+
+    _pendingLoadSubscription = nextIframe.onLoad.listen(
+      (_) => commitWhenPainted(loaded: true),
+    );
+    _hostElement.children.add(nextIframe);
+    nextIframe.srcdoc = document;
+
+    // Some Chrome versions miss `load` for rapidly replaced srcdoc frames.
+    // Poll the generation marker, but never expose an unready iframe. If the
+    // candidate fails, the last good frame remains visible.
+    var checks = 0;
+    _readinessTimer = Timer.periodic(
+      const Duration(milliseconds: 50),
+      (timer) {
+        if (!mounted ||
+            generation != _renderGeneration ||
+            _pendingIframe != nextIframe) {
+          timer.cancel();
+          return;
+        }
+        checks += 1;
+        if (isReady()) {
+          timer.cancel();
+          commitWhenPainted();
+          return;
+        }
+        if (checks < 200) return;
+        timer.cancel();
+        final subscription = _pendingLoadSubscription;
+        _pendingLoadSubscription = null;
+        if (subscription != null) {
+          unawaited(subscription.cancel());
+        }
+        nextIframe.remove();
+        if (_pendingIframe == nextIframe) _pendingIframe = null;
+        _readinessTimer = null;
+      },
     );
   }
 
@@ -177,28 +330,22 @@ class _HtmlLiveBackgroundState extends State<HtmlLiveBackground> {
         oldWidget.animationEnabled != widget.animationEnabled ||
         oldWidget.animationSpeed != widget.animationSpeed ||
         oldWidget.colorsInverted != widget.colorsInverted) {
-      _applyDocument();
+      _queueDocument();
     }
   }
 
   @override
-  Widget build(BuildContext context) {
-    return HtmlElementView.fromTagName(
-      tagName: 'iframe',
-      onElementCreated: (element) {
-        final iframe = element as html.IFrameElement
-          ..style.width = '100%'
-          ..style.height = '100%'
-          ..style.border = '0'
-          ..style.pointerEvents = 'none'
-          ..style.backgroundColor = 'transparent'
-          ..setAttribute('scrolling', 'no')
-          ..setAttribute('sandbox', 'allow-scripts');
-        _iframe = iframe;
-        _applyDocument();
-      },
-    );
+  void dispose() {
+    _renderGeneration += 1;
+    final subscription = _pendingLoadSubscription;
+    if (subscription != null) unawaited(subscription.cancel());
+    _readinessTimer?.cancel();
+    _hostElement.children.clear();
+    super.dispose();
   }
+
+  @override
+  Widget build(BuildContext context) => HtmlElementView(viewType: _viewType);
 }
 
 class HtmlBackgroundPreview extends StatefulWidget {
@@ -365,7 +512,9 @@ class _HtmlPageStageState extends State<HtmlPageStage> {
       ..style.overflow = 'hidden'
       ..style.backgroundColor = 'transparent';
     _applyVisualStyle();
-    _iframeElement = _createIframe()..style.opacity = '1';
+    _iframeElement = _createIframe()
+      ..style.opacity = '0'
+      ..style.visibility = 'hidden';
     _hostElement.children.add(_iframeElement);
     if (widget.onTap != null) {
       final overlay = html.DivElement()
@@ -431,7 +580,7 @@ class _HtmlPageStageState extends State<HtmlPageStage> {
                     widget.page.backgroundAnimationSpeed ||
                 oldWidget.page.backgroundColorsInverted !=
                     widget.page.backgroundColorsInverted))) {
-      _render(replaceImmediately: true);
+      _render();
       return;
     }
     if (!_patchInPlace(oldWidget)) {
@@ -475,7 +624,7 @@ class _HtmlPageStageState extends State<HtmlPageStage> {
     super.dispose();
   }
 
-  void _render({bool replaceImmediately = false}) {
+  void _render() {
     final document = buildHtmlStageDocument(
       page: widget.page,
       selectedTextBlockId: widget.selectedTextBlockId,
@@ -492,40 +641,102 @@ class _HtmlPageStageState extends State<HtmlPageStage> {
     // İlk sahnede değiştirecek eski bir kare yoktur; doğrudan yükle.
     if (!_hasRendered) {
       _hasRendered = true;
-      _iframeElement.style.pointerEvents =
-          widget.renderMode == HtmlStageRenderMode.full ? 'auto' : 'none';
-      _iframeElement.style.opacity = '1';
-      _iframeElement.srcdoc = document;
+      _renderGeneration += 1;
+      final generation = _renderGeneration;
+      final initialIframe = _iframeElement;
+      var markedDocument = document;
+      final marker =
+          '<meta name="sutol-stage-generation" content="$generation">';
+      markedDocument = markedDocument.contains('</head>')
+          ? markedDocument.replaceFirst('</head>', '$marker</head>')
+          : '$marker$markedDocument';
+
+      bool isInitialReady() {
+        try {
+          final frameDocument = (initialIframe.contentWindow as dynamic)
+              .document as html.Document?;
+          if (frameDocument == null || frameDocument.readyState != 'complete') {
+            return false;
+          }
+          return frameDocument
+                  .querySelector('meta[name="sutol-stage-generation"]')
+                  ?.getAttribute('content') ==
+              '$generation';
+        } catch (_) {
+          return false;
+        }
+      }
+
+      void revealInitialWhenPainted({bool loaded = false}) {
+        if (!mounted ||
+            generation != _renderGeneration ||
+            (!loaded && !isInitialReady())) {
+          return;
+        }
+        html.window.requestAnimationFrame((_) {
+          html.window.requestAnimationFrame((_) {
+            if (!mounted || generation != _renderGeneration) return;
+            _initialLoadTimer?.cancel();
+            _initialLoadTimer = null;
+            final subscription = _initialLoadSubscription;
+            _initialLoadSubscription = null;
+            if (subscription != null) unawaited(subscription.cancel());
+            initialIframe.style
+              ..visibility = 'visible'
+              ..opacity = '1'
+              ..pointerEvents = widget.renderMode == HtmlStageRenderMode.full
+                  ? 'auto'
+                  : 'none';
+          });
+        });
+      }
+
+      _initialLoadSubscription = initialIframe.onLoad.listen(
+        (_) => revealInitialWhenPainted(loaded: true),
+      );
+      initialIframe.srcdoc = markedDocument;
+      var checks = 0;
+      _initialLoadTimer = Timer.periodic(
+        const Duration(milliseconds: 50),
+        (timer) {
+          if (!mounted || generation != _renderGeneration) {
+            timer.cancel();
+            return;
+          }
+          checks += 1;
+          if (isInitialReady()) {
+            timer.cancel();
+            revealInitialWhenPainted();
+            return;
+          }
+          if (checks < 200) return;
+          timer.cancel();
+          final subscription = _initialLoadSubscription;
+          _initialLoadSubscription = null;
+          if (subscription != null) unawaited(subscription.cancel());
+          _initialLoadTimer = null;
+        },
+      );
       return;
     }
 
-    // Arka plan seçimi kullanıcıya anında yansımalıdır. Bu değişikliği load
-    // olayına bağlı çift-iframe geçişine bırakırsak Chrome iç içe srcdoc
-    // belgelerinde olayı kaçırıp eski sahneyi görünür tutabilir. Yeni iframe'i
-    // doğrudan görünür sahne yap; yüklenirken alttaki Flutter önizlemesi doğal
-    // bir placeholder görevi görür.
-    if (replaceImmediately) {
-      _renderGeneration += 1;
-      final pendingLoadSubscription = _pendingLoadSubscription;
-      if (pendingLoadSubscription != null) {
-        unawaited(pendingLoadSubscription.cancel());
+    // Structural edits (adding/removing a Pexels image, changing pages, etc.)
+    // are rewritten inside the existing iframe. Keeping both the Flutter
+    // platform view and iframe element stable prevents Chrome's grey surface
+    // during iframe replacement. The freshly written document installs this
+    // same listener again, so later edits remain patchable.
+    if (_pendingIframeElement == null) {
+      final targetWindow = _iframeElement.contentWindow;
+      if (targetWindow != null) {
+        targetWindow.postMessage(
+          jsonEncode(<String, Object?>{
+            'type': 'sutol-stage-replace',
+            'document': document,
+          }),
+          '*',
+        );
+        return;
       }
-      _pendingLoadSubscription = null;
-      _pendingLoadTimer?.cancel();
-      _pendingLoadTimer = null;
-      _pendingIframeElement?.remove();
-      _pendingIframeElement = null;
-
-      final previousIframe = _iframeElement;
-      final nextIframe = _createIframe()
-        ..style.opacity = '1'
-        ..style.pointerEvents =
-            widget.renderMode == HtmlStageRenderMode.full ? 'auto' : 'none';
-      _hostElement.children.add(nextIframe);
-      nextIframe.srcdoc = document;
-      _iframeElement = nextIframe;
-      previousIframe.remove();
-      return;
     }
 
     // Slayt değişiminde mevcut iframe'i boşaltmak gri bir ara kare üretir.
@@ -534,6 +745,13 @@ class _HtmlPageStageState extends State<HtmlPageStage> {
     // oluşturulan belge sahneye alınır.
     _renderGeneration += 1;
     final generation = _renderGeneration;
+    final initialSubscription = _initialLoadSubscription;
+    _initialLoadSubscription = null;
+    if (initialSubscription != null) {
+      unawaited(initialSubscription.cancel());
+    }
+    _initialLoadTimer?.cancel();
+    _initialLoadTimer = null;
     final previousPending = _pendingLoadSubscription;
     if (previousPending != null) {
       unawaited(previousPending.cancel());
@@ -549,43 +767,115 @@ class _HtmlPageStageState extends State<HtmlPageStage> {
       ..style.width = '100%'
       ..style.height = '100%'
       ..style.pointerEvents = 'none'
-      ..style.opacity = '0.001';
+      ..style.opacity = '0'
+      ..style.visibility = 'hidden';
     _pendingIframeElement = nextIframe;
+    final marker = '<meta name="sutol-stage-generation" content="$generation">';
+    final pendingDocument = document.contains('</head>')
+        ? document.replaceFirst('</head>', '$marker</head>')
+        : '$marker$document';
 
-    void commitPendingIframe() {
-      if (!mounted ||
-          generation != _renderGeneration ||
-          _pendingIframeElement != nextIframe) {
-        return;
+    bool isPendingReady() {
+      try {
+        final frameDocument =
+            (nextIframe.contentWindow as dynamic).document as html.Document?;
+        if (frameDocument == null || frameDocument.readyState != 'complete') {
+          return false;
+        }
+        return frameDocument
+                .querySelector('meta[name="sutol-stage-generation"]')
+                ?.getAttribute('content') ==
+            '$generation';
+      } catch (_) {
+        return false;
       }
-      _pendingLoadTimer?.cancel();
-      _pendingLoadTimer = null;
-      final previousIframe = _iframeElement;
-      nextIframe.style.opacity = '1';
-      nextIframe.style.pointerEvents =
-          widget.renderMode == HtmlStageRenderMode.full ? 'auto' : 'none';
-      _iframeElement = nextIframe;
-      _pendingIframeElement = null;
-      final subscription = _pendingLoadSubscription;
-      _pendingLoadSubscription = null;
-      if (subscription != null) {
-        unawaited(subscription.cancel());
-      }
-      previousIframe.remove();
     }
 
-    _pendingLoadSubscription =
-        nextIframe.onLoad.listen((_) => commitPendingIframe());
+    void commitPendingIframe({bool loaded = false}) {
+      if (!mounted ||
+          generation != _renderGeneration ||
+          _pendingIframeElement != nextIframe ||
+          (!loaded && !isPendingReady())) {
+        return;
+      }
+      html.window.requestAnimationFrame((_) {
+        html.window.requestAnimationFrame((_) {
+          if (!mounted ||
+              generation != _renderGeneration ||
+              _pendingIframeElement != nextIframe) {
+            return;
+          }
+          _pendingLoadTimer?.cancel();
+          _pendingLoadTimer = null;
+          final previousIframe = _iframeElement;
+          nextIframe.style
+            ..visibility = 'visible'
+            ..opacity = '1'
+            ..pointerEvents =
+                widget.renderMode == HtmlStageRenderMode.full ? 'auto' : 'none';
+          _iframeElement = nextIframe;
+          _pendingIframeElement = null;
+          final subscription = _pendingLoadSubscription;
+          _pendingLoadSubscription = null;
+          if (subscription != null) {
+            unawaited(subscription.cancel());
+          }
+          previousIframe.remove();
+        });
+      });
+    }
+
+    _pendingLoadSubscription = nextIframe.onLoad.listen(
+      (_) => commitPendingIframe(loaded: true),
+    );
     // Chrome, iç içe srcdoc iframe'lerinde srcdoc DOM'a bağlanmadan atanırsa
     // load olayını kimi güncellemelerde kaçırabiliyor. Önce iframe'i sahneye
     // bağla, ardından belgeyi ata.
     _hostElement.children.add(nextIframe);
-    // İç arka plan iframe'i ağır olduğunda veya tarayıcı load olayını hiç
-    // iletmediğinde yeni belge görünmez kalmamalı. Kısa bir güvenlik süresi
-    // sonunda geçişi tamamlayacak yedeği belge atanmadan önce kur.
-    _pendingLoadTimer =
-        Timer(const Duration(milliseconds: 250), commitPendingIframe);
-    nextIframe.srcdoc = document;
+    nextIframe.srcdoc = pendingDocument;
+
+    // Chrome bazı srcdoc güncellemelerinde iframe load olayını kaçırabiliyor.
+    // Önceki 250 ms'lik zorunlu geçiş, uzaktaki bir fotoğraf henüz yüklenirken
+    // boyanmamış iframe yüzeyini görünür yapıp tüm sahneyi gri bırakıyordu.
+    // Belgenin gerçekten tamamlandığını aynı-origin srcdoc üzerinden denetle;
+    // hazır değilse çalışan eski iframe'i koru. On saniyede tamamlanmayan yeni
+    // belge sessizce atılır ve bir sonraki düzenleme yeniden deneyebilir.
+    var readinessChecks = 0;
+    _pendingLoadTimer = Timer.periodic(
+      const Duration(milliseconds: 50),
+      (timer) {
+        if (!mounted ||
+            generation != _renderGeneration ||
+            _pendingIframeElement != nextIframe) {
+          timer.cancel();
+          return;
+        }
+
+        readinessChecks += 1;
+        try {
+          if (isPendingReady()) {
+            commitPendingIframe();
+            return;
+          }
+        } catch (_) {
+          // srcdoc normalde ana sayfayla aynı origin'dir. Tarayıcı erişimi
+          // geçici olarak reddederse load olayını beklemeye devam et.
+        }
+
+        if (readinessChecks < 200) return;
+        timer.cancel();
+        final subscription = _pendingLoadSubscription;
+        _pendingLoadSubscription = null;
+        if (subscription != null) {
+          unawaited(subscription.cancel());
+        }
+        nextIframe.remove();
+        if (_pendingIframeElement == nextIframe) {
+          _pendingIframeElement = null;
+        }
+        _pendingLoadTimer = null;
+      },
+    );
   }
 
   bool _patchInPlace(HtmlPageStage oldWidget) {

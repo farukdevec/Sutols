@@ -23,11 +23,6 @@ String buildPresentationExportHtml({
   );
   final exportStageStyles = sutolHtmlStageStylesForPages(pages);
   final slidesMarkup = StringBuffer();
-  final dotsMarkup = StringBuffer();
-  final zoomButtonMarkup = effectSettings.zoomEnabled
-      ? '<button id="sutolZoomBtn" class="sutol-export-action sutol-export-icon-action" type="button" aria-label="Zoom" aria-pressed="false" title="Zoom">&#8853;</button>'
-      : '';
-
   for (var index = 0; index < pages.length; index += 1) {
     final page = pages[index];
     final transitionAfter =
@@ -52,10 +47,6 @@ String buildPresentationExportHtml({
       )
       ..writeln('</div>')
       ..writeln('</section>');
-
-    dotsMarkup.writeln(
-      '<button class="sutol-export-dot${index == 0 ? ' is-active' : ''}" type="button" data-index="$index" aria-label="Slayt ${index + 1}" aria-current="${index == 0 ? 'true' : 'false'}"></button>',
-    );
   }
 
   final speakerNotesList = pages.map((p) => p.speakerNotes).toList();
@@ -77,42 +68,16 @@ String buildPresentationExportHtml({
 </head>
 <body>
   ${effectSettings.showProgressBar ? '<div id="sutolProgressBar" class="sutol-progress-bar"><div class="sutol-progress-fill" id="sutolProgressFill"></div></div>' : ''}
-  <div id="sutolLaserPointer" class="sutol-laser-pointer"></div>
-  <div id="sutolCurtainOverlay" class="sutol-curtain-overlay"></div>
-
-  <div class="sutol-export-shell ${_transitionShellClass(effectSettings.transitionKind)}${effectSettings.zoomEnabled ? ' allow-zoom' : ''}${effectSettings.reducedMotion ? ' reduce-motion' : ''}${printMode ? ' print-mode' : ''}" style="--sutol-transition-duration:${effectSettings.transitionDurationMs}ms;--sutol-zoom-scale:${effectSettings.zoomScale.toStringAsFixed(2)};">
+  <div class="sutol-export-shell ${_transitionShellClass(effectSettings.transitionKind)}${effectSettings.reducedMotion ? ' reduce-motion' : ''}${printMode ? ' print-mode' : ''}" style="--sutol-transition-duration:${effectSettings.transitionDurationMs}ms;--sutol-zoom-scale:${effectSettings.zoomScale.toStringAsFixed(2)};">
     <main class="sutol-export-deck">
       $slidesMarkup
     </main>
 
     <div class="sutol-export-nav">
       <button id="sutolPrevBtn" class="sutol-export-action sutol-export-arrow" type="button" aria-label="Önceki slayt" title="Önceki slayt (Sol Ok)">&#8592;</button>
-      <div class="sutol-export-dots">
-        $dotsMarkup
-      </div>
       <button id="sutolNextBtn" class="sutol-export-action sutol-export-arrow primary" type="button" aria-label="Sonraki slayt" title="Sonraki slayt (Sağ Ok / Boşluk)">&#8594;</button>
-      $zoomButtonMarkup
-      <button id="sutolLaserBtn" class="sutol-export-action sutol-export-icon-action" type="button" aria-label="Lazer (L)" title="Lazer İşaretçi (L)">&#128308;</button>
-      <button id="sutolOverviewBtn" class="sutol-export-action sutol-export-icon-action" type="button" aria-label="Genel Bakış (O)" title="Genel Bakış (O)">&#9638;</button>
-      <button id="sutolNotesBtn" class="sutol-export-action sutol-export-icon-action" type="button" aria-label="Notlar (P)" title="Sunucu Notları (P)">&#128221;</button>
       <button id="sutolFullscreenBtn" class="sutol-export-action sutol-export-icon-action" type="button" aria-label="Tam ekran (F)" title="Tam ekran (F)">&#9974;</button>
     </div>
-  </div>
-
-  <div id="sutolOverviewModal" class="sutol-overview-modal" aria-hidden="true">
-    <div class="sutol-overview-header">
-      <span>Slayt Genel Bakış</span>
-      <button id="sutolCloseOverviewBtn" class="sutol-export-action" type="button" style="width: auto; padding: 0.4rem 1rem;">Kapat (&times;)</button>
-    </div>
-    <div class="sutol-overview-grid" id="sutolOverviewGrid"></div>
-  </div>
-
-  <div id="sutolPresenterNotes" class="sutol-presenter-drawer" aria-hidden="true">
-    <div class="sutol-presenter-header">
-      <span>Sunucu Notları</span>
-      <button id="sutolClosePresenterBtn" class="sutol-export-action" type="button" style="width: auto; padding: 0.2rem 0.6rem; font-size: 0.8rem;">&times;</button>
-    </div>
-    <div id="sutolNotesContent" class="sutol-presenter-body">Not bulunmuyor.</div>
   </div>
 
   <script>
@@ -121,14 +86,14 @@ String buildPresentationExportHtml({
   $sutolHtmlStageComponentScript
 
   ${printMode ? '' : _exportScript(
-          zoomEnabled: effectSettings.zoomEnabled,
+          zoomEnabled: false,
           revealCounts: revealCounts,
           smoothTransition: effectSettings.transitionKind ==
               PresentationTransitionKind.smooth,
           transitionDurationMs: effectSettings.transitionDurationMs,
           autoPlayIntervalSec: effectSettings.autoPlayIntervalSec,
           loop: effectSettings.loop,
-          enableLaserPointer: effectSettings.enableLaserPointer,
+          enableLaserPointer: false,
           enableSoundEffects: effectSettings.enableSoundEffects,
           speakerNotesJson: speakerNotesJson,
         )}
@@ -491,6 +456,17 @@ body {
   transform-origin: var(--sutol-zoom-origin-x, 50%) var(--sutol-zoom-origin-y, 50%);
   transition:
     transform 320ms cubic-bezier(.22, 1, .36, 1);
+}
+
+/* Tam ekranda sahneyi oranını bozmadan viewport'a cover uygular. */
+:fullscreen .sutol-export-stage-frame {
+  width: max(100vw, calc(100vh * ${effectSettings.calculatedAspectRatio.toStringAsFixed(4)}));
+  height: max(100vh, calc(100vw / ${effectSettings.calculatedAspectRatio.toStringAsFixed(4)}));
+}
+
+:-webkit-full-screen .sutol-export-stage-frame {
+  width: max(100vw, calc(100vh * ${effectSettings.calculatedAspectRatio.toStringAsFixed(4)}));
+  height: max(100vh, calc(100vw / ${effectSettings.calculatedAspectRatio.toStringAsFixed(4)}));
 }
 
 .sutol-export-stage {

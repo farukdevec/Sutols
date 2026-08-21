@@ -3192,7 +3192,7 @@ body {
 .sutol-uploaded-image-element {
   width: 100%;
   height: 100%;
-  object-fit: contain;
+  object-fit: cover;
   border-radius: 6px;
   user-select: none;
   -webkit-user-drag: none;
@@ -3455,6 +3455,16 @@ const String _stagePatchScript = r'''
     let data = event.data;
     if (typeof data === 'string') {
       try { data = JSON.parse(data); } catch (_) { return; }
+    }
+    if (data && data.type === 'sutol-stage-replace') {
+      if (typeof data.document !== 'string' || data.document.length === 0) return;
+      // Keep the iframe/platform-view identity stable. Rewriting the same
+      // document avoids Chrome creating an unpainted grey compositor surface
+      // when images or other structural blocks are added.
+      document.open();
+      document.write(data.document);
+      document.close();
+      return;
     }
     if (!data || data.type !== 'sutol-stage-patch') return;
 

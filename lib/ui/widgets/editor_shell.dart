@@ -2240,7 +2240,9 @@ class _PresentationPageCanvasState extends State<PresentationPageCanvas> {
                 isSelected: selectedComponentIds.contains(block.id),
                 interactive: widget.interactive,
                 showSelectionBorder: widget.showSelectionBorder,
-                opacity: widget.textOpacity,
+                // Keep real photos visible in Flutter while the HTML layer
+                // refreshes. This prevents an empty/grey Pexels placeholder.
+                opacity: _isCanvasImageBlock(block) ? 1 : widget.textOpacity,
                 showResizeHandles: widget.interactive &&
                     selectedTextIds.isEmpty &&
                     selectedComponentIds.length == 1 &&
@@ -2711,6 +2713,10 @@ class _PageComponentBlock extends StatelessWidget {
       return const SizedBox.shrink();
     }
     final isImage = _isCanvasImageBlock(block);
+    final imageSourceId = block.imageAssetId ?? block.modelAssetId;
+    final imageSource = imageSourceId == null
+        ? null
+        : RemoteImageSources.sourceFor(imageSourceId);
     final minW = math.min(54.0, canvasSize.width);
     final minH = math.min(44.0, canvasSize.height);
     final width = (block.size.width * canvasSize.width)
@@ -2791,35 +2797,53 @@ class _PageComponentBlock extends StatelessWidget {
                     opacity: visibleOpacity,
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(isImage ? 6 : 16),
-                      child: isImage
-                          ? const SizedBox.expand()
-                          : !_isRenderableCanvasModelBlock(block)
-                              ? CustomPaint(
-                                  painter: ComponentBlockPreviewPainter(
-                                      kind: block.kind),
-                                )
-                              : DecoratedBox(
-                                  decoration: const BoxDecoration(
-                                    gradient: LinearGradient(
-                                      colors: <Color>[
-                                        Color(0xFF13294B),
-                                        Color(0xFF247BCE),
-                                      ],
-                                      begin: Alignment.topLeft,
-                                      end: Alignment.bottomRight,
-                                    ),
-                                  ),
-                                  child: Center(
-                                    child: Icon(
-                                      findPresentation3DModelAsset(
-                                            block.modelAssetId!,
-                                          )?.icon ??
-                                          Icons.view_in_ar_rounded,
-                                      color: Colors.white,
-                                      size: 34,
-                                    ),
+                      child: isImage && imageSource != null
+                          ? Image.network(
+                              imageSource,
+                              fit: BoxFit.cover,
+                              width: double.infinity,
+                              height: double.infinity,
+                              errorBuilder: (_, __, ___) => const DecoratedBox(
+                                decoration: BoxDecoration(
+                                  color: Color(0xFFF1F5F9),
+                                ),
+                                child: Center(
+                                  child: Icon(
+                                    Icons.broken_image_rounded,
+                                    color: Color(0xFF64748B),
                                   ),
                                 ),
+                              ),
+                            )
+                          : isImage
+                              ? const SizedBox.expand()
+                              : !_isRenderableCanvasModelBlock(block)
+                                  ? CustomPaint(
+                                      painter: ComponentBlockPreviewPainter(
+                                          kind: block.kind),
+                                    )
+                                  : DecoratedBox(
+                                      decoration: const BoxDecoration(
+                                        gradient: LinearGradient(
+                                          colors: <Color>[
+                                            Color(0xFF13294B),
+                                            Color(0xFF247BCE),
+                                          ],
+                                          begin: Alignment.topLeft,
+                                          end: Alignment.bottomRight,
+                                        ),
+                                      ),
+                                      child: Center(
+                                        child: Icon(
+                                          findPresentation3DModelAsset(
+                                                block.modelAssetId!,
+                                              )?.icon ??
+                                              Icons.view_in_ar_rounded,
+                                          color: Colors.white,
+                                          size: 34,
+                                        ),
+                                      ),
+                                    ),
                     ),
                   ),
                 ),

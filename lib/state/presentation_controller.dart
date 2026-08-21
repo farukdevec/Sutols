@@ -1917,52 +1917,6 @@ class PresentationController extends ChangeNotifier {
           .toDouble();
     }
 
-    final imageAspectRatio = current.imageAspectRatio;
-    if (current.imageAssetId != null && imageAspectRatio != null) {
-      // Component sizes are normalized against a 16:9 slide. Convert the
-      // photo's pixel aspect ratio to that coordinate system and keep the
-      // selection frame attached to the actual image proportions.
-      final normalizedRatio = imageAspectRatio / (16 / 9);
-      final horizontalResize = fromLeft || fromRight;
-      final verticalResize = fromTop || fromBottom;
-      var targetWidth = horizontalResize && !verticalResize
-          ? right - left
-          : (bottom - top) * normalizedRatio;
-      if (horizontalResize && verticalResize) {
-        final widthDrivenHeight = (right - left) / normalizedRatio;
-        final heightDrivenWidth = (bottom - top) * normalizedRatio;
-        targetWidth = (widthDrivenHeight - current.size.height).abs() >=
-                (heightDrivenWidth - current.size.width).abs()
-            ? right - left
-            : heightDrivenWidth;
-      }
-
-      final maxWidthForAnchor = fromLeft ? right - minLeft : maxRight - left;
-      final maxHeightForAnchor = fromTop ? bottom - minTop : maxBottom - top;
-      final minWidth = math.max(
-        _minComponentWidthFactor,
-        _minComponentHeightFactor * normalizedRatio,
-      );
-      final maxWidth = math.min(
-        math.min(_maxComponentWidthFactor, maxWidthForAnchor),
-        math.min(_maxComponentHeightFactor, maxHeightForAnchor) *
-            normalizedRatio,
-      );
-      targetWidth = targetWidth.clamp(minWidth, maxWidth).toDouble();
-      final targetHeight = targetWidth / normalizedRatio;
-
-      if (fromLeft) {
-        left = right - targetWidth;
-      } else {
-        right = left + targetWidth;
-      }
-      if (fromTop) {
-        top = bottom - targetHeight;
-      } else {
-        bottom = top + targetHeight;
-      }
-    }
-
     final nextSize = Size(
       (right - left).clamp(
         _minComponentWidthFactor,

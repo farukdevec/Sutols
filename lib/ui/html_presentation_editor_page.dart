@@ -57,11 +57,6 @@ bool _isRenderable3DModelBlock(PresentationComponentBlock block) {
   return modelId != null && RemoteModelSources.hasSignedSource(modelId);
 }
 
-bool _isVisuallyBlankPage(PresentationPage page) {
-  return page.componentBlocks.isEmpty &&
-      page.textBlocks.every((block) => block.text.trim().isEmpty);
-}
-
 const Color _studioHeaderBrandStart = Color(0xFF0A7E82);
 const Color _studioHeaderBrandEnd = Color(0xFF006471);
 const Color _studioHeaderForeground = Color(0xFFF7FFFF);
@@ -9288,8 +9283,6 @@ class _HtmlStageCardState extends State<_HtmlStageCard>
       context,
       widget.controller.effectSettings,
     );
-    final isVisuallyBlank =
-        _isVisuallyBlankPage(widget.controller.selectedPage);
     final zoom = math.max(1.0, widget.canvasZoom);
 
     // Yakınlaşınca tuvali sabitleyen çağrıların sürükleme deltalarını
@@ -9349,17 +9342,13 @@ class _HtmlStageCardState extends State<_HtmlStageCard>
                 child: Stack(
                   fit: StackFit.expand,
                   children: <Widget>[
-                    // Anında yerel Flutter önizleme katmanı (0ms - sıfır gecikme/gri ekran)
-                    IgnorePointer(
-                      child: PresentationPageThumbnailCanvas(
-                        page: widget.controller.selectedPage,
-                      ),
-                    ),
+                    // The editor owns content rendering in Flutter. Keeping
+                    // HTML limited to the single background layer prevents
+                    // Chrome platform views from covering the canvas in grey
+                    // when the first Pexels image is inserted.
+                    const ColoredBox(color: Colors.white),
                     IgnorePointer(
                       child: HtmlLiveBackground(
-                        key: ValueKey<PresentationBackgroundKind>(
-                          widget.controller.selectedPage.backgroundKind,
-                        ),
                         kind: widget.controller.selectedPage.backgroundKind,
                         animationEnabled: widget.controller.selectedPage
                                 .backgroundAnimationEnabled &&
@@ -9369,26 +9358,6 @@ class _HtmlStageCardState extends State<_HtmlStageCard>
                         colorsInverted: widget
                             .controller.selectedPage.backgroundColorsInverted,
                       ),
-                    ),
-                    IgnorePointer(
-                      child: isVisuallyBlank
-                          ? const SizedBox.shrink()
-                          : HtmlPageStage(
-                              key: ValueKey<String>(
-                                'editor-content-${widget.controller.selectedPage.backgroundKind.name}',
-                              ),
-                              page: widget.controller.selectedPage,
-                              selectedTextBlockId:
-                                  widget.controller.selectedTextBlockId,
-                              inlineEditingTextBlockId:
-                                  _inlineEditingTextBlockId,
-                              selectedComponentBlockId:
-                                  widget.controller.selectedComponentBlockId,
-                              renderMode: reduceMotion
-                                  ? HtmlStageRenderMode.snapshot
-                                  : HtmlStageRenderMode.preview,
-                              showBackground: false,
-                            ),
                     ),
                     if (_transitionPreviewFrom != null &&
                         _transitionPreviewTo != null &&
@@ -9420,7 +9389,7 @@ class _HtmlStageCardState extends State<_HtmlStageCard>
                           showHint: false,
                           showSurface: false,
                           showEmptyState: false,
-                          textOpacity: isVisuallyBlank ? 1 : 0,
+                          textOpacity: 1,
                         ),
                       )
                     else
@@ -9438,7 +9407,7 @@ class _HtmlStageCardState extends State<_HtmlStageCard>
                         showHint: widget.showHint,
                         showSurface: false,
                         showEmptyState: false,
-                        textOpacity: isVisuallyBlank ? 1 : 0,
+                        textOpacity: 1,
                         onSelectTextBlock: widget.controller.selectTextBlock,
                         onSelectComponentBlock:
                             widget.controller.selectComponentBlock,
