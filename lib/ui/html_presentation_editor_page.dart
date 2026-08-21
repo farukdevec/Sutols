@@ -5061,23 +5061,10 @@ class _HtmlPageCard extends StatelessWidget {
                   child: DecoratedBox(
                     decoration: const BoxDecoration(color: Colors.white),
                     child: IgnorePointer(
-                      child: _isVisuallyBlankPage(page)
-                          ? PresentationPageCanvas(
-                              key: ValueKey<String>(
-                                'blank-page-thumbnail-${page.id}',
-                              ),
-                              page: page,
-                              showHint: false,
-                              showEmptyState: false,
-                              showSelectionBorder: false,
-                            )
-                          : HtmlPageStage(
-                              key: ValueKey<String>(
-                                'page-thumbnail-${page.id}',
-                              ),
-                              page: page,
-                              renderMode: HtmlStageRenderMode.snapshot,
-                            ),
+                      child: PresentationPageThumbnailCanvas(
+                        key: ValueKey<String>('page-thumbnail-${page.id}'),
+                        page: page,
+                      ),
                     ),
                   ),
                 ),
@@ -8716,15 +8703,15 @@ class _HtmlStageCardState extends State<_HtmlStageCard>
                 child: Stack(
                   fit: StackFit.expand,
                   children: <Widget>[
+                    // Anında yerel Flutter önizleme katmanı (0ms - sıfır gecikme/gri ekran)
+                    IgnorePointer(
+                      child: PresentationPageThumbnailCanvas(
+                        page: widget.controller.selectedPage,
+                      ),
+                    ),
                     IgnorePointer(
                       child: isVisuallyBlank
-                          ? PresentationPageCanvas(
-                              page: widget.controller.selectedPage,
-                              showHint: false,
-                              showEmptyState: false,
-                              showSelectionBorder: false,
-                              textOpacity: 0,
-                            )
+                          ? const SizedBox.shrink()
                           : HtmlPageStage(
                               page: widget.controller.selectedPage,
                               selectedTextBlockId:

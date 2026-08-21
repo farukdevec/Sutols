@@ -296,9 +296,9 @@ class _HtmlPageStageState extends State<HtmlPageStage> {
       ..style.position = 'relative'
       ..style.pointerEvents = widget.onTap == null ? 'none' : 'auto'
       ..style.overflow = 'hidden'
-      ..style.backgroundColor = '#FFFFFF';
+      ..style.backgroundColor = 'transparent';
     _applyVisualStyle();
-    _iframeElement = _createIframe()..style.opacity = '0';
+    _iframeElement = _createIframe()..style.opacity = '1';
     _hostElement.children.add(_iframeElement);
     if (widget.onTap != null) {
       final overlay = html.DivElement()
@@ -342,7 +342,7 @@ class _HtmlPageStageState extends State<HtmlPageStage> {
       ..style.top = '0'
       ..style.left = '0'
       ..style.border = '0'
-      ..style.backgroundColor = '#FFFFFF'
+      ..style.backgroundColor = 'transparent'
       ..style.pointerEvents = 'none'
       ..setAttribute('scrolling', 'no');
     if (widget.onTap != null) {
@@ -407,18 +407,12 @@ class _HtmlPageStageState extends State<HtmlPageStage> {
       imageSourcesById: RemoteImageSources.all,
     );
 
-    // İlk sahnede değiştirecek eski bir kare yoktur; yükle.
+    // İlk sahnede değiştirecek eski bir kare yoktur; doğrudan yükle.
     if (!_hasRendered) {
       _hasRendered = true;
       _iframeElement.style.pointerEvents =
           widget.renderMode == HtmlStageRenderMode.full ? 'auto' : 'none';
-      _initialLoadSubscription = _iframeElement.onLoad.listen((_) {
-        _initialLoadTimer?.cancel();
-        _iframeElement.style.opacity = '1';
-      });
-      _initialLoadTimer = Timer(const Duration(milliseconds: 50), () {
-        _iframeElement.style.opacity = '1';
-      });
+      _iframeElement.style.opacity = '1';
       _iframeElement.srcdoc = document;
       return;
     }

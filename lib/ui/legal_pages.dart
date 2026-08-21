@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../routes.dart';
 import 'design/design_system.dart';
 import 'widgets/contact_social_widget.dart';
 
@@ -144,43 +145,48 @@ class LegalPageScaffold extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    return Scaffold(
-      backgroundColor: colors.surface,
-      appBar: AppBar(
-        title: Text(title),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded),
-          tooltip: 'Geri',
-          onPressed: () => Navigator.of(context).pop(),
+    return Title(
+      title: '$title – Sutols',
+      color: colors.accent,
+      child: Scaffold(
+        backgroundColor: colors.surface,
+        appBar: AppBar(
+          title: Text(title),
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back_rounded),
+            tooltip: 'Geri',
+            onPressed: () => AppRoutes.handleAppBack(context),
+          ),
         ),
-      ),
-      body: SingleChildScrollView(
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 760),
-            child: Padding(
-              padding: const EdgeInsets.all(AppSpacing.s24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Text(
-                    title,
-                    style: AppTypography.headline.copyWith(
-                      color: colors.textPrimary,
+        body: SingleChildScrollView(
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 760),
+              child: Padding(
+                padding: const EdgeInsets.all(AppSpacing.s24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(
+                      title,
+                      style: AppTypography.headline.copyWith(
+                        color: colors.textPrimary,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: AppSpacing.s4),
-                  Text(
-                    updatedLabel,
-                    style: AppTypography.bodyMedium.copyWith(
-                      color: colors.textSecondary,
+                    const SizedBox(height: AppSpacing.s8),
+                    Text(
+                      updatedLabel,
+                      style: AppTypography.bodyMedium.copyWith(
+                        color: colors.textSecondary,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: AppSpacing.s16),
-                  const Divider(),
-                  const SizedBox(height: AppSpacing.s8),
-                  ...children,
-                ],
+                    const SizedBox(height: AppSpacing.s24),
+                    const Divider(),
+                    const SizedBox(height: AppSpacing.s16),
+                    ...children,
+                  ],
+                ),
               ),
             ),
           ),

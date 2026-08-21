@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
+import '../routes.dart';
 import '../services/firestore_rest_helper.dart';
 import '../services/presentation_loader.dart';
+import '../services/web_url_service.dart';
 import 'design/design_system.dart';
 import 'html_presentation_editor_page.dart';
 
@@ -38,11 +40,24 @@ class _PresentationOpenPageState extends State<PresentationOpenPage> {
         );
       }
 
+      final fields = doc['fields'] as Map<String, dynamic>? ?? {};
+      final topic = fields['topic']?['stringValue'] as String? ?? '';
+
       final result = await loadPresentationForEdit(widget.presentationId);
+
+      final targetUrl = AppRoutes.presentationUrl(
+        id: widget.presentationId,
+        topic: topic,
+      );
+      updateBrowserUrl(
+        path: targetUrl,
+        title: topic.isNotEmpty ? topic : 'Sunum',
+      );
 
       if (!mounted) return;
       await Navigator.of(context).pushReplacement(
         MaterialPageRoute<void>(
+          settings: RouteSettings(name: targetUrl),
           builder: (_) => HtmlPresentationEditorPage(
             controller: result.controller,
             presentationId: widget.presentationId,

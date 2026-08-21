@@ -1,6 +1,15 @@
 User-agent: *
 Allow: /
 Disallow: /admin
-Disallow: /p/*
+Disallow: /yonetici
+
+User-agent: Googlebot
+Allow: /
+Disallow: /admin
+Disallow: /yonetici
+
+User-agent: Googlebot-Image
+Allow: /
 
 Sitemap: https://sutols.com/sitemap.xml
+Host: https://sutols.com

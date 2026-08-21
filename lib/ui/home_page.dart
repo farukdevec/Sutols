@@ -4,19 +4,18 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+import '../routes.dart';
 import '../services/auth_service.dart';
 import '../services/firestore_rest_helper.dart';
 import '../services/presentation_loader.dart';
 import '../services/presentation_service.dart';
-import '../state/presentation_controller.dart';
+import '../services/web_url_service.dart';
 import '../state/theme_controller.dart';
 import '../state/language_controller.dart';
 import 'html_presentation_editor_page.dart';
 import 'widgets/looping_loading_video.dart';
 import 'design/design_system.dart';
 import 'design/sutol_widgets.dart';
-import 'membership_page.dart';
-import 'my_presentations_page.dart';
 import 'widgets/contact_social_widget.dart';
 
 class SutolHomePage extends StatefulWidget {
@@ -153,7 +152,7 @@ class _SutolHomePageState extends State<SutolHomePage> {
         action: SnackBarAction(
           label: tr('Giriş Yap', 'Sign In'),
           textColor: const Color(0xFF00E5FF),
-          onPressed: () => Navigator.of(context).pushNamed('/login'),
+          onPressed: () => Navigator.of(context).pushNamed(AppRoutes.login),
         ),
       ),
     );
@@ -302,8 +301,15 @@ class _SutolHomePageState extends State<SutolHomePage> {
         _isGenerating = false;
       });
 
+      final targetRoute = AppRoutes.presentationUrl(
+        id: result.presentationId,
+        topic: topic,
+      );
+      updateBrowserUrl(path: targetRoute, title: topic);
+
       Navigator.of(context).push(
         MaterialPageRoute<void>(
+          settings: RouteSettings(name: targetRoute),
           builder: (_) => HtmlPresentationEditorPage(
             controller: result.controller,
             presentationId: result.presentationId,
@@ -512,11 +518,8 @@ class _SutolHomePageState extends State<SutolHomePage> {
                                   const Spacer(),
                                   TextButton(
                                     onPressed: () {
-                                      Navigator.of(context).push(
-                                        MaterialPageRoute<void>(
-                                          builder: (_) =>
-                                              const MyPresentationsPage(),
-                                        ),
+                                      Navigator.of(context).pushNamed(
+                                        AppRoutes.myPresentations,
                                       );
                                     },
                                     child: Text(tr('Tümünü gör', 'View all')),
@@ -650,15 +653,15 @@ class _FooterBar extends StatelessWidget {
                 child: Text(tr('İletişim', 'Contact')),
               ),
               TextButton(
-                onPressed: () => Navigator.of(context).pushNamed('/gizlilik'),
+                onPressed: () => Navigator.of(context).pushNamed(AppRoutes.privacy),
                 child: Text(tr('Gizlilik Politikası', 'Privacy Policy')),
               ),
               TextButton(
-                onPressed: () => Navigator.of(context).pushNamed('/sartlar'),
+                onPressed: () => Navigator.of(context).pushNamed(AppRoutes.terms),
                 child: Text(tr('Kullanım Şartları', 'Terms of Use')),
               ),
               TextButton(
-                onPressed: () => Navigator.of(context).pushNamed('/sss'),
+                onPressed: () => Navigator.of(context).pushNamed(AppRoutes.faq),
                 child: Text(tr('SSS', 'FAQ')),
               ),
             ],
@@ -1059,8 +1062,14 @@ class _RecentPresentationTile extends StatelessWidget {
         onTap: () async {
           final result = await loadPresentationForEdit(item.id);
           if (!context.mounted) return;
+          final targetRoute = AppRoutes.presentationUrl(
+            id: item.id,
+            topic: item.topic,
+          );
+          updateBrowserUrl(path: targetRoute, title: item.topic);
           Navigator.of(context).push(
             MaterialPageRoute<void>(
+              settings: RouteSettings(name: targetRoute),
               builder: (_) => HtmlPresentationEditorPage(
                 controller: result.controller,
                 presentationId: item.id,
@@ -1126,11 +1135,7 @@ class _TierBadgeState extends State<_TierBadge> {
           cursor: SystemMouseCursors.click,
           child: GestureDetector(
             onTap: () async {
-              await Navigator.of(context).push(
-                MaterialPageRoute<void>(
-                  builder: (_) => const MembershipPage(),
-                ),
-              );
+              await Navigator.of(context).pushNamed(AppRoutes.membership);
               _loadTier();
             },
             child: Container(
@@ -1205,9 +1210,7 @@ class _PlanStatusBarState extends State<_PlanStatusBar> {
   }
 
   Future<void> _openMembership() async {
-    await Navigator.of(context).push(
-      MaterialPageRoute<void>(builder: (_) => const MembershipPage()),
-    );
+    await Navigator.of(context).pushNamed(AppRoutes.membership);
     if (mounted) _loadTier();
   }
 
@@ -1315,9 +1318,7 @@ class _UpgradeButtonState extends State<_UpgradeButton> {
       onExit: (_) => setState(() => _hovered = false),
       child: GestureDetector(
         onTap: () async {
-          await Navigator.of(context).push(
-            MaterialPageRoute<void>(builder: (_) => const MembershipPage()),
-          );
+          await Navigator.of(context).pushNamed(AppRoutes.membership);
           widget.onReturn?.call();
         },
         child: AnimatedContainer(
@@ -1554,12 +1555,7 @@ class _MyPresentationsButtonState extends State<_MyPresentationsButton> {
           : 'Henüz sunum oluşturmadınız. İlk sunumunuzu oluşturduktan sonra bu sayfayı kullanabilirsiniz.',
       child: IconButton(
         onPressed: () async {
-          if (!hasPresentations) return;
-          await Navigator.of(context).push(
-            MaterialPageRoute<void>(
-              builder: (_) => const MyPresentationsPage(),
-            ),
-          );
+          await Navigator.of(context).pushNamed(AppRoutes.myPresentations);
           if (mounted) _fetchPresentationCount();
         },
         icon: const Icon(Icons.folder_outlined),
@@ -1611,14 +1607,7 @@ class _EditorButtonState extends State<_EditorButton> {
         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
       ),
       onPressed: () {
-        final controller = PresentationController();
-        Navigator.of(context).push(
-          MaterialPageRoute<void>(
-            builder: (_) => HtmlPresentationEditorPage(
-              controller: controller,
-            ),
-          ),
-        );
+        Navigator.of(context).pushNamed(AppRoutes.editor);
       },
       child: Text(
         tr('Boş Sunum', 'Blank Presentation'),
@@ -1783,7 +1772,7 @@ class _UserAvatarState extends State<_UserAvatar> {
   }
 
   void _openAuthPage(BuildContext context) {
-    Navigator.of(context).pushNamed('/login');
+    Navigator.of(context).pushNamed(AppRoutes.login);
   }
 
   void _showUserMenu(BuildContext context) {

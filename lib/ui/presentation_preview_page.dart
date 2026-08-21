@@ -9,6 +9,7 @@ import 'design/design_system.dart';
 import '../models/slide_model.dart';
 import '../services/presentation_fullscreen_service.dart';
 import '../state/presentation_controller.dart';
+import 'widgets/editor_shell.dart';
 import 'widgets/html_stage/html_page_stage.dart';
 
 class PresentationPreviewPage extends StatefulWidget {
@@ -590,6 +591,11 @@ class _PreviewStageWithOrbitState extends State<_PreviewStageWithOrbit> {
         return Stack(
           fit: StackFit.expand,
           children: <Widget>[
+            IgnorePointer(
+              child: PresentationPageThumbnailCanvas(
+                page: _effectivePage,
+              ),
+            ),
             if (widget.effectSettings.transitionKind ==
                     PresentationTransitionKind.smooth &&
                 widget.transitionFromPage != null &&

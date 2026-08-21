@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
+import '../routes.dart';
 import 'design/design_system.dart';
 import '../services/plan_tier_service.dart';
 
@@ -146,9 +147,19 @@ class _RedeemCodePageState extends State<RedeemCodePage> {
     final colors = context.colors;
     final narrow = MediaQuery.sizeOf(context).width < 600;
 
-    return Scaffold(
-      backgroundColor: colors.surface,
-      appBar: AppBar(title: const Text('Kod Kullan')),
+    return Title(
+      title: 'Kod Kullan – Sutols',
+      color: colors.accent,
+      child: Scaffold(
+        backgroundColor: colors.surface,
+        appBar: AppBar(
+          title: const Text('Kod Kullan'),
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back_rounded),
+            tooltip: 'Geri',
+            onPressed: () => AppRoutes.handleAppBack(context),
+          ),
+        ),
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 480),
@@ -208,6 +219,7 @@ class _RedeemCodePageState extends State<RedeemCodePage> {
           ),
         ),
       ),
+    ),
     );
   }
 }

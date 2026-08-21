@@ -94,6 +94,58 @@
         "destination": "/index.html"
       },
       {
+        "source": "/auth",
+        "destination": "/index.html"
+      },
+      {
+        "source": "/giris",
+        "destination": "/index.html"
+      },
+      {
+        "source": "/kayit",
+        "destination": "/index.html"
+      },
+      {
+        "source": "/sunumlarim",
+        "destination": "/index.html"
+      },
+      {
+        "source": "/my-presentations",
+        "destination": "/index.html"
+      },
+      {
+        "source": "/presentations",
+        "destination": "/index.html"
+      },
+      {
+        "source": "/uyelik",
+        "destination": "/index.html"
+      },
+      {
+        "source": "/pricing",
+        "destination": "/index.html"
+      },
+      {
+        "source": "/membership",
+        "destination": "/index.html"
+      },
+      {
+        "source": "/kod-kullan",
+        "destination": "/index.html"
+      },
+      {
+        "source": "/redeem",
+        "destination": "/index.html"
+      },
+      {
+        "source": "/editor",
+        "destination": "/index.html"
+      },
+      {
+        "source": "/editor/**",
+        "destination": "/index.html"
+      },
+      {
         "source": "/slide**",
         "destination": "/index.html"
       },
@@ -102,7 +154,19 @@
         "destination": "/index.html"
       },
       {
+        "source": "/s/**",
+        "destination": "/index.html"
+      },
+      {
+        "source": "/presentation/**",
+        "destination": "/index.html"
+      },
+      {
         "source": "/admin",
+        "destination": "/index.html"
+      },
+      {
+        "source": "/yonetici",
         "destination": "/index.html"
       },
       {
@@ -110,11 +174,23 @@
         "destination": "/index.html"
       },
       {
+        "source": "/privacy",
+        "destination": "/index.html"
+      },
+      {
         "source": "/sartlar",
         "destination": "/index.html"
       },
       {
+        "source": "/terms",
+        "destination": "/index.html"
+      },
+      {
         "source": "/sss",
+        "destination": "/index.html"
+      },
+      {
+        "source": "/faq",
         "destination": "/index.html"
       },
       {

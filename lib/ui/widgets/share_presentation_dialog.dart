@@ -27,7 +27,7 @@ class _SharePresentationDialogState extends State<SharePresentationDialog> {
   late bool _shared;
   bool _saving = false;
 
-  String get _link => '${Uri.base.origin}/p/${widget.presentationId}';
+  String get _link => '${Uri.base.origin}/slide${widget.presentationId}';
 
   @override
   void initState() {

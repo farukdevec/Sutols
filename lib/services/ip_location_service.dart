@@ -3,6 +3,8 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'shared_prefs_service.dart';
+
 class IpLocation {
   const IpLocation({
     required this.city,
@@ -73,7 +75,7 @@ class IpLocationService {
 
   Future<IpLocation?> _getCachedLocation() async {
     try {
-      final prefs = _prefs ?? await SharedPreferences.getInstance();
+      final prefs = _prefs ?? await SharedPrefsService.instance.prefs;
       final cachedJson = prefs.getString(_cacheKey);
       final timestampStr = prefs.getString(_cacheDurationKey);
 
@@ -96,7 +98,7 @@ class IpLocationService {
 
   Future<void> _cacheLocation(IpLocation location) async {
     try {
-      final prefs = _prefs ?? await SharedPreferences.getInstance();
+      final prefs = _prefs ?? await SharedPrefsService.instance.prefs;
       await prefs.setString(_cacheKey, jsonEncode(location.toJson()));
       await prefs.setString(_cacheDurationKey, DateTime.now().toIso8601String());
     } catch (_) {

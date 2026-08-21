@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../routes.dart';
 import 'design/design_system.dart';
 import 'widgets/contact_social_widget.dart';
 
@@ -11,82 +12,86 @@ class FaqPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    return Scaffold(
-      backgroundColor: colors.surface,
-      appBar: AppBar(
-        title: const Text('Sıkça Sorulan Sorular'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded),
-          tooltip: 'Geri',
-          onPressed: () => Navigator.of(context).pop(),
+    return Title(
+      title: 'Sıkça Sorulan Sorular – Sutols',
+      color: colors.accent,
+      child: Scaffold(
+        backgroundColor: colors.surface,
+        appBar: AppBar(
+          title: const Text('Sıkça Sorulan Sorular'),
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back_rounded),
+            tooltip: 'Geri',
+            onPressed: () => AppRoutes.handleAppBack(context),
+          ),
         ),
-      ),
-      body: SingleChildScrollView(
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 820),
-            child: Padding(
-              padding: const EdgeInsets.all(AppSpacing.s24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Center(
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: AppSpacing.s12,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        color: colors.accent.withValues(alpha: 0.08),
-                        borderRadius: BorderRadius.circular(AppRadius.full),
-                        border: Border.all(
-                          color: colors.accent.withValues(alpha: 0.25),
+        body: SingleChildScrollView(
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 820),
+              child: Padding(
+                padding: const EdgeInsets.all(AppSpacing.s24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Center(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.s12,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: colors.accent.withValues(alpha: 0.08),
+                          borderRadius: BorderRadius.circular(AppRadius.full),
+                          border: Border.all(
+                            color: colors.accent.withValues(alpha: 0.25),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.help_outline_rounded,
+                              size: 14,
+                              color: colors.accent,
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              'SSS',
+                              style: AppTypography.labelMedium.copyWith(
+                                color: colors.accent,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.help_outline_rounded,
-                            size: 14,
-                            color: colors.accent,
-                          ),
-                          const SizedBox(width: 6),
-                          Text(
-                            'SSS',
-                            style: AppTypography.labelMedium.copyWith(
-                              color: colors.accent,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ],
+                    ),
+                    const SizedBox(height: AppSpacing.s16),
+                    Text(
+                      'Sıkça Sorulan Sorular',
+                      textAlign: TextAlign.center,
+                      style: AppTypography.headline.copyWith(
+                        fontWeight: FontWeight.w800,
+                        color: colors.textPrimary,
                       ),
                     ),
-                  ),
-                  const SizedBox(height: AppSpacing.s16),
-                  Text(
-                    'Sıkça Sorulan Sorular',
-                    textAlign: TextAlign.center,
-                    style: AppTypography.headline.copyWith(
-                      color: colors.textPrimary,
+                    const SizedBox(height: AppSpacing.s8),
+                    Text(
+                      'Sutols hakkında merak edilen her şey tek sayfada.',
+                      textAlign: TextAlign.center,
+                      style: AppTypography.bodyLarge.copyWith(
+                        color: colors.textSecondary,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: AppSpacing.s8),
-                  Text(
-                    'Aklınıza takılan her şeyin yanıtı burada. '
-                    'Bir soruya tıklayarak yanıtını görüntüleyin.',
-                    textAlign: TextAlign.center,
-                    style: AppTypography.bodyLarge.copyWith(
-                      color: colors.textSecondary,
+                    const SizedBox(height: AppSpacing.s48),
+                    ..._categories.map(
+                      (category) => _FaqCategorySection(category: category),
                     ),
-                  ),
-                  const SizedBox(height: AppSpacing.s48),
-                  ..._categories.map(
-                    (category) => _FaqCategorySection(category: category),
-                  ),
-                  const SizedBox(height: AppSpacing.s24),
-                  const SutolContactCard(),
-                ],
+                    const SizedBox(height: AppSpacing.s24),
+                    const SutolContactCard(),
+                  ],
+                ),
               ),
             ),
           ),

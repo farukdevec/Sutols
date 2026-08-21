@@ -1,9 +1,11 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
+import '../routes.dart';
 import '../services/firestore_rest_helper.dart';
 import '../services/presentation_loader.dart';
 import '../state/language_controller.dart';
+import '../services/web_url_service.dart';
 import 'design/design_system.dart';
 import 'html_presentation_editor_page.dart';
 
@@ -104,73 +106,112 @@ class _MyPresentationsPageState extends State<MyPresentationsPage> {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final currentUser = FirebaseAuth.instance.currentUser;
 
-    return Scaffold(
-      backgroundColor: colors.surface,
-      appBar: AppBar(
-        title: Text(tr('Sunumlarım', 'My Presentations')),
-      ),
-      body: FutureBuilder<List<_PresentationItem>>(
-        future: _future,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState != ConnectionState.done) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
-          if (snapshot.hasError) {
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(AppSpacing.s32),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.cloud_off_outlined,
-                      size: 48,
-                      color: colors.textSecondary.withValues(alpha: 0.4),
-                    ),
-                    const SizedBox(height: AppSpacing.s16),
-                    Text(
-                      tr(
-                        'Sunumlar şu anda yüklenemiyor.\nLütfen daha sonra tekrar deneyin.',
-                        'Presentations cannot be loaded right now.\nPlease try again later.',
-                      ),
-                      textAlign: TextAlign.center,
-                      style: AppTypography.bodyLarge.copyWith(
-                        color: colors.textSecondary,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          }
-
-          final items = snapshot.data ?? [];
-          if (items.isEmpty) {
-            return Center(
+    return Title(
+      title: '${tr('Sunumlarım', 'My Presentations')} – Sutols',
+      color: colors.accent,
+      child: Scaffold(
+        backgroundColor: colors.surface,
+        appBar: AppBar(
+          title: Text(tr('Sunumlarım', 'My Presentations')),
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back_rounded),
+            tooltip: 'Geri',
+            onPressed: () => AppRoutes.handleAppBack(context),
+          ),
+        ),
+      body: currentUser == null
+          ? Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Icon(
-                    Icons.folder_open_outlined,
+                    Icons.lock_outline_rounded,
                     size: 56,
                     color: colors.textSecondary.withValues(alpha: 0.4),
                   ),
                   const SizedBox(height: AppSpacing.s16),
                   Text(
                     tr(
-                      'Henüz sunum oluşturmadınız',
-                      'You haven\'t created any presentations yet',
+                      'Sunumlarınızı görmek için lütfen giriş yapın',
+                      'Please sign in to view your presentations',
                     ),
                     style: AppTypography.titleMedium.copyWith(
                       color: colors.textSecondary,
                     ),
                   ),
+                  const SizedBox(height: AppSpacing.s16),
+                  FilledButton.icon(
+                    onPressed: () =>
+                        Navigator.of(context).pushNamed(AppRoutes.login),
+                    icon: const Icon(Icons.login_rounded),
+                    label: Text(tr('Giriş Yap', 'Sign In')),
+                  ),
                 ],
               ),
-            );
-          }
+            )
+          : FutureBuilder<List<_PresentationItem>>(
+              future: _future,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState != ConnectionState.done) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+
+                if (snapshot.hasError) {
+                  return Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(AppSpacing.s32),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.cloud_off_outlined,
+                            size: 48,
+                            color: colors.textSecondary.withValues(alpha: 0.4),
+                          ),
+                          const SizedBox(height: AppSpacing.s16),
+                          Text(
+                            tr(
+                              'Sunumlar şu anda yüklenemiyor.\nLütfen daha sonra tekrar deneyin.',
+                              'Presentations cannot be loaded right now.\nPlease try again later.',
+                            ),
+                            textAlign: TextAlign.center,
+                            style: AppTypography.bodyLarge.copyWith(
+                              color: colors.textSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }
+
+                final items = snapshot.data ?? [];
+                if (items.isEmpty) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.folder_open_outlined,
+                          size: 56,
+                          color: colors.textSecondary.withValues(alpha: 0.4),
+                        ),
+                        const SizedBox(height: AppSpacing.s16),
+                        Text(
+                          tr(
+                            'Henüz sunum oluşturmadınız',
+                            'You haven\'t created any presentations yet',
+                          ),
+                          style: AppTypography.titleMedium.copyWith(
+                            color: colors.textSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }
 
           return ListView.separated(
             padding: const EdgeInsets.all(AppSpacing.s24),
@@ -207,8 +248,14 @@ class _MyPresentationsPageState extends State<MyPresentationsPage> {
                   onTap: () async {
                     final result = await loadPresentationForEdit(item.id);
                     if (!mounted) return;
+                    final targetRoute = AppRoutes.presentationUrl(
+                      id: item.id,
+                      topic: item.topic,
+                    );
+                    updateBrowserUrl(path: targetRoute, title: item.topic);
                     Navigator.of(context).push(
                       MaterialPageRoute<void>(
+                        settings: RouteSettings(name: targetRoute),
                         builder: (_) => HtmlPresentationEditorPage(
                           controller: result.controller,
                           presentationId: item.id,
@@ -222,6 +269,7 @@ class _MyPresentationsPageState extends State<MyPresentationsPage> {
             },
           );
         },
+      ),
       ),
     );
   }

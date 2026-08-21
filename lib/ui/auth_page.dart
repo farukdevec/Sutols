@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
+import '../routes.dart';
 import '../services/auth_service.dart';
 import '../state/language_controller.dart';
 import 'design/design_system.dart';
@@ -63,7 +64,7 @@ class _AuthPageState extends State<AuthPage> {
               ?.updateDisplayName(_nameController.text.trim());
         }
       }
-      if (mounted) Navigator.of(context).pop();
+      if (mounted) AppRoutes.handleAppBack(context);
     } on TermsConsentNotApprovedException {
       setState(() {
         _error = 'Kullanım Şartları onaylanmadan kayıt tamamlanamaz.';
@@ -94,7 +95,7 @@ class _AuthPageState extends State<AuthPage> {
         // servis içindeki yedek dialog ile alınır.
         termsAccepted: !_isLogin && _termsAgreed,
       );
-      if (mounted) Navigator.of(context).pop();
+      if (mounted) AppRoutes.handleAppBack(context);
     } on FirebaseAuthException catch (e) {
       setState(() {
         _error = _mapError(e.code);
@@ -138,32 +139,38 @@ class _AuthPageState extends State<AuthPage> {
   Widget build(BuildContext context) {
     final colors = context.colors;
 
-    return Scaffold(
-      backgroundColor: colors.surface,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        surfaceTintColor: Colors.transparent,
-        leading: BackButton(
-          onPressed: () => Navigator.of(context).pop(),
+    return Title(
+      title: _isLogin
+          ? '${tr('Giriş Yap', 'Sign In')} – Sutols'
+          : '${tr('Kayıt Ol', 'Sign Up')} – Sutols',
+      color: colors.accent,
+      child: Scaffold(
+        backgroundColor: colors.surface,
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          surfaceTintColor: Colors.transparent,
+          leading: BackButton(
+            onPressed: () => AppRoutes.handleAppBack(context),
+          ),
         ),
-      ),
-      body: Stack(
-        children: [
-          const Positioned.fill(child: _AmbientGlowBackground()),
-          Center(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(AppSpacing.s32),
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 420),
-                child: AnimatedSwitcher(
-                  duration: AppMotion.standard,
-                  child: _buildAuthCard(colors),
+        body: Stack(
+          children: [
+            const Positioned.fill(child: _AmbientGlowBackground()),
+            Center(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(AppSpacing.s32),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 420),
+                  child: AnimatedSwitcher(
+                    duration: AppMotion.standard,
+                    child: _buildAuthCard(colors),
+                  ),
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

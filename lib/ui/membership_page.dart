@@ -2,10 +2,10 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
+import '../routes.dart';
 import '../services/presentation_service.dart';
 import '../state/language_controller.dart';
 import 'design/design_system.dart';
-import 'redeem_code_page.dart';
 
 class MembershipPage extends StatefulWidget {
   const MembershipPage({super.key});
@@ -48,9 +48,7 @@ class _MembershipPageState extends State<MembershipPage> {
   }
 
   Future<void> _openRedeemCode() async {
-    await Navigator.of(context).push(
-      MaterialPageRoute<void>(builder: (_) => const RedeemCodePage()),
-    );
+    await Navigator.of(context).pushNamed(AppRoutes.redeem);
     await _loadPlan();
   }
 
@@ -59,8 +57,18 @@ class _MembershipPageState extends State<MembershipPage> {
     final colors = context.colors;
     final currentPlanLabel = _hasPlus ? 'Plus' : tr('Ücretsiz', 'Free');
 
-    return Scaffold(
-      appBar: AppBar(title: Text(tr('Üyelik Planları', 'Membership Plans'))),
+    return Title(
+      title: '${tr('Üyelik & Paketler', 'Membership & Pricing')} – Sutols',
+      color: colors.accent,
+      child: Scaffold(
+      appBar: AppBar(
+        title: Text(tr('Üyelik Planları', 'Membership Plans')),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_rounded),
+          tooltip: 'Geri',
+          onPressed: () => AppRoutes.handleAppBack(context),
+        ),
+      ),
       backgroundColor: colors.surface,
       body: Center(
         child: ConstrainedBox(
@@ -183,6 +191,7 @@ class _MembershipPageState extends State<MembershipPage> {
           ),
         ),
       ),
+    ),
     );
   }
 }
