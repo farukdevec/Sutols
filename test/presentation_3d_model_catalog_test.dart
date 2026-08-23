@@ -1,12 +1,230 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sutol/models/slide_model.dart';
+import 'package:sutol/services/model_asset_service.dart';
 import 'package:sutol/services/presentation_export_builder.dart';
 import 'package:sutol/services/presentation_project_codec.dart';
 import 'package:sutol/state/presentation_controller.dart';
+import 'package:sutol/ui/widgets/editor_shell.dart';
+import 'package:sutol/ui/widgets/html_stage/html_page_stage.dart';
 import 'package:sutol/ui/widgets/html_stage/html_stage_document.dart';
 
 void main() {
+  test('Anıtkabir animasyonlu 3B model ve küçük resmiyle kayıtlıdır', () {
+    final model = findPresentation3DModelAsset('anitkabir');
+
+    expect(model, isNotNull);
+    expect(model!.label, 'Anıtkabir');
+    expect(model.category, 'Tarih ve Kültür');
+    expect(model.assetPath, '/models/anitkabir.glb');
+    expect(model.thumbnailPath, '/model_thumbnails/anitkabir.webp?v=2');
+    expect(model.hasAnimations, isTrue);
+    expect(model.hasRig, isFalse);
+    expect(model.byteSize, 4302048);
+    expect(model.exposure, 0.003);
+    expect(model.environmentImage, 'neutral');
+    expect(ModelAssetService.isLocalAssetPath(model.assetPath), isTrue);
+    expect(
+      ModelAssetService.thumbnailKey(thumbnailField: model.thumbnailPath),
+      '/model_thumbnails/anitkabir.webp?v=2',
+    );
+  });
+
+  testWidgets('Anıtkabir tuvalde mavi yer tutucu yerine HTML modeli kullanır',
+      (tester) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: SizedBox(
+          width: 1000,
+          height: 562.5,
+          child: PresentationPageCanvas(
+            page: PresentationPage(
+              id: 'anitkabir-canvas',
+              textBlocks: <PresentationTextBlock>[],
+              componentBlocks: <PresentationComponentBlock>[
+                PresentationComponentBlock(
+                  id: 'anitkabir-block',
+                  modelAssetId: 'anitkabir',
+                  position: Offset(0.2, 0.2),
+                  size: Size(0.4, 0.4),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+
+    expect(find.byType(HtmlModelCanvas), findsOneWidget);
+    expect(find.byType(HtmlPageStage), findsNothing);
+  });
+
+  testWidgets('3B modele sağ tıklama bileşen bağlam olayını iletir',
+      (tester) async {
+    Offset? secondaryTapPosition;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: SizedBox(
+          width: 1000,
+          height: 562.5,
+          child: PresentationPageCanvas(
+            page: const PresentationPage(
+              id: 'anitkabir-context-menu',
+              textBlocks: <PresentationTextBlock>[],
+              componentBlocks: <PresentationComponentBlock>[
+                PresentationComponentBlock(
+                  id: 'anitkabir-block',
+                  modelAssetId: 'anitkabir',
+                  position: Offset(0.2, 0.2),
+                  size: Size(0.4, 0.4),
+                ),
+              ],
+            ),
+            interactive: true,
+            onSecondaryTapComponentBlock: (id, position) {
+              expect(id, 'anitkabir-block');
+              secondaryTapPosition = position;
+            },
+          ),
+        ),
+      ),
+    );
+
+    final overlay = find.byKey(
+      const ValueKey<String>('model-interaction-overlay-anitkabir-block'),
+    );
+    expect(overlay, findsOneWidget);
+    final gesture = await tester.startGesture(
+      tester.getCenter(overlay),
+      buttons: kSecondaryMouseButton,
+    );
+    await gesture.up();
+    await tester.pump();
+
+    expect(secondaryTapPosition, isNotNull);
+  });
+
+  testWidgets('sanal tur modeli birincil fare sürüklemesini kameraya iletir',
+      (tester) async {
+    var began = false;
+    var ended = false;
+    var dragDelta = Offset.zero;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: SizedBox(
+          width: 1000,
+          height: 562.5,
+          child: PresentationPageCanvas(
+            page: const PresentationPage(
+              id: 'mouse-tour',
+              textBlocks: <PresentationTextBlock>[],
+              componentBlocks: <PresentationComponentBlock>[
+                PresentationComponentBlock(
+                  id: 'tour-block',
+                  modelAssetId: 'anitkabir',
+                  modelTourEnabled: true,
+                  position: Offset(0.2, 0.2),
+                  size: Size(0.4, 0.4),
+                ),
+              ],
+            ),
+            interactive: true,
+            selectedComponentBlockId: 'tour-block',
+            selectedComponentBlockIds: const <String>{'tour-block'},
+            onBeginModelOrbit: (_) => began = true,
+            onPanModelTour: (_, delta) => dragDelta += delta,
+            onEndModelOrbit: () => ended = true,
+          ),
+        ),
+      ),
+    );
+
+    final overlay = find.byKey(
+      const ValueKey<String>('model-interaction-overlay-tour-block'),
+    );
+    final gesture = await tester.startGesture(
+      tester.getCenter(overlay),
+      buttons: kPrimaryMouseButton,
+    );
+    await gesture.moveBy(const Offset(70, -35));
+    await gesture.up();
+    await tester.pump();
+
+    expect(began, isTrue);
+    expect(dragDelta.dx, closeTo(70, 0.01));
+    expect(dragDelta.dy, closeTo(-35, 0.01));
+    expect(ended, isTrue);
+  });
+
+  test('arka plansız 3B model sahnesi zorunlu olarak şeffaftır', () {
+    const page = PresentationPage(
+      id: 'transparent-anitkabir',
+      textBlocks: <PresentationTextBlock>[],
+      componentBlocks: <PresentationComponentBlock>[
+        PresentationComponentBlock(
+          id: 'anitkabir-block',
+          modelAssetId: 'anitkabir',
+          position: Offset.zero,
+          size: Size(1, 1),
+        ),
+      ],
+    );
+
+    final document = buildHtmlStageDocument(
+      page: page,
+      showBackground: false,
+      modelSourcesById: const <String, String>{
+        'anitkabir': '/models/anitkabir.glb',
+      },
+    );
+
+    expect(document, contains('sutol-stage-without-background'));
+    expect(document, contains('background: transparent !important;'));
+    expect(document, contains('src="/models/anitkabir.glb"'));
+    expect(document, contains('tone-mapping="neutral"'));
+    expect(document, contains('exposure="0.0030"'));
+    expect(document, contains('environment-image="neutral"'));
+    expect(document, contains('field-of-view="45deg"'));
+    expect(document, contains('camera-orbit="0.00deg 75.00deg 100.00%"'));
+  });
+
+  test('3B model 10x yakınlaştırmayı HTML sahnesine aktarır', () {
+    const page = PresentationPage(
+      id: 'zoomed-model',
+      textBlocks: <PresentationTextBlock>[],
+      componentBlocks: <PresentationComponentBlock>[
+        PresentationComponentBlock(
+          id: 'zoomed-anitkabir',
+          modelAssetId: 'anitkabir',
+          modelZoom: 10,
+          modelTargetX: 22,
+          modelTargetY: 6,
+          modelTargetZ: -18,
+          position: Offset.zero,
+          size: Size(1, 1),
+        ),
+      ],
+    );
+
+    final document = buildHtmlStageDocument(
+      page: page,
+      modelSourcesById: const <String, String>{
+        'anitkabir': '/models/anitkabir.glb',
+      },
+    );
+
+    expect(document, contains('field-of-view="45deg"'));
+    expect(document, contains('camera-orbit="0.00deg 75.00deg 10.00%"'));
+    expect(document, contains('min-camera-orbit="auto auto 1%"'));
+    expect(document, contains('camera-target="auto auto auto"'));
+    expect(document, contains('data-sutol-target-x="22.00"'));
+    expect(document, contains('data-sutol-target-y="6.00"'));
+    expect(document, contains('data-sutol-target-z="-18.00"'));
+    expect(document, contains("targetX.toFixed(5) + 'm '"));
+    expect(document, contains('Math.min(10, Number(item.modelZoom)'));
+  });
+
   test('yolcu uçağı 3B model kataloğunda kayıtlıdır', () {
     final model = findPresentation3DModelAsset('yolcu-ucagi');
 
@@ -116,7 +334,7 @@ void main() {
     expect(document,
         contains('https://assets.sutols.com/yolcu_ucagi.glb?token=test'));
     expect(document, contains('camera-controls'));
-    expect(document, contains('camera-orbit="0.00deg 75.00deg auto"'));
+    expect(document, contains('camera-orbit="0.00deg 75.00deg 100.00%"'));
     expect(document, isNot(contains(' auto-rotate')));
   });
 
@@ -259,7 +477,7 @@ void main() {
 
     expect(document, contains('camera-controls'));
     expect(document, contains('autoplay'));
-    expect(document, contains('camera-orbit="128.50deg 62.00deg auto"'));
+    expect(document, contains('camera-orbit="128.50deg 62.00deg 100.00%"'));
     expect(document, isNot(contains(' auto-rotate')));
   });
 

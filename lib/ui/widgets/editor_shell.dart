@@ -10,6 +10,7 @@ import '../../state/language_controller.dart';
 import '../../state/presentation_controller.dart';
 import '../design/design_system.dart';
 import '../design/sutol_widgets.dart';
+import 'html_stage/html_page_stage.dart';
 
 typedef EditorStageBuilder = Widget Function(
   BuildContext context,
@@ -1801,6 +1802,7 @@ class PresentationPageCanvas extends StatefulWidget {
     this.onSecondaryTapCanvas,
     this.onToggleModelOrbit,
     this.onRotateModel,
+    this.onPanModelTour,
     this.onBeginModelOrbit,
     this.onEndModelOrbit,
   });
@@ -1830,6 +1832,7 @@ class PresentationPageCanvas extends StatefulWidget {
   final CanvasSecondaryTap? onSecondaryTapCanvas;
   final ValueChanged<String>? onToggleModelOrbit;
   final CanvasModelRotate? onRotateModel;
+  final CanvasModelRotate? onPanModelTour;
   final ValueChanged<String>? onBeginModelOrbit;
   final VoidCallback? onEndModelOrbit;
 
@@ -2095,17 +2098,15 @@ class _PresentationPageCanvasState extends State<PresentationPageCanvas> {
     final baseFontSize =
         (block.fontSize * canvasSize.width / 1000).clamp(14.0, 320.0);
     final adjustedFontSize = _fontSizeForType(block.type, baseFontSize);
-    final maxBoxWidth = math.max(72.0, canvasSize.width * 0.82);
-    final minBoxWidth = math.min(
-      maxBoxWidth,
-      math.max(72.0, canvasSize.width * (widget.interactive ? 0.18 : 0.12)),
+    final minBoxWidth = math.max(
+      72.0,
+      canvasSize.width * (widget.interactive ? 0.18 : 0.12),
     );
-    final boxWidth = (block.widthFactor * canvasSize.width)
-        .clamp(minBoxWidth, maxBoxWidth)
-        .toDouble();
-    final leftPosition = (block.position.dx * canvasSize.width)
-        .clamp(0.0, math.max(0.0, canvasSize.width - boxWidth))
-        .toDouble();
+    final boxWidth = math.max(
+      minBoxWidth,
+      block.widthFactor * canvasSize.width,
+    );
+    final leftPosition = block.position.dx * canvasSize.width;
     final textPainter = TextPainter(
       text: TextSpan(
         text: displayText,
@@ -2120,13 +2121,10 @@ class _PresentationPageCanvasState extends State<PresentationPageCanvas> {
     )..layout(maxWidth: math.max(0, boxWidth - (paddingX * 2)));
 
     final naturalHeight = textPainter.height + (paddingY * 2);
-    final maxH = math.max(1.0, canvasSize.height * 0.86);
-    final minH = math.min(44.0, maxH);
+    const minH = 44.0;
     final boxHeight = block.heightFactor == null
         ? naturalHeight
-        : (block.heightFactor! * canvasSize.height)
-            .clamp(minH, maxH)
-            .toDouble();
+        : math.max(minH, block.heightFactor! * canvasSize.height);
     return Rect.fromLTWH(
       leftPosition,
       block.position.dy * canvasSize.height,
@@ -2144,18 +2142,10 @@ class _PresentationPageCanvasState extends State<PresentationPageCanvas> {
     }
     final minW = math.min(54.0, canvasSize.width);
     final minH = math.min(44.0, canvasSize.height);
-    final width = (block.size.width * canvasSize.width)
-        .clamp(minW, canvasSize.width)
-        .toDouble();
-    final height = (block.size.height * canvasSize.height)
-        .clamp(minH, canvasSize.height)
-        .toDouble();
-    final left = (block.position.dx * canvasSize.width)
-        .clamp(0.0, math.max(0.0, canvasSize.width - width))
-        .toDouble();
-    final top = (block.position.dy * canvasSize.height)
-        .clamp(0.0, math.max(0.0, canvasSize.height - height))
-        .toDouble();
+    final width = math.max(minW, block.size.width * canvasSize.width);
+    final height = math.max(minH, block.size.height * canvasSize.height);
+    final left = block.position.dx * canvasSize.width;
+    final top = block.position.dy * canvasSize.height;
     return Rect.fromLTWH(left, top, width, height);
   }
 
@@ -2171,6 +2161,7 @@ class _PresentationPageCanvasState extends State<PresentationPageCanvas> {
         final selectionRect = _selectionRect;
 
         return Stack(
+          clipBehavior: widget.interactive ? Clip.none : Clip.hardEdge,
           children: <Widget>[
             if (widget.interactive)
               Positioned.fill(
@@ -2262,8 +2253,9 @@ class _PresentationPageCanvasState extends State<PresentationPageCanvas> {
                 onOrbitPanStart: widget.interactive &&
                         _isRenderableCanvasModelBlock(block) &&
                         !_isCanvasImageBlock(block) &&
-                        block.modelOrbitEnabled &&
-                        widget.onRotateModel != null
+                        (block.modelOrbitEnabled || block.modelTourEnabled) &&
+                        (widget.onRotateModel != null ||
+                            widget.onPanModelTour != null)
                     ? (_) {
                         if (!selectedComponentIds.contains(block.id)) {
                           widget.onSelectComponentBlock?.call(block.id);
@@ -2274,16 +2266,23 @@ class _PresentationPageCanvasState extends State<PresentationPageCanvas> {
                 onOrbitPanUpdate: widget.interactive &&
                         _isRenderableCanvasModelBlock(block) &&
                         !_isCanvasImageBlock(block) &&
-                        block.modelOrbitEnabled &&
-                        widget.onRotateModel != null
-                    ? (details) =>
-                        widget.onRotateModel!(block.id, details.delta)
+                        (block.modelOrbitEnabled || block.modelTourEnabled) &&
+                        (widget.onRotateModel != null ||
+                            widget.onPanModelTour != null)
+                    ? (details) {
+                        if (block.modelTourEnabled) {
+                          widget.onPanModelTour?.call(block.id, details.delta);
+                        } else {
+                          widget.onRotateModel?.call(block.id, details.delta);
+                        }
+                      }
                     : null,
                 onOrbitPanEnd: widget.interactive &&
                         _isRenderableCanvasModelBlock(block) &&
                         !_isCanvasImageBlock(block) &&
-                        block.modelOrbitEnabled &&
-                        widget.onRotateModel != null
+                        (block.modelOrbitEnabled || block.modelTourEnabled) &&
+                        (widget.onRotateModel != null ||
+                            widget.onPanModelTour != null)
                     ? (_) => widget.onEndModelOrbit?.call()
                     : null,
                 onPanUpdate:
@@ -2497,17 +2496,15 @@ class _PageTextBlock extends StatelessWidget {
     final baseFontSize =
         (block.fontSize * canvasSize.width / 1000).clamp(14.0, 320.0);
     final adjustedFontSize = _fontSizeForType(block.type, baseFontSize);
-    final maxBoxWidth = math.max(72.0, canvasSize.width * 0.82);
-    final minBoxWidth = math.min(
-      maxBoxWidth,
-      math.max(72.0, canvasSize.width * (interactive ? 0.18 : 0.12)),
+    final minBoxWidth = math.max(
+      72.0,
+      canvasSize.width * (interactive ? 0.18 : 0.12),
     );
-    final boxWidth = (block.widthFactor * canvasSize.width)
-        .clamp(minBoxWidth, maxBoxWidth)
-        .toDouble();
-    final leftPosition = (block.position.dx * canvasSize.width)
-        .clamp(0.0, math.max(0.0, canvasSize.width - boxWidth))
-        .toDouble();
+    final boxWidth = math.max(
+      minBoxWidth,
+      block.widthFactor * canvasSize.width,
+    );
+    final leftPosition = block.position.dx * canvasSize.width;
     final effectiveTextAlpha = textOpacity <= 0
         ? 0.0
         : block.text.trim().isEmpty
@@ -2565,16 +2562,11 @@ class _PageTextBlock extends StatelessWidget {
       textDirection: Directionality.of(context),
     )..layout(maxWidth: math.max(0, boxWidth - (paddingX * 2)));
     final naturalHeight = textPainter.height + (paddingY * 2);
-    final maxH = math.max(1.0, canvasSize.height * 0.86);
-    final minH = math.min(44.0, maxH);
+    const minH = 44.0;
     final boxHeight = block.heightFactor == null
         ? naturalHeight
-        : (block.heightFactor! * canvasSize.height)
-            .clamp(minH, maxH)
-            .toDouble();
-    final topPosition = (block.position.dy * canvasSize.height)
-        .clamp(0.0, math.max(0.0, canvasSize.height - boxHeight))
-        .toDouble();
+        : math.max(minH, block.heightFactor! * canvasSize.height);
+    final topPosition = block.position.dy * canvasSize.height;
     final showResizeHandles =
         interactive && isSelected && !isEditing && onResizeUpdate != null;
     final gripHitSize = showResizeHandles ? 40.0 : 0.0;
@@ -2719,18 +2711,10 @@ class _PageComponentBlock extends StatelessWidget {
         : RemoteImageSources.sourceFor(imageSourceId);
     final minW = math.min(54.0, canvasSize.width);
     final minH = math.min(44.0, canvasSize.height);
-    final width = (block.size.width * canvasSize.width)
-        .clamp(minW, canvasSize.width)
-        .toDouble();
-    final height = (block.size.height * canvasSize.height)
-        .clamp(minH, canvasSize.height)
-        .toDouble();
-    final left = (block.position.dx * canvasSize.width)
-        .clamp(0.0, math.max(0.0, canvasSize.width - width))
-        .toDouble();
-    final top = (block.position.dy * canvasSize.height)
-        .clamp(0.0, math.max(0.0, canvasSize.height - height))
-        .toDouble();
+    final width = math.max(minW, block.size.width * canvasSize.width);
+    final height = math.max(minH, block.size.height * canvasSize.height);
+    final left = block.position.dx * canvasSize.width;
+    final top = block.position.dy * canvasSize.height;
     final visibleOpacity = opacity.clamp(0.0, 1.0).toDouble();
     final showHandles = showSelectionBorder && isSelected && showResizeHandles;
     final gripHitSize = showHandles ? 40.0 : 0.0;
@@ -2753,7 +2737,7 @@ class _PageComponentBlock extends StatelessWidget {
             child: MouseRegion(
               cursor: interactive
                   ? (_isRenderableCanvasModelBlock(block) &&
-                          block.modelOrbitEnabled
+                          (block.modelOrbitEnabled || block.modelTourEnabled)
                       ? SystemMouseCursors.grab
                       : isSelected
                           ? SystemMouseCursors.move
@@ -2822,27 +2806,30 @@ class _PageComponentBlock extends StatelessWidget {
                                       painter: ComponentBlockPreviewPainter(
                                           kind: block.kind),
                                     )
-                                  : DecoratedBox(
-                                      decoration: const BoxDecoration(
-                                        gradient: LinearGradient(
-                                          colors: <Color>[
-                                            Color(0xFF13294B),
-                                            Color(0xFF247BCE),
-                                          ],
-                                          begin: Alignment.topLeft,
-                                          end: Alignment.bottomRight,
-                                        ),
+                                  : HtmlModelCanvas(
+                                      key: ValueKey<String>(
+                                        'canvas-model-${block.id}-${block.modelAssetId}',
                                       ),
-                                      child: Center(
-                                        child: Icon(
+                                      modelId: block.modelAssetId!,
+                                      animationEnabled:
+                                          block.modelAnimationEnabled,
+                                      autoRotate: block.modelAutoRotate,
+                                      rotationSpeed: block.modelRotationSpeed,
+                                      zoom: block.modelZoom,
+                                      exposure: findPresentation3DModelAsset(
+                                            block.modelAssetId!,
+                                          )?.exposure ??
+                                          1,
+                                      environmentImage:
                                           findPresentation3DModelAsset(
-                                                block.modelAssetId!,
-                                              )?.icon ??
-                                              Icons.view_in_ar_rounded,
-                                          color: Colors.white,
-                                          size: 34,
-                                        ),
-                                      ),
+                                        block.modelAssetId!,
+                                      )?.environmentImage,
+                                      orbitEnabled: block.modelOrbitEnabled,
+                                      orbitTheta: block.modelOrbitTheta,
+                                      orbitPhi: block.modelOrbitPhi,
+                                      targetX: block.modelTargetX,
+                                      targetY: block.modelTargetY,
+                                      targetZ: block.modelTargetZ,
                                     ),
                     ),
                   ),
@@ -2850,9 +2837,40 @@ class _PageComponentBlock extends StatelessWidget {
               ),
             ),
           ),
+          // HTML platform view'ları tarayıcıda bağlam menüsü olayını Flutter
+          // atasına her zaman iletmez. Modelin üstündeki bu şeffaf katman sağ
+          // tık, seçim, taşıma ve manuel döndürmeyi aynı olay hattına taşır.
+          if (interactive && _isRenderableCanvasModelBlock(block) && !isImage)
+            Positioned(
+              left: gripInset,
+              top: gripInset,
+              width: width,
+              height: height,
+              child: GestureDetector(
+                key: ValueKey<String>('model-interaction-overlay-${block.id}'),
+                behavior: HitTestBehavior.opaque,
+                onTap: onTap,
+                onSecondaryTapDown: onSecondaryTapDown,
+                onPanStart: onOrbitPanStart ??
+                    (onPanUpdate == null
+                        ? null
+                        : (_) {
+                            if (!isSelected) onTap?.call();
+                          }),
+                onPanUpdate: onOrbitPanUpdate ?? onPanUpdate,
+                onPanEnd: onOrbitPanEnd,
+                onPanCancel: onOrbitPanEnd == null
+                    ? null
+                    : () => onOrbitPanEnd!(
+                          DragEndDetails(velocity: Velocity.zero),
+                        ),
+                child: const SizedBox.expand(),
+              ),
+            ),
           if (showHandles &&
               _isRenderableCanvasModelBlock(block) &&
               !isImage &&
+              !block.modelTourEnabled &&
               onToggleOrbit != null)
             Align(
               alignment: Alignment.center,

@@ -23,8 +23,7 @@ Future<void> hydratePresentationModelSources(
   final resolvedSources = <String, String>{};
   final remoteEntries = <MapEntry<String, String>>[];
   for (final entry in baseSources.entries) {
-    if (entry.value.startsWith('assets/') ||
-        entry.value.startsWith('packages/')) {
+    if (ModelAssetService.isLocalAssetPath(entry.value)) {
       resolvedSources[entry.key] = entry.value;
       continue;
     }
@@ -62,8 +61,7 @@ Future<void> hydratePresentationModelSources(
   for (final id in missingIds) {
     if (!resolvedSources.containsKey(id)) {
       final fallbackSource = RemoteModelSources.sourceForRefresh(id) ?? id;
-      if (!fallbackSource.startsWith('assets/') &&
-          !fallbackSource.startsWith('packages/')) {
+      if (!ModelAssetService.isLocalAssetPath(fallbackSource)) {
         try {
           final signedUrl = await ModelAssetService.generateSignedUrl(
             fallbackSource,

@@ -10,6 +10,9 @@ class Presentation3DModelAsset {
     required this.tags,
     required this.byteSize,
     required this.sha256,
+    this.thumbnailPath,
+    this.exposure = 1,
+    this.environmentImage,
     this.icon = Icons.view_in_ar_rounded,
     this.hasAnimations = false,
     this.hasRig = false,
@@ -22,6 +25,9 @@ class Presentation3DModelAsset {
   final List<String> tags;
   final int byteSize;
   final String sha256;
+  final String? thumbnailPath;
+  final double exposure;
+  final String? environmentImage;
   final IconData icon;
   final bool hasAnimations;
   final bool hasRig;
@@ -29,6 +35,33 @@ class Presentation3DModelAsset {
 
 const List<Presentation3DModelAsset> presentation3DModelCatalog =
     <Presentation3DModelAsset>[
+  Presentation3DModelAsset(
+    id: 'anitkabir',
+    label: 'Anıtkabir',
+    assetPath: '/models/anitkabir.glb',
+    thumbnailPath: '/model_thumbnails/anitkabir.webp?v=2',
+    category: 'Tarih ve Kültür',
+    tags: <String>[
+      'Anıtkabir',
+      'Mustafa Kemal Atatürk',
+      'Atatürk',
+      'Ankara',
+      'Türkiye',
+      'tarih',
+      'mimari',
+      'anıt mezar',
+      '3B',
+    ],
+    byteSize: 4302048,
+    sha256: 'd5c93725a5796d2e6b29f78ce0a7df8ffe0b31bd60ee0472fd13ae7735e5e46b',
+    icon: Icons.account_balance_rounded,
+    hasAnimations: true,
+    // Kaynak GLB, 2185.6 şiddetinde gömülü bir yönlü güneş içeriyor.
+    // model-viewer'ın ortam ışığıyla birleştiğinde renklerin beyaza kırpılmasını
+    // önlemek ve GLB'deki özgün yeşil materyalleri korumak için kalibre edildi.
+    exposure: 0.003,
+    environmentImage: 'neutral',
+  ),
   Presentation3DModelAsset(
     id: 'yolcu-ucagi',
     label: 'Yolcu Uçağı',

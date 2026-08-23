@@ -568,9 +568,17 @@ String buildHtmlStageMarkup({
                 animationEnabled: block.modelAnimationEnabled,
                 autoRotate: block.modelAutoRotate,
                 rotationSpeed: block.modelRotationSpeed,
+                zoom: block.modelZoom,
+                exposure:
+                    findPresentation3DModelAsset(modelId ?? '')?.exposure ?? 1,
+                environmentImage: findPresentation3DModelAsset(modelId ?? '')
+                    ?.environmentImage,
                 orbitEnabled: block.modelOrbitEnabled,
                 orbitTheta: block.modelOrbitTheta,
                 orbitPhi: block.modelOrbitPhi,
+                targetX: block.modelTargetX,
+                targetY: block.modelTargetY,
+                targetZ: block.modelTargetZ,
                 deferSource: deferEmbeddedAssets,
                 fallbackHtml: block.kind == PresentationComponentKind.edebiyat01
                     ? ''
@@ -584,7 +592,7 @@ String buildHtmlStageMarkup({
     final label = imageId ?? modelId ?? '';
     final modelAttr = !is3D
         ? ''
-        : ' data-sutol-model-id="${_escapeAttribute(modelId)}" data-sutol-orbit-theta="${block.modelOrbitTheta.toStringAsFixed(2)}" data-sutol-orbit-phi="${block.modelOrbitPhi.toStringAsFixed(2)}"';
+        : ' data-sutol-model-id="${_escapeAttribute(modelId)}" data-sutol-orbit-theta="${block.modelOrbitTheta.toStringAsFixed(2)}" data-sutol-orbit-phi="${block.modelOrbitPhi.toStringAsFixed(2)}" data-sutol-model-zoom="${block.modelZoom.toStringAsFixed(2)}" data-sutol-target-x="${block.modelTargetX.toStringAsFixed(2)}" data-sutol-target-y="${block.modelTargetY.toStringAsFixed(2)}" data-sutol-target-z="${block.modelTargetZ.toStringAsFixed(2)}"';
     buffer.writeln(
       '<div class="$classes" data-sutol-component-id="${_escapeAttribute(block.id)}"$modelAttr data-reveal-step="$displayRevealStep" data-animation-step="$effectiveRevealStep" aria-label="${_escapeAttribute(label)}"$hotspotAttr style="left:${_pct(block.position.dx)}%;top:${_pct(block.position.dy)}%;width:${_pct(block.size.width)}%;height:${_pct(block.size.height)}%;${_animationTimingStyle(block.animationDuration, animationTimeline.delays[block.id] ?? block.animationDelay)}${_motionPathStyle(block.motionPathPoints)}">$componentInner</div>',
     );
@@ -642,9 +650,15 @@ String _model3DMarkup(
   required bool animationEnabled,
   required bool autoRotate,
   required double rotationSpeed,
+  required double zoom,
+  required double exposure,
+  required String? environmentImage,
   required bool orbitEnabled,
   required double orbitTheta,
   required double orbitPhi,
+  required double targetX,
+  required double targetY,
+  required double targetZ,
   required String fallbackHtml,
   bool deferSource = false,
 }) {
@@ -656,13 +670,19 @@ String _model3DMarkup(
           ' rotation-per-second="${rotationSpeed.toStringAsFixed(1)}deg"'
       : '';
   final cameraControlsMarkup = orbitEnabled ? ' camera-controls' : '';
+  final effectiveZoom = zoom.clamp(0.5, 10.0);
+  final cameraRadius = (100 / effectiveZoom).clamp(10, 200).toStringAsFixed(2);
   final cameraOrbit =
-      '${orbitTheta.toStringAsFixed(2)}deg ${orbitPhi.toStringAsFixed(2)}deg auto';
+      '${orbitTheta.toStringAsFixed(2)}deg ${orbitPhi.toStringAsFixed(2)}deg $cameraRadius%';
   final sourceMarkup = deferSource
       ? 'data-sutol-model-source-id="${_escapeAttribute(id)}"'
       : source != null && source.isNotEmpty
           ? 'src="${_escapeAttribute(source)}"'
           : '';
+  final environmentImageMarkup =
+      environmentImage == null || environmentImage.isEmpty
+          ? ''
+          : ' environment-image="${_escapeAttribute(environmentImage)}"';
 
   final fallbackMarkup = fallbackHtml.trim().isEmpty
       ? '''<div class="sutol-3d-fallback-card">
@@ -673,7 +693,7 @@ String _model3DMarkup(
       : '<div class="sutol-html-component-inner">$fallbackHtml</div>';
   return '''
 <div class="sutol-html-component-inner sutol-3d-model-inner">
-  <model-viewer class="sutol-3d-model-viewer" crossorigin="anonymous" data-sutol-model-id="${_escapeAttribute(id)}" $sourceMarkup alt="${_escapeAttribute(label)}"$cameraControlsMarkup$animationMarkup$autoRotateMarkup camera-orbit="$cameraOrbit" interaction-prompt="none" shadow-intensity="1" shadow-softness="0.8" exposure="1" loading="eager" reveal="auto" onload="this.hidden=false;const status=this.nextElementSibling;if(status)status.hidden=true;const fallback=status?status.nextElementSibling:null;if(fallback)fallback.hidden=true;console.log('Sutols 3B model yüklendi',{modelId:this.dataset.sutolModelId})" onerror="const status=this.nextElementSibling;if(status)status.hidden=true;const fallback=status?status.nextElementSibling:null;if(fallback)fallback.hidden=false;this.hidden=true;console.error('Sutols 3B model yüklenemedi',{modelId:this.dataset.sutolModelId})"></model-viewer>
+  <model-viewer class="sutol-3d-model-viewer" crossorigin="anonymous" data-sutol-model-id="${_escapeAttribute(id)}" data-sutol-target-x="${targetX.toStringAsFixed(2)}" data-sutol-target-y="${targetY.toStringAsFixed(2)}" data-sutol-target-z="${targetZ.toStringAsFixed(2)}" $sourceMarkup alt="${_escapeAttribute(label)}"$cameraControlsMarkup$animationMarkup$autoRotateMarkup$environmentImageMarkup camera-orbit="$cameraOrbit" camera-target="auto auto auto" min-camera-orbit="auto auto 1%" max-camera-orbit="auto auto 250%" field-of-view="45deg" interaction-prompt="none" shadow-intensity="1" shadow-softness="0.8" tone-mapping="neutral" exposure="${exposure.toStringAsFixed(4)}" loading="eager" reveal="auto" onload="this.hidden=false;window.SutolApplyModelTarget&&window.SutolApplyModelTarget(this);const status=this.nextElementSibling;if(status)status.hidden=true;const fallback=status?status.nextElementSibling:null;if(fallback)fallback.hidden=true;console.log('Sutols 3B model yüklendi',{modelId:this.dataset.sutolModelId})" onerror="const status=this.nextElementSibling;if(status)status.hidden=true;const fallback=status?status.nextElementSibling:null;if(fallback)fallback.hidden=false;this.hidden=true;console.error('Sutols 3B model yüklenemedi',{modelId:this.dataset.sutolModelId})"></model-viewer>
   <span class="sutol-3d-model-status">3B model yükleniyor…</span>
   <div class="sutol-3d-model-fallback" hidden>$fallbackMarkup</div>
 </div>
@@ -1159,8 +1179,9 @@ body {
 }
 
 .sutol-html-stage.sutol-stage-without-background {
-  border: 0;
-  background: transparent;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
 }
 
 .sutol-html-stage.sutol-stage-without-background::before,
@@ -3247,6 +3268,29 @@ const String _stagePatchScript = r'''
     }
   }
 
+  // camera-target gerçek uzunluk birimleri ister. Editörde modelden bağımsız
+  // yüzde-ofset saklanır; burada modelin metre ölçülerine çevrilir.
+  function applyModelTarget(modelViewer) {
+    if (!modelViewer || typeof modelViewer.getDimensions !== 'function' ||
+        typeof modelViewer.getBoundingBoxCenter !== 'function') return;
+    try {
+      const dimensions = modelViewer.getDimensions();
+      const center = modelViewer.getBoundingBoxCenter();
+      const x = Number(modelViewer.dataset.sutolTargetX) || 0;
+      const y = Number(modelViewer.dataset.sutolTargetY) || 0;
+      const z = Number(modelViewer.dataset.sutolTargetZ) || 0;
+      const targetX = center.x + dimensions.x * x / 100;
+      const targetY = center.y + dimensions.y * y / 100;
+      const targetZ = center.z + dimensions.z * z / 100;
+      modelViewer.setAttribute(
+        'camera-target',
+        targetX.toFixed(5) + 'm ' + targetY.toFixed(5) + 'm ' +
+            targetZ.toFixed(5) + 'm'
+      );
+    } catch (_) {}
+  }
+  window.SutolApplyModelTarget = applyModelTarget;
+
   function fitText(element) {
     // Metin kutusu sahnenin güvenli alanını aşarsa yazı boyutunu kademeli
     // olarak küçültür. CSS'teki min değer okunabilirlik sınırını korur.
@@ -3288,10 +3332,12 @@ const String _stagePatchScript = r'''
         item.modelOrbitPhi !== null && item.modelOrbitPhi !== undefined) {
       const modelViewer = element.querySelector('model-viewer');
       if (modelViewer) {
+        const zoom = Math.max(0.5, Math.min(10, Number(item.modelZoom) || 1));
+        const cameraRadius = Math.max(10, Math.min(200, 100 / zoom));
         modelViewer.setAttribute(
           'camera-orbit',
           String(item.modelOrbitTheta) + 'deg ' +
-            String(item.modelOrbitPhi) + 'deg auto'
+            String(item.modelOrbitPhi) + 'deg ' + cameraRadius.toFixed(2) + '%'
         );
       }
     }
@@ -3313,6 +3359,34 @@ const String _stagePatchScript = r'''
           'rotation-per-second',
           String(item.modelRotationSpeed) + 'deg'
         );
+      }
+    }
+    if (item.modelZoom !== null && item.modelZoom !== undefined) {
+      const modelViewer = element.querySelector('model-viewer');
+      if (modelViewer) {
+        const zoom = Math.max(0.5, Math.min(10, Number(item.modelZoom) || 1));
+        const cameraRadius = Math.max(10, Math.min(200, 100 / zoom));
+        const theta = Number(item.modelOrbitTheta) || 0;
+        const phi = Number(item.modelOrbitPhi) || 75;
+        modelViewer.setAttribute(
+          'camera-orbit',
+          theta + 'deg ' + phi + 'deg ' + cameraRadius.toFixed(2) + '%'
+        );
+        modelViewer.setAttribute('field-of-view', '45deg');
+      }
+    }
+    if (item.modelTargetX !== null && item.modelTargetX !== undefined &&
+        item.modelTargetY !== null && item.modelTargetY !== undefined &&
+        item.modelTargetZ !== null && item.modelTargetZ !== undefined) {
+      const modelViewer = element.querySelector('model-viewer');
+      if (modelViewer) {
+        const targetX = Math.max(-500, Math.min(500, Number(item.modelTargetX) || 0));
+        const targetY = Math.max(-500, Math.min(500, Number(item.modelTargetY) || 0));
+        const targetZ = Math.max(-500, Math.min(500, Number(item.modelTargetZ) || 0));
+        modelViewer.dataset.sutolTargetX = targetX.toFixed(2);
+        modelViewer.dataset.sutolTargetY = targetY.toFixed(2);
+        modelViewer.dataset.sutolTargetZ = targetZ.toFixed(2);
+        applyModelTarget(modelViewer);
       }
     }
     if (item.modelOrbitEnabled !== null && item.modelOrbitEnabled !== undefined) {
@@ -3492,6 +3566,12 @@ const String _stagePatchScript = r'''
     const stage = document.querySelector('.sutol-html-stage');
     if (stage) new ResizeObserver(fitAllText).observe(stage);
   }
+  document.querySelectorAll('model-viewer').forEach(function (modelViewer) {
+    modelViewer.addEventListener('load', function () {
+      applyModelTarget(modelViewer);
+    });
+    if (modelViewer.loaded) applyModelTarget(modelViewer);
+  });
   window.SutolStagePatcher = true;
 })();
 ''';

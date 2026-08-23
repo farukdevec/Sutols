@@ -326,9 +326,14 @@ class PresentationProjectCodec {
       'modelAnimationEnabled': block.modelAnimationEnabled,
       'modelAutoRotate': block.modelAutoRotate,
       'modelRotationSpeed': block.modelRotationSpeed,
+      'modelZoom': block.modelZoom,
       'modelOrbitEnabled': block.modelOrbitEnabled,
+      'modelTourEnabled': block.modelTourEnabled,
       'modelOrbitTheta': block.modelOrbitTheta,
       'modelOrbitPhi': block.modelOrbitPhi,
+      'modelTargetX': block.modelTargetX,
+      'modelTargetY': block.modelTargetY,
+      'modelTargetZ': block.modelTargetZ,
       'position': _offsetToJson(block.position),
       'size': _sizeToJson(block.size),
       'revealStep': block.revealStep,
@@ -377,11 +382,21 @@ class PresentationProjectCodec {
           ? json['modelAutoRotate']! as bool
           : false,
       modelRotationSpeed: _double(json['modelRotationSpeed'], 30),
+      modelZoom: _double(json['modelZoom'], 1).clamp(0.5, 10.0).toDouble(),
       modelOrbitEnabled: json['modelOrbitEnabled'] is bool
           ? json['modelOrbitEnabled']! as bool
           : false,
+      modelTourEnabled: json['modelTourEnabled'] is bool
+          ? json['modelTourEnabled']! as bool
+          : false,
       modelOrbitTheta: _double(json['modelOrbitTheta'], 0),
       modelOrbitPhi: _double(json['modelOrbitPhi'], 75),
+      modelTargetX:
+          _double(json['modelTargetX'], 0).clamp(-500, 500).toDouble(),
+      modelTargetY:
+          _double(json['modelTargetY'], 0).clamp(-500, 500).toDouble(),
+      modelTargetZ:
+          _double(json['modelTargetZ'], 0).clamp(-500, 500).toDouble(),
       position: _offsetFromJson(json['position']),
       size: _sizeFromJson(json['size']),
       revealStep: _int(json['revealStep'], 0),

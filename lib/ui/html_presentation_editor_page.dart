@@ -17,6 +17,7 @@ import '../services/presentation_auto_builder.dart';
 import '../services/presentation_fullscreen_service.dart';
 import '../services/presentation_loader.dart';
 import '../services/presentation_model_source_resolver.dart';
+import '../services/pointer_lock_service.dart';
 import '../services/presentation_project_codec.dart';
 import '../services/presentation_project_io.dart';
 import '../services/presentation_project_store.dart';
@@ -155,6 +156,8 @@ class _HtmlPresentationEditorPageState
   /// katmanına geçer); parmaklar kalkınca tekrar açılır.
   bool _multiTouchActive = false;
   bool _textInputHasFocus = false;
+  final Set<LogicalKeyboardKey> _tourMovementKeys = <LogicalKeyboardKey>{};
+  Timer? _tourMovementTimer;
 
   /// Mobil tuvaldeki "boş alanda sürükle" ipucu: ilk açılışta kısa süre
   /// görünür, etkileşimle ya da süre dolunca kaybolur.
@@ -333,6 +336,7 @@ class _HtmlPresentationEditorPageState
         .removeListener(_onLanguageChanged);
     HardwareKeyboard.instance.removeHandler(_handleGlobalKeyEvent);
     FocusManager.instance.removeListener(_handlePrimaryFocusChanged);
+    _tourMovementTimer?.cancel();
     _editorFocusNode.dispose();
     _hintTimer?.cancel();
     widget.controller.removeListener(_syncTextField);
@@ -387,8 +391,11 @@ class _HtmlPresentationEditorPageState
           ..write(
               '\nC:${block.id}|${block.kind.index}|${block.modelAssetId}|${block.imageAssetId}|${block.imageAspectRatio}')
           ..write('|${block.modelAnimationEnabled}|${block.modelAutoRotate}')
+          ..write('|${block.modelZoom.toStringAsFixed(2)}')
           ..write('|${block.modelOrbitEnabled}'
               '|${block.modelOrbitTheta.toStringAsFixed(3)}|${block.modelOrbitPhi.toStringAsFixed(3)}')
+          ..write('|${block.modelTourEnabled}'
+              '|${block.modelTargetX.toStringAsFixed(3)}|${block.modelTargetY.toStringAsFixed(3)}|${block.modelTargetZ.toStringAsFixed(3)}')
           ..write(
               '|${block.position.dx.toStringAsFixed(3)}|${block.position.dy.toStringAsFixed(3)}')
           ..write(
@@ -725,15 +732,33 @@ class _HtmlPresentationEditorPageState
   void _handlePrimaryFocusChanged() {
     final nextValue = _primaryFocusIsTextInput();
     if (!mounted || nextValue == _textInputHasFocus) return;
+    if (nextValue) _stopTourKeyboardMovement();
     setState(() => _textInputHasFocus = nextValue);
   }
 
   bool _handleGlobalKeyEvent(KeyEvent event) {
-    if (event is! KeyDownEvent) return false;
     if (_isEditingText) return false;
     if (widget.adminReadOnly) return false;
 
     final key = event.logicalKey;
+    final movementKeys = <LogicalKeyboardKey>{
+      LogicalKeyboardKey.keyW,
+      LogicalKeyboardKey.keyA,
+      LogicalKeyboardKey.keyS,
+      LogicalKeyboardKey.keyD,
+    };
+    final selectedModel = widget.controller.selectedComponentBlock;
+    if (movementKeys.contains(key) && selectedModel?.modelTourEnabled == true) {
+      if (event is KeyDownEvent || event is KeyRepeatEvent) {
+        if (_tourMovementKeys.add(key)) _startTourKeyboardMovement();
+      } else if (event is KeyUpEvent) {
+        _tourMovementKeys.remove(key);
+        if (_tourMovementKeys.isEmpty) _stopTourKeyboardMovement();
+      }
+      return true;
+    }
+
+    if (event is! KeyDownEvent) return false;
     if (key == LogicalKeyboardKey.delete ||
         key == LogicalKeyboardKey.backspace) {
       if (widget.controller.hasSelection) {
@@ -742,6 +767,47 @@ class _HtmlPresentationEditorPageState
       }
     }
     return false;
+  }
+
+  void _startTourKeyboardMovement() {
+    if (_tourMovementTimer != null) return;
+    _editorFocusNode.requestFocus();
+    widget.controller.beginSelectedModelOrbitGesture();
+    _tourMovementTimer = Timer.periodic(
+      const Duration(milliseconds: 30),
+      (_) => _tickTourKeyboardMovement(),
+    );
+    _tickTourKeyboardMovement();
+  }
+
+  void _tickTourKeyboardMovement() {
+    final selectedModel = widget.controller.selectedComponentBlock;
+    if (selectedModel?.modelTourEnabled != true || _tourMovementKeys.isEmpty) {
+      _stopTourKeyboardMovement();
+      return;
+    }
+    var forward =
+        (_tourMovementKeys.contains(LogicalKeyboardKey.keyW) ? 1.0 : 0.0) -
+            (_tourMovementKeys.contains(LogicalKeyboardKey.keyS) ? 1.0 : 0.0);
+    var right =
+        (_tourMovementKeys.contains(LogicalKeyboardKey.keyD) ? 1.0 : 0.0) -
+            (_tourMovementKeys.contains(LogicalKeyboardKey.keyA) ? 1.0 : 0.0);
+    if (forward != 0 && right != 0) {
+      final diagonalScale = math.sqrt(0.5);
+      forward *= diagonalScale;
+      right *= diagonalScale;
+    }
+    widget.controller.moveSelectedModelTour(
+      forward: forward * 0.7,
+      right: right * 0.7,
+    );
+  }
+
+  void _stopTourKeyboardMovement() {
+    _tourMovementTimer?.cancel();
+    _tourMovementTimer = null;
+    _tourMovementKeys.clear();
+    widget.controller.endSelectedModelOrbitGesture();
   }
 
   void _handleDeleteShortcut() {
@@ -5578,11 +5644,16 @@ class _Html3DModelControlsState extends State<_Html3DModelControls> {
       );
       return;
     }
-    // Yetkili imzalı URL edin; yetki verilemezse bloğu ekleme.
-    final signedUrl = await ModelAssetService.generateSignedUrl(model.modelUrl);
-    if (signedUrl == null ||
-        signedUrl.isEmpty ||
-        !signedUrl.contains('token=')) {
+    // Paketle gelen modeller aynı-origin yolunu doğrudan kullanır; R2 modelleri
+    // için kısa ömürlü yetkili adres alınır.
+    final rawSource = model.modelUrl.trim();
+    final resolvedSource = ModelAssetService.isLocalAssetPath(rawSource)
+        ? rawSource
+        : await ModelAssetService.generateSignedUrl(rawSource);
+    if (resolvedSource == null ||
+        resolvedSource.isEmpty ||
+        (!ModelAssetService.isLocalAssetPath(resolvedSource) &&
+            !ModelAssetService.isSignedUrlValid(resolvedSource))) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -5595,12 +5666,12 @@ class _Html3DModelControlsState extends State<_Html3DModelControls> {
       return;
     }
 
-    RemoteModelSources.registerAll(<String, String>{model.id: signedUrl});
+    RemoteModelSources.registerAll(<String, String>{model.id: resolvedSource});
     widget.controller.add3DModelBlock(
       Presentation3DModelAsset(
         id: model.id,
         label: model.name,
-        assetPath: signedUrl,
+        assetPath: resolvedSource,
         category: model.category.isEmpty ? '3B Model' : model.category,
         tags: model.tags,
         byteSize: 0,
@@ -5816,6 +5887,7 @@ class _Html3DModelControlsState extends State<_Html3DModelControls> {
                   width: (height * 0.75).clamp(80.0, 110.0),
                   margin: const EdgeInsets.only(right: 10),
                   child: _Model3DLibraryCard(
+                    key: ValueKey<String>('model-card-${model.id}'),
                     model: Presentation3DModelAsset(
                       id: model.id,
                       label: model.name,
@@ -5864,6 +5936,7 @@ class _Html3DModelControlsState extends State<_Html3DModelControls> {
           itemBuilder: (context, index) {
             final model = filtered[index];
             return _Model3DLibraryCard(
+              key: ValueKey<String>('model-card-${model.id}'),
               model: Presentation3DModelAsset(
                 id: model.id,
                 label: model.name,
@@ -7174,6 +7247,7 @@ class _TransitionLibraryCard extends StatelessWidget {
 
 class _Model3DLibraryCard extends StatefulWidget {
   const _Model3DLibraryCard({
+    super.key,
     required this.model,
     required this.thumbnailUrl,
     required this.isSelected,
@@ -9206,6 +9280,8 @@ class _HtmlStageCardState extends State<_HtmlStageCard>
   PresentationPage? _transitionPreviewFrom;
   PresentationPage? _transitionPreviewTo;
   PresentationTransitionKind? _transitionPreviewKind;
+  StreamSubscription<Offset>? _pointerLockMovementSubscription;
+  StreamSubscription<bool>? _pointerLockChangeSubscription;
 
   @override
   void initState() {
@@ -9214,6 +9290,14 @@ class _HtmlStageCardState extends State<_HtmlStageCard>
     _seenTransitionPreviewRevision =
         widget.controller.transitionPreviewRevision;
     widget.controller.addListener(_handleTransitionPreviewRequest);
+    _pointerLockMovementSubscription = pointerLockMovements.listen((delta) {
+      final model = widget.controller.selectedComponentBlock;
+      if (model?.modelTourEnabled != true) return;
+      widget.controller.lookAroundSelectedModelTour(delta);
+    });
+    _pointerLockChangeSubscription = pointerLockChanges.listen((locked) {
+      if (!locked) widget.controller.endSelectedModelOrbitGesture();
+    });
   }
 
   @override
@@ -9229,6 +9313,9 @@ class _HtmlStageCardState extends State<_HtmlStageCard>
   @override
   void dispose() {
     widget.controller.removeListener(_handleTransitionPreviewRequest);
+    unawaited(_pointerLockMovementSubscription?.cancel());
+    unawaited(_pointerLockChangeSubscription?.cancel());
+    if (isPointerLocked) exitPointerLock();
     _transitionPreviewController.dispose();
     super.dispose();
   }
@@ -9337,26 +9424,39 @@ class _HtmlStageCardState extends State<_HtmlStageCard>
             // gösteriyordu. Sunum modundaki gerçek geçişler ayrı akıştadır.
             child: ClipRRect(
               borderRadius: BorderRadius.circular(28),
+              clipBehavior: Clip.antiAlias,
               child: DecoratedBox(
-                decoration: const BoxDecoration(color: Colors.white),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(28),
+                ),
                 child: Stack(
                   fit: StackFit.expand,
+                  clipBehavior: Clip.hardEdge,
                   children: <Widget>[
                     // The editor owns content rendering in Flutter. Keeping
                     // HTML limited to the single background layer prevents
                     // Chrome platform views from covering the canvas in grey
                     // when the first Pexels image is inserted.
-                    const ColoredBox(color: Colors.white),
-                    IgnorePointer(
-                      child: HtmlLiveBackground(
-                        kind: widget.controller.selectedPage.backgroundKind,
-                        animationEnabled: widget.controller.selectedPage
-                                .backgroundAnimationEnabled &&
-                            !reduceMotion,
-                        animationSpeed: widget
-                            .controller.selectedPage.backgroundAnimationSpeed,
-                        colorsInverted: widget
-                            .controller.selectedPage.backgroundColorsInverted,
+                    Positioned.fill(
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(28),
+                        child: ColoredBox(
+                          color: Colors.white,
+                          child: IgnorePointer(
+                            child: HtmlLiveBackground(
+                              kind:
+                                  widget.controller.selectedPage.backgroundKind,
+                              animationEnabled: widget.controller.selectedPage
+                                      .backgroundAnimationEnabled &&
+                                  !reduceMotion,
+                              animationSpeed: widget.controller.selectedPage
+                                  .backgroundAnimationSpeed,
+                              colorsInverted: widget.controller.selectedPage
+                                  .backgroundColorsInverted,
+                            ),
+                          ),
+                        ),
                       ),
                     ),
                     if (_transitionPreviewFrom != null &&
@@ -9374,22 +9474,25 @@ class _HtmlStageCardState extends State<_HtmlStageCard>
                         ),
                       ),
                     if (widget.readOnly)
-                      IgnorePointer(
-                        child: PresentationPageCanvas(
-                          page: widget.controller.selectedPage,
-                          selectedTextBlockId:
-                              widget.controller.selectedTextBlockId,
-                          selectedTextBlockIds:
-                              widget.controller.selectedTextBlockIds,
-                          selectedComponentBlockId:
-                              widget.controller.selectedComponentBlockId,
-                          selectedComponentBlockIds:
-                              widget.controller.selectedComponentBlockIds,
-                          interactive: false,
-                          showHint: false,
-                          showSurface: false,
-                          showEmptyState: false,
-                          textOpacity: 1,
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(28),
+                        child: IgnorePointer(
+                          child: PresentationPageCanvas(
+                            page: widget.controller.selectedPage,
+                            selectedTextBlockId:
+                                widget.controller.selectedTextBlockId,
+                            selectedTextBlockIds:
+                                widget.controller.selectedTextBlockIds,
+                            selectedComponentBlockId:
+                                widget.controller.selectedComponentBlockId,
+                            selectedComponentBlockIds:
+                                widget.controller.selectedComponentBlockIds,
+                            interactive: false,
+                            showHint: false,
+                            showSurface: false,
+                            showEmptyState: false,
+                            textOpacity: 1,
+                          ),
                         ),
                       )
                     else
@@ -9409,8 +9512,15 @@ class _HtmlStageCardState extends State<_HtmlStageCard>
                         showEmptyState: false,
                         textOpacity: 1,
                         onSelectTextBlock: widget.controller.selectTextBlock,
-                        onSelectComponentBlock:
-                            widget.controller.selectComponentBlock,
+                        onSelectComponentBlock: (itemId) {
+                          widget.controller.selectComponentBlock(itemId);
+                          final model =
+                              widget.controller.selectedComponentBlock;
+                          if (model?.modelTourEnabled == true) {
+                            widget.controller.beginSelectedModelOrbitGesture();
+                            requestPointerLock();
+                          }
+                        },
                         onDragSelectedText: (delta, size) =>
                             widget.controller.moveSelectedText(
                           localDelta(delta),
@@ -9499,6 +9609,15 @@ class _HtmlStageCardState extends State<_HtmlStageCard>
                           }
                           widget.controller
                               .rotateSelectedModel(localDelta(delta));
+                        },
+                        onPanModelTour: (itemId, delta) {
+                          if (widget.controller.selectedComponentBlockId !=
+                              itemId) {
+                            widget.controller.selectComponentBlock(itemId);
+                          }
+                          widget.controller.lookAroundSelectedModelTour(
+                            localDelta(delta),
+                          );
                         },
                         onBeginModelOrbit: (itemId) {
                           if (widget.controller.selectedComponentBlockId !=
@@ -9920,6 +10039,83 @@ class _SelectionContextBarSection extends StatelessWidget {
         active: block.modelOrbitEnabled,
         onTap: () => controller
             .updateSelectedModelOrbitEnabled(!block.modelOrbitEnabled),
+      ),
+      const SizedBox(width: 4),
+      MiniToolLabeledToggle(
+        icon: Icons.explore_rounded,
+        label: block.modelTourEnabled
+            ? tr('FPS · WASD + Fare', 'FPS · WASD + Mouse')
+            : tr('Sanal Tur', 'Virtual Tour'),
+        active: block.modelTourEnabled,
+        onTap: () =>
+            controller.updateSelectedModelTourEnabled(!block.modelTourEnabled),
+      ),
+      if (block.modelTourEnabled &&
+          (block.modelTargetX.abs() > 0.001 ||
+              block.modelTargetY.abs() > 0.001 ||
+              block.modelTargetZ.abs() > 0.001)) ...<Widget>[
+        const SizedBox(width: 4),
+        MiniToolToggle(
+          icon: Icons.center_focus_strong_rounded,
+          tooltip: tr('Tur Konumunu Sıfırla', 'Reset Tour Position'),
+          active: false,
+          onTap: controller.resetSelectedModelTourPosition,
+        ),
+      ],
+      const SizedBox(width: 4),
+      Tooltip(
+        message: tr('Model Yakınlaştırma', 'Model Zoom'),
+        child: Container(
+          height: 34,
+          padding: const EdgeInsets.symmetric(horizontal: 10),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(999),
+            border: Border.all(color: context.colors.border),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              Icon(
+                Icons.zoom_in_rounded,
+                size: 16,
+                color: context.colors.onSurfaceVariant,
+              ),
+              const SizedBox(width: 6),
+              SizedBox(
+                width: 100,
+                child: SliderTheme(
+                  data: SliderTheme.of(context).copyWith(
+                    trackHeight: 2,
+                    thumbShape:
+                        const RoundSliderThumbShape(enabledThumbRadius: 6),
+                    overlayShape:
+                        const RoundSliderOverlayShape(overlayRadius: 12),
+                  ),
+                  child: Slider(
+                    key: const ValueKey<String>('selected-model-zoom-slider'),
+                    value: block.modelZoom.clamp(0.5, 10.0),
+                    min: 0.5,
+                    max: 10,
+                    divisions: 95,
+                    onChanged: controller.updateSelectedModelZoom,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 6),
+              SizedBox(
+                width: 34,
+                child: Text(
+                  '${block.modelZoom.toStringAsFixed(1)}×',
+                  textAlign: TextAlign.end,
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        fontWeight: FontWeight.w700,
+                        color: context.colors.onSurfaceVariant,
+                      ),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     ];
   }

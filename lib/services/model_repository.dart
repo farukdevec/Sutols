@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../models/presentation_3d_model_catalog.dart';
 import 'firestore_rest_helper.dart';
 
 /// Firestore'daki 3B model kataloğunun oturum-içi kaynağı.
@@ -120,7 +121,8 @@ class ModelRepository {
   Future<List<ModelCatalogEntry>> _loadModels(String? userId) async {
     final persistent = await _readPersistentCache(userId);
     if (persistent != null && persistent.models.isNotEmpty) {
-      _cachedModels = persistent.models;
+      final models = _withBundledModels(persistent.models);
+      _cachedModels = models;
       _cachedForUserId = userId;
       if (DateTime.now().difference(persistent.savedAt) > _persistentCacheTtl) {
         unawaited(_refreshInBackground(userId));
@@ -129,7 +131,7 @@ class ModelRepository {
         _loadingModels = null;
         _loadingForUserId = null;
       }
-      return persistent.models;
+      return models;
     }
     return _fetchModels(userId);
   }
@@ -169,10 +171,7 @@ class ModelRepository {
         ));
       }
 
-      models.sort(
-        (a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()),
-      );
-      final immutableModels = List<ModelCatalogEntry>.unmodifiable(models);
+      final immutableModels = _withBundledModels(models);
       _cachedModels = immutableModels;
       _cachedForUserId = userId;
       if (immutableModels.isNotEmpty) {
@@ -183,13 +182,44 @@ class ModelRepository {
       // Firestore okuma hatası (403 vb.) olursa boş liste döner;
       // sunum oluşturma akışını bozmaz.
       print('Model kataloğu okunamadı (403 vb.): $e');
-      return const [];
+      final bundledModels = _withBundledModels(const <ModelCatalogEntry>[]);
+      _cachedModels = bundledModels;
+      _cachedForUserId = userId;
+      return bundledModels;
     } finally {
       if (_loadingForUserId == userId) {
         _loadingModels = null;
         _loadingForUserId = null;
       }
     }
+  }
+
+  List<ModelCatalogEntry> _withBundledModels(
+    Iterable<ModelCatalogEntry> remoteModels,
+  ) {
+    final byId = <String, ModelCatalogEntry>{
+      for (final model in remoteModels) model.id: model,
+    };
+    for (final asset in presentation3DModelCatalog) {
+      final thumbnailPath = asset.thumbnailPath;
+      if (thumbnailPath == null || thumbnailPath.isEmpty) continue;
+      // Paketle gelen kayıt, aynı kimlikteki eski bir bulut/önbellek kaydının
+      // modeli yanlış adrese yönlendirmesine izin vermez.
+      byId[asset.id] = ModelCatalogEntry(
+        id: asset.id,
+        name: asset.label,
+        modelUrl: asset.assetPath,
+        thumbnailUrl: thumbnailPath,
+        tags: asset.tags,
+        category: asset.category,
+        tier: 'free',
+      );
+    }
+    final models = byId.values.toList(growable: false)
+      ..sort(
+        (a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()),
+      );
+    return List<ModelCatalogEntry>.unmodifiable(models);
   }
 
   String _persistentCacheKey(String? userId) =>

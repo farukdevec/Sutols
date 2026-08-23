@@ -180,3 +180,42 @@ class HtmlPageStage extends StatelessWidget {
     );
   }
 }
+
+class HtmlModelCanvas extends StatelessWidget {
+  const HtmlModelCanvas({
+    super.key,
+    required this.modelId,
+    required this.animationEnabled,
+    required this.autoRotate,
+    required this.rotationSpeed,
+    required this.zoom,
+    required this.exposure,
+    required this.environmentImage,
+    required this.orbitEnabled,
+    required this.orbitTheta,
+    required this.orbitPhi,
+    required this.targetX,
+    required this.targetY,
+    required this.targetZ,
+  });
+
+  final String modelId;
+  final bool animationEnabled;
+  final bool autoRotate;
+  final double rotationSpeed;
+  final double zoom;
+  final double exposure;
+  final String? environmentImage;
+  final bool orbitEnabled;
+  final double orbitTheta;
+  final double orbitPhi;
+  final double targetX;
+  final double targetY;
+  final double targetZ;
+
+  @override
+  Widget build(BuildContext context) => const ColoredBox(
+        color: Colors.transparent,
+        child: Center(child: Icon(Icons.view_in_ar_rounded)),
+      );
+}

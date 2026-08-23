@@ -30,6 +30,7 @@ class _SignedThumbnailImageState extends State<SignedThumbnailImage> {
   String? _signedUrl;
   bool _isLoading = true;
   bool _hasError = false;
+  int _loadGeneration = 0;
 
   @override
   void initState() {
@@ -46,9 +47,21 @@ class _SignedThumbnailImageState extends State<SignedThumbnailImage> {
   }
 
   Future<void> _loadSignedUrl() async {
+    final rawKey = widget.assetKey.trim();
+    final generation = ++_loadGeneration;
+    if (ModelAssetService.isLocalAssetPath(rawKey)) {
+      if (mounted && generation == _loadGeneration) {
+        setState(() {
+          _signedUrl = rawKey;
+          _isLoading = false;
+          _hasError = false;
+        });
+      }
+      return;
+    }
     final key = ModelAssetService.extractKey(widget.assetKey);
     if (key.isEmpty) {
-      if (mounted) {
+      if (mounted && generation == _loadGeneration) {
         setState(() {
           _signedUrl = null;
           _isLoading = false;
@@ -65,7 +78,11 @@ class _SignedThumbnailImageState extends State<SignedThumbnailImage> {
 
     final url = await ModelAssetService.generateSignedUrl(key);
 
-    if (!mounted) return;
+    if (!mounted ||
+        generation != _loadGeneration ||
+        widget.assetKey.trim() != rawKey) {
+      return;
+    }
 
     if (url != null && url.isNotEmpty && url.contains('token=')) {
       print('[THUMBNAIL_RENDER] key=$key signed=true');
@@ -113,7 +130,8 @@ class _SignedThumbnailImageState extends State<SignedThumbnailImage> {
                 ? const Color(0xFF1E293B)
                 : const Color(0xFFF1F5F9),
             alignment: Alignment.center,
-            child: const Icon(Icons.broken_image_rounded, size: 24, color: Colors.grey),
+            child: const Icon(Icons.broken_image_rounded,
+                size: 24, color: Colors.grey),
           );
     }
 
@@ -131,7 +149,8 @@ class _SignedThumbnailImageState extends State<SignedThumbnailImage> {
                   ? const Color(0xFF1E293B)
                   : const Color(0xFFF1F5F9),
               alignment: Alignment.center,
-              child: const Icon(Icons.broken_image_rounded, size: 24, color: Colors.grey),
+              child: const Icon(Icons.broken_image_rounded,
+                  size: 24, color: Colors.grey),
             );
       },
     );

@@ -15,10 +15,21 @@ class ModelAssetService {
 
   static const String _base = 'https://assets.sutols.com';
   static const String _thumbPrefix = 'thumbnails';
-  static const String _authorizeEndpoint = 'https://assets.sutols.com/authorize';
+  static const String _authorizeEndpoint =
+      'https://assets.sutols.com/authorize';
 
-  static final Map<String, _CachedSignedUrl> _signedUrlCache = <String, _CachedSignedUrl>{};
-  static final Map<String, Future<String?>> _inFlightRequests = <String, Future<String?>>{};
+  static final Map<String, _CachedSignedUrl> _signedUrlCache =
+      <String, _CachedSignedUrl>{};
+  static final Map<String, Future<String?>> _inFlightRequests =
+      <String, Future<String?>>{};
+
+  /// Uygulamayla birlikte yayınlanan, imzalı R2 adresi gerektirmeyen dosyalar.
+  static bool isLocalAssetPath(String? raw) {
+    final value = (raw ?? '').trim();
+    return (value.startsWith('/') && !value.startsWith('//')) ||
+        value.startsWith('assets/') ||
+        value.startsWith('packages/');
+  }
 
   /// Clears in-memory signed URL cache.
   static void clearCache() {
@@ -40,8 +51,10 @@ class ModelAssetService {
         if (expiresStr != null) {
           final expiresSec = int.tryParse(expiresStr);
           if (expiresSec != null) {
-            final expiresTime = DateTime.fromMillisecondsSinceEpoch(expiresSec * 1000);
-            if (DateTime.now().isAfter(expiresTime.subtract(const Duration(seconds: 30)))) {
+            final expiresTime =
+                DateTime.fromMillisecondsSinceEpoch(expiresSec * 1000);
+            if (DateTime.now()
+                .isAfter(expiresTime.subtract(const Duration(seconds: 30)))) {
               return false;
             }
           }
@@ -167,11 +180,13 @@ class ModelAssetService {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body) as Map<String, dynamic>?;
         if (data != null) {
-          final signedUrl = (data['url'] as String?) ?? (data['signedUrl'] as String?);
+          final signedUrl =
+              (data['url'] as String?) ?? (data['signedUrl'] as String?);
           if (signedUrl != null && signedUrl.isNotEmpty) {
             _signedUrlCache[key] = _CachedSignedUrl(
               url: signedUrl,
-              expiresAt: DateTime.now().add(const Duration(minutes: 4, seconds: 15)),
+              expiresAt:
+                  DateTime.now().add(const Duration(minutes: 4, seconds: 15)),
             );
             print('[ASSET_AUTH] key=$key status=200 signed=true');
             return signedUrl;
@@ -187,21 +202,25 @@ class ModelAssetService {
   }
 
   /// Returns object key for thumbnail (e.g. "thumbnails/76_3B_Buyuyen_Bar_Grafigi.webp")
-  static String thumbnailKey({String? thumbnailField, String? modelField, String? modelId}) {
+  static String thumbnailKey(
+      {String? thumbnailField, String? modelField, String? modelId}) {
     final thumb = (thumbnailField ?? '').trim();
     if (thumb.isNotEmpty) {
+      if (isLocalAssetPath(thumb)) return thumb;
       return extractKey(thumb);
     }
     final m = (modelField ?? '').trim();
     if (m.isNotEmpty) {
       final key = extractKey(m);
       final fileName = key.split('/').last;
-      final thumbName = fileName.replaceAll(RegExp(r'\.glb$', caseSensitive: false), '.webp');
+      final thumbName =
+          fileName.replaceAll(RegExp(r'\.glb$', caseSensitive: false), '.webp');
       return '$_thumbPrefix/$thumbName';
     }
     final id = (modelId ?? '').trim();
     if (id.isNotEmpty) {
-      final cleanId = id.replaceAll(RegExp(r'\.glb$', caseSensitive: false), '');
+      final cleanId =
+          id.replaceAll(RegExp(r'\.glb$', caseSensitive: false), '');
       return '$_thumbPrefix/$cleanId.webp';
     }
     return '';
@@ -209,23 +228,27 @@ class ModelAssetService {
 
   /// Signed URL ile model erişimi için full URL oluştur.
   static String? buildModelUrl(String? signedUrl) {
-    if (signedUrl != null && signedUrl.isNotEmpty && signedUrl.contains('token=')) {
+    if (signedUrl != null &&
+        signedUrl.isNotEmpty &&
+        signedUrl.contains('token=')) {
       return signedUrl;
     }
     return null;
   }
 
-
-
   /// Thumbnail URL oluştur.
-  static String thumbnailUrl({String? thumbnailField, String? modelField, String? modelId}) {
+  static String thumbnailUrl(
+      {String? thumbnailField, String? modelField, String? modelId}) {
     final thumb = (thumbnailField ?? '').trim();
     if (thumb.isNotEmpty) {
       try {
         final uri = Uri.tryParse(thumb);
         if (uri != null && uri.hasScheme && uri.host.isNotEmpty) {
-          if (uri.host.toLowerCase().contains('assets.sutols.com')) return thumb;
-          final fileName = uri.pathSegments.isNotEmpty ? uri.pathSegments.last : uri.path.split('/').last;
+          if (uri.host.toLowerCase().contains('assets.sutols.com'))
+            return thumb;
+          final fileName = uri.pathSegments.isNotEmpty
+              ? uri.pathSegments.last
+              : uri.path.split('/').last;
           return '$_base/$_thumbPrefix/$fileName';
         }
       } catch (_) {}
@@ -238,13 +261,17 @@ class ModelAssetService {
       try {
         final uri = Uri.tryParse(m);
         if (uri != null && uri.hasScheme && uri.host.isNotEmpty) {
-          final fileName = uri.pathSegments.isNotEmpty ? uri.pathSegments.last : uri.path.split('/').last;
-          final thumbName = fileName.replaceAll(RegExp(r'\.glb', caseSensitive: false), '.webp');
+          final fileName = uri.pathSegments.isNotEmpty
+              ? uri.pathSegments.last
+              : uri.path.split('/').last;
+          final thumbName = fileName.replaceAll(
+              RegExp(r'\.glb', caseSensitive: false), '.webp');
           return '$_base/$_thumbPrefix/$thumbName';
         }
       } catch (_) {}
       final fileName = m.split('/').last;
-      final thumbName = fileName.replaceAll(RegExp(r'\.glb', caseSensitive: false), '.webp');
+      final thumbName =
+          fileName.replaceAll(RegExp(r'\.glb', caseSensitive: false), '.webp');
       return '$_base/$_thumbPrefix/$thumbName';
     }
 
@@ -255,7 +282,8 @@ class ModelAssetService {
   }
 
   /// GLB indirme ve erişim işlemini Firestore glb_downloads koleksiyonuna kaydeder.
-  static Future<void> logDownloadEvent(String rawKey, {String source = 'web'}) async {
+  static Future<void> logDownloadEvent(String rawKey,
+      {String source = 'web'}) async {
     try {
       final user = FirebaseAuth.instance.currentUser;
       if (user == null) return;
@@ -280,7 +308,9 @@ class ModelAssetService {
             'userEmail': {'stringValue': user.email ?? ''},
             'displayName': {'stringValue': user.displayName ?? ''},
             'modelKey': {'stringValue': key},
-            'downloadedAt': {'timestampValue': now.endsWith('Z') ? now : '${now}Z'},
+            'downloadedAt': {
+              'timestampValue': now.endsWith('Z') ? now : '${now}Z'
+            },
             'source': {'stringValue': source},
           }
         }),
@@ -290,5 +320,3 @@ class ModelAssetService {
     }
   }
 }
-
-

@@ -1085,6 +1085,14 @@ String _exportScript({
       const startPhi = orbitValue(source, 'sutolOrbitPhi', 75);
       const targetTheta = orbitValue(target, 'sutolOrbitTheta', 0);
       const targetPhi = orbitValue(target, 'sutolOrbitPhi', 75);
+      const startZoom = Math.max(0.5, Math.min(10, orbitValue(source, 'sutolModelZoom', 1)));
+      const targetZoom = Math.max(0.5, Math.min(10, orbitValue(target, 'sutolModelZoom', 1)));
+      const startRadius = 100 / startZoom;
+      const targetRadius = 100 / targetZoom;
+      const startTargetX = orbitValue(source, 'sutolTargetX', 0);
+      const startTargetZ = orbitValue(source, 'sutolTargetZ', 0);
+      const targetTargetX = orbitValue(target, 'sutolTargetX', 0);
+      const targetTargetZ = orbitValue(target, 'sutolTargetZ', 0);
       const thetaDelta = ((targetTheta - startTheta + 540) % 360) - 180;
       const startedAt = performance.now();
 
@@ -1095,11 +1103,16 @@ String _exportScript({
           : 1 - Math.pow(-2 * raw + 2, 3) / 2;
         const theta = startTheta + thetaDelta * eased;
         const phi = startPhi + (targetPhi - startPhi) * eased;
-        viewer.setAttribute('camera-orbit', theta.toFixed(2) + 'deg ' + phi.toFixed(2) + 'deg auto');
+        const radius = startRadius + (targetRadius - startRadius) * eased;
+        const targetX = startTargetX + (targetTargetX - startTargetX) * eased;
+        const targetZ = startTargetZ + (targetTargetZ - startTargetZ) * eased;
+        viewer.setAttribute('camera-orbit', theta.toFixed(2) + 'deg ' + phi.toFixed(2) + 'deg ' + radius.toFixed(2) + '%');
+        viewer.setAttribute('camera-target', targetX.toFixed(2) + '% 0% ' + targetZ.toFixed(2) + '%');
         if (raw < 1) requestAnimationFrame(animateOrbit);
       }
 
-      viewer.setAttribute('camera-orbit', startTheta.toFixed(2) + 'deg ' + startPhi.toFixed(2) + 'deg auto');
+      viewer.setAttribute('camera-orbit', startTheta.toFixed(2) + 'deg ' + startPhi.toFixed(2) + 'deg ' + startRadius.toFixed(2) + '%');
+      viewer.setAttribute('camera-target', startTargetX.toFixed(2) + '% 0% ' + startTargetZ.toFixed(2) + '%');
       requestAnimationFrame(animateOrbit);
     });
   }

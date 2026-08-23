@@ -10,7 +10,6 @@ class PresentationController extends ChangeNotifier {
   static const double minTextFontSize = 18;
   static const double maxTextFontSize = 320;
   static const double _minTextWidthFactor = 0.18;
-  static const double _maxTextRightPaddingFactor = 0.06;
   static const int _minTransitionDurationMs = 120;
   static const int _maxTransitionDurationMs = 3000;
   static const double _minZoomScale = 1.1;
@@ -18,8 +17,10 @@ class PresentationController extends ChangeNotifier {
   static const int _maxRevealStep = 9;
   static const double _minComponentWidthFactor = 0.08;
   static const double _minComponentHeightFactor = 0.08;
-  static const double _maxComponentWidthFactor = 0.90;
-  static const double _maxComponentHeightFactor = 0.88;
+  // Bunlar sahne sınırı değil, yalnızca aşırı büyük Flutter katmanlarının
+  // yanlışlıkla oluşturulmasını önleyen teknik güvenlik eşikleridir.
+  static const double _maxComponentWidthFactor = 10;
+  static const double _maxComponentHeightFactor = 10;
   static const int _maxHistoryEntries = 80;
 
   PresentationController()
@@ -65,6 +66,8 @@ class PresentationController extends ChangeNotifier {
       const <PresentationComponentBlock>[];
   bool _historySuspended = false;
   bool _modelOrbitGestureActive = false;
+  bool _modelCameraGestureHasNotified = false;
+  final Stopwatch _modelCameraNotifyClock = Stopwatch();
   int _transitionPreviewRevision = 0;
   int? _transitionPreviewGapIndex;
 
@@ -521,7 +524,10 @@ class PresentationController extends ChangeNotifier {
     final nextComponents = selectedPage.componentBlocks
         .map(
           (block) => block.id == current.id
-              ? block.copyWith(modelAutoRotate: value)
+              ? block.copyWith(
+                  modelAutoRotate: value,
+                  modelTourEnabled: value ? false : block.modelTourEnabled,
+                )
               : block,
         )
         .toList(growable: false);
@@ -545,6 +551,25 @@ class PresentationController extends ChangeNotifier {
         .map(
           (block) => block.id == current.id
               ? block.copyWith(modelRotationSpeed: clamped)
+              : block,
+        )
+        .toList(growable: false);
+    _replaceSelectedPage(
+      selectedPage.copyWith(componentBlocks: nextComponents),
+    );
+    notifyListeners();
+  }
+
+  void updateSelectedModelZoom(double value) {
+    final current = selectedComponentBlock;
+    if (current == null || current.modelAssetId == null) return;
+    final clamped = value.clamp(0.5, 10.0).toDouble();
+    if (current.modelZoom == clamped) return;
+
+    final nextComponents = selectedPage.componentBlocks
+        .map(
+          (block) => block.id == current.id
+              ? block.copyWith(modelZoom: clamped)
               : block,
         )
         .toList(growable: false);
@@ -612,7 +637,10 @@ class PresentationController extends ChangeNotifier {
     final nextComponents = selectedPage.componentBlocks
         .map(
           (block) => block.id == current.id
-              ? block.copyWith(modelOrbitEnabled: value)
+              ? block.copyWith(
+                  modelOrbitEnabled: value,
+                  modelTourEnabled: value ? false : block.modelTourEnabled,
+                )
               : block,
         )
         .toList(growable: false);
@@ -630,19 +658,97 @@ class PresentationController extends ChangeNotifier {
     updateSelectedModelOrbitEnabled(!current!.modelOrbitEnabled);
   }
 
+  void updateSelectedModelTourEnabled(bool value) {
+    final current = selectedComponentBlock;
+    if (current == null ||
+        current.modelAssetId == null ||
+        current.modelTourEnabled == value) {
+      return;
+    }
+    final nextComponents = selectedPage.componentBlocks
+        .map(
+          (block) => block.id == current.id
+              ? block.copyWith(
+                  modelTourEnabled: value,
+                  modelOrbitEnabled: value ? false : block.modelOrbitEnabled,
+                  modelAutoRotate: value ? false : block.modelAutoRotate,
+                )
+              : block,
+        )
+        .toList(growable: false);
+    _replaceSelectedPage(
+      selectedPage.copyWith(componentBlocks: nextComponents),
+    );
+    notifyListeners();
+  }
+
+  void resetSelectedModelTourPosition() {
+    final current = selectedComponentBlock;
+    if (current?.modelAssetId == null ||
+        (current!.modelTargetX == 0 &&
+            current.modelTargetY == 0 &&
+            current.modelTargetZ == 0)) {
+      return;
+    }
+    final nextComponents = selectedPage.componentBlocks
+        .map(
+          (block) => block.id == current.id
+              ? block.copyWith(
+                  modelTargetX: 0,
+                  modelTargetY: 0,
+                  modelTargetZ: 0,
+                )
+              : block,
+        )
+        .toList(growable: false);
+    _replaceSelectedPage(
+      selectedPage.copyWith(componentBlocks: nextComponents),
+    );
+    notifyListeners();
+  }
+
   void beginSelectedModelOrbitGesture() {
     final current = selectedComponentBlock;
     if (current?.modelAssetId == null ||
-        !current!.modelOrbitEnabled ||
+        (!current!.modelOrbitEnabled && !current.modelTourEnabled) ||
         _modelOrbitGestureActive) {
       return;
     }
     _recordUndo();
     _modelOrbitGestureActive = true;
+    _modelCameraGestureHasNotified = false;
+    _modelCameraNotifyClock
+      ..reset()
+      ..start();
   }
 
   void endSelectedModelOrbitGesture() {
+    if (!_modelOrbitGestureActive) return;
     _modelOrbitGestureActive = false;
+    _modelCameraGestureHasNotified = false;
+    _modelCameraNotifyClock
+      ..stop()
+      ..reset();
+    // Son kamera konumunu kesin olarak ekrana ve kaydetme katmanına aktar.
+    notifyListeners();
+  }
+
+  void _notifyModelCameraChanged() {
+    if (!_modelOrbitGestureActive) {
+      notifyListeners();
+      return;
+    }
+    // Pointer olayları 100 Hz'i aşabilir. Tüm editörü her olayda yeniden
+    // çizmek yerine model kamerasını ekran yenileme hızına yakın güncelle.
+    if (_modelCameraGestureHasNotified &&
+        _modelCameraNotifyClock.elapsedMicroseconds < 16000) {
+      return;
+    }
+    _modelCameraGestureHasNotified = true;
+    _modelCameraNotifyClock
+      ..reset()
+      ..start();
+    notifyListeners();
   }
 
   void rotateSelectedModel(Offset delta) {
@@ -670,7 +776,73 @@ class PresentationController extends ChangeNotifier {
     } else {
       _replaceSelectedPage(nextPage);
     }
-    notifyListeners();
+    _notifyModelCameraChanged();
+  }
+
+  void lookAroundSelectedModelTour(Offset delta) {
+    final current = selectedComponentBlock;
+    if (current?.modelAssetId == null || !current!.modelTourEnabled) {
+      return;
+    }
+
+    final nextTheta = (current.modelOrbitTheta - delta.dx * 0.28) % 360;
+    final nextPhi =
+        (current.modelOrbitPhi + delta.dy * 0.24).clamp(12.0, 168.0).toDouble();
+    final nextComponents = selectedPage.componentBlocks
+        .map(
+          (block) => block.id == current.id
+              ? block.copyWith(
+                  modelOrbitTheta: nextTheta,
+                  modelOrbitPhi: nextPhi,
+                )
+              : block,
+        )
+        .toList(growable: false);
+    final nextPage = selectedPage.copyWith(componentBlocks: nextComponents);
+    if (_modelOrbitGestureActive) {
+      _pages[_selectedPageIndex] = nextPage;
+    } else {
+      _replaceSelectedPage(nextPage);
+    }
+    _notifyModelCameraChanged();
+  }
+
+  void moveSelectedModelTour({double forward = 0, double right = 0}) {
+    final current = selectedComponentBlock;
+    if (current?.modelAssetId == null || !current!.modelTourEnabled) return;
+    if (forward == 0 && right == 0) return;
+
+    final theta = current.modelOrbitTheta * math.pi / 180;
+    final zoomSensitivity = 1 / math.sqrt(current.modelZoom.clamp(0.5, 10.0));
+    final forwardShift = forward * zoomSensitivity;
+    final rightShift = right * zoomSensitivity;
+    final nextTargetX = (current.modelTargetX -
+            forwardShift * math.sin(theta) +
+            rightShift * math.cos(theta))
+        .clamp(-500.0, 500.0)
+        .toDouble();
+    final nextTargetZ = (current.modelTargetZ -
+            forwardShift * math.cos(theta) -
+            rightShift * math.sin(theta))
+        .clamp(-500.0, 500.0)
+        .toDouble();
+    final nextComponents = selectedPage.componentBlocks
+        .map(
+          (block) => block.id == current.id
+              ? block.copyWith(
+                  modelTargetX: nextTargetX,
+                  modelTargetZ: nextTargetZ,
+                )
+              : block,
+        )
+        .toList(growable: false);
+    final nextPage = selectedPage.copyWith(componentBlocks: nextComponents);
+    if (_modelOrbitGestureActive) {
+      _pages[_selectedPageIndex] = nextPage;
+    } else {
+      _replaceSelectedPage(nextPage);
+    }
+    _notifyModelCameraChanged();
   }
 
   void updateSelectedBackground(PresentationBackgroundKind value) {
@@ -1588,10 +1760,8 @@ class PresentationController extends ChangeNotifier {
 
     final insertedTextBlocks = textBlocks.map((block) {
       final nextPosition = Offset(
-        (block.position.dx + 0.03)
-            .clamp(0.04, _maxLeftPositionForWidth(block.widthFactor))
-            .toDouble(),
-        (block.position.dy + 0.04).clamp(0.05, 0.84).toDouble(),
+        block.position.dx + 0.03,
+        block.position.dy + 0.04,
       );
       return block.copyWith(
         id: 'text-${_textBlockCounter++}',
@@ -1600,12 +1770,8 @@ class PresentationController extends ChangeNotifier {
     }).toList(growable: false);
     final insertedComponentBlocks = componentBlocks.map((block) {
       final nextPosition = Offset(
-        (block.position.dx + 0.03)
-            .clamp(0.04, _maxLeftPositionForWidth(block.size.width))
-            .toDouble(),
-        (block.position.dy + 0.04)
-            .clamp(0.05, _maxTopPositionForHeight(block.size.height))
-            .toDouble(),
+        block.position.dx + 0.03,
+        block.position.dy + 0.04,
       );
       return block.copyWith(
         id: 'component-${_componentBlockCounter++}',
@@ -1655,35 +1821,8 @@ class PresentationController extends ChangeNotifier {
       return;
     }
 
-    var minDeltaX = double.negativeInfinity;
-    var maxDeltaX = double.infinity;
-    var minDeltaY = double.negativeInfinity;
-    var maxDeltaY = double.infinity;
-
-    for (final block in selectedTextBlocks) {
-      minDeltaX = math.max(minDeltaX, 0.04 - block.position.dx);
-      maxDeltaX = math.min(
-        maxDeltaX,
-        _maxLeftPositionForWidth(block.widthFactor) - block.position.dx,
-      );
-      minDeltaY = math.max(minDeltaY, 0.05 - block.position.dy);
-      maxDeltaY = math.min(maxDeltaY, 0.84 - block.position.dy);
-    }
-    for (final block in selectedComponentBlocks) {
-      minDeltaX = math.max(minDeltaX, 0.04 - block.position.dx);
-      maxDeltaX = math.min(
-        maxDeltaX,
-        _maxLeftPositionForWidth(block.size.width) - block.position.dx,
-      );
-      minDeltaY = math.max(minDeltaY, 0.05 - block.position.dy);
-      maxDeltaY = math.min(
-        maxDeltaY,
-        _maxTopPositionForHeight(block.size.height) - block.position.dy,
-      );
-    }
-
-    final deltaX = (delta.dx / canvasSize.width).clamp(minDeltaX, maxDeltaX);
-    final deltaY = (delta.dy / canvasSize.height).clamp(minDeltaY, maxDeltaY);
+    final deltaX = delta.dx / canvasSize.width;
+    final deltaY = delta.dy / canvasSize.height;
 
     final nextBlocks = selectedPage.textBlocks
         .map(
@@ -1749,44 +1888,19 @@ class PresentationController extends ChangeNotifier {
     if (fromTop) top += deltaY;
     if (fromBottom) bottom += deltaY;
 
-    const minLeft = 0.04;
-    const minTop = 0.05;
     const minHeight = 0.06;
-    const maxHeight = 0.86;
-    const maxRight = 1 - _maxTextRightPaddingFactor;
-    const maxBottom = 0.95;
 
     if (fromLeft) {
-      left = left
-          .clamp(
-            math.max(minLeft, right - 0.82),
-            right - _minTextWidthFactor,
-          )
-          .toDouble();
+      left = math.min(left, right - _minTextWidthFactor);
     }
     if (fromRight) {
-      right = right
-          .clamp(
-            left + _minTextWidthFactor,
-            math.min(maxRight, left + 0.82),
-          )
-          .toDouble();
+      right = math.max(right, left + _minTextWidthFactor);
     }
     if (fromTop) {
-      top = top
-          .clamp(
-            math.max(minTop, bottom - maxHeight),
-            bottom - minHeight,
-          )
-          .toDouble();
+      top = math.min(top, bottom - minHeight);
     }
     if (fromBottom) {
-      bottom = bottom
-          .clamp(
-            top + minHeight,
-            math.min(maxBottom, top + maxHeight),
-          )
-          .toDouble();
+      bottom = math.max(bottom, top + minHeight);
     }
 
     final nextHeight = bottom - top;
@@ -1820,14 +1934,7 @@ class PresentationController extends ChangeNotifier {
         .clamp(_minComponentHeightFactor, _maxComponentHeightFactor)
         .toDouble();
     final nextSize = Size(nextWidth, nextHeight);
-    final nextPosition = Offset(
-      current.position.dx
-          .clamp(0.04, _maxLeftPositionForWidth(nextWidth))
-          .toDouble(),
-      current.position.dy
-          .clamp(0.05, _maxTopPositionForHeight(nextHeight))
-          .toDouble(),
-    );
+    final nextPosition = current.position;
     final nextComponents = selectedPage.componentBlocks
         .map(
           (block) => block.id == current.id
@@ -1879,15 +1986,10 @@ class PresentationController extends ChangeNotifier {
       bottom += deltaY;
     }
 
-    const minLeft = 0.04;
-    const minTop = 0.05;
-    const maxRight = 1 - _maxTextRightPaddingFactor;
-    const maxBottom = 0.95;
-
     if (fromLeft) {
       left = left
           .clamp(
-            math.max(minLeft, right - _maxComponentWidthFactor),
+            right - _maxComponentWidthFactor,
             right - _minComponentWidthFactor,
           )
           .toDouble();
@@ -1896,14 +1998,14 @@ class PresentationController extends ChangeNotifier {
       right = right
           .clamp(
             left + _minComponentWidthFactor,
-            math.min(maxRight, left + _maxComponentWidthFactor),
+            left + _maxComponentWidthFactor,
           )
           .toDouble();
     }
     if (fromTop) {
       top = top
           .clamp(
-            math.max(minTop, bottom - _maxComponentHeightFactor),
+            bottom - _maxComponentHeightFactor,
             bottom - _minComponentHeightFactor,
           )
           .toDouble();
@@ -1912,7 +2014,7 @@ class PresentationController extends ChangeNotifier {
       bottom = bottom
           .clamp(
             top + _minComponentHeightFactor,
-            math.min(maxBottom, top + _maxComponentHeightFactor),
+            top + _maxComponentHeightFactor,
           )
           .toDouble();
     }
@@ -1927,10 +2029,7 @@ class PresentationController extends ChangeNotifier {
         _maxComponentHeightFactor,
       ),
     );
-    final nextPosition = Offset(
-      left.clamp(minLeft, _maxLeftPositionForWidth(nextSize.width)).toDouble(),
-      top.clamp(minTop, _maxTopPositionForHeight(nextSize.height)).toDouble(),
-    );
+    final nextPosition = Offset(left, top);
 
     final nextComponents = selectedPage.componentBlocks
         .map(
@@ -2081,20 +2180,7 @@ class PresentationController extends ChangeNotifier {
   }
 
   double _clampWidthFactor(double value, double positionX) {
-    final maxWidth = (1 - positionX - _maxTextRightPaddingFactor)
-        .clamp(_minTextWidthFactor, 0.82)
-        .toDouble();
-    return value.clamp(_minTextWidthFactor, maxWidth).toDouble();
-  }
-
-  double _maxLeftPositionForWidth(double widthFactor) {
-    return (1 - widthFactor - _maxTextRightPaddingFactor)
-        .clamp(0.04, 0.76)
-        .toDouble();
-  }
-
-  double _maxTopPositionForHeight(double heightFactor) {
-    return (1 - heightFactor - 0.05).clamp(0.05, 0.86).toDouble();
+    return value.clamp(_minTextWidthFactor, 10).toDouble();
   }
 
   int _nextCounterForPrefix(Iterable<String> ids, String prefix) {

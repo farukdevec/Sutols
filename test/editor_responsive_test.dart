@@ -2,7 +2,7 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart' show FontLoader;
+import 'package:flutter/services.dart' show FontLoader, LogicalKeyboardKey;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sutol/models/slide_model.dart';
 import 'package:sutol/state/presentation_controller.dart';
@@ -309,7 +309,7 @@ void main() {
     await tester.tap(find.text('Arka Planlar'));
     await tester.pumpAndSettle();
     expect(find.text('Sutols Sahne Koleksiyonu'), findsOneWidget);
-    expect(find.text('20 tema'), findsOneWidget);
+    expect(find.text('21 tema'), findsOneWidget);
     expect(find.text('Arka Plansız (Beyaz)'), findsOneWidget);
     expect(find.text('Teknoloji & Yapay Zeka'), findsOneWidget);
     await tester.ensureVisible(find.text('Teknoloji & Yapay Zeka'));
@@ -1035,5 +1035,35 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Öğe Animasyonu'), findsOneWidget);
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('FPS sanal turda W ve D tuşları modeli sürekli hareket ettirir', (
+    tester,
+  ) async {
+    final controller = await pumpAt(tester, const Size(1440, 900));
+    controller.add3DModelBlock(
+      const Presentation3DModelAsset(
+        id: 'fps-test-model',
+        label: 'FPS test model',
+        assetPath: 'https://example.com/fps.glb',
+        category: 'Test',
+        tags: <String>[],
+        byteSize: 0,
+        sha256: '',
+      ),
+    );
+    controller.updateSelectedModelTourEnabled(true);
+    await tester.pump();
+
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.keyW);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.keyD);
+    await tester.pump(const Duration(milliseconds: 120));
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.keyW);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.keyD);
+    await tester.pump();
+
+    final model = controller.selectedComponentBlock!;
+    expect(model.modelTargetX.abs(), greaterThan(0));
+    expect(model.modelTargetZ.abs(), greaterThan(0));
   });
 }

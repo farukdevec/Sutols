@@ -331,6 +331,7 @@ enum PresentationBackgroundKind {
   studioPsychologyGrowth,
   studioConstructionRealEstate,
   studioGamingEntertainment,
+  studioSky,
 }
 
 enum PresentationTransitionKind {
@@ -592,9 +593,14 @@ class PresentationComponentBlock {
     this.modelAnimationEnabled = true,
     this.modelAutoRotate = false,
     this.modelRotationSpeed = 30,
+    this.modelZoom = 1,
     this.modelOrbitEnabled = false,
+    this.modelTourEnabled = false,
     this.modelOrbitTheta = 0,
     this.modelOrbitPhi = 75,
+    this.modelTargetX = 0,
+    this.modelTargetY = 0,
+    this.modelTargetZ = 0,
     required this.position,
     required this.size,
     this.revealStep = 0,
@@ -620,9 +626,14 @@ class PresentationComponentBlock {
   final bool modelAnimationEnabled;
   final bool modelAutoRotate;
   final double modelRotationSpeed;
+  final double modelZoom;
   final bool modelOrbitEnabled;
+  final bool modelTourEnabled;
   final double modelOrbitTheta;
   final double modelOrbitPhi;
+  final double modelTargetX;
+  final double modelTargetY;
+  final double modelTargetZ;
   final Offset position;
   final Size size;
   final int revealStep;
@@ -643,9 +654,14 @@ class PresentationComponentBlock {
     bool? modelAnimationEnabled,
     bool? modelAutoRotate,
     double? modelRotationSpeed,
+    double? modelZoom,
     bool? modelOrbitEnabled,
+    bool? modelTourEnabled,
     double? modelOrbitTheta,
     double? modelOrbitPhi,
+    double? modelTargetX,
+    double? modelTargetY,
+    double? modelTargetZ,
     Offset? position,
     Size? size,
     int? revealStep,
@@ -673,9 +689,14 @@ class PresentationComponentBlock {
           modelAnimationEnabled ?? this.modelAnimationEnabled,
       modelAutoRotate: modelAutoRotate ?? this.modelAutoRotate,
       modelRotationSpeed: modelRotationSpeed ?? this.modelRotationSpeed,
+      modelZoom: modelZoom ?? this.modelZoom,
       modelOrbitEnabled: modelOrbitEnabled ?? this.modelOrbitEnabled,
+      modelTourEnabled: modelTourEnabled ?? this.modelTourEnabled,
       modelOrbitTheta: modelOrbitTheta ?? this.modelOrbitTheta,
       modelOrbitPhi: modelOrbitPhi ?? this.modelOrbitPhi,
+      modelTargetX: modelTargetX ?? this.modelTargetX,
+      modelTargetY: modelTargetY ?? this.modelTargetY,
+      modelTargetZ: modelTargetZ ?? this.modelTargetZ,
       position: position ?? this.position,
       size: size ?? this.size,
       revealStep: revealStep ?? this.revealStep,
@@ -1265,6 +1286,26 @@ const List<PresentationBackgroundDefinition> sutolStudioBackgroundLibrary =
       Color(0xFFA6FF4D)
     ],
     icon: Icons.sports_esports_rounded,
+  ),
+  PresentationBackgroundDefinition(
+    kind: PresentationBackgroundKind.studioSky,
+    label: 'Gökyüzü',
+    category: 'Sade',
+    tags: <String>[
+      'gökyüzü',
+      'mavi',
+      'bulut',
+      'sade',
+      'açık',
+      'hava',
+      'sky',
+    ],
+    previewColors: <Color>[
+      Color(0xFF69B9E8),
+      Color(0xFFAEDFF5),
+      Color(0xFFF7FCFF),
+    ],
+    icon: Icons.cloud_outlined,
   ),
 ];
 
@@ -1946,6 +1987,7 @@ bool presentationBackgroundIsDark(PresentationBackgroundKind kind) {
     case PresentationBackgroundKind.lightWarm:
     case PresentationBackgroundKind.plainWhite:
     case PresentationBackgroundKind.studioEducationAcademia:
+    case PresentationBackgroundKind.studioSky:
       return false;
     default:
       return true;

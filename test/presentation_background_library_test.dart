@@ -70,17 +70,31 @@ void main() {
     expect(document, isNot(contains('fonts.googleapis.com/css2')));
   });
 
-  test('library exposes the legacy collection and 20 studio backgrounds', () {
-    expect(presentationBackgroundLibrary, hasLength(49));
+  test('library exposes the legacy collection and 21 studio backgrounds', () {
+    expect(presentationBackgroundLibrary, hasLength(50));
     expect(
       presentationBackgroundLibrary.map((item) => item.kind).toSet(),
-      hasLength(49),
+      hasLength(50),
     );
-    expect(sutolStudioBackgroundLibrary, hasLength(20));
+    expect(sutolStudioBackgroundLibrary, hasLength(21));
     expect(
       presentationBackgroundLibrary.every((item) => item.tags.isNotEmpty),
       isTrue,
     );
+  });
+
+  test('Gökyüzü background is a light animated scene with sparse clouds', () {
+    const kind = PresentationBackgroundKind.studioSky;
+    final definition = presentationBackgroundDefinition(kind)!;
+    final source = presentationBackgroundSceneHtml(kind);
+
+    expect(definition.label, 'Gökyüzü');
+    expect(definition.category, 'Sade');
+    expect(presentationBackgroundIsDark(kind), isFalse);
+    expect(source, contains('linear-gradient'));
+    expect(source, contains('cloud-drift'));
+    expect(source, contains('64s linear infinite'));
+    expect(RegExp(r'class="cloud').allMatches(source).length, 4);
   });
 
   test('a page without a selected background uses a plain white scene', () {

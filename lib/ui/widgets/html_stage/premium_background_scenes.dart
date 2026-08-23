@@ -3,6 +3,7 @@ import 'premium_background_scenes_group_a.dart';
 import 'premium_background_scenes_group_b.dart';
 import 'premium_background_scenes_group_c.dart';
 import 'premium_background_scenes_group_d.dart';
+import 'premium_background_scenes_group_e.dart';
 
 final Map<PresentationBackgroundKind, String> sutolPremiumBackgroundScenes =
     <PresentationBackgroundKind, String>{
@@ -10,4 +11,5 @@ final Map<PresentationBackgroundKind, String> sutolPremiumBackgroundScenes =
   ...sutolPremiumBackgroundScenesGroupB,
   ...sutolPremiumBackgroundScenesGroupC,
   ...sutolPremiumBackgroundScenesGroupD,
+  ...sutolPremiumBackgroundScenesGroupE,
 };

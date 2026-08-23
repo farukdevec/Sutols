@@ -112,12 +112,10 @@ Future<Map<String, String>> _embeddedModelSources(
     if (source == null || source.trim().isEmpty) {
       source = modelId;
     }
-    final signedUrl = await ModelAssetService.generateSignedUrl(source);
-    if (signedUrl == null || !signedUrl.contains('token=')) {
-      continue;
-    }
-    final fetchUrl = signedUrl;
-
+    final fetchUrl = ModelAssetService.isLocalAssetPath(source)
+        ? Uri.base.resolve(source).toString()
+        : await ModelAssetService.generateSignedUrl(source);
+    if (fetchUrl == null || fetchUrl.isEmpty) continue;
 
     try {
       final response = await http.get(Uri.parse(fetchUrl));
@@ -138,4 +136,3 @@ Future<Map<String, String>> _embeddedModelSources(
 }
 
 final Map<String, String> _embeddedModelSourceCache = <String, String>{};
-

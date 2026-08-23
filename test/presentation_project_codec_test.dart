@@ -84,9 +84,14 @@ void main() {
             modelAssetId: 'gercekci-dunya',
             modelAnimationEnabled: false,
             modelAutoRotate: true,
+            modelZoom: 2.3,
             modelOrbitEnabled: true,
             modelOrbitTheta: 45,
             modelOrbitPhi: 60,
+            modelTourEnabled: true,
+            modelTargetX: 18.5,
+            modelTargetY: 7.25,
+            modelTargetZ: -24,
             position: Offset(0.1, 0.5),
             size: Size(0.2, 0.3),
           ),
@@ -159,9 +164,14 @@ void main() {
     expect(modelBlock.modelAssetId, 'gercekci-dunya');
     expect(modelBlock.modelAnimationEnabled, isFalse);
     expect(modelBlock.modelAutoRotate, isTrue);
+    expect(modelBlock.modelZoom, 2.3);
     expect(modelBlock.modelOrbitEnabled, isTrue);
     expect(modelBlock.modelOrbitTheta, 45);
     expect(modelBlock.modelOrbitPhi, 60);
+    expect(modelBlock.modelTourEnabled, isTrue);
+    expect(modelBlock.modelTargetX, 18.5);
+    expect(modelBlock.modelTargetY, 7.25);
+    expect(modelBlock.modelTargetZ, -24);
     final imageBlock = project.pages.single.componentBlocks.last;
     expect(imageBlock.modelAssetId, isNull);
     expect(imageBlock.imageAssetId, 'photo-source-5');

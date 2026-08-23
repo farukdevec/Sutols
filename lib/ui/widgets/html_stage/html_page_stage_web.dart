@@ -3,6 +3,8 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:html' as html;
+import 'dart:js_interop';
+import 'dart:js_interop_unsafe';
 import 'dart:ui_web' as ui_web;
 
 import 'package:flutter/widgets.dart';
@@ -372,6 +374,232 @@ class HtmlComponentPreview extends StatefulWidget {
 
   @override
   State<HtmlComponentPreview> createState() => _HtmlComponentPreviewState();
+}
+
+/// Editör tuvalinde bir 3B modeli iframe oluşturmadan, doğrudan şeffaf bir
+/// `<model-viewer>` platform öğesinde gösterir. Böylece iframe'in beyaz belge
+/// yüzeyi slayt arka planını kapatmaz.
+class HtmlModelCanvas extends StatefulWidget {
+  const HtmlModelCanvas({
+    super.key,
+    required this.modelId,
+    required this.animationEnabled,
+    required this.autoRotate,
+    required this.rotationSpeed,
+    required this.zoom,
+    required this.exposure,
+    required this.environmentImage,
+    required this.orbitEnabled,
+    required this.orbitTheta,
+    required this.orbitPhi,
+    required this.targetX,
+    required this.targetY,
+    required this.targetZ,
+  });
+
+  final String modelId;
+  final bool animationEnabled;
+  final bool autoRotate;
+  final double rotationSpeed;
+  final double zoom;
+  final double exposure;
+  final String? environmentImage;
+  final bool orbitEnabled;
+  final double orbitTheta;
+  final double orbitPhi;
+  final double targetX;
+  final double targetY;
+  final double targetZ;
+
+  @override
+  State<HtmlModelCanvas> createState() => _HtmlModelCanvasState();
+}
+
+class _HtmlModelCanvasState extends State<HtmlModelCanvas> {
+  html.Element? _modelViewer;
+  StreamSubscription<html.Event>? _modelLoadSubscription;
+  double _modelWidth = 1;
+  double _modelHeight = 1;
+  double _modelDepth = 1;
+  double _modelCenterX = 0;
+  double _modelCenterY = 0;
+  double _modelCenterZ = 0;
+  bool _modelGeometryReady = false;
+
+  void _setAttribute(String name, String value) {
+    final element = _modelViewer;
+    if (element == null || element.getAttribute(name) == value) return;
+    element.setAttribute(name, value);
+  }
+
+  void _removeAttribute(String name) {
+    final element = _modelViewer;
+    if (element == null || !element.attributes.containsKey(name)) return;
+    element.attributes.remove(name);
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    RemoteModelSources.revision.addListener(_applyAttributes);
+  }
+
+  @override
+  void didUpdateWidget(covariant HtmlModelCanvas oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _applyAttributes();
+  }
+
+  void _setBooleanAttribute(String name, bool enabled) {
+    final element = _modelViewer;
+    if (element == null) return;
+    if (enabled) {
+      if (!element.attributes.containsKey(name)) element.setAttribute(name, '');
+    } else {
+      _removeAttribute(name);
+    }
+  }
+
+  void _applyAttributes() {
+    final element = _modelViewer;
+    if (element == null) return;
+    final source = RemoteModelSources.sourceFor(widget.modelId);
+    final zoom = widget.zoom.clamp(0.5, 10.0);
+    final cameraRadius = (100 / zoom).clamp(10, 200).toStringAsFixed(2);
+    if (source == null || source.isEmpty) {
+      _removeAttribute('src');
+    } else {
+      // `src`yi aynı değerle tekrar yazmak model-viewer'ın GLB'yi yeniden
+      // değerlendirmesine ve büyük modellerde sürüklemenin takılmasına yol
+      // açabiliyor. Yalnızca kaynak gerçekten değiştiğinde güncelle.
+      if (element.getAttribute('src') != source) {
+        _modelGeometryReady = false;
+        _setAttribute('src', source);
+      }
+    }
+    _setAttribute('alt', widget.modelId);
+    _setAttribute(
+      'camera-orbit',
+      '${widget.orbitTheta.toStringAsFixed(2)}deg '
+          '${widget.orbitPhi.toStringAsFixed(2)}deg $cameraRadius%',
+    );
+    _setAttribute('min-camera-orbit', 'auto auto 1%');
+    _setAttribute('max-camera-orbit', 'auto auto 250%');
+    _applyCameraTarget();
+    _setAttribute('interaction-prompt', 'none');
+    _setAttribute('loading', 'eager');
+    _setAttribute('reveal', 'auto');
+    _setAttribute('shadow-intensity', '1');
+    _setAttribute('shadow-softness', '0.8');
+    _setAttribute('tone-mapping', 'neutral');
+    _setAttribute('exposure', widget.exposure.toStringAsFixed(4));
+    _setAttribute('field-of-view', '45deg');
+    _setAttribute(
+      'rotation-per-second',
+      '${widget.rotationSpeed.toStringAsFixed(1)}deg',
+    );
+    final environmentImage = widget.environmentImage;
+    if (environmentImage == null || environmentImage.isEmpty) {
+      _removeAttribute('environment-image');
+    } else {
+      _setAttribute('environment-image', environmentImage);
+    }
+    _setBooleanAttribute('autoplay', widget.animationEnabled);
+    _setBooleanAttribute('auto-rotate', widget.autoRotate);
+    _setBooleanAttribute('camera-controls', widget.orbitEnabled);
+    if (widget.autoRotate) {
+      _setAttribute('auto-rotate-delay', '0');
+    } else {
+      _removeAttribute('auto-rotate-delay');
+    }
+  }
+
+  void _refreshModelGeometry() {
+    final element = _modelViewer;
+    if (element == null) return;
+    try {
+      // `model-viewer` bir Web Component olduğu için özel metotları
+      // dart:html'ın statik Element API'sinde bulunmuyor. Açık JS interop
+      // kullanmak, özellikle release derlemesinde dinamik çağrının sessizce
+      // başarısız olup kamera hedefini merkezde bırakmasını önler.
+      final viewer = element as JSObject;
+      final dimensions = viewer.callMethod<JSObject>('getDimensions'.toJS);
+      final center = viewer.callMethod<JSObject>(
+        'getBoundingBoxCenter'.toJS,
+      );
+      _modelWidth = _jsCoordinate(dimensions, 'x');
+      _modelHeight = _jsCoordinate(dimensions, 'y');
+      _modelDepth = _jsCoordinate(dimensions, 'z');
+      _modelCenterX = _jsCoordinate(center, 'x');
+      _modelCenterY = _jsCoordinate(center, 'y');
+      _modelCenterZ = _jsCoordinate(center, 'z');
+      _modelGeometryReady = _modelWidth.isFinite &&
+          _modelHeight.isFinite &&
+          _modelDepth.isFinite &&
+          _modelWidth > 0 &&
+          _modelHeight > 0 &&
+          _modelDepth > 0;
+      _applyCameraTarget();
+    } catch (_) {
+      _modelGeometryReady = false;
+    }
+  }
+
+  double _jsCoordinate(JSObject vector, String axis) {
+    final value = vector.getProperty<JSAny?>(axis.toJS);
+    if (value is! JSNumber) {
+      throw StateError('model-viewer $axis koordinatı sayı değil');
+    }
+    return value.toDartDouble;
+  }
+
+  void _applyCameraTarget() {
+    if (!_modelGeometryReady) {
+      _setAttribute('camera-target', 'auto auto auto');
+      return;
+    }
+    final x = _modelCenterX + _modelWidth * widget.targetX / 100;
+    final y = _modelCenterY + _modelHeight * widget.targetY / 100;
+    final z = _modelCenterZ + _modelDepth * widget.targetZ / 100;
+    _setAttribute(
+      'camera-target',
+      '${x.toStringAsFixed(5)}m ${y.toStringAsFixed(5)}m '
+          '${z.toStringAsFixed(5)}m',
+    );
+  }
+
+  @override
+  void dispose() {
+    RemoteModelSources.revision.removeListener(_applyAttributes);
+    final modelLoadSubscription = _modelLoadSubscription;
+    if (modelLoadSubscription != null) {
+      unawaited(modelLoadSubscription.cancel());
+    }
+    _modelViewer?.remove();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return HtmlElementView.fromTagName(
+      tagName: 'model-viewer',
+      onElementCreated: (element) {
+        final modelViewer = element as html.Element;
+        _modelViewer = modelViewer
+          ..style.width = '100%'
+          ..style.height = '100%'
+          ..style.display = 'block'
+          ..style.backgroundColor = 'transparent'
+          ..style.pointerEvents = 'none'
+          ..style.setProperty('contain', 'strict')
+          ..style.setProperty('--poster-color', 'transparent');
+        _modelLoadSubscription = modelViewer.on['load'].listen((_) {
+          _refreshModelGeometry();
+        });
+        _applyAttributes();
+      },
+    );
+  }
 }
 
 class _HtmlComponentPreviewState extends State<HtmlComponentPreview> {
@@ -944,6 +1172,13 @@ class _HtmlPageStageState extends State<HtmlPageStage> {
                 isImage || modelId == null ? null : block.modelAutoRotate,
             'modelRotationSpeed':
                 isImage || modelId == null ? null : block.modelRotationSpeed,
+            'modelZoom': isImage || modelId == null ? null : block.modelZoom,
+            'modelTargetX':
+                isImage || modelId == null ? null : block.modelTargetX,
+            'modelTargetY':
+                isImage || modelId == null ? null : block.modelTargetY,
+            'modelTargetZ':
+                isImage || modelId == null ? null : block.modelTargetZ,
             'modelOrbitEnabled':
                 isImage || modelId == null ? null : block.modelOrbitEnabled,
             'modelAnimationEnabled':

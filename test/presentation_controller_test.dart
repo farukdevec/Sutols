@@ -41,6 +41,13 @@ void main() {
     final modelBlock = controller.selectedComponentBlock!;
     expect(modelBlock.modelAnimationEnabled, isTrue);
     expect(modelBlock.modelAutoRotate, isTrue);
+    expect(modelBlock.modelZoom, 1);
+
+    controller.updateSelectedModelZoom(2.4);
+    expect(controller.selectedComponentBlock!.modelZoom, 2.4);
+
+    controller.updateSelectedModelZoom(99);
+    expect(controller.selectedComponentBlock!.modelZoom, 10);
   });
 
   test('undo and redo restore deck mutations', () {
@@ -172,6 +179,90 @@ void main() {
     expect(controller.selectedPage.componentBlocks, hasLength(1));
   });
 
+  test('3B model copy and duplicate preserve model settings', () {
+    final controller = PresentationController();
+    addTearDown(controller.dispose);
+    controller.add3DModelBlock(
+      const Presentation3DModelAsset(
+        id: 'copyable-model',
+        label: 'Copyable model',
+        assetPath: 'https://example.com/copyable.glb',
+        category: 'Test',
+        tags: <String>[],
+        byteSize: 0,
+        sha256: '',
+      ),
+    );
+    controller.updateSelectedModelZoom(7.5);
+    controller.updateSelectedModelOrbitEnabled(true);
+
+    controller.copySelectedItems();
+    controller.pasteCopiedItems();
+
+    expect(controller.selectedPage.componentBlocks, hasLength(2));
+    final copy = controller.selectedComponentBlock!;
+    expect(copy.modelAssetId, 'copyable-model');
+    expect(copy.modelZoom, 7.5);
+    expect(copy.modelOrbitEnabled, isTrue);
+
+    controller.duplicateSelectedItems();
+    expect(controller.selectedPage.componentBlocks, hasLength(3));
+    expect(controller.selectedComponentBlock!.modelAssetId, 'copyable-model');
+    expect(controller.selectedComponentBlock!.modelZoom, 7.5);
+  });
+
+  test('virtual tour drag moves and resets the 3D camera target', () {
+    final controller = PresentationController();
+    addTearDown(controller.dispose);
+    controller.add3DModelBlock(
+      const Presentation3DModelAsset(
+        id: 'tour-model',
+        label: 'Tour model',
+        assetPath: 'https://example.com/tour.glb',
+        category: 'Test',
+        tags: <String>[],
+        byteSize: 0,
+        sha256: '',
+      ),
+    );
+
+    controller.updateSelectedModelTourEnabled(true);
+    expect(controller.selectedComponentBlock!.modelTourEnabled, isTrue);
+    expect(controller.selectedComponentBlock!.modelOrbitEnabled, isFalse);
+    expect(controller.selectedComponentBlock!.modelAutoRotate, isFalse);
+
+    controller.beginSelectedModelOrbitGesture();
+    var cameraNotifications = 0;
+    controller.addListener(() => cameraNotifications += 1);
+    controller.lookAroundSelectedModelTour(const Offset(80, -50));
+    expect(
+      cameraNotifications,
+      1,
+      reason: 'İlk fare hareketi gecikmeden kameraya yansımalı.',
+    );
+    final firstMove = controller.selectedComponentBlock!;
+    expect(firstMove.modelOrbitTheta, isNot(0));
+    expect(firstMove.modelOrbitPhi, isNot(75));
+    for (var i = 0; i < 100; i++) {
+      controller.lookAroundSelectedModelTour(const Offset(1, 1));
+    }
+    controller.endSelectedModelOrbitGesture();
+    expect(cameraNotifications, lessThan(10));
+
+    controller.beginSelectedModelOrbitGesture();
+    controller.moveSelectedModelTour(forward: 20);
+    controller.moveSelectedModelTour(right: 15);
+    controller.endSelectedModelOrbitGesture();
+    final moved = controller.selectedComponentBlock!;
+    expect(moved.modelTargetX.abs(), greaterThan(0));
+    expect(moved.modelTargetZ.abs(), greaterThan(0));
+
+    controller.resetSelectedModelTourPosition();
+    expect(controller.selectedComponentBlock!.modelTargetX, 0);
+    expect(controller.selectedComponentBlock!.modelTargetY, 0);
+    expect(controller.selectedComponentBlock!.modelTargetZ, 0);
+  });
+
   test('uploaded photos start at image ratio and can then resize freely', () {
     final controller = PresentationController();
     addTearDown(controller.dispose);
@@ -277,5 +368,44 @@ void main() {
     expect(controller.selectedTextBlock!.position.dy, closeTo(0.21, 0.0001));
     expect(controller.selectedTextBlock!.heightFactor, closeTo(0.33, 0.0001));
     expect(controller.selectedTextBlock!.fontSize, closeTo(79.2, 0.0001));
+  });
+
+  test('text and components can move and resize beyond every stage edge', () {
+    final controller = PresentationController();
+    addTearDown(controller.dispose);
+    const canvas = Size(1000, 500);
+
+    controller.moveSelectedText(const Offset(-300, -200), canvas);
+    expect(controller.selectedTextBlock!.position.dx, lessThan(0));
+    expect(controller.selectedTextBlock!.position.dy, lessThan(0));
+
+    controller.resizeSelectedTextByHandle(
+      const Offset(1800, 900),
+      canvas,
+      renderedHeightFactor: 0.2,
+      fromLeft: false,
+      fromTop: false,
+      fromRight: true,
+      fromBottom: true,
+    );
+    final text = controller.selectedTextBlock!;
+    expect(text.position.dx + text.widthFactor, greaterThan(1));
+    expect(text.position.dy + text.heightFactor!, greaterThan(1));
+
+    controller.addComponentBlock(PresentationComponentKind.edebiyat01);
+    controller.moveSelectedText(const Offset(700, 500), canvas);
+    expect(controller.selectedComponentBlock!.position.dx, greaterThan(1));
+    expect(controller.selectedComponentBlock!.position.dy, greaterThan(1));
+
+    controller.resizeSelectedComponentByHandle(
+      const Offset(1400, 700),
+      canvas,
+      fromLeft: false,
+      fromTop: false,
+      fromRight: true,
+      fromBottom: true,
+    );
+    expect(controller.selectedComponentBlock!.size.width, greaterThan(1));
+    expect(controller.selectedComponentBlock!.size.height, greaterThan(1));
   });
 }

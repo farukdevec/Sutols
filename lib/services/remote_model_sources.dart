@@ -22,8 +22,7 @@ class RemoteModelSources {
       );
 
   static bool _isRenderableSource(String source) =>
-      source.startsWith('assets/') ||
-      source.startsWith('packages/') ||
+      ModelAssetService.isLocalAssetPath(source) ||
       ModelAssetService.isSignedUrlValid(source);
 
   static void registerAll(Map<String, String> sources) {
