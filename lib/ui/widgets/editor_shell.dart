@@ -1803,6 +1803,9 @@ class PresentationPageCanvas extends StatefulWidget {
     this.onToggleModelOrbit,
     this.onRotateModel,
     this.onPanModelTour,
+    this.modelTourPointPlacementEnabled = false,
+    this.onModelTourSurfacePointPicked,
+    this.onModelTourSurfacePickMissed,
     this.onBeginModelOrbit,
     this.onEndModelOrbit,
   });
@@ -1833,6 +1836,10 @@ class PresentationPageCanvas extends StatefulWidget {
   final ValueChanged<String>? onToggleModelOrbit;
   final CanvasModelRotate? onRotateModel;
   final CanvasModelRotate? onPanModelTour;
+  final bool modelTourPointPlacementEnabled;
+  final void Function(String blockId, ModelTourSurfacePoint point)?
+      onModelTourSurfacePointPicked;
+  final VoidCallback? onModelTourSurfacePickMissed;
   final ValueChanged<String>? onBeginModelOrbit;
   final VoidCallback? onEndModelOrbit;
 
@@ -2238,6 +2245,12 @@ class _PresentationPageCanvasState extends State<PresentationPageCanvas> {
                     selectedTextIds.isEmpty &&
                     selectedComponentIds.length == 1 &&
                     widget.onResizeSelectedComponent != null,
+                modelTourPointPlacementEnabled:
+                    widget.modelTourPointPlacementEnabled,
+                onModelTourSurfacePointPicked:
+                    widget.onModelTourSurfacePointPicked,
+                onModelTourSurfacePickMissed:
+                    widget.onModelTourSurfacePickMissed,
                 onTap: widget.onSelectComponentBlock == null
                     ? null
                     : () => widget.onSelectComponentBlock!(block.id),
@@ -2332,7 +2345,16 @@ class _PresentationPageCanvasState extends State<PresentationPageCanvas> {
                     _editingBlockId == block.id ? _inlineFocusNode : null,
                 onTap: widget.onSelectTextBlock == null
                     ? null
-                    : () => widget.onSelectTextBlock!(block.id),
+                    : () {
+                        // First click selects, the next click edits. This is
+                        // quicker than requiring a precisely timed double
+                        // click, while preserving drag-to-move on selection.
+                        if (selectedTextIds.contains(block.id)) {
+                          _startInlineEditing(block);
+                        } else {
+                          widget.onSelectTextBlock!(block.id);
+                        }
+                      },
                 onDoubleTap: widget.interactive
                     ? () => _startInlineEditing(block)
                     : null,
@@ -2672,6 +2694,9 @@ class _PageComponentBlock extends StatelessWidget {
     required this.showSelectionBorder,
     required this.opacity,
     required this.showResizeHandles,
+    this.modelTourPointPlacementEnabled = false,
+    this.onModelTourSurfacePointPicked,
+    this.onModelTourSurfacePickMissed,
     this.onTap,
     this.onSecondaryTapDown,
     this.onToggleOrbit,
@@ -2689,6 +2714,10 @@ class _PageComponentBlock extends StatelessWidget {
   final bool showSelectionBorder;
   final double opacity;
   final bool showResizeHandles;
+  final bool modelTourPointPlacementEnabled;
+  final void Function(String blockId, ModelTourSurfacePoint point)?
+      onModelTourSurfacePointPicked;
+  final VoidCallback? onModelTourSurfacePickMissed;
   final VoidCallback? onTap;
   final GestureTapDownCallback? onSecondaryTapDown;
   final VoidCallback? onToggleOrbit;
@@ -2825,11 +2854,24 @@ class _PageComponentBlock extends StatelessWidget {
                                         block.modelAssetId!,
                                       )?.environmentImage,
                                       orbitEnabled: block.modelOrbitEnabled,
+                                      tourEnabled: block.modelTourEnabled,
                                       orbitTheta: block.modelOrbitTheta,
                                       orbitPhi: block.modelOrbitPhi,
                                       targetX: block.modelTargetX,
                                       targetY: block.modelTargetY,
                                       targetZ: block.modelTargetZ,
+                                      pickSurfacePosition:
+                                          modelTourPointPlacementEnabled &&
+                                              isSelected,
+                                      onSurfacePositionPicked: onModelTourSurfacePointPicked ==
+                                              null
+                                          ? null
+                                          : (point) => onModelTourSurfacePointPicked!(
+                                                block.id,
+                                                point,
+                                              ),
+                                      onSurfacePickMissed:
+                                          onModelTourSurfacePickMissed,
                                     ),
                     ),
                   ),
@@ -2840,7 +2882,10 @@ class _PageComponentBlock extends StatelessWidget {
           // HTML platform view'ları tarayıcıda bağlam menüsü olayını Flutter
           // atasına her zaman iletmez. Modelin üstündeki bu şeffaf katman sağ
           // tık, seçim, taşıma ve manuel döndürmeyi aynı olay hattına taşır.
-          if (interactive && _isRenderableCanvasModelBlock(block) && !isImage)
+          if (interactive &&
+              _isRenderableCanvasModelBlock(block) &&
+              !isImage &&
+              !(modelTourPointPlacementEnabled && isSelected))
             Positioned(
               left: gripInset,
               top: gripInset,

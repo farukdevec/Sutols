@@ -1349,6 +1349,14 @@ String _exportScript({
     });
   });
 
+  document.querySelectorAll('.sutol-3d-tour-hotspot').forEach((element) => {
+    element.addEventListener('click', (event) => {
+      // Bilgi noktası, hedef slayt atanmamış olsa bile sahneye yayılıp
+      // yanlışlıkla sonraki slayta geçmemelidir.
+      event.stopPropagation();
+    });
+  });
+
   slides.forEach((slide) => {
     const frame = slide.querySelector('.sutol-export-stage-frame');
     frame?.addEventListener('click', (event) => {

@@ -341,10 +341,13 @@ String buildHtmlStageDocument({
   HtmlStageRenderMode renderMode = HtmlStageRenderMode.full,
   Map<String, String> modelSourcesById = const <String, String>{},
   Map<String, String> imageSourcesById = const <String, String>{},
+  bool tourPointPlacementEnabled = false,
 }) {
   final buffer = StringBuffer()
     ..writeln('<!DOCTYPE html>')
-    ..writeln('<html lang="tr">')
+    ..writeln(
+      '<html lang="tr" data-sutol-tour-placement="${tourPointPlacementEnabled ? 'true' : 'false'}">',
+    )
     ..writeln('<head>')
     ..writeln('<meta charset="utf-8">')
     ..writeln(
@@ -574,11 +577,13 @@ String buildHtmlStageMarkup({
                 environmentImage: findPresentation3DModelAsset(modelId ?? '')
                     ?.environmentImage,
                 orbitEnabled: block.modelOrbitEnabled,
+                tourEnabled: block.modelTourEnabled,
                 orbitTheta: block.modelOrbitTheta,
                 orbitPhi: block.modelOrbitPhi,
                 targetX: block.modelTargetX,
                 targetY: block.modelTargetY,
                 targetZ: block.modelTargetZ,
+                tourHotspots: block.modelTourHotspots,
                 deferSource: deferEmbeddedAssets,
                 fallbackHtml: block.kind == PresentationComponentKind.edebiyat01
                     ? ''
@@ -654,11 +659,13 @@ String _model3DMarkup(
   required double exposure,
   required String? environmentImage,
   required bool orbitEnabled,
+  required bool tourEnabled,
   required double orbitTheta,
   required double orbitPhi,
   required double targetX,
   required double targetY,
   required double targetZ,
+  required List<ModelTourHotspot> tourHotspots,
   required String fallbackHtml,
   bool deferSource = false,
 }) {
@@ -669,7 +676,23 @@ String _model3DMarkup(
       ? ' auto-rotate auto-rotate-delay="0"'
           ' rotation-per-second="${rotationSpeed.toStringAsFixed(1)}deg"'
       : '';
-  final cameraControlsMarkup = orbitEnabled ? ' camera-controls' : '';
+  // Sanal tur, manuel incelemenin rota tabanlı sürümüdür. Kamera denetimini
+  // açmak hem export edilen HTML'de hem de sunum önizlemesinde sürükle-bak
+  // etkileşimini korur; aksi durumda tur sadece editörde çalışıyordu.
+  final cameraControlsMarkup =
+      orbitEnabled || tourEnabled ? ' camera-controls' : '';
+  // model-viewer'ın yerleşik interpolasyonu, hem sürükleme hem de Flutter'dan
+  // gelen kamera hedefi güncellemelerinde görünür adımları yumuşatır.
+  final tourCameraTuning =
+      tourEnabled
+          ? ' interpolation-decay="100" orbit-sensitivity="0.78" zoom-sensitivity="0.72" disable-pan touch-action="none"'
+          : '';
+  // 360° turda yatay eksen sınırsızdır; dikey eksen de modelin üstü ve altı
+  // dahil neredeyse tam küreyi kapsar. Küçük kutup payı, kameranın ters
+  // dönmesini ve kontrolün yön değiştirmesini engeller.
+  final cameraOrbitLimits = tourEnabled
+      ? ' min-camera-orbit="auto 8deg 5%" max-camera-orbit="auto 172deg 250%"'
+      : ' min-camera-orbit="auto auto 1%" max-camera-orbit="auto auto 250%"';
   final effectiveZoom = zoom.clamp(0.5, 10.0);
   final cameraRadius = (100 / effectiveZoom).clamp(10, 200).toStringAsFixed(2);
   final cameraOrbit =
@@ -691,9 +714,18 @@ String _model3DMarkup(
       <span class="sutol-3d-fallback-sub">Model kaynağına ulaşılamadı.</span>
     </div>'''
       : '<div class="sutol-html-component-inner">$fallbackHtml</div>';
+  final hotspotMarkup = tourHotspots.map((hotspot) {
+    final target = hotspot.targetPageId == null
+        ? ''
+        : ' data-hotspot-target="${_escapeAttribute(hotspot.targetPageId!)}"';
+    final description = hotspot.description.trim().isEmpty
+        ? ''
+        : '<span class="sutol-3d-tour-hotspot-description">${_escape(hotspot.description.trim())}</span>';
+    return '<button class="sutol-3d-tour-hotspot" slot="hotspot-${_escapeAttribute(hotspot.id)}" data-sutol-hotspot-x="${hotspot.x.toStringAsFixed(4)}" data-sutol-hotspot-y="${hotspot.y.toStringAsFixed(4)}" data-sutol-hotspot-z="${hotspot.z.toStringAsFixed(4)}" data-position="0m 0m 0m" data-normal="0m 1m 0m" type="button" aria-label="${_escapeAttribute(hotspot.label)}"$target><span class="sutol-3d-tour-hotspot-dot">+</span><span class="sutol-3d-tour-hotspot-card"><strong>${_escape(hotspot.label)}</strong>$description</span></button>';
+  }).join();
   return '''
 <div class="sutol-html-component-inner sutol-3d-model-inner">
-  <model-viewer class="sutol-3d-model-viewer" crossorigin="anonymous" data-sutol-model-id="${_escapeAttribute(id)}" data-sutol-target-x="${targetX.toStringAsFixed(2)}" data-sutol-target-y="${targetY.toStringAsFixed(2)}" data-sutol-target-z="${targetZ.toStringAsFixed(2)}" $sourceMarkup alt="${_escapeAttribute(label)}"$cameraControlsMarkup$animationMarkup$autoRotateMarkup$environmentImageMarkup camera-orbit="$cameraOrbit" camera-target="auto auto auto" min-camera-orbit="auto auto 1%" max-camera-orbit="auto auto 250%" field-of-view="45deg" interaction-prompt="none" shadow-intensity="1" shadow-softness="0.8" tone-mapping="neutral" exposure="${exposure.toStringAsFixed(4)}" loading="eager" reveal="auto" onload="this.hidden=false;window.SutolApplyModelTarget&&window.SutolApplyModelTarget(this);const status=this.nextElementSibling;if(status)status.hidden=true;const fallback=status?status.nextElementSibling:null;if(fallback)fallback.hidden=true;console.log('Sutols 3B model yüklendi',{modelId:this.dataset.sutolModelId})" onerror="const status=this.nextElementSibling;if(status)status.hidden=true;const fallback=status?status.nextElementSibling:null;if(fallback)fallback.hidden=false;this.hidden=true;console.error('Sutols 3B model yüklenemedi',{modelId:this.dataset.sutolModelId})"></model-viewer>
+  <model-viewer class="sutol-3d-model-viewer" crossorigin="anonymous" data-sutol-model-id="${_escapeAttribute(id)}" data-sutol-target-x="${targetX.toStringAsFixed(2)}" data-sutol-target-y="${targetY.toStringAsFixed(2)}" data-sutol-target-z="${targetZ.toStringAsFixed(2)}" $sourceMarkup alt="${_escapeAttribute(label)}"$cameraControlsMarkup$tourCameraTuning$animationMarkup$autoRotateMarkup$environmentImageMarkup camera-orbit="$cameraOrbit" camera-target="auto auto auto"$cameraOrbitLimits field-of-view="45deg" interaction-prompt="none" shadow-intensity="1" shadow-softness="0.8" tone-mapping="neutral" exposure="${exposure.toStringAsFixed(4)}" loading="eager" reveal="auto" onload="this.hidden=false;window.SutolApplyModelTarget&&window.SutolApplyTourHotspots&&window.SutolApplyTourHotspots(this);const status=this.nextElementSibling;if(status)status.hidden=true;const fallback=status?status.nextElementSibling:null;if(fallback)fallback.hidden=true;console.log('Sutols 3B model yüklendi',{modelId:this.dataset.sutolModelId})" onerror="const status=this.nextElementSibling;if(status)status.hidden=true;const fallback=status?status.nextElementSibling;if(fallback)fallback.hidden=false;this.hidden=true;console.error('Sutols 3B model yüklenemedi',{modelId:this.dataset.sutolModelId})">$hotspotMarkup</model-viewer>
   <span class="sutol-3d-model-status">3B model yükleniyor…</span>
   <div class="sutol-3d-model-fallback" hidden>$fallbackMarkup</div>
 </div>
@@ -2898,6 +2930,82 @@ body {
   cursor: grabbing;
 }
 
+.sutol-3d-tour-hotspot {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 2px solid rgba(255,255,255,.96);
+  border-radius: 50%;
+  color: #fff;
+  background: #0b78d0;
+  box-shadow: 0 0 0 6px rgba(56, 189, 248, .18), 0 6px 20px rgba(6, 23, 43, .52);
+  cursor: pointer;
+  transform: translate(-50%, -50%);
+  transition: transform .18s ease, background .18s ease, box-shadow .18s ease;
+  animation: sutol-tour-hotspot-pulse 1.8s ease-in-out infinite;
+}
+
+@keyframes sutol-tour-hotspot-pulse {
+  0%, 100% { box-shadow: 0 0 0 5px rgba(56, 189, 248, .14), 0 6px 20px rgba(6, 23, 43, .52); }
+  50% { box-shadow: 0 0 0 11px rgba(56, 189, 248, .04), 0 8px 24px rgba(6, 23, 43, .6); }
+}
+
+.sutol-3d-tour-hotspot:hover,
+.sutol-3d-tour-hotspot:focus-visible {
+  z-index: 2;
+  background: #0858ac;
+  box-shadow: 0 0 0 8px rgba(56, 189, 248, .22), 0 8px 24px rgba(6, 23, 43, .6);
+  outline: none;
+  transform: translate(-50%, -50%) scale(1.12);
+}
+
+.sutol-3d-tour-hotspot-dot {
+  font: 700 20px/1 Arial, sans-serif;
+  transform: translateY(-1px);
+}
+
+.sutol-3d-tour-hotspot-card {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 10px);
+  display: none;
+  width: max-content;
+  max-width: 180px;
+  padding: 9px 11px;
+  border-radius: 10px;
+  color: #eff6ff;
+  background: rgba(8, 22, 40, .92);
+  box-shadow: 0 8px 22px rgba(0,0,0,.24);
+  font: 600 12px/1.35 Arial, sans-serif;
+  text-align: left;
+  transform: translateX(-50%);
+}
+
+.sutol-3d-tour-hotspot:hover .sutol-3d-tour-hotspot-card,
+.sutol-3d-tour-hotspot:focus-visible .sutol-3d-tour-hotspot-card {
+  display: block;
+}
+
+.sutol-3d-tour-hotspot-card strong,
+.sutol-3d-tour-hotspot-description {
+  display: block;
+}
+
+/* Düzenleyici gerçek yüzey seçimini beklerken model alanı hedef imlecine
+   dönüşür; böylece sürükle-bak ve nokta yerleştirme durumları ayırt edilir. */
+.sutol-tour-point-placement model-viewer.sutol-3d-model-viewer {
+  cursor: crosshair;
+}
+
+.sutol-3d-tour-hotspot-description {
+  margin-top: 3px;
+  color: #cbd5e1;
+  font-weight: 400;
+}
+
 .sutol-html-component .sutol-component-shape::before {
   left: 50%;
   top: 50%;
@@ -3291,6 +3399,129 @@ const String _stagePatchScript = r'''
   }
   window.SutolApplyModelTarget = applyModelTarget;
 
+  function applyTourHotspots(modelViewer) {
+    if (!modelViewer || typeof modelViewer.getDimensions !== 'function' ||
+        typeof modelViewer.getBoundingBoxCenter !== 'function') return;
+    try {
+      const dimensions = modelViewer.getDimensions();
+      const center = modelViewer.getBoundingBoxCenter();
+      modelViewer.querySelectorAll('.sutol-3d-tour-hotspot').forEach((hotspot) => {
+        const x = Math.max(-1, Math.min(1, Number(hotspot.dataset.sutolHotspotX) || 0));
+        const y = Math.max(-1, Math.min(1, Number(hotspot.dataset.sutolHotspotY) || 0));
+        const z = Math.max(-1, Math.min(1, Number(hotspot.dataset.sutolHotspotZ) || 0));
+        hotspot.dataset.position =
+          (center.x + dimensions.x * x / 2).toFixed(5) + 'm ' +
+          (center.y + dimensions.y * y / 2).toFixed(5) + 'm ' +
+          (center.z + dimensions.z * z / 2).toFixed(5) + 'm';
+      });
+    } catch (_) {}
+  }
+  window.SutolApplyTourHotspots = applyTourHotspots;
+
+  // Tur düzenleme modunda ekran koordinatını model-viewer'ın gerçek yüzey
+  // koordinatına çevirir. Saklanan değer merkez/boyut normalize olduğundan
+  // aynı açıklama editör, önizleme ve dışa aktarılan HTML'de aynı yüzeyde
+  // kalır.
+  function tourPointPlacementEnabled() {
+    return document.documentElement.dataset.sutolTourPlacement === 'true';
+  }
+
+  function setTourPointPlacement(enabled) {
+    document.documentElement.dataset.sutolTourPlacement = enabled ? 'true' : 'false';
+    document.body.classList.toggle('sutol-tour-point-placement', !!enabled);
+  }
+
+  function sendTourSurfaceEvent(type, payload) {
+    try {
+      // Dart'ın iframe postMessage köprüsünde JS nesnesi her tarayıcıda
+      // Map'e dönüşmez. JSON metni, yüzey seçimi ve ilk fare temasını
+      // deterministik biçimde ana Flutter katmanına iletir.
+      window.parent.postMessage(
+        JSON.stringify(Object.assign({ type: type }, payload || {})), '*'
+      );
+    } catch (_) {}
+  }
+
+  function pickTourSurfaceAt(viewportX, viewportY) {
+    if (!Number.isFinite(viewportX) || !Number.isFinite(viewportY)) {
+      sendTourSurfaceEvent('sutol-tour-surface-miss');
+      return;
+    }
+    const target = document.elementFromPoint(viewportX, viewportY);
+    const directViewer = target && target.closest
+      ? target.closest('model-viewer.sutol-3d-model-viewer')
+      : null;
+    const viewer = directViewer || Array.from(
+      document.querySelectorAll('model-viewer.sutol-3d-model-viewer')
+    ).find(function (candidate) {
+      const bounds = candidate.getBoundingClientRect();
+      return viewportX >= bounds.left && viewportX <= bounds.right &&
+        viewportY >= bounds.top && viewportY <= bounds.bottom;
+    });
+    if (!viewer || typeof viewer.positionAndNormalFromPoint !== 'function' ||
+        typeof viewer.getDimensions !== 'function' ||
+        typeof viewer.getBoundingBoxCenter !== 'function') {
+      sendTourSurfaceEvent('sutol-tour-surface-miss');
+      return;
+    }
+    try {
+      const bounds = viewer.getBoundingClientRect();
+      const hit = viewer.positionAndNormalFromPoint(
+        viewportX - bounds.left,
+        viewportY - bounds.top
+      );
+      if (!hit || !hit.position) throw new Error('surface-miss');
+      const dimensions = viewer.getDimensions();
+      const center = viewer.getBoundingBoxCenter();
+      const point = hit.position;
+      const normalize = function (value, axisCenter, dimension) {
+        if (!Number.isFinite(dimension) || Math.abs(dimension) < 0.00001) return 0;
+        return Math.max(-1, Math.min(1, (value - axisCenter) * 2 / dimension));
+      };
+      sendTourSurfaceEvent('sutol-tour-surface-point', {
+        x: normalize(point.x, center.x, dimensions.x),
+        y: normalize(point.y, center.y, dimensions.y),
+        z: normalize(point.z, center.z, dimensions.z),
+      });
+    } catch (_) {
+      sendTourSurfaceEvent('sutol-tour-surface-miss');
+    }
+  }
+
+  // Flutter web'de platform iframe'i görsel HUD'nin üzerinde kalabildiği
+  // için ilk fiziksel fare temasını doğrudan model katmanından bildiriyoruz.
+  // Böylece "Keşfe başla" düğmesi tıklanmasa bile ilk sürükleme turu açar.
+  document.addEventListener('pointerdown', function (event) {
+    const viewer = event.target && event.target.closest
+      ? event.target.closest('model-viewer.sutol-3d-model-viewer')
+      : null;
+    if (viewer && viewer.hasAttribute('camera-controls')) {
+      sendTourSurfaceEvent('sutol-tour-interaction');
+    }
+  }, true);
+
+  document.addEventListener('click', function (event) {
+    const hotspot = event.target && event.target.closest
+      ? event.target.closest('.sutol-3d-tour-hotspot')
+      : null;
+    // Tur noktaları, model-viewer iframe'i içinden Flutter sunum akışına
+    // geçer. Böylece açıklama kartı görünür kalırken hedef slayta güvenilir
+    // biçimde gidilebilir; boş hedefler yalnızca bilgi noktası olarak kalır.
+    if (hotspot && !tourPointPlacementEnabled()) {
+      const targetPageId = String(hotspot.dataset.hotspotTarget || '').trim();
+      sendTourSurfaceEvent('sutol-tour-hotspot', { targetPageId: targetPageId });
+      event.preventDefault();
+      event.stopPropagation();
+      return;
+    }
+    if (!tourPointPlacementEnabled()) return;
+    pickTourSurfaceAt(event.clientX, event.clientY);
+    event.preventDefault();
+    event.stopPropagation();
+  }, true);
+
+  setTourPointPlacement(tourPointPlacementEnabled());
+
   function fitText(element) {
     // Metin kutusu sahnenin güvenli alanını aşarsa yazı boyutunu kademeli
     // olarak küçültür. CSS'teki min değer okunabilirlik sınırını korur.
@@ -3540,6 +3771,16 @@ const String _stagePatchScript = r'''
       document.close();
       return;
     }
+    if (data && data.type === 'sutol-tour-placement') {
+      setTourPointPlacement(!!data.enabled);
+      return;
+    }
+    if (data && data.type === 'sutol-tour-surface-pick') {
+      if (tourPointPlacementEnabled()) {
+        pickTourSurfaceAt(Number(data.x), Number(data.y));
+      }
+      return;
+    }
     if (!data || data.type !== 'sutol-stage-patch') return;
 
     for (const item of data.texts || []) {
@@ -3569,8 +3810,12 @@ const String _stagePatchScript = r'''
   document.querySelectorAll('model-viewer').forEach(function (modelViewer) {
     modelViewer.addEventListener('load', function () {
       applyModelTarget(modelViewer);
+      applyTourHotspots(modelViewer);
     });
-    if (modelViewer.loaded) applyModelTarget(modelViewer);
+    if (modelViewer.loaded) {
+      applyModelTarget(modelViewer);
+      applyTourHotspots(modelViewer);
+    }
   });
   window.SutolStagePatcher = true;
 })();

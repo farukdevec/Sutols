@@ -119,6 +119,14 @@ class HtmlPageStage extends StatefulWidget {
     this.cssOpacity = 1,
     this.cssClipPath,
     this.cssTransformOrigin = 'center center',
+    this.tourPointPlacementEnabled = false,
+    this.tourSurfacePickPosition,
+    this.tourSurfacePickGeneration = 0,
+    this.onTourSurfacePointPicked,
+    this.onTourSurfacePickMissed,
+    this.onTourInteraction,
+    this.onTourHotspot,
+    this.tourInteractionEnabled = false,
   });
 
   final PresentationPage page;
@@ -134,6 +142,14 @@ class HtmlPageStage extends StatefulWidget {
   final double cssOpacity;
   final String? cssClipPath;
   final String cssTransformOrigin;
+  final bool tourPointPlacementEnabled;
+  final Offset? tourSurfacePickPosition;
+  final int tourSurfacePickGeneration;
+  final ValueChanged<ModelTourSurfacePoint>? onTourSurfacePointPicked;
+  final VoidCallback? onTourSurfacePickMissed;
+  final VoidCallback? onTourInteraction;
+  final ValueChanged<String>? onTourHotspot;
+  final bool tourInteractionEnabled;
 
   @override
   State<HtmlPageStage> createState() => _HtmlPageStageState();
@@ -390,11 +406,15 @@ class HtmlModelCanvas extends StatefulWidget {
     required this.exposure,
     required this.environmentImage,
     required this.orbitEnabled,
+    required this.tourEnabled,
     required this.orbitTheta,
     required this.orbitPhi,
     required this.targetX,
     required this.targetY,
     required this.targetZ,
+    this.pickSurfacePosition = false,
+    this.onSurfacePositionPicked,
+    this.onSurfacePickMissed,
   });
 
   final String modelId;
@@ -405,11 +425,15 @@ class HtmlModelCanvas extends StatefulWidget {
   final double exposure;
   final String? environmentImage;
   final bool orbitEnabled;
+  final bool tourEnabled;
   final double orbitTheta;
   final double orbitPhi;
   final double targetX;
   final double targetY;
   final double targetZ;
+  final bool pickSurfacePosition;
+  final ValueChanged<ModelTourSurfacePoint>? onSurfacePositionPicked;
+  final VoidCallback? onSurfacePickMissed;
 
   @override
   State<HtmlModelCanvas> createState() => _HtmlModelCanvasState();
@@ -418,6 +442,7 @@ class HtmlModelCanvas extends StatefulWidget {
 class _HtmlModelCanvasState extends State<HtmlModelCanvas> {
   html.Element? _modelViewer;
   StreamSubscription<html.Event>? _modelLoadSubscription;
+  StreamSubscription<html.MouseEvent>? _surfacePickSubscription;
   double _modelWidth = 1;
   double _modelHeight = 1;
   double _modelDepth = 1;
@@ -463,6 +488,9 @@ class _HtmlModelCanvasState extends State<HtmlModelCanvas> {
   void _applyAttributes() {
     final element = _modelViewer;
     if (element == null) return;
+    element.style.pointerEvents = widget.pickSurfacePosition ? 'auto' : 'none';
+    element.style.cursor = widget.pickSurfacePosition ? 'crosshair' : 'default';
+    element.style.touchAction = widget.tourEnabled ? 'none' : 'auto';
     final source = RemoteModelSources.sourceFor(widget.modelId);
     final zoom = widget.zoom.clamp(0.5, 10.0);
     final cameraRadius = (100 / zoom).clamp(10, 200).toStringAsFixed(2);
@@ -483,10 +511,18 @@ class _HtmlModelCanvasState extends State<HtmlModelCanvas> {
       '${widget.orbitTheta.toStringAsFixed(2)}deg '
           '${widget.orbitPhi.toStringAsFixed(2)}deg $cameraRadius%',
     );
-    _setAttribute('min-camera-orbit', 'auto auto 1%');
-    _setAttribute('max-camera-orbit', 'auto auto 250%');
+    _setAttribute(
+      'min-camera-orbit',
+      widget.tourEnabled ? 'auto 8deg 5%' : 'auto auto 1%',
+    );
+    _setAttribute(
+      'max-camera-orbit',
+      widget.tourEnabled ? 'auto 172deg 250%' : 'auto auto 250%',
+    );
     _applyCameraTarget();
     _setAttribute('interaction-prompt', 'none');
+    _setAttribute('orbit-sensitivity', widget.tourEnabled ? '0.78' : '1');
+    _setAttribute('zoom-sensitivity', widget.tourEnabled ? '0.72' : '1');
     _setAttribute('loading', 'eager');
     _setAttribute('reveal', 'auto');
     _setAttribute('shadow-intensity', '1');
@@ -506,7 +542,15 @@ class _HtmlModelCanvasState extends State<HtmlModelCanvas> {
     }
     _setBooleanAttribute('autoplay', widget.animationEnabled);
     _setBooleanAttribute('auto-rotate', widget.autoRotate);
-    _setBooleanAttribute('camera-controls', widget.orbitEnabled);
+    // Tur modu da sahne içinde doğrudan keşif gerektirir. Bu nitelik yalnızca
+    // "Manuel Kontrol" açıkken verildiğinde, kaydedilmiş bir sanal tur
+    // paylaşım/önizleme ekranında hareketsiz kalıyordu.
+    _setBooleanAttribute(
+      'camera-controls',
+      (widget.orbitEnabled || widget.tourEnabled) &&
+          !widget.pickSurfacePosition,
+    );
+    _setBooleanAttribute('disable-pan', widget.tourEnabled);
     if (widget.autoRotate) {
       _setAttribute('auto-rotate-delay', '0');
     } else {
@@ -575,6 +619,7 @@ class _HtmlModelCanvasState extends State<HtmlModelCanvas> {
     if (modelLoadSubscription != null) {
       unawaited(modelLoadSubscription.cancel());
     }
+    unawaited(_surfacePickSubscription?.cancel());
     _modelViewer?.remove();
     super.dispose();
   }
@@ -590,15 +635,55 @@ class _HtmlModelCanvasState extends State<HtmlModelCanvas> {
           ..style.height = '100%'
           ..style.display = 'block'
           ..style.backgroundColor = 'transparent'
-          ..style.pointerEvents = 'none'
+          ..style.pointerEvents = widget.pickSurfacePosition ? 'auto' : 'none'
           ..style.setProperty('contain', 'strict')
           ..style.setProperty('--poster-color', 'transparent');
         _modelLoadSubscription = modelViewer.on['load'].listen((_) {
           _refreshModelGeometry();
         });
+        _surfacePickSubscription =
+            modelViewer.onClick.listen(_pickSurfacePoint);
         _applyAttributes();
       },
     );
+  }
+
+  void _pickSurfacePoint(html.MouseEvent event) {
+    if (!widget.pickSurfacePosition || !_modelGeometryReady) return;
+    final element = _modelViewer;
+    if (element == null) return;
+    try {
+      final rect = element.getBoundingClientRect();
+      final viewer = element as JSObject;
+      final point = viewer.callMethod<JSObject?>(
+        'positionAndNormalFromPoint'.toJS,
+        (event.client.x - rect.left).toJS,
+        (event.client.y - rect.top).toJS,
+      );
+      if (point == null) {
+        widget.onSurfacePickMissed?.call();
+        return;
+      }
+      final position = point.getProperty<JSObject?>('position'.toJS);
+      if (position == null) {
+        widget.onSurfacePickMissed?.call();
+        return;
+      }
+      final x =
+          (_jsCoordinate(position, 'x') - _modelCenterX) / (_modelWidth / 2);
+      final y =
+          (_jsCoordinate(position, 'y') - _modelCenterY) / (_modelHeight / 2);
+      final z =
+          (_jsCoordinate(position, 'z') - _modelCenterZ) / (_modelDepth / 2);
+      if (!x.isFinite || !y.isFinite || !z.isFinite) return;
+      widget.onSurfacePositionPicked?.call(ModelTourSurfacePoint(
+        x: x.clamp(-1.0, 1.0).toDouble(),
+        y: y.clamp(-1.0, 1.0).toDouble(),
+        z: z.clamp(-1.0, 1.0).toDouble(),
+      ));
+    } catch (_) {
+      widget.onSurfacePickMissed?.call();
+    }
   }
 }
 
@@ -726,17 +811,21 @@ class _HtmlPageStageState extends State<HtmlPageStage> {
   bool _hasRendered = false;
   StreamSubscription<html.Event>? _initialLoadSubscription;
   Timer? _initialLoadTimer;
+  StreamSubscription<html.MessageEvent>? _tourMessageSubscription;
   @override
   void initState() {
     super.initState();
     RemoteModelSources.revision.addListener(_onRemoteSourcesChanged);
+    _tourMessageSubscription = html.window.onMessage.listen(_handleTourMessage);
     _viewType = 'sutol-html-stage-${_viewCounter++}';
     _hostElement = html.DivElement()
       ..className = 'sutol-html-host'
       ..style.width = '100%'
       ..style.height = '100%'
       ..style.position = 'relative'
-      ..style.pointerEvents = widget.onTap == null ? 'none' : 'auto'
+      ..style.pointerEvents = _shouldAllowIframeInteraction || widget.onTap != null
+          ? 'auto'
+          : 'none'
       ..style.overflow = 'hidden'
       ..style.backgroundColor = 'transparent';
     _applyVisualStyle();
@@ -778,6 +867,86 @@ class _HtmlPageStageState extends State<HtmlPageStage> {
     }
   }
 
+  void _setTourPointPlacement(bool enabled) {
+    final targetWindow = _iframeElement.contentWindow;
+    if (targetWindow == null) return;
+    targetWindow.postMessage(
+      jsonEncode(<String, Object?>{
+        'type': 'sutol-tour-placement',
+        'enabled': enabled,
+      }),
+      '*',
+    );
+  }
+
+  void _requestTourSurfacePick(Offset position) {
+    if (!widget.tourPointPlacementEnabled) return;
+    final targetWindow = _iframeElement.contentWindow;
+    if (targetWindow == null) {
+      widget.onTourSurfacePickMissed?.call();
+      return;
+    }
+    // Iframe pointer-events kapalı kalsa bile model-viewer'ın kendi yüzey
+    // çözümleyicisi gerçek geometri noktasını bulabilir. Böylece platform
+    // görünümü Flutter HUD ve diyaloglarının üstüne çıkmaz.
+    targetWindow.postMessage(
+      jsonEncode(<String, Object?>{
+        'type': 'sutol-tour-surface-pick',
+        'x': position.dx,
+        'y': position.dy,
+      }),
+      '*',
+    );
+  }
+
+  void _handleTourMessage(html.MessageEvent event) {
+    // srcdoc sahnesinin gönderdiği küçük, açık protokol. Diğer pencere
+    // mesajlarını görmezden gelerek tur düzenleme olayını yalıtıyoruz.
+    if (event.source != _iframeElement.contentWindow) return;
+    dynamic raw = event.data;
+    if (raw is String) {
+      try {
+        raw = jsonDecode(raw);
+      } catch (_) {
+        return;
+      }
+    }
+    if (raw is! Map) return;
+    final type = raw['type']?.toString();
+    if (type == 'sutol-tour-interaction') {
+      widget.onTourInteraction?.call();
+      return;
+    }
+    if (type == 'sutol-tour-surface-miss') {
+      widget.onTourSurfacePickMissed?.call();
+      return;
+    }
+    if (type == 'sutol-tour-hotspot') {
+      final targetPageId = raw['targetPageId']?.toString().trim();
+      if (targetPageId != null && targetPageId.isNotEmpty) {
+        widget.onTourHotspot?.call(targetPageId);
+      }
+      return;
+    }
+    if (type != 'sutol-tour-surface-point') return;
+    final x = (raw['x'] as num?)?.toDouble();
+    final y = (raw['y'] as num?)?.toDouble();
+    final z = (raw['z'] as num?)?.toDouble();
+    if (x == null || y == null || z == null) {
+      widget.onTourSurfacePickMissed?.call();
+      return;
+    }
+    // Platform iframe'leri bazı web oluşturucularında Flutter'ın modal
+    // katmanının üzerinde kalır. Diyalog açılmadan önce iframe'i anında
+    // pasifleştirmek, "3B metin ekle" akışının tüm ekranı tıklanamaz hale
+    // getirmesini önler. Bir sonraki widget güncellemesi de bu durumu korur.
+    _iframeElement.style.pointerEvents = 'none';
+    _pendingIframeElement?.style.pointerEvents = 'none';
+    widget.onTourSurfacePointPicked?.call(
+      ModelTourSurfacePoint(x: x, y: y, z: z),
+    );
+  }
+
   html.IFrameElement _createIframe() {
     final iframe = html.IFrameElement()
       ..style.width = '100%'
@@ -787,7 +956,10 @@ class _HtmlPageStageState extends State<HtmlPageStage> {
       ..style.left = '0'
       ..style.border = '0'
       ..style.backgroundColor = 'transparent'
-      ..style.pointerEvents = 'none'
+      // Preview/tour ekranında Flutter katmanı kontrollerin ve 3B yüzey
+      // seçiminin sahibidir. Iframe'i pasif tutmak platform görünümünün HUD
+      // ile diyalogların üstüne çıkıp tıklamaları yutmasını önler.
+      ..style.pointerEvents = _shouldAllowIframeInteraction ? 'auto' : 'none'
       ..setAttribute('scrolling', 'no');
     if (widget.onTap != null) {
       iframe.setAttribute('loading', 'lazy');
@@ -799,6 +971,40 @@ class _HtmlPageStageState extends State<HtmlPageStage> {
   void didUpdateWidget(covariant HtmlPageStage oldWidget) {
     super.didUpdateWidget(oldWidget);
     _applyVisualStyle();
+    _iframeElement.style.pointerEvents =
+        _shouldAllowIframeInteraction ? 'auto' : 'none';
+    _pendingIframeElement?.style.pointerEvents =
+        _shouldAllowIframeInteraction ? 'auto' : 'none';
+    final shouldRequestSurfacePick =
+        oldWidget.tourSurfacePickGeneration !=
+                widget.tourSurfacePickGeneration &&
+            widget.tourSurfacePickPosition != null;
+    if (oldWidget.tourPointPlacementEnabled != widget.tourPointPlacementEnabled) {
+      _setTourPointPlacement(widget.tourPointPlacementEnabled);
+      // Yüzey seçimi bir çalışma zamanı durumu; burada iframe'i yeniden
+      // yazmak platform görünümünü Flutter diyaloğunun üstüne taşıyordu.
+      // İlk belge zaten bu ayarı içerir, sonraki değişiklikler postMessage ile
+      // güvenle uygulanır.
+      if (!shouldRequestSurfacePick) return;
+    }
+    if (shouldRequestSurfacePick) {
+      _requestTourSurfacePick(widget.tourSurfacePickPosition!);
+      return;
+    }
+    // Sunucu HUD'ı (anlatım paneli, kontroller vb.) açılıp kapanırken aynı
+    // sahneyi tekrar yamamak, model-viewer'ın kullanıcının sürükleyerek
+    // seçtiği canlı kamera açısını başlangıç yörüngesine döndürüyordu.
+    // Sayfa nesnesi ve görünür sahne ayarları değişmediyse iframe dokunulmaz.
+    if (identical(oldWidget.page, widget.page) &&
+        oldWidget.selectedTextBlockId == widget.selectedTextBlockId &&
+        oldWidget.inlineEditingTextBlockId == widget.inlineEditingTextBlockId &&
+        oldWidget.selectedComponentBlockId == widget.selectedComponentBlockId &&
+        oldWidget.visibleRevealStep == widget.visibleRevealStep &&
+        oldWidget.showBadge == widget.showBadge &&
+        oldWidget.showBackground == widget.showBackground &&
+        oldWidget.renderMode == widget.renderMode) {
+      return;
+    }
     if (oldWidget.showBackground != widget.showBackground ||
         (widget.showBackground &&
             (oldWidget.page.backgroundKind != widget.page.backgroundKind ||
@@ -827,7 +1033,13 @@ class _HtmlPageStageState extends State<HtmlPageStage> {
       ..clipPath = widget.cssClipPath ?? 'none'
       ..willChange =
           hasCompositedEffect ? 'transform, opacity, clip-path' : 'auto';
+    _hostElement.style.pointerEvents =
+        _shouldAllowIframeInteraction || widget.onTap != null ? 'auto' : 'none';
   }
+
+  bool get _shouldAllowIframeInteraction =>
+      widget.renderMode == HtmlStageRenderMode.full ||
+      widget.tourInteractionEnabled;
 
   @override
   void dispose() {
@@ -843,6 +1055,7 @@ class _HtmlPageStageState extends State<HtmlPageStage> {
       unawaited(initialLoadSubscription.cancel());
     }
     _initialLoadTimer?.cancel();
+    unawaited(_tourMessageSubscription?.cancel());
     _pendingIframeElement?.remove();
     final tapSubscription = _tapSubscription;
     if (tapSubscription != null) {
@@ -864,6 +1077,7 @@ class _HtmlPageStageState extends State<HtmlPageStage> {
       renderMode: widget.renderMode,
       modelSourcesById: RemoteModelSources.all,
       imageSourcesById: RemoteImageSources.all,
+      tourPointPlacementEnabled: widget.tourPointPlacementEnabled,
     );
 
     // İlk sahnede değiştirecek eski bir kare yoktur; doğrudan yükle.
@@ -912,9 +1126,7 @@ class _HtmlPageStageState extends State<HtmlPageStage> {
             initialIframe.style
               ..visibility = 'visible'
               ..opacity = '1'
-              ..pointerEvents = widget.renderMode == HtmlStageRenderMode.full
-                  ? 'auto'
-                  : 'none';
+              ..pointerEvents = _shouldAllowIframeInteraction ? 'auto' : 'none';
           });
         });
       }
@@ -1039,8 +1251,7 @@ class _HtmlPageStageState extends State<HtmlPageStage> {
           nextIframe.style
             ..visibility = 'visible'
             ..opacity = '1'
-            ..pointerEvents =
-                widget.renderMode == HtmlStageRenderMode.full ? 'auto' : 'none';
+            ..pointerEvents = _shouldAllowIframeInteraction ? 'auto' : 'none';
           _iframeElement = nextIframe;
           _pendingIframeElement = null;
           final subscription = _pendingLoadSubscription;
@@ -1269,7 +1480,11 @@ bool _canPatchInPlace(HtmlPageStage oldWidget, HtmlPageStage nextWidget) {
         oldBlock.imageAssetId != nextBlock.imageAssetId ||
         oldBlock.imageAspectRatio != nextBlock.imageAspectRatio ||
         oldBlock.revealStep != nextBlock.revealStep ||
-        oldBlock.hotspotTargetPageId != nextBlock.hotspotTargetPageId) {
+        oldBlock.hotspotTargetPageId != nextBlock.hotspotTargetPageId ||
+        !_sameModelTourHotspots(
+          oldBlock.modelTourHotspots,
+          nextBlock.modelTourHotspots,
+        )) {
       return false;
     }
   }
@@ -1284,6 +1499,31 @@ bool _canPatchInPlace(HtmlPageStage oldWidget, HtmlPageStage nextWidget) {
     }
   }
 
+  return true;
+}
+
+/// Tur noktaları model-viewer'ın içindeki slot öğeleridir. Bunlar değiştiğinde
+/// sadece konum/stil yaması göndermek yeterli değildir; yeni iframe belgesi,
+/// fiziksel 3B işaretçileri oluşturmalıdır.
+bool _sameModelTourHotspots(
+  List<ModelTourHotspot> first,
+  List<ModelTourHotspot> second,
+) {
+  if (identical(first, second)) return true;
+  if (first.length != second.length) return false;
+  for (var index = 0; index < first.length; index += 1) {
+    final a = first[index];
+    final b = second[index];
+    if (a.id != b.id ||
+        a.label != b.label ||
+        a.description != b.description ||
+        a.targetPageId != b.targetPageId ||
+        a.x != b.x ||
+        a.y != b.y ||
+        a.z != b.z) {
+      return false;
+    }
+  }
   return true;
 }
 

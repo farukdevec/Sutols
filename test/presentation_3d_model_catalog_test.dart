@@ -338,6 +338,102 @@ void main() {
     expect(document, isNot(contains(' auto-rotate')));
   });
 
+  test('sanal tur modeli sunum ve dışa aktarımda sürüklenerek keşfedilebilir',
+      () {
+    const page = PresentationPage(
+      id: 'anitkabir-tour',
+      textBlocks: <PresentationTextBlock>[],
+      componentBlocks: <PresentationComponentBlock>[
+        PresentationComponentBlock(
+          id: 'anitkabir-tour-model',
+          modelAssetId: 'anitkabir',
+          modelTourEnabled: true,
+          modelOrbitTheta: 35,
+          modelOrbitPhi: 72,
+          position: Offset.zero,
+          size: Size(1, 1),
+        ),
+      ],
+    );
+
+    final document = buildHtmlStageDocument(
+      page: page,
+      modelSourcesById: const <String, String>{
+        'anitkabir': '/models/anitkabir.glb',
+      },
+    );
+
+    expect(document, contains('camera-controls'));
+    expect(document, contains('camera-orbit="35.00deg 72.00deg 100.00%"'));
+    expect(document, contains('min-camera-orbit="auto 8deg 5%"'));
+    expect(document, contains('max-camera-orbit="auto 172deg 250%"'));
+    expect(document, contains('orbit-sensitivity="0.78"'));
+    expect(document, contains('disable-pan'));
+  });
+
+  test('3B tur noktası model HTML çıktısına başlık ve slayt bağlantısıyla eklenir',
+      () {
+    const page = PresentationPage(
+      id: 'anitkabir-tour-points',
+      textBlocks: <PresentationTextBlock>[],
+      componentBlocks: <PresentationComponentBlock>[
+        PresentationComponentBlock(
+          id: 'anitkabir-tour-model',
+          modelAssetId: 'anitkabir',
+          modelTourEnabled: true,
+          modelTourHotspots: <ModelTourHotspot>[
+            ModelTourHotspot(
+              id: 'lion-road',
+              label: 'Aslanlı Yol',
+              description: 'Tören aksının başlangıcı',
+              targetPageId: 'lion-road-slide',
+              x: .25,
+              y: -.1,
+              z: .4,
+            ),
+          ],
+          position: Offset.zero,
+          size: Size(1, 1),
+        ),
+      ],
+    );
+
+    final document = buildHtmlStageDocument(
+      page: page,
+      modelSourcesById: const <String, String>{
+        'anitkabir': '/models/anitkabir.glb',
+      },
+    );
+
+    expect(document, contains('slot="hotspot-lion-road"'));
+    expect(document, contains('Aslanlı Yol'));
+    expect(document, contains('data-hotspot-target="lion-road-slide"'));
+    expect(document, contains('window.SutolApplyTourHotspots'));
+    expect(document, contains('data-sutol-hotspot-x="0.2500"'));
+    expect(document, contains('data-sutol-hotspot-y="-0.1000"'));
+    expect(document, contains('data-sutol-hotspot-z="0.4000"'));
+  });
+
+  test('tur yüzeyi seçme belgesi gerçek 3B koordinat protokolünü açar', () {
+    final document = buildHtmlStageDocument(
+      page: const PresentationPage(
+        id: 'surface-pick-tour',
+        textBlocks: <PresentationTextBlock>[],
+        componentBlocks: <PresentationComponentBlock>[],
+      ),
+      tourPointPlacementEnabled: true,
+    );
+
+    expect(document, contains('data-sutol-tour-placement="true"'));
+    expect(document, contains('positionAndNormalFromPoint'));
+    expect(document, contains('sutol-tour-surface-point'));
+    expect(document, contains('sutol-tour-surface-miss'));
+    expect(document, contains('sutol-tour-surface-pick'));
+    expect(document, contains('document.elementFromPoint'));
+    expect(document, contains('sutol-tour-interaction'));
+    expect(document, contains('sutol-tour-hotspot'));
+  });
+
   test('3B model yüklenemezse konu bileşeni yedek olarak hazırlanır', () {
     const page = PresentationPage(
       id: 'fallback-model-page',

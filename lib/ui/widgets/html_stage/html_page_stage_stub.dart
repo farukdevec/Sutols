@@ -131,6 +131,14 @@ class HtmlPageStage extends StatelessWidget {
     this.cssOpacity = 1,
     this.cssClipPath,
     this.cssTransformOrigin = 'center center',
+    this.tourPointPlacementEnabled = false,
+    this.tourSurfacePickPosition,
+    this.tourSurfacePickGeneration = 0,
+    this.onTourSurfacePointPicked,
+    this.onTourSurfacePickMissed,
+    this.onTourInteraction,
+    this.onTourHotspot,
+    this.tourInteractionEnabled = false,
   });
 
   final PresentationPage page;
@@ -146,6 +154,14 @@ class HtmlPageStage extends StatelessWidget {
   final double cssOpacity;
   final String? cssClipPath;
   final String cssTransformOrigin;
+  final bool tourPointPlacementEnabled;
+  final Offset? tourSurfacePickPosition;
+  final int tourSurfacePickGeneration;
+  final ValueChanged<ModelTourSurfacePoint>? onTourSurfacePointPicked;
+  final VoidCallback? onTourSurfacePickMissed;
+  final VoidCallback? onTourInteraction;
+  final ValueChanged<String>? onTourHotspot;
+  final bool tourInteractionEnabled;
 
   @override
   Widget build(BuildContext context) {
@@ -192,11 +208,15 @@ class HtmlModelCanvas extends StatelessWidget {
     required this.exposure,
     required this.environmentImage,
     required this.orbitEnabled,
+    required this.tourEnabled,
     required this.orbitTheta,
     required this.orbitPhi,
     required this.targetX,
     required this.targetY,
     required this.targetZ,
+    this.pickSurfacePosition = false,
+    this.onSurfacePositionPicked,
+    this.onSurfacePickMissed,
   });
 
   final String modelId;
@@ -207,11 +227,15 @@ class HtmlModelCanvas extends StatelessWidget {
   final double exposure;
   final String? environmentImage;
   final bool orbitEnabled;
+  final bool tourEnabled;
   final double orbitTheta;
   final double orbitPhi;
   final double targetX;
   final double targetY;
   final double targetZ;
+  final bool pickSurfacePosition;
+  final ValueChanged<ModelTourSurfacePoint>? onSurfacePositionPicked;
+  final VoidCallback? onSurfacePickMissed;
 
   @override
   Widget build(BuildContext context) => const ColoredBox(

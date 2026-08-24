@@ -583,6 +583,65 @@ class PresentationTextBlock {
 }
 
 @immutable
+class ModelTourSurfacePoint {
+  const ModelTourSurfacePoint({
+    required this.x,
+    required this.y,
+    required this.z,
+  });
+
+  final double x;
+  final double y;
+  final double z;
+}
+
+@immutable
+class ModelTourHotspot {
+  const ModelTourHotspot({
+    required this.id,
+    required this.label,
+    this.description = '',
+    this.targetPageId,
+    this.x = 0,
+    this.y = 0,
+    this.z = 0,
+  });
+
+  final String id;
+  final String label;
+  final String description;
+  final String? targetPageId;
+
+  /// Modelin merkezine göre normalize edilmiş konum (-1 ile 1 arası).
+  /// Gerçek metre konumu, model-viewer yüklendiğinde modelin boyutlarından
+  /// hesaplanır; farklı ölçekteki GLB dosyaları böylece aynı formatı kullanır.
+  final double x;
+  final double y;
+  final double z;
+
+  ModelTourHotspot copyWith({
+    String? id,
+    String? label,
+    String? description,
+    Object? targetPageId = _copySentinel,
+    double? x,
+    double? y,
+    double? z,
+  }) =>
+      ModelTourHotspot(
+        id: id ?? this.id,
+        label: label ?? this.label,
+        description: description ?? this.description,
+        targetPageId: identical(targetPageId, _copySentinel)
+            ? this.targetPageId
+            : targetPageId as String?,
+        x: x ?? this.x,
+        y: y ?? this.y,
+        z: z ?? this.z,
+      );
+}
+
+@immutable
 class PresentationComponentBlock {
   const PresentationComponentBlock({
     required this.id,
@@ -601,6 +660,7 @@ class PresentationComponentBlock {
     this.modelTargetX = 0,
     this.modelTargetY = 0,
     this.modelTargetZ = 0,
+    this.modelTourHotspots = const <ModelTourHotspot>[],
     required this.position,
     required this.size,
     this.revealStep = 0,
@@ -634,6 +694,7 @@ class PresentationComponentBlock {
   final double modelTargetX;
   final double modelTargetY;
   final double modelTargetZ;
+  final List<ModelTourHotspot> modelTourHotspots;
   final Offset position;
   final Size size;
   final int revealStep;
@@ -662,6 +723,7 @@ class PresentationComponentBlock {
     double? modelTargetX,
     double? modelTargetY,
     double? modelTargetZ,
+    List<ModelTourHotspot>? modelTourHotspots,
     Offset? position,
     Size? size,
     int? revealStep,
@@ -697,6 +759,7 @@ class PresentationComponentBlock {
       modelTargetX: modelTargetX ?? this.modelTargetX,
       modelTargetY: modelTargetY ?? this.modelTargetY,
       modelTargetZ: modelTargetZ ?? this.modelTargetZ,
+      modelTourHotspots: modelTourHotspots ?? this.modelTourHotspots,
       position: position ?? this.position,
       size: size ?? this.size,
       revealStep: revealStep ?? this.revealStep,
@@ -772,6 +835,15 @@ class PresentationPage {
           ? this.transitionAfter
           : transitionAfter as PresentationTransitionKind?,
     );
+  }
+
+  String get title {
+    for (final block in textBlocks) {
+      if (block.type == PresentationTextType.title && block.text.trim().isNotEmpty) {
+        return block.text;
+      }
+    }
+    return '';
   }
 
   PresentationTextBlock? findTextBlock(String? textBlockId) {

@@ -798,8 +798,9 @@ class _HtmlPresentationEditorPageState
       right *= diagonalScale;
     }
     widget.controller.moveSelectedModelTour(
-      forward: forward * 0.7,
-      right: right * 0.7,
+      // Önizlemedeki yürüyüş hızıyla uyumlu, hassas ince ayar adımı.
+      forward: forward * 0.5,
+      right: right * 0.5,
     );
   }
 
@@ -5079,6 +5080,10 @@ class _HtmlPageCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isTourScene = page.componentBlocks.any(
+      (block) => block.modelAssetId != null && block.modelTourEnabled,
+    );
+    final tourAccent = const Color(0xFF0284C7);
     return GestureDetector(
       onSecondaryTapUp: (details) {
         if (!readOnly) {
@@ -5099,16 +5104,26 @@ class _HtmlPageCard extends StatelessWidget {
           decoration: BoxDecoration(
             color: isSelected
                 ? (Theme.of(context).brightness == Brightness.dark
-                    ? context.colors.primary.withValues(alpha: 0.18)
-                    : const Color(0xFFEAF7F7))
+                    ? (isTourScene
+                        ? tourAccent.withValues(alpha: 0.26)
+                        : context.colors.primary.withValues(alpha: 0.18))
+                    : (isTourScene
+                        ? const Color(0xFFE8F5FF)
+                        : const Color(0xFFEAF7F7)))
                 : (Theme.of(context).brightness == Brightness.dark
-                    ? context.colors.surface
-                    : const Color(0xFFF8FAFD)),
+                    ? (isTourScene
+                        ? const Color(0xFF102A3C)
+                        : context.colors.surface)
+                    : (isTourScene
+                        ? const Color(0xFFF2F9FF)
+                        : const Color(0xFFF8FAFD))),
             borderRadius: BorderRadius.circular(8),
             border: Border.all(
               color: isSelected
-                  ? context._htmlAccent
-                  : context.sutolColors.outline,
+                  ? (isTourScene ? tourAccent : context._htmlAccent)
+                  : (isTourScene
+                      ? tourAccent.withValues(alpha: 0.55)
+                      : context.sutolColors.outline),
               width: isSelected ? 1.5 : 1,
             ),
           ),
@@ -5139,21 +5154,58 @@ class _HtmlPageCard extends StatelessWidget {
                       ),
                     ],
                   ),
-                  if (!readOnly)
-                    InkWell(
-                      onTapDown: (details) => _showPageContextMenu(
-                        context,
-                        details.globalPosition,
-                        controller,
-                        index,
-                      ),
-                      borderRadius: BorderRadius.circular(4),
-                      child: Icon(
-                        Icons.more_vert_rounded,
-                        size: 16,
-                        color: context._htmlMuted,
-                      ),
-                    ),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      if (isTourScene)
+                        Container(
+                          margin: const EdgeInsets.only(right: 5),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 3,
+                          ),
+                          decoration: BoxDecoration(
+                            color: tourAccent,
+                            borderRadius: BorderRadius.circular(999),
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: <Widget>[
+                              Icon(
+                                Icons.explore_rounded,
+                                size: 11,
+                                color: Colors.white,
+                              ),
+                              SizedBox(width: 3),
+                              Text(
+                                'TUR',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.w900,
+                                  letterSpacing: .4,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      if (!readOnly)
+                        InkWell(
+                          onTapDown: (details) => _showPageContextMenu(
+                            context,
+                            details.globalPosition,
+                            controller,
+                            index,
+                          ),
+                          borderRadius: BorderRadius.circular(4),
+                          child: Icon(
+                            Icons.more_vert_rounded,
+                            size: 16,
+                            color: context._htmlMuted,
+                          ),
+                        ),
+                    ],
+                  ),
                 ],
               ),
               const SizedBox(height: 5),
@@ -9312,6 +9364,7 @@ class _HtmlStageCardState extends State<_HtmlStageCard>
 
   @override
   void dispose() {
+    widget.controller.finishInlineTextEditing(_inlineEditingTextBlockId);
     widget.controller.removeListener(_handleTransitionPreviewRequest);
     unawaited(_pointerLockMovementSubscription?.cancel());
     unawaited(_pointerLockChangeSubscription?.cancel());
@@ -9361,6 +9414,13 @@ class _HtmlStageCardState extends State<_HtmlStageCard>
 
   void _setInlineEditingTextBlock(String? blockId) {
     if (_inlineEditingTextBlockId == blockId || !mounted) return;
+    final previousBlockId = _inlineEditingTextBlockId;
+    if (previousBlockId != null) {
+      widget.controller.finishInlineTextEditing(previousBlockId);
+    }
+    if (blockId != null) {
+      widget.controller.beginInlineTextEditing(blockId);
+    }
     setState(() => _inlineEditingTextBlockId = blockId);
   }
 
@@ -9617,6 +9677,27 @@ class _HtmlStageCardState extends State<_HtmlStageCard>
                           }
                           widget.controller.lookAroundSelectedModelTour(
                             localDelta(delta),
+                          );
+                        },
+                        modelTourPointPlacementEnabled:
+                            widget.controller.modelTourPointPlacementEnabled,
+                        onModelTourSurfacePointPicked: (itemId, point) async {
+                          if (widget.controller.selectedComponentBlockId !=
+                              itemId) return;
+                          widget.controller
+                              .setModelTourPointPlacementEnabled(false);
+                          await _showAddTourHotspotDialog(
+                            context,
+                            widget.controller,
+                            fixedPoint: point,
+                          );
+                        },
+                        onModelTourSurfacePickMissed: () {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                  'Nokta eklemek için model yüzeyine tıklayın.'),
+                            ),
                           );
                         },
                         onBeginModelOrbit: (itemId) {
@@ -10044,12 +10125,45 @@ class _SelectionContextBarSection extends StatelessWidget {
       MiniToolLabeledToggle(
         icon: Icons.explore_rounded,
         label: block.modelTourEnabled
-            ? tr('FPS · WASD + Fare', 'FPS · WASD + Mouse')
+            ? tr('Sanal Turu Aç', 'Open Virtual Tour')
             : tr('Sanal Tur', 'Virtual Tour'),
         active: block.modelTourEnabled,
-        onTap: () =>
-            controller.updateSelectedModelTourEnabled(!block.modelTourEnabled),
+        onTap: () async {
+          final enableTour = !block.modelTourEnabled;
+          if (enableTour) {
+            controller.updateSelectedModelTourEnabled(true);
+          }
+          // "Sanal Tur" bir düzenleme anahtarı değil, izleyicinin açtığı
+          // deneyimdir: her dokunuşta tekrar tam ekran tur sahnesi açılır.
+          await requestPresentationFullscreen();
+          if (!context.mounted) return;
+          await Navigator.of(context).push(
+            MaterialPageRoute<void>(
+              builder: (_) => PresentationPreviewPage(controller: controller),
+            ),
+          );
+        },
       ),
+      const SizedBox(width: 4),
+      MiniToolAction(
+        icon: controller.modelTourPointPlacementEnabled
+            ? Icons.close_rounded
+            : Icons.add_location_alt_rounded,
+        tooltip: controller.modelTourPointPlacementEnabled
+            ? tr('Nokta Yerleştirmeyi İptal Et', 'Cancel Point Placement')
+            : tr('Modelde Nokta Yerleştir', 'Place Point on Model'),
+        onTap: () => controller.setModelTourPointPlacementEnabled(
+          !controller.modelTourPointPlacementEnabled,
+        ),
+      ),
+      if (block.modelTourHotspots.isNotEmpty) ...<Widget>[
+        const SizedBox(width: 4),
+        MiniToolAction(
+          icon: Icons.edit_location_alt_rounded,
+          tooltip: tr('Tur Noktalarını Düzenle', 'Edit Tour Hotspots'),
+          onTap: () => _showTourHotspotManager(context, controller),
+        ),
+      ],
       if (block.modelTourEnabled &&
           (block.modelTargetX.abs() > 0.001 ||
               block.modelTargetY.abs() > 0.001 ||
@@ -10166,6 +10280,232 @@ class _SelectionContextBarSection extends StatelessWidget {
         onTap: controller.removeSelectedComponentBlock,
       ),
     ];
+  }
+}
+
+Future<void> _showAddTourHotspotDialog(
+  BuildContext context,
+  PresentationController controller, {
+  ModelTourHotspot? existing,
+  ModelTourSurfacePoint? fixedPoint,
+}) async {
+  final labelController =
+      TextEditingController(text: existing?.label ?? 'Yeni tur noktası');
+  final descriptionController =
+      TextEditingController(text: existing?.description ?? '');
+  final xController =
+      TextEditingController(text: '${fixedPoint?.x ?? existing?.x ?? 0}');
+  final yController =
+      TextEditingController(text: '${fixedPoint?.y ?? existing?.y ?? 0}');
+  final zController =
+      TextEditingController(text: '${fixedPoint?.z ?? existing?.z ?? 0}');
+  String? targetPageId = existing?.targetPageId;
+  final pages = controller.pages;
+
+  await showDialog<void>(
+    context: context,
+    builder: (dialogContext) => StatefulBuilder(
+      builder: (context, setDialogState) => AlertDialog(
+        title: Text(
+          existing == null ? '360° tur metni ekle' : '360° tur metnini düzenle',
+        ),
+        content: SizedBox(
+          width: 420,
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                if (fixedPoint != null)
+                  Container(
+                    width: double.infinity,
+                    margin: const EdgeInsets.only(bottom: 12),
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFE8F5FF),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Row(
+                      children: <Widget>[
+                        Icon(Icons.place_rounded, color: Color(0xFF0284C7)),
+                        SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'Bu metin, model üzerinde işaretlediğiniz 3B konuma bağlanır.',
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                TextField(
+                  controller: labelController,
+                  autofocus: true,
+                  decoration: const InputDecoration(labelText: '360° başlık'),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: descriptionController,
+                  maxLines: 2,
+                  decoration: const InputDecoration(
+                    labelText: '360° bilgi metni (isteğe bağlı)',
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: <Widget>[
+                    for (final field
+                        in <({String label, TextEditingController controller})>[
+                      (label: 'X', controller: xController),
+                      (label: 'Y', controller: yController),
+                      (label: 'Z', controller: zController),
+                    ])
+                      Expanded(
+                        child: Padding(
+                          padding: EdgeInsets.only(
+                            right: field.label == 'Z' ? 0 : 8,
+                          ),
+                          child: TextField(
+                            controller: field.controller,
+                            readOnly: fixedPoint != null,
+                            keyboardType: const TextInputType.numberWithOptions(
+                              decimal: true,
+                              signed: true,
+                            ),
+                            decoration: InputDecoration(
+                              labelText: '${field.label} konumu',
+                              helperText:
+                                  fixedPoint == null ? '-1…1' : 'Yüzey konumu',
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<String?>(
+                  value: targetPageId,
+                  decoration: const InputDecoration(
+                    labelText: 'Metne tıklanınca açılacak slayt',
+                  ),
+                  items: <DropdownMenuItem<String?>>[
+                    const DropdownMenuItem<String?>(
+                      value: null,
+                      child: Text('Yalnızca bilgi göster'),
+                    ),
+                    ...pages
+                        .where((page) => page.id != controller.selectedPage.id)
+                        .map(
+                          (page) => DropdownMenuItem<String?>(
+                            value: page.id,
+                            child: Text('Slayt ${pages.indexOf(page) + 1}'),
+                          ),
+                        ),
+                  ],
+                  onChanged: (value) =>
+                      setDialogState(() => targetPageId = value),
+                ),
+              ],
+            ),
+          ),
+        ),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('Vazgeç'),
+          ),
+          FilledButton.icon(
+            icon: const Icon(Icons.add_location_alt_rounded),
+            label: Text(existing == null ? '360° metni ekle' : 'Kaydet'),
+            onPressed: () {
+              double coordinate(TextEditingController field) =>
+                  (double.tryParse(field.text.replaceAll(',', '.')) ?? 0)
+                      .clamp(-1.0, 1.0)
+                      .toDouble();
+              if (existing == null) {
+                controller.addSelectedModelTourHotspot(
+                  label: labelController.text,
+                  description: descriptionController.text,
+                  x: coordinate(xController),
+                  y: coordinate(yController),
+                  z: coordinate(zController),
+                  targetPageId: targetPageId,
+                );
+              } else {
+                controller.updateSelectedModelTourHotspot(
+                  existing.copyWith(
+                    label: labelController.text.trim().isEmpty
+                        ? 'Tur noktası'
+                        : labelController.text.trim(),
+                    description: descriptionController.text.trim(),
+                    targetPageId: targetPageId,
+                    x: coordinate(xController),
+                    y: coordinate(yController),
+                    z: coordinate(zController),
+                  ),
+                );
+              }
+              Navigator.of(dialogContext).pop();
+            },
+          ),
+        ],
+      ),
+    ),
+  );
+  labelController.dispose();
+  descriptionController.dispose();
+  xController.dispose();
+  yController.dispose();
+  zController.dispose();
+}
+
+Future<void> _showTourHotspotManager(
+  BuildContext context,
+  PresentationController controller,
+) async {
+  final hotspots = controller.selectedComponentBlock?.modelTourHotspots ??
+      const <ModelTourHotspot>[];
+  final selected = await showDialog<ModelTourHotspot>(
+    context: context,
+    builder: (dialogContext) => AlertDialog(
+      title: const Text('Tur noktaları'),
+      content: SizedBox(
+        width: 420,
+        child: ListView.separated(
+          shrinkWrap: true,
+          itemCount: hotspots.length,
+          separatorBuilder: (_, __) => const Divider(height: 1),
+          itemBuilder: (_, index) {
+            final hotspot = hotspots[index];
+            return ListTile(
+              leading: const Icon(Icons.location_on_rounded),
+              title: Text(hotspot.label),
+              subtitle: Text(
+                hotspot.targetPageId == null
+                    ? 'Bilgi noktası'
+                    : 'Bağlı slayt: ${hotspot.targetPageId}',
+              ),
+              onTap: () => Navigator.of(dialogContext).pop(hotspot),
+              trailing: IconButton(
+                icon: const Icon(Icons.delete_outline_rounded),
+                tooltip: 'Sil',
+                onPressed: () {
+                  controller.removeSelectedModelTourHotspot(hotspot.id);
+                  Navigator.of(dialogContext).pop();
+                },
+              ),
+            );
+          },
+        ),
+      ),
+      actions: <Widget>[
+        TextButton(
+          onPressed: () => Navigator.of(dialogContext).pop(),
+          child: const Text('Kapat'),
+        ),
+      ],
+    ),
+  );
+  if (selected != null && context.mounted) {
+    await _showAddTourHotspotDialog(context, controller, existing: selected);
   }
 }
 

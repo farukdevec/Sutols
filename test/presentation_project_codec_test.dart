@@ -92,6 +92,17 @@ void main() {
             modelTargetX: 18.5,
             modelTargetY: 7.25,
             modelTargetZ: -24,
+            modelTourHotspots: <ModelTourHotspot>[
+              ModelTourHotspot(
+                id: 'hotspot-1',
+                label: 'Kuzey cephe',
+                description: 'Ana giriş',
+                targetPageId: 'page-5',
+                x: .2,
+                y: -.1,
+                z: .4,
+              ),
+            ],
             position: Offset(0.1, 0.5),
             size: Size(0.2, 0.3),
           ),
@@ -168,6 +179,9 @@ void main() {
     expect(modelBlock.modelOrbitEnabled, isTrue);
     expect(modelBlock.modelOrbitTheta, 45);
     expect(modelBlock.modelOrbitPhi, 60);
+    expect(modelBlock.modelTourHotspots, hasLength(1));
+    expect(modelBlock.modelTourHotspots.single.label, 'Kuzey cephe');
+    expect(modelBlock.modelTourHotspots.single.targetPageId, 'page-5');
     expect(modelBlock.modelTourEnabled, isTrue);
     expect(modelBlock.modelTargetX, 18.5);
     expect(modelBlock.modelTargetY, 7.25);

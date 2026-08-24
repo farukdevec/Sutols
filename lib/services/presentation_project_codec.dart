@@ -334,6 +334,17 @@ class PresentationProjectCodec {
       'modelTargetX': block.modelTargetX,
       'modelTargetY': block.modelTargetY,
       'modelTargetZ': block.modelTargetZ,
+      'modelTourHotspots': block.modelTourHotspots
+          .map((hotspot) => <String, Object?>{
+                'id': hotspot.id,
+                'label': hotspot.label,
+                'description': hotspot.description,
+                'targetPageId': hotspot.targetPageId,
+                'x': hotspot.x,
+                'y': hotspot.y,
+                'z': hotspot.z,
+              })
+          .toList(growable: false),
       'position': _offsetToJson(block.position),
       'size': _sizeToJson(block.size),
       'revealStep': block.revealStep,
@@ -397,6 +408,7 @@ class PresentationProjectCodec {
           _double(json['modelTargetY'], 0).clamp(-500, 500).toDouble(),
       modelTargetZ:
           _double(json['modelTargetZ'], 0).clamp(-500, 500).toDouble(),
+      modelTourHotspots: _modelTourHotspotsFromJson(json['modelTourHotspots']),
       position: _offsetFromJson(json['position']),
       size: _sizeFromJson(json['size']),
       revealStep: _int(json['revealStep'], 0),
@@ -418,6 +430,23 @@ class PresentationProjectCodec {
       animationOrder: _int(json['animationOrder'], 0),
       motionPathPoints: _offsetListFromJson(json['motionPathPoints']),
     );
+  }
+
+  static List<ModelTourHotspot> _modelTourHotspotsFromJson(Object? value) {
+    if (value is! List) return const <ModelTourHotspot>[];
+    return value.whereType<Map>().map((raw) {
+      final json = raw.map((key, value) => MapEntry('$key', value));
+      return ModelTourHotspot(
+        id: _string(json['id'], 'tour-hotspot'),
+        label: _string(json['label'], 'Tur noktası'),
+        description: _string(json['description'], ''),
+        targetPageId:
+            json['targetPageId'] is String ? json['targetPageId']! as String : null,
+        x: _double(json['x'], 0).clamp(-1, 1).toDouble(),
+        y: _double(json['y'], 0).clamp(-1, 1).toDouble(),
+        z: _double(json['z'], 0).clamp(-1, 1).toDouble(),
+      );
+    }).toList(growable: false);
   }
 
   static Map<String, Object?> _effectSettingsToJson(

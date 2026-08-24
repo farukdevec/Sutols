@@ -1,4 +1,5 @@
 import 'dart:collection';
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -53,6 +54,7 @@ class PresentationController extends ChangeNotifier {
   int _componentBlockCounter;
   String? _selectedTextBlockId;
   String? _selectedComponentBlockId;
+  bool _modelTourPointPlacementEnabled = false;
   PresentationEffectSettings _effectSettings =
       const PresentationEffectSettings();
   final LinkedHashSet<String> _selectedTextBlockIds = LinkedHashSet<String>();
@@ -65,6 +67,10 @@ class PresentationController extends ChangeNotifier {
   List<PresentationComponentBlock> _copiedComponentBlocks =
       const <PresentationComponentBlock>[];
   bool _historySuspended = false;
+  String? _inlineTextEditingBlockId;
+  bool _inlineTextEditHasChanges = false;
+  bool _selectionTransformActive = false;
+  Timer? _selectionTransformIdleTimer;
   bool _modelOrbitGestureActive = false;
   bool _modelCameraGestureHasNotified = false;
   final Stopwatch _modelCameraNotifyClock = Stopwatch();
@@ -107,6 +113,16 @@ class PresentationController extends ChangeNotifier {
       _selectedComponentBlockIds.length == 1 && _selectedTextBlockIds.isEmpty
           ? selectedPage.findComponentBlock(_selectedComponentBlockId)
           : null;
+
+  bool get modelTourPointPlacementEnabled => _modelTourPointPlacementEnabled;
+
+  void setModelTourPointPlacementEnabled(bool value) {
+    final canPlace = selectedComponentBlock?.modelAssetId != null;
+    final next = value && canPlace;
+    if (_modelTourPointPlacementEnabled == next) return;
+    _modelTourPointPlacementEnabled = next;
+    notifyListeners();
+  }
 
   PresentationEntranceAnimation? get selectedEntranceAnimation {
     final text = selectedTextBlock;
@@ -266,9 +282,40 @@ class PresentationController extends ChangeNotifier {
   }
 
   void updateSelectedText(String value) {
+    final current = selectedTextBlock;
+    if (current == null || current.text == value) {
+      return;
+    }
+
+    // Inline editing must not rebuild the whole editor (or create an undo
+    // record) for every character. The TextField owns its live value; we
+    // commit one coherent change when editing ends.
+    if (_inlineTextEditingBlockId == current.id) {
+      if (!_inlineTextEditHasChanges) {
+        _recordUndo();
+        _inlineTextEditHasChanges = true;
+      }
+      _replaceSelectedTextBlockWithoutHistory(current.copyWith(text: value));
+      return;
+    }
     _replaceSelectedTextBlock(
-      selectedTextBlock?.copyWith(text: value),
+      current.copyWith(text: value),
     );
+  }
+
+  void beginInlineTextEditing(String blockId) {
+    _inlineTextEditingBlockId = blockId;
+    _inlineTextEditHasChanges = false;
+  }
+
+  void finishInlineTextEditing(String? blockId) {
+    if (blockId != null && _inlineTextEditingBlockId != blockId) {
+      return;
+    }
+    final changed = _inlineTextEditHasChanges;
+    _inlineTextEditingBlockId = null;
+    _inlineTextEditHasChanges = false;
+    if (changed) notifyListeners();
   }
 
   void updateSelectedFontSize(double value) {
@@ -672,6 +719,13 @@ class PresentationController extends ChangeNotifier {
                   modelTourEnabled: value,
                   modelOrbitEnabled: value ? false : block.modelOrbitEnabled,
                   modelAutoRotate: value ? false : block.modelAutoRotate,
+                  // Tur modunda bakış, gerçek 360° keşif için modelin her
+                  // tarafına dönebilmelidir. Kutup noktalarında kameranın
+                  // ters dönmesini önlemek için yalnızca çok küçük bir pay
+                  // bırakıyoruz.
+                  modelOrbitPhi: value
+                      ? block.modelOrbitPhi.clamp(8.0, 172.0).toDouble()
+                      : block.modelOrbitPhi,
                 )
               : block,
         )
@@ -704,6 +758,73 @@ class PresentationController extends ChangeNotifier {
     _replaceSelectedPage(
       selectedPage.copyWith(componentBlocks: nextComponents),
     );
+    notifyListeners();
+  }
+
+  void addSelectedModelTourHotspot({
+    String label = 'Yeni tur noktası',
+    String description = '',
+    double x = 0,
+    double y = 0,
+    double z = 0,
+    String? targetPageId,
+  }) {
+    final current = selectedComponentBlock;
+    if (current?.modelAssetId == null) return;
+    final hotspot = ModelTourHotspot(
+      id: 'tour-hotspot-${DateTime.now().microsecondsSinceEpoch}',
+      label: label.trim().isEmpty ? 'Yeni tur noktası' : label.trim(),
+      description: description.trim(),
+      x: x.clamp(-1.0, 1.0).toDouble(),
+      y: y.clamp(-1.0, 1.0).toDouble(),
+      z: z.clamp(-1.0, 1.0).toDouble(),
+      targetPageId: targetPageId != selectedPage.id &&
+              _pages.any((page) => page.id == targetPageId)
+          ? targetPageId
+          : null,
+    );
+    final components = selectedPage.componentBlocks.map((block) {
+      return block.id == current!.id
+          ? block.copyWith(
+              modelTourEnabled: true,
+              modelTourHotspots: <ModelTourHotspot>[
+                ...block.modelTourHotspots,
+                hotspot,
+              ],
+            )
+          : block;
+    }).toList(growable: false);
+    _replaceSelectedPage(selectedPage.copyWith(componentBlocks: components));
+    notifyListeners();
+  }
+
+  void updateSelectedModelTourHotspot(ModelTourHotspot updated) {
+    final current = selectedComponentBlock;
+    if (current?.modelAssetId == null) return;
+    final components = selectedPage.componentBlocks.map((block) {
+      if (block.id != current!.id) return block;
+      return block.copyWith(
+        modelTourHotspots: block.modelTourHotspots
+            .map((item) => item.id == updated.id ? updated : item)
+            .toList(growable: false),
+      );
+    }).toList(growable: false);
+    _replaceSelectedPage(selectedPage.copyWith(componentBlocks: components));
+    notifyListeners();
+  }
+
+  void removeSelectedModelTourHotspot(String hotspotId) {
+    final current = selectedComponentBlock;
+    if (current?.modelAssetId == null) return;
+    final components = selectedPage.componentBlocks.map((block) {
+      if (block.id != current!.id) return block;
+      return block.copyWith(
+        modelTourHotspots: block.modelTourHotspots
+            .where((item) => item.id != hotspotId)
+            .toList(growable: false),
+      );
+    }).toList(growable: false);
+    _replaceSelectedPage(selectedPage.copyWith(componentBlocks: components));
     notifyListeners();
   }
 
@@ -785,9 +906,14 @@ class PresentationController extends ChangeNotifier {
       return;
     }
 
-    final nextTheta = (current.modelOrbitTheta - delta.dx * 0.28) % 360;
+    final horizontal = delta.dx.clamp(-24.0, 24.0).toDouble();
+    final vertical = delta.dy.clamp(-24.0, 24.0).toDouble();
+    final nextTheta = (current.modelOrbitTheta - horizontal * 0.24) % 360;
+    // Dikey bakış da 360° tur deneyiminin parçasıdır. 0° ve 180° tam
+    // kutuplarında oluşan kontrol terslenmesini önlemek için güvenli pay
+    // bırakılır; modelin altı dahil tüm çevre keşfedilebilir.
     final nextPhi =
-        (current.modelOrbitPhi + delta.dy * 0.24).clamp(12.0, 168.0).toDouble();
+        (current.modelOrbitPhi + vertical * 0.20).clamp(8.0, 172.0).toDouble();
     final nextComponents = selectedPage.componentBlocks
         .map(
           (block) => block.id == current.id
@@ -1803,7 +1929,19 @@ class PresentationController extends ChangeNotifier {
   }
 
   void moveSelectedText(Offset delta, Size canvasSize) {
+    _beginSelectionTransform();
     _moveSelection(delta, canvasSize);
+  }
+
+  void _beginSelectionTransform() {
+    _selectionTransformIdleTimer?.cancel();
+    if (!_selectionTransformActive) {
+      _recordUndo();
+      _selectionTransformActive = true;
+    }
+    _selectionTransformIdleTimer = Timer(const Duration(milliseconds: 180), () {
+      _selectionTransformActive = false;
+    });
   }
 
   void _moveSelection(Offset delta, Size canvasSize) {
@@ -1848,12 +1986,15 @@ class PresentationController extends ChangeNotifier {
               : block,
         )
         .toList(growable: false);
-    _replaceSelectedPage(
-      selectedPage.copyWith(
-        textBlocks: nextBlocks,
-        componentBlocks: nextComponents,
-      ),
+    final nextPage = selectedPage.copyWith(
+      textBlocks: nextBlocks,
+      componentBlocks: nextComponents,
     );
+    if (_selectionTransformActive) {
+      _pages[_selectedPageIndex] = nextPage;
+    } else {
+      _replaceSelectedPage(nextPage);
+    }
     notifyListeners();
   }
 
@@ -1874,6 +2015,7 @@ class PresentationController extends ChangeNotifier {
     if (current == null) {
       return;
     }
+    _beginSelectionTransform();
 
     final deltaX = delta.dx / canvasSize.width;
     final deltaY = delta.dy / canvasSize.height;
@@ -1911,7 +2053,7 @@ class PresentationController extends ChangeNotifier {
             .toDouble()
         : current.fontSize;
 
-    _replaceSelectedTextBlock(
+    _replaceSelectedTextBlockWithoutHistory(
       current.copyWith(
         position: Offset(left, top),
         widthFactor: right - left,
@@ -1919,6 +2061,7 @@ class PresentationController extends ChangeNotifier {
         fontSize: nextFontSize,
       ),
     );
+    notifyListeners();
   }
 
   void scaleSelectedComponent(double scale) {
@@ -1965,6 +2108,7 @@ class PresentationController extends ChangeNotifier {
     if (current == null) {
       return;
     }
+    _beginSelectionTransform();
 
     final deltaX = delta.dx / canvasSize.width;
     final deltaY = delta.dy / canvasSize.height;
@@ -2039,9 +2183,8 @@ class PresentationController extends ChangeNotifier {
         )
         .toList(growable: false);
 
-    _replaceSelectedPage(
-      selectedPage.copyWith(componentBlocks: nextComponents),
-    );
+    _pages[_selectedPageIndex] =
+        selectedPage.copyWith(componentBlocks: nextComponents);
     notifyListeners();
   }
 
@@ -2133,6 +2276,23 @@ class PresentationController extends ChangeNotifier {
     notifyListeners();
   }
 
+  void _replaceSelectedTextBlockWithoutHistory(
+      PresentationTextBlock nextBlock) {
+    final current = selectedTextBlock;
+    if (current == null) return;
+    _pages[_selectedPageIndex] = selectedPage.copyWith(
+      textBlocks: selectedPage.textBlocks
+          .map((block) => block.id == current.id ? nextBlock : block)
+          .toList(growable: false),
+    );
+  }
+
+  @override
+  void dispose() {
+    _selectionTransformIdleTimer?.cancel();
+    super.dispose();
+  }
+
   void _clearHotspotsTargeting(String removedPageId) {
     for (var i = 0; i < _pages.length; i += 1) {
       final page = _pages[i];
@@ -2145,11 +2305,26 @@ class PresentationController extends ChangeNotifier {
         return block.copyWith(hotspotTargetPageId: null);
       }).toList(growable: false);
       final nextComponents = page.componentBlocks.map((block) {
-        if (block.hotspotTargetPageId != removedPageId) {
+        final clearsComponentTarget =
+            block.hotspotTargetPageId == removedPageId;
+        final clearsTourTarget = block.modelTourHotspots.any(
+          (hotspot) => hotspot.targetPageId == removedPageId,
+        );
+        if (!clearsComponentTarget && !clearsTourTarget) {
           return block;
         }
         changed = true;
-        return block.copyWith(hotspotTargetPageId: null);
+        return block.copyWith(
+          hotspotTargetPageId:
+              clearsComponentTarget ? null : block.hotspotTargetPageId,
+          modelTourHotspots: block.modelTourHotspots
+              .map(
+                (hotspot) => hotspot.targetPageId == removedPageId
+                    ? hotspot.copyWith(targetPageId: null)
+                    : hotspot,
+              )
+              .toList(growable: false),
+        );
       }).toList(growable: false);
       if (changed) {
         _pages[i] = page.copyWith(

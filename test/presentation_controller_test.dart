@@ -249,6 +249,17 @@ void main() {
     controller.endSelectedModelOrbitGesture();
     expect(cameraNotifications, lessThan(10));
 
+    // Tur görünümü üst yarımküreyle sınırlı değildir; profesyonel 360°
+    // inceleme için modelin altına kadar bakış açısı korunur.
+    for (var i = 0; i < 40; i++) {
+      controller.lookAroundSelectedModelTour(const Offset(0, 24));
+    }
+    expect(controller.selectedComponentBlock!.modelOrbitPhi, 172);
+    for (var i = 0; i < 40; i++) {
+      controller.lookAroundSelectedModelTour(const Offset(0, -24));
+    }
+    expect(controller.selectedComponentBlock!.modelOrbitPhi, 8);
+
     controller.beginSelectedModelOrbitGesture();
     controller.moveSelectedModelTour(forward: 20);
     controller.moveSelectedModelTour(right: 15);
