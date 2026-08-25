@@ -265,7 +265,7 @@ body.sutol-transition-playing .sutol-transition-frame{animation-play-state:runni
 </style></head><body>
 <div class="sutol-transition-frame sutol-transition-out">$fromMarkup</div>
 <div class="sutol-transition-frame sutol-transition-in">$toMarkup</div>
-<script>$sutolHtmlStageBackgroundScript\n$sutolHtmlStageComponentScript</script>
+<script>$sutolHtmlStageBackgroundScript\n$sutolHtmlStageComponentScript\n$sutolHtmlStagePatchScript</script>
 <script>
 function __sutolStartTransition(){
   requestAnimationFrame(function(){
@@ -745,7 +745,7 @@ String _model3DMarkup(
   }).join();
   return '''
 <div class="sutol-html-component-inner sutol-3d-model-inner">
-  <model-viewer class="sutol-3d-model-viewer" crossorigin="anonymous" data-sutol-model-id="${_escapeAttribute(id)}" data-sutol-target-x="${safeTargetX.toStringAsFixed(2)}" data-sutol-target-y="${safeTargetY.toStringAsFixed(2)}" data-sutol-target-z="${safeTargetZ.toStringAsFixed(2)}" data-sutol-tour-ground="${tourEnabled ? 'true' : 'false'}" $sourceMarkup alt="${_escapeAttribute(label)}"$cameraControlsMarkup$tourCameraTuning$animationMarkup$autoRotateMarkup$environmentImageMarkup camera-orbit="$cameraOrbit" camera-target="auto auto auto"$cameraOrbitLimits field-of-view="45deg" interaction-prompt="none" shadow-intensity="1" shadow-softness="0.8" tone-mapping="neutral" exposure="${exposure.toStringAsFixed(4)}" loading="eager" reveal="auto" onload="this.hidden=false;const target=window.SutolApplyModelTarget;if(target)target(this);const status=this.nextElementSibling;if(status)status.hidden=true;const fallback=status?status.nextElementSibling:null;if(fallback)fallback.hidden=true;console.log('Sutols 3B model yüklendi',{modelId:this.dataset.sutolModelId})" onerror="const status=this.nextElementSibling;if(status)status.hidden=true;const fallback=status?status.nextElementSibling;if(fallback)fallback.hidden=false;this.hidden=true;console.error('Sutols 3B model yüklenemedi',{modelId:this.dataset.sutolModelId})">$hotspotMarkup</model-viewer>
+  <model-viewer class="sutol-3d-model-viewer" crossorigin="anonymous" data-sutol-model-id="${_escapeAttribute(id)}" data-sutol-orbit-theta="${orbitTheta.toStringAsFixed(2)}" data-sutol-orbit-phi="${effectiveOrbitPhi.toStringAsFixed(2)}" data-sutol-model-zoom="${effectiveZoom.toStringAsFixed(4)}" data-sutol-target-x="${safeTargetX.toStringAsFixed(2)}" data-sutol-target-y="${safeTargetY.toStringAsFixed(2)}" data-sutol-target-z="${safeTargetZ.toStringAsFixed(2)}" data-sutol-tour-ground="${tourEnabled ? 'true' : 'false'}" $sourceMarkup alt="${_escapeAttribute(label)}"$cameraControlsMarkup$tourCameraTuning$animationMarkup$autoRotateMarkup$environmentImageMarkup camera-orbit="$cameraOrbit" camera-target="auto auto auto"$cameraOrbitLimits field-of-view="45deg" interaction-prompt="none" shadow-intensity="1" shadow-softness="0.8" tone-mapping="neutral" exposure="${exposure.toStringAsFixed(4)}" loading="eager" reveal="auto" onload="this.hidden=false;const restore=window.SutolRestoreModelCamera;if(restore)restore(this);else{const target=window.SutolApplyModelTarget;if(target)target(this);}const status=this.nextElementSibling;if(status)status.hidden=true;const fallback=status?status.nextElementSibling:null;if(fallback)fallback.hidden=true;console.log('Sutols 3B model yüklendi',{modelId:this.dataset.sutolModelId})" onerror="const status=this.nextElementSibling;if(status)status.hidden=true;const fallback=status?status.nextElementSibling;if(fallback)fallback.hidden=false;this.hidden=true;console.error('Sutols 3B model yüklenemedi',{modelId:this.dataset.sutolModelId})">$hotspotMarkup</model-viewer>
   <span class="sutol-3d-model-status">3B model yükleniyor…</span>
   <div class="sutol-3d-model-fallback" hidden>$fallbackMarkup</div>
 </div>
@@ -3436,18 +3436,31 @@ const String _stagePatchScript = r'''
     try {
       const dimensions = modelViewer.getDimensions();
       const center = modelViewer.getBoundingBoxCenter();
+      if (!Number.isFinite(dimensions.x) || dimensions.x <= 0 ||
+          !Number.isFinite(dimensions.y) || dimensions.y <= 0 ||
+          !Number.isFinite(dimensions.z) || dimensions.z <= 0 ||
+          !Number.isFinite(center.x) || !Number.isFinite(center.y) ||
+          !Number.isFinite(center.z)) return;
       const x = Number(modelViewer.dataset.sutolTargetX) || 0;
       const y = Number(modelViewer.dataset.sutolTargetY) || 0;
       const z = Number(modelViewer.dataset.sutolTargetZ) || 0;
       const isTour = modelViewer.dataset.sutolTourGround === 'true';
-      const targetX = isTour ? x : center.x + dimensions.x * x / 100;
+      const insetX = Math.min(dimensions.x * .08, .75);
+      const insetZ = Math.min(dimensions.z * .08, .75);
+      const halfX = Math.max(.125, dimensions.x / 2 - insetX);
+      const halfZ = Math.max(.125, dimensions.z / 2 - insetZ);
+      const targetX = isTour
+        ? Math.max(center.x - halfX, Math.min(center.x + halfX, x))
+        : center.x + dimensions.x * x / 100;
       // Turdaki sıfır düzlemi modelin alt sınırıdır. Y hedefini merkezden
       // değil buradan kurmak, yürüyüşü modelin dibinde başlatır ve hareket
       // sırasında kameranın modelin altına dolanmasını engeller.
       const targetY = isTour
         ? center.y - dimensions.y / 2
         : center.y + dimensions.y * y / 100;
-      const targetZ = isTour ? z : center.z + dimensions.z * z / 100;
+      const targetZ = isTour
+        ? Math.max(center.z - halfZ, Math.min(center.z + halfZ, z))
+        : center.z + dimensions.z * z / 100;
       modelViewer.setAttribute(
         'camera-target',
         targetX.toFixed(5) + 'm ' + targetY.toFixed(5) + 'm ' +
@@ -3460,49 +3473,106 @@ const String _stagePatchScript = r'''
   // Flutter, WASD ve sürükleme olaylarını farklı hızlarda üretebilir. Son
   // pose'u bir animasyon karesinde tek seferde uygulamak, orbit/target'ın
   // birbirinden farklı frame'lerde yazılıp kameranın sıçramasını önler.
-  let pendingTourCamera = null;
+  // Geçiş belgesinde eski ve yeni slaytın model-viewer'ları aynı frame'de
+  // yüklenebilir. Tek bir pending kayıt kullanmak ikinci kameranın ilkini
+  // ezmesine yol açıyordu; her model kendi son pozunu taşır.
+  const pendingTourCameras = new Map();
   let pendingTourCameraFrame = 0;
   function scheduleTourCamera(modelViewer, pose) {
-    pendingTourCamera = { modelViewer: modelViewer, pose: pose };
+    pendingTourCameras.set(modelViewer, pose);
     if (pendingTourCameraFrame) return;
     pendingTourCameraFrame = requestAnimationFrame(function () {
       pendingTourCameraFrame = 0;
-      const pending = pendingTourCamera;
-      pendingTourCamera = null;
-      if (!pending) return;
-      const viewer = pending.modelViewer;
-      const pose = pending.pose;
-      const existingOrbit = String(viewer.getAttribute('camera-orbit') || '').trim().split(/\s+/);
-      const zoom = Number(pose.zoom);
-      const radius = Number.isFinite(zoom)
-        ? Math.max(10, Math.min(200, 100 / Math.max(.5, Math.min(10, zoom)))).toFixed(2) + '%'
-        : (existingOrbit[2] || '100%');
-      viewer.setAttribute(
-        'camera-orbit',
-        pose.theta.toFixed(2) + 'deg ' +
-          Math.max(42, Math.min(89, pose.phi)).toFixed(2) + 'deg ' + radius
-      );
-      let targetX = Math.max(-500, Math.min(500, pose.targetX));
-      let targetZ = Math.max(-500, Math.min(500, pose.targetZ));
-      // Model yüklendiğinde yürüyüş alanını gerçek taban izinden çıkar.
-      // Detaylı mesh çarpışması yerine, kenardan pay bırakılmış deterministik
-      // bir dikdörtgen kullanıyoruz.
-      try {
-        const dimensions = viewer.getDimensions();
-        const center = viewer.getBoundingBoxCenter();
-        const insetX = Math.min(dimensions.x * .08, .75);
-        const insetZ = Math.min(dimensions.z * .08, .75);
-        const halfX = Math.max(.125, dimensions.x / 2 - insetX);
-        const halfZ = Math.max(.125, dimensions.z / 2 - insetZ);
-        targetX = Math.max(center.x - halfX, Math.min(center.x + halfX, targetX));
-        targetZ = Math.max(center.z - halfZ, Math.min(center.z + halfZ, targetZ));
-      } catch (_) {}
-      viewer.dataset.sutolTargetX = targetX.toFixed(5);
-      viewer.dataset.sutolTargetY = Math.max(-500, Math.min(500, pose.targetY)).toFixed(5);
-      viewer.dataset.sutolTargetZ = targetZ.toFixed(5);
-      applyModelTarget(viewer);
+      const entries = Array.from(pendingTourCameras.entries());
+      pendingTourCameras.clear();
+      for (const entry of entries) {
+        const viewer = entry[0];
+        const pose = entry[1];
+        if (!viewer || !viewer.isConnected) continue;
+        const existingOrbit = String(viewer.getAttribute('camera-orbit') || '').trim().split(/\s+/);
+        const theta = Number(pose.theta);
+        const phi = Number(pose.phi);
+        const zoom = Number(pose.zoom);
+        if (!Number.isFinite(theta) || !Number.isFinite(phi)) continue;
+        const radius = Number.isFinite(zoom)
+          ? Math.max(10, Math.min(200, 100 / Math.max(.5, Math.min(10, zoom)))).toFixed(2) + '%'
+          : (existingOrbit[2] || '100%');
+        viewer.dataset.sutolOrbitTheta = theta.toFixed(5);
+        viewer.dataset.sutolOrbitPhi = Math.max(42, Math.min(89, phi)).toFixed(5);
+        if (Number.isFinite(zoom)) {
+          viewer.dataset.sutolModelZoom = Math.max(.5, Math.min(10, zoom)).toFixed(5);
+        }
+        viewer.setAttribute(
+          'camera-orbit',
+          theta.toFixed(2) + 'deg ' +
+            Math.max(42, Math.min(89, phi)).toFixed(2) + 'deg ' + radius
+        );
+        // Burada yalnızca store'daki ham kamera hedefini sakla. Iframe load
+        // olayı GLB geometrisinden önce gelebilir; sıfır boyutlu geçici
+        // bounding-box ile clamp edip dataset'i ezmek, sayfaya dönüldüğünde
+        // kamerayı model merkezine sıçratıyordu. Geometriye bağlı tek clamp
+        // otoritesi, model gerçekten hazırken çalışan applyModelTarget'tır.
+        const targetX = Math.max(-500, Math.min(500, Number(pose.targetX) || 0));
+        const targetY = Math.max(-500, Math.min(500, Number(pose.targetY) || 0));
+        const targetZ = Math.max(-500, Math.min(500, Number(pose.targetZ) || 0));
+        viewer.dataset.sutolTargetX = targetX.toFixed(5);
+        viewer.dataset.sutolTargetY = targetY.toFixed(5);
+        viewer.dataset.sutolTargetZ = targetZ.toFixed(5);
+        const owner = viewer.closest('[data-sutol-component-id]');
+        if (owner) {
+          owner.dataset.sutolOrbitTheta = theta.toFixed(5);
+          owner.dataset.sutolOrbitPhi = Math.max(42, Math.min(89, phi)).toFixed(5);
+          if (Number.isFinite(zoom)) {
+            owner.dataset.sutolModelZoom = Math.max(.5, Math.min(10, zoom)).toFixed(5);
+          }
+          owner.dataset.sutolTargetX = targetX.toFixed(5);
+          owner.dataset.sutolTargetY = targetY.toFixed(5);
+          owner.dataset.sutolTargetZ = targetZ.toFixed(5);
+        }
+        applyModelTarget(viewer);
+        // model-viewer attribute hedeflerine varsayılan olarak interpolasyon
+        // uygular. İlk sunum frame'inde eski/ideal kameranın görünmemesi için
+        // orbit ve target aynı frame'de kesin konumuna alınmalıdır.
+        try {
+          if (typeof viewer.jumpCameraToGoal === 'function') {
+            viewer.jumpCameraToGoal();
+          }
+        } catch (_) {}
+      }
     });
   }
+
+  // `model-viewer`, GLB kaynağı tamamlandığında kendi ideal kamerasını tekrar
+  // hesaplayabilir. Kaydedilmiş sayfa pozunu modelin load olayından sonraki
+  // frame'de yeniden uygulayarak geri dönülen sayfayı tam kaldığı yerde aç.
+  function restoreModelCamera(modelViewer) {
+    if (!modelViewer) return;
+    const owner = modelViewer.closest('[data-sutol-component-id]');
+    const source = modelViewer.dataset;
+    const ownerData = owner ? owner.dataset : {};
+    const theta = Number(source.sutolOrbitTheta ?? ownerData.sutolOrbitTheta);
+    const phi = Number(source.sutolOrbitPhi ?? ownerData.sutolOrbitPhi);
+    const zoom = Number(source.sutolModelZoom ?? ownerData.sutolModelZoom);
+    const targetX = Number(source.sutolTargetX ?? ownerData.sutolTargetX);
+    const targetY = Number(source.sutolTargetY ?? ownerData.sutolTargetY);
+    const targetZ = Number(source.sutolTargetZ ?? ownerData.sutolTargetZ);
+    if (modelViewer.dataset.sutolTourGround === 'true' &&
+        Number.isFinite(theta) && Number.isFinite(phi) &&
+        Number.isFinite(targetX) && Number.isFinite(targetY) &&
+        Number.isFinite(targetZ)) {
+      scheduleTourCamera(modelViewer, {
+        theta: theta,
+        phi: phi,
+        zoom: zoom,
+        targetX: targetX,
+        targetY: targetY,
+        targetZ: targetZ,
+      });
+      return;
+    }
+    applyModelTarget(modelViewer);
+  }
+  window.SutolRestoreModelCamera = restoreModelCamera;
 
   // Tur düzenleme modunda ekran koordinatını model-viewer'ın gerçek yüzey
   // koordinatına çevirir. Bu metre değerleri herhangi bir bounding-box
@@ -3746,6 +3816,7 @@ const String _stagePatchScript = r'''
           targetX: Number(item.modelTargetX),
           targetY: Number(item.modelTargetY),
           targetZ: Number(item.modelTargetZ),
+          zoom: Number(item.modelZoom),
         });
       }
     }

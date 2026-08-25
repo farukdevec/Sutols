@@ -143,7 +143,11 @@ class _PresentationPreviewPageState extends State<PresentationPreviewPage>
       return;
     }
     _flushPendingTourLook();
-    _persistCurrentTourPose(freeze: true);
+    // Sayfa değiştirmek sanal turu kapatmak değildir. Pozu ilgili sayfaya
+    // yaz, fakat turu dondurma; kullanıcı geri döndüğünde aynı tam-sahne
+    // kamera ve aynı konumdan keşfe devam etsin. Yalnızca ESC/kapatma akışı
+    // freeze eder.
+    _persistCurrentTourPose();
     final previousPage = widget.controller.pages[_index];
     final gapIndex = math.min(_index, clamped);
     final transitionKind = widget.controller.transitionAfterPage(gapIndex);
@@ -268,9 +272,22 @@ class _PresentationPreviewPageState extends State<PresentationPreviewPage>
 
   void _close() {
     if (_closing || !mounted) return;
-    _flushPendingTourLook();
-    _persistCurrentTourPose(freeze: true);
     _closing = true;
+    // Kapatma HUD düğmesinden veya fullscreen değişiminden de gelebilir.
+    // Capture'dan önce tüm hareket üreticilerini durdur ki basılı bir WASD
+    // tuşu post-frame pop'a kadar kamerayı bir kare daha ilerletmesin.
+    _stopTourMovement();
+    _flushPendingTourLook();
+    _stopTourLook();
+    final cameraCommitted = _persistCurrentTourPose(freeze: true);
+    if (cameraCommitted) {
+      // Store bildiriminin alttaki editör sahnesine uygulanmasına bir frame
+      // tanı. Önizleme bu sırada aynı pozla çizildiğinden jump/flicker oluşmaz.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) Navigator.of(context).pop();
+      });
+      return;
+    }
     Navigator.of(context).pop();
   }
 
@@ -282,20 +299,18 @@ class _PresentationPreviewPageState extends State<PresentationPreviewPage>
     }
   }
 
-  void _persistCurrentTourPose({bool freeze = false}) {
+  bool _persistCurrentTourPose({bool freeze = false}) {
     final stage = _tourStageKey.currentState;
-    final pose = stage?.currentTourPose;
-    final blockId = stage?.currentTourBlockId;
-    if (pose == null || blockId == null || _index < 0) return;
-    final pages = widget.controller.pages;
-    if (_index >= pages.length) return;
+    final camera = stage?.captureTourCameraState();
+    if (camera == null) return false;
     widget.controller.saveModelTourPose(
-      pageId: pages[_index].id,
-      blockId: blockId,
-      pose: pose,
-      zoom: stage?.currentTourZoom,
+      pageId: camera.pageId,
+      blockId: camera.blockId,
+      pose: camera.pose,
+      zoom: camera.zoom,
       freeze: freeze,
     );
+    return true;
   }
 
   void _handleKeyEvent(KeyEvent event) {
@@ -1533,6 +1548,21 @@ class _OrbitPose {
   final double zoom;
 }
 
+@immutable
+class _TourCameraState {
+  const _TourCameraState({
+    required this.pageId,
+    required this.blockId,
+    required this.pose,
+    required this.zoom,
+  });
+
+  final String pageId;
+  final String blockId;
+  final ModelTourPose pose;
+  final double zoom;
+}
+
 class _PreviewStageWithOrbitState extends State<_PreviewStageWithOrbit> {
   final Map<String, _OrbitPose> _orbitOverrides = <String, _OrbitPose>{};
   bool _tourPointPlacementEnabled = false;
@@ -1550,24 +1580,22 @@ class _PreviewStageWithOrbitState extends State<_PreviewStageWithOrbit> {
 
   bool get hasTour => _tourBlock != null;
 
-  String? get currentTourBlockId => _tourBlock?.id;
-
-  ModelTourPose? get currentTourPose {
+  _TourCameraState? captureTourCameraState() {
     final block = _tourBlock;
     if (block == null) return null;
     final pose = _tourPoseFor(block);
-    return ModelTourPose(
-      theta: pose.theta,
-      phi: pose.phi,
-      x: pose.targetX,
-      y: pose.targetY,
-      z: pose.targetZ,
+    return _TourCameraState(
+      pageId: widget.page.id,
+      blockId: block.id,
+      pose: ModelTourPose(
+        theta: pose.theta,
+        phi: pose.phi,
+        x: pose.targetX,
+        y: pose.targetY,
+        z: pose.targetZ,
+      ),
+      zoom: pose.zoom,
     );
-  }
-
-  double? get currentTourZoom {
-    final block = _tourBlock;
-    return block == null ? null : _tourPoseFor(block).zoom;
   }
 
   _OrbitPose _tourPoseFor(PresentationComponentBlock block) {
@@ -1629,6 +1657,16 @@ class _PreviewStageWithOrbitState extends State<_PreviewStageWithOrbit> {
     return changed
         ? widget.page.copyWith(componentBlocks: components)
         : widget.page;
+  }
+
+  PresentationPage get _fallbackPageWithoutLiveModels {
+    final page = _effectivePage;
+    final components = page.componentBlocks
+        .where((block) => block.modelAssetId == null)
+        .toList(growable: false);
+    return components.length == page.componentBlocks.length
+        ? page
+        : page.copyWith(componentBlocks: components);
   }
 
   void _handleOrbitDrag(PresentationComponentBlock block, Offset delta) {
@@ -1880,10 +1918,22 @@ class _PreviewStageWithOrbitState extends State<_PreviewStageWithOrbit> {
               !block.modelTourFrozen,
         )
         .toList(growable: false);
-    final activeTourBlock = _tourBlock;
-    final activeTourPose = widget.tourMode && activeTourBlock != null
-        ? _tourPoseFor(activeTourBlock)
-        : null;
+    // Donmuş tur da tur koordinat sistemini (metre hedefi + orbit + zoom)
+    // kullanır. Yalnızca etkileşim kapanır; kamera state'i HTML sahneye her
+    // zaman açıkça gönderilmelidir.
+    // Tur tam-sahneye odaklandığında kamera da aynı aktif modele ait olmalı.
+    // Sayfada önce donmuş, sonra aktif bir tur modeli varsa "ilk enabled"
+    // seçimi aktif modele yanlış kamerayı gönderiyordu.
+    final stageTourBlock = widget.tourMode
+        ? _tourBlock
+        : widget.page.componentBlocks
+            .cast<PresentationComponentBlock?>()
+            .firstWhere(
+              (block) => block?.modelAssetId != null && block!.modelTourEnabled,
+              orElse: () => null,
+            );
+    final stageTourPose =
+        stageTourBlock == null ? null : _tourPoseFor(stageTourBlock);
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -1893,7 +1943,10 @@ class _PreviewStageWithOrbitState extends State<_PreviewStageWithOrbit> {
           children: <Widget>[
             IgnorePointer(
               child: PresentationPageThumbnailCanvas(
-                page: _effectivePage,
+                // Canlı 3B model yalnızca HtmlPageStage tarafından çizilir.
+                // Aynı modelin altta ikinci bir platform view olarak kalması,
+                // editör ve sunum kameralarının üst üste görünmesine yol açar.
+                page: _fallbackPageWithoutLiveModels,
               ),
             ),
             if (widget.effectSettings.transitionKind ==
@@ -1921,12 +1974,12 @@ class _PreviewStageWithOrbitState extends State<_PreviewStageWithOrbit> {
                 // eklenmemesine neden olan köprüyü ortadan kaldırır.
                 tourInteractionEnabled:
                     widget.tourMode && _tourPointPlacementEnabled,
-                tourCameraTheta: activeTourPose?.theta,
-                tourCameraPhi: activeTourPose?.phi,
-                tourCameraTargetX: activeTourPose?.targetX,
-                tourCameraTargetY: activeTourPose?.targetY,
-                tourCameraTargetZ: activeTourPose?.targetZ,
-                tourCameraZoom: activeTourPose?.zoom,
+                tourCameraTheta: stageTourPose?.theta,
+                tourCameraPhi: stageTourPose?.phi,
+                tourCameraTargetX: stageTourPose?.targetX,
+                tourCameraTargetY: stageTourPose?.targetY,
+                tourCameraTargetZ: stageTourPose?.targetZ,
+                tourCameraZoom: stageTourPose?.zoom,
                 tourCameraRevision: _tourCameraRevision,
                 onTourSurfacePointPicked: (point) {
                   if (!_tourPointPlacementEnabled) return;
@@ -1954,6 +2007,7 @@ class _PreviewStageWithOrbitState extends State<_PreviewStageWithOrbit> {
                   child: MouseRegion(
                     cursor: SystemMouseCursors.grab,
                     child: GestureDetector(
+                      key: const ValueKey<String>('tour-camera-interaction'),
                       behavior: HitTestBehavior.opaque,
                       onPanStart: (_) => widget.onTourInteraction(),
                       // Sanal turdaki tek fare girdisi burasıdır. Iframe
@@ -2094,7 +2148,9 @@ PresentationPage _interpolateModelPages(
       return target;
     }
     final sourceIndex = availableSources.indexWhere(
-      (source) => source.modelAssetId == target.modelAssetId,
+      (source) =>
+          source.modelAssetId == target.modelAssetId &&
+          source.modelTourEnabled == target.modelTourEnabled,
     );
     if (sourceIndex < 0) {
       return target;
@@ -2108,6 +2164,22 @@ PresentationPage _interpolateModelPages(
       modelOrbitTheta: source.modelOrbitTheta + thetaDelta * progress,
       modelOrbitPhi: source.modelOrbitPhi +
           (target.modelOrbitPhi - source.modelOrbitPhi) * progress,
+      modelTargetX: ui.lerpDouble(
+        source.modelTargetX,
+        target.modelTargetX,
+        progress,
+      ),
+      modelTargetY: ui.lerpDouble(
+        source.modelTargetY,
+        target.modelTargetY,
+        progress,
+      ),
+      modelTargetZ: ui.lerpDouble(
+        source.modelTargetZ,
+        target.modelTargetZ,
+        progress,
+      ),
+      modelZoom: ui.lerpDouble(source.modelZoom, target.modelZoom, progress),
     );
   }).toList(growable: false);
   return to.copyWith(componentBlocks: nextComponents);

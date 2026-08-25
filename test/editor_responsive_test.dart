@@ -6,8 +6,10 @@ import 'package:flutter/services.dart' show FontLoader, LogicalKeyboardKey;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sutol/models/slide_model.dart';
+import 'package:sutol/services/presentation_project_codec.dart';
 import 'package:sutol/state/presentation_controller.dart';
 import 'package:sutol/ui/html_presentation_editor_page.dart';
+import 'package:sutol/ui/presentation_preview_page.dart';
 import 'package:sutol/ui/widgets/editor_shell.dart';
 import 'package:sutol/ui/widgets/html_stage/html_page_stage.dart';
 import 'package:sutol/ui/widgets/selection_mini_toolbar.dart';
@@ -1096,5 +1098,85 @@ void main() {
     final model = controller.selectedComponentBlock!;
     expect(model.modelTargetX.abs(), greaterThan(0));
     expect(model.modelTargetZ.abs(), greaterThan(0));
+  });
+
+  testWidgets('ESC sanal tur kamerasını editör sahnesine kalıcı yazar', (
+    tester,
+  ) async {
+    final controller = await pumpAt(tester, const Size(1440, 900));
+    controller.add3DModelBlock(presentation3DModelCatalog.first);
+    await tester.pump();
+
+    final tourToggle = find.byKey(const ValueKey<String>('model-tour-toggle'));
+    tester.widget<MiniToolLabeledToggle>(tourToggle).onTap();
+    await tester.pump();
+
+    expect(controller.selectedComponentBlock!.modelTourEnabled, isTrue);
+    expect(find.byType(HtmlPresentationEditorPage), findsOneWidget);
+    expect(find.byType(PresentationPreviewPage), findsNothing);
+    expect(find.text('Sanal Turu Kapat'), findsOneWidget);
+
+    controller.lookAroundSelectedModelTour(const Offset(36, -12));
+    controller.moveSelectedModelTour(forward: 8, right: 3);
+    controller.updateSelectedModelZoom(2.4);
+    final tourPose = controller.selectedComponentBlock!;
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await tester.pump();
+
+    final committed = controller.selectedComponentBlock!;
+    expect(committed.modelTourEnabled, isTrue);
+    expect(committed.modelTourFrozen, isTrue);
+    expect(committed.modelOrbitTheta, tourPose.modelOrbitTheta);
+    expect(committed.modelOrbitPhi, tourPose.modelOrbitPhi);
+    expect(committed.modelTargetX, tourPose.modelTargetX);
+    expect(committed.modelTargetY, tourPose.modelTargetY);
+    expect(committed.modelTargetZ, tourPose.modelTargetZ);
+    expect(committed.modelZoom, tourPose.modelZoom);
+
+    final restored = PresentationProjectCodec.decodeProject(
+      PresentationProjectCodec.encodeProject(
+        pages: controller.pages,
+        effectSettings: controller.effectSettings,
+      ),
+    ).pages.single.componentBlocks.single;
+    expect(restored.modelOrbitTheta, committed.modelOrbitTheta);
+    expect(restored.modelOrbitPhi, committed.modelOrbitPhi);
+    expect(restored.modelTargetX, committed.modelTargetX);
+    expect(restored.modelTargetY, committed.modelTargetY);
+    expect(restored.modelTargetZ, committed.modelTargetZ);
+    expect(restored.modelZoom, committed.modelZoom);
+    expect(restored.modelTourFrozen, isTrue);
+  });
+
+  testWidgets('Sanal Turu Kapat son kamera pozunu model üzerinde dondurur', (
+    tester,
+  ) async {
+    final controller = await pumpAt(tester, const Size(1440, 900));
+    controller.add3DModelBlock(presentation3DModelCatalog.first);
+    await tester.pump();
+
+    final tourToggle = find.byKey(const ValueKey<String>('model-tour-toggle'));
+    tester.widget<MiniToolLabeledToggle>(tourToggle).onTap();
+    await tester.pump();
+
+    controller.lookAroundSelectedModelTour(const Offset(-48, 16));
+    controller.moveSelectedModelTour(forward: 11, right: -4);
+    controller.updateSelectedModelZoom(3.2);
+    final tourPose = controller.selectedComponentBlock!;
+
+    tester.widget<MiniToolLabeledToggle>(tourToggle).onTap();
+    await tester.pump();
+
+    final frozen = controller.selectedComponentBlock!;
+    expect(frozen.modelTourEnabled, isTrue);
+    expect(frozen.modelTourFrozen, isTrue);
+    expect(frozen.modelOrbitTheta, tourPose.modelOrbitTheta);
+    expect(frozen.modelOrbitPhi, tourPose.modelOrbitPhi);
+    expect(frozen.modelTargetX, tourPose.modelTargetX);
+    expect(frozen.modelTargetY, tourPose.modelTargetY);
+    expect(frozen.modelTargetZ, tourPose.modelTargetZ);
+    expect(frozen.modelZoom, tourPose.modelZoom);
+    expect(find.text('Sanal Tur'), findsOneWidget);
   });
 }

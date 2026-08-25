@@ -413,6 +413,94 @@ void main() {
     expect(modelTag, contains('camera-orbit="128.00deg 64.00deg 30.77%"'));
     expect(modelTag, contains('data-sutol-target-x="12.00"'));
     expect(modelTag, contains('data-sutol-target-z="-7.00"'));
+    expect(document, contains('zoom: Number(item.modelZoom)'));
+
+    // Iframe, GLB geometrisinden önce yüklenebilir. Kamera mesajı bu anda
+    // çalıştığında store'daki gerçek target sıfır boyutlu geçici bounding-box
+    // ile ezilmemeli; geometriye bağlı clamp yalnız applyModelTarget'ta kalır.
+    final scheduler = document.substring(
+      document.indexOf('function scheduleTourCamera'),
+      document.indexOf('function restoreModelCamera'),
+    );
+    expect(
+      document,
+      contains('!Number.isFinite(dimensions.x) || dimensions.x <= 0'),
+    );
+    expect(scheduler, isNot(contains('viewer.getDimensions()')));
+    expect(
+      scheduler,
+      contains('viewer.dataset.sutolTargetX = targetX.toFixed(5)'),
+    );
+    expect(
+      scheduler,
+      contains('owner.dataset.sutolTargetX = targetX.toFixed(5)'),
+    );
+    expect(scheduler, contains('viewer.jumpCameraToGoal()'));
+  });
+
+  test('sunum geçişinde her sayfanın donmuş tur kamerası HTML sahnede korunur',
+      () {
+    const from = PresentationPage(
+      id: 'tour-camera-from',
+      textBlocks: <PresentationTextBlock>[],
+      componentBlocks: <PresentationComponentBlock>[
+        PresentationComponentBlock(
+          id: 'tour-model-from',
+          modelAssetId: 'anitkabir',
+          modelTourEnabled: true,
+          modelTourFrozen: true,
+          modelAnimationEnabled: false,
+          modelOrbitTheta: 25,
+          modelOrbitPhi: 60,
+          modelZoom: 2,
+          modelTargetX: 4,
+          modelTargetZ: -3,
+          position: Offset.zero,
+          size: Size(1, 1),
+        ),
+      ],
+    );
+    const to = PresentationPage(
+      id: 'tour-camera-to',
+      textBlocks: <PresentationTextBlock>[],
+      componentBlocks: <PresentationComponentBlock>[
+        PresentationComponentBlock(
+          id: 'tour-model-to',
+          modelAssetId: 'anitkabir',
+          modelTourEnabled: true,
+          modelTourFrozen: true,
+          modelAnimationEnabled: false,
+          modelOrbitTheta: 210,
+          modelOrbitPhi: 88,
+          modelZoom: 5,
+          modelTargetX: -8,
+          modelTargetZ: 6,
+          position: Offset.zero,
+          size: Size(1, 1),
+        ),
+      ],
+    );
+
+    final document = buildHtmlPageTransitionDocument(
+      from: from,
+      to: to,
+      kind: PresentationTransitionKind.fade,
+      durationMs: 600,
+      modelSourcesById: const <String, String>{
+        'anitkabir': '/models/anitkabir.glb',
+      },
+    );
+
+    expect(document, contains('camera-orbit="25.00deg 60.00deg 50.00%"'));
+    expect(document, contains('data-sutol-target-x="4.00"'));
+    expect(document, contains('data-sutol-target-z="-3.00"'));
+    expect(document, contains('camera-orbit="210.00deg 88.00deg 20.00%"'));
+    expect(document, contains('data-sutol-target-x="-8.00"'));
+    expect(document, contains('data-sutol-target-z="6.00"'));
+    expect(document, contains('const pendingTourCameras = new Map()'));
+    expect(document, contains('window.SutolRestoreModelCamera'));
+    expect(document, contains('data-sutol-model-zoom="2.0000"'));
+    expect(document, contains('data-sutol-model-zoom="5.0000"'));
   });
 
   test(

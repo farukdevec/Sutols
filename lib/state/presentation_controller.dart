@@ -230,6 +230,10 @@ class PresentationController extends ChangeNotifier {
     if (index < 0 || index >= _pages.length || index == _selectedPageIndex) {
       return;
     }
+    // Kamera jestinin son throttled bildirimi henüz çizilmemiş olabilir.
+    // Sayfa indeksini değiştirmeden önce onu mevcut sayfaya tamamlamak,
+    // geri dönüldüğünde son bakış açısının bir önceki frame'e dönmesini önler.
+    endSelectedModelOrbitGesture();
     _selectedPageIndex = index;
     _resetSelectionForCurrentPage();
     notifyListeners();
@@ -1069,7 +1073,7 @@ class PresentationController extends ChangeNotifier {
     _notifyModelCameraChanged();
   }
 
-  /// Tam ekran sanal turda oluşan son kamera pozunu ilgili slayttaki modele
+  /// Sanal turda oluşan son kamera pozunu ilgili slayttaki modele
   /// kaydeder. Böylece turdan çıkıldığında sunum sahnesi aynı görünümde kalır.
   void saveModelTourPose({
     required String pageId,
@@ -1123,6 +1127,35 @@ class PresentationController extends ChangeNotifier {
     );
     _pages[pageIndex] = page.copyWith(componentBlocks: components);
     notifyListeners();
+  }
+
+  /// Editör içindeki canlı sanal tur kamerasını normal sahne kamerası olarak
+  /// sabitler. Kamera state'inin tek kaynağı PresentationComponentBlock'tur;
+  /// bu nedenle burada sabitlenen değerler proje JSON'una da doğrudan girer.
+  bool commitSelectedModelTourPose() {
+    final current = selectedComponentBlock;
+    if (current?.modelAssetId == null ||
+        !current!.modelTourEnabled ||
+        current.modelTourFrozen) {
+      return false;
+    }
+    // Kapatma bir WASD/fare gesture'ının ortasında gelmişse son bekleyen
+    // controller güncellemesini önce tamamla.
+    endSelectedModelOrbitGesture();
+    saveModelTourPose(
+      pageId: selectedPage.id,
+      blockId: current.id,
+      pose: ModelTourPose(
+        theta: current.modelOrbitTheta,
+        phi: current.modelOrbitPhi,
+        x: current.modelTargetX,
+        y: current.modelTargetY,
+        z: current.modelTargetZ,
+      ),
+      zoom: current.modelZoom,
+      freeze: true,
+    );
+    return true;
   }
 
   void updateSelectedBackground(PresentationBackgroundKind value) {

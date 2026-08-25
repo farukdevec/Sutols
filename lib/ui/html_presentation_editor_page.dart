@@ -741,6 +741,10 @@ class _HtmlPresentationEditorPageState
     if (widget.adminReadOnly) return false;
 
     final key = event.logicalKey;
+    if (event is KeyDownEvent && key == LogicalKeyboardKey.escape) {
+      _handleEscapeShortcut();
+      return true;
+    }
     final movementKeys = <LogicalKeyboardKey>{
       LogicalKeyboardKey.keyW,
       LogicalKeyboardKey.keyA,
@@ -813,6 +817,21 @@ class _HtmlPresentationEditorPageState
     _tourMovementTimer = null;
     _tourMovementKeys.clear();
     widget.controller.endSelectedModelOrbitGesture();
+  }
+
+  void _handleEscapeShortcut() {
+    final selectedModel = widget.controller.selectedComponentBlock;
+    if (selectedModel?.modelTourEnabled == true &&
+        selectedModel?.modelTourFrozen != true) {
+      // Önce son WASD/fare gesture'ını store'a tamamen akıt, ardından aynı
+      // kamera state'ini normal editör sahnesinin başlangıç pozu olarak sabitle.
+      _stopTourKeyboardMovement();
+      widget.controller.commitSelectedModelTourPose();
+      if (isPointerLocked) exitPointerLock();
+      _editorFocusNode.requestFocus();
+      return;
+    }
+    widget.controller.clearSelection();
   }
 
   void _handleDeleteShortcut() {
@@ -923,9 +942,9 @@ class _HtmlPresentationEditorPageState
                 const SingleActivator(LogicalKeyboardKey.backspace):
                     _handleDeleteShortcut,
 
-                // Seçimi temizle
+                // Sanal turu son kamera pozunda kapat; tur yoksa seçimi temizle.
                 const SingleActivator(LogicalKeyboardKey.escape):
-                    widget.controller.clearSelection,
+                    _handleEscapeShortcut,
 
                 // Sunum Modu (F5 / Ctrl+Enter)
                 const SingleActivator(LogicalKeyboardKey.f5):
@@ -10137,24 +10156,19 @@ class _SelectionContextBarSection extends StatelessWidget {
           true) ...<Widget>[
         const SizedBox(width: 4),
         MiniToolLabeledToggle(
+          key: const ValueKey<String>('model-tour-toggle'),
           icon: Icons.explore_rounded,
           label: block.modelTourEnabled && !block.modelTourFrozen
-              ? tr('Sanal Turu Aç', 'Open Virtual Tour')
+              ? tr('Sanal Turu Kapat', 'Close Virtual Tour')
               : tr('Sanal Tur', 'Virtual Tour'),
           active: block.modelTourEnabled && !block.modelTourFrozen,
-          onTap: () async {
-            final enableTour = !block.modelTourEnabled || block.modelTourFrozen;
-            if (enableTour) {
+          onTap: () {
+            if (block.modelTourEnabled && !block.modelTourFrozen) {
+              controller.commitSelectedModelTourPose();
+              if (isPointerLocked) exitPointerLock();
+            } else {
               controller.updateSelectedModelTourEnabled(true);
             }
-            await Navigator.of(context).push(
-              MaterialPageRoute<void>(
-                builder: (_) => PresentationPreviewPage(
-                  controller: controller,
-                  useFullscreen: false,
-                ),
-              ),
-            );
           },
         ),
       ],
