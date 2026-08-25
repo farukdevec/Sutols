@@ -7,11 +7,14 @@ import 'package:flutter/services.dart';
 
 import 'design/design_system.dart';
 import '../models/slide_model.dart';
+import '../models/model_tour_runtime.dart';
 import '../services/presentation_fullscreen_service.dart';
 import '../services/pointer_lock_service.dart';
 import '../state/presentation_controller.dart';
 import 'widgets/editor_shell.dart';
 import 'widgets/html_stage/html_page_stage.dart';
+
+enum _TourPlacementAction { text, point }
 
 class PresentationPreviewPage extends StatefulWidget {
   const PresentationPreviewPage({
@@ -50,6 +53,7 @@ class _PresentationPreviewPageState extends State<PresentationPreviewPage>
   bool _tourStarted = false;
   bool _tourNarrationOpen = false;
   bool _returnToTourEditor = false;
+  _TourPlacementAction? _tourPlacementAction;
   final GlobalKey<_PreviewStageWithOrbitState> _tourStageKey =
       GlobalKey<_PreviewStageWithOrbitState>();
   int _transitionGeneration = 0;
@@ -79,7 +83,10 @@ class _PresentationPreviewPageState extends State<PresentationPreviewPage>
     );
     _pointerLockChangeSubscription = pointerLockChanges.listen((isLocked) {
       if (!isLocked) {
-        _stopTourMovement();
+        // Fare kilidi, tarayıcı ya da kullanıcı tarafından her an bırakılabilir.
+        // WASD ise fare kilidinden bağımsız çalışmalıdır; burada tuşları
+        // sıfırlamak kısa bir kilit değişiminde yürüyüşün aniden kesilmesine
+        // yol açıyordu. Yalnızca kilitli fareden birikmiş bakış verisini at.
         _stopTourLook();
       }
       if (mounted && _pointerLocked != isLocked) {
@@ -270,6 +277,10 @@ class _PresentationPreviewPageState extends State<PresentationPreviewPage>
         _tourStageKey.currentState?.cancelTourPointPlacement();
         return;
       }
+      if (isPointerLocked) {
+        exitPointerLock();
+        return;
+      }
       _close();
     } else if (key == LogicalKeyboardKey.keyZ ||
         key == LogicalKeyboardKey.equal ||
@@ -286,19 +297,30 @@ class _PresentationPreviewPageState extends State<PresentationPreviewPage>
   }
 
   bool _handleGlobalTourMovementKey(KeyEvent event) {
-    _updateTourMovementKey(event);
-    return false;
+    // WASD olayını en erken global klavye katmanında tüketmek, aynı olayın
+    // KeyboardListener'a ikinci kez düşerek zamanlayıcıyı kararsızlaştırmasını
+    // önler.
+    return _updateTourMovementKey(event);
   }
 
   bool _updateTourMovementKey(KeyEvent event) {
-    final key = event.logicalKey;
-    final movementKeys = <LogicalKeyboardKey>{
-      LogicalKeyboardKey.keyW,
-      LogicalKeyboardKey.keyA,
-      LogicalKeyboardKey.keyS,
-      LogicalKeyboardKey.keyD,
-    };
-    if (movementKeys.contains(key)) {
+    // Fiziksel tuşu temel almak, Türkçe/F klavye gibi düzenlerde logicalKey
+    // eşleşmese bile WASD kontrolünün aynı tuş konumunda çalışmasını sağlar.
+    final physicalKey = event.physicalKey;
+    final key = physicalKey == PhysicalKeyboardKey.keyW ||
+            event.logicalKey == LogicalKeyboardKey.keyW
+        ? LogicalKeyboardKey.keyW
+        : physicalKey == PhysicalKeyboardKey.keyA ||
+                event.logicalKey == LogicalKeyboardKey.keyA
+            ? LogicalKeyboardKey.keyA
+            : physicalKey == PhysicalKeyboardKey.keyS ||
+                    event.logicalKey == LogicalKeyboardKey.keyS
+                ? LogicalKeyboardKey.keyS
+                : physicalKey == PhysicalKeyboardKey.keyD ||
+                        event.logicalKey == LogicalKeyboardKey.keyD
+                    ? LogicalKeyboardKey.keyD
+                    : null;
+    if (key != null) {
       if (event is KeyDownEvent || event is KeyRepeatEvent) {
         if (_tourStageKey.currentState?.hasTour == true &&
             _tourStageKey.currentState?.isTourPointPlacementActive != true) {
@@ -403,7 +425,8 @@ class _PresentationPreviewPageState extends State<PresentationPreviewPage>
                               onTransitionReady: _startLoadedTransition,
                               tourStageKey: _tourStageKey,
                               tourMode: isTourPage,
-                              onTourSurfacePointPicked: _addTourSurfaceText,
+                              onTourSurfacePointPicked:
+                                  _handleTourSurfacePointPicked,
                               onTourSurfacePickMissed: _showTourSurfaceMiss,
                               onTourInteraction: _engageTour,
                               onTourHotspot: _goToPageId,
@@ -454,20 +477,29 @@ class _PresentationPreviewPageState extends State<PresentationPreviewPage>
                       onReset: () =>
                           _tourStageKey.currentState?.resetTourView(),
                       onEdit: _returnToEditor,
-                      onAddText: _startTourPointPlacement,
+                      onAddText: _startTourTextPlacement,
                       onAddPoint: _startTourPointPlacement,
                       narrationOpen: _tourNarrationOpen,
                       onToggleNarration: _toggleTourNarration,
                       onClose: _close,
+                    ),
+                  if (isTourPage)
+                    _TourJoystick(
+                      onMove: ({required forward, required right}) {
+                        _engageTour();
+                        _tourStageKey.currentState?.moveTour(
+                          forward: forward,
+                          right: right,
+                        );
+                      },
                     ),
                   if (isTourPage && _tourNarrationOpen && page != null)
                     _TourNarrationPanel(
                       page: page,
                       currentIndex: safeIndex,
                       pageCount: pageCount,
-                      onPrevious: safeIndex > 0 || _fragmentStep > 0
-                          ? _previous
-                          : null,
+                      onPrevious:
+                          safeIndex > 0 || _fragmentStep > 0 ? _previous : null,
                       onNext: safeIndex < pageCount - 1 ||
                               _fragmentStep < maxFragmentStep
                           ? _next
@@ -509,11 +541,14 @@ class _PresentationPreviewPageState extends State<PresentationPreviewPage>
     final seconds =
         now.difference(lastTick).inMicroseconds.clamp(0, 50000).toDouble() /
             Duration.microsecondsPerSecond;
-    // İlk hassas ayar, özellikle geniş Anıtkabir sahnesinde gereğinden
-    // temkinli kaldı. Bu değer kontrollü kalırken yürüyüş hissini korur.
+    // WASD, önceki sürümdeki doğrudan ve tepkisel yürüme hızını kullanır.
+    // İvme kuyruğu tuş bırakıldığında gecikme yaratıyordu.
     const walkSpeed = 20.0;
     final movement = walkSpeed * seconds;
-    stage.moveTour(forward: forward * movement, right: right * movement);
+    stage.moveTour(
+      forward: forward * movement,
+      right: right * movement,
+    );
   }
 
   void _stopTourMovement() {
@@ -549,9 +584,10 @@ class _PresentationPreviewPageState extends State<PresentationPreviewPage>
   }
 
   void _engageTour() {
-    // Varsayılan etkileşim pointer-lock değil, model-viewer'ın doğrudan
-    // sürükle-bak denetimidir. Bu, iframe içindeki ilk fare hareketinin
-    // kaybolmasını önler ve tüm tarayıcılarda anında çalışır.
+    // Pointer-lock, Flutter'ın tam ekran katmanı ile model iframe'inin olay
+    // sıralamasını iki ayrı fare akışına bölüyordu. Tur girişini tek bir
+    // sürükle-bak akışında tutmak, hem fareyi hem de yönü kameraya bağlı
+    // WASD hareketini kararlı hale getirir.
     if (!_tourStarted && mounted) setState(() => _tourStarted = true);
     _focusNode.requestFocus();
   }
@@ -564,7 +600,15 @@ class _PresentationPreviewPageState extends State<PresentationPreviewPage>
     _close();
   }
 
+  void _startTourTextPlacement() {
+    _startTourPlacement(_TourPlacementAction.text);
+  }
+
   void _startTourPointPlacement() {
+    _startTourPlacement(_TourPlacementAction.point);
+  }
+
+  void _startTourPlacement(_TourPlacementAction action) {
     _stopTourMovement();
     _stopTourLook();
     if (isPointerLocked) exitPointerLock();
@@ -572,6 +616,7 @@ class _PresentationPreviewPageState extends State<PresentationPreviewPage>
       setState(() {
         _pointerLocked = false;
         _tourStarted = true;
+        _tourPlacementAction = action;
       });
     }
     _tourStageKey.currentState?.beginTourPointPlacement();
@@ -580,7 +625,7 @@ class _PresentationPreviewPageState extends State<PresentationPreviewPage>
   void _showTourSurfaceMiss() {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Bir tur metni için model yüzeyine tıklayın.')),
+      const SnackBar(content: Text('İşaret için model yüzeyine tıklayın.')),
     );
   }
 
@@ -593,14 +638,19 @@ class _PresentationPreviewPageState extends State<PresentationPreviewPage>
     final pages = widget.controller.pages;
     if (_index < 0 || _index >= pages.length) return;
     final page = pages[_index];
-    final tourBlock = page.componentBlocks.firstWhere(
-      (block) => block.modelAssetId != null && block.modelTourEnabled,
-      orElse: () => throw StateError('Tur modeli bulunamadı'),
-    );
+    final tourBlocks = page.componentBlocks
+        .where((block) => block.modelAssetId != null && block.modelTourEnabled)
+        .toList(growable: false);
+    if (tourBlocks.isEmpty) {
+      _showTourSurfaceMiss();
+      return;
+    }
+    final tourBlock = tourBlocks.first;
     final titleController = TextEditingController();
     final descriptionController = TextEditingController();
     String? targetPageId;
-    final result = await showDialog<({String title, String description, String? target})>(
+    final result =
+        await showDialog<({String title, String description, String? target})>(
       context: context,
       builder: (dialogContext) => StatefulBuilder(
         builder: (dialogContext, setDialogState) => AlertDialog(
@@ -613,6 +663,7 @@ class _PresentationPreviewPageState extends State<PresentationPreviewPage>
                 TextField(
                   controller: titleController,
                   autofocus: true,
+                  onChanged: (_) => setDialogState(() {}),
                   decoration: const InputDecoration(labelText: 'Başlık *'),
                 ),
                 const SizedBox(height: 12),
@@ -623,21 +674,25 @@ class _PresentationPreviewPageState extends State<PresentationPreviewPage>
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String?>(
-                  value: targetPageId,
-                  decoration: const InputDecoration(labelText: 'Hedef slayt (isteğe bağlı)'),
+                  initialValue: targetPageId,
+                  decoration: const InputDecoration(
+                      labelText: 'Hedef slayt (isteğe bağlı)'),
                   items: <DropdownMenuItem<String?>>[
                     const DropdownMenuItem<String?>(
                       value: null,
                       child: Text('Bağlantı yok'),
                     ),
                     ...pages.where((candidate) => candidate.id != page.id).map(
-                      (candidate) => DropdownMenuItem<String?>(
-                        value: candidate.id,
-                        child: Text(candidate.title.isEmpty ? 'İsimsiz slayt' : candidate.title),
-                      ),
-                    ),
+                          (candidate) => DropdownMenuItem<String?>(
+                            value: candidate.id,
+                            child: Text(candidate.title.isEmpty
+                                ? 'İsimsiz slayt'
+                                : candidate.title),
+                          ),
+                        ),
                   ],
-                  onChanged: (value) => setDialogState(() => targetPageId = value),
+                  onChanged: (value) =>
+                      setDialogState(() => targetPageId = value),
                 ),
                 const SizedBox(height: 14),
                 Text(
@@ -653,15 +708,19 @@ class _PresentationPreviewPageState extends State<PresentationPreviewPage>
               child: const Text('Vazgeç'),
             ),
             FilledButton(
-              onPressed: () {
-                final title = titleController.text.trim();
-                if (title.isEmpty) return;
-                Navigator.of(dialogContext).pop((
-                  title: title,
-                  description: descriptionController.text.trim(),
-                  target: targetPageId,
-                ));
-              },
+              // Boş başlıkta sessizce hiçbir şey yapmamak, tur metninin
+              // eklenmediği izlenimini veriyordu. Zorunlu alan artık açıkça
+              // devre dışı durumda görünür.
+              onPressed: titleController.text.trim().isEmpty
+                  ? null
+                  : () {
+                      final title = titleController.text.trim();
+                      Navigator.of(dialogContext).pop((
+                        title: title,
+                        description: descriptionController.text.trim(),
+                        target: targetPageId,
+                      ));
+                    },
               child: const Text('3B metni ekle'),
             ),
           ],
@@ -675,12 +734,56 @@ class _PresentationPreviewPageState extends State<PresentationPreviewPage>
     widget.controller.selectComponentBlock(tourBlock.id);
     widget.controller.addSelectedModelTourHotspot(
       label: result.title,
+      kind: ModelTourHotspotKind.text,
       description: result.description,
       targetPageId: result.target,
       x: point.x,
       y: point.y,
       z: point.z,
     );
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('3B metin modele eklendi.')),
+      );
+    }
+  }
+
+  Future<void> _addTourPoint(ModelTourSurfacePoint point) async {
+    await WidgetsBinding.instance.endOfFrame;
+    if (!mounted) return;
+    final pages = widget.controller.pages;
+    if (_index < 0 || _index >= pages.length) return;
+    final page = pages[_index];
+    final tourBlocks = page.componentBlocks
+        .where((block) => block.modelAssetId != null && block.modelTourEnabled)
+        .toList(growable: false);
+    if (tourBlocks.isEmpty) {
+      _showTourSurfaceMiss();
+      return;
+    }
+    widget.controller.selectPage(_index);
+    widget.controller.selectComponentBlock(tourBlocks.first.id);
+    widget.controller.addSelectedModelTourHotspot(
+      label: 'Tur noktası',
+      x: point.x,
+      y: point.y,
+      z: point.z,
+    );
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Tur noktası modele eklendi.')),
+      );
+    }
+  }
+
+  void _handleTourSurfacePointPicked(ModelTourSurfacePoint point) {
+    final action = _tourPlacementAction ?? _TourPlacementAction.text;
+    _tourPlacementAction = null;
+    if (action == _TourPlacementAction.point) {
+      unawaited(_addTourPoint(point));
+      return;
+    }
+    unawaited(_addTourSurfaceText(point));
   }
 }
 
@@ -693,7 +796,7 @@ class _TourSurfacePlacementPrompt extends StatelessWidget {
   Widget build(BuildContext context) {
     return Semantics(
       liveRegion: true,
-      label: '3B metin konumu seçiliyor',
+      label: 'Tur işareti konumu seçiliyor',
       child: DecoratedBox(
         decoration: BoxDecoration(
           color: const Color(0xED071426),
@@ -719,7 +822,7 @@ class _TourSurfacePlacementPrompt extends StatelessWidget {
               ),
               const SizedBox(width: 9),
               const Text(
-                'Model yüzeyinde metnin konumunu seçin',
+                'Model yüzeyinde işaretin konumunu seçin',
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 13,
@@ -764,6 +867,97 @@ class _TourStartOverlay extends StatelessWidget {
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
               textStyle: const TextStyle(fontWeight: FontWeight.w800),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _TourJoystick extends StatefulWidget {
+  const _TourJoystick({required this.onMove});
+
+  final void Function({required double forward, required double right}) onMove;
+
+  @override
+  State<_TourJoystick> createState() => _TourJoystickState();
+}
+
+class _TourJoystickState extends State<_TourJoystick> {
+  static const _radius = 42.0;
+  Offset _stick = Offset.zero;
+  Timer? _movementTimer;
+
+  void _updateStick(Offset localPosition) {
+    final raw = localPosition - const Offset(_radius, _radius);
+    final distance = raw.distance;
+    final next = distance > _radius ? raw / distance * _radius : raw;
+    setState(() => _stick = next);
+    _movementTimer ??= Timer.periodic(const Duration(milliseconds: 32), (_) {
+      final ratio = _stick / _radius;
+      if (ratio.distanceSquared < .0025) return;
+      // Yukarı W/ileri, sağ D/sağ olacak şekilde hareketi tur kamerasına ver.
+      widget.onMove(forward: -ratio.dy * .72, right: ratio.dx * .72);
+    });
+  }
+
+  void _releaseStick() {
+    if (_stick == Offset.zero) return;
+    setState(() => _stick = Offset.zero);
+    _movementTimer?.cancel();
+    _movementTimer = null;
+  }
+
+  @override
+  void dispose() {
+    _movementTimer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Positioned(
+      left: 24,
+      bottom: 28,
+      child: SafeArea(
+        child: Semantics(
+          label: 'Tur hareket joysticki',
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onPanDown: (details) => _updateStick(details.localPosition),
+            onPanUpdate: (details) => _updateStick(details.localPosition),
+            onPanEnd: (_) => _releaseStick(),
+            onPanCancel: _releaseStick,
+            child: SizedBox(
+              width: _radius * 2,
+              height: _radius * 2,
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: const Color(0xA8071426),
+                  border: Border.all(color: const Color(0x807DD3FC), width: 1.5),
+                  boxShadow: const <BoxShadow>[
+                    BoxShadow(
+                      color: Color(0x55000000),
+                      blurRadius: 16,
+                      offset: Offset(0, 6),
+                    ),
+                  ],
+                ),
+                child: Center(
+                  child: Transform.translate(
+                    offset: _stick,
+                    child: DecoratedBox(
+                      decoration: const BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Color(0xFF7DD3FC),
+                      ),
+                      child: const SizedBox(width: 31, height: 31),
+                    ),
+                  ),
+                ),
+              ),
             ),
           ),
         ),
@@ -858,7 +1052,7 @@ class _TourExperienceHud extends StatelessWidget {
                           ),
                           SizedBox(width: 5),
                           Text(
-                            'Sol tuş + sürükle: bak',
+                            'Sol tuş + sürükle: bak · WASD: yürü',
                             style: TextStyle(
                               color: Color(0xFFA5F3FC),
                               fontSize: 12,
@@ -1304,8 +1498,10 @@ class _PreviewDeckStage extends StatelessWidget {
                                 showHotspots: showHotspots,
                                 onHotspot: onHotspot,
                                 tourMode: tourMode,
-                                onTourSurfacePointPicked: onTourSurfacePointPicked,
-                                onTourSurfacePickMissed: onTourSurfacePickMissed,
+                                onTourSurfacePointPicked:
+                                    onTourSurfacePointPicked,
+                                onTourSurfacePickMissed:
+                                    onTourSurfacePickMissed,
                                 onTourInteraction: onTourInteraction,
                                 onTourHotspot: onTourHotspot,
                               ),
@@ -1377,8 +1573,7 @@ class _OrbitPose {
 class _PreviewStageWithOrbitState extends State<_PreviewStageWithOrbit> {
   final Map<String, _OrbitPose> _orbitOverrides = <String, _OrbitPose>{};
   bool _tourPointPlacementEnabled = false;
-  Offset? _tourSurfacePickPosition;
-  int _tourSurfacePickGeneration = 0;
+  int _tourCameraRevision = 0;
 
   PresentationComponentBlock? get _tourBlock => widget.page.componentBlocks
       .cast<PresentationComponentBlock?>()
@@ -1388,6 +1583,17 @@ class _PreviewStageWithOrbitState extends State<_PreviewStageWithOrbit> {
       );
 
   bool get hasTour => _tourBlock != null;
+
+  _OrbitPose _tourPoseFor(PresentationComponentBlock block) {
+    return _orbitOverrides[block.id] ??
+        _OrbitPose(
+          block.modelOrbitTheta,
+          math.max(82.0, block.modelOrbitPhi.clamp(42.0, 89.0).toDouble()),
+          block.modelTargetX,
+          block.modelTargetY,
+          block.modelTargetZ,
+        );
+  }
 
   void beginTourPointPlacement() {
     if (!hasTour) return;
@@ -1401,26 +1607,12 @@ class _PreviewStageWithOrbitState extends State<_PreviewStageWithOrbit> {
     setState(() => _tourPointPlacementEnabled = false);
   }
 
-  void _requestTourSurfacePick(Offset position) {
-    if (!_tourPointPlacementEnabled) return;
-    setState(() {
-      _tourSurfacePickPosition = position;
-      _tourSurfacePickGeneration += 1;
-    });
-  }
-
   PresentationPage get _effectivePage {
     final tourBlock = _tourBlock;
     if (widget.tourMode && tourBlock != null) {
-      final pose = _orbitOverrides[tourBlock.id];
       final focused = tourBlock.copyWith(
         position: Offset.zero,
         size: const Size(1, 1),
-        modelOrbitTheta: pose?.theta ?? tourBlock.modelOrbitTheta,
-        modelOrbitPhi: pose?.phi ?? tourBlock.modelOrbitPhi,
-        modelTargetX: pose?.targetX ?? tourBlock.modelTargetX,
-        modelTargetY: pose?.targetY ?? tourBlock.modelTargetY,
-        modelTargetZ: pose?.targetZ ?? tourBlock.modelTargetZ,
       );
       return widget.page.copyWith(
         // Tur metinleri Flutter'ın düzenlenebilir rehber katmanında çizilir.
@@ -1474,34 +1666,37 @@ class _PreviewStageWithOrbitState extends State<_PreviewStageWithOrbit> {
   void lookAroundTour(Offset delta) {
     final block = _tourBlock;
     if (block == null) return;
-    final current = _orbitOverrides[block.id] ??
-        _OrbitPose(
-          block.modelOrbitTheta,
-          block.modelOrbitPhi,
-          block.modelTargetX,
-          block.modelTargetY,
-          block.modelTargetZ,
-        );
+    final current = _tourPoseFor(block);
     setState(() {
-      // Tarayıcılar fare kilidindeyken bazı platformlarda büyük movement
-      // değerleri gönderebilir. Kısa bir üst sınır, kamerayı bir anda modelin
-      // etrafında döndürmek yerine kontrollü ama tam küresel bakış sağlar.
-      final horizontal = delta.dx.clamp(-24.0, 24.0).toDouble();
-      final vertical = delta.dy.clamp(-24.0, 24.0).toDouble();
+      final next = ModelTourRuntime.look(
+        ModelTourPose(
+          theta: current.theta,
+          phi: current.phi,
+          x: current.targetX,
+          y: current.targetY,
+          z: current.targetZ,
+        ),
+        horizontalPixels: delta.dx,
+        verticalPixels: delta.dy,
+      );
       _orbitOverrides[block.id] = _OrbitPose(
-        (current.theta - horizontal * 0.24) % 360,
-        (current.phi + vertical * 0.20).clamp(8.0, 172.0).toDouble(),
+        next.theta,
+        next.phi,
         current.targetX,
         current.targetY,
         current.targetZ,
       );
+      _tourCameraRevision += 1;
     });
   }
 
   void resetTourView() {
     final block = _tourBlock;
     if (block == null) return;
-    setState(() => _orbitOverrides.remove(block.id));
+    setState(() {
+      _orbitOverrides.remove(block.id);
+      _tourCameraRevision += 1;
+    });
   }
 
   /// Sunum sırasında tur açık modelde kısa bir adım ilerler. Yön, kameranın
@@ -1516,34 +1711,28 @@ class _PreviewStageWithOrbitState extends State<_PreviewStageWithOrbit> {
       }
     }
     if (block == null) return false;
-    final current = _orbitOverrides[block.id] ??
-        _OrbitPose(
-          block.modelOrbitTheta,
-          block.modelOrbitPhi,
-          block.modelTargetX,
-          block.modelTargetY,
-          block.modelTargetZ,
-        );
-    final theta = current.theta * math.pi / 180;
+    final current = _tourPoseFor(block);
     final sensitivity = 1 / math.sqrt(block.modelZoom.clamp(0.5, 10.0));
     setState(() {
-      _orbitOverrides[block!.id] = _OrbitPose(
-        current.theta,
-        current.phi,
-        // model-viewer'ın kamera hedefi, ekrandaki hareketin ters yönünde
-        // ötelenmelidir. Böylece W ileri, D sağ yönünde algılanır.
-        (current.targetX -
-                forward * sensitivity * math.sin(theta) +
-                right * sensitivity * math.cos(theta))
-            .clamp(-500.0, 500.0)
-            .toDouble(),
-        current.targetY,
-        (current.targetZ -
-                forward * sensitivity * math.cos(theta) -
-                right * sensitivity * math.sin(theta))
-            .clamp(-500.0, 500.0)
-            .toDouble(),
+      final next = ModelTourRuntime.move(
+        ModelTourPose(
+          theta: current.theta,
+          phi: current.phi,
+          x: current.targetX,
+          y: current.targetY,
+          z: current.targetZ,
+        ),
+        forwardMeters: forward * sensitivity,
+        rightMeters: right * sensitivity,
       );
+      _orbitOverrides[block!.id] = _OrbitPose(
+        next.theta,
+        next.phi,
+        next.x.clamp(-500.0, 500.0).toDouble(),
+        next.y,
+        next.z.clamp(-500.0, 500.0).toDouble(),
+      );
+      _tourCameraRevision += 1;
     });
     return true;
   }
@@ -1554,7 +1743,6 @@ class _PreviewStageWithOrbitState extends State<_PreviewStageWithOrbit> {
     if (oldWidget.page.id != widget.page.id) {
       _orbitOverrides.clear();
       _tourPointPlacementEnabled = false;
-      _tourSurfacePickPosition = null;
     }
   }
 
@@ -1675,6 +1863,10 @@ class _PreviewStageWithOrbitState extends State<_PreviewStageWithOrbit> {
           (block) => block.modelAssetId != null && block.modelTourEnabled,
         )
         .toList(growable: false);
+    final activeTourBlock = _tourBlock;
+    final activeTourPose = widget.tourMode && activeTourBlock != null
+        ? _tourPoseFor(activeTourBlock)
+        : null;
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -1706,12 +1898,18 @@ class _PreviewStageWithOrbitState extends State<_PreviewStageWithOrbit> {
                 renderMode: HtmlStageRenderMode.preview,
                 tourPointPlacementEnabled:
                     widget.tourMode && _tourPointPlacementEnabled,
-                tourSurfacePickPosition: _tourSurfacePickPosition,
-                tourSurfacePickGeneration: _tourSurfacePickGeneration,
-                // HTML platform görünümü hiçbir tur durumunda fareyi almaz.
-                // Böylece 3B metin konumu seçilirken bile HUD, iptal düğmesi
-                // ve modal diyaloglar erişilebilir kalır.
-                tourInteractionEnabled: false,
+                // Yüzey seçimi, koordinatı Flutter katmanından tahmin etmek
+                // yerine doğrudan model-viewer'ın kendi tıklamasından alır.
+                // Bu, CanvasKit/iframe ölçek farkında metin ve noktanın hiç
+                // eklenmemesine neden olan köprüyü ortadan kaldırır.
+                tourInteractionEnabled:
+                    widget.tourMode && _tourPointPlacementEnabled,
+                tourCameraTheta: activeTourPose?.theta,
+                tourCameraPhi: activeTourPose?.phi,
+                tourCameraTargetX: activeTourPose?.targetX,
+                tourCameraTargetY: activeTourPose?.targetY,
+                tourCameraTargetZ: activeTourPose?.targetZ,
+                tourCameraRevision: _tourCameraRevision,
                 onTourSurfacePointPicked: (point) {
                   if (!_tourPointPlacementEnabled) return;
                   setState(() => _tourPointPlacementEnabled = false);
@@ -1725,30 +1923,27 @@ class _PreviewStageWithOrbitState extends State<_PreviewStageWithOrbit> {
                 onTourInteraction: widget.onTourInteraction,
                 onTourHotspot: widget.onTourHotspot,
               ),
-            if (widget.tourMode)
+            if (widget.tourMode && !_tourPointPlacementEnabled)
               Positioned.fill(
                 child: MouseRegion(
-                  cursor: _tourPointPlacementEnabled
-                      ? SystemMouseCursors.precise
-                      : SystemMouseCursors.grab,
+                  cursor: SystemMouseCursors.grab,
                   child: GestureDetector(
                     behavior: HitTestBehavior.opaque,
-                    onTapUp: _tourPointPlacementEnabled
-                        ? (details) =>
-                            _requestTourSurfacePick(details.localPosition)
-                        : null,
-                    onPanStart: _tourPointPlacementEnabled
-                        ? null
-                        : (_) => widget.onTourInteraction(),
-                    onPanUpdate: _tourPointPlacementEnabled
-                        ? null
-                        : (details) => lookAroundTour(details.delta),
+                    onPanStart: (_) => widget.onTourInteraction(),
+                    // Sanal turdaki tek fare girdisi burasıdır. Iframe
+                    // denetimi ve pointer-lock aynı anda kullanılmadığından
+                    // kamera iki kez güncellenmez.
+                    onPanUpdate: (details) => lookAroundTour(details.delta),
                   ),
                 ),
               ),
             if (!_tourPointPlacementEnabled)
               for (final block in orbitBlocks) _orbitOverlay(block, stageSize),
-            if (widget.showHotspots || widget.tourMode)
+            // Tur ekranında model-viewer slot'ları gerçek 3B konumlarına
+            // sabitlenmiş metin/noktaları zaten çizer. Flutter rehberini
+            // burada tekrar çizmek, metnin sahne üstünde 2B bir etiketmiş
+            // gibi görünmesine neden oluyordu.
+            if (widget.showHotspots && !widget.tourMode)
               for (final block in tourBlocks) _tourHint(block, stageSize),
             if (widget.tourMode && _tourPointPlacementEnabled)
               Positioned(

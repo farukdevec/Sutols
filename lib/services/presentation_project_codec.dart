@@ -338,6 +338,7 @@ class PresentationProjectCodec {
           .map((hotspot) => <String, Object?>{
                 'id': hotspot.id,
                 'label': hotspot.label,
+                'kind': hotspot.kind.name,
                 'description': hotspot.description,
                 'targetPageId': hotspot.targetPageId,
                 'x': hotspot.x,
@@ -439,12 +440,18 @@ class PresentationProjectCodec {
       return ModelTourHotspot(
         id: _string(json['id'], 'tour-hotspot'),
         label: _string(json['label'], 'Tur noktası'),
+        kind: _enumValue(
+          ModelTourHotspotKind.values,
+          json['kind'],
+          ModelTourHotspotKind.point,
+        ),
         description: _string(json['description'], ''),
-        targetPageId:
-            json['targetPageId'] is String ? json['targetPageId']! as String : null,
-        x: _double(json['x'], 0).clamp(-1, 1).toDouble(),
-        y: _double(json['y'], 0).clamp(-1, 1).toDouble(),
-        z: _double(json['z'], 0).clamp(-1, 1).toDouble(),
+        targetPageId: json['targetPageId'] is String
+            ? json['targetPageId']! as String
+            : null,
+        x: _double(json['x'], 0).clamp(-500, 500).toDouble(),
+        y: _double(json['y'], 0).clamp(-500, 500).toDouble(),
+        z: _double(json['z'], 0).clamp(-500, 500).toDouble(),
       );
     }).toList(growable: false);
   }

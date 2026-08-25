@@ -121,7 +121,7 @@ class ModelRepository {
   Future<List<ModelCatalogEntry>> _loadModels(String? userId) async {
     final persistent = await _readPersistentCache(userId);
     if (persistent != null && persistent.models.isNotEmpty) {
-      final models = _withBundledModels(persistent.models);
+      final models = mergeWithBundledModels(persistent.models);
       _cachedModels = models;
       _cachedForUserId = userId;
       if (DateTime.now().difference(persistent.savedAt) > _persistentCacheTtl) {
@@ -171,7 +171,7 @@ class ModelRepository {
         ));
       }
 
-      final immutableModels = _withBundledModels(models);
+      final immutableModels = mergeWithBundledModels(models);
       _cachedModels = immutableModels;
       _cachedForUserId = userId;
       if (immutableModels.isNotEmpty) {
@@ -182,7 +182,7 @@ class ModelRepository {
       // Firestore okuma hatası (403 vb.) olursa boş liste döner;
       // sunum oluşturma akışını bozmaz.
       print('Model kataloğu okunamadı (403 vb.): $e');
-      final bundledModels = _withBundledModels(const <ModelCatalogEntry>[]);
+      final bundledModels = mergeWithBundledModels(const <ModelCatalogEntry>[]);
       _cachedModels = bundledModels;
       _cachedForUserId = userId;
       return bundledModels;
@@ -194,22 +194,25 @@ class ModelRepository {
     }
   }
 
-  List<ModelCatalogEntry> _withBundledModels(
+  /// Uzak katalogyu uygulamayla birlikte gelen modellerle birleştirir.
+  ///
+  /// Paket modelleri küçük resmi olmasa da editör kütüphanesinde yer alır.
+  /// Bu durumda arayüz güvenli harfli önizlemesini gösterir; model kaydı
+  /// Firestore/R2'den bir küçük resim edinmeye bağlı değildir.
+  static List<ModelCatalogEntry> mergeWithBundledModels(
     Iterable<ModelCatalogEntry> remoteModels,
   ) {
     final byId = <String, ModelCatalogEntry>{
       for (final model in remoteModels) model.id: model,
     };
     for (final asset in presentation3DModelCatalog) {
-      final thumbnailPath = asset.thumbnailPath;
-      if (thumbnailPath == null || thumbnailPath.isEmpty) continue;
       // Paketle gelen kayıt, aynı kimlikteki eski bir bulut/önbellek kaydının
       // modeli yanlış adrese yönlendirmesine izin vermez.
       byId[asset.id] = ModelCatalogEntry(
         id: asset.id,
         name: asset.label,
         modelUrl: asset.assetPath,
-        thumbnailUrl: thumbnailPath,
+        thumbnailUrl: asset.thumbnailPath ?? '',
         tags: asset.tags,
         category: asset.category,
         tier: 'free',

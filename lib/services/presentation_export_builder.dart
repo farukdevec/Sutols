@@ -3,6 +3,39 @@ import 'dart:convert';
 import '../models/slide_model.dart';
 import '../ui/widgets/html_stage/html_stage_document.dart';
 
+const String _exportModelTargetScript = r'''
+(function () {
+  function applyModelTarget(modelViewer) {
+    if (!modelViewer || typeof modelViewer.getDimensions !== 'function' ||
+        typeof modelViewer.getBoundingBoxCenter !== 'function') return;
+    try {
+      const dimensions = modelViewer.getDimensions();
+      const center = modelViewer.getBoundingBoxCenter();
+      const x = Number(modelViewer.dataset.sutolTargetX) || 0;
+      const y = Number(modelViewer.dataset.sutolTargetY) || 0;
+      const z = Number(modelViewer.dataset.sutolTargetZ) || 0;
+      const isTour = modelViewer.dataset.sutolTourGround === 'true';
+      const targetY = isTour
+        ? center.y - dimensions.y / 2
+        : center.y + dimensions.y * y / 100;
+      modelViewer.setAttribute(
+        'camera-target',
+        (isTour ? x : center.x + dimensions.x * x / 100).toFixed(5) + 'm ' +
+          targetY.toFixed(5) + 'm ' +
+          (isTour ? z : center.z + dimensions.z * z / 100).toFixed(5) + 'm'
+      );
+    } catch (_) {}
+  }
+  window.SutolApplyModelTarget = applyModelTarget;
+  document.querySelectorAll('model-viewer').forEach(function (modelViewer) {
+    modelViewer.addEventListener('load', function () {
+      applyModelTarget(modelViewer);
+    });
+    if (modelViewer.loaded) applyModelTarget(modelViewer);
+  });
+})();
+''';
+
 String buildPresentationExportHtml({
   required List<PresentationPage> pages,
   PresentationEffectSettings effectSettings =
@@ -84,6 +117,7 @@ String buildPresentationExportHtml({
   $embeddedAssetsScript
   $sutolHtmlStageBackgroundScript
   $sutolHtmlStageComponentScript
+  $_exportModelTargetScript
 
   ${printMode ? '' : _exportScript(
           zoomEnabled: false,
@@ -203,6 +237,7 @@ String _staticSnapshotDocument(String source) {
   transition: none !important;
   scroll-behavior: auto !important;
 }
+
 </style>
 ''';
   if (source.contains('</head>')) {
@@ -902,6 +937,98 @@ String _exportScript({
   let leavingTimer = null;
   let laserActive = initialLaserPointer;
   let autoTimer = null;
+  const tourKeys = new Set();
+  let tourFrame = null;
+  let tourJoystick = null;
+  let tourStick = { x: 0, y: 0 };
+
+  function activeTourViewer() {
+    return slides[index]?.querySelector('model-viewer[data-sutol-tour-ground="true"]') ?? null;
+  }
+
+  function tourAngle(viewer) {
+    const orbit = String(viewer?.getAttribute('camera-orbit') || '0deg 82deg 100%').split(/\s+/);
+    const value = Number.parseFloat(orbit[0]);
+    return Number.isFinite(value) ? value * Math.PI / 180 : 0;
+  }
+
+  function constrainTourTarget(viewer, x, z) {
+    x = Math.max(-500, Math.min(500, x));
+    z = Math.max(-500, Math.min(500, z));
+    try {
+      const dimensions = viewer.getDimensions();
+      const center = viewer.getBoundingBoxCenter();
+      const halfX = Math.max(.125, dimensions.x / 2 - Math.min(dimensions.x * .08, .75));
+      const halfZ = Math.max(.125, dimensions.z / 2 - Math.min(dimensions.z * .08, .75));
+      return {
+        x: Math.max(center.x - halfX, Math.min(center.x + halfX, x)),
+        z: Math.max(center.z - halfZ, Math.min(center.z + halfZ, z)),
+      };
+    } catch (_) {
+      return { x: x, z: z };
+    }
+  }
+
+  function moveTour(viewer, forward, right) {
+    if (!viewer) return;
+    const theta = tourAngle(viewer);
+    const x = Number(viewer.dataset.sutolTargetX) || 0;
+    const z = Number(viewer.dataset.sutolTargetZ) || 0;
+    // Tur değerleri model yerel metresidir. Yüklenmiş modelin gerçek güvenli
+    // alanı editör belge katmanında da uygulanır; burada genel sınır geçersiz
+    // veya kötü niyetli dış veriye karşı son korumadır.
+    const target = constrainTourTarget(
+      viewer,
+      x - forward * Math.sin(theta) + right * Math.cos(theta),
+      z - forward * Math.cos(theta) - right * Math.sin(theta),
+    );
+    viewer.dataset.sutolTargetX = target.x.toFixed(5);
+    viewer.dataset.sutolTargetZ = target.z.toFixed(5);
+    window.SutolApplyModelTarget?.(viewer);
+  }
+
+  function tickTour(now) {
+    const viewer = activeTourViewer();
+    if (viewer && (tourKeys.size || tourStick.x || tourStick.y)) {
+      const elapsed = Math.min(.05, Math.max(.001, (now - (tickTour.last || now)) / 1000));
+      const forward = ((tourKeys.has('w') ? 1 : 0) - (tourKeys.has('s') ? 1 : 0) - tourStick.y) * 20 * elapsed;
+      const right = ((tourKeys.has('d') ? 1 : 0) - (tourKeys.has('a') ? 1 : 0) + tourStick.x) * 20 * elapsed;
+      moveTour(viewer, forward, right);
+    }
+    tickTour.last = now;
+    tourFrame = requestAnimationFrame(tickTour);
+  }
+
+  function renderTourControls() {
+    const active = !!activeTourViewer();
+    if (!tourJoystick) {
+      tourJoystick = document.createElement('div');
+      tourJoystick.setAttribute('aria-label', 'Tur hareket joysticki');
+      tourJoystick.setAttribute('role', 'application');
+      Object.assign(tourJoystick.style, {
+        position: 'fixed', left: '24px', bottom: '24px', width: '84px', height: '84px',
+        borderRadius: '50%', background: 'rgba(7,20,38,.78)', border: '1px solid rgba(125,211,252,.8)',
+        zIndex: '40', touchAction: 'none', display: 'grid', placeItems: 'center'
+      });
+      const thumb = document.createElement('div');
+      Object.assign(thumb.style, { width: '30px', height: '30px', borderRadius: '50%', background: '#7dd3fc', transform: 'translate(0,0)' });
+      tourJoystick.appendChild(thumb);
+      const update = (event) => {
+        const rect = tourJoystick.getBoundingClientRect();
+        const dx = Math.max(-1, Math.min(1, (event.clientX - rect.left - rect.width / 2) / 42));
+        const dy = Math.max(-1, Math.min(1, (event.clientY - rect.top - rect.height / 2) / 42));
+        tourStick = { x: dx, y: dy };
+        thumb.style.transform = 'translate(' + (dx * 27).toFixed(1) + 'px,' + (dy * 27).toFixed(1) + 'px)';
+      };
+      tourJoystick.addEventListener('pointerdown', (event) => { tourJoystick.setPointerCapture(event.pointerId); update(event); });
+      tourJoystick.addEventListener('pointermove', (event) => { if (tourJoystick.hasPointerCapture(event.pointerId)) update(event); });
+      const release = () => { tourStick = { x: 0, y: 0 }; thumb.style.transform = 'translate(0,0)'; };
+      tourJoystick.addEventListener('pointerup', release);
+      tourJoystick.addEventListener('pointercancel', release);
+      document.body.appendChild(tourJoystick);
+    }
+    tourJoystick.style.display = active ? 'grid' : 'none';
+  }
 
   function playTransitionSound() {
     if (!enableSoundEffects) return;
@@ -1107,12 +1234,16 @@ String _exportScript({
         const targetX = startTargetX + (targetTargetX - startTargetX) * eased;
         const targetZ = startTargetZ + (targetTargetZ - startTargetZ) * eased;
         viewer.setAttribute('camera-orbit', theta.toFixed(2) + 'deg ' + phi.toFixed(2) + 'deg ' + radius.toFixed(2) + '%');
-        viewer.setAttribute('camera-target', targetX.toFixed(2) + '% 0% ' + targetZ.toFixed(2) + '%');
+        viewer.dataset.sutolTargetX = targetX.toFixed(2);
+        viewer.dataset.sutolTargetZ = targetZ.toFixed(2);
+        window.SutolApplyModelTarget?.(viewer);
         if (raw < 1) requestAnimationFrame(animateOrbit);
       }
 
       viewer.setAttribute('camera-orbit', startTheta.toFixed(2) + 'deg ' + startPhi.toFixed(2) + 'deg ' + startRadius.toFixed(2) + '%');
-      viewer.setAttribute('camera-target', startTargetX.toFixed(2) + '% 0% ' + startTargetZ.toFixed(2) + '%');
+      viewer.dataset.sutolTargetX = startTargetX.toFixed(2);
+      viewer.dataset.sutolTargetZ = startTargetZ.toFixed(2);
+      window.SutolApplyModelTarget?.(viewer);
       requestAnimationFrame(animateOrbit);
     });
   }
@@ -1243,6 +1374,7 @@ String _exportScript({
     updateNotes();
     window.SutolStageBackgrounds?.refresh?.();
     window.SutolStageComponents?.refresh?.();
+    renderTourControls();
   }
 
   function setZoomed(nextZoomed, clientX, clientY) {
@@ -1378,7 +1510,10 @@ String _exportScript({
 
   window.addEventListener('keydown', (event) => {
     const key = event.key.toLowerCase();
-    if (event.key === 'ArrowRight' || event.key === 'PageDown' || event.key === ' ' || event.code === 'Space') {
+    if (activeTourViewer() && ['w', 'a', 's', 'd'].includes(key)) {
+      event.preventDefault();
+      tourKeys.add(key);
+    } else if (event.key === 'ArrowRight' || event.key === 'PageDown' || event.key === ' ' || event.code === 'Space') {
       event.preventDefault();
       goNext();
     } else if (event.key === 'ArrowLeft' || event.key === 'PageUp' || event.key === 'Backspace') {
@@ -1406,7 +1541,15 @@ String _exportScript({
     }
   });
 
+  window.addEventListener('keyup', (event) => {
+    const key = event.key.toLowerCase();
+    if (['w', 'a', 's', 'd'].includes(key)) {
+      tourKeys.delete(key);
+    }
+  });
+
   toggleLaser(initialLaserPointer);
+  tourFrame = requestAnimationFrame(tickTour);
   resetAutoTimer();
   render();
 })();

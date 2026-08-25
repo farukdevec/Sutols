@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:sutol/models/presentation_3d_model_catalog.dart';
 import 'package:sutol/services/model_repository.dart';
 
 void main() {
@@ -31,5 +32,35 @@ void main() {
 
   test('geçersiz katalog girdisi önbellekten yüklenmez', () {
     expect(ModelCatalogEntry.fromCacheJson(<String, dynamic>{}), isNull);
+  });
+
+  test('küçük resmi olmayan paket modelleri de katalogda görünür', () {
+    const staleCloudModel = ModelCatalogEntry(
+      id: 'yolcu-ucagi',
+      name: 'Eski uçak',
+      modelUrl: 'https://assets.sutols.com/old-plane.glb',
+      thumbnailUrl: 'https://assets.sutols.com/thumbnails/old-plane.webp',
+      tags: <String>[],
+      category: 'Eski',
+      tier: 'premium',
+    );
+
+    final catalog = ModelRepository.mergeWithBundledModels(
+      const <ModelCatalogEntry>[staleCloudModel],
+    );
+    final ids = catalog.map((model) => model.id).toSet();
+
+    expect(
+      ids,
+      containsAll(
+        presentation3DModelCatalog.map((model) => model.id),
+      ),
+    );
+    final plane = catalog.singleWhere((model) => model.id == 'yolcu-ucagi');
+    final earth = catalog.singleWhere((model) => model.id == 'gercekci-dunya');
+    expect(plane.modelUrl, 'assets/models/yolcu_ucagi.glb');
+    expect(plane.thumbnailUrl, isEmpty);
+    expect(plane.tier, 'free');
+    expect(earth.thumbnailUrl, isEmpty);
   });
 }

@@ -5,6 +5,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../models/slide_model.dart';
+import '../models/model_tour_runtime.dart';
 import '../services/presentation_auto_builder.dart';
 
 class PresentationController extends ChangeNotifier {
@@ -23,6 +24,16 @@ class PresentationController extends ChangeNotifier {
   static const double _maxComponentWidthFactor = 10;
   static const double _maxComponentHeightFactor = 10;
   static const int _maxHistoryEntries = 80;
+  // Sanal tur kamerası zeminin altına inmez. Böylece modelin alt yüzeyi
+  // görünmez ve yön kontrolü kutuplarda tersine dönmez. Gerçek zemin hedefi
+  // HTML katmanında modelin alt sınırından (Y=0) hesaplanır.
+  static const double _tourMinCameraPhi = 42;
+  static const double _tourDefaultCameraPhi = 82;
+  static const double _tourMaxCameraPhi = 89;
+  // Tur hedefleri modelin yerel metresidir. Kesin sınır, model-viewer model
+  // yüklenince gerçek bounding box'tan çıkarılır; bu genel sınır yalnızca
+  // bozuk proje verisinin çalışma alanını aşmasını engeller.
+  static const double _tourMaxTargetMetres = 500;
 
   PresentationController()
       : _pages = <PresentationPage>[
@@ -73,6 +84,7 @@ class PresentationController extends ChangeNotifier {
   Timer? _selectionTransformIdleTimer;
   bool _modelOrbitGestureActive = false;
   bool _modelCameraGestureHasNotified = false;
+  bool _modelCameraHasPendingUpdate = false;
   final Stopwatch _modelCameraNotifyClock = Stopwatch();
   int _transitionPreviewRevision = 0;
   int? _transitionPreviewGapIndex;
@@ -652,6 +664,58 @@ class PresentationController extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Seçili bileşeni doğrudan en öne veya en arkaya taşır.
+  void moveSelectedComponentToEdge({required bool forward}) {
+    final current = selectedComponentBlock;
+    if (current == null) {
+      return;
+    }
+    final components = List<PresentationComponentBlock>.of(
+      selectedPage.componentBlocks,
+    );
+    final index = components.indexWhere((block) => block.id == current.id);
+    if (index < 0 ||
+        (forward && index == components.length - 1) ||
+        (!forward && index == 0)) {
+      return;
+    }
+    final moved = components.removeAt(index);
+    if (forward) {
+      components.add(moved);
+    } else {
+      components.insert(0, moved);
+    }
+    _replaceSelectedPage(
+      selectedPage.copyWith(componentBlocks: components),
+    );
+    notifyListeners();
+  }
+
+  /// Seçili görseli veya 3B modeli slaydın tamamına yayar ve en altta tutar.
+  void setSelectedVisualAsBackground() {
+    final current = selectedComponentBlock;
+    if (current == null ||
+        (current.imageAssetId == null && current.modelAssetId == null)) {
+      return;
+    }
+    final components = List<PresentationComponentBlock>.of(
+      selectedPage.componentBlocks,
+    );
+    final index = components.indexWhere((block) => block.id == current.id);
+    if (index < 0) {
+      return;
+    }
+    final background = components.removeAt(index).copyWith(
+      position: Offset.zero,
+      size: const Size(1, 1),
+    );
+    components.insert(0, background);
+    _replaceSelectedPage(
+      selectedPage.copyWith(componentBlocks: components),
+    );
+    notifyListeners();
+  }
+
   void updateSelectedModelAnimationEnabled(bool value) {
     final current = selectedComponentBlock;
     if (current == null ||
@@ -719,12 +783,17 @@ class PresentationController extends ChangeNotifier {
                   modelTourEnabled: value,
                   modelOrbitEnabled: value ? false : block.modelOrbitEnabled,
                   modelAutoRotate: value ? false : block.modelAutoRotate,
-                  // Tur modunda bakış, gerçek 360° keşif için modelin her
-                  // tarafına dönebilmelidir. Kutup noktalarında kameranın
-                  // ters dönmesini önlemek için yalnızca çok küçük bir pay
-                  // bırakıyoruz.
+                  // Sanal tur zeminde dolaşır; kameranın alt yüzeye geçmesi
+                  // hem modelin tabanını gösterir hem de sağ/sol yönlerini
+                  // ters hissettirir. Bu nedenle yalnızca insan göz
+                  // hizasındaki güvenli açı aralığı korunur.
                   modelOrbitPhi: value
-                      ? block.modelOrbitPhi.clamp(8.0, 172.0).toDouble()
+                      ? math.max(
+                          _tourDefaultCameraPhi,
+                          block.modelOrbitPhi
+                              .clamp(_tourMinCameraPhi, _tourMaxCameraPhi)
+                              .toDouble(),
+                        )
                       : block.modelOrbitPhi,
                 )
               : block,
@@ -763,6 +832,7 @@ class PresentationController extends ChangeNotifier {
 
   void addSelectedModelTourHotspot({
     String label = 'Yeni tur noktası',
+    ModelTourHotspotKind kind = ModelTourHotspotKind.point,
     String description = '',
     double x = 0,
     double y = 0,
@@ -774,10 +844,11 @@ class PresentationController extends ChangeNotifier {
     final hotspot = ModelTourHotspot(
       id: 'tour-hotspot-${DateTime.now().microsecondsSinceEpoch}',
       label: label.trim().isEmpty ? 'Yeni tur noktası' : label.trim(),
+      kind: kind,
       description: description.trim(),
-      x: x.clamp(-1.0, 1.0).toDouble(),
-      y: y.clamp(-1.0, 1.0).toDouble(),
-      z: z.clamp(-1.0, 1.0).toDouble(),
+      x: x.clamp(-500.0, 500.0).toDouble(),
+      y: y.clamp(-500.0, 500.0).toDouble(),
+      z: z.clamp(-500.0, 500.0).toDouble(),
       targetPageId: targetPageId != selectedPage.id &&
               _pages.any((page) => page.id == targetPageId)
           ? targetPageId
@@ -838,6 +909,7 @@ class PresentationController extends ChangeNotifier {
     _recordUndo();
     _modelOrbitGestureActive = true;
     _modelCameraGestureHasNotified = false;
+    _modelCameraHasPendingUpdate = false;
     _modelCameraNotifyClock
       ..reset()
       ..start();
@@ -845,18 +917,25 @@ class PresentationController extends ChangeNotifier {
 
   void endSelectedModelOrbitGesture() {
     if (!_modelOrbitGestureActive) return;
+    final shouldNotify = _modelCameraHasPendingUpdate;
     _modelOrbitGestureActive = false;
     _modelCameraGestureHasNotified = false;
+    _modelCameraHasPendingUpdate = false;
     _modelCameraNotifyClock
       ..stop()
       ..reset();
-    // Son kamera konumunu kesin olarak ekrana ve kaydetme katmanına aktar.
-    notifyListeners();
+    // Tuş bırakmak yeni bir kamera durumu üretmez. Koşulsuz bildirim,
+    // platform model-viewer'ını attribute'lardan yeniden kurup görünümü
+    // başlangıç kamerasına sıçratabiliyordu. Sadece henüz boyanmamış son
+    // hareket varsa onu gönder.
+    if (shouldNotify) notifyListeners();
   }
 
   void _notifyModelCameraChanged() {
+    _modelCameraHasPendingUpdate = true;
     if (!_modelOrbitGestureActive) {
       notifyListeners();
+      _modelCameraHasPendingUpdate = false;
       return;
     }
     // Pointer olayları 100 Hz'i aşabilir. Tüm editörü her olayda yeniden
@@ -870,6 +949,7 @@ class PresentationController extends ChangeNotifier {
       ..reset()
       ..start();
     notifyListeners();
+    _modelCameraHasPendingUpdate = false;
   }
 
   void rotateSelectedModel(Offset delta) {
@@ -906,20 +986,23 @@ class PresentationController extends ChangeNotifier {
       return;
     }
 
-    final horizontal = delta.dx.clamp(-24.0, 24.0).toDouble();
-    final vertical = delta.dy.clamp(-24.0, 24.0).toDouble();
-    final nextTheta = (current.modelOrbitTheta - horizontal * 0.24) % 360;
-    // Dikey bakış da 360° tur deneyiminin parçasıdır. 0° ve 180° tam
-    // kutuplarında oluşan kontrol terslenmesini önlemek için güvenli pay
-    // bırakılır; modelin altı dahil tüm çevre keşfedilebilir.
-    final nextPhi =
-        (current.modelOrbitPhi + vertical * 0.20).clamp(8.0, 172.0).toDouble();
+    final next = ModelTourRuntime.look(
+      ModelTourPose(
+        theta: current.modelOrbitTheta,
+        phi: current.modelOrbitPhi,
+        x: current.modelTargetX,
+        y: current.modelTargetY,
+        z: current.modelTargetZ,
+      ),
+      horizontalPixels: delta.dx,
+      verticalPixels: delta.dy,
+    );
     final nextComponents = selectedPage.componentBlocks
         .map(
           (block) => block.id == current.id
               ? block.copyWith(
-                  modelOrbitTheta: nextTheta,
-                  modelOrbitPhi: nextPhi,
+                  modelOrbitTheta: next.theta,
+                  modelOrbitPhi: next.phi,
                 )
               : block,
         )
@@ -938,26 +1021,28 @@ class PresentationController extends ChangeNotifier {
     if (current?.modelAssetId == null || !current!.modelTourEnabled) return;
     if (forward == 0 && right == 0) return;
 
-    final theta = current.modelOrbitTheta * math.pi / 180;
     final zoomSensitivity = 1 / math.sqrt(current.modelZoom.clamp(0.5, 10.0));
-    final forwardShift = forward * zoomSensitivity;
-    final rightShift = right * zoomSensitivity;
-    final nextTargetX = (current.modelTargetX -
-            forwardShift * math.sin(theta) +
-            rightShift * math.cos(theta))
-        .clamp(-500.0, 500.0)
-        .toDouble();
-    final nextTargetZ = (current.modelTargetZ -
-            forwardShift * math.cos(theta) -
-            rightShift * math.sin(theta))
-        .clamp(-500.0, 500.0)
-        .toDouble();
+    final next = ModelTourRuntime.move(
+      ModelTourPose(
+        theta: current.modelOrbitTheta,
+        phi: current.modelOrbitPhi,
+        x: current.modelTargetX,
+        y: current.modelTargetY,
+        z: current.modelTargetZ,
+      ),
+      forwardMeters: forward * zoomSensitivity,
+      rightMeters: right * zoomSensitivity,
+    );
     final nextComponents = selectedPage.componentBlocks
         .map(
           (block) => block.id == current.id
               ? block.copyWith(
-                  modelTargetX: nextTargetX,
-                  modelTargetZ: nextTargetZ,
+                  modelTargetX: next.x
+                      .clamp(-_tourMaxTargetMetres, _tourMaxTargetMetres)
+                      .toDouble(),
+                  modelTargetZ: next.z
+                      .clamp(-_tourMaxTargetMetres, _tourMaxTargetMetres)
+                      .toDouble(),
                 )
               : block,
         )

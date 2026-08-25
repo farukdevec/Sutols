@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show FontLoader, LogicalKeyboardKey;
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sutol/models/slide_model.dart';
 import 'package:sutol/state/presentation_controller.dart';
 import 'package:sutol/ui/html_presentation_editor_page.dart';
@@ -824,6 +825,36 @@ void main() {
     expect(libraryRect.bottom, closeTo(inspectorRect.bottom - 16, 1));
     expect(resultsRect.bottom, closeTo(libraryRect.bottom - 14, 1));
     expect(resultsRect.height, greaterThan(500));
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('küçük resmi olmayan paket 3B modelleri kütüphanede görünür', (
+    tester,
+  ) async {
+    SharedPreferences.setMockInitialValues(<String, Object>{});
+    await pumpAt(tester, const Size(1400, 900));
+    await tester.tap(find.text('3D Modeller').first);
+    // Repository, Firebase oturumu olmasa da paket katalogyu döndürür.
+    for (var attempt = 0;
+        attempt < 10 &&
+            find
+                .byKey(const ValueKey<String>('model-card-anitkabir'))
+                .evaluate()
+                .isEmpty;
+        attempt++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+
+    for (final id in <String>[
+      'anitkabir',
+      'yolcu-ucagi',
+      'gercekci-dunya',
+    ]) {
+      expect(
+        find.byKey(ValueKey<String>('model-card-$id')),
+        findsOneWidget,
+      );
+    }
     expect(tester.takeException(), isNull);
   });
 

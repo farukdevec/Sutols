@@ -364,14 +364,19 @@ void main() {
     );
 
     expect(document, contains('camera-controls'));
-    expect(document, contains('camera-orbit="35.00deg 72.00deg 100.00%"'));
-    expect(document, contains('min-camera-orbit="auto 8deg 5%"'));
-    expect(document, contains('max-camera-orbit="auto 172deg 250%"'));
+    expect(document, contains('camera-orbit="35.00deg 82.00deg 100.00%"'));
+    expect(document, contains('min-camera-orbit="auto 42deg 5%"'));
+    expect(document, contains('max-camera-orbit="auto 89deg 250%"'));
+    expect(document, contains('interpolation-decay="16"'));
     expect(document, contains('orbit-sensitivity="0.78"'));
     expect(document, contains('disable-pan'));
+    expect(document, contains('data-sutol-tour-ground="true"'));
+    expect(document, contains('scheduleTourCamera(modelViewer, pose)'));
+    expect(document, contains('requestAnimationFrame(function ()'));
   });
 
-  test('3B tur noktası model HTML çıktısına başlık ve slayt bağlantısıyla eklenir',
+  test(
+      '3B tur noktası model HTML çıktısına başlık ve slayt bağlantısıyla eklenir',
       () {
     const page = PresentationPage(
       id: 'anitkabir-tour-points',
@@ -385,6 +390,7 @@ void main() {
             ModelTourHotspot(
               id: 'lion-road',
               label: 'Aslanlı Yol',
+              kind: ModelTourHotspotKind.text,
               description: 'Tören aksının başlangıcı',
               targetPageId: 'lion-road-slide',
               x: .25,
@@ -406,12 +412,12 @@ void main() {
     );
 
     expect(document, contains('slot="hotspot-lion-road"'));
+    expect(document, contains('sutol-3d-tour-hotspot is-text'));
     expect(document, contains('Aslanlı Yol'));
     expect(document, contains('data-hotspot-target="lion-road-slide"'));
-    expect(document, contains('window.SutolApplyTourHotspots'));
-    expect(document, contains('data-sutol-hotspot-x="0.2500"'));
-    expect(document, contains('data-sutol-hotspot-y="-0.1000"'));
-    expect(document, contains('data-sutol-hotspot-z="0.4000"'));
+    expect(document, contains('data-position="0.25000m -0.10000m 0.40000m"'));
+    expect(document, isNot(contains('data-sutol-hotspot-x=')));
+    expect(document, contains('.sutol-3d-tour-hotspot.is-text'));
   });
 
   test('tur yüzeyi seçme belgesi gerçek 3B koordinat protokolünü açar', () {
@@ -432,6 +438,7 @@ void main() {
     expect(document, contains('document.elementFromPoint'));
     expect(document, contains('sutol-tour-interaction'));
     expect(document, contains('sutol-tour-hotspot'));
+    expect(document, contains('sutol-tour-camera'));
   });
 
   test('3B model yüklenemezse konu bileşeni yedek olarak hazırlanır', () {
@@ -601,6 +608,11 @@ void main() {
     expect(document, contains(sutolModelViewerScriptUrl));
     expect(document, contains('data:model/gltf-binary;base64,TEST'));
     expect(document, contains('sutol-export-stage'));
+    // Export belgesinin de yükleme sonrası hedefi metreye çevirmesi gerekir;
+    // aksi halde model sahnesi editörle aynı hedefte açılmaz.
+    expect(document, contains('window.SutolApplyModelTarget'));
+    expect(document, contains('function renderTourControls()'));
+    expect(document, contains('const tourKeys = new Set()'));
   });
 
   test('yumuşak geçiş aynı 3B modelin açılarını HTML içinde dönüştürür', () {
@@ -650,6 +662,7 @@ void main() {
     expect(document, contains('beginSmoothTransition'));
     expect(document, contains('data-sutol-orbit-theta="180.00"'));
     expect(document, contains('const transitionDurationMs = 1400'));
+    expect(document, contains('viewer.dataset.sutolTargetX = targetX.toFixed(2)'));
   });
 
   test('popüler geçişler HTML sunumuna aktarılır', () {

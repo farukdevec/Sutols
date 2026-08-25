@@ -96,6 +96,7 @@ void main() {
               ModelTourHotspot(
                 id: 'hotspot-1',
                 label: 'Kuzey cephe',
+                kind: ModelTourHotspotKind.text,
                 description: 'Ana giriş',
                 targetPageId: 'page-5',
                 x: .2,
@@ -181,6 +182,10 @@ void main() {
     expect(modelBlock.modelOrbitPhi, 60);
     expect(modelBlock.modelTourHotspots, hasLength(1));
     expect(modelBlock.modelTourHotspots.single.label, 'Kuzey cephe');
+    expect(
+      modelBlock.modelTourHotspots.single.kind,
+      ModelTourHotspotKind.text,
+    );
     expect(modelBlock.modelTourHotspots.single.targetPageId, 'page-5');
     expect(modelBlock.modelTourEnabled, isTrue);
     expect(modelBlock.modelTargetX, 18.5);

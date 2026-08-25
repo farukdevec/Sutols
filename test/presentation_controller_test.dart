@@ -50,6 +50,35 @@ void main() {
     expect(controller.selectedComponentBlock!.modelZoom, 10);
   });
 
+  test('visuals can fill the slide background and move to layer edges', () {
+    final controller = PresentationController();
+    addTearDown(controller.dispose);
+    controller.addComponentBlock(PresentationComponentKind.edebiyat01);
+    final foregroundId = controller.selectedComponentBlock!.id;
+    controller.addUploadedImageBlock('photo-1');
+    final imageId = controller.selectedComponentBlock!.id;
+    controller.addComponentBlock(PresentationComponentKind.edebiyat02);
+    final topId = controller.selectedComponentBlock!.id;
+
+    controller.selectComponentBlock(imageId);
+    controller.setSelectedVisualAsBackground();
+
+    final background = controller.selectedPage.componentBlocks.first;
+    expect(background.id, imageId);
+    expect(background.position, Offset.zero);
+    expect(background.size, const Size(1, 1));
+
+    controller.moveSelectedComponentToEdge(forward: true);
+    expect(controller.selectedPage.componentBlocks.last.id, imageId);
+
+    controller.moveSelectedComponentToEdge(forward: false);
+    expect(controller.selectedPage.componentBlocks.first.id, imageId);
+    expect(
+      controller.selectedPage.componentBlocks.map((block) => block.id),
+      <String>[imageId, foregroundId, topId],
+    );
+  });
+
   test('undo and redo restore deck mutations', () {
     final controller = PresentationController();
     addTearDown(controller.dispose);
@@ -249,16 +278,16 @@ void main() {
     controller.endSelectedModelOrbitGesture();
     expect(cameraNotifications, lessThan(10));
 
-    // Tur görünümü üst yarımküreyle sınırlı değildir; profesyonel 360°
-    // inceleme için modelin altına kadar bakış açısı korunur.
+    // FPS turu modelin tabanında kalır; alt yüzeyi gösterecek açıya hiç
+    // geçmeden, insan göz hizasındaki bakış aralığını korur.
     for (var i = 0; i < 40; i++) {
       controller.lookAroundSelectedModelTour(const Offset(0, 24));
     }
-    expect(controller.selectedComponentBlock!.modelOrbitPhi, 172);
+    expect(controller.selectedComponentBlock!.modelOrbitPhi, 89);
     for (var i = 0; i < 40; i++) {
       controller.lookAroundSelectedModelTour(const Offset(0, -24));
     }
-    expect(controller.selectedComponentBlock!.modelOrbitPhi, 8);
+    expect(controller.selectedComponentBlock!.modelOrbitPhi, 42);
 
     controller.beginSelectedModelOrbitGesture();
     controller.moveSelectedModelTour(forward: 20);
@@ -272,6 +301,38 @@ void main() {
     expect(controller.selectedComponentBlock!.modelTargetX, 0);
     expect(controller.selectedComponentBlock!.modelTargetY, 0);
     expect(controller.selectedComponentBlock!.modelTargetZ, 0);
+  });
+
+  test('virtual tour point persists as a model hotspot', () {
+    final controller = PresentationController();
+    addTearDown(controller.dispose);
+    controller.add3DModelBlock(
+      const Presentation3DModelAsset(
+        id: 'tour-point-model',
+        label: 'Tour point model',
+        assetPath: 'https://example.com/tour-point.glb',
+        category: 'Test',
+        tags: <String>[],
+        byteSize: 0,
+        sha256: '',
+      ),
+    );
+
+    controller.updateSelectedModelTourEnabled(true);
+    controller.addSelectedModelTourHotspot(
+      label: 'Giriş noktası',
+      kind: ModelTourHotspotKind.text,
+      x: .2,
+      y: -.8,
+      z: .4,
+    );
+
+    final hotspot = controller.selectedComponentBlock!.modelTourHotspots.single;
+    expect(hotspot.kind, ModelTourHotspotKind.text);
+    expect(hotspot.label, 'Giriş noktası');
+    expect(hotspot.x, .2);
+    expect(hotspot.y, -.8);
+    expect(hotspot.z, .4);
   });
 
   test('uploaded photos start at image ratio and can then resize freely', () {

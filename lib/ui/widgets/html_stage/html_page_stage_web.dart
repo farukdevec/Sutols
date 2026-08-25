@@ -127,6 +127,12 @@ class HtmlPageStage extends StatefulWidget {
     this.onTourInteraction,
     this.onTourHotspot,
     this.tourInteractionEnabled = false,
+    this.tourCameraTheta,
+    this.tourCameraPhi,
+    this.tourCameraTargetX,
+    this.tourCameraTargetY,
+    this.tourCameraTargetZ,
+    this.tourCameraRevision = 0,
   });
 
   final PresentationPage page;
@@ -150,6 +156,12 @@ class HtmlPageStage extends StatefulWidget {
   final VoidCallback? onTourInteraction;
   final ValueChanged<String>? onTourHotspot;
   final bool tourInteractionEnabled;
+  final double? tourCameraTheta;
+  final double? tourCameraPhi;
+  final double? tourCameraTargetX;
+  final double? tourCameraTargetY;
+  final double? tourCameraTargetZ;
+  final int tourCameraRevision;
 
   @override
   State<HtmlPageStage> createState() => _HtmlPageStageState();
@@ -513,11 +525,15 @@ class _HtmlModelCanvasState extends State<HtmlModelCanvas> {
     );
     _setAttribute(
       'min-camera-orbit',
-      widget.tourEnabled ? 'auto 8deg 5%' : 'auto auto 1%',
+      widget.tourEnabled ? 'auto 42deg 5%' : 'auto auto 1%',
     );
     _setAttribute(
       'max-camera-orbit',
-      widget.tourEnabled ? 'auto 172deg 250%' : 'auto auto 250%',
+      widget.tourEnabled ? 'auto 89deg 250%' : 'auto auto 250%',
+    );
+    _setAttribute(
+      'data-sutol-tour-ground',
+      widget.tourEnabled ? 'true' : 'false',
     );
     _applyCameraTarget();
     _setAttribute('interaction-prompt', 'none');
@@ -603,7 +619,12 @@ class _HtmlModelCanvasState extends State<HtmlModelCanvas> {
       return;
     }
     final x = _modelCenterX + _modelWidth * widget.targetX / 100;
-    final y = _modelCenterY + _modelHeight * widget.targetY / 100;
+    // Sanal turdaki sıfır noktası modelin zemine temas eden alt sınırıdır.
+    // Kaydedilen X/Z ofsetleri buradan yürüyüşü taşır; Y ise modelin merkezine
+    // bağlı kalmadığı için kamera alt yüzeye geçmez.
+    final y = widget.tourEnabled
+        ? _modelCenterY - _modelHeight / 2
+        : _modelCenterY + _modelHeight * widget.targetY / 100;
     final z = _modelCenterZ + _modelDepth * widget.targetZ / 100;
     _setAttribute(
       'camera-target',
@@ -669,17 +690,14 @@ class _HtmlModelCanvasState extends State<HtmlModelCanvas> {
         widget.onSurfacePickMissed?.call();
         return;
       }
-      final x =
-          (_jsCoordinate(position, 'x') - _modelCenterX) / (_modelWidth / 2);
-      final y =
-          (_jsCoordinate(position, 'y') - _modelCenterY) / (_modelHeight / 2);
-      final z =
-          (_jsCoordinate(position, 'z') - _modelCenterZ) / (_modelDepth / 2);
+      final x = _jsCoordinate(position, 'x');
+      final y = _jsCoordinate(position, 'y');
+      final z = _jsCoordinate(position, 'z');
       if (!x.isFinite || !y.isFinite || !z.isFinite) return;
       widget.onSurfacePositionPicked?.call(ModelTourSurfacePoint(
-        x: x.clamp(-1.0, 1.0).toDouble(),
-        y: y.clamp(-1.0, 1.0).toDouble(),
-        z: z.clamp(-1.0, 1.0).toDouble(),
+        x: x.clamp(-500.0, 500.0).toDouble(),
+        y: y.clamp(-500.0, 500.0).toDouble(),
+        z: z.clamp(-500.0, 500.0).toDouble(),
       ));
     } catch (_) {
       widget.onSurfacePickMissed?.call();
@@ -823,9 +841,10 @@ class _HtmlPageStageState extends State<HtmlPageStage> {
       ..style.width = '100%'
       ..style.height = '100%'
       ..style.position = 'relative'
-      ..style.pointerEvents = _shouldAllowIframeInteraction || widget.onTap != null
-          ? 'auto'
-          : 'none'
+      ..style.pointerEvents =
+          _shouldAllowIframeInteraction || widget.onTap != null
+              ? 'auto'
+              : 'none'
       ..style.overflow = 'hidden'
       ..style.backgroundColor = 'transparent';
     _applyVisualStyle();
@@ -899,10 +918,49 @@ class _HtmlPageStageState extends State<HtmlPageStage> {
     );
   }
 
+  void _applyTourCamera() {
+    final theta = widget.tourCameraTheta;
+    final phi = widget.tourCameraPhi;
+    final targetX = widget.tourCameraTargetX;
+    final targetY = widget.tourCameraTargetY;
+    final targetZ = widget.tourCameraTargetZ;
+    if (theta == null ||
+        phi == null ||
+        targetX == null ||
+        targetY == null ||
+        targetZ == null) {
+      return;
+    }
+    final targetWindow = _iframeElement.contentWindow;
+    if (targetWindow == null) return;
+    targetWindow.postMessage(
+      jsonEncode(<String, Object>{
+        'type': 'sutol-tour-camera',
+        'theta': theta,
+        'phi': phi,
+        'targetX': targetX,
+        'targetY': targetY,
+        'targetZ': targetZ,
+      }),
+      '*',
+    );
+  }
+
+  /// `srcdoc` belgesi veya model kaynağı, Flutter'ın önceki kamera mesajından
+  /// sonra hazır olabilir. Bu durumda model-viewer başlangıç attribute'larına
+  /// döner. Sahne her yüklendiğinde son tur durumunu tekrar göndermek, WASD
+  /// tuşu bırakıldığında görünen bu geri sıçramayı önler.
+  void _restoreTourRuntimeState() {
+    if (!mounted) return;
+    _setTourPointPlacement(widget.tourPointPlacementEnabled);
+    _applyTourCamera();
+  }
+
   void _handleTourMessage(html.MessageEvent event) {
-    // srcdoc sahnesinin gönderdiği küçük, açık protokol. Diğer pencere
-    // mesajlarını görmezden gelerek tur düzenleme olayını yalıtıyoruz.
-    if (event.source != _iframeElement.contentWindow) return;
+    // Bazı Flutter web derlemelerinde `srcdoc` iframe'inin Window nesnesi
+    // olayda eşitlik karşılaştırmasını geçmiyor. Yalnızca dar, isim alanlı
+    // tur protokolünü kabul ederek yüzey seçimini bu tarayıcılarda da
+    // güvenilir kılıyoruz.
     dynamic raw = event.data;
     if (raw is String) {
       try {
@@ -913,6 +971,7 @@ class _HtmlPageStageState extends State<HtmlPageStage> {
     }
     if (raw is! Map) return;
     final type = raw['type']?.toString();
+    if (type == null || !type.startsWith('sutol-tour-')) return;
     if (type == 'sutol-tour-interaction') {
       widget.onTourInteraction?.call();
       return;
@@ -975,11 +1034,11 @@ class _HtmlPageStageState extends State<HtmlPageStage> {
         _shouldAllowIframeInteraction ? 'auto' : 'none';
     _pendingIframeElement?.style.pointerEvents =
         _shouldAllowIframeInteraction ? 'auto' : 'none';
-    final shouldRequestSurfacePick =
-        oldWidget.tourSurfacePickGeneration !=
-                widget.tourSurfacePickGeneration &&
-            widget.tourSurfacePickPosition != null;
-    if (oldWidget.tourPointPlacementEnabled != widget.tourPointPlacementEnabled) {
+    final shouldRequestSurfacePick = oldWidget.tourSurfacePickGeneration !=
+            widget.tourSurfacePickGeneration &&
+        widget.tourSurfacePickPosition != null;
+    if (oldWidget.tourPointPlacementEnabled !=
+        widget.tourPointPlacementEnabled) {
       _setTourPointPlacement(widget.tourPointPlacementEnabled);
       // Yüzey seçimi bir çalışma zamanı durumu; burada iframe'i yeniden
       // yazmak platform görünümünü Flutter diyaloğunun üstüne taşıyordu.
@@ -989,6 +1048,10 @@ class _HtmlPageStageState extends State<HtmlPageStage> {
     }
     if (shouldRequestSurfacePick) {
       _requestTourSurfacePick(widget.tourSurfacePickPosition!);
+      return;
+    }
+    if (oldWidget.tourCameraRevision != widget.tourCameraRevision) {
+      _applyTourCamera();
       return;
     }
     // Sunucu HUD'ı (anlatım paneli, kontroller vb.) açılıp kapanırken aynı
@@ -1131,9 +1194,10 @@ class _HtmlPageStageState extends State<HtmlPageStage> {
         });
       }
 
-      _initialLoadSubscription = initialIframe.onLoad.listen(
-        (_) => revealInitialWhenPainted(loaded: true),
-      );
+      _initialLoadSubscription = initialIframe.onLoad.listen((_) {
+        _restoreTourRuntimeState();
+        revealInitialWhenPainted(loaded: true);
+      });
       initialIframe.srcdoc = markedDocument;
       var checks = 0;
       _initialLoadTimer = Timer.periodic(
@@ -1175,6 +1239,10 @@ class _HtmlPageStageState extends State<HtmlPageStage> {
           }),
           '*',
         );
+        // document.open()/close() ile yapılan yerinde yenilemede iframe'in
+        // `load` olayı tarayıcıya göre atlanabilir. Yeni betik kurulduktan
+        // sonraki görevde tur durumunu yeniden uygula.
+        Timer.run(_restoreTourRuntimeState);
         return;
       }
     }
@@ -1260,6 +1328,7 @@ class _HtmlPageStageState extends State<HtmlPageStage> {
             unawaited(subscription.cancel());
           }
           previousIframe.remove();
+          _restoreTourRuntimeState();
         });
       });
     }
@@ -1392,6 +1461,8 @@ class _HtmlPageStageState extends State<HtmlPageStage> {
                 isImage || modelId == null ? null : block.modelTargetZ,
             'modelOrbitEnabled':
                 isImage || modelId == null ? null : block.modelOrbitEnabled,
+            'modelTourEnabled':
+                isImage || modelId == null ? null : block.modelTourEnabled,
             'modelAnimationEnabled':
                 isImage || modelId == null ? null : block.modelAnimationEnabled,
           };
@@ -1516,6 +1587,7 @@ bool _sameModelTourHotspots(
     final b = second[index];
     if (a.id != b.id ||
         a.label != b.label ||
+        a.kind != b.kind ||
         a.description != b.description ||
         a.targetPageId != b.targetPageId ||
         a.x != b.x ||

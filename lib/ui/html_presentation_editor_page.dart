@@ -5643,7 +5643,12 @@ class _Html3DModelControlsState extends State<_Html3DModelControls> {
       // Kullanıcının planını best-effort oku; hata olsa bile model yükleme
       // akışını bozmamalı (kilit kontrolü "free" varsayımıyla çalışır).
       var userTier = 'free';
-      final uid = FirebaseAuth.instance.currentUser?.uid;
+      String? uid;
+      try {
+        uid = FirebaseAuth.instance.currentUser?.uid;
+      } catch (_) {
+        // Firebase henüz başlatılmadıysa paket modelleri yine yüklenebilir.
+      }
       if (uid != null) {
         try {
           final userDoc = await FirestoreRestHelper.getDocument('users/$uid');
@@ -5950,10 +5955,7 @@ class _Html3DModelControlsState extends State<_Html3DModelControls> {
                       byteSize: 0,
                       sha256: '',
                     ),
-                    thumbnailUrl: ModelAssetService.thumbnailKey(
-                      thumbnailField: model.thumbnailUrl,
-                      modelId: model.id,
-                    ),
+                    thumbnailUrl: model.thumbnailUrl,
                     isSelected: selectedModelId == model.id,
                     locked: _isLocked(model),
                     onTap: () => _add(model),
@@ -5998,10 +6000,7 @@ class _Html3DModelControlsState extends State<_Html3DModelControls> {
                 byteSize: 0,
                 sha256: '',
               ),
-              thumbnailUrl: ModelAssetService.thumbnailKey(
-                thumbnailField: model.thumbnailUrl,
-                modelId: model.id,
-              ),
+              thumbnailUrl: model.thumbnailUrl,
               isSelected: selectedModelId == model.id,
               locked: _isLocked(model),
               onTap: () => _add(model),
@@ -7353,8 +7352,13 @@ class _Model3DLibraryCardState extends State<_Model3DLibraryCard> {
   }
 
   Widget _thumbnail(BuildContext context) {
+    final explicitThumbnail = widget.thumbnailUrl.trim();
+    if (explicitThumbnail.isEmpty &&
+        ModelAssetService.isLocalAssetPath(widget.model.assetPath)) {
+      return _letterBox(context);
+    }
     final key = ModelAssetService.thumbnailKey(
-      thumbnailField: widget.thumbnailUrl,
+      thumbnailField: explicitThumbnail,
       modelId: widget.model.id,
     );
 
@@ -10373,7 +10377,7 @@ Future<void> _showAddTourHotspotDialog(
                             decoration: InputDecoration(
                               labelText: '${field.label} konumu',
                               helperText:
-                                  fixedPoint == null ? '-1…1' : 'Yüzey konumu',
+                                  fixedPoint == null ? 'metre (-500…500)' : 'Yüzey konumu (m)',
                             ),
                           ),
                         ),
@@ -10418,11 +10422,12 @@ Future<void> _showAddTourHotspotDialog(
             onPressed: () {
               double coordinate(TextEditingController field) =>
                   (double.tryParse(field.text.replaceAll(',', '.')) ?? 0)
-                      .clamp(-1.0, 1.0)
+                      .clamp(-500.0, 500.0)
                       .toDouble();
               if (existing == null) {
                 controller.addSelectedModelTourHotspot(
                   label: labelController.text,
+                  kind: ModelTourHotspotKind.text,
                   description: descriptionController.text,
                   x: coordinate(xController),
                   y: coordinate(yController),
@@ -10834,6 +10839,9 @@ enum _StageItemContextAction {
   copy,
   paste,
   duplicate,
+  setAsBackground,
+  bringToFront,
+  sendToBack,
   delete,
 }
 
@@ -10851,6 +10859,11 @@ Future<void> _showStageItemContextMenu(
   if (overlay is! RenderBox) {
     return;
   }
+
+  final selectedBlock = controller.selectedComponentBlock;
+  final canArrangeVisual = selectedBlock != null &&
+      (_isUploadedImageBlock(selectedBlock) ||
+          _isRenderable3DModelBlock(selectedBlock));
 
   final action = await showMenu<_StageItemContextAction>(
     context: context,
@@ -10887,6 +10900,30 @@ Future<void> _showStageItemContextMenu(
           label: tr('Çoğalt', 'Duplicate'),
         ),
       ),
+      if (canArrangeVisual) ...<PopupMenuEntry<_StageItemContextAction>>[
+        const PopupMenuDivider(),
+        PopupMenuItem<_StageItemContextAction>(
+          value: _StageItemContextAction.setAsBackground,
+          child: _StageContextMenuRow(
+            icon: Icons.wallpaper_rounded,
+            label: tr('Arka plan olarak ayarla', 'Set as Background'),
+          ),
+        ),
+        PopupMenuItem<_StageItemContextAction>(
+          value: _StageItemContextAction.bringToFront,
+          child: _StageContextMenuRow(
+            icon: Icons.flip_to_front_rounded,
+            label: tr('Öne getir', 'Bring to Front'),
+          ),
+        ),
+        PopupMenuItem<_StageItemContextAction>(
+          value: _StageItemContextAction.sendToBack,
+          child: _StageContextMenuRow(
+            icon: Icons.flip_to_back_rounded,
+            label: tr('Arkaya getir', 'Send to Back'),
+          ),
+        ),
+      ],
       const PopupMenuDivider(),
       PopupMenuItem<_StageItemContextAction>(
         value: _StageItemContextAction.delete,
@@ -10919,6 +10956,12 @@ Future<void> _showStageItemContextMenu(
       controller.pasteCopiedItems();
     case _StageItemContextAction.duplicate:
       controller.duplicateSelectedItems();
+    case _StageItemContextAction.setAsBackground:
+      controller.setSelectedVisualAsBackground();
+    case _StageItemContextAction.bringToFront:
+      controller.moveSelectedComponentToEdge(forward: true);
+    case _StageItemContextAction.sendToBack:
+      controller.moveSelectedComponentToEdge(forward: false);
     case _StageItemContextAction.delete:
       controller.removeSelectedItems();
   }

@@ -102,22 +102,30 @@ class ModelMatchingService {
   /// `rankCatalogModels` (konu bazlı Aşama 2 araması) aynı istatistikleri
   /// kullansın diye ortak metot burada toplandı.
   static List<_IndexedModel> _buildIndex(List<ModelCatalogEntry> models) {
-    final indexed = models
-        .map(
-          (model) => _IndexedModel(
-            model: model,
-            normalizedName: PresentationKeywordCatalog.normalize(model.name),
-            normalizedTags: <String>[...model.tags, ...model.tagsEn]
-                .map(PresentationKeywordCatalog.normalize)
-                .where((tag) => tag.isNotEmpty)
-                .toList(growable: false),
-            normalizedExcludeTags: model.excludeTags
-                .map(PresentationKeywordCatalog.normalize)
-                .where((tag) => tag.isNotEmpty)
-                .toSet(),
-          ),
-        )
-        .toList(growable: false);
+    final indexed = <_IndexedModel>[];
+    final indexedIds = <String>{};
+    for (final model in models) {
+      final modelId = model.id.trim();
+      // ModelRepository paket kayıtlarını zaten döndürür. Çevrimdışı
+      // eşleştirme için eklenen yerel katalogla birleştiğinde aynı modelin
+      // skoru/IDF frekansı iki kez hesaplanmamalı. İlk kayıt (repository)
+      // korunur; bu da küçük resim ve kaynak adresi bilgisini kaybetmez.
+      if (modelId.isEmpty || !indexedIds.add(modelId)) continue;
+      indexed.add(
+        _IndexedModel(
+          model: model,
+          normalizedName: PresentationKeywordCatalog.normalize(model.name),
+          normalizedTags: <String>[...model.tags, ...model.tagsEn]
+              .map(PresentationKeywordCatalog.normalize)
+              .where((tag) => tag.isNotEmpty)
+              .toList(growable: false),
+          normalizedExcludeTags: model.excludeTags
+              .map(PresentationKeywordCatalog.normalize)
+              .where((tag) => tag.isNotEmpty)
+              .toSet(),
+        ),
+      );
+    }
 
     final freq = <String, int>{};
     for (final m in indexed) {

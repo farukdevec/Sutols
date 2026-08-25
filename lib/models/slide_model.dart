@@ -595,11 +595,16 @@ class ModelTourSurfacePoint {
   final double z;
 }
 
+/// Tur yüzeyindeki öğenin görsel biçimi. Eski projeler alanı içermediğinden
+/// varsayılan `point` olarak okunur ve mevcut işaretleri korur.
+enum ModelTourHotspotKind { point, text }
+
 @immutable
 class ModelTourHotspot {
   const ModelTourHotspot({
     required this.id,
     required this.label,
+    this.kind = ModelTourHotspotKind.point,
     this.description = '',
     this.targetPageId,
     this.x = 0,
@@ -609,12 +614,15 @@ class ModelTourHotspot {
 
   final String id;
   final String label;
+  final ModelTourHotspotKind kind;
   final String description;
   final String? targetPageId;
 
-  /// Modelin merkezine göre normalize edilmiş konum (-1 ile 1 arası).
-  /// Gerçek metre konumu, model-viewer yüklendiğinde modelin boyutlarından
-  /// hesaplanır; farklı ölçekteki GLB dosyaları böylece aynı formatı kullanır.
+  /// GLB sahnesindeki gerçek konum (metre).
+  ///
+  /// Konumu doğrudan saklamak, editör, önizleme ve dışa aktarılan HTML'in
+  /// model bounding box'ını farklı anlarda hesaplamasından doğan kaymaları
+  /// önler. Bu değerler `model-viewer`ın `data-position` birimiyle aynıdır.
   final double x;
   final double y;
   final double z;
@@ -622,6 +630,7 @@ class ModelTourHotspot {
   ModelTourHotspot copyWith({
     String? id,
     String? label,
+    ModelTourHotspotKind? kind,
     String? description,
     Object? targetPageId = _copySentinel,
     double? x,
@@ -631,6 +640,7 @@ class ModelTourHotspot {
       ModelTourHotspot(
         id: id ?? this.id,
         label: label ?? this.label,
+        kind: kind ?? this.kind,
         description: description ?? this.description,
         targetPageId: identical(targetPageId, _copySentinel)
             ? this.targetPageId
@@ -839,7 +849,8 @@ class PresentationPage {
 
   String get title {
     for (final block in textBlocks) {
-      if (block.type == PresentationTextType.title && block.text.trim().isNotEmpty) {
+      if (block.type == PresentationTextType.title &&
+          block.text.trim().isNotEmpty) {
         return block.text;
       }
     }

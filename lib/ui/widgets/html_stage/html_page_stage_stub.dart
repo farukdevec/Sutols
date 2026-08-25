@@ -139,6 +139,12 @@ class HtmlPageStage extends StatelessWidget {
     this.onTourInteraction,
     this.onTourHotspot,
     this.tourInteractionEnabled = false,
+    this.tourCameraTheta,
+    this.tourCameraPhi,
+    this.tourCameraTargetX,
+    this.tourCameraTargetY,
+    this.tourCameraTargetZ,
+    this.tourCameraRevision = 0,
   });
 
   final PresentationPage page;
@@ -162,6 +168,12 @@ class HtmlPageStage extends StatelessWidget {
   final VoidCallback? onTourInteraction;
   final ValueChanged<String>? onTourHotspot;
   final bool tourInteractionEnabled;
+  final double? tourCameraTheta;
+  final double? tourCameraPhi;
+  final double? tourCameraTargetX;
+  final double? tourCameraTargetY;
+  final double? tourCameraTargetZ;
+  final int tourCameraRevision;
 
   @override
   Widget build(BuildContext context) {
