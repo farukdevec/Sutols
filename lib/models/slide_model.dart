@@ -665,6 +665,7 @@ class PresentationComponentBlock {
     this.modelZoom = 1,
     this.modelOrbitEnabled = false,
     this.modelTourEnabled = false,
+    this.modelTourFrozen = false,
     this.modelOrbitTheta = 0,
     this.modelOrbitPhi = 75,
     this.modelTargetX = 0,
@@ -699,6 +700,7 @@ class PresentationComponentBlock {
   final double modelZoom;
   final bool modelOrbitEnabled;
   final bool modelTourEnabled;
+  final bool modelTourFrozen;
   final double modelOrbitTheta;
   final double modelOrbitPhi;
   final double modelTargetX;
@@ -728,6 +730,7 @@ class PresentationComponentBlock {
     double? modelZoom,
     bool? modelOrbitEnabled,
     bool? modelTourEnabled,
+    bool? modelTourFrozen,
     double? modelOrbitTheta,
     double? modelOrbitPhi,
     double? modelTargetX,
@@ -764,6 +767,7 @@ class PresentationComponentBlock {
       modelZoom: modelZoom ?? this.modelZoom,
       modelOrbitEnabled: modelOrbitEnabled ?? this.modelOrbitEnabled,
       modelTourEnabled: modelTourEnabled ?? this.modelTourEnabled,
+      modelTourFrozen: modelTourFrozen ?? this.modelTourFrozen,
       modelOrbitTheta: modelOrbitTheta ?? this.modelOrbitTheta,
       modelOrbitPhi: modelOrbitPhi ?? this.modelOrbitPhi,
       modelTargetX: modelTargetX ?? this.modelTargetX,

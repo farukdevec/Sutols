@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math' as math;
 import 'dart:ui' as ui;
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -20,9 +21,11 @@ class PresentationPreviewPage extends StatefulWidget {
   const PresentationPreviewPage({
     super.key,
     required this.controller,
+    this.useFullscreen = true,
   });
 
   final PresentationController controller;
+  final bool useFullscreen;
 
   @override
   State<PresentationPreviewPage> createState() =>
@@ -71,13 +74,18 @@ class _PresentationPreviewPageState extends State<PresentationPreviewPage>
     _pageTransitionController = AnimationController(vsync: this, value: 1);
     _index = widget.controller.selectedIndex;
     _showControls = !widget.controller.selectedPage.componentBlocks.any(
-      (block) => block.modelAssetId != null && block.modelTourEnabled,
+      (block) =>
+          block.modelAssetId != null &&
+          block.modelTourEnabled &&
+          !block.modelTourFrozen,
     );
-    _fullscreenSubscription = presentationFullscreenChanges().listen(
-      (isFullscreen) {
-        if (!isFullscreen && mounted) _close();
-      },
-    );
+    if (widget.useFullscreen) {
+      _fullscreenSubscription = presentationFullscreenChanges().listen(
+        (isFullscreen) {
+          if (!isFullscreen && mounted) _close();
+        },
+      );
+    }
     _pointerLockMovementSubscription = pointerLockMovements.listen(
       _queueTourLook,
     );
@@ -98,12 +106,14 @@ class _PresentationPreviewPageState extends State<PresentationPreviewPage>
         return;
       }
       _focusNode.requestFocus();
-      requestPresentationFullscreen();
+      if (widget.useFullscreen) requestPresentationFullscreen();
     });
   }
 
   @override
   void dispose() {
+    _flushPendingTourLook();
+    _persistCurrentTourPose(freeze: true);
     WidgetsBinding.instance.removeObserver(this);
     HardwareKeyboard.instance.removeHandler(_handleGlobalTourMovementKey);
     unawaited(_fullscreenSubscription?.cancel());
@@ -114,7 +124,9 @@ class _PresentationPreviewPageState extends State<PresentationPreviewPage>
     if (isPointerLocked) exitPointerLock();
     _focusNode.dispose();
     _pageTransitionController.dispose();
-    if (!_returnToTourEditor) exitPresentationFullscreen();
+    if (widget.useFullscreen && !_returnToTourEditor) {
+      exitPresentationFullscreen();
+    }
     super.dispose();
   }
 
@@ -130,6 +142,8 @@ class _PresentationPreviewPageState extends State<PresentationPreviewPage>
     if (clamped == _index) {
       return;
     }
+    _flushPendingTourLook();
+    _persistCurrentTourPose(freeze: true);
     final previousPage = widget.controller.pages[_index];
     final gapIndex = math.min(_index, clamped);
     final transitionKind = widget.controller.transitionAfterPage(gapIndex);
@@ -254,8 +268,34 @@ class _PresentationPreviewPageState extends State<PresentationPreviewPage>
 
   void _close() {
     if (_closing || !mounted) return;
+    _flushPendingTourLook();
+    _persistCurrentTourPose(freeze: true);
     _closing = true;
     Navigator.of(context).pop();
+  }
+
+  void _flushPendingTourLook() {
+    final look = _pendingTourLook;
+    _pendingTourLook = Offset.zero;
+    if (look != Offset.zero) {
+      _tourStageKey.currentState?.lookAroundTour(look);
+    }
+  }
+
+  void _persistCurrentTourPose({bool freeze = false}) {
+    final stage = _tourStageKey.currentState;
+    final pose = stage?.currentTourPose;
+    final blockId = stage?.currentTourBlockId;
+    if (pose == null || blockId == null || _index < 0) return;
+    final pages = widget.controller.pages;
+    if (_index >= pages.length) return;
+    widget.controller.saveModelTourPose(
+      pageId: pages[_index].id,
+      blockId: blockId,
+      pose: pose,
+      zoom: stage?.currentTourZoom,
+      freeze: freeze,
+    );
   }
 
   void _handleKeyEvent(KeyEvent event) {
@@ -273,15 +313,7 @@ class _PresentationPreviewPageState extends State<PresentationPreviewPage>
         key == LogicalKeyboardKey.backspace) {
       _previous();
     } else if (key == LogicalKeyboardKey.escape) {
-      if (_tourStageKey.currentState?.isTourPointPlacementActive == true) {
-        _tourStageKey.currentState?.cancelTourPointPlacement();
-        return;
-      }
-      if (isPointerLocked) {
-        exitPointerLock();
-        return;
-      }
-      _close();
+      _returnToEditor();
     } else if (key == LogicalKeyboardKey.keyZ ||
         key == LogicalKeyboardKey.equal ||
         key == LogicalKeyboardKey.add) {
@@ -297,6 +329,11 @@ class _PresentationPreviewPageState extends State<PresentationPreviewPage>
   }
 
   bool _handleGlobalTourMovementKey(KeyEvent event) {
+    if (event is KeyDownEvent &&
+        event.logicalKey == LogicalKeyboardKey.escape) {
+      _returnToEditor();
+      return true;
+    }
     // WASD olayını en erken global klavye katmanında tüketmek, aynı olayın
     // KeyboardListener'a ikinci kez düşerek zamanlayıcıyı kararsızlaştırmasını
     // önler.
@@ -368,7 +405,10 @@ class _PresentationPreviewPageState extends State<PresentationPreviewPage>
             pageCount == 0 ? 0 : math.min(_index, math.max(0, pageCount - 1));
         final page = pageCount == 0 ? null : pages[safeIndex];
         final isTourPage = page?.componentBlocks.any(
-              (block) => block.modelAssetId != null && block.modelTourEnabled,
+              (block) =>
+                  block.modelAssetId != null &&
+                  block.modelTourEnabled &&
+                  !block.modelTourFrozen,
             ) ??
             false;
         final maxFragmentStep =
@@ -477,8 +517,6 @@ class _PresentationPreviewPageState extends State<PresentationPreviewPage>
                       onReset: () =>
                           _tourStageKey.currentState?.resetTourView(),
                       onEdit: _returnToEditor,
-                      onAddText: _startTourTextPlacement,
-                      onAddPoint: _startTourPointPlacement,
                       narrationOpen: _tourNarrationOpen,
                       onToggleNarration: _toggleTourNarration,
                       onClose: _close,
@@ -595,31 +633,12 @@ class _PresentationPreviewPageState extends State<PresentationPreviewPage>
   void _returnToEditor() {
     _returnToTourEditor = true;
     _stopTourMovement();
+    // Zamanlayıcının henüz işlemediği son fare hareketini kamera pozuna kat.
+    // Aksi halde Esc, kullanıcının bıraktığı son bakış açısını atabiliyordu.
+    _flushPendingTourLook();
     _stopTourLook();
     if (isPointerLocked) exitPointerLock();
     _close();
-  }
-
-  void _startTourTextPlacement() {
-    _startTourPlacement(_TourPlacementAction.text);
-  }
-
-  void _startTourPointPlacement() {
-    _startTourPlacement(_TourPlacementAction.point);
-  }
-
-  void _startTourPlacement(_TourPlacementAction action) {
-    _stopTourMovement();
-    _stopTourLook();
-    if (isPointerLocked) exitPointerLock();
-    if (mounted) {
-      setState(() {
-        _pointerLocked = false;
-        _tourStarted = true;
-        _tourPlacementAction = action;
-      });
-    }
-    _tourStageKey.currentState?.beginTourPointPlacement();
   }
 
   void _showTourSurfaceMiss() {
@@ -936,7 +955,8 @@ class _TourJoystickState extends State<_TourJoystick> {
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: const Color(0xA8071426),
-                  border: Border.all(color: const Color(0x807DD3FC), width: 1.5),
+                  border:
+                      Border.all(color: const Color(0x807DD3FC), width: 1.5),
                   boxShadow: const <BoxShadow>[
                     BoxShadow(
                       color: Color(0x55000000),
@@ -972,8 +992,6 @@ class _TourExperienceHud extends StatelessWidget {
     required this.onEngage,
     required this.onReset,
     required this.onEdit,
-    required this.onAddText,
-    required this.onAddPoint,
     required this.narrationOpen,
     required this.onToggleNarration,
     required this.onClose,
@@ -983,8 +1001,6 @@ class _TourExperienceHud extends StatelessWidget {
   final VoidCallback onEngage;
   final VoidCallback onReset;
   final VoidCallback onEdit;
-  final VoidCallback onAddText;
-  final VoidCallback onAddPoint;
   final bool narrationOpen;
   final VoidCallback onToggleNarration;
   final VoidCallback onClose;
@@ -1042,16 +1058,16 @@ class _TourExperienceHud extends StatelessWidget {
                         onPressed: onEngage,
                       )
                     else
-                      const Row(
+                      Row(
                         mainAxisSize: MainAxisSize.min,
                         children: <Widget>[
-                          Icon(
+                          const Icon(
                             Icons.mouse_rounded,
                             size: 15,
                             color: Color(0xFFA5F3FC),
                           ),
-                          SizedBox(width: 5),
-                          Text(
+                          const SizedBox(width: 5),
+                          const Text(
                             'Sol tuş + sürükle: bak · WASD: yürü',
                             style: TextStyle(
                               color: Color(0xFFA5F3FC),
@@ -1059,40 +1075,18 @@ class _TourExperienceHud extends StatelessWidget {
                               fontWeight: FontWeight.w700,
                             ),
                           ),
+                          const SizedBox(width: 10),
+                          _TourHudButton(
+                            icon: Icons.explore_off_rounded,
+                            label: 'Sanal turu kapat',
+                            onPressed: onEdit,
+                          ),
                         ],
                       ),
                   ],
                 ),
               ),
             ),
-            // Düzenleme araçları tur açıkken de erişilebilir kalır. Bir araç
-            // seçildiğinde üst katman fare kilidini güvenle kapatır.
-            ...<Widget>[
-              const SizedBox(width: 8),
-              DecoratedBox(
-                decoration: BoxDecoration(
-                  color: const Color(0xDC071426),
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: const Color(0x4D7DD3FC)),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: <Widget>[
-                    _TourHudToolButton(
-                      icon: Icons.text_fields_rounded,
-                      label: '3B metin ekle',
-                      onPressed: onAddText,
-                    ),
-                    const SizedBox(width: 2),
-                    _TourHudToolButton(
-                      icon: Icons.add_location_alt_rounded,
-                      label: 'Nokta yerleştir',
-                      onPressed: onAddPoint,
-                    ),
-                  ],
-                ),
-              ),
-            ],
             const Spacer(),
             _TourHudIconButton(
               tooltip: 'Başlangıç görünümüne dön',
@@ -1111,13 +1105,7 @@ class _TourExperienceHud extends StatelessWidget {
             ),
             const SizedBox(width: 8),
             _TourHudIconButton(
-              tooltip: 'Tur düzenleme araçlarına dön',
-              icon: Icons.edit_rounded,
-              onPressed: onEdit,
-            ),
-            const SizedBox(width: 8),
-            _TourHudIconButton(
-              tooltip: 'Turu kapat',
+              tooltip: 'Sunumu kapat',
               icon: Icons.close_rounded,
               onPressed: onClose,
             ),
@@ -1313,33 +1301,6 @@ class _TourHudButton extends StatelessWidget {
         visualDensity: VisualDensity.compact,
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
         textStyle: const TextStyle(fontWeight: FontWeight.w800),
-      ),
-    );
-  }
-}
-
-class _TourHudToolButton extends StatelessWidget {
-  const _TourHudToolButton({
-    required this.icon,
-    required this.label,
-    required this.onPressed,
-  });
-
-  final IconData icon;
-  final String label;
-  final VoidCallback onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    return TextButton.icon(
-      onPressed: onPressed,
-      icon: Icon(icon, size: 16),
-      label: Text(label),
-      style: TextButton.styleFrom(
-        foregroundColor: const Color(0xFFE0F2FE),
-        visualDensity: VisualDensity.compact,
-        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 9),
-        textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800),
       ),
     );
   }
@@ -1561,6 +1522,7 @@ class _OrbitPose {
     this.targetX,
     this.targetY,
     this.targetZ,
+    this.zoom,
   );
 
   final double theta;
@@ -1568,6 +1530,7 @@ class _OrbitPose {
   final double targetX;
   final double targetY;
   final double targetZ;
+  final double zoom;
 }
 
 class _PreviewStageWithOrbitState extends State<_PreviewStageWithOrbit> {
@@ -1578,20 +1541,44 @@ class _PreviewStageWithOrbitState extends State<_PreviewStageWithOrbit> {
   PresentationComponentBlock? get _tourBlock => widget.page.componentBlocks
       .cast<PresentationComponentBlock?>()
       .firstWhere(
-        (block) => block?.modelAssetId != null && block!.modelTourEnabled,
+        (block) =>
+            block?.modelAssetId != null &&
+            block!.modelTourEnabled &&
+            !block.modelTourFrozen,
         orElse: () => null,
       );
 
   bool get hasTour => _tourBlock != null;
 
+  String? get currentTourBlockId => _tourBlock?.id;
+
+  ModelTourPose? get currentTourPose {
+    final block = _tourBlock;
+    if (block == null) return null;
+    final pose = _tourPoseFor(block);
+    return ModelTourPose(
+      theta: pose.theta,
+      phi: pose.phi,
+      x: pose.targetX,
+      y: pose.targetY,
+      z: pose.targetZ,
+    );
+  }
+
+  double? get currentTourZoom {
+    final block = _tourBlock;
+    return block == null ? null : _tourPoseFor(block).zoom;
+  }
+
   _OrbitPose _tourPoseFor(PresentationComponentBlock block) {
     return _orbitOverrides[block.id] ??
         _OrbitPose(
           block.modelOrbitTheta,
-          math.max(82.0, block.modelOrbitPhi.clamp(42.0, 89.0).toDouble()),
+          block.modelOrbitPhi.clamp(42.0, 89.0).toDouble(),
           block.modelTargetX,
           block.modelTargetY,
           block.modelTargetZ,
+          block.modelZoom,
         );
   }
 
@@ -1636,6 +1623,7 @@ class _PreviewStageWithOrbitState extends State<_PreviewStageWithOrbit> {
         modelTargetX: pose.targetX,
         modelTargetY: pose.targetY,
         modelTargetZ: pose.targetZ,
+        modelZoom: pose.zoom,
       );
     }).toList(growable: false);
     return changed
@@ -1651,6 +1639,7 @@ class _PreviewStageWithOrbitState extends State<_PreviewStageWithOrbit> {
           block.modelTargetX,
           block.modelTargetY,
           block.modelTargetZ,
+          block.modelZoom,
         );
     setState(() {
       _orbitOverrides[block.id] = _OrbitPose(
@@ -1659,6 +1648,7 @@ class _PreviewStageWithOrbitState extends State<_PreviewStageWithOrbit> {
         current.targetX,
         current.targetY,
         current.targetZ,
+        current.zoom,
       );
     });
   }
@@ -1685,6 +1675,7 @@ class _PreviewStageWithOrbitState extends State<_PreviewStageWithOrbit> {
         current.targetX,
         current.targetY,
         current.targetZ,
+        current.zoom,
       );
       _tourCameraRevision += 1;
     });
@@ -1705,14 +1696,16 @@ class _PreviewStageWithOrbitState extends State<_PreviewStageWithOrbit> {
   bool moveTour({required double forward, required double right}) {
     PresentationComponentBlock? block;
     for (final candidate in widget.page.componentBlocks) {
-      if (candidate.modelAssetId != null && candidate.modelTourEnabled) {
+      if (candidate.modelAssetId != null &&
+          candidate.modelTourEnabled &&
+          !candidate.modelTourFrozen) {
         block = candidate;
         break;
       }
     }
     if (block == null) return false;
     final current = _tourPoseFor(block);
-    final sensitivity = 1 / math.sqrt(block.modelZoom.clamp(0.5, 10.0));
+    final sensitivity = 1 / math.sqrt(current.zoom.clamp(0.5, 10.0));
     setState(() {
       final next = ModelTourRuntime.move(
         ModelTourPose(
@@ -1731,10 +1724,31 @@ class _PreviewStageWithOrbitState extends State<_PreviewStageWithOrbit> {
         next.x.clamp(-500.0, 500.0).toDouble(),
         next.y,
         next.z.clamp(-500.0, 500.0).toDouble(),
+        current.zoom,
       );
       _tourCameraRevision += 1;
     });
     return true;
+  }
+
+  void zoomTour(double scrollDeltaY) {
+    final block = _tourBlock;
+    if (block == null || scrollDeltaY == 0) return;
+    final current = _tourPoseFor(block);
+    final factor = math.exp(-scrollDeltaY * 0.0015);
+    final nextZoom = (current.zoom * factor).clamp(0.5, 10.0).toDouble();
+    if ((nextZoom - current.zoom).abs() < 0.0001) return;
+    setState(() {
+      _orbitOverrides[block.id] = _OrbitPose(
+        current.theta,
+        current.phi,
+        current.targetX,
+        current.targetY,
+        current.targetZ,
+        nextZoom,
+      );
+      _tourCameraRevision += 1;
+    });
   }
 
   @override
@@ -1860,7 +1874,10 @@ class _PreviewStageWithOrbitState extends State<_PreviewStageWithOrbit> {
             ? _effectivePage.componentBlocks
             : widget.page.componentBlocks)
         .where(
-          (block) => block.modelAssetId != null && block.modelTourEnabled,
+          (block) =>
+              block.modelAssetId != null &&
+              block.modelTourEnabled &&
+              !block.modelTourFrozen,
         )
         .toList(growable: false);
     final activeTourBlock = _tourBlock;
@@ -1909,6 +1926,7 @@ class _PreviewStageWithOrbitState extends State<_PreviewStageWithOrbit> {
                 tourCameraTargetX: activeTourPose?.targetX,
                 tourCameraTargetY: activeTourPose?.targetY,
                 tourCameraTargetZ: activeTourPose?.targetZ,
+                tourCameraZoom: activeTourPose?.zoom,
                 tourCameraRevision: _tourCameraRevision,
                 onTourSurfacePointPicked: (point) {
                   if (!_tourPointPlacementEnabled) return;
@@ -1925,15 +1943,24 @@ class _PreviewStageWithOrbitState extends State<_PreviewStageWithOrbit> {
               ),
             if (widget.tourMode && !_tourPointPlacementEnabled)
               Positioned.fill(
-                child: MouseRegion(
-                  cursor: SystemMouseCursors.grab,
-                  child: GestureDetector(
-                    behavior: HitTestBehavior.opaque,
-                    onPanStart: (_) => widget.onTourInteraction(),
-                    // Sanal turdaki tek fare girdisi burasıdır. Iframe
-                    // denetimi ve pointer-lock aynı anda kullanılmadığından
-                    // kamera iki kez güncellenmez.
-                    onPanUpdate: (details) => lookAroundTour(details.delta),
+                child: Listener(
+                  behavior: HitTestBehavior.opaque,
+                  onPointerSignal: (event) {
+                    if (event is PointerScrollEvent) {
+                      widget.onTourInteraction();
+                      zoomTour(event.scrollDelta.dy);
+                    }
+                  },
+                  child: MouseRegion(
+                    cursor: SystemMouseCursors.grab,
+                    child: GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onPanStart: (_) => widget.onTourInteraction(),
+                      // Sanal turdaki tek fare girdisi burasıdır. Iframe
+                      // denetimi ve pointer-lock aynı anda kullanılmadığından
+                      // kamera iki kez güncellenmez.
+                      onPanUpdate: (details) => lookAroundTour(details.delta),
+                    ),
                   ),
                 ),
               ),

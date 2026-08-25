@@ -21,6 +21,7 @@ void main() {
     expect(model.thumbnailPath, '/model_thumbnails/anitkabir.webp?v=2');
     expect(model.hasAnimations, isTrue);
     expect(model.hasRig, isFalse);
+    expect(model.supportsVirtualTour, isTrue);
     expect(model.byteSize, 4302048);
     expect(model.exposure, 0.003);
     expect(model.environmentImage, 'neutral');
@@ -364,7 +365,7 @@ void main() {
     );
 
     expect(document, contains('camera-controls'));
-    expect(document, contains('camera-orbit="35.00deg 82.00deg 100.00%"'));
+    expect(document, contains('camera-orbit="35.00deg 72.00deg 100.00%"'));
     expect(document, contains('min-camera-orbit="auto 42deg 5%"'));
     expect(document, contains('max-camera-orbit="auto 89deg 250%"'));
     expect(document, contains('interpolation-decay="16"'));
@@ -373,6 +374,45 @@ void main() {
     expect(document, contains('data-sutol-tour-ground="true"'));
     expect(document, contains('scheduleTourCamera(modelViewer, pose)'));
     expect(document, contains('requestAnimationFrame(function ()'));
+  });
+
+  test('turdan çıkınca kaydedilen model sunumda aynı kamerada donar', () {
+    const page = PresentationPage(
+      id: 'frozen-anitkabir-tour',
+      textBlocks: <PresentationTextBlock>[],
+      componentBlocks: <PresentationComponentBlock>[
+        PresentationComponentBlock(
+          id: 'frozen-anitkabir-model',
+          modelAssetId: 'anitkabir',
+          modelTourEnabled: true,
+          modelTourFrozen: true,
+          modelAnimationEnabled: false,
+          modelAutoRotate: false,
+          modelOrbitTheta: 128,
+          modelOrbitPhi: 64,
+          modelZoom: 3.25,
+          modelTargetX: 12,
+          modelTargetZ: -7,
+          position: Offset.zero,
+          size: Size(1, 1),
+        ),
+      ],
+    );
+
+    final document = buildHtmlStageDocument(
+      page: page,
+      modelSourcesById: const <String, String>{
+        'anitkabir': '/models/anitkabir.glb',
+      },
+    );
+    final modelTag = RegExp(r'<model-viewer[^>]*>').firstMatch(document)![0]!;
+
+    expect(modelTag, isNot(contains('camera-controls')));
+    expect(modelTag, isNot(contains('auto-rotate')));
+    expect(modelTag, isNot(contains('autoplay')));
+    expect(modelTag, contains('camera-orbit="128.00deg 64.00deg 30.77%"'));
+    expect(modelTag, contains('data-sutol-target-x="12.00"'));
+    expect(modelTag, contains('data-sutol-target-z="-7.00"'));
   });
 
   test(
@@ -662,7 +702,8 @@ void main() {
     expect(document, contains('beginSmoothTransition'));
     expect(document, contains('data-sutol-orbit-theta="180.00"'));
     expect(document, contains('const transitionDurationMs = 1400'));
-    expect(document, contains('viewer.dataset.sutolTargetX = targetX.toFixed(2)'));
+    expect(
+        document, contains('viewer.dataset.sutolTargetX = targetX.toFixed(2)'));
   });
 
   test('popüler geçişler HTML sunumuna aktarılır', () {

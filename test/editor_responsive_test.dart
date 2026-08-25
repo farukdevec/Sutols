@@ -1074,7 +1074,7 @@ void main() {
     final controller = await pumpAt(tester, const Size(1440, 900));
     controller.add3DModelBlock(
       const Presentation3DModelAsset(
-        id: 'fps-test-model',
+        id: 'anitkabir',
         label: 'FPS test model',
         assetPath: 'https://example.com/fps.glb',
         category: 'Test',

@@ -329,6 +329,7 @@ class PresentationProjectCodec {
       'modelZoom': block.modelZoom,
       'modelOrbitEnabled': block.modelOrbitEnabled,
       'modelTourEnabled': block.modelTourEnabled,
+      'modelTourFrozen': block.modelTourFrozen,
       'modelOrbitTheta': block.modelOrbitTheta,
       'modelOrbitPhi': block.modelOrbitPhi,
       'modelTargetX': block.modelTargetX,
@@ -400,6 +401,9 @@ class PresentationProjectCodec {
           : false,
       modelTourEnabled: json['modelTourEnabled'] is bool
           ? json['modelTourEnabled']! as bool
+          : false,
+      modelTourFrozen: json['modelTourFrozen'] is bool
+          ? json['modelTourFrozen']! as bool
           : false,
       modelOrbitTheta: _double(json['modelOrbitTheta'], 0),
       modelOrbitPhi: _double(json['modelOrbitPhi'], 75),

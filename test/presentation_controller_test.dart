@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:sutol/models/model_tour_runtime.dart';
 import 'package:sutol/models/slide_model.dart';
 import 'package:sutol/state/presentation_controller.dart';
 
@@ -245,7 +246,7 @@ void main() {
     addTearDown(controller.dispose);
     controller.add3DModelBlock(
       const Presentation3DModelAsset(
-        id: 'tour-model',
+        id: 'anitkabir',
         label: 'Tour model',
         assetPath: 'https://example.com/tour.glb',
         category: 'Test',
@@ -303,12 +304,79 @@ void main() {
     expect(controller.selectedComponentBlock!.modelTargetZ, 0);
   });
 
+  test('virtual tour preview pose is saved to its slide model', () {
+    final controller = PresentationController();
+    addTearDown(controller.dispose);
+    controller.add3DModelBlock(
+      const Presentation3DModelAsset(
+        id: 'anitkabir',
+        label: 'Tour camera model',
+        assetPath: 'https://example.com/tour-camera.glb',
+        category: 'Test',
+        tags: <String>[],
+        byteSize: 0,
+        sha256: '',
+      ),
+    );
+    controller.updateSelectedModelTourEnabled(true);
+    final pageId = controller.selectedPage.id;
+    final blockId = controller.selectedComponentBlock!.id;
+
+    controller.saveModelTourPose(
+      pageId: pageId,
+      blockId: blockId,
+      pose: const ModelTourPose(
+        theta: 128,
+        phi: 64,
+        x: 12,
+        y: 3,
+        z: -7,
+      ),
+      zoom: 3.25,
+      freeze: true,
+    );
+
+    final saved = controller.selectedComponentBlock!;
+    expect(saved.modelOrbitTheta, 128);
+    expect(saved.modelOrbitPhi, 64);
+    expect(saved.modelTargetX, 12);
+    expect(saved.modelTargetY, 3);
+    expect(saved.modelTargetZ, -7);
+    expect(saved.modelZoom, 3.25);
+    expect(saved.modelTourFrozen, isTrue);
+    expect(saved.modelAnimationEnabled, isFalse);
+    expect(saved.modelAutoRotate, isFalse);
+
+    controller.updateSelectedModelTourEnabled(true);
+    expect(controller.selectedComponentBlock!.modelTourFrozen, isFalse);
+  });
+
+  test('virtual tour cannot be enabled for a non-spatial model', () {
+    final controller = PresentationController();
+    addTearDown(controller.dispose);
+    controller.add3DModelBlock(
+      const Presentation3DModelAsset(
+        id: 'yolcu-ucagi',
+        label: 'Yolcu Uçağı',
+        assetPath: 'https://example.com/plane.glb',
+        category: 'Test',
+        tags: <String>[],
+        byteSize: 0,
+        sha256: '',
+      ),
+    );
+
+    controller.updateSelectedModelTourEnabled(true);
+
+    expect(controller.selectedComponentBlock!.modelTourEnabled, isFalse);
+  });
+
   test('virtual tour point persists as a model hotspot', () {
     final controller = PresentationController();
     addTearDown(controller.dispose);
     controller.add3DModelBlock(
       const Presentation3DModelAsset(
-        id: 'tour-point-model',
+        id: 'anitkabir',
         label: 'Tour point model',
         assetPath: 'https://example.com/tour-point.glb',
         category: 'Test',

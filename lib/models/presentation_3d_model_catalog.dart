@@ -16,6 +16,7 @@ class Presentation3DModelAsset {
     this.icon = Icons.view_in_ar_rounded,
     this.hasAnimations = false,
     this.hasRig = false,
+    this.supportsVirtualTour = false,
   });
 
   final String id;
@@ -31,6 +32,7 @@ class Presentation3DModelAsset {
   final IconData icon;
   final bool hasAnimations;
   final bool hasRig;
+  final bool supportsVirtualTour;
 }
 
 const List<Presentation3DModelAsset> presentation3DModelCatalog =
@@ -56,6 +58,7 @@ const List<Presentation3DModelAsset> presentation3DModelCatalog =
     sha256: 'd5c93725a5796d2e6b29f78ce0a7df8ffe0b31bd60ee0472fd13ae7735e5e46b',
     icon: Icons.account_balance_rounded,
     hasAnimations: true,
+    supportsVirtualTour: true,
     // Kaynak GLB, 2185.6 şiddetinde gömülü bir yönlü güneş içeriyor.
     // model-viewer'ın ortam ışığıyla birleştiğinde renklerin beyaza kırpılmasını
     // önlemek ve GLB'deki özgün yeşil materyalleri korumak için kalibre edildi.

@@ -748,7 +748,9 @@ class _HtmlPresentationEditorPageState
       LogicalKeyboardKey.keyD,
     };
     final selectedModel = widget.controller.selectedComponentBlock;
-    if (movementKeys.contains(key) && selectedModel?.modelTourEnabled == true) {
+    if (movementKeys.contains(key) &&
+        selectedModel?.modelTourEnabled == true &&
+        selectedModel?.modelTourFrozen != true) {
       if (event is KeyDownEvent || event is KeyRepeatEvent) {
         if (_tourMovementKeys.add(key)) _startTourKeyboardMovement();
       } else if (event is KeyUpEvent) {
@@ -782,7 +784,9 @@ class _HtmlPresentationEditorPageState
 
   void _tickTourKeyboardMovement() {
     final selectedModel = widget.controller.selectedComponentBlock;
-    if (selectedModel?.modelTourEnabled != true || _tourMovementKeys.isEmpty) {
+    if (selectedModel?.modelTourEnabled != true ||
+        selectedModel?.modelTourFrozen == true ||
+        _tourMovementKeys.isEmpty) {
       _stopTourKeyboardMovement();
       return;
     }
@@ -9348,7 +9352,9 @@ class _HtmlStageCardState extends State<_HtmlStageCard>
     widget.controller.addListener(_handleTransitionPreviewRequest);
     _pointerLockMovementSubscription = pointerLockMovements.listen((delta) {
       final model = widget.controller.selectedComponentBlock;
-      if (model?.modelTourEnabled != true) return;
+      if (model?.modelTourEnabled != true || model?.modelTourFrozen == true) {
+        return;
+      }
       widget.controller.lookAroundSelectedModelTour(delta);
     });
     _pointerLockChangeSubscription = pointerLockChanges.listen((locked) {
@@ -9580,7 +9586,8 @@ class _HtmlStageCardState extends State<_HtmlStageCard>
                           widget.controller.selectComponentBlock(itemId);
                           final model =
                               widget.controller.selectedComponentBlock;
-                          if (model?.modelTourEnabled == true) {
+                          if (model?.modelTourEnabled == true &&
+                              model?.modelTourFrozen != true) {
                             widget.controller.beginSelectedModelOrbitGesture();
                             requestPointerLock();
                           }
@@ -10125,47 +10132,30 @@ class _SelectionContextBarSection extends StatelessWidget {
         onTap: () => controller
             .updateSelectedModelOrbitEnabled(!block.modelOrbitEnabled),
       ),
-      const SizedBox(width: 4),
-      MiniToolLabeledToggle(
-        icon: Icons.explore_rounded,
-        label: block.modelTourEnabled
-            ? tr('Sanal Turu Aç', 'Open Virtual Tour')
-            : tr('Sanal Tur', 'Virtual Tour'),
-        active: block.modelTourEnabled,
-        onTap: () async {
-          final enableTour = !block.modelTourEnabled;
-          if (enableTour) {
-            controller.updateSelectedModelTourEnabled(true);
-          }
-          // "Sanal Tur" bir düzenleme anahtarı değil, izleyicinin açtığı
-          // deneyimdir: her dokunuşta tekrar tam ekran tur sahnesi açılır.
-          await requestPresentationFullscreen();
-          if (!context.mounted) return;
-          await Navigator.of(context).push(
-            MaterialPageRoute<void>(
-              builder: (_) => PresentationPreviewPage(controller: controller),
-            ),
-          );
-        },
-      ),
-      const SizedBox(width: 4),
-      MiniToolAction(
-        icon: controller.modelTourPointPlacementEnabled
-            ? Icons.close_rounded
-            : Icons.add_location_alt_rounded,
-        tooltip: controller.modelTourPointPlacementEnabled
-            ? tr('Nokta Yerleştirmeyi İptal Et', 'Cancel Point Placement')
-            : tr('Modelde Nokta Yerleştir', 'Place Point on Model'),
-        onTap: () => controller.setModelTourPointPlacementEnabled(
-          !controller.modelTourPointPlacementEnabled,
-        ),
-      ),
-      if (block.modelTourHotspots.isNotEmpty) ...<Widget>[
+      if (findPresentation3DModelAsset(block.modelAssetId ?? '')
+              ?.supportsVirtualTour ==
+          true) ...<Widget>[
         const SizedBox(width: 4),
-        MiniToolAction(
-          icon: Icons.edit_location_alt_rounded,
-          tooltip: tr('Tur Noktalarını Düzenle', 'Edit Tour Hotspots'),
-          onTap: () => _showTourHotspotManager(context, controller),
+        MiniToolLabeledToggle(
+          icon: Icons.explore_rounded,
+          label: block.modelTourEnabled && !block.modelTourFrozen
+              ? tr('Sanal Turu Aç', 'Open Virtual Tour')
+              : tr('Sanal Tur', 'Virtual Tour'),
+          active: block.modelTourEnabled && !block.modelTourFrozen,
+          onTap: () async {
+            final enableTour = !block.modelTourEnabled || block.modelTourFrozen;
+            if (enableTour) {
+              controller.updateSelectedModelTourEnabled(true);
+            }
+            await Navigator.of(context).push(
+              MaterialPageRoute<void>(
+                builder: (_) => PresentationPreviewPage(
+                  controller: controller,
+                  useFullscreen: false,
+                ),
+              ),
+            );
+          },
         ),
       ],
       if (block.modelTourEnabled &&
@@ -10376,8 +10366,9 @@ Future<void> _showAddTourHotspotDialog(
                             ),
                             decoration: InputDecoration(
                               labelText: '${field.label} konumu',
-                              helperText:
-                                  fixedPoint == null ? 'metre (-500…500)' : 'Yüzey konumu (m)',
+                              helperText: fixedPoint == null
+                                  ? 'metre (-500…500)'
+                                  : 'Yüzey konumu (m)',
                             ),
                           ),
                         ),

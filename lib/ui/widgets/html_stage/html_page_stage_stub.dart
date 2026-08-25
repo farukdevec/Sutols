@@ -144,6 +144,7 @@ class HtmlPageStage extends StatelessWidget {
     this.tourCameraTargetX,
     this.tourCameraTargetY,
     this.tourCameraTargetZ,
+    this.tourCameraZoom,
     this.tourCameraRevision = 0,
   });
 
@@ -173,6 +174,7 @@ class HtmlPageStage extends StatelessWidget {
   final double? tourCameraTargetX;
   final double? tourCameraTargetY;
   final double? tourCameraTargetZ;
+  final double? tourCameraZoom;
   final int tourCameraRevision;
 
   @override
@@ -221,6 +223,7 @@ class HtmlModelCanvas extends StatelessWidget {
     required this.environmentImage,
     required this.orbitEnabled,
     required this.tourEnabled,
+    required this.tourInteractive,
     required this.orbitTheta,
     required this.orbitPhi,
     required this.targetX,
@@ -240,6 +243,7 @@ class HtmlModelCanvas extends StatelessWidget {
   final String? environmentImage;
   final bool orbitEnabled;
   final bool tourEnabled;
+  final bool tourInteractive;
   final double orbitTheta;
   final double orbitPhi;
   final double targetX;

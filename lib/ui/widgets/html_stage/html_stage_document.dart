@@ -578,6 +578,8 @@ String buildHtmlStageMarkup({
                     ?.environmentImage,
                 orbitEnabled: block.modelOrbitEnabled,
                 tourEnabled: block.modelTourEnabled,
+                tourInteractive:
+                    block.modelTourEnabled && !block.modelTourFrozen,
                 orbitTheta: block.modelOrbitTheta,
                 orbitPhi: block.modelOrbitPhi,
                 targetX: block.modelTargetX,
@@ -660,6 +662,7 @@ String _model3DMarkup(
   required String? environmentImage,
   required bool orbitEnabled,
   required bool tourEnabled,
+  required bool tourInteractive,
   required double orbitTheta,
   required double orbitPhi,
   required double targetX,
@@ -680,7 +683,7 @@ String _model3DMarkup(
   // açmak hem export edilen HTML'de hem de sunum önizlemesinde sürükle-bak
   // etkileşimini korur; aksi durumda tur sadece editörde çalışıyordu.
   final cameraControlsMarkup =
-      orbitEnabled || tourEnabled ? ' camera-controls' : '';
+      orbitEnabled || tourInteractive ? ' camera-controls' : '';
   // Tur kamerası Flutter'dan kare bazında güncellenir. Bir karelik çok kısa
   // yumuşatma, düşük yenileme hızında da akışı korur; uzun süreli takip ise
   // fare ve WASD girişini geciktirir.
@@ -697,20 +700,19 @@ String _model3DMarkup(
   // Eski turlarda varsayılan 75° kamera yüksek kalıyordu. Zemin turu
   // başlangıçta göz hizasına yakın 82° ile açılır; kullanıcı isterse yukarı
   // doğru bakmaya devam edebilir.
-  final effectiveOrbitPhi = tourEnabled
-      ? math.max(82.0, orbitPhi.clamp(42.0, 89.0).toDouble())
-      : orbitPhi;
+  final effectiveOrbitPhi =
+      tourEnabled ? orbitPhi.clamp(42.0, 89.0).toDouble() : orbitPhi;
   final cameraOrbit =
       '${orbitTheta.toStringAsFixed(2)}deg ${effectiveOrbitPhi.toStringAsFixed(2)}deg $cameraRadius%';
   // Tur hedefi eski model formatında bounding-box yüzdesidir. Başlangıçta
   // bile güvenli alan dışındaki değerler model yüklenince "uzak sahne" etkisi
   // yaratır; tüm yüzeylerde aynı sınırı kullan.
-    // Tur hedefi modelin yerel koordinat sisteminde metre olarak tutulur.
-    // Eski, tur kapalı bileşenlerin yüzde tabanlı hedefleri aşağıdaki
-    // JavaScript yolunda aynen korunur.
-    final safeTargetX = tourEnabled ? targetX.clamp(-500.0, 500.0) : targetX;
-    final safeTargetY = tourEnabled ? targetY.clamp(-500.0, 500.0) : targetY;
-    final safeTargetZ = tourEnabled ? targetZ.clamp(-500.0, 500.0) : targetZ;
+  // Tur hedefi modelin yerel koordinat sisteminde metre olarak tutulur.
+  // Eski, tur kapalı bileşenlerin yüzde tabanlı hedefleri aşağıdaki
+  // JavaScript yolunda aynen korunur.
+  final safeTargetX = tourEnabled ? targetX.clamp(-500.0, 500.0) : targetX;
+  final safeTargetY = tourEnabled ? targetY.clamp(-500.0, 500.0) : targetY;
+  final safeTargetZ = tourEnabled ? targetZ.clamp(-500.0, 500.0) : targetZ;
   final sourceMarkup = deferSource
       ? 'data-sutol-model-source-id="${_escapeAttribute(id)}"'
       : source != null && source.isNotEmpty
@@ -3471,7 +3473,10 @@ const String _stagePatchScript = r'''
       const viewer = pending.modelViewer;
       const pose = pending.pose;
       const existingOrbit = String(viewer.getAttribute('camera-orbit') || '').trim().split(/\s+/);
-      const radius = existingOrbit[2] || '100%';
+      const zoom = Number(pose.zoom);
+      const radius = Number.isFinite(zoom)
+        ? Math.max(10, Math.min(200, 100 / Math.max(.5, Math.min(10, zoom)))).toFixed(2) + '%'
+        : (existingOrbit[2] || '100%');
       viewer.setAttribute(
         'camera-orbit',
         pose.theta.toFixed(2) + 'deg ' +
@@ -3705,7 +3710,7 @@ const String _stagePatchScript = r'''
       if (modelViewer) {
         const tourEnabled = !!item.modelTourEnabled;
         modelViewer.dataset.sutolTourGround = tourEnabled ? 'true' : 'false';
-        if (tourEnabled || item.modelOrbitEnabled) {
+        if (item.modelTourInteractive || item.modelOrbitEnabled) {
           modelViewer.setAttribute('camera-controls', '');
         } else {
           modelViewer.removeAttribute('camera-controls');
@@ -3716,7 +3721,7 @@ const String _stagePatchScript = r'''
     if (item.modelOrbitEnabled !== null && item.modelOrbitEnabled !== undefined) {
       const modelViewer = element.querySelector('model-viewer');
       if (modelViewer) {
-        if (item.modelOrbitEnabled || item.modelTourEnabled) {
+        if (item.modelOrbitEnabled || item.modelTourInteractive) {
           modelViewer.setAttribute('camera-controls', '');
         } else {
           modelViewer.removeAttribute('camera-controls');
@@ -3897,10 +3902,11 @@ const String _stagePatchScript = r'''
       const targetX = Number(data.targetX);
       const targetY = Number(data.targetY);
       const targetZ = Number(data.targetZ);
+      const zoom = Number(data.zoom);
       if (!Number.isFinite(theta) || !Number.isFinite(phi) ||
           !Number.isFinite(targetX) || !Number.isFinite(targetY) ||
           !Number.isFinite(targetZ)) return;
-      scheduleTourCamera(modelViewer, { theta: theta, phi: phi, targetX: targetX, targetY: targetY, targetZ: targetZ });
+      scheduleTourCamera(modelViewer, { theta: theta, phi: phi, targetX: targetX, targetY: targetY, targetZ: targetZ, zoom: zoom });
       return;
     }
     if (data && data.type === 'sutol-tour-surface-pick') {

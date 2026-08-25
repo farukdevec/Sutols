@@ -706,9 +706,9 @@ class PresentationController extends ChangeNotifier {
       return;
     }
     final background = components.removeAt(index).copyWith(
-      position: Offset.zero,
-      size: const Size(1, 1),
-    );
+          position: Offset.zero,
+          size: const Size(1, 1),
+        );
     components.insert(0, background);
     _replaceSelectedPage(
       selectedPage.copyWith(componentBlocks: components),
@@ -771,9 +771,12 @@ class PresentationController extends ChangeNotifier {
 
   void updateSelectedModelTourEnabled(bool value) {
     final current = selectedComponentBlock;
+    final asset = findPresentation3DModelAsset(current?.modelAssetId ?? '');
     if (current == null ||
         current.modelAssetId == null ||
-        current.modelTourEnabled == value) {
+        (value && asset?.supportsVirtualTour != true) ||
+        (current.modelTourEnabled == value &&
+            (!value || !current.modelTourFrozen))) {
       return;
     }
     final nextComponents = selectedPage.componentBlocks
@@ -781,6 +784,7 @@ class PresentationController extends ChangeNotifier {
           (block) => block.id == current.id
               ? block.copyWith(
                   modelTourEnabled: value,
+                  modelTourFrozen: false,
                   modelOrbitEnabled: value ? false : block.modelOrbitEnabled,
                   modelAutoRotate: value ? false : block.modelAutoRotate,
                   // Sanal tur zeminde dolaşır; kameranın alt yüzeye geçmesi
@@ -788,12 +792,16 @@ class PresentationController extends ChangeNotifier {
                   // ters hissettirir. Bu nedenle yalnızca insan göz
                   // hizasındaki güvenli açı aralığı korunur.
                   modelOrbitPhi: value
-                      ? math.max(
-                          _tourDefaultCameraPhi,
-                          block.modelOrbitPhi
+                      ? (block.modelTourFrozen
+                          ? block.modelOrbitPhi
                               .clamp(_tourMinCameraPhi, _tourMaxCameraPhi)
-                              .toDouble(),
-                        )
+                              .toDouble()
+                          : math.max(
+                              _tourDefaultCameraPhi,
+                              block.modelOrbitPhi
+                                  .clamp(_tourMinCameraPhi, _tourMaxCameraPhi)
+                                  .toDouble(),
+                            ))
                       : block.modelOrbitPhi,
                 )
               : block,
@@ -902,7 +910,8 @@ class PresentationController extends ChangeNotifier {
   void beginSelectedModelOrbitGesture() {
     final current = selectedComponentBlock;
     if (current?.modelAssetId == null ||
-        (!current!.modelOrbitEnabled && !current.modelTourEnabled) ||
+        (!current!.modelOrbitEnabled &&
+            (!current.modelTourEnabled || current.modelTourFrozen)) ||
         _modelOrbitGestureActive) {
       return;
     }
@@ -982,7 +991,9 @@ class PresentationController extends ChangeNotifier {
 
   void lookAroundSelectedModelTour(Offset delta) {
     final current = selectedComponentBlock;
-    if (current?.modelAssetId == null || !current!.modelTourEnabled) {
+    if (current?.modelAssetId == null ||
+        !current!.modelTourEnabled ||
+        current.modelTourFrozen) {
       return;
     }
 
@@ -1018,7 +1029,9 @@ class PresentationController extends ChangeNotifier {
 
   void moveSelectedModelTour({double forward = 0, double right = 0}) {
     final current = selectedComponentBlock;
-    if (current?.modelAssetId == null || !current!.modelTourEnabled) return;
+    if (current?.modelAssetId == null ||
+        !current!.modelTourEnabled ||
+        current.modelTourFrozen) return;
     if (forward == 0 && right == 0) return;
 
     final zoomSensitivity = 1 / math.sqrt(current.modelZoom.clamp(0.5, 10.0));
@@ -1054,6 +1067,62 @@ class PresentationController extends ChangeNotifier {
       _replaceSelectedPage(nextPage);
     }
     _notifyModelCameraChanged();
+  }
+
+  /// Tam ekran sanal turda oluşan son kamera pozunu ilgili slayttaki modele
+  /// kaydeder. Böylece turdan çıkıldığında sunum sahnesi aynı görünümde kalır.
+  void saveModelTourPose({
+    required String pageId,
+    required String blockId,
+    required ModelTourPose pose,
+    double? zoom,
+    bool freeze = false,
+  }) {
+    final pageIndex = _pages.indexWhere((page) => page.id == pageId);
+    if (pageIndex < 0) return;
+    final page = _pages[pageIndex];
+    final blockIndex = page.componentBlocks.indexWhere(
+      (block) =>
+          block.id == blockId &&
+          block.modelAssetId != null &&
+          block.modelTourEnabled,
+    );
+    if (blockIndex < 0) return;
+
+    final current = page.componentBlocks[blockIndex];
+    final theta = pose.theta % 360;
+    final phi = pose.phi.clamp(_tourMinCameraPhi, _tourMaxCameraPhi).toDouble();
+    final targetX =
+        pose.x.clamp(-_tourMaxTargetMetres, _tourMaxTargetMetres).toDouble();
+    final targetY =
+        pose.y.clamp(-_tourMaxTargetMetres, _tourMaxTargetMetres).toDouble();
+    final targetZ =
+        pose.z.clamp(-_tourMaxTargetMetres, _tourMaxTargetMetres).toDouble();
+    final savedZoom = (zoom ?? current.modelZoom).clamp(0.5, 10.0).toDouble();
+    if (current.modelOrbitTheta == theta &&
+        current.modelOrbitPhi == phi &&
+        current.modelTargetX == targetX &&
+        current.modelTargetY == targetY &&
+        current.modelTargetZ == targetZ &&
+        current.modelZoom == savedZoom &&
+        (!freeze || current.modelTourFrozen)) return;
+
+    _recordUndo();
+    final components =
+        List<PresentationComponentBlock>.of(page.componentBlocks);
+    components[blockIndex] = current.copyWith(
+      modelOrbitTheta: theta,
+      modelOrbitPhi: phi,
+      modelTargetX: targetX,
+      modelTargetY: targetY,
+      modelTargetZ: targetZ,
+      modelZoom: savedZoom,
+      modelTourFrozen: freeze ? true : current.modelTourFrozen,
+      modelAutoRotate: freeze ? false : current.modelAutoRotate,
+      modelAnimationEnabled: freeze ? false : current.modelAnimationEnabled,
+    );
+    _pages[pageIndex] = page.copyWith(componentBlocks: components);
+    notifyListeners();
   }
 
   void updateSelectedBackground(PresentationBackgroundKind value) {

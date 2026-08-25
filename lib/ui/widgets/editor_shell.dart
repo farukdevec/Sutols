@@ -2266,7 +2266,9 @@ class _PresentationPageCanvasState extends State<PresentationPageCanvas> {
                 onOrbitPanStart: widget.interactive &&
                         _isRenderableCanvasModelBlock(block) &&
                         !_isCanvasImageBlock(block) &&
-                        (block.modelOrbitEnabled || block.modelTourEnabled) &&
+                        (block.modelOrbitEnabled ||
+                            (block.modelTourEnabled &&
+                                !block.modelTourFrozen)) &&
                         (widget.onRotateModel != null ||
                             widget.onPanModelTour != null)
                     ? (_) {
@@ -2279,7 +2281,9 @@ class _PresentationPageCanvasState extends State<PresentationPageCanvas> {
                 onOrbitPanUpdate: widget.interactive &&
                         _isRenderableCanvasModelBlock(block) &&
                         !_isCanvasImageBlock(block) &&
-                        (block.modelOrbitEnabled || block.modelTourEnabled) &&
+                        (block.modelOrbitEnabled ||
+                            (block.modelTourEnabled &&
+                                !block.modelTourFrozen)) &&
                         (widget.onRotateModel != null ||
                             widget.onPanModelTour != null)
                     ? (details) {
@@ -2293,7 +2297,9 @@ class _PresentationPageCanvasState extends State<PresentationPageCanvas> {
                 onOrbitPanEnd: widget.interactive &&
                         _isRenderableCanvasModelBlock(block) &&
                         !_isCanvasImageBlock(block) &&
-                        (block.modelOrbitEnabled || block.modelTourEnabled) &&
+                        (block.modelOrbitEnabled ||
+                            (block.modelTourEnabled &&
+                                !block.modelTourFrozen)) &&
                         (widget.onRotateModel != null ||
                             widget.onPanModelTour != null)
                     ? (_) => widget.onEndModelOrbit?.call()
@@ -2766,7 +2772,9 @@ class _PageComponentBlock extends StatelessWidget {
             child: MouseRegion(
               cursor: interactive
                   ? (_isRenderableCanvasModelBlock(block) &&
-                          (block.modelOrbitEnabled || block.modelTourEnabled)
+                          (block.modelOrbitEnabled ||
+                              (block.modelTourEnabled &&
+                                  !block.modelTourFrozen))
                       ? SystemMouseCursors.grab
                       : isSelected
                           ? SystemMouseCursors.move
@@ -2855,6 +2863,8 @@ class _PageComponentBlock extends StatelessWidget {
                                       )?.environmentImage,
                                       orbitEnabled: block.modelOrbitEnabled,
                                       tourEnabled: block.modelTourEnabled,
+                                      tourInteractive: block.modelTourEnabled &&
+                                          !block.modelTourFrozen,
                                       orbitTheta: block.modelOrbitTheta,
                                       orbitPhi: block.modelOrbitPhi,
                                       targetX: block.modelTargetX,
@@ -2863,13 +2873,14 @@ class _PageComponentBlock extends StatelessWidget {
                                       pickSurfacePosition:
                                           modelTourPointPlacementEnabled &&
                                               isSelected,
-                                      onSurfacePositionPicked: onModelTourSurfacePointPicked ==
-                                              null
-                                          ? null
-                                          : (point) => onModelTourSurfacePointPicked!(
-                                                block.id,
-                                                point,
-                                              ),
+                                      onSurfacePositionPicked:
+                                          onModelTourSurfacePointPicked == null
+                                              ? null
+                                              : (point) =>
+                                                  onModelTourSurfacePointPicked!(
+                                                    block.id,
+                                                    point,
+                                                  ),
                                       onSurfacePickMissed:
                                           onModelTourSurfacePickMissed,
                                     ),

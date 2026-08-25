@@ -5,6 +5,7 @@ import 'dart:convert';
 import 'dart:html' as html;
 import 'dart:js_interop';
 import 'dart:js_interop_unsafe';
+import 'dart:math' as math;
 import 'dart:ui_web' as ui_web;
 
 import 'package:flutter/widgets.dart';
@@ -132,6 +133,7 @@ class HtmlPageStage extends StatefulWidget {
     this.tourCameraTargetX,
     this.tourCameraTargetY,
     this.tourCameraTargetZ,
+    this.tourCameraZoom,
     this.tourCameraRevision = 0,
   });
 
@@ -161,6 +163,7 @@ class HtmlPageStage extends StatefulWidget {
   final double? tourCameraTargetX;
   final double? tourCameraTargetY;
   final double? tourCameraTargetZ;
+  final double? tourCameraZoom;
   final int tourCameraRevision;
 
   @override
@@ -419,6 +422,7 @@ class HtmlModelCanvas extends StatefulWidget {
     required this.environmentImage,
     required this.orbitEnabled,
     required this.tourEnabled,
+    required this.tourInteractive,
     required this.orbitTheta,
     required this.orbitPhi,
     required this.targetX,
@@ -438,6 +442,7 @@ class HtmlModelCanvas extends StatefulWidget {
   final String? environmentImage;
   final bool orbitEnabled;
   final bool tourEnabled;
+  final bool tourInteractive;
   final double orbitTheta;
   final double orbitPhi;
   final double targetX;
@@ -563,7 +568,7 @@ class _HtmlModelCanvasState extends State<HtmlModelCanvas> {
     // paylaşım/önizleme ekranında hareketsiz kalıyordu.
     _setBooleanAttribute(
       'camera-controls',
-      (widget.orbitEnabled || widget.tourEnabled) &&
+      (widget.orbitEnabled || widget.tourInteractive) &&
           !widget.pickSurfacePosition,
     );
     _setBooleanAttribute('disable-pan', widget.tourEnabled);
@@ -618,14 +623,27 @@ class _HtmlModelCanvasState extends State<HtmlModelCanvas> {
       _setAttribute('camera-target', 'auto auto auto');
       return;
     }
-    final x = _modelCenterX + _modelWidth * widget.targetX / 100;
-    // Sanal turdaki sıfır noktası modelin zemine temas eden alt sınırıdır.
-    // Kaydedilen X/Z ofsetleri buradan yürüyüşü taşır; Y ise modelin merkezine
-    // bağlı kalmadığı için kamera alt yüzeye geçmez.
+    // Sanal tur hedefleri modelin gerçek yerel metre koordinatlarıdır. Normal
+    // model görünümündeki hedefler ise eski proje uyumluluğu için bounding-box
+    // yüzdesi olarak tutulur. Turdan çıkarken metre değerlerini yeniden yüzde
+    // gibi ölçeklemek kamerayı bambaşka bir noktaya sıçratıyordu.
+    final tourInsetX = math.min(_modelWidth * .08, .75);
+    final tourInsetZ = math.min(_modelDepth * .08, .75);
+    final tourHalfX = math.max(.125, _modelWidth / 2 - tourInsetX);
+    final tourHalfZ = math.max(.125, _modelDepth / 2 - tourInsetZ);
+    final x = widget.tourEnabled
+        ? widget.targetX
+            .clamp(_modelCenterX - tourHalfX, _modelCenterX + tourHalfX)
+            .toDouble()
+        : _modelCenterX + _modelWidth * widget.targetX / 100;
     final y = widget.tourEnabled
         ? _modelCenterY - _modelHeight / 2
         : _modelCenterY + _modelHeight * widget.targetY / 100;
-    final z = _modelCenterZ + _modelDepth * widget.targetZ / 100;
+    final z = widget.tourEnabled
+        ? widget.targetZ
+            .clamp(_modelCenterZ - tourHalfZ, _modelCenterZ + tourHalfZ)
+            .toDouble()
+        : _modelCenterZ + _modelDepth * widget.targetZ / 100;
     _setAttribute(
       'camera-target',
       '${x.toStringAsFixed(5)}m ${y.toStringAsFixed(5)}m '
@@ -924,6 +942,7 @@ class _HtmlPageStageState extends State<HtmlPageStage> {
     final targetX = widget.tourCameraTargetX;
     final targetY = widget.tourCameraTargetY;
     final targetZ = widget.tourCameraTargetZ;
+    final zoom = widget.tourCameraZoom;
     if (theta == null ||
         phi == null ||
         targetX == null ||
@@ -941,6 +960,7 @@ class _HtmlPageStageState extends State<HtmlPageStage> {
         'targetX': targetX,
         'targetY': targetY,
         'targetZ': targetZ,
+        if (zoom != null) 'zoom': zoom,
       }),
       '*',
     );
@@ -1463,6 +1483,9 @@ class _HtmlPageStageState extends State<HtmlPageStage> {
                 isImage || modelId == null ? null : block.modelOrbitEnabled,
             'modelTourEnabled':
                 isImage || modelId == null ? null : block.modelTourEnabled,
+            'modelTourInteractive': isImage || modelId == null
+                ? null
+                : block.modelTourEnabled && !block.modelTourFrozen,
             'modelAnimationEnabled':
                 isImage || modelId == null ? null : block.modelAnimationEnabled,
           };
