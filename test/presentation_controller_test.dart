@@ -29,7 +29,7 @@ void main() {
     expect(
       controller.syncRenderedModelCameraPoses(
         const <String, ModelViewerCameraPose>{
-          'camera-model': ModelViewerCameraPose(
+          'camera-page:camera-model': ModelViewerCameraPose(
             theta: 32,
             phi: 84,
             radius: 17.625,
@@ -49,6 +49,67 @@ void main() {
     expect(model.modelTargetX, 4);
     expect(model.modelTargetY, -2);
     expect(model.modelTargetZ, 11);
+  });
+
+  test('aynı blok kimliği farklı sayfalarda ayrı kamera pozunu korur', () {
+    final controller = PresentationController();
+    addTearDown(controller.dispose);
+    controller.replaceDeck(
+      const <PresentationPage>[
+        PresentationPage(
+          id: 'camera-page-a',
+          textBlocks: <PresentationTextBlock>[],
+          componentBlocks: <PresentationComponentBlock>[
+            PresentationComponentBlock(
+              id: 'shared-model',
+              modelAssetId: 'anitkabir',
+              position: Offset.zero,
+              size: Size(1, 1),
+            ),
+          ],
+        ),
+        PresentationPage(
+          id: 'camera-page-b',
+          textBlocks: <PresentationTextBlock>[],
+          componentBlocks: <PresentationComponentBlock>[
+            PresentationComponentBlock(
+              id: 'shared-model',
+              modelAssetId: 'anitkabir',
+              position: Offset.zero,
+              size: Size(1, 1),
+            ),
+          ],
+        ),
+      ],
+    );
+
+    controller.syncRenderedModelCameraPoses(
+      const <String, ModelViewerCameraPose>{
+        'camera-page-a:shared-model': ModelViewerCameraPose(
+          theta: 25,
+          phi: 70,
+          radius: 12,
+          targetX: 0,
+          targetY: 0,
+          targetZ: 0,
+        ),
+        'camera-page-b:shared-model': ModelViewerCameraPose(
+          theta: 210,
+          phi: 82,
+          radius: 40,
+          targetX: 0,
+          targetY: 0,
+          targetZ: 0,
+        ),
+      },
+    );
+
+    final first = controller.pages[0].componentBlocks.single;
+    final second = controller.pages[1].componentBlocks.single;
+    expect(first.modelOrbitTheta, 25);
+    expect(first.modelCameraRadius, 12);
+    expect(second.modelOrbitTheta, 210);
+    expect(second.modelCameraRadius, 40);
   });
 
   test('sunum hazırlığı her sayfanın tur kamerasını ayrı pozda sabitler', () {
@@ -99,6 +160,48 @@ void main() {
     expect(first.modelTargetX, 12);
     expect(second.modelOrbitTheta, 210);
     expect(second.modelTargetX, -18);
+  });
+
+  test('üç sayfalı tur sunumu ilk sayfa dahil tüm kameraları korur', () {
+    final controller = PresentationController();
+    addTearDown(controller.dispose);
+    controller.replaceDeck(
+      List<PresentationPage>.generate(3, (index) {
+        return PresentationPage(
+          id: 'tour-page-$index',
+          textBlocks: const <PresentationTextBlock>[],
+          componentBlocks: <PresentationComponentBlock>[
+            PresentationComponentBlock(
+              id: 'tour-model-$index',
+              modelAssetId: 'anitkabir',
+              modelTourEnabled: true,
+              modelOrbitTheta: 35 + index * 105,
+              modelOrbitPhi: 55 + index * 8,
+              modelCameraRadius: 12 + index * 9,
+              modelTargetX: -18 + index * 17,
+              modelTargetZ: 24 - index * 19,
+              position: Offset.zero,
+              size: const Size(1, 1),
+            ),
+          ],
+        );
+      }),
+    );
+
+    final expected = controller.pages
+        .map((page) => page.componentBlocks.single)
+        .toList(growable: false);
+    expect(controller.commitAllModelTourPoses(), isTrue);
+
+    for (var index = 0; index < 3; index++) {
+      final actual = controller.pages[index].componentBlocks.single;
+      expect(actual.modelTourFrozen, isTrue);
+      expect(actual.modelOrbitTheta, expected[index].modelOrbitTheta);
+      expect(actual.modelOrbitPhi, expected[index].modelOrbitPhi);
+      expect(actual.modelCameraRadius, expected[index].modelCameraRadius);
+      expect(actual.modelTargetX, expected[index].modelTargetX);
+      expect(actual.modelTargetZ, expected[index].modelTargetZ);
+    }
   });
 
   test('applying a transition requests one preview for that slide gap', () {

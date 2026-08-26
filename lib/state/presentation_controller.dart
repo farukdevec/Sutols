@@ -1195,19 +1195,21 @@ class PresentationController extends ChangeNotifier {
     return changed;
   }
 
-  /// EditÃ¶rde ekranda duran model-viewer kameralarÄ±nÄ± proje state'ine alÄ±r.
-  /// Component kimlikleri sunum genelinde benzersizdir; her slayt kendi blok
-  /// kaydÄ±nÄ± aldÄ±ÄŸÄ± iÃ§in aynÄ± GLB'nin farklÄ± aÃ§Ä±larÄ± birbirini ezmez.
+  /// Editörde ana sahnede duran model-viewer kameralarını proje state'ine alır.
+  /// Anahtar `sayfaId:blokId` biçimindedir; böylece aynı GLB'nin ve eski
+  /// projelerde yinelenmiş blok kimliklerinin pozları birbirini ezmez.
   bool syncRenderedModelCameraPoses(
-    Map<String, ModelViewerCameraPose> posesByBlockId,
+    Map<String, ModelViewerCameraPose> posesByCameraStateKey,
   ) {
-    if (posesByBlockId.isEmpty) return false;
+    if (posesByCameraStateKey.isEmpty) return false;
     var changed = false;
     for (var pageIndex = 0; pageIndex < _pages.length; pageIndex++) {
       final page = _pages[pageIndex];
       var pageChanged = false;
       final components = page.componentBlocks.map((block) {
-        final pose = posesByBlockId[block.id];
+        final pose = posesByCameraStateKey['${page.id}:${block.id}'] ??
+            // Eski çağrı biçimini kullanan istemciler için geriye uyumluluk.
+            posesByCameraStateKey[block.id];
         if (pose == null || block.modelAssetId == null) return block;
         final theta = pose.theta % 360;
         final phi = pose.phi

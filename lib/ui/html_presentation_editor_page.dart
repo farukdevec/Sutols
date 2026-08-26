@@ -190,6 +190,14 @@ class _HtmlPresentationEditorPageState
   /// assertion'ina yol açabiliyordu.
   bool _presentationNameDialogOpen = false;
 
+  /// IndexedStack içindeki gizli model-viewer'lar tarayıcı tarafından sıfır
+  /// boyuta alınabilir ve varsayılan kameraya dönebilir. Bu nedenle yalnızca
+  /// görünür sayfadan ayrılırken alınan poz güvenilir kabul edilir.
+  late String _lastVisibleCameraPageId;
+  final Map<String, ModelViewerCameraPose> _pendingDepartingCameraPoses =
+      <String, ModelViewerCameraPose>{};
+  bool _departingCameraPoseSyncScheduled = false;
+
   /// Sunum sayfalarındaki ilk metin bloğundan konu / dosya adını çözer.
   String? _presentationFileNameFromDeck() {
     for (final page in widget.controller.pages) {
@@ -242,6 +250,8 @@ class _HtmlPresentationEditorPageState
     FocusManager.instance.addListener(_handlePrimaryFocusChanged);
     _openedAt = DateTime.now();
     _trackedSignature = _deckSignature();
+    _lastVisibleCameraPageId = widget.controller.selectedPage.id;
+    widget.controller.addListener(_captureDepartingPageCameraPoses);
     widget.controller.addListener(_syncTextField);
     widget.controller.addListener(_syncTabWithSelection);
     widget.controller.addListener(_onMobilePageChanged);
@@ -257,8 +267,7 @@ class _HtmlPresentationEditorPageState
     }
     _hintTimer = Timer(const Duration(seconds: 6), _dismissMobileHint);
     final initialPresentationName = widget.initialPresentationName?.trim();
-    if (initialPresentationName != null &&
-        initialPresentationName.isNotEmpty) {
+    if (initialPresentationName != null && initialPresentationName.isNotEmpty) {
       _presentationFileName = initialPresentationName;
     } else {
       _presentationFileName =
@@ -357,6 +366,7 @@ class _HtmlPresentationEditorPageState
     _tourMovementTimer?.cancel();
     _editorFocusNode.dispose();
     _hintTimer?.cancel();
+    widget.controller.removeListener(_captureDepartingPageCameraPoses);
     widget.controller.removeListener(_syncTextField);
     widget.controller.removeListener(_syncTabWithSelection);
     widget.controller.removeListener(_onMobilePageChanged);
@@ -712,7 +722,8 @@ class _HtmlPresentationEditorPageState
             : (user?.email ?? '');
         if (mounted) {
           setState(() => _lastEditorLabel = name);
-          _showSnack('Sunum "$_presentationFileName" adıyla buluta kaydedildi.');
+          _showSnack(
+              'Sunum "$_presentationFileName" adıyla buluta kaydedildi.');
         }
       } catch (e) {
         _showSnack('Buluta kaydedilemedi: $e');
@@ -781,15 +792,63 @@ class _HtmlPresentationEditorPageState
   }
 
   void _syncRenderedModelCameraPoses() {
-    final posesByBlockId = <String, ModelViewerCameraPose>{};
+    // Yalnız seçili sayfa görünür ve güvenilir bir DOM ölçüsüne sahiptir.
+    // Gizli IndexedStack çocuklarını okumak, özellikle uzun süre gizli kalan
+    // ilk sayfanın kayıtlı kamerasını model-viewer'ın varsayılanıyla eziyordu.
+    final posesByCameraStateKey = _renderedCameraPosesForPage(
+      widget.controller.selectedPage,
+    );
+    widget.controller.syncRenderedModelCameraPoses(posesByCameraStateKey);
+  }
+
+  Map<String, ModelViewerCameraPose> _renderedCameraPosesForPage(
+    PresentationPage page,
+  ) {
+    final poses = <String, ModelViewerCameraPose>{};
+    for (final block in page.componentBlocks) {
+      if (block.modelAssetId == null) continue;
+      final cameraStateKey = '${page.id}:${block.id}';
+      final pose = HtmlModelCanvas.cameraPoseFor(cameraStateKey);
+      if (pose != null) poses[cameraStateKey] = pose;
+    }
+    return poses;
+  }
+
+  void _captureDepartingPageCameraPoses() {
+    final currentPageId = widget.controller.selectedPage.id;
+    final departingPageId = _lastVisibleCameraPageId;
+    if (currentPageId == departingPageId) return;
+    _lastVisibleCameraPageId = currentPageId;
+
+    PresentationPage? departingPage;
     for (final page in widget.controller.pages) {
-      for (final block in page.componentBlocks) {
-        if (block.modelAssetId == null) continue;
-        final pose = HtmlModelCanvas.cameraPoseFor('${page.id}:${block.id}');
-        if (pose != null) posesByBlockId[block.id] = pose;
+      if (page.id == departingPageId) {
+        departingPage = page;
+        break;
       }
     }
-    widget.controller.syncRenderedModelCameraPoses(posesByBlockId);
+    if (departingPage == null) return;
+
+    // Controller dinleyicileri AnimatedBuilder'dan önce çalışır; önceki
+    // sayfanın platform view'ı bu anda hâlâ görünürdür. Pozu senkron yakala,
+    // controller'a yazmayı mevcut notify turunun sonrasına bırak.
+    _pendingDepartingCameraPoses.addAll(
+      _renderedCameraPosesForPage(departingPage),
+    );
+    if (_pendingDepartingCameraPoses.isEmpty ||
+        _departingCameraPoseSyncScheduled) {
+      return;
+    }
+    _departingCameraPoseSyncScheduled = true;
+    scheduleMicrotask(() {
+      _departingCameraPoseSyncScheduled = false;
+      if (!mounted || _pendingDepartingCameraPoses.isEmpty) return;
+      final poses = Map<String, ModelViewerCameraPose>.of(
+        _pendingDepartingCameraPoses,
+      );
+      _pendingDepartingCameraPoses.clear();
+      widget.controller.syncRenderedModelCameraPoses(poses);
+    });
   }
 
   bool _primaryFocusIsTextInput() {
@@ -2615,6 +2674,64 @@ class _HtmlMobileToolDock extends StatelessWidget {
       case _MobileMoreTool.stageDimensions:
         onOpenTool(_HtmlToolTab.stageDimensions);
     }
+  }
+}
+
+/// Sunum adını düzenler. Denetleyiciyi dialog kendi yaşam döngüsünde tuttuğu
+/// için kapanış animasyonu tamamlanmadan dispose edilmez.
+class _PresentationNameDialog extends StatefulWidget {
+  const _PresentationNameDialog({required this.initialName});
+
+  final String initialName;
+
+  @override
+  State<_PresentationNameDialog> createState() =>
+      _PresentationNameDialogState();
+}
+
+class _PresentationNameDialogState extends State<_PresentationNameDialog> {
+  late final TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.initialName);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _save() {
+    Navigator.of(context).pop(_controller.text.trim());
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Sunum Konusu'),
+      content: TextField(
+        controller: _controller,
+        autofocus: true,
+        decoration: const InputDecoration(
+          labelText: 'Konu / Sunum Adı',
+          hintText: 'Örn: Tarih ve Arkeoloji',
+        ),
+        onSubmitted: (_) => _save(),
+      ),
+      actions: <Widget>[
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('İptal'),
+        ),
+        FilledButton(
+          onPressed: _save,
+          child: const Text('Kaydet'),
+        ),
+      ],
+    );
   }
 }
 
@@ -9658,6 +9775,8 @@ class _HtmlStageCardState extends State<_HtmlStageCard>
                                     'editor-page-canvas-${canvasPage.id}',
                                   ),
                                   page: canvasPage,
+                                  captureModelCameraState: canvasPage.id ==
+                                      widget.controller.selectedPage.id,
                                   selectedTextBlockId:
                                       widget.controller.selectedTextBlockId,
                                   selectedTextBlockIds:
@@ -9680,6 +9799,8 @@ class _HtmlStageCardState extends State<_HtmlStageCard>
                                 'editor-page-canvas-${canvasPage.id}',
                               ),
                               page: canvasPage,
+                              captureModelCameraState: canvasPage.id ==
+                                  widget.controller.selectedPage.id,
                               selectedTextBlockId:
                                   widget.controller.selectedTextBlockId,
                               selectedTextBlockIds:

@@ -482,6 +482,7 @@ class _HtmlModelCanvasState extends State<HtmlModelCanvas> {
   html.Element? _modelViewer;
   StreamSubscription<html.Event>? _modelLoadSubscription;
   StreamSubscription<html.MouseEvent>? _surfacePickSubscription;
+  html.ResizeObserver? _resizeObserver;
   final List<Timer> _cameraRestoreTimers = <Timer>[];
   double _modelWidth = 1;
   double _modelHeight = 1;
@@ -843,6 +844,8 @@ class _HtmlModelCanvasState extends State<HtmlModelCanvas> {
       timer.cancel();
     }
     _cameraRestoreTimers.clear();
+    _resizeObserver?.disconnect();
+    _resizeObserver = null;
     _modelViewer?.remove();
     super.dispose();
   }
@@ -862,6 +865,16 @@ class _HtmlModelCanvasState extends State<HtmlModelCanvas> {
           ..style.pointerEvents = widget.pickSurfacePosition ? 'auto' : 'none'
           ..style.setProperty('contain', 'strict')
           ..style.setProperty('--poster-color', 'transparent');
+        _resizeObserver = html.ResizeObserver((_, __) {
+          if (!mounted || _modelViewer == null) return;
+          final bounds = modelViewer.getBoundingClientRect();
+          if (bounds.width <= 0 || bounds.height <= 0) return;
+          // İlk sunum sayfası route/fullscreen yerleşimi tamamlanırken yeniden
+          // boyutlanır. model-viewer bu sırada ideal kameraya dönebildiği için
+          // kayıtlı hedefi her gerçek boyut değişiminden sonra tekrar uygula.
+          _scheduleSavedCameraRestore();
+        })
+          ..observe(modelViewer);
         _modelLoadSubscription = modelViewer.on['load'].listen((_) {
           _scheduleSavedCameraRestore();
         });
@@ -1857,7 +1870,6 @@ class _HtmlPageStageState extends State<HtmlPageStage> {
                         ? widget.tourCameraZoom ?? block.modelZoom
                         : block.modelZoom,
                     cameraRadius: block.modelCameraRadius,
-                    cameraStateKey: '${widget.page.id}:${block.id}',
                     exposure: findPresentation3DModelAsset(
                           block.modelAssetId!,
                         )?.exposure ??

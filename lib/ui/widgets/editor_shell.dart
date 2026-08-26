@@ -1788,6 +1788,7 @@ class PresentationPageCanvas extends StatefulWidget {
     this.showSelectionBorder = true,
     this.textOpacity = 1,
     this.showEmptyState = true,
+    this.captureModelCameraState = false,
     this.onSelectTextBlock,
     this.onDragSelectedText,
     this.onInlineTextChanged,
@@ -1821,6 +1822,11 @@ class PresentationPageCanvas extends StatefulWidget {
   final bool showSelectionBorder;
   final double textOpacity;
   final bool showEmptyState;
+
+  /// Yalnızca kullanıcının düzenlediği ana sahne gerçek model-viewer kamera
+  /// pozunun kaynağı olmalıdır. Küçük resimler ve sunum kopyaları aynı blok
+  /// kimliğini çizse de ana sahnenin son pozunu ezmemelidir.
+  final bool captureModelCameraState;
   final ValueChanged<String>? onSelectTextBlock;
   final void Function(Offset delta, Size canvasSize)? onDragSelectedText;
   final ValueChanged<String>? onInlineTextChanged;
@@ -2234,7 +2240,9 @@ class _PresentationPageCanvasState extends State<PresentationPageCanvas> {
             for (final block in componentBlocks)
               _PageComponentBlock(
                 block: block,
-                cameraStateKey: '${widget.page.id}:${block.id}',
+                cameraStateKey: widget.captureModelCameraState
+                    ? '${widget.page.id}:${block.id}'
+                    : null,
                 canvasSize: canvasSize,
                 isSelected: selectedComponentIds.contains(block.id),
                 interactive: widget.interactive,
@@ -2716,7 +2724,7 @@ class _PageComponentBlock extends StatelessWidget {
   });
 
   final PresentationComponentBlock block;
-  final String cameraStateKey;
+  final String? cameraStateKey;
   final Size canvasSize;
   final bool isSelected;
   final bool interactive;
