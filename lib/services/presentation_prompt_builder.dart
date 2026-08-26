@@ -46,6 +46,7 @@ CORE PRINCIPLES:
    - "subject": Concrete physical object or diagram subject
    - "caption": Short pedagogical caption below visual
    - "visual_keywords": ONLY concrete, physical objects (e.g., ["ice", "water", "steam", "crystal"]). NEVER abstract words like ["strategy", "history", "importance"].
+   - Use a photo only when it makes the idea clearer; do not request a stock photo for every slide. Prefer diagrams, data, comparison, or no visual when those communicate the point better.
 
 6. JSON SCHEMA:
 {
@@ -56,7 +57,7 @@ CORE PRINCIPLES:
     {
       "title": "Slide Title",
       "purpose": "What this slide teaches or communicates",
-      "type": "concept | comparison | process | quiz | cards | data | takeaway | hero | visual_breakdown",
+      "type": "concept | comparison | process | quiz | cards | data | takeaway | hero | visual_breakdown | image_focus",
       "content": {
         "headline": "Strong primary takeaway or focus sentence",
         "supporting_text": "1-2 sentence fluent explanation reinforcing the headline",
@@ -66,7 +67,7 @@ CORE PRINCIPLES:
         ]
       },
       "visual": {
-        "kind": "particle_diagram | object_3d | process_diagram | comparison | chart | table | illustration | none",
+        "kind": "photo | particle_diagram | object_3d | process_diagram | comparison | chart | table | illustration | none",
         "subject": "concrete_visual_subject",
         "caption": "Brief explanation of the visual or diagram"
       },
@@ -120,6 +121,7 @@ TEMEL PRENSİPLER:
      * "caption": Görselin altındaki kısa pedagojik açıklama
    - "visual_keywords" listesine ASLA soyut kelimeler ("strateji", "değerlendirme", "tarihçe", "önem") YAZMA!
    - Yalnızca fiziksel, görsel karşılığı olan nesneleri yaz (Örn: ["buz", "su", "buhar", "tanecik", "kristal"]).
+   - Fotoğrafı yalnızca fikri belirgin biçimde güçlendirdiğinde seç; her slayta stok fotoğraf isteme. Diyagram, veri, karşılaştırma veya görselsiz düzen daha doğruysa onları tercih et.
 
 6. JSON FORMAT KURALLARI:
    - Tüm string değerler çift tırnak (\") içinde olmalı.
@@ -136,7 +138,7 @@ TEMEL PRENSİPLER:
     {
       "title": "Slayt Başlığı",
       "purpose": "Bu slaydın izleyiciye ne öğreteceği / kazandıracağı",
-      "type": "concept | comparison | process | quiz | cards | data | takeaway | hero | visual_breakdown",
+      "type": "concept | comparison | process | quiz | cards | data | takeaway | hero | visual_breakdown | image_focus",
       "content": {
         "headline": "Slaydın en güçlü ana fikri veya odak cümlesi",
         "supporting_text": "Ana fikri somutlaştıran 1-2 cümlelik akıcı açıklama",
@@ -146,7 +148,7 @@ TEMEL PRENSİPLER:
         ]
       },
       "visual": {
-        "kind": "particle_diagram | object_3d | process_diagram | comparison | chart | table | illustration | none",
+        "kind": "photo | particle_diagram | object_3d | process_diagram | comparison | chart | table | illustration | none",
         "subject": "somut_gorsel_konusu",
         "caption": "Görsel veya şemanın kısa açıklaması"
       },

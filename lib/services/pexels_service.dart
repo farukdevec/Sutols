@@ -309,12 +309,15 @@ class PexelsService {
     required List<String> keywords,
     required String title,
     String? topic,
+    String? subject,
+    Set<int> excludedPhotoIds = const <int>{},
   }) async {
     try {
       final candidates = _buildSearchTerms(
         keywords: keywords,
         title: title,
         topic: topic,
+        subject: subject,
       );
 
       if (candidates.isEmpty) return null;
@@ -328,7 +331,11 @@ class PexelsService {
         );
 
         if (result != null && result.photos.isNotEmpty) {
-          final chosen = result.photos.first;
+          final chosen = _chooseProfessionalLandscape(
+            result.photos,
+            excludedPhotoIds: excludedPhotoIds,
+          );
+          if (chosen == null) continue;
           // Slayt sahnesinin görseli hemen gösterebilmesi için kaydedelim
           RemoteImageSources.register(
             chosen.sourceId,
@@ -349,8 +356,14 @@ class PexelsService {
     required List<String> keywords,
     required String title,
     String? topic,
+    String? subject,
   }) {
     final terms = <String>[];
+
+    // Modelin kurduğu somut görsel cümlesi, tekil anahtar kelimelerden daha
+    // iyi Pexels sonucu verir. Örn. "solar panels on a factory roof".
+    final cleanSubject = _cleanKeyword(subject ?? '');
+    if (cleanSubject.isNotEmpty) terms.add(cleanSubject);
 
     // 1. Doğrudan somut anahtar kelimeler
     for (final kw in keywords) {
@@ -382,6 +395,28 @@ class PexelsService {
     }
 
     return terms;
+  }
+
+  static PexelsPhoto? _chooseProfessionalLandscape(
+    List<PexelsPhoto> photos, {
+    required Set<int> excludedPhotoIds,
+  }) {
+    final available = photos
+        .where((photo) =>
+            photo.id > 0 &&
+            !excludedPhotoIds.contains(photo.id) &&
+            photo.bestDisplayUrl.isNotEmpty)
+        .toList(growable: false);
+    if (available.isEmpty) return null;
+
+    // Pexels zaten sorgu ilgisine göre sıralar. Bu küçük ikinci sıralama,
+    // slaytta daha dengeli duran yatay fotoğrafı tercih eder.
+    available.sort((a, b) {
+      final aDistance = (a.aspectRatio - (16 / 9)).abs();
+      final bDistance = (b.aspectRatio - (16 / 9)).abs();
+      return aDistance.compareTo(bDistance);
+    });
+    return available.first;
   }
 
   static String _cleanKeyword(String kw) {

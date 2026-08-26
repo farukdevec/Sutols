@@ -34,11 +34,15 @@ class PresentationDeckBuilder {
         continue;
       }
 
-      var selectedModel =
-          slide.models.isEmpty || slide.models.first.modelUrl.trim().isEmpty
-              ? null
-              : slide.models.first;
-      if (selectedModel == null) {
+      // Bir fotoğraf seçildiyse fotoğraf, 3B katalogdan yeniden yapılan
+      // eşleştirmeye karşı önceliklidir. Aksi halde Pexels görseli bulunmuş
+      // olsa bile burada tekrar bir 3B model seçilip hiç görünmeyebilirdi.
+      var selectedModel = slide.imageAssetId == null &&
+              slide.models.isNotEmpty &&
+              slide.models.first.modelUrl.trim().isNotEmpty
+          ? slide.models.first
+          : null;
+      if (selectedModel == null && slide.imageAssetId == null) {
         final searchKeywords = <String>[
           ...slide.keywords,
           ...title.split(' '),

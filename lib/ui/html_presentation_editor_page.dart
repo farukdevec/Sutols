@@ -6145,7 +6145,7 @@ class _HtmlPhotoControlsState extends State<_HtmlPhotoControls> {
 
   bool _pickingLocal = false;
   String? _localError;
-  int _activeTab = 0; // 0: Pexels, 1: Cihazdan
+  int _activeTab = 0; // 0: stok görseller, 1: cihazdan
 
   @override
   void initState() {
@@ -6307,7 +6307,7 @@ class _HtmlPhotoControlsState extends State<_HtmlPhotoControls> {
     );
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Pexels görseli slayta eklendi (${photo.photographer})'),
+        content: Text('Görsel slayta eklendi (${photo.photographer})'),
         duration: const Duration(seconds: 2),
         behavior: SnackBarBehavior.floating,
       ),
@@ -6400,7 +6400,7 @@ class _HtmlPhotoControlsState extends State<_HtmlPhotoControls> {
                         ),
                         const SizedBox(width: 6),
                         Text(
-                          tr('Pexels Stok', 'Pexels Stock'),
+                          tr('Stok Görsel', 'Stock Images'),
                           style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w800,
@@ -6468,7 +6468,7 @@ class _HtmlPhotoControlsState extends State<_HtmlPhotoControls> {
         const SizedBox(height: 12),
 
         if (_activeTab == 0) ...<Widget>[
-          // Pexels Search Box
+          // Stock image search box
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
             decoration: BoxDecoration(
@@ -6496,8 +6496,8 @@ class _HtmlPhotoControlsState extends State<_HtmlPhotoControls> {
                     ),
                     decoration: InputDecoration(
                       hintText: tr(
-                        'Pexels görseli ara (örn. teknoloji, uzay)...',
-                        'Search Pexels photos (e.g. tech, space)...',
+                        'Görsel ara (örn. teknoloji, uzay)...',
+                        'Search images (e.g. tech, space)...',
                       ),
                       hintStyle: TextStyle(
                         fontSize: 13,
@@ -6579,7 +6579,7 @@ class _HtmlPhotoControlsState extends State<_HtmlPhotoControls> {
 
           const SizedBox(height: 12),
 
-          // Pexels Results List
+          // Stock image results list
           if (_searchingPexels && _pexelsPhotos.isEmpty)
             const Padding(
               padding: EdgeInsets.symmetric(vertical: 36),
@@ -6606,8 +6606,8 @@ class _HtmlPhotoControlsState extends State<_HtmlPhotoControls> {
                   Text(
                     _pexelsError ??
                         tr(
-                          'Aramanıza uygun Pexels fotoğrafı bulunamadı.',
-                          'No Pexels photos found matching your search.',
+                          'Aramanıza uygun görsel bulunamadı.',
+                          'No images found matching your search.',
                         ),
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -6836,7 +6836,7 @@ class _PexelsPhotoCard extends StatelessWidget {
                       mainAxisSize: MainAxisSize.min,
                       children: <Widget>[
                         Text(
-                          'Pexels',
+                          tr('Kaynağı Aç', 'Open Source'),
                           style:
                               Theme.of(context).textTheme.labelSmall?.copyWith(
                                     color: context._htmlAccent,

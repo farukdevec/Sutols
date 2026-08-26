@@ -17,6 +17,7 @@ import 'pexels_service.dart';
 import 'presentation_deck_builder.dart';
 import 'presentation_project_codec.dart';
 import 'presentation_retention_service.dart';
+import 'presentation_visual_plan.dart';
 import 'usage_service.dart';
 import 'firestore_rest_helper.dart';
 
@@ -216,6 +217,52 @@ class PresentationService {
 
     final matchesBySlide =
         await _matcher.matchModelsForSlides(searchKeywordsBySlide);
+    final photoCandidates = <int>[];
+    for (var index = 0; index < resultPresentation.slides.length; index += 1) {
+      final slide = resultPresentation.slides[index];
+      final has3d = matchesBySlide[index].isNotEmpty;
+      if (PresentationVisualPlan.isPhotoCandidate(
+        visualKind: slide.visual?['kind']?.toString() ?? slide.type,
+        hasConfident3dModel: has3d,
+      )) {
+        photoCandidates.add(index);
+      }
+    }
+    final photoSlideIndexes = PresentationVisualPlan.choosePhotoSlides(
+      slideCount: resultPresentation.slides.length,
+      candidates: photoCandidates,
+    ).toSet();
+
+    // Seçilen fotoğraflar aynı anda aranır. Bu aşama üretim sonrasına eklenen
+    // gecikmeyi, her slaytı sırayla bekletmek yerine en yavaş tek sorgunun
+    // süresine indirir.
+    final photoSearches = <int, Future<PexelsPhoto?>>{};
+    for (final index in photoSlideIndexes) {
+      final slide = resultPresentation.slides[index];
+      final visualSubject = slide.visual?['subject']?.toString();
+      photoSearches[index] = _pexels.matchPhotoForSlide(
+        keywords: slide.keywords,
+        title: slide.title,
+        topic: topic,
+        subject: visualSubject,
+        // Aramalar paralel başladığından burada yalnızca daha önceki
+        // eşleştirmelerden gelen kimlikler elenir. Aynı sonuç dönerse aşağıda
+        // deterministik olarak yalnızca ilk slayt korur.
+        excludedPhotoIds: const <int>{},
+      );
+    }
+    final resolvedPhotos = <int, PexelsPhoto?>{};
+    await Future.wait(photoSearches.entries.map((entry) async {
+      resolvedPhotos[entry.key] = await entry.value;
+    }));
+    final retainedPhotoIds = <int>{};
+    final orderedPhotoIndexes = photoSlideIndexes.toList()..sort();
+    for (final index in orderedPhotoIndexes) {
+      final photo = resolvedPhotos[index];
+      if (photo != null && !retainedPhotoIds.add(photo.id)) {
+        resolvedPhotos[index] = null;
+      }
+    }
     for (var slideIndex = 0;
         slideIndex < resultPresentation.slides.length;
         slideIndex += 1) {
@@ -227,24 +274,11 @@ class PresentationService {
         usedModelIds,
       );
 
-      PexelsPhoto? matchedPhoto;
-      if (selectedModel == null) {
-        try {
-          final visualSubject = slide.visual?['subject']?.toString();
-          final searchTerms = <String>[
-            if (visualSubject != null && visualSubject.trim().isNotEmpty)
-              visualSubject,
-            ...slide.keywords,
-            slide.title,
-          ];
-          matchedPhoto = await _pexels.matchPhotoForSlide(
-            keywords: searchTerms,
-            title: slide.title,
-            topic: topic,
-          );
-        } catch (_) {
-          matchedPhoto = null;
-        }
+      final matchedPhoto = resolvedPhotos[slideIndex];
+      final visualKind = slide.visual?['kind']?.toString() ?? slide.type;
+      if (matchedPhoto != null &&
+          PresentationVisualPlan.prefersPhotoOver3d(visualKind)) {
+        selectedModel = null;
       }
 
       final selectedModels = selectedModel == null
