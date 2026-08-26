@@ -5,6 +5,26 @@ import 'package:sutol/services/presentation_project_codec.dart';
 import 'package:sutol/services/remote_model_sources.dart';
 
 void main() {
+  test('Gece Gökyüzü arka planı proje JSONunda korunur', () {
+    const page = PresentationPage(
+      id: 'night-sky-page',
+      backgroundKind: PresentationBackgroundKind.studioNightSky,
+      textBlocks: <PresentationTextBlock>[],
+    );
+
+    final source = PresentationProjectCodec.encodeProject(
+      pages: const <PresentationPage>[page],
+      effectSettings: const PresentationEffectSettings(),
+    );
+    final restored = PresentationProjectCodec.decodeProject(source);
+
+    expect(source, contains('studioNightSky'));
+    expect(
+      restored.pages.single.backgroundKind,
+      PresentationBackgroundKind.studioNightSky,
+    );
+  });
+
   test('persists remote model sources used by the project', () {
     const modelId = 'persisted-model-source';
     const modelUrl = 'https://assets.sutols.com/persisted-model.glb';

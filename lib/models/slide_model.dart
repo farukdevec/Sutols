@@ -332,6 +332,7 @@ enum PresentationBackgroundKind {
   studioConstructionRealEstate,
   studioGamingEntertainment,
   studioSky,
+  studioNightSky,
 }
 
 enum PresentationTransitionKind {
@@ -1393,6 +1394,29 @@ const List<PresentationBackgroundDefinition> sutolStudioBackgroundLibrary =
       Color(0xFFF7FCFF),
     ],
     icon: Icons.cloud_outlined,
+  ),
+  PresentationBackgroundDefinition(
+    kind: PresentationBackgroundKind.studioNightSky,
+    label: 'Gece Gökyüzü',
+    category: 'Sade',
+    tags: <String>[
+      'gece',
+      'gece gökyüzü',
+      'yıldız',
+      'yıldızlar',
+      'parlayan yıldız',
+      'lacivert',
+      'karanlık',
+      'sade',
+      'night sky',
+      'stars',
+    ],
+    previewColors: <Color>[
+      Color(0xFF01040D),
+      Color(0xFF07152B),
+      Color(0xFFEAF4FF),
+    ],
+    icon: Icons.auto_awesome_rounded,
   ),
 ];
 

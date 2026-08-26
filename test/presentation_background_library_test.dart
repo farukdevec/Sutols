@@ -70,13 +70,13 @@ void main() {
     expect(document, isNot(contains('fonts.googleapis.com/css2')));
   });
 
-  test('library exposes the legacy collection and 21 studio backgrounds', () {
-    expect(presentationBackgroundLibrary, hasLength(50));
+  test('library exposes the legacy collection and 22 studio backgrounds', () {
+    expect(presentationBackgroundLibrary, hasLength(51));
     expect(
       presentationBackgroundLibrary.map((item) => item.kind).toSet(),
-      hasLength(50),
+      hasLength(51),
     );
-    expect(sutolStudioBackgroundLibrary, hasLength(21));
+    expect(sutolStudioBackgroundLibrary, hasLength(22));
     expect(
       presentationBackgroundLibrary.every((item) => item.tags.isNotEmpty),
       isTrue,
@@ -95,6 +95,40 @@ void main() {
     expect(source, contains('cloud-drift'));
     expect(source, contains('64s linear infinite'));
     expect(RegExp(r'class="cloud').allMatches(source).length, 4);
+  });
+
+  test('Gece Gökyüzü yalnızca küçük ve yanıp sönen yıldızlardan oluşur', () {
+    const kind = PresentationBackgroundKind.studioNightSky;
+    final definition = presentationBackgroundDefinition(kind)!;
+    final source = presentationBackgroundSceneHtml(kind);
+
+    expect(definition.label, 'Gece Gökyüzü');
+    expect(definition.category, 'Sade');
+    expect(presentationBackgroundIsDark(kind), isTrue);
+    expect(source, contains('const starCount = 170'));
+    expect(source, contains("createElementNS(namespace, 'circle')"));
+    expect(source, contains('@keyframes twinkle'));
+    expect(source, contains('animation:twinkle'));
+    expect(source, isNot(contains('cloud')));
+    expect(source, isNot(contains('moon')));
+    expect(source, isNot(contains('planet')));
+    expect(source, isNot(contains('shooting')));
+
+    const page = PresentationPage(
+      id: 'night-sky-page',
+      backgroundKind: kind,
+      textBlocks: <PresentationTextBlock>[],
+    );
+    final export = buildPresentationExportHtml(
+      pages: const <PresentationPage>[page],
+      compact: false,
+    );
+    expect(
+      export,
+      contains('data-sutol-background-kind="studioNightSky"'),
+    );
+    expect(export, contains('const starCount = 170'));
+    expect(export, contains('@keyframes twinkle'));
   });
 
   test('a page without a selected background uses a plain white scene', () {

@@ -3,6 +3,7 @@ import '../../../models/slide_model.dart';
 final Map<PresentationBackgroundKind, String>
     sutolPremiumBackgroundScenesGroupE = <PresentationBackgroundKind, String>{
   PresentationBackgroundKind.studioSky: _studioSky,
+  PresentationBackgroundKind.studioNightSky: _studioNightSky,
 };
 
 const String _studioSky = r'''<!doctype html>
@@ -74,5 +75,76 @@ html,body{width:100%;height:100%;margin:0;padding:0;overflow:hidden;background:v
   </g>
 </svg>
 </main>
+</body>
+</html>''';
+
+const String _studioNightSky = r'''<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Gece Gökyüzü</title>
+<style>
+:root{
+  --bg-primary:#01040D;
+  --bg-surface:#07152B;
+  --bg-accent:#FFFFFF;
+  --bg-accent-soft:rgba(197,220,255,.72);
+}
+*{box-sizing:border-box}
+html,body{width:100%;height:100%;margin:0;padding:0;overflow:hidden;background:var(--bg-primary)}
+.scene{position:relative;width:100%;height:100%;aspect-ratio:16/9;overflow:hidden;background:linear-gradient(180deg,var(--bg-primary) 0%,#030A1A 52%,var(--bg-surface) 100%)}
+.scene svg{display:block;width:100%;height:100%;shape-rendering:geometricPrecision}
+.star{
+  fill:var(--bg-accent);
+  opacity:.12;
+  transform-box:fill-box;
+  transform-origin:center;
+  filter:drop-shadow(0 0 .8px rgba(255,255,255,.46));
+  animation:twinkle var(--duration) ease-in-out var(--delay) infinite;
+  will-change:opacity,transform;
+}
+.star.ice{fill:#CFE3FF;filter:drop-shadow(0 0 .9px rgba(164,204,255,.54))}
+@keyframes twinkle{
+  0%,100%{opacity:.10;transform:scale(.72)}
+  50%{opacity:var(--peak);transform:scale(1.14)}
+}
+@media (prefers-reduced-motion:reduce){.star{animation:none!important;opacity:.66;transform:none}}
+</style>
+</head>
+<body>
+<main class="scene" aria-label="Küçük yıldızların yavaşça parlayıp söndüğü gece gökyüzü">
+  <svg viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Gece gökyüzündeki yıldızlar">
+    <g id="stars" aria-hidden="true"></g>
+  </svg>
+</main>
+<script>
+(function () {
+  const layer = document.getElementById('stars');
+  const namespace = 'http://www.w3.org/2000/svg';
+  const starCount = 170;
+  let state = 739391;
+
+  function random() {
+    state = (state * 48271) % 2147483647;
+    return state / 2147483647;
+  }
+
+  for (let index = 0; index < starCount; index += 1) {
+    const star = document.createElementNS(namespace, 'circle');
+    const bright = random() > .88;
+    const radius = bright ? 1.35 + random() * .75 : .62 + random() * .78;
+    const duration = 2.8 + random() * 5.4;
+    star.setAttribute('cx', (random() * 1920).toFixed(2));
+    star.setAttribute('cy', (random() * 1080).toFixed(2));
+    star.setAttribute('r', radius.toFixed(2));
+    star.setAttribute('class', random() > .76 ? 'star ice' : 'star');
+    star.style.setProperty('--duration', duration.toFixed(2) + 's');
+    star.style.setProperty('--delay', (-random() * duration).toFixed(2) + 's');
+    star.style.setProperty('--peak', (.58 + random() * .42).toFixed(2));
+    layer.appendChild(star);
+  }
+})();
+</script>
 </body>
 </html>''';
