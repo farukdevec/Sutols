@@ -2234,6 +2234,7 @@ class _PresentationPageCanvasState extends State<PresentationPageCanvas> {
             for (final block in componentBlocks)
               _PageComponentBlock(
                 block: block,
+                cameraStateKey: '${widget.page.id}:${block.id}',
                 canvasSize: canvasSize,
                 isSelected: selectedComponentIds.contains(block.id),
                 interactive: widget.interactive,
@@ -2694,6 +2695,7 @@ Color? _presentationTextColor(String? hex) {
 class _PageComponentBlock extends StatelessWidget {
   const _PageComponentBlock({
     required this.block,
+    required this.cameraStateKey,
     required this.canvasSize,
     required this.isSelected,
     required this.interactive,
@@ -2714,6 +2716,7 @@ class _PageComponentBlock extends StatelessWidget {
   });
 
   final PresentationComponentBlock block;
+  final String cameraStateKey;
   final Size canvasSize;
   final bool isSelected;
   final bool interactive;
@@ -2853,6 +2856,8 @@ class _PageComponentBlock extends StatelessWidget {
                                       autoRotate: block.modelAutoRotate,
                                       rotationSpeed: block.modelRotationSpeed,
                                       zoom: block.modelZoom,
+                                      cameraRadius: block.modelCameraRadius,
+                                      cameraStateKey: cameraStateKey,
                                       exposure: findPresentation3DModelAsset(
                                             block.modelAssetId!,
                                           )?.exposure ??

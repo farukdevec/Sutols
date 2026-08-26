@@ -9,6 +9,121 @@ import 'package:sutol/ui/widgets/html_stage/html_page_stage.dart';
 
 void main() {
   testWidgets(
+      'yumuşak geçiş aynı modelin sayfalara özel kameraları arasında akar',
+      (tester) async {
+    tester.view.physicalSize = const Size(1440, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+
+    final controller = PresentationController();
+    addTearDown(controller.dispose);
+    controller.replaceDeck(
+      const <PresentationPage>[
+        PresentationPage(
+          id: 'camera-a',
+          transitionAfter: PresentationTransitionKind.smooth,
+          textBlocks: <PresentationTextBlock>[],
+          componentBlocks: <PresentationComponentBlock>[
+            PresentationComponentBlock(
+              id: 'model-a',
+              modelAssetId: 'anitkabir',
+              modelTourEnabled: true,
+              modelTourFrozen: true,
+              modelOrbitTheta: 10,
+              modelCameraRadius: 10,
+              modelTargetX: 20,
+              modelTargetZ: -8,
+              position: Offset.zero,
+              size: Size(1, 1),
+            ),
+          ],
+        ),
+        PresentationPage(
+          id: 'camera-b',
+          textBlocks: <PresentationTextBlock>[],
+          componentBlocks: <PresentationComponentBlock>[
+            PresentationComponentBlock(
+              id: 'model-b',
+              modelAssetId: 'anitkabir',
+              modelTourEnabled: true,
+              modelTourFrozen: true,
+              modelOrbitTheta: 130,
+              modelCameraRadius: 30,
+              modelTargetX: -10,
+              modelTargetZ: 16,
+              position: Offset.zero,
+              size: Size(1, 1),
+            ),
+          ],
+        ),
+      ],
+      effectSettings: const PresentationEffectSettings(
+        transitionKind: PresentationTransitionKind.smooth,
+        transitionDurationMs: 600,
+      ),
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: PresentationPreviewPage(
+          controller: controller,
+          useFullscreen: false,
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    var model = tester
+        .widget<PresentationPageCanvas>(find.byType(PresentationPageCanvas))
+        .page
+        .componentBlocks
+        .single;
+    expect(model.modelOrbitTheta, greaterThan(10));
+    expect(model.modelOrbitTheta, lessThan(130));
+    expect(model.modelTargetX, lessThan(20));
+    expect(model.modelTargetX, greaterThan(-10));
+    expect(model.modelCameraRadius, closeTo(20, 3));
+
+    await tester.pump(const Duration(milliseconds: 450));
+    model = tester
+        .widget<PresentationPageCanvas>(find.byType(PresentationPageCanvas))
+        .page
+        .componentBlocks
+        .single;
+    expect(model.modelOrbitTheta, 130);
+    expect(model.modelTargetX, -10);
+    expect(model.modelTargetZ, 16);
+    expect(model.modelCameraRadius, 30);
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowLeft);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 750));
+    model = tester
+        .widget<PresentationPageCanvas>(find.byType(PresentationPageCanvas))
+        .page
+        .componentBlocks
+        .single;
+    expect(model.modelOrbitTheta, 10);
+    expect(model.modelTargetX, 20);
+    expect(model.modelTargetZ, -8);
+    expect(model.modelCameraRadius, 10);
+
+    // Sunum gezinmesi proje verisini değiştirmemeli; iki sayfanın kamera
+    // kayıtları hâlâ birbirinden tamamen bağımsız olmalı.
+    final firstSaved = controller.pages[0].componentBlocks.single;
+    final secondSaved = controller.pages[1].componentBlocks.single;
+    expect(firstSaved.modelOrbitTheta, 10);
+    expect(firstSaved.modelTargetX, 20);
+    expect(firstSaved.modelTargetZ, -8);
+    expect(secondSaved.modelOrbitTheta, 130);
+    expect(secondSaved.modelTargetX, -10);
+    expect(secondSaved.modelTargetZ, 16);
+  });
+
+  testWidgets(
       'ESC önizleme turundaki son kamera state\'ini editöre commit eder',
       (tester) async {
     tester.view.physicalSize = const Size(1440, 900);
@@ -111,23 +226,17 @@ void main() {
     );
     await tester.pump();
 
-    final htmlStage = tester.widget<HtmlPageStage>(
-      find.byType(HtmlPageStage),
+    final previewCanvas = tester.widget<PresentationPageCanvas>(
+      find.byType(PresentationPageCanvas),
     );
-    expect(htmlStage.tourCameraTheta, expected.modelOrbitTheta);
-    expect(htmlStage.tourCameraPhi, expected.modelOrbitPhi);
-    expect(htmlStage.tourCameraTargetX, expected.modelTargetX);
-    expect(htmlStage.tourCameraTargetY, expected.modelTargetY);
-    expect(htmlStage.tourCameraTargetZ, expected.modelTargetZ);
-    expect(htmlStage.tourCameraZoom, expected.modelZoom);
-
-    final fallback = tester.widget<PresentationPageThumbnailCanvas>(
-      find.byType(PresentationPageThumbnailCanvas),
-    );
-    expect(
-      fallback.page.componentBlocks.any((block) => block.modelAssetId != null),
-      isFalse,
-    );
+    final rendered = previewCanvas.page.componentBlocks.single;
+    expect(rendered.modelOrbitTheta, expected.modelOrbitTheta);
+    expect(rendered.modelOrbitPhi, expected.modelOrbitPhi);
+    expect(rendered.modelTargetX, expected.modelTargetX);
+    expect(rendered.modelTargetY, expected.modelTargetY);
+    expect(rendered.modelTargetZ, expected.modelTargetZ);
+    expect(rendered.modelZoom, expected.modelZoom);
+    expect(find.byType(PresentationPageThumbnailCanvas), findsNothing);
   });
 
   testWidgets(
@@ -167,24 +276,33 @@ void main() {
     );
     await tester.pump();
 
-    HtmlPageStage currentStage() => tester.widget<HtmlPageStage>(
-          find.byType(HtmlPageStage),
+    PresentationPageCanvas currentStage() =>
+        tester.widget<PresentationPageCanvas>(
+          find.byType(PresentationPageCanvas),
         );
 
     expect(currentStage().page.id, controller.pages.first.id);
-    expect(currentStage().tourCameraTheta, firstCamera.modelOrbitTheta);
-    expect(currentStage().tourCameraTargetX, firstCamera.modelTargetX);
-    expect(currentStage().tourCameraTargetZ, firstCamera.modelTargetZ);
-    expect(currentStage().tourCameraZoom, firstCamera.modelZoom);
+    expect(currentStage().page.componentBlocks.single.modelOrbitTheta,
+        firstCamera.modelOrbitTheta);
+    expect(currentStage().page.componentBlocks.single.modelTargetX,
+        firstCamera.modelTargetX);
+    expect(currentStage().page.componentBlocks.single.modelTargetZ,
+        firstCamera.modelTargetZ);
+    expect(currentStage().page.componentBlocks.single.modelZoom,
+        firstCamera.modelZoom);
 
     await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
     await tester.pump();
 
     expect(currentStage().page.id, controller.pages[1].id);
-    expect(currentStage().tourCameraTheta, secondCamera.modelOrbitTheta);
-    expect(currentStage().tourCameraTargetX, secondCamera.modelTargetX);
-    expect(currentStage().tourCameraTargetZ, secondCamera.modelTargetZ);
-    expect(currentStage().tourCameraZoom, secondCamera.modelZoom);
+    expect(currentStage().page.componentBlocks.single.modelOrbitTheta,
+        secondCamera.modelOrbitTheta);
+    expect(currentStage().page.componentBlocks.single.modelTargetX,
+        secondCamera.modelTargetX);
+    expect(currentStage().page.componentBlocks.single.modelTargetZ,
+        secondCamera.modelTargetZ);
+    expect(currentStage().page.componentBlocks.single.modelZoom,
+        secondCamera.modelZoom);
   });
 
   testWidgets('aktif turda sayfa değişimi kamerayı kaydeder ve turu dondurmaz',

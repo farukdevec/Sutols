@@ -596,6 +596,30 @@ class ModelTourSurfacePoint {
   final double z;
 }
 
+/// `model-viewer` tarafÄ±nda ekranda gerÃ§ekten kullanÄ±lan kamera pozu.
+///
+/// YÃ¼zde tabanlÄ± kamera uzaklÄ±ÄŸÄ± yeni bir viewport'ta yeniden hesaplanabildiÄŸi
+/// iÃ§in yarÄ±Ã§ap metre olarak da saklanÄ±r. Bu deÄŸer editÃ¶r ve tam ekran sunumun
+/// aynÄ± kareyi Ã¼retmesini saÄŸlar.
+@immutable
+class ModelViewerCameraPose {
+  const ModelViewerCameraPose({
+    required this.theta,
+    required this.phi,
+    required this.radius,
+    required this.targetX,
+    required this.targetY,
+    required this.targetZ,
+  });
+
+  final double theta;
+  final double phi;
+  final double radius;
+  final double targetX;
+  final double targetY;
+  final double targetZ;
+}
+
 /// Tur yüzeyindeki öğenin görsel biçimi. Eski projeler alanı içermediğinden
 /// varsayılan `point` olarak okunur ve mevcut işaretleri korur.
 enum ModelTourHotspotKind { point, text }
@@ -664,6 +688,7 @@ class PresentationComponentBlock {
     this.modelAutoRotate = false,
     this.modelRotationSpeed = 30,
     this.modelZoom = 1,
+    this.modelCameraRadius,
     this.modelOrbitEnabled = false,
     this.modelTourEnabled = false,
     this.modelTourFrozen = false,
@@ -699,6 +724,7 @@ class PresentationComponentBlock {
   final bool modelAutoRotate;
   final double modelRotationSpeed;
   final double modelZoom;
+  final double? modelCameraRadius;
   final bool modelOrbitEnabled;
   final bool modelTourEnabled;
   final bool modelTourFrozen;
@@ -729,6 +755,7 @@ class PresentationComponentBlock {
     bool? modelAutoRotate,
     double? modelRotationSpeed,
     double? modelZoom,
+    Object? modelCameraRadius = _copySentinel,
     bool? modelOrbitEnabled,
     bool? modelTourEnabled,
     bool? modelTourFrozen,
@@ -766,6 +793,9 @@ class PresentationComponentBlock {
       modelAutoRotate: modelAutoRotate ?? this.modelAutoRotate,
       modelRotationSpeed: modelRotationSpeed ?? this.modelRotationSpeed,
       modelZoom: modelZoom ?? this.modelZoom,
+      modelCameraRadius: identical(modelCameraRadius, _copySentinel)
+          ? this.modelCameraRadius
+          : modelCameraRadius as double?,
       modelOrbitEnabled: modelOrbitEnabled ?? this.modelOrbitEnabled,
       modelTourEnabled: modelTourEnabled ?? this.modelTourEnabled,
       modelTourFrozen: modelTourFrozen ?? this.modelTourFrozen,

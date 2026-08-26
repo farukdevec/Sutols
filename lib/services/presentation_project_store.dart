@@ -30,6 +30,8 @@ class PresentationProjectStore {
   static Future<void> saveProject({
     required String presentationId,
     required String json,
+    String? presentationName,
+    int? slideCount,
   }) async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
@@ -68,6 +70,51 @@ class PresentationProjectStore {
         ],
       );
     }
+
+    final cleanName = presentationName?.trim();
+    if ((cleanName != null && cleanName.isNotEmpty) || slideCount != null) {
+      final metadataFields = <String, dynamic>{
+        if (cleanName != null && cleanName.isNotEmpty) ...{
+          'topic': {'stringValue': cleanName},
+          'title': {'stringValue': cleanName},
+        },
+        if (slideCount != null)
+          'slideCount': {'integerValue': '${slideCount.clamp(0, 9999)}'},
+        'updatedAt': {'timestampValue': FirestoreRestHelper.nowTimestamp()},
+      };
+      await FirestoreRestHelper.patchDocument(
+        'presentations/$presentationId',
+        metadataFields,
+        updateMask: <String>[
+          if (cleanName != null && cleanName.isNotEmpty) 'topic',
+          if (cleanName != null && cleanName.isNotEmpty) 'title',
+          if (slideCount != null) 'slideCount',
+          'updatedAt',
+        ],
+      );
+    }
+  }
+
+  /// Sunumun listelerde ve editör başlığında görünen adını
+  /// günceller. Sunum kimliği değişmediği için aynı adı kullanan
+  /// başka bir sunum bulunması kaydı engellemez.
+  static Future<void> updatePresentationName({
+    required String presentationId,
+    required String name,
+  }) async {
+    final cleanName = name.trim();
+    if (cleanName.isEmpty) {
+      throw ArgumentError.value(name, 'name', 'Sunum adı boş olamaz.');
+    }
+    await FirestoreRestHelper.patchDocument(
+      'presentations/$presentationId',
+      {
+        'topic': {'stringValue': cleanName},
+        'title': {'stringValue': cleanName},
+        'updatedAt': {'timestampValue': FirestoreRestHelper.nowTimestamp()},
+      },
+      updateMask: const ['topic', 'title', 'updatedAt'],
+    );
   }
 
   /// Paylaşım bayrağını günceller (sahip işlemi).

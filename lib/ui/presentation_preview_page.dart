@@ -1446,7 +1446,9 @@ class _PreviewDeckStage extends StatelessWidget {
                     child: GestureDetector(
                       behavior: HitTestBehavior.translucent,
                       onTap: effectSettings.zoomEnabled ? onToggleZoom : null,
-                      child: isPlayingTransition
+                      child: isPlayingTransition &&
+                              effectSettings.transitionKind !=
+                                  PresentationTransitionKind.smooth
                           ? HtmlPageTransitionStage(
                               key: ValueKey<String>(
                                 'transition-${transitionFromPage!.id}-${page.id}-${effectSettings.transitionKind.name}',
@@ -1466,7 +1468,11 @@ class _PreviewDeckStage extends StatelessWidget {
                               child: _PreviewStageWithOrbit(
                                 key: tourStageKey,
                                 page: page,
-                                transitionFromPage: null,
+                                transitionFromPage: isPlayingTransition &&
+                                        effectSettings.transitionKind ==
+                                            PresentationTransitionKind.smooth
+                                    ? transitionFromPage
+                                    : null,
                                 currentRevealStep: currentRevealStep,
                                 effectSettings: effectSettings,
                                 reduceMotion: reduceMotion,
@@ -1934,6 +1940,8 @@ class _PreviewStageWithOrbitState extends State<_PreviewStageWithOrbit> {
             );
     final stageTourPose =
         stageTourBlock == null ? null : _tourPoseFor(stageTourBlock);
+    final useEditorMatchedStage =
+        !widget.tourMode && !_tourPointPlacementEnabled;
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -1941,15 +1949,17 @@ class _PreviewStageWithOrbitState extends State<_PreviewStageWithOrbit> {
         return Stack(
           fit: StackFit.expand,
           children: <Widget>[
-            IgnorePointer(
-              child: PresentationPageThumbnailCanvas(
-                // Canlı 3B model yalnızca HtmlPageStage tarafından çizilir.
-                // Aynı modelin altta ikinci bir platform view olarak kalması,
-                // editör ve sunum kameralarının üst üste görünmesine yol açar.
-                page: _fallbackPageWithoutLiveModels,
+            if (!useEditorMatchedStage)
+              IgnorePointer(
+                child: PresentationPageThumbnailCanvas(
+                  // Canlı 3B model yalnızca HtmlPageStage tarafından çizilir.
+                  // Aynı modelin altta ikinci bir platform view olarak kalması,
+                  // editör ve sunum kameralarının üst üste görünmesine yol açar.
+                  page: _fallbackPageWithoutLiveModels,
+                ),
               ),
-            ),
-            if (widget.effectSettings.transitionKind ==
+            if (useEditorMatchedStage &&
+                widget.effectSettings.transitionKind ==
                     PresentationTransitionKind.smooth &&
                 widget.transitionFromPage != null &&
                 !widget.reduceMotion)
@@ -1960,8 +1970,20 @@ class _PreviewStageWithOrbitState extends State<_PreviewStageWithOrbit> {
                 visibleRevealStep: widget.currentRevealStep,
                 duration: widget.duration,
               )
+            else if (useEditorMatchedStage)
+              _EditorMatchedPreviewStage(
+                key: ValueKey<String>(
+                  'editor-matched-preview-${widget.page.id}',
+                ),
+                page: _effectivePage,
+                visibleRevealStep: widget.currentRevealStep,
+              )
             else
               HtmlPageStage(
+                // Her sayfa kendi model-viewer/iframe örneğine sahip olmalı.
+                // Aynı platform view'ı sayfalar arasında patch etmek, özellikle
+                // aynı GLB kullanıldığında önceki sayfanın kamerasını ezebiliyor.
+                key: ValueKey<String>('preview-stage-${widget.page.id}'),
                 page: _effectivePage,
                 visibleRevealStep: widget.currentRevealStep,
                 showBadge: false,
@@ -2050,6 +2072,52 @@ class _PreviewStageWithOrbitState extends State<_PreviewStageWithOrbit> {
   }
 }
 
+/// DondurulmuÅŸ/normal sunum sayfasÄ±nÄ± editÃ¶rle aynÄ± widget aÄŸacÄ±nda Ã§izer.
+/// BÃ¶ylece ilk sayfada iframe'e Ã¶zgÃ¼ kamera, metin ve Ã¶lÃ§ek farkÄ± kalmaz.
+class _EditorMatchedPreviewStage extends StatelessWidget {
+  const _EditorMatchedPreviewStage({
+    super.key,
+    required this.page,
+    required this.visibleRevealStep,
+  });
+
+  final PresentationPage page;
+  final int visibleRevealStep;
+
+  @override
+  Widget build(BuildContext context) {
+    final visiblePage = page.copyWith(
+      textBlocks: page.textBlocks
+          .where((block) => block.revealStep <= visibleRevealStep)
+          .toList(growable: false),
+      componentBlocks: page.componentBlocks
+          .where((block) => block.revealStep <= visibleRevealStep)
+          .toList(growable: false),
+    );
+    return Stack(
+      fit: StackFit.expand,
+      children: <Widget>[
+        HtmlLiveBackground(
+          kind: visiblePage.backgroundKind,
+          animationEnabled: visiblePage.backgroundAnimationEnabled,
+          animationSpeed: visiblePage.backgroundAnimationSpeed,
+          colorsInverted: visiblePage.backgroundColorsInverted,
+        ),
+        IgnorePointer(
+          child: PresentationPageCanvas(
+            page: visiblePage,
+            interactive: false,
+            showHint: false,
+            showSurface: false,
+            showSelectionBorder: false,
+            showEmptyState: false,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 class _SmoothModelMorphStage extends StatefulWidget {
   const _SmoothModelMorphStage({
     super.key,
@@ -2122,15 +2190,13 @@ class _SmoothModelMorphStageState extends State<_SmoothModelMorphStage>
 
   @override
   Widget build(BuildContext context) {
-    return HtmlPageStage(
+    return _EditorMatchedPreviewStage(
       page: _interpolateModelPages(
         widget.fromPage,
         widget.toPage,
         _progress.value,
       ),
       visibleRevealStep: widget.visibleRevealStep,
-      showBadge: false,
-      renderMode: HtmlStageRenderMode.preview,
     );
   }
 }
@@ -2180,6 +2246,14 @@ PresentationPage _interpolateModelPages(
         progress,
       ),
       modelZoom: ui.lerpDouble(source.modelZoom, target.modelZoom, progress),
+      modelCameraRadius:
+          source.modelCameraRadius == null && target.modelCameraRadius == null
+              ? null
+              : ui.lerpDouble(
+                  source.modelCameraRadius ?? target.modelCameraRadius!,
+                  target.modelCameraRadius ?? source.modelCameraRadius!,
+                  progress,
+                ),
     );
   }).toList(growable: false);
   return to.copyWith(componentBlocks: nextComponents);

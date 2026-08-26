@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../models/slide_model.dart';
+import '../routes.dart';
 import '../services/firestore_rest_helper.dart';
 import '../services/local_image_picker.dart';
 import '../services/model_asset_service.dart';
@@ -25,6 +26,7 @@ import '../services/presentation_tracking_service.dart';
 import '../services/remote_image_sources.dart';
 import '../services/remote_model_sources.dart';
 import '../services/url_launcher_service.dart';
+import '../services/web_url_service.dart';
 import '../state/presentation_controller.dart';
 import '../state/theme_controller.dart';
 import '../state/language_controller.dart';
@@ -96,6 +98,7 @@ class HtmlPresentationEditorPage extends StatefulWidget {
     super.key,
     required this.controller,
     this.presentationId,
+    this.initialPresentationName,
     this.initialUpdatedByName,
     this.adminReadOnly = false,
   });
@@ -104,6 +107,11 @@ class HtmlPresentationEditorPage extends StatefulWidget {
 
   /// Bağlı Firestore sunum ID'si (varsa kayıt buluta yazılır).
   final String? presentationId;
+
+  /// Firestore ana sunum belgesindeki kalıcı `topic/title` değeri.
+  /// Verilmediğinde ilk dolu metin bloğu yalnızca ilk açılış adı olarak
+  /// kullanılır; kullanıcının sonradan verdiği adın üzerine yazılmaz.
+  final String? initialPresentationName;
 
   /// Açılışta gösterilecek "son düzenleyen" adı.
   final String? initialUpdatedByName;
@@ -176,20 +184,23 @@ class _HtmlPresentationEditorPageState
   /// İndirilecek sunumun konu / dosya adı (kullanıcı düzenleyebilir).
   String _presentationFileName = 'Sutols Sunumu';
 
+  /// Ad düzenleme rotası açıkken odak değişikliği alttaki bütün
+  /// editörü yeniden kurmamalıdır. Web platform view'ları ile dialog aynı
+  /// karede sökülürken bu, InheritedElement `_dependents.isEmpty`
+  /// assertion'ina yol açabiliyordu.
+  bool _presentationNameDialogOpen = false;
+
   /// Sunum sayfalarındaki ilk metin bloğundan konu / dosya adını çözer.
-  void _resolvePresentationFileName() {
+  String? _presentationFileNameFromDeck() {
     for (final page in widget.controller.pages) {
       for (final block in page.textBlocks) {
         final value = block.text.trim();
         if (value.isNotEmpty) {
-          final name = value.length > 64 ? value.substring(0, 64) : value;
-          if (name != _presentationFileName) {
-            setState(() => _presentationFileName = name);
-          }
-          return;
+          return value.length > 64 ? value.substring(0, 64) : value;
         }
       }
     }
+    return null;
   }
 
   void _onMobileScaleStart(ScaleStartDetails details) {
@@ -245,7 +256,14 @@ class _HtmlPresentationEditorPageState
       _lastEditorLabel = initial.trim();
     }
     _hintTimer = Timer(const Duration(seconds: 6), _dismissMobileHint);
-    _resolvePresentationFileName();
+    final initialPresentationName = widget.initialPresentationName?.trim();
+    if (initialPresentationName != null &&
+        initialPresentationName.isNotEmpty) {
+      _presentationFileName = initialPresentationName;
+    } else {
+      _presentationFileName =
+          _presentationFileNameFromDeck() ?? _presentationFileName;
+    }
     _hydrateModels();
     if (widget.adminReadOnly) {
       _adminLoading = true;
@@ -392,9 +410,10 @@ class _HtmlPresentationEditorPageState
               '\nC:${block.id}|${block.kind.index}|${block.modelAssetId}|${block.imageAssetId}|${block.imageAspectRatio}')
           ..write('|${block.modelAnimationEnabled}|${block.modelAutoRotate}')
           ..write('|${block.modelZoom.toStringAsFixed(2)}')
+          ..write('|${block.modelCameraRadius?.toStringAsFixed(7) ?? ''}')
           ..write('|${block.modelOrbitEnabled}'
               '|${block.modelOrbitTheta.toStringAsFixed(3)}|${block.modelOrbitPhi.toStringAsFixed(3)}')
-          ..write('|${block.modelTourEnabled}'
+          ..write('|${block.modelTourEnabled}|${block.modelTourFrozen}'
               '|${block.modelTargetX.toStringAsFixed(3)}|${block.modelTargetY.toStringAsFixed(3)}|${block.modelTargetZ.toStringAsFixed(3)}')
           ..write(
               '|${block.position.dx.toStringAsFixed(3)}|${block.position.dy.toStringAsFixed(3)}')
@@ -584,42 +603,62 @@ class _HtmlPresentationEditorPageState
 
   /// Konu / sunum adını kullanıcıdan alıp günceller.
   Future<void> _editPresentationFileName() async {
-    final controller = TextEditingController(text: _presentationFileName);
-    final result = await showDialog<String>(
+    if (widget.adminReadOnly || _presentationNameDialogOpen) return;
+
+    _presentationNameDialogOpen = true;
+    final route = DialogRoute<String>(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Sunum Konusu'),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          decoration: const InputDecoration(
-            labelText: 'Konu / Sunum Adı',
-            hintText: 'Örn: Tarih ve Arkeoloji',
-          ),
-          onSubmitted: (value) => Navigator.of(dialogContext).pop(value),
-        ),
-        actions: <Widget>[
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(),
-            child: const Text('İptal'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(dialogContext).pop(
-              controller.text.trim(),
-            ),
-            child: const Text('Kaydet'),
-          ),
-        ],
+      builder: (_) => _PresentationNameDialog(
+        initialName: _presentationFileName,
       ),
     );
-    controller.dispose();
-    if (result != null && result.isNotEmpty && mounted) {
-      setState(() => _presentationFileName = result);
+    String? result;
+    try {
+      result = await Navigator.of(context, rootNavigator: true).push(route);
+      // Navigator.pop sonucu ters geçiş tamamlanmadan döner. Editörü ve
+      // HTML platform view'larını ancak dialog gerçekten söküldükten
+      // sonra yeniden kur.
+      await route.completed;
+    } finally {
+      _presentationNameDialogOpen = false;
+    }
+
+    final cleanName = result?.trim();
+    if (!mounted || cleanName == null || cleanName.isEmpty) return;
+    if (cleanName == _presentationFileName) return;
+
+    final presentationId = widget.presentationId;
+    if (presentationId != null) {
+      try {
+        await PresentationProjectStore.updatePresentationName(
+          presentationId: presentationId,
+          name: cleanName,
+        );
+      } catch (error) {
+        if (mounted) {
+          _showSnack('Sunum adı güncellenemedi: $error');
+        }
+        return;
+      }
+    }
+
+    if (!mounted) return;
+    setState(() => _presentationFileName = cleanName);
+    if (presentationId != null) {
+      replaceBrowserUrl(
+        path: AppRoutes.presentationUrl(
+          id: presentationId,
+          topic: cleanName,
+        ),
+        title: cleanName,
+      );
+      _showSnack('Sunum adı güncellendi.');
     }
   }
 
   Future<void> _exportPresentation() async {
-    _resolvePresentationFileName();
+    _stopTourKeyboardMovement();
+    _syncRenderedModelCameraPoses();
     final presentationId = widget.presentationId;
     if (presentationId != null && !widget.adminReadOnly) {
       _tracking.markExported(presentationId);
@@ -638,6 +677,8 @@ class _HtmlPresentationEditorPageState
   }
 
   Future<void> _exportPdfPresentation() async {
+    _stopTourKeyboardMovement();
+    _syncRenderedModelCameraPoses();
     await exportPresentationAsPdfViaPrint(
       pages: widget.controller.pages.toList(growable: false),
       effectSettings: widget.controller.effectSettings,
@@ -650,6 +691,8 @@ class _HtmlPresentationEditorPageState
       _showSnack('Salt okunur görüntüleme modunda kayıt yapılamaz.');
       return;
     }
+    _stopTourKeyboardMovement();
+    _syncRenderedModelCameraPoses();
     final presentationId = widget.presentationId;
     if (presentationId != null) {
       final json = PresentationProjectCodec.encodeProject(
@@ -660,6 +703,8 @@ class _HtmlPresentationEditorPageState
         await PresentationProjectStore.saveProject(
           presentationId: presentationId,
           json: json,
+          presentationName: _presentationFileName,
+          slideCount: widget.controller.pages.length,
         );
         final user = FirebaseAuth.instance.currentUser;
         final name = user != null && (user.displayName ?? '').trim().isNotEmpty
@@ -667,7 +712,7 @@ class _HtmlPresentationEditorPageState
             : (user?.email ?? '');
         if (mounted) {
           setState(() => _lastEditorLabel = name);
-          _showSnack('Sunum buluta kaydedildi.');
+          _showSnack('Sunum "$_presentationFileName" adıyla buluta kaydedildi.');
         }
       } catch (e) {
         _showSnack('Buluta kaydedilemedi: $e');
@@ -704,18 +749,47 @@ class _HtmlPresentationEditorPageState
   }
 
   Future<void> _openPresentationPreview() async {
+    // Sunum modu asıl editör verisini değiştirmez. Son kamera hareketini
+    // tamamlar ve her sayfanın kayıtlı pozunu taşıyan bağımsız bir kopya açar.
+    _stopTourKeyboardMovement();
+    if (isPointerLocked) exitPointerLock();
+    _syncRenderedModelCameraPoses();
+    final previewController = PresentationController();
+    previewController.replaceDeck(
+      widget.controller.pages.toList(growable: false),
+      effectSettings: widget.controller.effectSettings,
+    );
+    previewController.commitAllModelTourPoses();
+    previewController.selectPage(widget.controller.selectedIndex);
     await requestPresentationFullscreen();
     if (!mounted) {
+      previewController.dispose();
       return;
     }
-    await Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        fullscreenDialog: true,
-        builder: (_) => PresentationPreviewPage(
-          controller: widget.controller,
+    try {
+      await Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          fullscreenDialog: true,
+          builder: (_) => PresentationPreviewPage(
+            controller: previewController,
+          ),
         ),
-      ),
-    );
+      );
+    } finally {
+      previewController.dispose();
+    }
+  }
+
+  void _syncRenderedModelCameraPoses() {
+    final posesByBlockId = <String, ModelViewerCameraPose>{};
+    for (final page in widget.controller.pages) {
+      for (final block in page.componentBlocks) {
+        if (block.modelAssetId == null) continue;
+        final pose = HtmlModelCanvas.cameraPoseFor('${page.id}:${block.id}');
+        if (pose != null) posesByBlockId[block.id] = pose;
+      }
+    }
+    widget.controller.syncRenderedModelCameraPoses(posesByBlockId);
   }
 
   bool _primaryFocusIsTextInput() {
@@ -733,6 +807,10 @@ class _HtmlPresentationEditorPageState
     final nextValue = _primaryFocusIsTextInput();
     if (!mounted || nextValue == _textInputHasFocus) return;
     if (nextValue) _stopTourKeyboardMovement();
+    if (_presentationNameDialogOpen) {
+      _textInputHasFocus = nextValue;
+      return;
+    }
     setState(() => _textInputHasFocus = nextValue);
   }
 
@@ -1011,7 +1089,9 @@ class _HtmlPresentationEditorPageState
                               lastEditorLabel: _lastEditorLabel,
                               adminReadOnly: widget.adminReadOnly,
                               presentationFileName: _presentationFileName,
-                              onEditFileName: _editPresentationFileName,
+                              onEditFileName: widget.adminReadOnly
+                                  ? null
+                                  : _editPresentationFileName,
                               onOpenStageDimensions: () =>
                                   _showStageDimensionsDialog(
                                 context,
@@ -1055,7 +1135,9 @@ class _HtmlPresentationEditorPageState
                               lastEditorLabel: _lastEditorLabel,
                               adminReadOnly: widget.adminReadOnly,
                               presentationFileName: _presentationFileName,
-                              onEditFileName: _editPresentationFileName,
+                              onEditFileName: widget.adminReadOnly
+                                  ? null
+                                  : _editPresentationFileName,
                             ),
                             SizedBox(height: isMobile ? 8 : 14),
                             Expanded(
@@ -9562,184 +9644,218 @@ class _HtmlStageCardState extends State<_HtmlStageCard>
                           ),
                         ),
                       ),
-                    if (widget.readOnly)
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(28),
-                        child: IgnorePointer(
-                          child: PresentationPageCanvas(
-                            page: widget.controller.selectedPage,
-                            selectedTextBlockId:
-                                widget.controller.selectedTextBlockId,
-                            selectedTextBlockIds:
-                                widget.controller.selectedTextBlockIds,
-                            selectedComponentBlockId:
-                                widget.controller.selectedComponentBlockId,
-                            selectedComponentBlockIds:
-                                widget.controller.selectedComponentBlockIds,
-                            interactive: false,
-                            showHint: false,
-                            showSurface: false,
-                            showEmptyState: false,
-                            textOpacity: 1,
-                          ),
-                        ),
-                      )
-                    else
-                      PresentationPageCanvas(
-                        page: widget.controller.selectedPage,
-                        selectedTextBlockId:
-                            widget.controller.selectedTextBlockId,
-                        selectedTextBlockIds:
-                            widget.controller.selectedTextBlockIds,
-                        selectedComponentBlockId:
-                            widget.controller.selectedComponentBlockId,
-                        selectedComponentBlockIds:
-                            widget.controller.selectedComponentBlockIds,
-                        interactive: widget.interactive,
-                        showHint: widget.showHint,
-                        showSurface: false,
-                        showEmptyState: false,
-                        textOpacity: 1,
-                        onSelectTextBlock: widget.controller.selectTextBlock,
-                        onSelectComponentBlock: (itemId) {
-                          widget.controller.selectComponentBlock(itemId);
-                          final model =
-                              widget.controller.selectedComponentBlock;
-                          if (model?.modelTourEnabled == true &&
-                              model?.modelTourFrozen != true) {
-                            widget.controller.beginSelectedModelOrbitGesture();
-                            requestPointerLock();
-                          }
-                        },
-                        onDragSelectedText: (delta, size) =>
-                            widget.controller.moveSelectedText(
-                          localDelta(delta),
-                          size,
-                        ),
-                        onInlineTextChanged:
-                            widget.controller.updateSelectedText,
-                        onInlineEditingChanged: _setInlineEditingTextBlock,
-                        onResizeSelectedText: (delta, size,
-                                {required renderedHeightFactor,
-                                required fromLeft,
-                                required fromTop,
-                                required fromRight,
-                                required fromBottom}) =>
-                            widget.controller.resizeSelectedTextByHandle(
-                          localDelta(delta),
-                          size,
-                          renderedHeightFactor: renderedHeightFactor,
-                          fromLeft: fromLeft,
-                          fromTop: fromTop,
-                          fromRight: fromRight,
-                          fromBottom: fromBottom,
-                        ),
-                        onResizeSelectedComponent: (delta, size,
-                                {required fromLeft,
-                                required fromTop,
-                                required fromRight,
-                                required fromBottom}) =>
-                            widget.controller.resizeSelectedComponentByHandle(
-                          localDelta(delta),
-                          size,
-                          fromLeft: fromLeft,
-                          fromTop: fromTop,
-                          fromRight: fromRight,
-                          fromBottom: fromBottom,
-                        ),
-                        onMarqueeSelectionChanged: ({
-                          required textBlockIds,
-                          required componentBlockIds,
-                        }) =>
-                            widget.controller.selectItems(
-                          textBlockIds: textBlockIds,
-                          componentBlockIds: componentBlockIds,
-                        ),
-                        onClearSelection: widget.controller.clearSelection,
-                        onSecondaryTapTextBlock: (itemId, globalPosition) {
-                          if (!widget.controller.selectedTextBlockIds
-                              .contains(itemId)) {
-                            widget.controller.selectTextBlock(itemId);
-                          }
-                          _showStageItemContextMenu(
-                            context,
-                            widget.controller,
-                            globalPosition,
-                          );
-                        },
-                        onSecondaryTapComponentBlock: (itemId, globalPosition) {
-                          if (!widget.controller.selectedComponentBlockIds
-                              .contains(itemId)) {
-                            widget.controller.selectComponentBlock(itemId);
-                          }
-                          _showStageItemContextMenu(
-                            context,
-                            widget.controller,
-                            globalPosition,
-                          );
-                        },
-                        onSecondaryTapCanvas: (globalPosition) {
-                          _showCanvasContextMenu(
-                            context,
-                            widget.controller,
-                            globalPosition,
-                          );
-                        },
-                        onToggleModelOrbit: (itemId) {
-                          if (widget.controller.selectedComponentBlockId !=
-                              itemId) {
-                            widget.controller.selectComponentBlock(itemId);
-                          }
-                          widget.controller.toggleSelectedModelOrbit();
-                        },
-                        onRotateModel: (itemId, delta) {
-                          if (widget.controller.selectedComponentBlockId !=
-                              itemId) {
-                            widget.controller.selectComponentBlock(itemId);
-                          }
-                          widget.controller
-                              .rotateSelectedModel(localDelta(delta));
-                        },
-                        onPanModelTour: (itemId, delta) {
-                          if (widget.controller.selectedComponentBlockId !=
-                              itemId) {
-                            widget.controller.selectComponentBlock(itemId);
-                          }
-                          widget.controller.lookAroundSelectedModelTour(
-                            localDelta(delta),
-                          );
-                        },
-                        modelTourPointPlacementEnabled:
-                            widget.controller.modelTourPointPlacementEnabled,
-                        onModelTourSurfacePointPicked: (itemId, point) async {
-                          if (widget.controller.selectedComponentBlockId !=
-                              itemId) return;
-                          widget.controller
-                              .setModelTourPointPlacementEnabled(false);
-                          await _showAddTourHotspotDialog(
-                            context,
-                            widget.controller,
-                            fixedPoint: point,
-                          );
-                        },
-                        onModelTourSurfacePickMissed: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text(
-                                  'Nokta eklemek için model yüzeyine tıklayın.'),
+                    IndexedStack(
+                      index: widget.controller.selectedIndex,
+                      sizing: StackFit.expand,
+                      children: <Widget>[
+                        for (final canvasPage in widget.controller.pages)
+                          if (widget.readOnly)
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(28),
+                              child: IgnorePointer(
+                                child: PresentationPageCanvas(
+                                  key: ValueKey<String>(
+                                    'editor-page-canvas-${canvasPage.id}',
+                                  ),
+                                  page: canvasPage,
+                                  selectedTextBlockId:
+                                      widget.controller.selectedTextBlockId,
+                                  selectedTextBlockIds:
+                                      widget.controller.selectedTextBlockIds,
+                                  selectedComponentBlockId: widget
+                                      .controller.selectedComponentBlockId,
+                                  selectedComponentBlockIds: widget
+                                      .controller.selectedComponentBlockIds,
+                                  interactive: false,
+                                  showHint: false,
+                                  showSurface: false,
+                                  showEmptyState: false,
+                                  textOpacity: 1,
+                                ),
+                              ),
+                            )
+                          else
+                            PresentationPageCanvas(
+                              key: ValueKey<String>(
+                                'editor-page-canvas-${canvasPage.id}',
+                              ),
+                              page: canvasPage,
+                              selectedTextBlockId:
+                                  widget.controller.selectedTextBlockId,
+                              selectedTextBlockIds:
+                                  widget.controller.selectedTextBlockIds,
+                              selectedComponentBlockId:
+                                  widget.controller.selectedComponentBlockId,
+                              selectedComponentBlockIds:
+                                  widget.controller.selectedComponentBlockIds,
+                              interactive: widget.interactive &&
+                                  canvasPage.id ==
+                                      widget.controller.selectedPage.id,
+                              showHint: widget.showHint,
+                              showSurface: false,
+                              showEmptyState: false,
+                              textOpacity: 1,
+                              onSelectTextBlock:
+                                  widget.controller.selectTextBlock,
+                              onSelectComponentBlock: (itemId) {
+                                widget.controller.selectComponentBlock(itemId);
+                                final model =
+                                    widget.controller.selectedComponentBlock;
+                                if (model?.modelTourEnabled == true &&
+                                    model?.modelTourFrozen != true) {
+                                  widget.controller
+                                      .beginSelectedModelOrbitGesture();
+                                  requestPointerLock();
+                                }
+                              },
+                              onDragSelectedText: (delta, size) =>
+                                  widget.controller.moveSelectedText(
+                                localDelta(delta),
+                                size,
+                              ),
+                              onInlineTextChanged:
+                                  widget.controller.updateSelectedText,
+                              onInlineEditingChanged:
+                                  _setInlineEditingTextBlock,
+                              onResizeSelectedText: (delta, size,
+                                      {required renderedHeightFactor,
+                                      required fromLeft,
+                                      required fromTop,
+                                      required fromRight,
+                                      required fromBottom}) =>
+                                  widget.controller.resizeSelectedTextByHandle(
+                                localDelta(delta),
+                                size,
+                                renderedHeightFactor: renderedHeightFactor,
+                                fromLeft: fromLeft,
+                                fromTop: fromTop,
+                                fromRight: fromRight,
+                                fromBottom: fromBottom,
+                              ),
+                              onResizeSelectedComponent: (delta, size,
+                                      {required fromLeft,
+                                      required fromTop,
+                                      required fromRight,
+                                      required fromBottom}) =>
+                                  widget.controller
+                                      .resizeSelectedComponentByHandle(
+                                localDelta(delta),
+                                size,
+                                fromLeft: fromLeft,
+                                fromTop: fromTop,
+                                fromRight: fromRight,
+                                fromBottom: fromBottom,
+                              ),
+                              onMarqueeSelectionChanged: ({
+                                required textBlockIds,
+                                required componentBlockIds,
+                              }) =>
+                                  widget.controller.selectItems(
+                                textBlockIds: textBlockIds,
+                                componentBlockIds: componentBlockIds,
+                              ),
+                              onClearSelection:
+                                  widget.controller.clearSelection,
+                              onSecondaryTapTextBlock:
+                                  (itemId, globalPosition) {
+                                if (!widget.controller.selectedTextBlockIds
+                                    .contains(itemId)) {
+                                  widget.controller.selectTextBlock(itemId);
+                                }
+                                _showStageItemContextMenu(
+                                  context,
+                                  widget.controller,
+                                  globalPosition,
+                                );
+                              },
+                              onSecondaryTapComponentBlock:
+                                  (itemId, globalPosition) {
+                                if (!widget.controller.selectedComponentBlockIds
+                                    .contains(itemId)) {
+                                  widget.controller
+                                      .selectComponentBlock(itemId);
+                                }
+                                _showStageItemContextMenu(
+                                  context,
+                                  widget.controller,
+                                  globalPosition,
+                                );
+                              },
+                              onSecondaryTapCanvas: (globalPosition) {
+                                _showCanvasContextMenu(
+                                  context,
+                                  widget.controller,
+                                  globalPosition,
+                                );
+                              },
+                              onToggleModelOrbit: (itemId) {
+                                if (widget
+                                        .controller.selectedComponentBlockId !=
+                                    itemId) {
+                                  widget.controller
+                                      .selectComponentBlock(itemId);
+                                }
+                                widget.controller.toggleSelectedModelOrbit();
+                              },
+                              onRotateModel: (itemId, delta) {
+                                if (widget
+                                        .controller.selectedComponentBlockId !=
+                                    itemId) {
+                                  widget.controller
+                                      .selectComponentBlock(itemId);
+                                }
+                                widget.controller
+                                    .rotateSelectedModel(localDelta(delta));
+                              },
+                              onPanModelTour: (itemId, delta) {
+                                if (widget
+                                        .controller.selectedComponentBlockId !=
+                                    itemId) {
+                                  widget.controller
+                                      .selectComponentBlock(itemId);
+                                }
+                                widget.controller.lookAroundSelectedModelTour(
+                                  localDelta(delta),
+                                );
+                              },
+                              modelTourPointPlacementEnabled: widget
+                                  .controller.modelTourPointPlacementEnabled,
+                              onModelTourSurfacePointPicked:
+                                  (itemId, point) async {
+                                if (widget
+                                        .controller.selectedComponentBlockId !=
+                                    itemId) return;
+                                widget.controller
+                                    .setModelTourPointPlacementEnabled(false);
+                                await _showAddTourHotspotDialog(
+                                  context,
+                                  widget.controller,
+                                  fixedPoint: point,
+                                );
+                              },
+                              onModelTourSurfacePickMissed: () {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                        'Nokta eklemek için model yüzeyine tıklayın.'),
+                                  ),
+                                );
+                              },
+                              onBeginModelOrbit: (itemId) {
+                                if (widget
+                                        .controller.selectedComponentBlockId !=
+                                    itemId) {
+                                  widget.controller
+                                      .selectComponentBlock(itemId);
+                                }
+                                widget.controller
+                                    .beginSelectedModelOrbitGesture();
+                              },
+                              onEndModelOrbit: widget
+                                  .controller.endSelectedModelOrbitGesture,
                             ),
-                          );
-                        },
-                        onBeginModelOrbit: (itemId) {
-                          if (widget.controller.selectedComponentBlockId !=
-                              itemId) {
-                            widget.controller.selectComponentBlock(itemId);
-                          }
-                          widget.controller.beginSelectedModelOrbitGesture();
-                        },
-                        onEndModelOrbit:
-                            widget.controller.endSelectedModelOrbitGesture,
-                      ),
+                      ],
+                    ),
                     if (!widget.readOnly)
                       IgnorePointer(
                         child: _StageAnimationOrderBadges(

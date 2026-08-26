@@ -572,6 +572,7 @@ String buildHtmlStageMarkup({
                 autoRotate: block.modelAutoRotate,
                 rotationSpeed: block.modelRotationSpeed,
                 zoom: block.modelZoom,
+                cameraRadius: block.modelCameraRadius,
                 exposure:
                     findPresentation3DModelAsset(modelId ?? '')?.exposure ?? 1,
                 environmentImage: findPresentation3DModelAsset(modelId ?? '')
@@ -658,6 +659,7 @@ String _model3DMarkup(
   required bool autoRotate,
   required double rotationSpeed,
   required double zoom,
+  required double? cameraRadius,
   required double exposure,
   required String? environmentImage,
   required bool orbitEnabled,
@@ -696,14 +698,17 @@ String _model3DMarkup(
       ? ' min-camera-orbit="auto 42deg 5%" max-camera-orbit="auto 89deg 250%"'
       : ' min-camera-orbit="auto auto 1%" max-camera-orbit="auto auto 250%"';
   final effectiveZoom = zoom.clamp(0.5, 10.0);
-  final cameraRadius = (100 / effectiveZoom).clamp(10, 200).toStringAsFixed(2);
+  final resolvedCameraRadius =
+      cameraRadius != null && cameraRadius.isFinite && cameraRadius > 0
+          ? '${cameraRadius.toStringAsFixed(7)}m'
+          : '${(100 / effectiveZoom).clamp(10, 200).toStringAsFixed(2)}%';
   // Eski turlarda varsayılan 75° kamera yüksek kalıyordu. Zemin turu
   // başlangıçta göz hizasına yakın 82° ile açılır; kullanıcı isterse yukarı
   // doğru bakmaya devam edebilir.
   final effectiveOrbitPhi =
       tourEnabled ? orbitPhi.clamp(42.0, 89.0).toDouble() : orbitPhi;
   final cameraOrbit =
-      '${orbitTheta.toStringAsFixed(2)}deg ${effectiveOrbitPhi.toStringAsFixed(2)}deg $cameraRadius%';
+      '${orbitTheta.toStringAsFixed(2)}deg ${effectiveOrbitPhi.toStringAsFixed(2)}deg $resolvedCameraRadius';
   // Tur hedefi eski model formatında bounding-box yüzdesidir. Başlangıçta
   // bile güvenli alan dışındaki değerler model yüklenince "uzak sahne" etkisi
   // yaratır; tüm yüzeylerde aynı sınırı kullan.
@@ -3493,8 +3498,11 @@ const String _stagePatchScript = r'''
         const theta = Number(pose.theta);
         const phi = Number(pose.phi);
         const zoom = Number(pose.zoom);
+        const exactRadius = Number(pose.cameraRadius);
         if (!Number.isFinite(theta) || !Number.isFinite(phi)) continue;
-        const radius = Number.isFinite(zoom)
+        const radius = Number.isFinite(exactRadius) && exactRadius > 0
+          ? exactRadius.toFixed(7) + 'm'
+          : Number.isFinite(zoom)
           ? Math.max(10, Math.min(200, 100 / Math.max(.5, Math.min(10, zoom)))).toFixed(2) + '%'
           : (existingOrbit[2] || '100%');
         viewer.dataset.sutolOrbitTheta = theta.toFixed(5);
@@ -3556,6 +3564,12 @@ const String _stagePatchScript = r'''
     const targetX = Number(source.sutolTargetX ?? ownerData.sutolTargetX);
     const targetY = Number(source.sutolTargetY ?? ownerData.sutolTargetY);
     const targetZ = Number(source.sutolTargetZ ?? ownerData.sutolTargetZ);
+    const orbitParts = String(modelViewer.getAttribute('camera-orbit') || '')
+      .trim().split(/\s+/);
+    const radiusPart = orbitParts[2] || '';
+    const cameraRadius = radiusPart.endsWith('m')
+      ? Number(radiusPart.slice(0, -1))
+      : Number.NaN;
     if (modelViewer.dataset.sutolTourGround === 'true' &&
         Number.isFinite(theta) && Number.isFinite(phi) &&
         Number.isFinite(targetX) && Number.isFinite(targetY) &&
@@ -3564,6 +3578,7 @@ const String _stagePatchScript = r'''
         theta: theta,
         phi: phi,
         zoom: zoom,
+        cameraRadius: cameraRadius,
         targetX: targetX,
         targetY: targetY,
         targetZ: targetZ,
@@ -3718,11 +3733,14 @@ const String _stagePatchScript = r'''
       const modelViewer = element.querySelector('model-viewer');
       if (modelViewer) {
         const zoom = Math.max(0.5, Math.min(10, Number(item.modelZoom) || 1));
-        const cameraRadius = Math.max(10, Math.min(200, 100 / zoom));
+        const exactRadius = Number(item.modelCameraRadius);
+        const cameraRadius = Number.isFinite(exactRadius) && exactRadius > 0
+          ? exactRadius.toFixed(7) + 'm'
+          : Math.max(10, Math.min(200, 100 / zoom)).toFixed(2) + '%';
         modelViewer.setAttribute(
           'camera-orbit',
           String(item.modelOrbitTheta) + 'deg ' +
-            String(item.modelOrbitPhi) + 'deg ' + cameraRadius.toFixed(2) + '%'
+            String(item.modelOrbitPhi) + 'deg ' + cameraRadius
         );
       }
     }
@@ -3750,12 +3768,15 @@ const String _stagePatchScript = r'''
       const modelViewer = element.querySelector('model-viewer');
       if (modelViewer) {
         const zoom = Math.max(0.5, Math.min(10, Number(item.modelZoom) || 1));
-        const cameraRadius = Math.max(10, Math.min(200, 100 / zoom));
+        const exactRadius = Number(item.modelCameraRadius);
+        const cameraRadius = Number.isFinite(exactRadius) && exactRadius > 0
+          ? exactRadius.toFixed(7) + 'm'
+          : Math.max(10, Math.min(200, 100 / zoom)).toFixed(2) + '%';
         const theta = Number(item.modelOrbitTheta) || 0;
         const phi = Number(item.modelOrbitPhi) || 75;
         modelViewer.setAttribute(
           'camera-orbit',
-          theta + 'deg ' + phi + 'deg ' + cameraRadius.toFixed(2) + '%'
+          theta + 'deg ' + phi + 'deg ' + cameraRadius
         );
         modelViewer.setAttribute('field-of-view', '45deg');
       }
@@ -3817,6 +3838,7 @@ const String _stagePatchScript = r'''
           targetY: Number(item.modelTargetY),
           targetZ: Number(item.modelTargetZ),
           zoom: Number(item.modelZoom),
+          cameraRadius: Number(item.modelCameraRadius),
         });
       }
     }

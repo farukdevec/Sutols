@@ -1149,6 +1149,38 @@ void main() {
     expect(restored.modelTourFrozen, isTrue);
   });
 
+  testWidgets('sayfa değişince 3B editör sahnesi canlı tutulur', (
+    tester,
+  ) async {
+    final controller = await pumpAt(tester, const Size(1440, 900));
+    final firstPageId = controller.selectedPage.id;
+    controller.add3DModelBlock(presentation3DModelCatalog.first);
+    controller.updateSelectedModelTourEnabled(true);
+    controller.lookAroundSelectedModelTour(const Offset(72, -18));
+    controller.moveSelectedModelTour(forward: 15, right: 4);
+    controller.updateSelectedModelZoom(2.8);
+    final expected = controller.selectedComponentBlock!;
+
+    controller.addPage();
+    await tester.pump();
+    expect(
+      find.byKey(
+        ValueKey<String>('editor-page-canvas-$firstPageId'),
+        skipOffstage: false,
+      ),
+      findsOneWidget,
+    );
+
+    controller.selectPage(0);
+    await tester.pump();
+    final restored = controller.selectedPage.componentBlocks.single;
+    expect(restored.modelOrbitTheta, expected.modelOrbitTheta);
+    expect(restored.modelOrbitPhi, expected.modelOrbitPhi);
+    expect(restored.modelTargetX, expected.modelTargetX);
+    expect(restored.modelTargetZ, expected.modelTargetZ);
+    expect(restored.modelZoom, expected.modelZoom);
+  });
+
   testWidgets('Sanal Turu Kapat son kamera pozunu model üzerinde dondurur', (
     tester,
   ) async {

@@ -5,6 +5,102 @@ import 'package:sutol/models/slide_model.dart';
 import 'package:sutol/state/presentation_controller.dart';
 
 void main() {
+  test('render edilen kesin kamera yarÄ±Ã§apÄ± ilgili sayfaya kaydedilir', () {
+    final controller = PresentationController();
+    addTearDown(controller.dispose);
+    controller.replaceDeck(
+      const <PresentationPage>[
+        PresentationPage(
+          id: 'camera-page',
+          textBlocks: <PresentationTextBlock>[],
+          componentBlocks: <PresentationComponentBlock>[
+            PresentationComponentBlock(
+              id: 'camera-model',
+              modelAssetId: 'anitkabir',
+              modelTourEnabled: true,
+              position: Offset.zero,
+              size: Size(1, 1),
+            ),
+          ],
+        ),
+      ],
+    );
+
+    expect(
+      controller.syncRenderedModelCameraPoses(
+        const <String, ModelViewerCameraPose>{
+          'camera-model': ModelViewerCameraPose(
+            theta: 32,
+            phi: 84,
+            radius: 17.625,
+            targetX: 4,
+            targetY: -2,
+            targetZ: 11,
+          ),
+        },
+      ),
+      isTrue,
+    );
+
+    final model = controller.pages.single.componentBlocks.single;
+    expect(model.modelOrbitTheta, 32);
+    expect(model.modelOrbitPhi, 84);
+    expect(model.modelCameraRadius, 17.625);
+    expect(model.modelTargetX, 4);
+    expect(model.modelTargetY, -2);
+    expect(model.modelTargetZ, 11);
+  });
+
+  test('sunum hazırlığı her sayfanın tur kamerasını ayrı pozda sabitler', () {
+    final controller = PresentationController();
+    addTearDown(controller.dispose);
+    controller.replaceDeck(
+      const <PresentationPage>[
+        PresentationPage(
+          id: 'tour-a',
+          textBlocks: <PresentationTextBlock>[],
+          componentBlocks: <PresentationComponentBlock>[
+            PresentationComponentBlock(
+              id: 'model-a',
+              modelAssetId: 'anitkabir',
+              modelTourEnabled: true,
+              modelOrbitTheta: 25,
+              modelTargetX: 12,
+              position: Offset.zero,
+              size: Size(1, 1),
+            ),
+          ],
+        ),
+        PresentationPage(
+          id: 'tour-b',
+          textBlocks: <PresentationTextBlock>[],
+          componentBlocks: <PresentationComponentBlock>[
+            PresentationComponentBlock(
+              id: 'model-b',
+              modelAssetId: 'anitkabir',
+              modelTourEnabled: true,
+              modelOrbitTheta: 210,
+              modelTargetX: -18,
+              position: Offset.zero,
+              size: Size(1, 1),
+            ),
+          ],
+        ),
+      ],
+    );
+
+    expect(controller.commitAllModelTourPoses(), isTrue);
+
+    final first = controller.pages[0].componentBlocks.single;
+    final second = controller.pages[1].componentBlocks.single;
+    expect(first.modelTourFrozen, isTrue);
+    expect(second.modelTourFrozen, isTrue);
+    expect(first.modelOrbitTheta, 25);
+    expect(first.modelTargetX, 12);
+    expect(second.modelOrbitTheta, 210);
+    expect(second.modelTargetX, -18);
+  });
+
   test('applying a transition requests one preview for that slide gap', () {
     final controller = PresentationController()..addPage();
     final before = controller.transitionPreviewRevision;

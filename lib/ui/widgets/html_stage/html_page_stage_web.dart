@@ -418,6 +418,8 @@ class HtmlModelCanvas extends StatefulWidget {
     required this.autoRotate,
     required this.rotationSpeed,
     required this.zoom,
+    this.cameraRadius,
+    this.cameraStateKey,
     required this.exposure,
     required this.environmentImage,
     required this.orbitEnabled,
@@ -438,6 +440,8 @@ class HtmlModelCanvas extends StatefulWidget {
   final bool autoRotate;
   final double rotationSpeed;
   final double zoom;
+  final double? cameraRadius;
+  final String? cameraStateKey;
   final double exposure;
   final String? environmentImage;
   final bool orbitEnabled;
@@ -452,14 +456,33 @@ class HtmlModelCanvas extends StatefulWidget {
   final ValueChanged<ModelTourSurfacePoint>? onSurfacePositionPicked;
   final VoidCallback? onSurfacePickMissed;
 
+  /// Ekranda gerÃ§ekten kullanÄ±lan (interpolasyon sonrasÄ±) kamera pozunu okur.
+  /// Sunum aÃ§Ä±lmadan hemen Ã¶nce Ã§aÄŸrÄ±larak yÃ¼zde tabanlÄ± uzaklÄ±k yerine
+  /// model-viewer'Ä±n metre cinsinden kesin yarÄ±Ã§apÄ± kaydedilir.
+  static ModelViewerCameraPose? cameraPoseFor(String cameraStateKey) =>
+      _HtmlModelCanvasState.cameraPoseFor(cameraStateKey);
+
   @override
   State<HtmlModelCanvas> createState() => _HtmlModelCanvasState();
 }
 
 class _HtmlModelCanvasState extends State<HtmlModelCanvas> {
+  static final Map<String, _ModelCanvasGeometry> _geometryByModelId =
+      <String, _ModelCanvasGeometry>{};
+  static final Map<String, _HtmlModelCanvasState> _statesByCameraKey =
+      <String, _HtmlModelCanvasState>{};
+  static final Map<String, ModelViewerCameraPose> _posesByCameraKey =
+      <String, ModelViewerCameraPose>{};
+
+  static ModelViewerCameraPose? cameraPoseFor(String cameraStateKey) {
+    final state = _statesByCameraKey[cameraStateKey];
+    return state?._captureCameraPose() ?? _posesByCameraKey[cameraStateKey];
+  }
+
   html.Element? _modelViewer;
   StreamSubscription<html.Event>? _modelLoadSubscription;
   StreamSubscription<html.MouseEvent>? _surfacePickSubscription;
+  final List<Timer> _cameraRestoreTimers = <Timer>[];
   double _modelWidth = 1;
   double _modelHeight = 1;
   double _modelDepth = 1;
@@ -467,6 +490,29 @@ class _HtmlModelCanvasState extends State<HtmlModelCanvas> {
   double _modelCenterY = 0;
   double _modelCenterZ = 0;
   bool _modelGeometryReady = false;
+
+  void _restoreCachedGeometry() {
+    final geometry = _geometryByModelId[widget.modelId];
+    if (geometry == null) return;
+    _modelWidth = geometry.width;
+    _modelHeight = geometry.height;
+    _modelDepth = geometry.depth;
+    _modelCenterX = geometry.centerX;
+    _modelCenterY = geometry.centerY;
+    _modelCenterZ = geometry.centerZ;
+    _modelGeometryReady = true;
+  }
+
+  String get _savedCameraOrbit {
+    final exactRadius = widget.cameraRadius;
+    final radiusText = exactRadius != null &&
+            exactRadius.isFinite &&
+            exactRadius > 0
+        ? '${exactRadius.toStringAsFixed(7)}m'
+        : '${(100 / widget.zoom.clamp(0.5, 10.0)).clamp(10, 200).toStringAsFixed(2)}%';
+    return '${widget.orbitTheta.toStringAsFixed(5)}deg '
+        '${widget.orbitPhi.toStringAsFixed(5)}deg $radiusText';
+  }
 
   void _setAttribute(String name, String value) {
     final element = _modelViewer;
@@ -483,13 +529,76 @@ class _HtmlModelCanvasState extends State<HtmlModelCanvas> {
   @override
   void initState() {
     super.initState();
+    _registerCameraState();
     RemoteModelSources.revision.addListener(_applyAttributes);
   }
 
   @override
   void didUpdateWidget(covariant HtmlModelCanvas oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (oldWidget.cameraStateKey != widget.cameraStateKey) {
+      _unregisterCameraState(oldWidget.cameraStateKey);
+      _registerCameraState();
+    }
+    if (oldWidget.modelId != widget.modelId) {
+      _modelGeometryReady = false;
+      _restoreCachedGeometry();
+    }
     _applyAttributes();
+    if (oldWidget.modelId != widget.modelId ||
+        oldWidget.orbitTheta != widget.orbitTheta ||
+        oldWidget.orbitPhi != widget.orbitPhi ||
+        oldWidget.targetX != widget.targetX ||
+        oldWidget.targetY != widget.targetY ||
+        oldWidget.targetZ != widget.targetZ ||
+        oldWidget.zoom != widget.zoom ||
+        oldWidget.cameraRadius != widget.cameraRadius) {
+      _jumpCameraToSavedPose();
+    }
+  }
+
+  void _registerCameraState() {
+    final key = widget.cameraStateKey;
+    if (key != null && key.isNotEmpty) _statesByCameraKey[key] = this;
+  }
+
+  void _unregisterCameraState([String? key]) {
+    final resolvedKey = key ?? widget.cameraStateKey;
+    if (resolvedKey != null && _statesByCameraKey[resolvedKey] == this) {
+      _statesByCameraKey.remove(resolvedKey);
+    }
+  }
+
+  ModelViewerCameraPose? _captureCameraPose() {
+    final element = _modelViewer;
+    final key = widget.cameraStateKey;
+    if (element == null || key == null || key.isEmpty) return null;
+    try {
+      final viewer = element as JSObject;
+      final orbit = viewer.callMethod<JSObject>('getCameraOrbit'.toJS);
+      final target = viewer.callMethod<JSObject>('getCameraTarget'.toJS);
+      final pose = ModelViewerCameraPose(
+        theta: _jsCoordinate(orbit, 'theta') * 180 / math.pi,
+        phi: _jsCoordinate(orbit, 'phi') * 180 / math.pi,
+        radius: _jsCoordinate(orbit, 'radius'),
+        targetX: _jsCoordinate(target, 'x'),
+        targetY: _jsCoordinate(target, 'y'),
+        targetZ: _jsCoordinate(target, 'z'),
+      );
+      if (!pose.theta.isFinite ||
+          !pose.phi.isFinite ||
+          !pose.radius.isFinite ||
+          pose.radius <= 0 ||
+          !pose.targetX.isFinite ||
+          !pose.targetY.isFinite ||
+          !pose.targetZ.isFinite) {
+        return null;
+      }
+      _posesByCameraKey[key] = pose;
+      return pose;
+    } catch (_) {
+      return _posesByCameraKey[key];
+    }
   }
 
   void _setBooleanAttribute(String name, bool enabled) {
@@ -509,8 +618,6 @@ class _HtmlModelCanvasState extends State<HtmlModelCanvas> {
     element.style.cursor = widget.pickSurfacePosition ? 'crosshair' : 'default';
     element.style.touchAction = widget.tourEnabled ? 'none' : 'auto';
     final source = RemoteModelSources.sourceFor(widget.modelId);
-    final zoom = widget.zoom.clamp(0.5, 10.0);
-    final cameraRadius = (100 / zoom).clamp(10, 200).toStringAsFixed(2);
     if (source == null || source.isEmpty) {
       _removeAttribute('src');
     } else {
@@ -518,16 +625,14 @@ class _HtmlModelCanvasState extends State<HtmlModelCanvas> {
       // değerlendirmesine ve büyük modellerde sürüklemenin takılmasına yol
       // açabiliyor. Yalnızca kaynak gerçekten değiştiğinde güncelle.
       if (element.getAttribute('src') != source) {
-        _modelGeometryReady = false;
+        if (!_geometryByModelId.containsKey(widget.modelId)) {
+          _modelGeometryReady = false;
+        }
         _setAttribute('src', source);
       }
     }
     _setAttribute('alt', widget.modelId);
-    _setAttribute(
-      'camera-orbit',
-      '${widget.orbitTheta.toStringAsFixed(2)}deg '
-          '${widget.orbitPhi.toStringAsFixed(2)}deg $cameraRadius%',
-    );
+    _setAttribute('camera-orbit', _savedCameraOrbit);
     _setAttribute(
       'min-camera-orbit',
       widget.tourEnabled ? 'auto 42deg 5%' : 'auto auto 1%',
@@ -604,9 +709,65 @@ class _HtmlModelCanvasState extends State<HtmlModelCanvas> {
           _modelWidth > 0 &&
           _modelHeight > 0 &&
           _modelDepth > 0;
+      if (_modelGeometryReady) {
+        _geometryByModelId[widget.modelId] = _ModelCanvasGeometry(
+          width: _modelWidth,
+          height: _modelHeight,
+          depth: _modelDepth,
+          centerX: _modelCenterX,
+          centerY: _modelCenterY,
+          centerZ: _modelCenterZ,
+        );
+      }
       _applyCameraTarget();
+      _jumpCameraToSavedPose();
+      _captureCameraPose();
     } catch (_) {
       _modelGeometryReady = false;
+    }
+  }
+
+  void _jumpCameraToSavedPose() {
+    final element = _modelViewer;
+    if (element == null) return;
+    try {
+      // model-viewer GLB yüklenince kısa süreliğine kendi ideal kamerasına
+      // dönebilir. Kayıtlı orbit/target değerini anında hedefe uygulamak ana
+      // tuval, küçük resim ve sayfaya geri dönüş görünümünü aynı tutar.
+      _applyCameraGoalProperties();
+      (element as JSObject).callMethod<JSAny?>(
+        'jumpCameraToGoal'.toJS,
+      );
+      _captureCameraPose();
+    } catch (_) {
+      // Eski model-viewer sürümlerinde metot bulunmayabilir; attribute tabanlı
+      // kamera uygulaması çalışmaya devam eder.
+    }
+  }
+
+  void _scheduleSavedCameraRestore() {
+    for (final timer in _cameraRestoreTimers) {
+      timer.cancel();
+    }
+    _cameraRestoreTimers.clear();
+
+    // Web component'in yükseltilmesi, GLB load olayı ve bounding-box hesabı
+    // aynı anda tamamlanmayabilir. Özellikle sayfadan çıkıp geri girerken ilk
+    // deneme erken kalırsa model ideal/uzak kamerada görünüyordu. Birkaç kısa
+    // doğrulama geçişiyle son kaydedilen kamera kesin olarak geri yüklenir.
+    for (final delay in const <Duration>[
+      Duration.zero,
+      Duration(milliseconds: 50),
+      Duration(milliseconds: 150),
+      Duration(milliseconds: 350),
+      Duration(milliseconds: 750),
+      Duration(milliseconds: 1200),
+    ]) {
+      _cameraRestoreTimers.add(Timer(delay, () {
+        if (!mounted || _modelViewer == null) return;
+        _applyAttributes();
+        _refreshModelGeometry();
+      }));
     }
   }
 
@@ -644,21 +805,44 @@ class _HtmlModelCanvasState extends State<HtmlModelCanvas> {
             .clamp(_modelCenterZ - tourHalfZ, _modelCenterZ + tourHalfZ)
             .toDouble()
         : _modelCenterZ + _modelDepth * widget.targetZ / 100;
-    _setAttribute(
-      'camera-target',
-      '${x.toStringAsFixed(5)}m ${y.toStringAsFixed(5)}m '
-          '${z.toStringAsFixed(5)}m',
-    );
+    final cameraTarget = '${x.toStringAsFixed(5)}m ${y.toStringAsFixed(5)}m '
+        '${z.toStringAsFixed(5)}m';
+    _setAttribute('camera-target', cameraTarget);
+    _applyCameraGoalProperties(cameraTarget: cameraTarget);
+  }
+
+  void _applyCameraGoalProperties({String? cameraTarget}) {
+    final element = _modelViewer;
+    if (element == null) return;
+    try {
+      final viewer = element as JSObject;
+      // Attribute yansıtması yükleme döngüsünde gecikebilir. Public kamera
+      // property'lerine de doğrudan yazmak, geri dönülen sayfanın kayıtlı
+      // pozunu model-viewer için kesin hedef haline getirir.
+      viewer.setProperty('cameraOrbit'.toJS, _savedCameraOrbit.toJS);
+      final target = cameraTarget ?? element.getAttribute('camera-target');
+      if (target != null && target.isNotEmpty) {
+        viewer.setProperty('cameraTarget'.toJS, target.toJS);
+      }
+    } catch (_) {
+      // Attribute tabanlı uygulama eski model-viewer sürümleri için yedektir.
+    }
   }
 
   @override
   void dispose() {
+    _captureCameraPose();
+    _unregisterCameraState();
     RemoteModelSources.revision.removeListener(_applyAttributes);
     final modelLoadSubscription = _modelLoadSubscription;
     if (modelLoadSubscription != null) {
       unawaited(modelLoadSubscription.cancel());
     }
     unawaited(_surfacePickSubscription?.cancel());
+    for (final timer in _cameraRestoreTimers) {
+      timer.cancel();
+    }
+    _cameraRestoreTimers.clear();
     _modelViewer?.remove();
     super.dispose();
   }
@@ -669,6 +853,7 @@ class _HtmlModelCanvasState extends State<HtmlModelCanvas> {
       tagName: 'model-viewer',
       onElementCreated: (element) {
         final modelViewer = element as html.Element;
+        _restoreCachedGeometry();
         _modelViewer = modelViewer
           ..style.width = '100%'
           ..style.height = '100%'
@@ -678,11 +863,12 @@ class _HtmlModelCanvasState extends State<HtmlModelCanvas> {
           ..style.setProperty('contain', 'strict')
           ..style.setProperty('--poster-color', 'transparent');
         _modelLoadSubscription = modelViewer.on['load'].listen((_) {
-          _refreshModelGeometry();
+          _scheduleSavedCameraRestore();
         });
         _surfacePickSubscription =
             modelViewer.onClick.listen(_pickSurfacePoint);
         _applyAttributes();
+        _scheduleSavedCameraRestore();
       },
     );
   }
@@ -721,6 +907,24 @@ class _HtmlModelCanvasState extends State<HtmlModelCanvas> {
       widget.onSurfacePickMissed?.call();
     }
   }
+}
+
+class _ModelCanvasGeometry {
+  const _ModelCanvasGeometry({
+    required this.width,
+    required this.height,
+    required this.depth,
+    required this.centerX,
+    required this.centerY,
+    required this.centerZ,
+  });
+
+  final double width;
+  final double height;
+  final double depth;
+  final double centerX;
+  final double centerY;
+  final double centerZ;
 }
 
 class _HtmlComponentPreviewState extends State<HtmlComponentPreview> {
@@ -848,6 +1052,55 @@ class _HtmlPageStageState extends State<HtmlPageStage> {
   StreamSubscription<html.Event>? _initialLoadSubscription;
   Timer? _initialLoadTimer;
   StreamSubscription<html.MessageEvent>? _tourMessageSubscription;
+
+  bool _usesDirectModelCanvas(PresentationComponentBlock block) {
+    final modelId = block.modelAssetId;
+    return widget.renderMode == HtmlStageRenderMode.preview &&
+        modelId != null &&
+        block.imageAssetId == null &&
+        (!block.modelTourEnabled || block.modelTourFrozen) &&
+        RemoteImageSources.sourceFor(modelId) == null &&
+        RemoteModelSources.hasSignedSource(modelId);
+  }
+
+  List<PresentationComponentBlock> get _directModelBlocks {
+    final revealStep = widget.visibleRevealStep;
+    return widget.page.componentBlocks
+        .where(
+          (block) =>
+              _usesDirectModelCanvas(block) &&
+              (revealStep == null || block.revealStep <= revealStep),
+        )
+        .toList(growable: false);
+  }
+
+  PresentationPage get _documentPage {
+    final components = widget.page.componentBlocks
+        .where((block) => !_usesDirectModelCanvas(block))
+        .toList(growable: false);
+    return components.length == widget.page.componentBlocks.length
+        ? widget.page
+        : widget.page.copyWith(componentBlocks: components);
+  }
+
+  PresentationComponentBlock? get _cameraTourBlock {
+    PresentationComponentBlock? firstTour;
+    for (final block in widget.page.componentBlocks) {
+      if (!_usesDirectModelCanvas(block) || !block.modelTourEnabled) continue;
+      firstTour ??= block;
+      if (!block.modelTourFrozen) return block;
+    }
+    return firstTour;
+  }
+
+  bool _usesRuntimeTourCamera(PresentationComponentBlock block) =>
+      _cameraTourBlock?.id == block.id &&
+      widget.tourCameraTheta != null &&
+      widget.tourCameraPhi != null &&
+      widget.tourCameraTargetX != null &&
+      widget.tourCameraTargetY != null &&
+      widget.tourCameraTargetZ != null;
+
   @override
   void initState() {
     super.initState();
@@ -900,6 +1153,7 @@ class _HtmlPageStageState extends State<HtmlPageStage> {
 
   void _onRemoteSourcesChanged() {
     if (mounted) {
+      setState(() {});
       _render();
     }
   }
@@ -1149,14 +1403,19 @@ class _HtmlPageStageState extends State<HtmlPageStage> {
   }
 
   void _render() {
+    final directModelBlocks = _directModelBlocks;
     final document = buildHtmlStageDocument(
-      page: widget.page,
+      // Sunumda 3B model editÃ¶rle aynÄ± doÄŸrudan model-viewer bileÅŸeninde
+      // Ã§izilir. Iframe yalnÄ±zca metinleri ve diÄŸer HTML bileÅŸenlerini tutar;
+      // aksi halde aynÄ± kayÄ±tlÄ± kamera iki farklÄ± renderer tarafÄ±ndan farklÄ±
+      // yorumlanÄ±yor ve sunum ilk karesinde model baÅŸka bir aÃ§Ä±ya sÄ±Ã§rÄ±yordu.
+      page: _documentPage,
       selectedTextBlockId: widget.selectedTextBlockId,
       inlineEditingTextBlockId: widget.inlineEditingTextBlockId,
       selectedComponentBlockId: widget.selectedComponentBlockId,
       visibleRevealStep: widget.visibleRevealStep,
       showBadge: widget.showBadge,
-      showBackground: widget.showBackground,
+      showBackground: widget.showBackground && directModelBlocks.isEmpty,
       renderMode: widget.renderMode,
       modelSourcesById: RemoteModelSources.all,
       imageSourcesById: RemoteImageSources.all,
@@ -1419,9 +1678,10 @@ class _HtmlPageStageState extends State<HtmlPageStage> {
       return false;
     }
 
+    final documentPage = _documentPage;
     final payload = <String, Object?>{
       'type': 'sutol-stage-patch',
-      'components': widget.page.componentBlocks.map(
+      'components': documentPage.componentBlocks.map(
         (block) {
           final legacyImageId = block.imageAssetId == null &&
                   block.modelAssetId != null &&
@@ -1473,6 +1733,8 @@ class _HtmlPageStageState extends State<HtmlPageStage> {
             'modelRotationSpeed':
                 isImage || modelId == null ? null : block.modelRotationSpeed,
             'modelZoom': isImage || modelId == null ? null : block.modelZoom,
+            'modelCameraRadius':
+                isImage || modelId == null ? null : block.modelCameraRadius,
             'modelTargetX':
                 isImage || modelId == null ? null : block.modelTargetX,
             'modelTargetY':
@@ -1491,7 +1753,7 @@ class _HtmlPageStageState extends State<HtmlPageStage> {
           };
         },
       ).toList(growable: false),
-      'texts': widget.page.textBlocks
+      'texts': documentPage.textBlocks
           .map(
             (block) => <String, Object?>{
               'id': block.id,
@@ -1549,7 +1811,95 @@ class _HtmlPageStageState extends State<HtmlPageStage> {
 
   @override
   Widget build(BuildContext context) {
-    return HtmlElementView(viewType: _viewType);
+    final directModelBlocks = _directModelBlocks;
+    if (directModelBlocks.isEmpty) {
+      return HtmlElementView(viewType: _viewType);
+    }
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final stageWidth = constraints.maxWidth;
+        final stageHeight = constraints.maxHeight;
+        if (stageWidth <= 0 || stageHeight <= 0) {
+          return const SizedBox.shrink();
+        }
+        final minWidth = math.min(54.0, stageWidth);
+        final minHeight = math.min(44.0, stageHeight);
+
+        return Stack(
+          fit: StackFit.expand,
+          clipBehavior: Clip.hardEdge,
+          children: <Widget>[
+            if (widget.showBackground)
+              HtmlLiveBackground(
+                kind: widget.page.backgroundKind,
+                animationEnabled: widget.page.backgroundAnimationEnabled,
+                animationSpeed: widget.page.backgroundAnimationSpeed,
+                colorsInverted: widget.page.backgroundColorsInverted,
+              ),
+            for (final block in directModelBlocks)
+              Positioned(
+                left: block.position.dx * stageWidth,
+                top: block.position.dy * stageHeight,
+                width: math.max(minWidth, block.size.width * stageWidth),
+                height: math.max(minHeight, block.size.height * stageHeight),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(16),
+                  child: HtmlModelCanvas(
+                    key: ValueKey<String>(
+                      'preview-model-${widget.page.id}-${block.id}-${block.modelAssetId}',
+                    ),
+                    modelId: block.modelAssetId!,
+                    animationEnabled: block.modelAnimationEnabled,
+                    autoRotate: block.modelAutoRotate,
+                    rotationSpeed: block.modelRotationSpeed,
+                    zoom: _usesRuntimeTourCamera(block)
+                        ? widget.tourCameraZoom ?? block.modelZoom
+                        : block.modelZoom,
+                    cameraRadius: block.modelCameraRadius,
+                    cameraStateKey: '${widget.page.id}:${block.id}',
+                    exposure: findPresentation3DModelAsset(
+                          block.modelAssetId!,
+                        )?.exposure ??
+                        1,
+                    environmentImage: findPresentation3DModelAsset(
+                      block.modelAssetId!,
+                    )?.environmentImage,
+                    orbitEnabled: block.modelOrbitEnabled,
+                    tourEnabled: block.modelTourEnabled,
+                    tourInteractive:
+                        block.modelTourEnabled && !block.modelTourFrozen,
+                    orbitTheta: _usesRuntimeTourCamera(block)
+                        ? widget.tourCameraTheta!
+                        : block.modelOrbitTheta,
+                    orbitPhi: _usesRuntimeTourCamera(block)
+                        ? widget.tourCameraPhi!
+                        : block.modelOrbitPhi,
+                    targetX: _usesRuntimeTourCamera(block)
+                        ? widget.tourCameraTargetX!
+                        : block.modelTargetX,
+                    targetY: _usesRuntimeTourCamera(block)
+                        ? widget.tourCameraTargetY!
+                        : block.modelTargetY,
+                    targetZ: _usesRuntimeTourCamera(block)
+                        ? widget.tourCameraTargetZ!
+                        : block.modelTargetZ,
+                    pickSurfacePosition: widget.tourPointPlacementEnabled &&
+                        (widget.selectedComponentBlockId == null ||
+                            widget.selectedComponentBlockId == block.id),
+                    onSurfacePositionPicked: widget.onTourSurfacePointPicked,
+                    onSurfacePickMissed: widget.onTourSurfacePickMissed,
+                  ),
+                ),
+              ),
+            // Metinler, fotoÄŸraflar ve diÄŸer HTML bileÅŸenleri modelin Ã¼stÃ¼nde
+            // kalÄ±r. Belge arka planÄ± ÅŸeffaftÄ±r; gerÃ§ek arka plan yukarÄ±daki
+            // canlÄ± katmanda Ã§izildiÄŸi iÃ§in model tamamen gÃ¶rÃ¼nÃ¼r kalÄ±r.
+            HtmlElementView(viewType: _viewType),
+          ],
+        );
+      },
+    );
   }
 }
 
