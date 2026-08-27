@@ -2865,6 +2865,9 @@ class _PageComponentBlock extends StatelessWidget {
                                       rotationSpeed: block.modelRotationSpeed,
                                       zoom: block.modelZoom,
                                       cameraRadius: block.modelCameraRadius,
+                                      turntableRotation:
+                                          block.modelTurntableRotation,
+                                      fieldOfView: block.modelFieldOfView,
                                       cameraStateKey: cameraStateKey,
                                       exposure: findPresentation3DModelAsset(
                                             block.modelAssetId!,

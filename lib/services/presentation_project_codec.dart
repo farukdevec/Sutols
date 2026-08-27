@@ -328,6 +328,8 @@ class PresentationProjectCodec {
       'modelRotationSpeed': block.modelRotationSpeed,
       'modelZoom': block.modelZoom,
       'modelCameraRadius': block.modelCameraRadius,
+      'modelTurntableRotation': block.modelTurntableRotation,
+      'modelFieldOfView': block.modelFieldOfView,
       'modelOrbitEnabled': block.modelOrbitEnabled,
       'modelTourEnabled': block.modelTourEnabled,
       'modelTourFrozen': block.modelTourFrozen,
@@ -403,6 +405,15 @@ class PresentationProjectCodec {
               .clamp(0.001, 100000)
               .toDouble()
           : null,
+      modelTurntableRotation: json['modelTurntableRotation'] is num
+          ? (json['modelTurntableRotation']! as num).toDouble()
+          : 0,
+      modelFieldOfView: json['modelFieldOfView'] is num
+          ? (json['modelFieldOfView']! as num)
+              .toDouble()
+              .clamp(1.0, 179.0)
+              .toDouble()
+          : 45,
       modelOrbitEnabled: json['modelOrbitEnabled'] is bool
           ? json['modelOrbitEnabled']! as bool
           : false,

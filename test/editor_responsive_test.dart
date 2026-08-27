@@ -1238,6 +1238,8 @@ void main() {
       targetX: controllerPose.modelTargetX,
       targetY: -1.75,
       targetZ: controllerPose.modelTargetZ,
+      turntableRotation: 1.2345,
+      fieldOfView: 37.25,
     );
     await tester.pump();
 
@@ -1262,6 +1264,11 @@ void main() {
     expect(rendered.modelZoom, controllerPose.modelZoom);
     expect(rendered.modelCameraRadius, renderedPose.radius);
     expect(
+      rendered.modelTurntableRotation,
+      renderedPose.turntableRotation,
+    );
+    expect(rendered.modelFieldOfView, renderedPose.fieldOfView);
+    expect(
         rendered.modelAnimationEnabled, controllerPose.modelAnimationEnabled);
 
     final editorModel = controller.selectedComponentBlock!;
@@ -1270,6 +1277,11 @@ void main() {
     expect(editorModel.modelTargetY, renderedPose.targetY);
     expect(editorModel.modelTargetZ, renderedPose.targetZ);
     expect(editorModel.modelCameraRadius, renderedPose.radius);
+    expect(
+      editorModel.modelTurntableRotation,
+      renderedPose.turntableRotation,
+    );
+    expect(editorModel.modelFieldOfView, renderedPose.fieldOfView);
     expect(editorModel.modelTourFrozen, isFalse);
 
     await tester.sendKeyEvent(LogicalKeyboardKey.escape);

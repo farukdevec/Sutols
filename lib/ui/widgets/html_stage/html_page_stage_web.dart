@@ -419,6 +419,8 @@ class HtmlModelCanvas extends StatefulWidget {
     required this.rotationSpeed,
     required this.zoom,
     this.cameraRadius,
+    this.turntableRotation = 0,
+    this.fieldOfView = 45,
     this.cameraStateKey,
     required this.exposure,
     required this.environmentImage,
@@ -441,6 +443,8 @@ class HtmlModelCanvas extends StatefulWidget {
   final double rotationSpeed;
   final double zoom;
   final double? cameraRadius;
+  final double turntableRotation;
+  final double fieldOfView;
   final String? cameraStateKey;
   final double exposure;
   final String? environmentImage;
@@ -491,6 +495,7 @@ class _HtmlModelCanvasState extends State<HtmlModelCanvas> {
   double _modelCenterY = 0;
   double _modelCenterZ = 0;
   bool _modelGeometryReady = false;
+  bool _preserveLiveTurntableUntilCaptured = false;
 
   void _restoreCachedGeometry() {
     final geometry = _geometryByModelId[widget.modelId];
@@ -545,6 +550,14 @@ class _HtmlModelCanvasState extends State<HtmlModelCanvas> {
   @override
   void didUpdateWidget(covariant HtmlModelCanvas oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (oldWidget.autoRotate && !widget.autoRotate && widget.tourEnabled) {
+      _preserveLiveTurntableUntilCaptured = true;
+    } else if (_preserveLiveTurntableUntilCaptured &&
+        (oldWidget.modelId != widget.modelId ||
+            oldWidget.turntableRotation != widget.turntableRotation ||
+            oldWidget.cameraRadius != widget.cameraRadius)) {
+      _preserveLiveTurntableUntilCaptured = false;
+    }
     if (oldWidget.cameraStateKey != widget.cameraStateKey) {
       _unregisterCameraState(oldWidget.cameraStateKey);
       _registerCameraState();
@@ -561,7 +574,9 @@ class _HtmlModelCanvasState extends State<HtmlModelCanvas> {
         oldWidget.targetY != widget.targetY ||
         oldWidget.targetZ != widget.targetZ ||
         oldWidget.zoom != widget.zoom ||
-        oldWidget.cameraRadius != widget.cameraRadius) {
+        oldWidget.cameraRadius != widget.cameraRadius ||
+        oldWidget.turntableRotation != widget.turntableRotation ||
+        oldWidget.fieldOfView != widget.fieldOfView) {
       _jumpCameraToSavedPose();
     }
   }
@@ -586,6 +601,13 @@ class _HtmlModelCanvasState extends State<HtmlModelCanvas> {
       final viewer = element as JSObject;
       final orbit = viewer.callMethod<JSObject>('getCameraOrbit'.toJS);
       final target = viewer.callMethod<JSObject>('getCameraTarget'.toJS);
+      final fieldOfView =
+          viewer.callMethod<JSNumber>('getFieldOfView'.toJS).toDartDouble;
+      final turntableRotationValue =
+          viewer.getProperty<JSAny?>('turntableRotation'.toJS);
+      if (turntableRotationValue is! JSNumber) {
+        return _posesByCameraKey[key];
+      }
       final pose = ModelViewerCameraPose(
         theta: _jsCoordinate(orbit, 'theta') * 180 / math.pi,
         phi: _jsCoordinate(orbit, 'phi') * 180 / math.pi,
@@ -593,6 +615,8 @@ class _HtmlModelCanvasState extends State<HtmlModelCanvas> {
         targetX: _jsCoordinate(target, 'x'),
         targetY: _jsCoordinate(target, 'y'),
         targetZ: _jsCoordinate(target, 'z'),
+        turntableRotation: turntableRotationValue.toDartDouble,
+        fieldOfView: fieldOfView,
       );
       if (!pose.theta.isFinite ||
           !pose.phi.isFinite ||
@@ -600,7 +624,11 @@ class _HtmlModelCanvasState extends State<HtmlModelCanvas> {
           pose.radius <= 0 ||
           !pose.targetX.isFinite ||
           !pose.targetY.isFinite ||
-          !pose.targetZ.isFinite) {
+          !pose.targetZ.isFinite ||
+          !pose.turntableRotation.isFinite ||
+          !pose.fieldOfView.isFinite ||
+          pose.fieldOfView <= 0 ||
+          pose.fieldOfView >= 180) {
         return _posesByCameraKey[key];
       }
       _posesByCameraKey[key] = pose;
@@ -664,7 +692,10 @@ class _HtmlModelCanvasState extends State<HtmlModelCanvas> {
     _setAttribute('shadow-softness', '0.8');
     _setAttribute('tone-mapping', 'neutral');
     _setAttribute('exposure', widget.exposure.toStringAsFixed(4));
-    _setAttribute('field-of-view', '45deg');
+    _setAttribute(
+      'field-of-view',
+      '${widget.fieldOfView.clamp(1.0, 179.0).toStringAsFixed(5)}deg',
+    );
     _setAttribute(
       'rotation-per-second',
       '${widget.rotationSpeed.toStringAsFixed(1)}deg',
@@ -844,6 +875,18 @@ class _HtmlModelCanvasState extends State<HtmlModelCanvas> {
       final target = cameraTarget ?? element.getAttribute('camera-target');
       if (target != null && target.isNotEmpty) {
         viewer.setProperty('cameraTarget'.toJS, target.toJS);
+      }
+      viewer.setProperty(
+        'fieldOfView'.toJS,
+        '${widget.fieldOfView.clamp(1.0, 179.0).toStringAsFixed(5)}deg'.toJS,
+      );
+      if (!_preserveLiveTurntableUntilCaptured && !widget.autoRotate) {
+        final turntable =
+            widget.turntableRotation.isFinite ? widget.turntableRotation : 0.0;
+        viewer.callMethod<JSAny?>(
+          'resetTurntableRotation'.toJS,
+          turntable.toJS,
+        );
       }
     } catch (_) {
       // Attribute tabanlı uygulama eski model-viewer sürümleri için yedektir.
@@ -1768,6 +1811,11 @@ class _HtmlPageStageState extends State<HtmlPageStage> {
             'modelZoom': isImage || modelId == null ? null : block.modelZoom,
             'modelCameraRadius':
                 isImage || modelId == null ? null : block.modelCameraRadius,
+            'modelTurntableRotation': isImage || modelId == null
+                ? null
+                : block.modelTurntableRotation,
+            'modelFieldOfView':
+                isImage || modelId == null ? null : block.modelFieldOfView,
             'modelTargetX':
                 isImage || modelId == null ? null : block.modelTargetX,
             'modelTargetY':
@@ -1890,6 +1938,8 @@ class _HtmlPageStageState extends State<HtmlPageStage> {
                         ? widget.tourCameraZoom ?? block.modelZoom
                         : block.modelZoom,
                     cameraRadius: block.modelCameraRadius,
+                    turntableRotation: block.modelTurntableRotation,
+                    fieldOfView: block.modelFieldOfView,
                     exposure: findPresentation3DModelAsset(
                           block.modelAssetId!,
                         )?.exposure ??

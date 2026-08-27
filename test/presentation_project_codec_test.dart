@@ -106,6 +106,8 @@ void main() {
             modelAutoRotate: true,
             modelZoom: 2.3,
             modelCameraRadius: 14.875,
+            modelTurntableRotation: 1.2345,
+            modelFieldOfView: 37.25,
             modelOrbitEnabled: true,
             modelOrbitTheta: 45,
             modelOrbitPhi: 60,
@@ -199,6 +201,8 @@ void main() {
     expect(modelBlock.modelAutoRotate, isTrue);
     expect(modelBlock.modelZoom, 2.3);
     expect(modelBlock.modelCameraRadius, 14.875);
+    expect(modelBlock.modelTurntableRotation, 1.2345);
+    expect(modelBlock.modelFieldOfView, 37.25);
     expect(modelBlock.modelOrbitEnabled, isTrue);
     expect(modelBlock.modelOrbitTheta, 45);
     expect(modelBlock.modelOrbitPhi, 60);

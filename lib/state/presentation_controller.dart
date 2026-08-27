@@ -1221,6 +1221,12 @@ class PresentationController extends ChangeNotifier {
         final radius = pose.radius.isFinite && pose.radius > 0
             ? pose.radius.clamp(0.001, 100000).toDouble()
             : block.modelCameraRadius;
+        final turntableRotation = pose.turntableRotation.isFinite
+            ? pose.turntableRotation % (math.pi * 2)
+            : block.modelTurntableRotation;
+        final fieldOfView = pose.fieldOfView.isFinite
+            ? pose.fieldOfView.clamp(1.0, 179.0).toDouble()
+            : block.modelFieldOfView;
         final targetX = block.modelTourEnabled
             ? pose.targetX
                 .clamp(-_tourMaxTargetMetres, _tourMaxTargetMetres)
@@ -1240,6 +1246,8 @@ class PresentationController extends ChangeNotifier {
         if (block.modelOrbitTheta == theta &&
             block.modelOrbitPhi == phi &&
             block.modelCameraRadius == radius &&
+            block.modelTurntableRotation == turntableRotation &&
+            block.modelFieldOfView == fieldOfView &&
             block.modelTargetX == targetX &&
             block.modelTargetY == targetY &&
             block.modelTargetZ == targetZ) {
@@ -1252,6 +1260,8 @@ class PresentationController extends ChangeNotifier {
           modelOrbitTheta: theta,
           modelOrbitPhi: phi,
           modelCameraRadius: radius,
+          modelTurntableRotation: turntableRotation,
+          modelFieldOfView: fieldOfView,
           modelTargetX: targetX,
           modelTargetY: targetY,
           modelTargetZ: targetZ,

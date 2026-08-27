@@ -611,6 +611,8 @@ class ModelViewerCameraPose {
     required this.targetX,
     required this.targetY,
     required this.targetZ,
+    this.turntableRotation = 0,
+    this.fieldOfView = 45,
   });
 
   final double theta;
@@ -619,6 +621,15 @@ class ModelViewerCameraPose {
   final double targetX;
   final double targetY;
   final double targetZ;
+
+  /// `<model-viewer>` rotates the model itself while auto-rotate is active.
+  /// Camera orbit does not contain this value, so it must be preserved too or
+  /// a fresh viewer can show the same camera coordinates from a different
+  /// visual direction.
+  final double turntableRotation;
+
+  /// The realtime vertical field of view in degrees.
+  final double fieldOfView;
 }
 
 /// Tur yüzeyindeki öğenin görsel biçimi. Eski projeler alanı içermediğinden
@@ -690,6 +701,8 @@ class PresentationComponentBlock {
     this.modelRotationSpeed = 30,
     this.modelZoom = 1,
     this.modelCameraRadius,
+    this.modelTurntableRotation = 0,
+    this.modelFieldOfView = 45,
     this.modelOrbitEnabled = false,
     this.modelTourEnabled = false,
     this.modelTourFrozen = false,
@@ -726,6 +739,8 @@ class PresentationComponentBlock {
   final double modelRotationSpeed;
   final double modelZoom;
   final double? modelCameraRadius;
+  final double modelTurntableRotation;
+  final double modelFieldOfView;
   final bool modelOrbitEnabled;
   final bool modelTourEnabled;
   final bool modelTourFrozen;
@@ -757,6 +772,8 @@ class PresentationComponentBlock {
     double? modelRotationSpeed,
     double? modelZoom,
     Object? modelCameraRadius = _copySentinel,
+    double? modelTurntableRotation,
+    double? modelFieldOfView,
     bool? modelOrbitEnabled,
     bool? modelTourEnabled,
     bool? modelTourFrozen,
@@ -797,6 +814,9 @@ class PresentationComponentBlock {
       modelCameraRadius: identical(modelCameraRadius, _copySentinel)
           ? this.modelCameraRadius
           : modelCameraRadius as double?,
+      modelTurntableRotation:
+          modelTurntableRotation ?? this.modelTurntableRotation,
+      modelFieldOfView: modelFieldOfView ?? this.modelFieldOfView,
       modelOrbitEnabled: modelOrbitEnabled ?? this.modelOrbitEnabled,
       modelTourEnabled: modelTourEnabled ?? this.modelTourEnabled,
       modelTourFrozen: modelTourFrozen ?? this.modelTourFrozen,

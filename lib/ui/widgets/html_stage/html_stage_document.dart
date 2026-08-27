@@ -573,6 +573,8 @@ String buildHtmlStageMarkup({
                 rotationSpeed: block.modelRotationSpeed,
                 zoom: block.modelZoom,
                 cameraRadius: block.modelCameraRadius,
+                turntableRotation: block.modelTurntableRotation,
+                fieldOfView: block.modelFieldOfView,
                 exposure:
                     findPresentation3DModelAsset(modelId ?? '')?.exposure ?? 1,
                 environmentImage: findPresentation3DModelAsset(modelId ?? '')
@@ -660,6 +662,8 @@ String _model3DMarkup(
   required double rotationSpeed,
   required double zoom,
   required double? cameraRadius,
+  required double turntableRotation,
+  required double fieldOfView,
   required double exposure,
   required String? environmentImage,
   required bool orbitEnabled,
@@ -713,6 +717,9 @@ String _model3DMarkup(
       tourEnabled ? orbitPhi.clamp(42.0, 89.0).toDouble() : orbitPhi;
   final cameraOrbit =
       '${orbitTheta.toStringAsFixed(2)}deg ${effectiveOrbitPhi.toStringAsFixed(2)}deg $resolvedCameraRadius';
+  final safeTurntableRotation =
+      turntableRotation.isFinite ? turntableRotation : 0.0;
+  final safeFieldOfView = fieldOfView.clamp(1.0, 179.0).toDouble();
   // Tur hedefi eski model formatında bounding-box yüzdesidir. Başlangıçta
   // bile güvenli alan dışındaki değerler model yüklenince "uzak sahne" etkisi
   // yaratır; tüm yüzeylerde aynı sınırı kullan.
@@ -756,7 +763,7 @@ String _model3DMarkup(
   }).join();
   return '''
 <div class="sutol-html-component-inner sutol-3d-model-inner">
-  <model-viewer class="sutol-3d-model-viewer" crossorigin="anonymous" data-sutol-model-id="${_escapeAttribute(id)}" data-sutol-orbit-theta="${orbitTheta.toStringAsFixed(2)}" data-sutol-orbit-phi="${effectiveOrbitPhi.toStringAsFixed(2)}" data-sutol-model-zoom="${effectiveZoom.toStringAsFixed(4)}" data-sutol-target-x="${safeTargetX.toStringAsFixed(2)}" data-sutol-target-y="${safeTargetY.toStringAsFixed(2)}" data-sutol-target-z="${safeTargetZ.toStringAsFixed(2)}" data-sutol-tour-ground="${tourEnabled ? 'true' : 'false'}" $sourceMarkup alt="${_escapeAttribute(label)}"$cameraControlsMarkup$tourCameraTuning$animationMarkup$autoRotateMarkup$environmentImageMarkup camera-orbit="$cameraOrbit" camera-target="auto auto auto"$cameraOrbitLimits field-of-view="45deg" interaction-prompt="none" shadow-intensity="1" shadow-softness="0.8" tone-mapping="neutral" exposure="${exposure.toStringAsFixed(4)}" loading="eager" reveal="auto" onload="this.hidden=false;const restore=window.SutolRestoreModelCamera;if(restore)restore(this);else{const target=window.SutolApplyModelTarget;if(target)target(this);}const status=this.nextElementSibling;if(status)status.hidden=true;const fallback=status?status.nextElementSibling:null;if(fallback)fallback.hidden=true;console.log('Sutols 3B model yüklendi',{modelId:this.dataset.sutolModelId})" onerror="const status=this.nextElementSibling;if(status)status.hidden=true;const fallback=status?status.nextElementSibling;if(fallback)fallback.hidden=false;this.hidden=true;console.error('Sutols 3B model yüklenemedi',{modelId:this.dataset.sutolModelId})">$hotspotMarkup</model-viewer>
+  <model-viewer class="sutol-3d-model-viewer" crossorigin="anonymous" data-sutol-model-id="${_escapeAttribute(id)}" data-sutol-orbit-theta="${orbitTheta.toStringAsFixed(2)}" data-sutol-orbit-phi="${effectiveOrbitPhi.toStringAsFixed(2)}" data-sutol-model-zoom="${effectiveZoom.toStringAsFixed(4)}" data-sutol-target-x="${safeTargetX.toStringAsFixed(2)}" data-sutol-target-y="${safeTargetY.toStringAsFixed(2)}" data-sutol-target-z="${safeTargetZ.toStringAsFixed(2)}" data-sutol-turntable-rotation="${safeTurntableRotation.toStringAsFixed(8)}" data-sutol-field-of-view="${safeFieldOfView.toStringAsFixed(5)}" data-sutol-tour-ground="${tourEnabled ? 'true' : 'false'}" $sourceMarkup alt="${_escapeAttribute(label)}"$cameraControlsMarkup$tourCameraTuning$animationMarkup$autoRotateMarkup$environmentImageMarkup camera-orbit="$cameraOrbit" camera-target="auto auto auto"$cameraOrbitLimits field-of-view="${safeFieldOfView.toStringAsFixed(5)}deg" interaction-prompt="none" shadow-intensity="1" shadow-softness="0.8" tone-mapping="neutral" exposure="${exposure.toStringAsFixed(4)}" loading="eager" reveal="auto" onload="this.hidden=false;const restore=window.SutolRestoreModelCamera;if(restore)restore(this);else{const target=window.SutolApplyModelTarget;if(target)target(this);}const status=this.nextElementSibling;if(status)status.hidden=true;const fallback=status?status.nextElementSibling:null;if(fallback)fallback.hidden=true;console.log('Sutols 3B model yüklendi',{modelId:this.dataset.sutolModelId})" onerror="const status=this.nextElementSibling;if(status)status.hidden=true;const fallback=status?status.nextElementSibling;if(fallback)fallback.hidden=false;this.hidden=true;console.error('Sutols 3B model yüklenemedi',{modelId:this.dataset.sutolModelId})">$hotspotMarkup</model-viewer>
   <span class="sutol-3d-model-status">3B model yükleniyor…</span>
   <div class="sutol-3d-model-fallback" hidden>$fallbackMarkup</div>
 </div>
@@ -3511,6 +3518,8 @@ const String _stagePatchScript = r'''
         const phi = Number(pose.phi);
         const zoom = Number(pose.zoom);
         const exactRadius = Number(pose.cameraRadius);
+        const turntableRotation = Number(pose.turntableRotation);
+        const fieldOfView = Number(pose.fieldOfView);
         if (!Number.isFinite(theta) || !Number.isFinite(phi)) continue;
         const radius = Number.isFinite(exactRadius) && exactRadius > 0
           ? exactRadius.toFixed(7) + 'm'
@@ -3521,6 +3530,14 @@ const String _stagePatchScript = r'''
         viewer.dataset.sutolOrbitPhi = Math.max(42, Math.min(89, phi)).toFixed(5);
         if (Number.isFinite(zoom)) {
           viewer.dataset.sutolModelZoom = Math.max(.5, Math.min(10, zoom)).toFixed(5);
+        }
+        if (Number.isFinite(turntableRotation)) {
+          viewer.dataset.sutolTurntableRotation = turntableRotation.toFixed(8);
+        }
+        if (Number.isFinite(fieldOfView)) {
+          const safeFieldOfView = Math.max(1, Math.min(179, fieldOfView));
+          viewer.dataset.sutolFieldOfView = safeFieldOfView.toFixed(5);
+          viewer.setAttribute('field-of-view', safeFieldOfView.toFixed(5) + 'deg');
         }
         viewer.setAttribute(
           'camera-orbit',
@@ -3545,11 +3562,21 @@ const String _stagePatchScript = r'''
           if (Number.isFinite(zoom)) {
             owner.dataset.sutolModelZoom = Math.max(.5, Math.min(10, zoom)).toFixed(5);
           }
+          if (Number.isFinite(turntableRotation)) {
+            owner.dataset.sutolTurntableRotation = turntableRotation.toFixed(8);
+          }
+          if (Number.isFinite(fieldOfView)) {
+            owner.dataset.sutolFieldOfView = Math.max(1, Math.min(179, fieldOfView)).toFixed(5);
+          }
           owner.dataset.sutolTargetX = targetX.toFixed(5);
           owner.dataset.sutolTargetY = targetY.toFixed(5);
           owner.dataset.sutolTargetZ = targetZ.toFixed(5);
         }
         applyModelTarget(viewer);
+        if (Number.isFinite(turntableRotation) &&
+            typeof viewer.resetTurntableRotation === 'function') {
+          viewer.resetTurntableRotation(turntableRotation);
+        }
         // model-viewer attribute hedeflerine varsayılan olarak interpolasyon
         // uygular. İlk sunum frame'inde eski/ideal kameranın görünmemesi için
         // orbit ve target aynı frame'de kesin konumuna alınmalıdır.
@@ -3576,6 +3603,12 @@ const String _stagePatchScript = r'''
     const targetX = Number(source.sutolTargetX ?? ownerData.sutolTargetX);
     const targetY = Number(source.sutolTargetY ?? ownerData.sutolTargetY);
     const targetZ = Number(source.sutolTargetZ ?? ownerData.sutolTargetZ);
+    const turntableRotation = Number(
+      source.sutolTurntableRotation ?? ownerData.sutolTurntableRotation
+    );
+    const fieldOfView = Number(
+      source.sutolFieldOfView ?? ownerData.sutolFieldOfView
+    );
     const orbitParts = String(modelViewer.getAttribute('camera-orbit') || '')
       .trim().split(/\s+/);
     const radiusPart = orbitParts[2] || '';
@@ -3591,6 +3624,8 @@ const String _stagePatchScript = r'''
         phi: phi,
         zoom: zoom,
         cameraRadius: cameraRadius,
+        turntableRotation: turntableRotation,
+        fieldOfView: fieldOfView,
         targetX: targetX,
         targetY: targetY,
         targetZ: targetZ,
@@ -3790,7 +3825,19 @@ const String _stagePatchScript = r'''
           'camera-orbit',
           theta + 'deg ' + phi + 'deg ' + cameraRadius
         );
-        modelViewer.setAttribute('field-of-view', '45deg');
+        const fieldOfView = Math.max(1, Math.min(179, Number(item.modelFieldOfView) || 45));
+        modelViewer.setAttribute('field-of-view', fieldOfView.toFixed(5) + 'deg');
+      }
+    }
+    if (!isTourModel &&
+        item.modelTurntableRotation !== null &&
+        item.modelTurntableRotation !== undefined) {
+      const modelViewer = element.querySelector('model-viewer');
+      const turntableRotation = Number(item.modelTurntableRotation);
+      if (modelViewer && Number.isFinite(turntableRotation) &&
+          typeof modelViewer.resetTurntableRotation === 'function' &&
+          !item.modelAutoRotate) {
+        modelViewer.resetTurntableRotation(turntableRotation);
       }
     }
     if (!isTourModel &&
@@ -3851,6 +3898,8 @@ const String _stagePatchScript = r'''
           targetZ: Number(item.modelTargetZ),
           zoom: Number(item.modelZoom),
           cameraRadius: Number(item.modelCameraRadius),
+          turntableRotation: Number(item.modelTurntableRotation),
+          fieldOfView: Number(item.modelFieldOfView),
         });
       }
     }

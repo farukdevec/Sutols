@@ -430,6 +430,8 @@ class _HtmlPresentationEditorPageState
           ..write('|${block.modelAnimationEnabled}|${block.modelAutoRotate}')
           ..write('|${block.modelZoom.toStringAsFixed(2)}')
           ..write('|${block.modelCameraRadius?.toStringAsFixed(7) ?? ''}')
+          ..write('|${block.modelTurntableRotation.toStringAsFixed(7)}')
+          ..write('|${block.modelFieldOfView.toStringAsFixed(5)}')
           ..write('|${block.modelOrbitEnabled}'
               '|${block.modelOrbitTheta.toStringAsFixed(3)}|${block.modelOrbitPhi.toStringAsFixed(3)}')
           ..write('|${block.modelTourEnabled}|${block.modelTourFrozen}'

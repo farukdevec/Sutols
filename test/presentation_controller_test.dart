@@ -36,6 +36,8 @@ void main() {
             targetX: 4,
             targetY: -2,
             targetZ: 11,
+            turntableRotation: 1.2345,
+            fieldOfView: 37.25,
           ),
         },
       ),
@@ -46,6 +48,8 @@ void main() {
     expect(editorModel.modelOrbitTheta, 32);
     expect(editorModel.modelOrbitPhi, 84);
     expect(editorModel.modelCameraRadius, 17.625);
+    expect(editorModel.modelTurntableRotation, 1.2345);
+    expect(editorModel.modelFieldOfView, 37.25);
     expect(editorModel.modelTargetX, 4);
     expect(editorModel.modelTargetY, -2);
     expect(editorModel.modelTargetZ, 11);
@@ -56,6 +60,8 @@ void main() {
     previewController.commitAllModelTourPoses();
     final previewModel = previewController.pages.single.componentBlocks.single;
     expect(previewModel.modelCameraRadius, 17.625);
+    expect(previewModel.modelTurntableRotation, 1.2345);
+    expect(previewModel.modelFieldOfView, 37.25);
     expect(previewModel.modelOrbitTheta, 32);
     expect(previewModel.modelOrbitPhi, 84);
     expect(previewModel.modelTargetX, 4);
@@ -82,6 +88,8 @@ void main() {
               modelTargetY: -2,
               modelTargetZ: 11,
               modelZoom: 3.25,
+              modelTurntableRotation: 2.3456,
+              modelFieldOfView: 39.5,
               position: Offset.zero,
               size: Size(1, 1),
             ),
@@ -107,6 +115,11 @@ void main() {
     expect(previewModel.modelTargetZ, editorModel.modelTargetZ);
     expect(previewModel.modelZoom, editorModel.modelZoom);
     expect(previewModel.modelCameraRadius, editorModel.modelCameraRadius);
+    expect(
+      previewModel.modelTurntableRotation,
+      editorModel.modelTurntableRotation,
+    );
+    expect(previewModel.modelFieldOfView, editorModel.modelFieldOfView);
     expect(
       previewModel.modelAnimationEnabled,
       editorModel.modelAnimationEnabled,
@@ -250,7 +263,7 @@ void main() {
     expect(second.modelTargetX, -18);
   });
 
-  test('üç sayfalı tur sunumu ilk sayfa dahil tüm kameraları korur', () {
+  test('farklı tur modelleri ilk sayfa dahil tam görsel pozu korur', () {
     final controller = PresentationController();
     addTearDown(controller.dispose);
     controller.replaceDeck(
@@ -261,11 +274,13 @@ void main() {
           componentBlocks: <PresentationComponentBlock>[
             PresentationComponentBlock(
               id: 'tour-model-$index',
-              modelAssetId: 'anitkabir',
+              modelAssetId: 'virtual-tour-model-$index',
               modelTourEnabled: true,
               modelOrbitTheta: 35 + index * 105,
               modelOrbitPhi: 55 + index * 8,
               modelCameraRadius: 12 + index * 9,
+              modelTurntableRotation: .35 + index * 1.1,
+              modelFieldOfView: 32 + index * 7,
               modelTargetX: -18 + index * 17,
               modelTargetZ: 24 - index * 19,
               position: Offset.zero,
@@ -287,6 +302,11 @@ void main() {
       expect(actual.modelOrbitTheta, expected[index].modelOrbitTheta);
       expect(actual.modelOrbitPhi, expected[index].modelOrbitPhi);
       expect(actual.modelCameraRadius, expected[index].modelCameraRadius);
+      expect(
+        actual.modelTurntableRotation,
+        expected[index].modelTurntableRotation,
+      );
+      expect(actual.modelFieldOfView, expected[index].modelFieldOfView);
       expect(actual.modelTargetX, expected[index].modelTargetX);
       expect(actual.modelTargetZ, expected[index].modelTargetZ);
     }

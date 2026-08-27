@@ -15,8 +15,10 @@ const String _exportModelTargetScript = r'''
       const y = Number(modelViewer.dataset.sutolTargetY) || 0;
       const z = Number(modelViewer.dataset.sutolTargetZ) || 0;
       const isTour = modelViewer.dataset.sutolTourGround === 'true';
+      const hasExactCameraPose =
+        isTour && modelViewer.dataset.sutolExactCameraPose === 'true';
       const targetY = isTour
-        ? center.y - dimensions.y / 2
+        ? (hasExactCameraPose ? y : center.y - dimensions.y / 2)
         : center.y + dimensions.y * y / 100;
       modelViewer.setAttribute(
         'camera-target',

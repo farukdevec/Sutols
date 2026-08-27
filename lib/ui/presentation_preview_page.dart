@@ -2224,6 +2224,11 @@ PresentationPage _interpolateModelPages(
     final source = availableSources.removeAt(sourceIndex);
     final thetaDelta =
         ((target.modelOrbitTheta - source.modelOrbitTheta + 540) % 360) - 180;
+    final turntableDelta = ((target.modelTurntableRotation -
+                source.modelTurntableRotation +
+                math.pi * 3) %
+            (math.pi * 2)) -
+        math.pi;
     return target.copyWith(
       position: Offset.lerp(source.position, target.position, progress),
       size: Size.lerp(source.size, target.size, progress),
@@ -2254,6 +2259,13 @@ PresentationPage _interpolateModelPages(
                   target.modelCameraRadius ?? source.modelCameraRadius!,
                   progress,
                 ),
+      modelTurntableRotation:
+          source.modelTurntableRotation + turntableDelta * progress,
+      modelFieldOfView: ui.lerpDouble(
+        source.modelFieldOfView,
+        target.modelFieldOfView,
+        progress,
+      ),
     );
   }).toList(growable: false);
   return to.copyWith(componentBlocks: nextComponents);

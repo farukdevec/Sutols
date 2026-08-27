@@ -220,6 +220,8 @@ class HtmlModelCanvas extends StatelessWidget {
     required this.rotationSpeed,
     required this.zoom,
     this.cameraRadius,
+    this.turntableRotation = 0,
+    this.fieldOfView = 45,
     this.cameraStateKey,
     required this.exposure,
     required this.environmentImage,
@@ -242,6 +244,8 @@ class HtmlModelCanvas extends StatelessWidget {
   final double rotationSpeed;
   final double zoom;
   final double? cameraRadius;
+  final double turntableRotation;
+  final double fieldOfView;
   final String? cameraStateKey;
   final double exposure;
   final String? environmentImage;

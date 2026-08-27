@@ -229,7 +229,7 @@ void main() {
     expect(document, contains('tone-mapping="neutral"'));
     expect(document, contains('exposure="0.0030"'));
     expect(document, contains('environment-image="neutral"'));
-    expect(document, contains('field-of-view="45deg"'));
+    expect(document, contains('field-of-view="45.00000deg"'));
     expect(document, contains('camera-orbit="0.00deg 75.00deg 100.00%"'));
   });
 
@@ -258,7 +258,7 @@ void main() {
       },
     );
 
-    expect(document, contains('field-of-view="45deg"'));
+    expect(document, contains('field-of-view="45.00000deg"'));
     expect(document, contains('camera-orbit="0.00deg 75.00deg 10.00%"'));
     expect(document, contains('min-camera-orbit="auto auto 1%"'));
     expect(document, contains('camera-target="auto auto auto"'));
@@ -494,6 +494,8 @@ void main() {
           modelOrbitTheta: 18,
           modelOrbitPhi: 84,
           modelCameraRadius: 17.625,
+          modelTurntableRotation: 1.2345,
+          modelFieldOfView: 37.25,
           modelTargetX: 41.25,
           modelTargetY: -3.55,
           modelTargetZ: 72.5,
@@ -515,7 +517,14 @@ void main() {
     expect(modelTag, contains('data-sutol-target-x="41.25"'));
     expect(modelTag, contains('data-sutol-target-y="-3.55"'));
     expect(modelTag, contains('data-sutol-target-z="72.50"'));
+    expect(
+      modelTag,
+      contains('data-sutol-turntable-rotation="1.23450000"'),
+    );
+    expect(modelTag, contains('field-of-view="37.25000deg"'));
     expect(modelTag, contains('data-sutol-exact-camera-pose="true"'));
+    expect(
+        document, contains('viewer.resetTurntableRotation(turntableRotation)'));
     expect(document, contains('hasExactCameraPose ? y'));
     expect(document, contains('? x\n'));
     expect(document, contains('? z\n'));
