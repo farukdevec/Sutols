@@ -596,6 +596,31 @@ class ModelTourSurfacePoint {
   final double z;
 }
 
+/// The exact camera pose currently rendered by `<model-viewer>`.
+///
+/// `modelZoom` is stored as a percentage and can resolve to a different
+/// distance when a fresh viewer is created. Persisting the resolved radius in
+/// metres, together with the resolved target, keeps editor and presentation
+/// framing identical.
+@immutable
+class ModelViewerCameraPose {
+  const ModelViewerCameraPose({
+    required this.theta,
+    required this.phi,
+    required this.radius,
+    required this.targetX,
+    required this.targetY,
+    required this.targetZ,
+  });
+
+  final double theta;
+  final double phi;
+  final double radius;
+  final double targetX;
+  final double targetY;
+  final double targetZ;
+}
+
 /// Tur yüzeyindeki öğenin görsel biçimi. Eski projeler alanı içermediğinden
 /// varsayılan `point` olarak okunur ve mevcut işaretleri korur.
 enum ModelTourHotspotKind { point, text }

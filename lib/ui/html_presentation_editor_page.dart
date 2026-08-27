@@ -93,6 +93,10 @@ enum _HtmlToolTab {
   stageDimensions,
 }
 
+typedef ModelCameraPoseReader = ModelViewerCameraPose? Function(
+  String cameraStateKey,
+);
+
 class HtmlPresentationEditorPage extends StatefulWidget {
   const HtmlPresentationEditorPage({
     super.key,
@@ -101,6 +105,7 @@ class HtmlPresentationEditorPage extends StatefulWidget {
     this.initialPresentationName,
     this.initialUpdatedByName,
     this.adminReadOnly = false,
+    this.modelCameraPoseReader,
   });
 
   final PresentationController controller;
@@ -121,6 +126,10 @@ class HtmlPresentationEditorPage extends StatefulWidget {
   /// kadar sayfa yükleme ekranı gösterir), tüm düzenleme araçları gizlenir ve
   /// tuval etkileşimsizdir. Dışa aktarma (HTML/PDF) ve sunum modu kullanılabilir.
   final bool adminReadOnly;
+
+  /// Browser camera reader override used by focused regression tests. Runtime
+  /// code reads directly from [HtmlModelCanvas].
+  final ModelCameraPoseReader? modelCameraPoseReader;
 
   @override
   State<HtmlPresentationEditorPage> createState() =>
@@ -190,6 +199,14 @@ class _HtmlPresentationEditorPageState
   /// assertion'ina yol açabiliyordu.
   bool _presentationNameDialogOpen = false;
 
+  /// Only the visible IndexedStack page has trustworthy browser geometry.
+  /// Capture it before the page becomes hidden, then persist it after the
+  /// controller's current notification finishes.
+  late String _lastVisibleCameraPageId;
+  final Map<String, ModelViewerCameraPose> _pendingDepartingCameraPoses =
+      <String, ModelViewerCameraPose>{};
+  bool _departingCameraPoseSyncScheduled = false;
+
   /// Sunum sayfalarındaki ilk metin bloğundan konu / dosya adını çözer.
   String? _presentationFileNameFromDeck() {
     for (final page in widget.controller.pages) {
@@ -242,6 +259,8 @@ class _HtmlPresentationEditorPageState
     FocusManager.instance.addListener(_handlePrimaryFocusChanged);
     _openedAt = DateTime.now();
     _trackedSignature = _deckSignature();
+    _lastVisibleCameraPageId = widget.controller.selectedPage.id;
+    widget.controller.addListener(_captureDepartingPageCameraPoses);
     widget.controller.addListener(_syncTextField);
     widget.controller.addListener(_syncTabWithSelection);
     widget.controller.addListener(_onMobilePageChanged);
@@ -356,6 +375,7 @@ class _HtmlPresentationEditorPageState
     _tourMovementTimer?.cancel();
     _editorFocusNode.dispose();
     _hintTimer?.cancel();
+    widget.controller.removeListener(_captureDepartingPageCameraPoses);
     widget.controller.removeListener(_syncTextField);
     widget.controller.removeListener(_syncTabWithSelection);
     widget.controller.removeListener(_onMobilePageChanged);
@@ -657,6 +677,7 @@ class _HtmlPresentationEditorPageState
 
   Future<void> _exportPresentation() async {
     _stopTourKeyboardMovement();
+    _syncRenderedModelCameraPoses();
     final presentationId = widget.presentationId;
     if (presentationId != null && !widget.adminReadOnly) {
       _tracking.markExported(presentationId);
@@ -676,6 +697,7 @@ class _HtmlPresentationEditorPageState
 
   Future<void> _exportPdfPresentation() async {
     _stopTourKeyboardMovement();
+    _syncRenderedModelCameraPoses();
     await exportPresentationAsPdfViaPrint(
       pages: widget.controller.pages.toList(growable: false),
       effectSettings: widget.controller.effectSettings,
@@ -689,6 +711,7 @@ class _HtmlPresentationEditorPageState
       return;
     }
     _stopTourKeyboardMovement();
+    _syncRenderedModelCameraPoses();
     final presentationId = widget.presentationId;
     if (presentationId != null) {
       final json = PresentationProjectCodec.encodeProject(
@@ -746,12 +769,13 @@ class _HtmlPresentationEditorPageState
   }
 
   Future<void> _openPresentationPreview() async {
-    // Kamera, konum ve ölçeğin tek kaynağı controller state'idir. Önizleme
-    // editörün bağımsız bir kopyasını açar; DOM/model-viewer'dan geri okuma
-    // yapılmaz. Böylece sunuma basmak doğru kamerayı eski/interpolasyonlu bir
-    // render karesiyle hiçbir koşulda değiştiremez.
+    // The browser resolves percentage zoom to an exact radius only after the
+    // GLB and viewport are ready. Capture that painted pose before cloning the
+    // deck; otherwise the new fullscreen viewer recalculates a different
+    // overview camera from modelZoom.
     _stopTourKeyboardMovement();
     if (isPointerLocked) exitPointerLock();
+    _syncRenderedModelCameraPoses();
     final previewController = PresentationController();
     previewController.replaceDeck(
       widget.controller.pages.toList(growable: false),
@@ -776,6 +800,64 @@ class _HtmlPresentationEditorPageState
     } finally {
       previewController.dispose();
     }
+  }
+
+  void _syncRenderedModelCameraPoses() {
+    widget.controller.syncRenderedModelCameraPoses(
+      _renderedCameraPosesForPage(widget.controller.selectedPage),
+    );
+  }
+
+  Map<String, ModelViewerCameraPose> _renderedCameraPosesForPage(
+    PresentationPage page,
+  ) {
+    final poses = <String, ModelViewerCameraPose>{};
+    for (final block in page.componentBlocks) {
+      if (block.modelAssetId == null) continue;
+      final cameraStateKey = '${page.id}:${block.id}';
+      final pose =
+          (widget.modelCameraPoseReader ?? HtmlModelCanvas.cameraPoseFor)(
+        cameraStateKey,
+      );
+      if (pose != null) poses[cameraStateKey] = pose;
+    }
+    return poses;
+  }
+
+  void _captureDepartingPageCameraPoses() {
+    final currentPageId = widget.controller.selectedPage.id;
+    final departingPageId = _lastVisibleCameraPageId;
+    if (currentPageId == departingPageId) return;
+    _lastVisibleCameraPageId = currentPageId;
+
+    PresentationPage? departingPage;
+    for (final page in widget.controller.pages) {
+      if (page.id == departingPageId) {
+        departingPage = page;
+        break;
+      }
+    }
+    if (departingPage == null) return;
+
+    // Controller listeners run before IndexedStack rebuilds, so the departing
+    // model-viewer still has its real, visible size at this point.
+    _pendingDepartingCameraPoses.addAll(
+      _renderedCameraPosesForPage(departingPage),
+    );
+    if (_pendingDepartingCameraPoses.isEmpty ||
+        _departingCameraPoseSyncScheduled) {
+      return;
+    }
+    _departingCameraPoseSyncScheduled = true;
+    scheduleMicrotask(() {
+      _departingCameraPoseSyncScheduled = false;
+      if (!mounted || _pendingDepartingCameraPoses.isEmpty) return;
+      final poses = Map<String, ModelViewerCameraPose>.of(
+        _pendingDepartingCameraPoses,
+      );
+      _pendingDepartingCameraPoses.clear();
+      widget.controller.syncRenderedModelCameraPoses(poses);
+    });
   }
 
   bool _primaryFocusIsTextInput() {
@@ -9724,6 +9806,8 @@ class _HtmlStageCardState extends State<_HtmlStageCard>
                                 'editor-page-canvas-${canvasPage.id}',
                               ),
                               page: canvasPage,
+                              captureModelCameraState: canvasPage.id ==
+                                  widget.controller.selectedPage.id,
                               selectedTextBlockId:
                                   widget.controller.selectedTextBlockId,
                               selectedTextBlockIds:

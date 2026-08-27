@@ -5,6 +5,64 @@ import 'package:sutol/models/slide_model.dart';
 import 'package:sutol/state/presentation_controller.dart';
 
 void main() {
+  test('render edilen kesin kamera pozu önizleme stateine kaydedilir', () {
+    final controller = PresentationController();
+    addTearDown(controller.dispose);
+    controller.replaceDeck(
+      const <PresentationPage>[
+        PresentationPage(
+          id: 'camera-page',
+          textBlocks: <PresentationTextBlock>[],
+          componentBlocks: <PresentationComponentBlock>[
+            PresentationComponentBlock(
+              id: 'camera-model',
+              modelAssetId: 'anitkabir',
+              modelTourEnabled: true,
+              position: Offset.zero,
+              size: Size(1, 1),
+            ),
+          ],
+        ),
+      ],
+    );
+
+    expect(
+      controller.syncRenderedModelCameraPoses(
+        const <String, ModelViewerCameraPose>{
+          'camera-page:camera-model': ModelViewerCameraPose(
+            theta: 32,
+            phi: 84,
+            radius: 17.625,
+            targetX: 4,
+            targetY: -2,
+            targetZ: 11,
+          ),
+        },
+      ),
+      isTrue,
+    );
+
+    final editorModel = controller.pages.single.componentBlocks.single;
+    expect(editorModel.modelOrbitTheta, 32);
+    expect(editorModel.modelOrbitPhi, 84);
+    expect(editorModel.modelCameraRadius, 17.625);
+    expect(editorModel.modelTargetX, 4);
+    expect(editorModel.modelTargetY, -2);
+    expect(editorModel.modelTargetZ, 11);
+
+    final previewController = PresentationController();
+    addTearDown(previewController.dispose);
+    previewController.replaceDeck(controller.pages);
+    previewController.commitAllModelTourPoses();
+    final previewModel = previewController.pages.single.componentBlocks.single;
+    expect(previewModel.modelCameraRadius, 17.625);
+    expect(previewModel.modelOrbitTheta, 32);
+    expect(previewModel.modelOrbitPhi, 84);
+    expect(previewModel.modelTargetX, 4);
+    expect(previewModel.modelTargetY, -2);
+    expect(previewModel.modelTargetZ, 11);
+  });
+
   test('sunum kopyası editör kamera stateini değiştirmeden taşır', () {
     final controller = PresentationController();
     addTearDown(controller.dispose);

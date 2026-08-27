@@ -1788,6 +1788,7 @@ class PresentationPageCanvas extends StatefulWidget {
     this.showSelectionBorder = true,
     this.textOpacity = 1,
     this.showEmptyState = true,
+    this.captureModelCameraState = false,
     this.onSelectTextBlock,
     this.onDragSelectedText,
     this.onInlineTextChanged,
@@ -1821,6 +1822,11 @@ class PresentationPageCanvas extends StatefulWidget {
   final bool showSelectionBorder;
   final double textOpacity;
   final bool showEmptyState;
+
+  /// Only the visible editor canvas is allowed to publish an exact browser
+  /// camera pose. Thumbnails and presentation canvases intentionally leave
+  /// this disabled so duplicate model ids cannot replace the editor camera.
+  final bool captureModelCameraState;
   final ValueChanged<String>? onSelectTextBlock;
   final void Function(Offset delta, Size canvasSize)? onDragSelectedText;
   final ValueChanged<String>? onInlineTextChanged;
@@ -2234,6 +2240,9 @@ class _PresentationPageCanvasState extends State<PresentationPageCanvas> {
             for (final block in componentBlocks)
               _PageComponentBlock(
                 block: block,
+                cameraStateKey: widget.captureModelCameraState
+                    ? '${widget.page.id}:${block.id}'
+                    : null,
                 canvasSize: canvasSize,
                 isSelected: selectedComponentIds.contains(block.id),
                 interactive: widget.interactive,
@@ -2694,6 +2703,7 @@ Color? _presentationTextColor(String? hex) {
 class _PageComponentBlock extends StatelessWidget {
   const _PageComponentBlock({
     required this.block,
+    required this.cameraStateKey,
     required this.canvasSize,
     required this.isSelected,
     required this.interactive,
@@ -2714,6 +2724,7 @@ class _PageComponentBlock extends StatelessWidget {
   });
 
   final PresentationComponentBlock block;
+  final String? cameraStateKey;
   final Size canvasSize;
   final bool isSelected;
   final bool interactive;
@@ -2854,6 +2865,7 @@ class _PageComponentBlock extends StatelessWidget {
                                       rotationSpeed: block.modelRotationSpeed,
                                       zoom: block.modelZoom,
                                       cameraRadius: block.modelCameraRadius,
+                                      cameraStateKey: cameraStateKey,
                                       exposure: findPresentation3DModelAsset(
                                             block.modelAssetId!,
                                           )?.exposure ??

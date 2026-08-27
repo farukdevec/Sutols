@@ -1193,6 +1193,78 @@ class PresentationController extends ChangeNotifier {
     return changed;
   }
 
+  /// Copies the exact camera rendered by the editor's visible model-viewer
+  /// into project state before preview/export/save creates another viewer.
+  ///
+  /// Keys include both page and block ids so repeated GLBs (and legacy decks
+  /// with repeated block ids) cannot overwrite one another.
+  bool syncRenderedModelCameraPoses(
+    Map<String, ModelViewerCameraPose> posesByCameraStateKey,
+  ) {
+    if (posesByCameraStateKey.isEmpty) return false;
+    var changed = false;
+    for (var pageIndex = 0; pageIndex < _pages.length; pageIndex++) {
+      final page = _pages[pageIndex];
+      var pageChanged = false;
+      final components = page.componentBlocks.map((block) {
+        final pose = posesByCameraStateKey['${page.id}:${block.id}'] ??
+            posesByCameraStateKey[block.id];
+        if (pose == null || block.modelAssetId == null) return block;
+
+        final theta = pose.theta % 360;
+        final phi = pose.phi
+            .clamp(
+              block.modelTourEnabled ? _tourMinCameraPhi : 10.0,
+              block.modelTourEnabled ? _tourMaxCameraPhi : 170.0,
+            )
+            .toDouble();
+        final radius = pose.radius.isFinite && pose.radius > 0
+            ? pose.radius.clamp(0.001, 100000).toDouble()
+            : block.modelCameraRadius;
+        final targetX = block.modelTourEnabled
+            ? pose.targetX
+                .clamp(-_tourMaxTargetMetres, _tourMaxTargetMetres)
+                .toDouble()
+            : block.modelTargetX;
+        final targetY = block.modelTourEnabled
+            ? pose.targetY
+                .clamp(-_tourMaxTargetMetres, _tourMaxTargetMetres)
+                .toDouble()
+            : block.modelTargetY;
+        final targetZ = block.modelTourEnabled
+            ? pose.targetZ
+                .clamp(-_tourMaxTargetMetres, _tourMaxTargetMetres)
+                .toDouble()
+            : block.modelTargetZ;
+
+        if (block.modelOrbitTheta == theta &&
+            block.modelOrbitPhi == phi &&
+            block.modelCameraRadius == radius &&
+            block.modelTargetX == targetX &&
+            block.modelTargetY == targetY &&
+            block.modelTargetZ == targetZ) {
+          return block;
+        }
+
+        changed = true;
+        pageChanged = true;
+        return block.copyWith(
+          modelOrbitTheta: theta,
+          modelOrbitPhi: phi,
+          modelCameraRadius: radius,
+          modelTargetX: targetX,
+          modelTargetY: targetY,
+          modelTargetZ: targetZ,
+        );
+      }).toList(growable: false);
+      if (pageChanged) {
+        _pages[pageIndex] = page.copyWith(componentBlocks: components);
+      }
+    }
+    if (changed) notifyListeners();
+    return changed;
+  }
+
   void updateSelectedBackground(PresentationBackgroundKind value) {
     if (selectedPage.backgroundKind == value) {
       return;

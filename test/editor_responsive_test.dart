@@ -38,8 +38,9 @@ void main() {
 
   Future<PresentationController> pumpAt(
     WidgetTester tester,
-    Size size,
-  ) async {
+    Size size, {
+    ModelCameraPoseReader? modelCameraPoseReader,
+  }) async {
     CookieConsentService.instance.state.value = CookieConsentState.accepted;
     tester.view.physicalSize = size;
     tester.view.devicePixelRatio = 1.0;
@@ -57,7 +58,10 @@ void main() {
     };
     await tester.pumpWidget(
       MaterialApp(
-        home: HtmlPresentationEditorPage(controller: controller),
+        home: HtmlPresentationEditorPage(
+          controller: controller,
+          modelCameraPoseReader: modelCameraPoseReader,
+        ),
       ),
     );
     await tester.pump();
@@ -1215,13 +1219,26 @@ void main() {
   testWidgets('Sunum Modu editör kamera stateini birebir kopyalar', (
     tester,
   ) async {
-    final controller = await pumpAt(tester, const Size(1440, 900));
+    ModelViewerCameraPose? renderedPose;
+    final controller = await pumpAt(
+      tester,
+      const Size(1440, 900),
+      modelCameraPoseReader: (_) => renderedPose,
+    );
     controller.add3DModelBlock(presentation3DModelCatalog.first);
     controller.updateSelectedModelTourEnabled(true);
     controller.lookAroundSelectedModelTour(const Offset(-138, 24));
     controller.moveSelectedModelTour(forward: 17, right: -9);
     controller.updateSelectedModelZoom(3.7);
-    final expected = controller.selectedComponentBlock!;
+    final controllerPose = controller.selectedComponentBlock!;
+    renderedPose = ModelViewerCameraPose(
+      theta: controllerPose.modelOrbitTheta,
+      phi: controllerPose.modelOrbitPhi,
+      radius: 17.625,
+      targetX: controllerPose.modelTargetX,
+      targetY: -1.75,
+      targetZ: controllerPose.modelTargetZ,
+    );
     await tester.pump();
 
     await tester.tap(find.text('Sunum Modu'));
@@ -1237,19 +1254,22 @@ void main() {
           (canvas) => canvas.page.componentBlocks.single.modelTourFrozen,
         );
     final rendered = previewCanvas.page.componentBlocks.single;
-    expect(rendered.modelOrbitTheta, expected.modelOrbitTheta);
-    expect(rendered.modelOrbitPhi, expected.modelOrbitPhi);
-    expect(rendered.modelTargetX, expected.modelTargetX);
-    expect(rendered.modelTargetY, expected.modelTargetY);
-    expect(rendered.modelTargetZ, expected.modelTargetZ);
-    expect(rendered.modelZoom, expected.modelZoom);
-    expect(rendered.modelCameraRadius, expected.modelCameraRadius);
-    expect(rendered.modelAnimationEnabled, expected.modelAnimationEnabled);
+    expect(rendered.modelOrbitTheta, renderedPose.theta);
+    expect(rendered.modelOrbitPhi, renderedPose.phi);
+    expect(rendered.modelTargetX, renderedPose.targetX);
+    expect(rendered.modelTargetY, renderedPose.targetY);
+    expect(rendered.modelTargetZ, renderedPose.targetZ);
+    expect(rendered.modelZoom, controllerPose.modelZoom);
+    expect(rendered.modelCameraRadius, renderedPose.radius);
+    expect(
+        rendered.modelAnimationEnabled, controllerPose.modelAnimationEnabled);
 
     final editorModel = controller.selectedComponentBlock!;
-    expect(editorModel.modelOrbitTheta, expected.modelOrbitTheta);
-    expect(editorModel.modelTargetX, expected.modelTargetX);
-    expect(editorModel.modelTargetZ, expected.modelTargetZ);
+    expect(editorModel.modelOrbitTheta, renderedPose.theta);
+    expect(editorModel.modelTargetX, renderedPose.targetX);
+    expect(editorModel.modelTargetY, renderedPose.targetY);
+    expect(editorModel.modelTargetZ, renderedPose.targetZ);
+    expect(editorModel.modelCameraRadius, renderedPose.radius);
     expect(editorModel.modelTourFrozen, isFalse);
 
     await tester.sendKeyEvent(LogicalKeyboardKey.escape);

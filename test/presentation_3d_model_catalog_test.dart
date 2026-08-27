@@ -61,6 +61,49 @@ void main() {
     expect(find.byType(HtmlPageStage), findsNothing);
   });
 
+  testWidgets('yalnız ana editör tuvali kesin model kamera kaynağıdır',
+      (tester) async {
+    const page = PresentationPage(
+      id: 'camera-source-page',
+      textBlocks: <PresentationTextBlock>[],
+      componentBlocks: <PresentationComponentBlock>[
+        PresentationComponentBlock(
+          id: 'camera-source-model',
+          modelAssetId: 'anitkabir',
+          position: Offset.zero,
+          size: Size(1, 1),
+        ),
+      ],
+    );
+
+    Future<void> pumpCanvas({required bool capture}) {
+      return tester.pumpWidget(
+        MaterialApp(
+          home: PresentationPageCanvas(
+            page: page,
+            captureModelCameraState: capture,
+          ),
+        ),
+      );
+    }
+
+    await pumpCanvas(capture: false);
+    expect(
+      tester
+          .widget<HtmlModelCanvas>(find.byType(HtmlModelCanvas))
+          .cameraStateKey,
+      isNull,
+    );
+
+    await pumpCanvas(capture: true);
+    expect(
+      tester
+          .widget<HtmlModelCanvas>(find.byType(HtmlModelCanvas))
+          .cameraStateKey,
+      'camera-source-page:camera-source-model',
+    );
+  });
+
   testWidgets('3B modele sağ tıklama bileşen bağlam olayını iletir',
       (tester) async {
     Offset? secondaryTapPosition;
