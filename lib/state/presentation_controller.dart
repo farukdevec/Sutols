@@ -634,9 +634,9 @@ class PresentationController extends ChangeNotifier {
           (block) => block.id == current.id
               ? block.copyWith(
                   modelZoom: clamped,
-                  // Yeni zoom yÃ¼zdesi uygulandÄ±ÄŸÄ±nda eski metre yarÄ±Ã§apÄ± artÄ±k
-                  // geÃ§erli deÄŸildir. Model yÃ¼klendiÄŸinde gerÃ§ek yarÄ±Ã§ap tekrar
-                  // okunup sunumdan Ã¶nce kaydedilir.
+                  // Yeni zoom değeri uygulandığında eski mutlak metre yarıçapı
+                  // artık geçerli değildir. Editör ve sunum aynı controller
+                  // zoom değerinden aynı kamera uzaklığını yeniden üretir.
                   modelCameraRadius: null,
                 )
               : block,
@@ -1129,7 +1129,6 @@ class PresentationController extends ChangeNotifier {
       modelZoom: savedZoom,
       modelTourFrozen: freeze ? true : current.modelTourFrozen,
       modelAutoRotate: freeze ? false : current.modelAutoRotate,
-      modelAnimationEnabled: freeze ? false : current.modelAnimationEnabled,
     );
     _pages[pageIndex] = page.copyWith(componentBlocks: components);
     notifyListeners();
@@ -1184,75 +1183,6 @@ class PresentationController extends ChangeNotifier {
         return block.copyWith(
           modelTourFrozen: true,
           modelAutoRotate: false,
-          modelAnimationEnabled: false,
-        );
-      }).toList(growable: false);
-      if (pageChanged) {
-        _pages[pageIndex] = page.copyWith(componentBlocks: components);
-      }
-    }
-    if (changed) notifyListeners();
-    return changed;
-  }
-
-  /// Editörde ana sahnede duran model-viewer kameralarını proje state'ine alır.
-  /// Anahtar `sayfaId:blokId` biçimindedir; böylece aynı GLB'nin ve eski
-  /// projelerde yinelenmiş blok kimliklerinin pozları birbirini ezmez.
-  bool syncRenderedModelCameraPoses(
-    Map<String, ModelViewerCameraPose> posesByCameraStateKey,
-  ) {
-    if (posesByCameraStateKey.isEmpty) return false;
-    var changed = false;
-    for (var pageIndex = 0; pageIndex < _pages.length; pageIndex++) {
-      final page = _pages[pageIndex];
-      var pageChanged = false;
-      final components = page.componentBlocks.map((block) {
-        final pose = posesByCameraStateKey['${page.id}:${block.id}'] ??
-            // Eski çağrı biçimini kullanan istemciler için geriye uyumluluk.
-            posesByCameraStateKey[block.id];
-        if (pose == null || block.modelAssetId == null) return block;
-        final theta = pose.theta % 360;
-        final phi = pose.phi
-            .clamp(
-              block.modelTourEnabled ? _tourMinCameraPhi : 10.0,
-              block.modelTourEnabled ? _tourMaxCameraPhi : 170.0,
-            )
-            .toDouble();
-        final radius = pose.radius.isFinite && pose.radius > 0
-            ? pose.radius.clamp(0.001, 100000).toDouble()
-            : block.modelCameraRadius;
-        final targetX = block.modelTourEnabled
-            ? pose.targetX
-                .clamp(-_tourMaxTargetMetres, _tourMaxTargetMetres)
-                .toDouble()
-            : block.modelTargetX;
-        final targetY = block.modelTourEnabled
-            ? pose.targetY
-                .clamp(-_tourMaxTargetMetres, _tourMaxTargetMetres)
-                .toDouble()
-            : block.modelTargetY;
-        final targetZ = block.modelTourEnabled
-            ? pose.targetZ
-                .clamp(-_tourMaxTargetMetres, _tourMaxTargetMetres)
-                .toDouble()
-            : block.modelTargetZ;
-        if (block.modelOrbitTheta == theta &&
-            block.modelOrbitPhi == phi &&
-            block.modelCameraRadius == radius &&
-            block.modelTargetX == targetX &&
-            block.modelTargetY == targetY &&
-            block.modelTargetZ == targetZ) {
-          return block;
-        }
-        changed = true;
-        pageChanged = true;
-        return block.copyWith(
-          modelOrbitTheta: theta,
-          modelOrbitPhi: phi,
-          modelCameraRadius: radius,
-          modelTargetX: targetX,
-          modelTargetY: targetY,
-          modelTargetZ: targetZ,
         );
       }).toList(growable: false);
       if (pageChanged) {

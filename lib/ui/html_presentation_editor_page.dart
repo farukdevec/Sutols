@@ -190,14 +190,6 @@ class _HtmlPresentationEditorPageState
   /// assertion'ina yol açabiliyordu.
   bool _presentationNameDialogOpen = false;
 
-  /// IndexedStack içindeki gizli model-viewer'lar tarayıcı tarafından sıfır
-  /// boyuta alınabilir ve varsayılan kameraya dönebilir. Bu nedenle yalnızca
-  /// görünür sayfadan ayrılırken alınan poz güvenilir kabul edilir.
-  late String _lastVisibleCameraPageId;
-  final Map<String, ModelViewerCameraPose> _pendingDepartingCameraPoses =
-      <String, ModelViewerCameraPose>{};
-  bool _departingCameraPoseSyncScheduled = false;
-
   /// Sunum sayfalarındaki ilk metin bloğundan konu / dosya adını çözer.
   String? _presentationFileNameFromDeck() {
     for (final page in widget.controller.pages) {
@@ -250,8 +242,6 @@ class _HtmlPresentationEditorPageState
     FocusManager.instance.addListener(_handlePrimaryFocusChanged);
     _openedAt = DateTime.now();
     _trackedSignature = _deckSignature();
-    _lastVisibleCameraPageId = widget.controller.selectedPage.id;
-    widget.controller.addListener(_captureDepartingPageCameraPoses);
     widget.controller.addListener(_syncTextField);
     widget.controller.addListener(_syncTabWithSelection);
     widget.controller.addListener(_onMobilePageChanged);
@@ -366,7 +356,6 @@ class _HtmlPresentationEditorPageState
     _tourMovementTimer?.cancel();
     _editorFocusNode.dispose();
     _hintTimer?.cancel();
-    widget.controller.removeListener(_captureDepartingPageCameraPoses);
     widget.controller.removeListener(_syncTextField);
     widget.controller.removeListener(_syncTabWithSelection);
     widget.controller.removeListener(_onMobilePageChanged);
@@ -668,7 +657,6 @@ class _HtmlPresentationEditorPageState
 
   Future<void> _exportPresentation() async {
     _stopTourKeyboardMovement();
-    _syncRenderedModelCameraPoses();
     final presentationId = widget.presentationId;
     if (presentationId != null && !widget.adminReadOnly) {
       _tracking.markExported(presentationId);
@@ -688,7 +676,6 @@ class _HtmlPresentationEditorPageState
 
   Future<void> _exportPdfPresentation() async {
     _stopTourKeyboardMovement();
-    _syncRenderedModelCameraPoses();
     await exportPresentationAsPdfViaPrint(
       pages: widget.controller.pages.toList(growable: false),
       effectSettings: widget.controller.effectSettings,
@@ -702,7 +689,6 @@ class _HtmlPresentationEditorPageState
       return;
     }
     _stopTourKeyboardMovement();
-    _syncRenderedModelCameraPoses();
     final presentationId = widget.presentationId;
     if (presentationId != null) {
       final json = PresentationProjectCodec.encodeProject(
@@ -760,11 +746,12 @@ class _HtmlPresentationEditorPageState
   }
 
   Future<void> _openPresentationPreview() async {
-    // Sunum modu asıl editör verisini değiştirmez. Son kamera hareketini
-    // tamamlar ve her sayfanın kayıtlı pozunu taşıyan bağımsız bir kopya açar.
+    // Kamera, konum ve ölçeğin tek kaynağı controller state'idir. Önizleme
+    // editörün bağımsız bir kopyasını açar; DOM/model-viewer'dan geri okuma
+    // yapılmaz. Böylece sunuma basmak doğru kamerayı eski/interpolasyonlu bir
+    // render karesiyle hiçbir koşulda değiştiremez.
     _stopTourKeyboardMovement();
     if (isPointerLocked) exitPointerLock();
-    _syncRenderedModelCameraPoses();
     final previewController = PresentationController();
     previewController.replaceDeck(
       widget.controller.pages.toList(growable: false),
@@ -789,66 +776,6 @@ class _HtmlPresentationEditorPageState
     } finally {
       previewController.dispose();
     }
-  }
-
-  void _syncRenderedModelCameraPoses() {
-    // Yalnız seçili sayfa görünür ve güvenilir bir DOM ölçüsüne sahiptir.
-    // Gizli IndexedStack çocuklarını okumak, özellikle uzun süre gizli kalan
-    // ilk sayfanın kayıtlı kamerasını model-viewer'ın varsayılanıyla eziyordu.
-    final posesByCameraStateKey = _renderedCameraPosesForPage(
-      widget.controller.selectedPage,
-    );
-    widget.controller.syncRenderedModelCameraPoses(posesByCameraStateKey);
-  }
-
-  Map<String, ModelViewerCameraPose> _renderedCameraPosesForPage(
-    PresentationPage page,
-  ) {
-    final poses = <String, ModelViewerCameraPose>{};
-    for (final block in page.componentBlocks) {
-      if (block.modelAssetId == null) continue;
-      final cameraStateKey = '${page.id}:${block.id}';
-      final pose = HtmlModelCanvas.cameraPoseFor(cameraStateKey);
-      if (pose != null) poses[cameraStateKey] = pose;
-    }
-    return poses;
-  }
-
-  void _captureDepartingPageCameraPoses() {
-    final currentPageId = widget.controller.selectedPage.id;
-    final departingPageId = _lastVisibleCameraPageId;
-    if (currentPageId == departingPageId) return;
-    _lastVisibleCameraPageId = currentPageId;
-
-    PresentationPage? departingPage;
-    for (final page in widget.controller.pages) {
-      if (page.id == departingPageId) {
-        departingPage = page;
-        break;
-      }
-    }
-    if (departingPage == null) return;
-
-    // Controller dinleyicileri AnimatedBuilder'dan önce çalışır; önceki
-    // sayfanın platform view'ı bu anda hâlâ görünürdür. Pozu senkron yakala,
-    // controller'a yazmayı mevcut notify turunun sonrasına bırak.
-    _pendingDepartingCameraPoses.addAll(
-      _renderedCameraPosesForPage(departingPage),
-    );
-    if (_pendingDepartingCameraPoses.isEmpty ||
-        _departingCameraPoseSyncScheduled) {
-      return;
-    }
-    _departingCameraPoseSyncScheduled = true;
-    scheduleMicrotask(() {
-      _departingCameraPoseSyncScheduled = false;
-      if (!mounted || _pendingDepartingCameraPoses.isEmpty) return;
-      final poses = Map<String, ModelViewerCameraPose>.of(
-        _pendingDepartingCameraPoses,
-      );
-      _pendingDepartingCameraPoses.clear();
-      widget.controller.syncRenderedModelCameraPoses(poses);
-    });
   }
 
   bool _primaryFocusIsTextInput() {
@@ -9775,8 +9702,6 @@ class _HtmlStageCardState extends State<_HtmlStageCard>
                                     'editor-page-canvas-${canvasPage.id}',
                                   ),
                                   page: canvasPage,
-                                  captureModelCameraState: canvasPage.id ==
-                                      widget.controller.selectedPage.id,
                                   selectedTextBlockId:
                                       widget.controller.selectedTextBlockId,
                                   selectedTextBlockIds:
@@ -9799,8 +9724,6 @@ class _HtmlStageCardState extends State<_HtmlStageCard>
                                 'editor-page-canvas-${canvasPage.id}',
                               ),
                               page: canvasPage,
-                              captureModelCameraState: canvasPage.id ==
-                                  widget.controller.selectedPage.id,
                               selectedTextBlockId:
                                   widget.controller.selectedTextBlockId,
                               selectedTextBlockIds:

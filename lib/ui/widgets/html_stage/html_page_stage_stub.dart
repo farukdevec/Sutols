@@ -220,7 +220,6 @@ class HtmlModelCanvas extends StatelessWidget {
     required this.rotationSpeed,
     required this.zoom,
     this.cameraRadius,
-    this.cameraStateKey,
     required this.exposure,
     required this.environmentImage,
     required this.orbitEnabled,
@@ -242,7 +241,6 @@ class HtmlModelCanvas extends StatelessWidget {
   final double rotationSpeed;
   final double zoom;
   final double? cameraRadius;
-  final String? cameraStateKey;
   final double exposure;
   final String? environmentImage;
   final bool orbitEnabled;
@@ -256,8 +254,6 @@ class HtmlModelCanvas extends StatelessWidget {
   final bool pickSurfacePosition;
   final ValueChanged<ModelTourSurfacePoint>? onSurfacePositionPicked;
   final VoidCallback? onSurfacePickMissed;
-
-  static ModelViewerCameraPose? cameraPoseFor(String cameraStateKey) => null;
 
   @override
   Widget build(BuildContext context) => const ColoredBox(

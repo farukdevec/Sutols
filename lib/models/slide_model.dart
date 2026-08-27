@@ -596,30 +596,6 @@ class ModelTourSurfacePoint {
   final double z;
 }
 
-/// `model-viewer` tarafÄ±nda ekranda gerÃ§ekten kullanÄ±lan kamera pozu.
-///
-/// YÃ¼zde tabanlÄ± kamera uzaklÄ±ÄŸÄ± yeni bir viewport'ta yeniden hesaplanabildiÄŸi
-/// iÃ§in yarÄ±Ã§ap metre olarak da saklanÄ±r. Bu deÄŸer editÃ¶r ve tam ekran sunumun
-/// aynÄ± kareyi Ã¼retmesini saÄŸlar.
-@immutable
-class ModelViewerCameraPose {
-  const ModelViewerCameraPose({
-    required this.theta,
-    required this.phi,
-    required this.radius,
-    required this.targetX,
-    required this.targetY,
-    required this.targetZ,
-  });
-
-  final double theta;
-  final double phi;
-  final double radius;
-  final double targetX;
-  final double targetY;
-  final double targetZ;
-}
-
 /// Tur yüzeyindeki öğenin görsel biçimi. Eski projeler alanı içermediğinden
 /// varsayılan `point` olarak okunur ve mevcut işaretleri korur.
 enum ModelTourHotspotKind { point, text }

@@ -419,7 +419,6 @@ class HtmlModelCanvas extends StatefulWidget {
     required this.rotationSpeed,
     required this.zoom,
     this.cameraRadius,
-    this.cameraStateKey,
     required this.exposure,
     required this.environmentImage,
     required this.orbitEnabled,
@@ -441,7 +440,6 @@ class HtmlModelCanvas extends StatefulWidget {
   final double rotationSpeed;
   final double zoom;
   final double? cameraRadius;
-  final String? cameraStateKey;
   final double exposure;
   final String? environmentImage;
   final bool orbitEnabled;
@@ -456,12 +454,6 @@ class HtmlModelCanvas extends StatefulWidget {
   final ValueChanged<ModelTourSurfacePoint>? onSurfacePositionPicked;
   final VoidCallback? onSurfacePickMissed;
 
-  /// Ekranda gerÃ§ekten kullanÄ±lan (interpolasyon sonrasÄ±) kamera pozunu okur.
-  /// Sunum aÃ§Ä±lmadan hemen Ã¶nce Ã§aÄŸrÄ±larak yÃ¼zde tabanlÄ± uzaklÄ±k yerine
-  /// model-viewer'Ä±n metre cinsinden kesin yarÄ±Ã§apÄ± kaydedilir.
-  static ModelViewerCameraPose? cameraPoseFor(String cameraStateKey) =>
-      _HtmlModelCanvasState.cameraPoseFor(cameraStateKey);
-
   @override
   State<HtmlModelCanvas> createState() => _HtmlModelCanvasState();
 }
@@ -469,16 +461,6 @@ class HtmlModelCanvas extends StatefulWidget {
 class _HtmlModelCanvasState extends State<HtmlModelCanvas> {
   static final Map<String, _ModelCanvasGeometry> _geometryByModelId =
       <String, _ModelCanvasGeometry>{};
-  static final Map<String, _HtmlModelCanvasState> _statesByCameraKey =
-      <String, _HtmlModelCanvasState>{};
-  static final Map<String, ModelViewerCameraPose> _posesByCameraKey =
-      <String, ModelViewerCameraPose>{};
-
-  static ModelViewerCameraPose? cameraPoseFor(String cameraStateKey) {
-    final state = _statesByCameraKey[cameraStateKey];
-    return state?._captureCameraPose() ?? _posesByCameraKey[cameraStateKey];
-  }
-
   html.Element? _modelViewer;
   StreamSubscription<html.Event>? _modelLoadSubscription;
   StreamSubscription<html.MouseEvent>? _surfacePickSubscription;
@@ -515,6 +497,14 @@ class _HtmlModelCanvasState extends State<HtmlModelCanvas> {
         '${widget.orbitPhi.toStringAsFixed(5)}deg $radiusText';
   }
 
+  bool get _hasExactCameraPose {
+    final radius = widget.cameraRadius;
+    return widget.tourEnabled &&
+        radius != null &&
+        radius.isFinite &&
+        radius > 0;
+  }
+
   void _setAttribute(String name, String value) {
     final element = _modelViewer;
     if (element == null || element.getAttribute(name) == value) return;
@@ -530,17 +520,12 @@ class _HtmlModelCanvasState extends State<HtmlModelCanvas> {
   @override
   void initState() {
     super.initState();
-    _registerCameraState();
     RemoteModelSources.revision.addListener(_applyAttributes);
   }
 
   @override
   void didUpdateWidget(covariant HtmlModelCanvas oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.cameraStateKey != widget.cameraStateKey) {
-      _unregisterCameraState(oldWidget.cameraStateKey);
-      _registerCameraState();
-    }
     if (oldWidget.modelId != widget.modelId) {
       _modelGeometryReady = false;
       _restoreCachedGeometry();
@@ -555,50 +540,6 @@ class _HtmlModelCanvasState extends State<HtmlModelCanvas> {
         oldWidget.zoom != widget.zoom ||
         oldWidget.cameraRadius != widget.cameraRadius) {
       _jumpCameraToSavedPose();
-    }
-  }
-
-  void _registerCameraState() {
-    final key = widget.cameraStateKey;
-    if (key != null && key.isNotEmpty) _statesByCameraKey[key] = this;
-  }
-
-  void _unregisterCameraState([String? key]) {
-    final resolvedKey = key ?? widget.cameraStateKey;
-    if (resolvedKey != null && _statesByCameraKey[resolvedKey] == this) {
-      _statesByCameraKey.remove(resolvedKey);
-    }
-  }
-
-  ModelViewerCameraPose? _captureCameraPose() {
-    final element = _modelViewer;
-    final key = widget.cameraStateKey;
-    if (element == null || key == null || key.isEmpty) return null;
-    try {
-      final viewer = element as JSObject;
-      final orbit = viewer.callMethod<JSObject>('getCameraOrbit'.toJS);
-      final target = viewer.callMethod<JSObject>('getCameraTarget'.toJS);
-      final pose = ModelViewerCameraPose(
-        theta: _jsCoordinate(orbit, 'theta') * 180 / math.pi,
-        phi: _jsCoordinate(orbit, 'phi') * 180 / math.pi,
-        radius: _jsCoordinate(orbit, 'radius'),
-        targetX: _jsCoordinate(target, 'x'),
-        targetY: _jsCoordinate(target, 'y'),
-        targetZ: _jsCoordinate(target, 'z'),
-      );
-      if (!pose.theta.isFinite ||
-          !pose.phi.isFinite ||
-          !pose.radius.isFinite ||
-          pose.radius <= 0 ||
-          !pose.targetX.isFinite ||
-          !pose.targetY.isFinite ||
-          !pose.targetZ.isFinite) {
-        return null;
-      }
-      _posesByCameraKey[key] = pose;
-      return pose;
-    } catch (_) {
-      return _posesByCameraKey[key];
     }
   }
 
@@ -722,7 +663,6 @@ class _HtmlModelCanvasState extends State<HtmlModelCanvas> {
       }
       _applyCameraTarget();
       _jumpCameraToSavedPose();
-      _captureCameraPose();
     } catch (_) {
       _modelGeometryReady = false;
     }
@@ -739,7 +679,6 @@ class _HtmlModelCanvasState extends State<HtmlModelCanvas> {
       (element as JSObject).callMethod<JSAny?>(
         'jumpCameraToGoal'.toJS,
       );
-      _captureCameraPose();
     } catch (_) {
       // Eski model-viewer sürümlerinde metot bulunmayabilir; attribute tabanlı
       // kamera uygulaması çalışmaya devam eder.
@@ -793,19 +732,31 @@ class _HtmlModelCanvasState extends State<HtmlModelCanvas> {
     final tourInsetZ = math.min(_modelDepth * .08, .75);
     final tourHalfX = math.max(.125, _modelWidth / 2 - tourInsetX);
     final tourHalfZ = math.max(.125, _modelDepth / 2 - tourInsetZ);
-    final x = widget.tourEnabled
+    // Once a rendered pose has been captured, its radius and target are all
+    // absolute model-space values. Recomputing only Y from the bounding box (or
+    // clamping X/Z again) changes the point the camera orbits around and makes
+    // the presentation open on a visibly different part of the same model.
+    // A null radius marks legacy/percentage-based poses, which still need the
+    // original ground and safe-bounds calculation until their first capture.
+    final x = _hasExactCameraPose
         ? widget.targetX
-            .clamp(_modelCenterX - tourHalfX, _modelCenterX + tourHalfX)
-            .toDouble()
-        : _modelCenterX + _modelWidth * widget.targetX / 100;
-    final y = widget.tourEnabled
-        ? _modelCenterY - _modelHeight / 2
-        : _modelCenterY + _modelHeight * widget.targetY / 100;
-    final z = widget.tourEnabled
+        : widget.tourEnabled
+            ? widget.targetX
+                .clamp(_modelCenterX - tourHalfX, _modelCenterX + tourHalfX)
+                .toDouble()
+            : _modelCenterX + _modelWidth * widget.targetX / 100;
+    final y = _hasExactCameraPose
+        ? widget.targetY
+        : widget.tourEnabled
+            ? _modelCenterY - _modelHeight / 2
+            : _modelCenterY + _modelHeight * widget.targetY / 100;
+    final z = _hasExactCameraPose
         ? widget.targetZ
-            .clamp(_modelCenterZ - tourHalfZ, _modelCenterZ + tourHalfZ)
-            .toDouble()
-        : _modelCenterZ + _modelDepth * widget.targetZ / 100;
+        : widget.tourEnabled
+            ? widget.targetZ
+                .clamp(_modelCenterZ - tourHalfZ, _modelCenterZ + tourHalfZ)
+                .toDouble()
+            : _modelCenterZ + _modelDepth * widget.targetZ / 100;
     final cameraTarget = '${x.toStringAsFixed(5)}m ${y.toStringAsFixed(5)}m '
         '${z.toStringAsFixed(5)}m';
     _setAttribute('camera-target', cameraTarget);
@@ -832,8 +783,6 @@ class _HtmlModelCanvasState extends State<HtmlModelCanvas> {
 
   @override
   void dispose() {
-    _captureCameraPose();
-    _unregisterCameraState();
     RemoteModelSources.revision.removeListener(_applyAttributes);
     final modelLoadSubscription = _modelLoadSubscription;
     if (modelLoadSubscription != null) {

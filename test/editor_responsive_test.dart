@@ -1211,4 +1211,48 @@ void main() {
     expect(frozen.modelZoom, tourPose.modelZoom);
     expect(find.text('Sanal Tur'), findsOneWidget);
   });
+
+  testWidgets('Sunum Modu editör kamera stateini birebir kopyalar', (
+    tester,
+  ) async {
+    final controller = await pumpAt(tester, const Size(1440, 900));
+    controller.add3DModelBlock(presentation3DModelCatalog.first);
+    controller.updateSelectedModelTourEnabled(true);
+    controller.lookAroundSelectedModelTour(const Offset(-138, 24));
+    controller.moveSelectedModelTour(forward: 17, right: -9);
+    controller.updateSelectedModelZoom(3.7);
+    final expected = controller.selectedComponentBlock!;
+    await tester.pump();
+
+    await tester.tap(find.text('Sunum Modu'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+
+    expect(find.byType(PresentationPreviewPage), findsOneWidget);
+    final previewCanvas = tester
+        .widgetList<PresentationPageCanvas>(
+          find.byType(PresentationPageCanvas, skipOffstage: false),
+        )
+        .firstWhere(
+          (canvas) => canvas.page.componentBlocks.single.modelTourFrozen,
+        );
+    final rendered = previewCanvas.page.componentBlocks.single;
+    expect(rendered.modelOrbitTheta, expected.modelOrbitTheta);
+    expect(rendered.modelOrbitPhi, expected.modelOrbitPhi);
+    expect(rendered.modelTargetX, expected.modelTargetX);
+    expect(rendered.modelTargetY, expected.modelTargetY);
+    expect(rendered.modelTargetZ, expected.modelTargetZ);
+    expect(rendered.modelZoom, expected.modelZoom);
+    expect(rendered.modelCameraRadius, expected.modelCameraRadius);
+    expect(rendered.modelAnimationEnabled, expected.modelAnimationEnabled);
+
+    final editorModel = controller.selectedComponentBlock!;
+    expect(editorModel.modelOrbitTheta, expected.modelOrbitTheta);
+    expect(editorModel.modelTargetX, expected.modelTargetX);
+    expect(editorModel.modelTargetZ, expected.modelTargetZ);
+    expect(editorModel.modelTourFrozen, isFalse);
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await tester.pump();
+  });
 }

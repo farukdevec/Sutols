@@ -5,7 +5,7 @@ import 'package:sutol/models/slide_model.dart';
 import 'package:sutol/state/presentation_controller.dart';
 
 void main() {
-  test('render edilen kesin kamera yarÄ±Ã§apÄ± ilgili sayfaya kaydedilir', () {
+  test('sunum kopyası editör kamera stateini değiştirmeden taşır', () {
     final controller = PresentationController();
     addTearDown(controller.dispose);
     controller.replaceDeck(
@@ -18,6 +18,12 @@ void main() {
               id: 'camera-model',
               modelAssetId: 'anitkabir',
               modelTourEnabled: true,
+              modelOrbitTheta: 145,
+              modelOrbitPhi: 78,
+              modelTargetX: 4,
+              modelTargetY: -2,
+              modelTargetZ: 11,
+              modelZoom: 3.25,
               position: Offset.zero,
               size: Size(1, 1),
             ),
@@ -26,29 +32,29 @@ void main() {
       ],
     );
 
-    expect(
-      controller.syncRenderedModelCameraPoses(
-        const <String, ModelViewerCameraPose>{
-          'camera-page:camera-model': ModelViewerCameraPose(
-            theta: 32,
-            phi: 84,
-            radius: 17.625,
-            targetX: 4,
-            targetY: -2,
-            targetZ: 11,
-          ),
-        },
-      ),
-      isTrue,
+    final previewController = PresentationController();
+    addTearDown(previewController.dispose);
+    previewController.replaceDeck(
+      controller.pages.toList(growable: false),
+      effectSettings: controller.effectSettings,
     );
+    previewController.commitAllModelTourPoses();
 
-    final model = controller.pages.single.componentBlocks.single;
-    expect(model.modelOrbitTheta, 32);
-    expect(model.modelOrbitPhi, 84);
-    expect(model.modelCameraRadius, 17.625);
-    expect(model.modelTargetX, 4);
-    expect(model.modelTargetY, -2);
-    expect(model.modelTargetZ, 11);
+    final editorModel = controller.pages.single.componentBlocks.single;
+    final previewModel = previewController.pages.single.componentBlocks.single;
+    expect(previewModel.modelOrbitTheta, editorModel.modelOrbitTheta);
+    expect(previewModel.modelOrbitPhi, editorModel.modelOrbitPhi);
+    expect(previewModel.modelTargetX, editorModel.modelTargetX);
+    expect(previewModel.modelTargetY, editorModel.modelTargetY);
+    expect(previewModel.modelTargetZ, editorModel.modelTargetZ);
+    expect(previewModel.modelZoom, editorModel.modelZoom);
+    expect(previewModel.modelCameraRadius, editorModel.modelCameraRadius);
+    expect(
+      previewModel.modelAnimationEnabled,
+      editorModel.modelAnimationEnabled,
+    );
+    expect(previewModel.modelTourFrozen, isTrue);
+    expect(editorModel.modelTourFrozen, isFalse);
   });
 
   test('aynı blok kimliği farklı sayfalarda ayrı kamera pozunu korur', () {
@@ -63,6 +69,7 @@ void main() {
             PresentationComponentBlock(
               id: 'shared-model',
               modelAssetId: 'anitkabir',
+              modelOrbitTheta: 105,
               position: Offset.zero,
               size: Size(1, 1),
             ),
@@ -75,6 +82,7 @@ void main() {
             PresentationComponentBlock(
               id: 'shared-model',
               modelAssetId: 'anitkabir',
+              modelOrbitTheta: 255,
               position: Offset.zero,
               size: Size(1, 1),
             ),
@@ -83,33 +91,55 @@ void main() {
       ],
     );
 
-    controller.syncRenderedModelCameraPoses(
-      const <String, ModelViewerCameraPose>{
-        'camera-page-a:shared-model': ModelViewerCameraPose(
-          theta: 25,
-          phi: 70,
-          radius: 12,
-          targetX: 0,
-          targetY: 0,
-          targetZ: 0,
-        ),
-        'camera-page-b:shared-model': ModelViewerCameraPose(
-          theta: 210,
-          phi: 82,
-          radius: 40,
-          targetX: 0,
-          targetY: 0,
-          targetZ: 0,
-        ),
-      },
+    final previewController = PresentationController();
+    addTearDown(previewController.dispose);
+    previewController.replaceDeck(
+      controller.pages.toList(growable: false),
+      effectSettings: controller.effectSettings,
     );
 
-    final first = controller.pages[0].componentBlocks.single;
-    final second = controller.pages[1].componentBlocks.single;
-    expect(first.modelOrbitTheta, 25);
-    expect(first.modelCameraRadius, 12);
-    expect(second.modelOrbitTheta, 210);
-    expect(second.modelCameraRadius, 40);
+    final first = previewController.pages[0].componentBlocks.single;
+    final second = previewController.pages[1].componentBlocks.single;
+    expect(first.modelOrbitTheta, 105);
+    expect(second.modelOrbitTheta, 255);
+  });
+
+  test('çözümlenmiş tur hedefi DOM kamera karesiyle geri yazılmaz', () {
+    final controller = PresentationController();
+    addTearDown(controller.dispose);
+    controller.replaceDeck(
+      const <PresentationPage>[
+        PresentationPage(
+          id: 'resolved-camera-page',
+          textBlocks: <PresentationTextBlock>[],
+          componentBlocks: <PresentationComponentBlock>[
+            PresentationComponentBlock(
+              id: 'resolved-camera-model',
+              modelAssetId: 'anitkabir',
+              modelTourEnabled: true,
+              modelOrbitTheta: 205,
+              modelOrbitPhi: 82,
+              modelCameraRadius: 20,
+              modelTargetX: 9,
+              modelTargetY: -3,
+              modelTargetZ: 4,
+              position: Offset.zero,
+              size: Size(1, 1),
+            ),
+          ],
+        ),
+      ],
+    );
+
+    controller.commitAllModelTourPoses();
+
+    final model = controller.pages.single.componentBlocks.single;
+    expect(model.modelOrbitTheta, 205);
+    expect(model.modelOrbitPhi, 82);
+    expect(model.modelCameraRadius, 20);
+    expect(model.modelTargetX, 9);
+    expect(model.modelTargetY, -3);
+    expect(model.modelTargetZ, 4);
   });
 
   test('sunum hazırlığı her sayfanın tur kamerasını ayrı pozda sabitler', () {
@@ -306,7 +336,6 @@ void main() {
     addTearDown(controller.dispose);
 
     expect(controller.pages, hasLength(1));
-    final initialPageId = controller.selectedPage.id;
 
     // Add page after index 0
     controller.addPageAfter(0);
@@ -543,7 +572,7 @@ void main() {
     expect(saved.modelTargetZ, -7);
     expect(saved.modelZoom, 3.25);
     expect(saved.modelTourFrozen, isTrue);
-    expect(saved.modelAnimationEnabled, isFalse);
+    expect(saved.modelAnimationEnabled, isTrue);
     expect(saved.modelAutoRotate, isFalse);
 
     controller.updateSelectedModelTourEnabled(true);

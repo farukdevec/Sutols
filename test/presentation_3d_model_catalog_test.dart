@@ -61,49 +61,6 @@ void main() {
     expect(find.byType(HtmlPageStage), findsNothing);
   });
 
-  testWidgets('yalnız ana editör tuvali model kamera kaynağına kaydolur',
-      (tester) async {
-    const page = PresentationPage(
-      id: 'camera-source-page',
-      textBlocks: <PresentationTextBlock>[],
-      componentBlocks: <PresentationComponentBlock>[
-        PresentationComponentBlock(
-          id: 'camera-source-model',
-          modelAssetId: 'anitkabir',
-          position: Offset.zero,
-          size: Size(1, 1),
-        ),
-      ],
-    );
-
-    Future<void> pumpCanvas({required bool capture}) {
-      return tester.pumpWidget(
-        MaterialApp(
-          home: PresentationPageCanvas(
-            page: page,
-            captureModelCameraState: capture,
-          ),
-        ),
-      );
-    }
-
-    await pumpCanvas(capture: false);
-    expect(
-      tester
-          .widget<HtmlModelCanvas>(find.byType(HtmlModelCanvas))
-          .cameraStateKey,
-      isNull,
-    );
-
-    await pumpCanvas(capture: true);
-    expect(
-      tester
-          .widget<HtmlModelCanvas>(find.byType(HtmlModelCanvas))
-          .cameraStateKey,
-      'camera-source-page:camera-source-model',
-    );
-  });
-
   testWidgets('3B modele sağ tıklama bileşen bağlam olayını iletir',
       (tester) async {
     Offset? secondaryTapPosition;
@@ -479,6 +436,46 @@ void main() {
       contains('owner.dataset.sutolTargetX = targetX.toFixed(5)'),
     );
     expect(scheduler, contains('viewer.jumpCameraToGoal()'));
+  });
+
+  test('exact tour camera target is not recomputed for presentation', () {
+    const page = PresentationPage(
+      id: 'exact-tour-camera',
+      textBlocks: <PresentationTextBlock>[],
+      componentBlocks: <PresentationComponentBlock>[
+        PresentationComponentBlock(
+          id: 'exact-tour-model',
+          modelAssetId: 'anitkabir',
+          modelTourEnabled: true,
+          modelTourFrozen: true,
+          modelOrbitTheta: 18,
+          modelOrbitPhi: 84,
+          modelCameraRadius: 17.625,
+          modelTargetX: 41.25,
+          modelTargetY: -3.55,
+          modelTargetZ: 72.5,
+          position: Offset.zero,
+          size: Size(1, 1),
+        ),
+      ],
+    );
+
+    final document = buildHtmlStageDocument(
+      page: page,
+      modelSourcesById: const <String, String>{
+        'anitkabir': '/models/anitkabir.glb',
+      },
+    );
+    final modelTag = RegExp(r'<model-viewer[^>]*>').firstMatch(document)![0]!;
+
+    expect(modelTag, contains('camera-orbit="18.00deg 84.00deg 17.6250000m"'));
+    expect(modelTag, contains('data-sutol-target-x="41.25"'));
+    expect(modelTag, contains('data-sutol-target-y="-3.55"'));
+    expect(modelTag, contains('data-sutol-target-z="72.50"'));
+    expect(modelTag, contains('data-sutol-exact-camera-pose="true"'));
+    expect(document, contains('hasExactCameraPose ? y'));
+    expect(document, contains('? x\n'));
+    expect(document, contains('? z\n'));
   });
 
   test('sunum geçişinde her sayfanın donmuş tur kamerası HTML sahnede korunur',

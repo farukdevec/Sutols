@@ -702,6 +702,10 @@ String _model3DMarkup(
       cameraRadius != null && cameraRadius.isFinite && cameraRadius > 0
           ? '${cameraRadius.toStringAsFixed(7)}m'
           : '${(100 / effectiveZoom).clamp(10, 200).toStringAsFixed(2)}%';
+  final hasExactCameraPose = tourEnabled &&
+      cameraRadius != null &&
+      cameraRadius.isFinite &&
+      cameraRadius > 0;
   // Eski turlarda varsayılan 75° kamera yüksek kalıyordu. Zemin turu
   // başlangıçta göz hizasına yakın 82° ile açılır; kullanıcı isterse yukarı
   // doğru bakmaya devam edebilir.
@@ -718,11 +722,13 @@ String _model3DMarkup(
   final safeTargetX = tourEnabled ? targetX.clamp(-500.0, 500.0) : targetX;
   final safeTargetY = tourEnabled ? targetY.clamp(-500.0, 500.0) : targetY;
   final safeTargetZ = tourEnabled ? targetZ.clamp(-500.0, 500.0) : targetZ;
+  final exactCameraPoseMarkup =
+      'data-sutol-exact-camera-pose="${hasExactCameraPose ? 'true' : 'false'}"';
   final sourceMarkup = deferSource
-      ? 'data-sutol-model-source-id="${_escapeAttribute(id)}"'
+      ? '$exactCameraPoseMarkup data-sutol-model-source-id="${_escapeAttribute(id)}"'
       : source != null && source.isNotEmpty
-          ? 'src="${_escapeAttribute(source)}"'
-          : '';
+          ? '$exactCameraPoseMarkup src="${_escapeAttribute(source)}"'
+          : exactCameraPoseMarkup;
   final environmentImageMarkup =
       environmentImage == null || environmentImage.isEmpty
           ? ''
@@ -3450,21 +3456,27 @@ const String _stagePatchScript = r'''
       const y = Number(modelViewer.dataset.sutolTargetY) || 0;
       const z = Number(modelViewer.dataset.sutolTargetZ) || 0;
       const isTour = modelViewer.dataset.sutolTourGround === 'true';
+      const hasExactCameraPose =
+        isTour && modelViewer.dataset.sutolExactCameraPose === 'true';
       const insetX = Math.min(dimensions.x * .08, .75);
       const insetZ = Math.min(dimensions.z * .08, .75);
       const halfX = Math.max(.125, dimensions.x / 2 - insetX);
       const halfZ = Math.max(.125, dimensions.z / 2 - insetZ);
       const targetX = isTour
-        ? Math.max(center.x - halfX, Math.min(center.x + halfX, x))
+        ? (hasExactCameraPose
+            ? x
+            : Math.max(center.x - halfX, Math.min(center.x + halfX, x)))
         : center.x + dimensions.x * x / 100;
       // Turdaki sıfır düzlemi modelin alt sınırıdır. Y hedefini merkezden
       // değil buradan kurmak, yürüyüşü modelin dibinde başlatır ve hareket
       // sırasında kameranın modelin altına dolanmasını engeller.
       const targetY = isTour
-        ? center.y - dimensions.y / 2
+        ? (hasExactCameraPose ? y : center.y - dimensions.y / 2)
         : center.y + dimensions.y * y / 100;
       const targetZ = isTour
-        ? Math.max(center.z - halfZ, Math.min(center.z + halfZ, z))
+        ? (hasExactCameraPose
+            ? z
+            : Math.max(center.z - halfZ, Math.min(center.z + halfZ, z)))
         : center.z + dimensions.z * z / 100;
       modelViewer.setAttribute(
         'camera-target',

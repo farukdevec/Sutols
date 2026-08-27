@@ -236,6 +236,16 @@ void main() {
     expect(rendered.modelTargetY, expected.modelTargetY);
     expect(rendered.modelTargetZ, expected.modelTargetZ);
     expect(rendered.modelZoom, expected.modelZoom);
+    expect(rendered.modelAnimationEnabled, expected.modelAnimationEnabled);
+    final modelViewer = tester.widget<HtmlModelCanvas>(
+      find.byType(HtmlModelCanvas),
+    );
+    expect(modelViewer.orbitTheta, expected.modelOrbitTheta);
+    expect(modelViewer.orbitPhi, expected.modelOrbitPhi);
+    expect(modelViewer.targetX, expected.modelTargetX);
+    expect(modelViewer.targetY, expected.modelTargetY);
+    expect(modelViewer.targetZ, expected.modelTargetZ);
+    expect(modelViewer.zoom, expected.modelZoom);
     expect(find.byType(PresentationPageThumbnailCanvas), findsNothing);
   });
 
