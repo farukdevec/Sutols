@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import '../models/model_tour_runtime.dart';
 import '../models/slide_model.dart';
 import '../ui/widgets/html_stage/html_stage_document.dart';
 
@@ -993,8 +994,16 @@ String _exportScript({
     const viewer = activeTourViewer();
     if (viewer && (tourKeys.size || tourStick.x || tourStick.y)) {
       const elapsed = Math.min(.05, Math.max(.001, (now - (tickTour.last || now)) / 1000));
-      const forward = ((tourKeys.has('w') ? 1 : 0) - (tourKeys.has('s') ? 1 : 0) - tourStick.y) * 20 * elapsed;
-      const right = ((tourKeys.has('d') ? 1 : 0) - (tourKeys.has('a') ? 1 : 0) + tourStick.x) * 20 * elapsed;
+      let forward = (tourKeys.has('w') ? 1 : 0) - (tourKeys.has('s') ? 1 : 0) - tourStick.y;
+      let right = (tourKeys.has('d') ? 1 : 0) - (tourKeys.has('a') ? 1 : 0) + tourStick.x;
+      const magnitude = Math.hypot(forward, right);
+      if (magnitude > 1) {
+        forward /= magnitude;
+        right /= magnitude;
+      }
+      const movement = ${ModelTourRuntime.keyboardWalkSpeedMetersPerSecond.toStringAsFixed(1)} * elapsed;
+      forward *= movement;
+      right *= movement;
       moveTour(viewer, forward, right);
     }
     tickTour.last = now;
@@ -1512,9 +1521,10 @@ String _exportScript({
 
   window.addEventListener('keydown', (event) => {
     const key = event.key.toLowerCase();
-    if (activeTourViewer() && ['w', 'a', 's', 'd'].includes(key)) {
+    const tourKey = ({ arrowup: 'w', arrowleft: 'a', arrowdown: 's', arrowright: 'd' })[key] || key;
+    if (activeTourViewer() && ['w', 'a', 's', 'd'].includes(tourKey)) {
       event.preventDefault();
-      tourKeys.add(key);
+      tourKeys.add(tourKey);
     } else if (event.key === 'ArrowRight' || event.key === 'PageDown' || event.key === ' ' || event.code === 'Space') {
       event.preventDefault();
       goNext();
@@ -1545,8 +1555,9 @@ String _exportScript({
 
   window.addEventListener('keyup', (event) => {
     const key = event.key.toLowerCase();
-    if (['w', 'a', 's', 'd'].includes(key)) {
-      tourKeys.delete(key);
+    const tourKey = ({ arrowup: 'w', arrowleft: 'a', arrowdown: 's', arrowright: 'd' })[key] || key;
+    if (['w', 'a', 's', 'd'].includes(tourKey)) {
+      tourKeys.delete(tourKey);
     }
   });
 

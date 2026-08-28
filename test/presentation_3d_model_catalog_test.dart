@@ -833,6 +833,10 @@ void main() {
     expect(document, contains('window.SutolApplyModelTarget'));
     expect(document, contains('function renderTourControls()'));
     expect(document, contains('const tourKeys = new Set()'));
+    expect(document, contains("arrowup: 'w'"));
+    expect(document, contains("arrowright: 'd'"));
+    expect(document, contains('const magnitude = Math.hypot(forward, right)'));
+    expect(document, contains('const movement = 36.0 * elapsed'));
   });
 
   test('yumuşak geçiş aynı 3B modelin açılarını HTML içinde dönüştürür', () {

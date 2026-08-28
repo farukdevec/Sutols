@@ -64,7 +64,11 @@ class ModelTourRuntime {
   static const double minPhi = 42;
   static const double maxPhi = 89;
 
-  static ModelTourPose look(ModelTourPose pose, {
+  /// Editör, canlı sunum ve dışa aktarılan tur için ortak yürüme hızı.
+  static const double keyboardWalkSpeedMetersPerSecond = 36;
+
+  static ModelTourPose look(
+    ModelTourPose pose, {
     required double horizontalPixels,
     required double verticalPixels,
   }) {
@@ -77,15 +81,23 @@ class ModelTourRuntime {
     );
   }
 
-  static ModelTourPose move(ModelTourPose pose, {
+  static ModelTourPose move(
+    ModelTourPose pose, {
     required double forwardMeters,
     required double rightMeters,
     ModelTourBounds? bounds,
   }) {
+    // model-viewer azimutunda kamera hedefin çevresinde döner. Bu yüzden
+    // ileri vektörü kameradan hedefe, sağ vektörü de aynı bakışın ekran
+    // sağına göre hesaplanır; dünya X/Z eksenlerine sabitlenmez.
     final theta = pose.theta * math.pi / 180;
     final next = pose.copyWith(
-      x: pose.x - forwardMeters * math.sin(theta) + rightMeters * math.cos(theta),
-      z: pose.z - forwardMeters * math.cos(theta) - rightMeters * math.sin(theta),
+      x: pose.x -
+          forwardMeters * math.sin(theta) +
+          rightMeters * math.cos(theta),
+      z: pose.z -
+          forwardMeters * math.cos(theta) -
+          rightMeters * math.sin(theta),
     );
     return bounds?.constrain(next) ?? next;
   }

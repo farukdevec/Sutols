@@ -358,38 +358,47 @@ class _PresentationPreviewPageState extends State<PresentationPreviewPage>
   bool _updateTourMovementKey(KeyEvent event) {
     // Fiziksel tuşu temel almak, Türkçe/F klavye gibi düzenlerde logicalKey
     // eşleşmese bile WASD kontrolünün aynı tuş konumunda çalışmasını sağlar.
+    // Ok tuşları aktif turda aynı dört hareket yönüne dönüştürülür; tur yoksa
+    // slayt gezinmesine bırakılır.
     final physicalKey = event.physicalKey;
     final key = physicalKey == PhysicalKeyboardKey.keyW ||
-            event.logicalKey == LogicalKeyboardKey.keyW
+            event.logicalKey == LogicalKeyboardKey.keyW ||
+            event.logicalKey == LogicalKeyboardKey.arrowUp
         ? LogicalKeyboardKey.keyW
         : physicalKey == PhysicalKeyboardKey.keyA ||
-                event.logicalKey == LogicalKeyboardKey.keyA
+                event.logicalKey == LogicalKeyboardKey.keyA ||
+                event.logicalKey == LogicalKeyboardKey.arrowLeft
             ? LogicalKeyboardKey.keyA
             : physicalKey == PhysicalKeyboardKey.keyS ||
-                    event.logicalKey == LogicalKeyboardKey.keyS
+                    event.logicalKey == LogicalKeyboardKey.keyS ||
+                    event.logicalKey == LogicalKeyboardKey.arrowDown
                 ? LogicalKeyboardKey.keyS
                 : physicalKey == PhysicalKeyboardKey.keyD ||
-                        event.logicalKey == LogicalKeyboardKey.keyD
+                        event.logicalKey == LogicalKeyboardKey.keyD ||
+                        event.logicalKey == LogicalKeyboardKey.arrowRight
                     ? LogicalKeyboardKey.keyD
                     : null;
     if (key != null) {
+      final tourActive = _tourStageKey.currentState?.hasTour == true &&
+          _tourStageKey.currentState?.isTourPointPlacementActive != true;
       if (event is KeyDownEvent || event is KeyRepeatEvent) {
-        if (_tourStageKey.currentState?.hasTour == true &&
-            _tourStageKey.currentState?.isTourPointPlacementActive != true) {
+        if (tourActive) {
           _tourMovementKeys.add(key);
           _lastTourMovementTick ??= DateTime.now();
           _tourMovementTimer ??= Timer.periodic(
             const Duration(milliseconds: 16),
             (_) => _tickTourMovement(),
           );
+          return true;
         }
+        return false;
       } else if (event is KeyUpEvent) {
-        _tourMovementKeys.remove(key);
+        final wasMoving = _tourMovementKeys.remove(key);
         if (_tourMovementKeys.isEmpty) {
           _stopTourMovement();
         }
+        return wasMoving || tourActive;
       }
-      return true;
     }
     return false;
   }
@@ -594,10 +603,10 @@ class _PresentationPreviewPageState extends State<PresentationPreviewPage>
     final seconds =
         now.difference(lastTick).inMicroseconds.clamp(0, 50000).toDouble() /
             Duration.microsecondsPerSecond;
-    // WASD, önceki sürümdeki doğrudan ve tepkisel yürüme hızını kullanır.
-    // İvme kuyruğu tuş bırakıldığında gecikme yaratıyordu.
-    const walkSpeed = 20.0;
-    final movement = walkSpeed * seconds;
+    // Tüm çalışma ortamları aynı, daha tepkisel yürüme hızını kullanır.
+    // İvme kuyruğu yoktur; tuş bırakıldığında hareket hemen kesilir.
+    final movement =
+        ModelTourRuntime.keyboardWalkSpeedMetersPerSecond * seconds;
     stage.moveTour(
       forward: forward * movement,
       right: right * movement,
@@ -1057,7 +1066,7 @@ class _TourExperienceHud extends StatelessWidget {
                     const SizedBox(width: 8),
                     Text(
                       tourStarted
-                          ? 'Keşif modu aktif · sürükle + WASD'
+                          ? 'Keşif modu · WASD / Oklar'
                           : 'Sanal tur hazır',
                       style: const TextStyle(
                         color: Colors.white,
@@ -1083,7 +1092,7 @@ class _TourExperienceHud extends StatelessWidget {
                           ),
                           const SizedBox(width: 5),
                           const Text(
-                            'Sol tuş + sürükle: bak · WASD: yürü',
+                            'Sürükle: bak · WASD / Oklar: yürü',
                             style: TextStyle(
                               color: Color(0xFFA5F3FC),
                               fontSize: 12,
@@ -1881,7 +1890,7 @@ class _PreviewStageWithOrbitState extends State<_PreviewStageWithOrbit> {
                 Icon(Icons.pan_tool_alt_rounded, size: 15, color: Colors.white),
                 SizedBox(width: 7),
                 Text(
-                  '360° bakış · Fare + WASD',
+                  '360° · Fare + WASD/Oklar',
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 12,

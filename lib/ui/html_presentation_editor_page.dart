@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../models/model_tour_runtime.dart';
 import '../models/slide_model.dart';
 import '../routes.dart';
 import '../services/firestore_rest_helper.dart';
@@ -181,6 +182,7 @@ class _HtmlPresentationEditorPageState
   bool _textInputHasFocus = false;
   final Set<LogicalKeyboardKey> _tourMovementKeys = <LogicalKeyboardKey>{};
   Timer? _tourMovementTimer;
+  DateTime? _lastTourMovementTick;
 
   /// Mobil tuvaldeki "boş alanda sürükle" ipucu: ilk açılışta kısa süre
   /// görünür, etkileşimle ya da süre dolunca kaybolur.
@@ -919,20 +921,15 @@ class _HtmlPresentationEditorPageState
       _handleEscapeShortcut();
       return true;
     }
-    final movementKeys = <LogicalKeyboardKey>{
-      LogicalKeyboardKey.keyW,
-      LogicalKeyboardKey.keyA,
-      LogicalKeyboardKey.keyS,
-      LogicalKeyboardKey.keyD,
-    };
+    final movementKey = _tourMovementKeyForEvent(event);
     final selectedModel = widget.controller.selectedComponentBlock;
-    if (movementKeys.contains(key) &&
+    if (movementKey != null &&
         selectedModel?.modelTourEnabled == true &&
         selectedModel?.modelTourFrozen != true) {
       if (event is KeyDownEvent || event is KeyRepeatEvent) {
-        if (_tourMovementKeys.add(key)) _startTourKeyboardMovement();
+        if (_tourMovementKeys.add(movementKey)) _startTourKeyboardMovement();
       } else if (event is KeyUpEvent) {
-        _tourMovementKeys.remove(key);
+        _tourMovementKeys.remove(movementKey);
         if (_tourMovementKeys.isEmpty) _stopTourKeyboardMovement();
       }
       return true;
@@ -953,6 +950,7 @@ class _HtmlPresentationEditorPageState
     if (_tourMovementTimer != null) return;
     _editorFocusNode.requestFocus();
     widget.controller.beginSelectedModelOrbitGesture();
+    _lastTourMovementTick = null;
     _tourMovementTimer = Timer.periodic(
       const Duration(milliseconds: 30),
       (_) => _tickTourKeyboardMovement(),
@@ -979,18 +977,53 @@ class _HtmlPresentationEditorPageState
       forward *= diagonalScale;
       right *= diagonalScale;
     }
+    final now = DateTime.now();
+    final lastTick = _lastTourMovementTick;
+    _lastTourMovementTick = now;
+    final seconds = lastTick == null
+        ? .03
+        : now.difference(lastTick).inMicroseconds.clamp(0, 50000).toDouble() /
+            Duration.microsecondsPerSecond;
+    final movement =
+        ModelTourRuntime.keyboardWalkSpeedMetersPerSecond * seconds;
     widget.controller.moveSelectedModelTour(
-      // Önizlemedeki yürüyüş hızıyla uyumlu, hassas ince ayar adımı.
-      forward: forward * 0.5,
-      right: right * 0.5,
+      forward: forward * movement,
+      right: right * movement,
     );
   }
 
   void _stopTourKeyboardMovement() {
     _tourMovementTimer?.cancel();
     _tourMovementTimer = null;
+    _lastTourMovementTick = null;
     _tourMovementKeys.clear();
     widget.controller.endSelectedModelOrbitGesture();
+  }
+
+  LogicalKeyboardKey? _tourMovementKeyForEvent(KeyEvent event) {
+    final physical = event.physicalKey;
+    final logical = event.logicalKey;
+    if (physical == PhysicalKeyboardKey.keyW ||
+        logical == LogicalKeyboardKey.keyW ||
+        logical == LogicalKeyboardKey.arrowUp) {
+      return LogicalKeyboardKey.keyW;
+    }
+    if (physical == PhysicalKeyboardKey.keyA ||
+        logical == LogicalKeyboardKey.keyA ||
+        logical == LogicalKeyboardKey.arrowLeft) {
+      return LogicalKeyboardKey.keyA;
+    }
+    if (physical == PhysicalKeyboardKey.keyS ||
+        logical == LogicalKeyboardKey.keyS ||
+        logical == LogicalKeyboardKey.arrowDown) {
+      return LogicalKeyboardKey.keyS;
+    }
+    if (physical == PhysicalKeyboardKey.keyD ||
+        logical == LogicalKeyboardKey.keyD ||
+        logical == LogicalKeyboardKey.arrowRight) {
+      return LogicalKeyboardKey.keyD;
+    }
+    return null;
   }
 
   void _handleEscapeShortcut() {

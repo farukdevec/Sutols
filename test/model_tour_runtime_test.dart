@@ -35,4 +35,44 @@ void main() {
     expect(moved.z, bounds.minZ);
     expect(moved.y, bounds.groundY);
   });
+
+  test('ileri ve sağ hareket kameranın baktığı yöne göre döner', () {
+    const origin = ModelTourPose(theta: 0, phi: 82, x: 0, y: 0, z: 0);
+
+    final north = ModelTourRuntime.move(
+      origin,
+      forwardMeters: 4,
+      rightMeters: 0,
+    );
+    expect(north.x, closeTo(0, 0.0001));
+    expect(north.z, closeTo(-4, 0.0001));
+
+    final northRight = ModelTourRuntime.move(
+      origin,
+      forwardMeters: 0,
+      rightMeters: 4,
+    );
+    expect(northRight.x, closeTo(4, 0.0001));
+    expect(northRight.z, closeTo(0, 0.0001));
+
+    final eastFacing = ModelTourRuntime.move(
+      origin.copyWith(theta: 90),
+      forwardMeters: 4,
+      rightMeters: 2,
+    );
+    expect(eastFacing.x, closeTo(-4, 0.0001));
+    expect(eastFacing.z, closeTo(-2, 0.0001));
+
+    final southFacing = ModelTourRuntime.move(
+      origin.copyWith(theta: 180),
+      forwardMeters: 4,
+      rightMeters: 2,
+    );
+    expect(southFacing.x, closeTo(-2, 0.0001));
+    expect(southFacing.z, closeTo(4, 0.0001));
+  });
+
+  test('klavye tur hızı hızlı ve ortak çalışma değerini kullanır', () {
+    expect(ModelTourRuntime.keyboardWalkSpeedMetersPerSecond, 36);
+  });
 }

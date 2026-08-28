@@ -1227,35 +1227,54 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('FPS sanal turda W ve D tuşları modeli sürekli hareket ettirir', (
-    tester,
-  ) async {
-    final controller = await pumpAt(tester, const Size(1440, 900));
-    controller.add3DModelBlock(
-      const Presentation3DModelAsset(
-        id: 'anitkabir',
-        label: 'FPS test model',
-        assetPath: 'https://example.com/fps.glb',
-        category: 'Test',
-        tags: <String>[],
-        byteSize: 0,
-        sha256: '',
-      ),
-    );
-    controller.updateSelectedModelTourEnabled(true);
-    await tester.pump();
+  testWidgets(
+    'FPS sanal turda WASD ve oklar bakış yönünde hızlı hareket eder',
+    (tester) async {
+      final controller = await pumpAt(tester, const Size(1440, 900));
+      controller.add3DModelBlock(
+        const Presentation3DModelAsset(
+          id: 'anitkabir',
+          label: 'FPS test model',
+          assetPath: 'https://example.com/fps.glb',
+          category: 'Test',
+          tags: <String>[],
+          byteSize: 0,
+          sha256: '',
+        ),
+      );
+      controller.updateSelectedModelTourEnabled(true);
+      await tester.pump();
+      expect(controller.selectedComponentBlock!.modelOrbitTheta, 0);
 
-    await tester.sendKeyDownEvent(LogicalKeyboardKey.keyW);
-    await tester.sendKeyDownEvent(LogicalKeyboardKey.keyD);
-    await tester.pump(const Duration(milliseconds: 120));
-    await tester.sendKeyUpEvent(LogicalKeyboardKey.keyW);
-    await tester.sendKeyUpEvent(LogicalKeyboardKey.keyD);
-    await tester.pump();
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.keyW);
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.keyD);
+      for (var frame = 0; frame < 8; frame += 1) {
+        await tester.pump(const Duration(milliseconds: 30));
+      }
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.keyW);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.keyD);
+      await tester.pump();
 
-    final model = controller.selectedComponentBlock!;
-    expect(model.modelTargetX.abs(), greaterThan(0));
-    expect(model.modelTargetZ.abs(), greaterThan(0));
-  });
+      var model = controller.selectedComponentBlock!;
+      expect(model.modelTargetX, greaterThan(1));
+      expect(model.modelTargetZ, lessThan(-1));
+
+      final afterWasdX = model.modelTargetX;
+      final afterWasdZ = model.modelTargetZ;
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.arrowLeft);
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.arrowDown);
+      for (var frame = 0; frame < 8; frame += 1) {
+        await tester.pump(const Duration(milliseconds: 30));
+      }
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.arrowLeft);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.arrowDown);
+      await tester.pump();
+
+      model = controller.selectedComponentBlock!;
+      expect(model.modelTargetX, lessThan(afterWasdX - 1));
+      expect(model.modelTargetZ, greaterThan(afterWasdZ + 1));
+    },
+  );
 
   testWidgets('ESC sanal tur kamerasını editör sahnesine kalıcı yazar', (
     tester,

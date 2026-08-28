@@ -350,7 +350,7 @@ void main() {
     );
     await tester.pump();
 
-    await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+    await tester.sendKeyEvent(LogicalKeyboardKey.pageDown);
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 900));
 
@@ -361,7 +361,7 @@ void main() {
       isNot(initialFirstCamera.modelOrbitTheta),
     );
 
-    await tester.sendKeyEvent(LogicalKeyboardKey.arrowLeft);
+    await tester.sendKeyEvent(LogicalKeyboardKey.pageUp);
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 900));
 
@@ -376,6 +376,56 @@ void main() {
       find.byKey(const ValueKey<String>('tour-camera-interaction')),
       findsOneWidget,
     );
+  });
+
+  testWidgets(
+      'aktif sunum turunda oklar kameraya göre yürür ve sayfayı değiştirmez',
+      (tester) async {
+    tester.view.physicalSize = const Size(1440, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+
+    final controller = PresentationController();
+    addTearDown(controller.dispose);
+    controller.add3DModelBlock(presentation3DModelCatalog.first);
+    controller.updateSelectedModelTourEnabled(true);
+    controller.addPage();
+    controller.selectPage(0);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: PresentationPreviewPage(
+          controller: controller,
+          useFullscreen: false,
+        ),
+      ),
+    );
+    await tester.pump();
+
+    HtmlPageStage currentStage() =>
+        tester.widget<HtmlPageStage>(find.byType(HtmlPageStage));
+
+    final initialZ = currentStage().tourCameraTargetZ!;
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.arrowUp);
+    for (var frame = 0; frame < 10; frame += 1) {
+      await tester.pump(const Duration(milliseconds: 16));
+    }
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.arrowUp);
+    await tester.pump();
+
+    expect(currentStage().page.id, controller.pages.first.id);
+    expect(currentStage().tourCameraTargetZ, lessThan(initialZ - .5));
+
+    final afterForwardX = currentStage().tourCameraTargetX!;
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.arrowRight);
+    for (var frame = 0; frame < 10; frame += 1) {
+      await tester.pump(const Duration(milliseconds: 16));
+    }
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.arrowRight);
+    await tester.pump();
+
+    expect(currentStage().page.id, controller.pages.first.id);
+    expect(currentStage().tourCameraTargetX, greaterThan(afterForwardX + .5));
   });
 
   testWidgets('çoklu modelde sunum aktif tur modelinin kamerasını kullanır',
