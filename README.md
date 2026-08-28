@@ -1,99 +1,121 @@
 # Sutol
 
-Sutol, girilen başlık ve metinlerden düzenlenebilir HTML sunumları üreten, Flutter Web tabanlı bir sunum hazırlama uygulamasıdır. İçeriği cihaz üzerinde analiz eder; uygun arka planları, metin yerleşimlerini ve görsel bileşenleri anahtar kelime ve benzerlik eşleştirmesiyle otomatik olarak seçer.
+![Sutol wordmark](assets/images/sutols_wordmark.webp)
+
+[![Flutter](https://img.shields.io/badge/Flutter-02569B?style=flat&logo=flutter&logoColor=white)](https://flutter.dev/)
+[![Dart](https://img.shields.io/badge/Dart-0175C2?style=flat&logo=dart&logoColor=white)](https://dart.dev/)
+[![Firebase](https://img.shields.io/badge/Firebase-FFCA28?style=flat&logo=firebase&logoColor=black)](https://firebase.google.com/)
+[![Platform](https://img.shields.io/badge/Platform-Flutter%20Web-0F766E?style=flat)](#kurulum)
+
+Sutol, başlık ve metinlerden düzenlenebilir HTML sunumları üreten, Flutter Web tabanlı bir sunum hazırlama uygulamasıdır. İçeriği anahtar kelime ve benzerlik eşleştirmesiyle analiz eder, uygun arka planları ve görsel bileşenleri seçer, ardından sonuçları doğrudan düzenlenebilir bir sunum projesi olarak sunar.
 
 > [!NOTE]
-> Otomatik oluşturma işlemi herhangi bir yapay zekâ servisine veya harici API'ye bağlanmaz. Metin analizi ve yerleşim seçimi tamamen yerel ve deterministik olarak çalışır.
+> Otomatik oluşturma akışı harici bir yapay zekâ servisine bağlanmadan, yerel ve deterministik kurallarla çalışır.
+
+## Canlı Demo
+
+Bu depoya bağlı bir kamuya açık demo bağlantısı henüz eklenmemiştir. Uygulamayı yerelde çalıştırmak için aşağıdaki kurulum adımlarını kullanabilirsiniz. Eğer sonra bir dağıtım yayınlarsanız, buraya demo URL’si eklemek iyi bir fikir olur.
+
+## Önizleme
+
+<p align="center">
+  <img src="test/goldens/editor_800.png" alt="Sutol editor desktop preview" width="820" />
+</p>
+
+<p align="center">
+  <img src="test/goldens/editor_390.png" alt="Sutol editor mobile preview" width="360" />
+</p>
 
 ## İçindekiler
 
-- [Özellikler](#özellikler)
-- [Nasıl çalışır?](#nasıl-çalışır)
-- [Mimari](#mimari)
-- [Proje yapısı](#proje-yapısı)
+- [Öne Çıkanlar](#öne-çıkanlar)
+- [Nasıl Çalışır](#nasıl-çalışır)
+- [Teknoloji](#teknoloji)
+- [Proje Yapısı](#proje-yapısı)
 - [Kurulum](#kurulum)
-- [Test ve doğrulama](#test-ve-doğrulama)
-- [Kullanım notları](#kullanım-notları)
-- [Bilinen sınırlamalar](#bilinen-sınırlamalar)
-- [Yol haritası](#yol-haritası)
-- [Katkıda bulunma](#katkıda-bulunma)
+- [Test ve Doğrulama](#test-ve-doğrulama)
+- [Kullanım Notları](#kullanım-notları)
+- [Bilinen Sınırlamalar](#bilinen-sınırlamalar)
+- [Katkıda Bulunma](#katkıda-bulunma)
+- [İngilizce Sürüm](#ingilizce-sürüm)
 - [Lisans](#lisans)
 
-## Özellikler
+## Öne Çıkanlar
 
-- **Metinden otomatik sunum üretimi:** Her sayfanın başlığı ve gövde metni analiz edilerek uygun sahne hazırlanır.
-- **Akıllı içerik eşleştirme:** Türkçe ve İngilizce anahtar kelimeler ile küçük yazım ve aksan farklarını yakalayabilen fuzzy eşleştirme desteklenir.
-- **Geniş bileşen kataloğu:** Farklı konu kategorilerine ait HTML/CSS tabanlı görsel bileşenler otomatik veya manuel olarak slaytlara eklenebilir.
-- **HTML sahne editörü:** Arka plan, metin, bileşen, akış ve efekt ayarları tek bir çalışma alanından düzenlenebilir.
-- **Geri alma ve yineleme:** Düzenleme işlemleri arayüzden veya klavye kısayollarıyla geri alınabilir ve yinelenebilir.
-- **Sunum akışı:** Öğelere adımlı gösterim (reveal), başka bir sayfaya yönlendiren hotspot ve sunucu notu atanabilir.
-- **Sunum modu:** Tam ekran görüntüleme, klavye ile gezinme, yakınlaştırma ve sunucu notları desteklenir.
-- **Efektler:** Slayt geçişi, geçiş süresi, hareket azaltma ve sahne yakınlaştırma seçenekleri bulunur.
-- **Proje kaydetme ve yükleme:** Çalışmalar Sutol JSON proje dosyası olarak indirilebilir ve daha sonra yeniden açılabilir.
-- **Dışa aktarma:** Sunum tek bir HTML dosyası olarak indirilebilir veya tarayıcının yazdırma akışıyla PDF olarak kaydedilebilir.
+- **Otomatik sunum üretimi:** Başlık ve metin girdilerinden sayfa düzeni, arka plan ve bileşen seçimi yapılır.
+- **Akıllı eşleştirme:** Türkçe ve İngilizce anahtar kelimeler ile benzerlik tabanlı seçim mekanizması kullanılır.
+- **Düzenlenebilir HTML çıktı:** Üretilen sunumlar HTML tabanlıdır ve editörde ayrıntılı biçimde özelleştirilebilir.
+- **Geniş bileşen kataloğu:** Konuya göre farklı arka planlar, görseller ve sahne bileşenleri kullanılabilir.
+- **Sunum editörü:** Sayfa düzeni, efektler, reveal adımları, hotspot’lar ve sunucu notları tek bir arayüzden yönetilir.
+- **Sunum modu:** Tam ekran gösterim, klavye gezinmesi ve yakınlaştırma desteklenir.
+- **Proje kaydı ve geri yükleme:** Çalışmalar Sutol JSON proje dosyası olarak dışa aktarılabilir ve yeniden açılabilir.
+- **Dışa aktarma:** Sunumlar tek HTML dosyası olarak indirilebilir veya tarayıcı üzerinden PDF olarak kaydedilebilir.
 
-## Nasıl çalışır?
+## Nasıl Çalışır
 
 1. Ana ekrandan **Sunum Oluştur** seçilir.
 2. Her slayt için başlık ve metin girilir; gerekirse yeni sayfalar eklenir.
-3. **Sunumu Oluştur** seçildiğinde boş sayfalar atlanır ve içerik analiz edilir.
-4. Uygulama her sayfa için arka planı, metin düzenini ve uygun görsel bileşenleri belirler.
-5. Oluşturulan sunum editörde özelleştirilir, önizlenir ve istenen formatta dışa aktarılır.
+3. **Sunumu Oluştur** komutu ile boş sayfalar atlanır ve içerik analiz edilir.
+4. Uygulama her sayfa için uygun arka planı, yerleşimi ve görsel bileşenleri belirler.
+5. Oluşturulan sunum editörde düzenlenir, önizlenir ve istenen formatta dışa aktarılır.
 
 Basitleştirilmiş veri akışı:
 
 ```text
-Başlık + metin
+Başlık + Metin
       │
       ▼
 PresentationAutoBuilder
-  ├─ anahtar kelime ve fuzzy eşleştirme
+  ├─ anahtar kelime ve benzerlik analizi
   ├─ arka plan seçimi
   └─ bileşen ve yerleşim seçimi
       │
       ▼
-PresentationPage / SlideModel
+SlideModel
       │
       ▼
 HtmlPresentationEditorPage
   ├─ PresentationPreviewPage       → sunum modu
-  ├─ PresentationExportBuilder     → bağımsız HTML / PDF yazdırma
+  ├─ PresentationExportBuilder     → HTML / PDF dışa aktarma
   └─ PresentationProjectCodec      → Sutol JSON proje dosyası
 ```
 
-## Mimari
+## Teknoloji
 
-Sutol, arayüz, durum yönetimi, veri modelleri ve platforma özel servisleri birbirinden ayıran sade bir yapıya sahiptir:
+- **Flutter Web**
+- **Dart**
+- **Firebase**
+  - Authentication
+  - Firestore
+  - Firebase AI
+- **Yerel servisler**
+  - proje kaydı ve yükleme
+  - içerik eşleştirme
+  - HTML dışa aktarma
+  - tam ekran ve paylaşım akışları
 
-- `models`: Slayt, metin bloğu, efekt ve bileşen kataloğu modelleri.
-- `services`: Otomatik oluşturma, eşleştirme, HTML export ve proje dosyası işlemleri.
-- `state`: Sayfa seçimi, düzenleme geçmişi ve sunum durumunun yönetimi.
-- `ui`: Metin girişi, editör, sahne ve sunum modu ekranları.
-
-Web'e özel indirme, dosya seçme ve tam ekran işlemleri koşullu Dart export'larıyla ayrılmıştır. Böylece web API'leri desteklenmeyen hedeflerde doğrudan derleme bağımlılığı oluşturmaz.
-
-## Proje yapısı
+## Proje Yapısı
 
 ```text
 lib/
 ├── main.dart
 ├── models/
 │   ├── presentation_component_catalog.dart
+│   ├── presentation_template_catalog.dart
 │   └── slide_model.dart
 ├── services/
 │   ├── presentation_auto_builder.dart
 │   ├── presentation_export_builder.dart
-│   ├── presentation_export_service*.dart
-│   ├── presentation_fullscreen_service*.dart
 │   ├── presentation_keyword_catalog.dart
 │   ├── presentation_project_codec.dart
-│   └── presentation_project_io*.dart
+│   └── presentation_service.dart
 ├── state/
 │   └── presentation_controller.dart
 └── ui/
     ├── home_page.dart
-    ├── presentation_text_draft_page.dart
+    ├── ai_draft_page.dart
     ├── html_presentation_editor_page.dart
+    ├── presentation_editor_page.dart
     ├── presentation_preview_page.dart
     └── widgets/
         └── html_stage/
@@ -102,26 +124,18 @@ test/
 ├── presentation_controller_test.dart
 └── presentation_project_codec_test.dart
 tool/
-└── bileşen kataloğu üretim ve kontrol araçları
+└── içerik üretimi, kategorileme ve doğrulama araçları
 web/
 └── Flutter Web başlangıç dosyaları
 ```
-
-`gitsunum/` dizinindeki Shower ve reveal.js kaynakları ana Flutter uygulamasından bağımsız, üçüncü taraf sunum projeleridir. Bu dizinler kendi lisans ve geliştirme kurallarına tabi olabilir.
 
 ## Kurulum
 
 ### Gereksinimler
 
-- Flutter SDK (Dart `>=3.5.0 <4.0.0` desteği olan bir sürüm)
-- Chrome veya güncel, Chromium tabanlı bir tarayıcı
-- İsteğe bağlı: üretim build'ini yerelde sunmak için Python 3
-
-Flutter kurulumunuzu kontrol edin:
-
-```bash
-flutter doctor
-```
+- Flutter SDK `>=3.5.0 <4.0.0`
+- Chrome veya güncel bir Chromium tabanlı tarayıcı
+- İsteğe bağlı: üretim build’ini yerelde sunmak için Python 3
 
 Bağımlılıkları yükleyin:
 
@@ -129,19 +143,19 @@ Bağımlılıkları yükleyin:
 flutter pub get
 ```
 
-Uygulamayı Chrome'da çalıştırın:
+Uygulamayı geliştirme modunda çalıştırın:
 
 ```bash
 flutter run -d chrome
 ```
 
-### Üretim build'i
+Üretim web build’i oluşturun:
 
 ```bash
 flutter build web
 ```
 
-Oluşan build'i yerelde sunmak için:
+Build çıktısını yerelde sunmak isterseniz:
 
 ```bash
 python3 -m http.server 8080 --directory build/web
@@ -149,7 +163,7 @@ python3 -m http.server 8080 --directory build/web
 
 Ardından `http://localhost:8080` adresini açın.
 
-## Test ve doğrulama
+## Test ve Doğrulama
 
 Kod biçimini kontrol edin:
 
@@ -169,7 +183,7 @@ Birim testlerini çalıştırın:
 flutter test
 ```
 
-Web build'ini doğrulayın:
+Web build’ini doğrulayın:
 
 ```bash
 flutter build web
@@ -177,16 +191,16 @@ flutter build web
 
 Önerilen manuel kontroller:
 
-- Türkçe, İngilizce ve küçük yazım hataları içeren metinlerin uygun arka plan ve bileşenlerle eşleştiğini doğrulayın.
-- Tamamen boş girişte editöre geçilmediğini ve kullanıcıya uyarı gösterildiğini kontrol edin.
-- Metin ve bileşenlerin taşınabildiğini, boyutlandırılabildiğini ve silinebildiğini doğrulayın.
-- Geri alma/yineleme, reveal, hotspot, sunucu notu ve efekt ayarlarını sınayın.
+- Türkçe, İngilizce ve yazım hatası içeren metinlerde uygun arka plan ve bileşen eşleşmesini doğrulayın.
+- Boş girişte editöre geçiş yapılmadığını ve uyarı gösterildiğini kontrol edin.
+- Metin ve bileşenlerin taşınabildiğini, yeniden boyutlandırılabildiğini ve silinebildiğini test edin.
+- Geri alma/yineleme, reveal, hotspot, sunucu notu ve efekt ayarlarını deneyin.
 - Sutol JSON dosyasını kaydedip yeniden yükleyin.
-- HTML export'u farklı bir sekmede açın; PDF seçeneğinin yazdırma penceresini açtığını kontrol edin.
+- HTML dışa aktarmayı yeni sekmede açın; PDF seçeneğinin yazdırma akışını başlattığını doğrulayın.
 
-## Kullanım notları
+## Kullanım Notları
 
-Sunum modundaki temel klavye kontrolleri:
+Sunum modundaki temel klavye kısayolları:
 
 | Tuş | İşlev |
 |---|---|
@@ -199,34 +213,27 @@ Sunum modundaki temel klavye kontrolleri:
 
 Editörde geri alma için `Ctrl/Cmd + Z`; yineleme için `Ctrl + Y` veya `Cmd + Shift + Z` kullanılabilir.
 
-## Bilinen sınırlamalar
+## Bilinen Sınırlamalar
 
-- İçerik analizi anahtar kelime ve benzerlik tabanlıdır; bağlamsal bir yapay zekâ modeli kullanmaz.
-- Fuzzy eşleştirme, yanlış pozitifleri azaltmak amacıyla kısa kelimelerde bilinçli olarak daha katıdır.
-- PDF dışa aktarma, tarayıcının **Yazdır / PDF olarak kaydet** özelliğini kullanır; uygulamanın kendi PDF motoru yoktur.
-- Proje dosyası kaydetme/yükleme ve dışa aktarma akışları öncelikli olarak web hedefi için geliştirilmiştir.
-- MP4 veya video dışa aktarma henüz desteklenmez.
+- İçerik analizi anahtar kelime ve benzerlik tabanlıdır; bağlamsal bir model kullanmaz.
+- Fuzzy eşleştirme, kısa kelimelerde yanlış pozitifleri azaltmak için daha katı davranabilir.
+- PDF dışa aktarma, tarayıcının yazdırma akışını kullanır.
+- Proje kaydetme, yükleme ve dışa aktarma akışları öncelikle web hedefi için tasarlanmıştır.
+- MP4 veya doğrudan video dışa aktarma şu anda desteklenmez.
 
-## Yol haritası
+## Katkıda Bulunma
 
-- [ ] MP4/video dışa aktarma için capture veya render hattı
-- [ ] Daha geniş eş anlamlı ve alan terimi havuzu
-- [ ] Mobil ve masaüstü için yerel dosya işlemleri
-- [ ] Bulut tabanlı kaydetme ve eşitleme
-- [ ] Görsel regresyon testleri
-- [ ] Daha kapsamlı erişilebilirlik kontrolleri
-
-## Katkıda bulunma
-
-Bir değişiklik göndermeden önce:
+Değişiklik göndermeden önce:
 
 1. `dart format --output=none --set-exit-if-changed lib test` komutunu çalıştırın.
-2. `flutter analyze` ve `flutter test` sonuçlarının temiz olduğundan emin olun.
-3. Yeni davranışlar için ilgili testleri ekleyin veya güncelleyin.
-4. Commit mesajını değişikliğin amacını açıklayacak biçimde yazın.
+2. `flutter analyze` ve `flutter test` çıktılarının temiz olduğundan emin olun.
+3. Yeni davranışlar için gerekli testleri ekleyin veya güncelleyin.
+4. Commit mesajını değişikliğin amacını açıkça anlatacak şekilde yazın.
+
+## İngilizce Sürüm
+
+İngilizce README sürümü için [README.en.md](README.en.md) dosyasına bakın.
 
 ## Lisans
 
-Bu depo için henüz bir kök lisans dosyası belirtilmemiştir. Kaynak kodu kullanmadan veya dağıtmadan önce proje sahibinden izin alın. `gitsunum/` altındaki üçüncü taraf projelerin lisansları ayrıca geçerlidir.
-#   s u t o l s  
- 
+Bu depo için henüz bir kök lisans dosyası belirtilmemiştir. Kaynak kodu kullanmadan veya dağıtmadan önce proje sahibinden izin alın. `sutol-model-proxy/` altındaki yardımcı projenin lisans ve kullanım koşulları ayrıca geçerlidir.
