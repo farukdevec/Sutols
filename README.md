@@ -19,11 +19,11 @@ Bu depoya bağlı bir kamuya açık demo bağlantısı henüz eklenmemiştir. Uy
 ## Önizleme
 
 <p align="center">
-  <img src="test/goldens/editor_800.png" alt="Sutol editor desktop preview" width="820" />
+  <img src="assets/readme/preview-desktop.png" alt="Sutol editor desktop preview" width="1200" />
 </p>
 
 <p align="center">
-  <img src="test/goldens/editor_390.png" alt="Sutol editor mobile preview" width="360" />
+  <img src="assets/readme/preview-mobile.png" alt="Sutol editor mobile preview" width="520" />
 </p>
 
 ## İçindekiler
