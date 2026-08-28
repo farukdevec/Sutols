@@ -553,8 +553,19 @@ class PresentationController extends ChangeNotifier {
   }
 
   void updateSelectedTextBold(bool value) {
+    updateSelectedFontWeight(value ? 700 : 400);
+  }
+
+  void updateSelectedFontWeight(int value) {
+    final normalized = ((value.clamp(100, 900).toInt() / 100).round() * 100)
+        .clamp(100, 900)
+        .toInt();
     _replaceSelectedTextBlock(
-      selectedTextBlock?.copyWith(textBold: value),
+      selectedTextBlock?.copyWith(
+        fontWeight: normalized,
+        // Eski istemciler yeni alanı okumasa bile temel kalınlık kaybolmasın.
+        textBold: normalized >= 700,
+      ),
     );
   }
 

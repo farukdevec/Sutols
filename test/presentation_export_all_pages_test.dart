@@ -96,4 +96,29 @@ void main() {
     expect(document, contains('object-fit: cover;'));
     expect(document, isNot(contains('object-fit: contain;')));
   });
+
+  test('HTML çıktısı seçilen yazı ağırlığını korur', () {
+    final document = buildPresentationExportHtml(
+      pages: const <PresentationPage>[
+        PresentationPage(
+          id: 'weighted-text-page',
+          textBlocks: <PresentationTextBlock>[
+            PresentationTextBlock(
+              id: 'weighted-text',
+              text: 'İnce metin',
+              position: Offset(.1, .1),
+              fontSize: 42,
+              type: PresentationTextType.body,
+              widthFactor: .5,
+              fontWeight: 200,
+            ),
+          ],
+        ),
+      ],
+    );
+
+    expect(document, contains('font-weight:200;'));
+    expect(document, contains("font-variation-settings:'wght' 200;"));
+    expect(document, contains('İnce metin'));
+  });
 }

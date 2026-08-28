@@ -488,6 +488,7 @@ class PresentationTextBlock {
     this.glowIntensity = 1,
     this.revealStep = 0,
     this.hotspotTargetPageId,
+    this.fontWeight,
     this.textBold = false,
     this.textItalic = false,
     this.textUnderline = false,
@@ -515,10 +516,28 @@ class PresentationTextBlock {
   final double glowIntensity;
   final int revealStep;
   final String? hotspotTargetPageId;
+
+  /// Kullanıcının seçtiği açık yazı ağırlığı (100–900).
+  ///
+  /// `null`, eski projelerdeki metin türü/font hazır ayarı ağırlığını korur.
+  /// [textBold] yalnızca eski proje dosyalarıyla geriye uyumluluk içindir.
+  final int? fontWeight;
   final bool textBold;
   final bool textItalic;
   final bool textUnderline;
   final PresentationTextAlign textAlign;
+
+  int get effectiveFontWeight {
+    if (fontWeight case final explicitWeight?) {
+      return explicitWeight.clamp(100, 900).toInt();
+    }
+    if (textBold) return 700;
+    return switch (type) {
+      PresentationTextType.title => 800,
+      PresentationTextType.subtitle => 700,
+      PresentationTextType.body => 600,
+    };
+  }
 
   PresentationTextBlock copyWith({
     String? id,
@@ -542,6 +561,7 @@ class PresentationTextBlock {
     double? glowIntensity,
     int? revealStep,
     Object? hotspotTargetPageId = _copySentinel,
+    Object? fontWeight = _copySentinel,
     bool? textBold,
     bool? textItalic,
     bool? textUnderline,
@@ -575,6 +595,9 @@ class PresentationTextBlock {
       hotspotTargetPageId: identical(hotspotTargetPageId, _copySentinel)
           ? this.hotspotTargetPageId
           : hotspotTargetPageId as String?,
+      fontWeight: identical(fontWeight, _copySentinel)
+          ? this.fontWeight
+          : fontWeight as int?,
       textBold: textBold ?? this.textBold,
       textItalic: textItalic ?? this.textItalic,
       textUnderline: textUnderline ?? this.textUnderline,

@@ -240,6 +240,7 @@ class PresentationProjectCodec {
       'glowIntensity': block.glowIntensity,
       'revealStep': block.revealStep,
       'hotspotTargetPageId': block.hotspotTargetPageId,
+      'fontWeight': block.fontWeight,
       'textBold': block.textBold,
       'textItalic': block.textItalic,
       'textUnderline': block.textUnderline,
@@ -300,6 +301,7 @@ class PresentationProjectCodec {
       hotspotTargetPageId: json['hotspotTargetPageId'] is String
           ? json['hotspotTargetPageId']! as String
           : null,
+      fontWeight: _fontWeight(json['fontWeight']),
       textBold: json['textBold'] is bool ? json['textBold']! as bool : false,
       textItalic:
           json['textItalic'] is bool ? json['textItalic']! as bool : false,
@@ -604,6 +606,13 @@ class PresentationProjectCodec {
       return value.round();
     }
     return fallback;
+  }
+
+  static int? _fontWeight(Object? value) {
+    if (value is! num) return null;
+    return ((value.clamp(100, 900).toDouble() / 100).round() * 100)
+        .clamp(100, 900)
+        .toInt();
   }
 
   static double _double(Object? value, double fallback) {

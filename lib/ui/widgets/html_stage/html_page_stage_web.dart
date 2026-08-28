@@ -1911,6 +1911,7 @@ class _HtmlPageStageState extends State<HtmlPageStage> {
               'entranceAnimationClass':
                   _entranceAnimationDomClass(block.entranceAnimation),
               'textColor': block.textColorHex,
+              'fontWeight': block.fontWeight,
               'textBold': block.textBold,
               'textItalic': block.textItalic,
               'textUnderline': block.textUnderline,

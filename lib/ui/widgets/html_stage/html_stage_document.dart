@@ -783,8 +783,14 @@ String _escape(String value) =>
 
 String _textFormatStyles(PresentationTextBlock block) {
   final buffer = StringBuffer();
-  if (block.textBold) {
-    buffer.write('font-weight:700;');
+  if (block.fontWeight case final fontWeight?) {
+    buffer
+      ..write('font-weight:$fontWeight;')
+      ..write("font-variation-settings:'wght' $fontWeight;");
+  } else if (block.textBold) {
+    buffer
+      ..write('font-weight:700;')
+      ..write("font-variation-settings:'wght' 700;");
   }
   if (block.textItalic) {
     buffer.write('font-style:italic;');
@@ -3940,8 +3946,12 @@ const String _stagePatchScript = r'''
         }
       }
     }
-    if (item.textBold !== undefined) {
+    if (item.fontWeight !== undefined && item.fontWeight !== null) {
+      element.style.fontWeight = String(item.fontWeight);
+      element.style.fontVariationSettings = "'wght' " + item.fontWeight;
+    } else if (item.textBold !== undefined) {
       element.style.fontWeight = item.textBold ? '700' : '';
+      element.style.fontVariationSettings = item.textBold ? "'wght' 700" : '';
     }
     if (item.textItalic !== undefined) {
       element.style.fontStyle = item.textItalic ? 'italic' : '';

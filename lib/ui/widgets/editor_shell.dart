@@ -2124,7 +2124,9 @@ class _PresentationPageCanvasState extends State<PresentationPageCanvas> {
       text: TextSpan(
         text: displayText,
         style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-              fontWeight: _fontWeightForType(block.type),
+              fontWeight: _fontWeightFromValue(block.effectiveFontWeight),
+              fontVariations:
+                  _fontVariationsFromValue(block.effectiveFontWeight),
               fontSize: adjustedFontSize,
               height: _lineHeightForType(block.type),
               letterSpacing: _letterSpacingForType(block.type),
@@ -2556,7 +2558,8 @@ class _PageTextBlock extends StatelessWidget {
     final displayStyle = Theme.of(context).textTheme.headlineSmall?.copyWith(
           color: textColor,
           fontFamily: resolvedFontFamily,
-          fontWeight: _fontWeightForType(block.type),
+          fontWeight: _fontWeightFromValue(block.effectiveFontWeight),
+          fontVariations: _fontVariationsFromValue(block.effectiveFontWeight),
           fontSize: adjustedFontSize,
           height: _lineHeightForType(block.type),
           letterSpacing: _letterSpacingForType(block.type),
@@ -2564,7 +2567,8 @@ class _PageTextBlock extends StatelessWidget {
     final editingStyle = Theme.of(context).textTheme.headlineSmall?.copyWith(
           color: resolvedTextColor,
           fontFamily: resolvedFontFamily,
-          fontWeight: _fontWeightForType(block.type),
+          fontWeight: _fontWeightFromValue(block.effectiveFontWeight),
+          fontVariations: _fontVariationsFromValue(block.effectiveFontWeight),
           fontSize: adjustedFontSize,
           height: _lineHeightForType(block.type),
           letterSpacing: _letterSpacingForType(block.type),
@@ -3550,16 +3554,16 @@ String _textStyleLabel(PresentationTextStyle style) {
   }
 }
 
-FontWeight _fontWeightForType(PresentationTextType type) {
-  switch (type) {
-    case PresentationTextType.title:
-      return FontWeight.w800;
-    case PresentationTextType.subtitle:
-      return FontWeight.w700;
-    case PresentationTextType.body:
-      return FontWeight.w600;
-  }
+FontWeight _fontWeightFromValue(int value) {
+  final normalized = ((value.clamp(100, 900).toInt() / 100).round() * 100)
+      .clamp(100, 900)
+      .toInt();
+  return FontWeight.values[(normalized ~/ 100) - 1];
 }
+
+List<FontVariation> _fontVariationsFromValue(int value) => <FontVariation>[
+      FontVariation('wght', value.clamp(100, 900).toDouble()),
+    ];
 
 double _fontSizeForType(PresentationTextType type, double fontSize) {
   switch (type) {

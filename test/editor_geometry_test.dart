@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:sutol/models/slide_model.dart';
 import 'package:sutol/state/presentation_controller.dart';
 import 'package:sutol/ui/html_presentation_editor_page.dart';
 import 'package:sutol/ui/widgets/editor_shell.dart';
@@ -187,6 +186,23 @@ void main() {
     );
     expect(controller.controller.selectedTextBlock!.text, 'Yeni başlık');
 
+    final weightControl = find.byKey(
+      const ValueKey<String>('selected-text-weight-control'),
+    );
+    expect(weightControl, findsOneWidget);
+    await tester.ensureVisible(weightControl);
+    await tester.tap(weightControl);
+    await tester.pumpAndSettle();
+    final thinWeightOption = find.byKey(
+      const ValueKey<String>('text-weight-300'),
+    );
+    expect(thinWeightOption, findsOneWidget);
+    await tester.tap(thinWeightOption);
+    await tester.pumpAndSettle();
+    expect(controller.controller.selectedTextBlock!.fontWeight, 300);
+    expect(controller.controller.selectedTextBlock!.textBold, isFalse);
+    expect(thinWeightOption, findsNothing, reason: 'açılır menü kapanmalı');
+
     final colorControl = find.byKey(
       const ValueKey<String>('selected-text-color-control'),
     );
@@ -201,6 +217,13 @@ void main() {
     await tester.tap(blueOption);
     await tester.pumpAndSettle();
     expect(controller.controller.selectedTextBlock!.textColorHex, '#3B82F6');
+    await tester.tap(
+      find.descendant(
+        of: find.byType(Dialog),
+        matching: find.byIcon(Icons.close_rounded),
+      ),
+    );
+    await tester.pumpAndSettle();
 
     final glowControl = find.byKey(
       const ValueKey<String>('selected-text-glow-control'),

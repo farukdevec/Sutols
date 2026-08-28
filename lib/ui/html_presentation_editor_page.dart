@@ -443,7 +443,8 @@ class _HtmlPresentationEditorPageState
               '|${text.type.index}|${text.widthFactor}|${text.heightFactor}|${text.textStyle.index}')
           ..write('|${text.textAnimation.index}|${text.textColorHex}')
           ..write('|${text.glowIntensity}|${text.revealStep}')
-          ..write('|${text.hotspotTargetPageId}|${text.textBold}')
+          ..write(
+              '|${text.hotspotTargetPageId}|${text.fontWeight}|${text.textBold}')
           ..write(
               '|${text.textItalic}|${text.textUnderline}|${text.textAlign.index}');
       }
@@ -10279,11 +10280,11 @@ class _SelectionContextBarSection extends StatelessWidget {
             : null,
       ),
       const MiniToolDivider(),
-      MiniToolToggle(
-        icon: Icons.format_bold_rounded,
-        tooltip: tr('Kalın', 'Bold'),
-        active: block.textBold,
-        onTap: () => controller.updateSelectedTextBold(!block.textBold),
+      _TextWeightPopupButton(
+        key: const ValueKey<String>('selected-text-weight-control'),
+        controller: controller,
+        current: block.effectiveFontWeight,
+        compact: compact,
       ),
       MiniToolToggle(
         icon: Icons.format_italic_rounded,
@@ -10898,6 +10899,111 @@ class _SelectedTextToolbarField extends StatelessWidget {
             borderRadius: BorderRadius.circular(12),
             borderSide: BorderSide(color: context._htmlAccent, width: 1.5),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _TextWeightPopupButton extends StatelessWidget {
+  const _TextWeightPopupButton({
+    super.key,
+    required this.controller,
+    required this.current,
+    required this.compact,
+  });
+
+  static Map<int, String> get _options => <int, String>{
+        100: tr('Çok İnce', 'Thin'),
+        200: tr('Ekstra İnce', 'Extra Light'),
+        300: tr('İnce', 'Light'),
+        400: tr('Normal', 'Regular'),
+        500: tr('Orta', 'Medium'),
+        600: tr('Yarı Kalın', 'Semi Bold'),
+        700: tr('Kalın', 'Bold'),
+        800: tr('Ekstra Kalın', 'Extra Bold'),
+        900: tr('Çok Kalın', 'Black'),
+      };
+
+  final PresentationController controller;
+  final int current;
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context) {
+    final normalized = ((current.clamp(100, 900).toInt() / 100).round() * 100)
+        .clamp(100, 900)
+        .toInt();
+    final selectedWeight = FontWeight.values[(normalized ~/ 100) - 1];
+    return PopupMenuButton<int>(
+      tooltip: tr('Yazı inceliği ve kalınlığı', 'Font weight'),
+      initialValue: normalized,
+      position: PopupMenuPosition.under,
+      constraints: const BoxConstraints(minWidth: 210, maxWidth: 240),
+      onSelected: controller.updateSelectedFontWeight,
+      itemBuilder: (context) => <PopupMenuEntry<int>>[
+        for (final option in _options.entries)
+          CheckedPopupMenuItem<int>(
+            key: ValueKey<String>('text-weight-${option.key}'),
+            value: option.key,
+            checked: option.key == normalized,
+            child: Row(
+              children: <Widget>[
+                SizedBox(
+                  width: 42,
+                  child: Text(
+                    '${option.key}',
+                    style: TextStyle(
+                      color: context._htmlInk,
+                      fontWeight: FontWeight.values[(option.key ~/ 100) - 1],
+                    ),
+                  ),
+                ),
+                Flexible(
+                  child: Text(
+                    option.value,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+          ),
+      ],
+      child: Container(
+        height: 34,
+        padding: EdgeInsets.symmetric(horizontal: compact ? 8 : 10),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: context.sutolColors.outline),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            Text(
+              'Aa',
+              style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                    color: context._htmlInk,
+                    fontWeight: selectedWeight,
+                  ),
+            ),
+            const SizedBox(width: 5),
+            Text(
+              '$normalized',
+              style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                    color: context._htmlInk,
+                    fontWeight: FontWeight.w700,
+                  ),
+            ),
+            if (!compact) ...<Widget>[
+              const SizedBox(width: 2),
+              Icon(
+                Icons.arrow_drop_down_rounded,
+                size: 17,
+                color: context.sutolColors.onSurfaceVariant,
+              ),
+            ],
+          ],
         ),
       ),
     );

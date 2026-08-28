@@ -84,6 +84,7 @@ void main() {
             glowIntensity: 1.6,
             revealStep: 1,
             hotspotTargetPageId: 'page-5',
+            fontWeight: 900,
             textBold: true,
             textItalic: true,
             textUnderline: true,
@@ -179,6 +180,8 @@ void main() {
     expect(project.pages.single.textBlocks.single.textColorHex, '#A855F7');
     expect(project.pages.single.textBlocks.single.glowIntensity, 1.6);
     expect(project.pages.single.textBlocks.single.heightFactor, 0.22);
+    expect(project.pages.single.textBlocks.single.fontWeight, 900);
+    expect(project.pages.single.textBlocks.single.effectiveFontWeight, 900);
     expect(project.pages.single.textBlocks.single.textBold, isTrue);
     expect(project.pages.single.textBlocks.single.textItalic, isTrue);
     expect(project.pages.single.textBlocks.single.textUnderline, isTrue);
@@ -312,6 +315,8 @@ void main() {
     );
     expect(project.pages.single.textBlocks.single.textColorHex, isNull);
     expect(project.pages.single.textBlocks.single.heightFactor, isNull);
+    expect(project.pages.single.textBlocks.single.fontWeight, isNull);
+    expect(project.pages.single.textBlocks.single.effectiveFontWeight, 600);
     expect(project.pages.single.textBlocks.single.textBold, isFalse);
     expect(project.pages.single.textBlocks.single.textItalic, isFalse);
     expect(project.pages.single.textBlocks.single.textUnderline, isFalse);
@@ -323,6 +328,37 @@ void main() {
     expect(legacyModel.modelAnimationEnabled, isTrue);
     expect(legacyModel.modelAutoRotate, isFalse);
     expect(legacyModel.modelOrbitEnabled, isFalse);
+  });
+
+  test('legacy kalın metni yeni ağırlık sistemiyle 700 olarak gösterir', () {
+    final project = PresentationProjectCodec.decodeProject('''
+{
+  "format": "sutol-project",
+  "version": 1,
+  "pages": [
+    {
+      "id": "legacy-bold-page",
+      "textBlocks": [
+        {
+          "id": "legacy-bold-text",
+          "text": "Kalın",
+          "position": {"x": 0.1, "y": 0.1},
+          "fontSize": 42,
+          "type": "body",
+          "widthFactor": 0.4,
+          "textBold": true
+        }
+      ],
+      "componentBlocks": []
+    }
+  ]
+}
+''');
+
+    final text = project.pages.single.textBlocks.single;
+    expect(text.fontWeight, isNull);
+    expect(text.textBold, isTrue);
+    expect(text.effectiveFontWeight, 700);
   });
 
   test('migrates a legacy background to the new topic library', () {

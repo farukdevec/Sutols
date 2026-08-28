@@ -751,6 +751,9 @@ void main() {
       controller.selectedTextBlock?.textStyle,
       PresentationTextStyle.klasikGreatVibes,
     );
+    controller.updateSelectedFontWeight(300);
+    await tester.pump();
+    expect(controller.selectedTextBlock?.fontWeight, 300);
 
     final editorCanvas = find.byKey(
       const ValueKey<String>('editor-page-canvas-page-1'),
@@ -763,6 +766,12 @@ void main() {
     expect(
       tester.widget<Text>(renderedText).style?.fontFamily,
       'Great Vibes',
+    );
+    expect(
+        tester.widget<Text>(renderedText).style?.fontWeight, FontWeight.w300);
+    expect(
+      tester.widget<Text>(renderedText).style?.fontVariations?.single.value,
+      300,
     );
 
     final renderedTextCenter = tester.getCenter(renderedText);
@@ -778,6 +787,19 @@ void main() {
     expect(
       tester.widget<TextField>(inlineEditor).style?.fontFamily,
       'Great Vibes',
+    );
+    expect(
+      tester.widget<TextField>(inlineEditor).style?.fontWeight,
+      FontWeight.w300,
+    );
+    expect(
+      tester
+          .widget<TextField>(inlineEditor)
+          .style
+          ?.fontVariations
+          ?.single
+          .value,
+      300,
     );
 
     controller.updateSelectedTextStyle(PresentationTextStyle.googleRobotoMono);
@@ -801,7 +823,50 @@ void main() {
       <String?>{'Roboto Mono'},
       reason: 'Responsive mobil editör aynı seçili fontu korumalı',
     );
+    expect(
+      tester
+          .widgetList<Text>(mobileRenderedText)
+          .map((widget) => widget.style?.fontWeight)
+          .toSet(),
+      <FontWeight?>{FontWeight.w300},
+      reason: 'Responsive mobil editör aynı yazı ağırlığını korumalı',
+    );
     await tester.pump(const Duration(milliseconds: 100));
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('seçilen yazı ağırlığı sunum modunda ve mobilde korunur', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1400, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final controller = PresentationController();
+    addTearDown(controller.dispose);
+    controller.updateSelectedText('Sunum ağırlık önizlemesi');
+    controller.updateSelectedFontWeight(900);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: PresentationPreviewPage(
+          controller: controller,
+          useFullscreen: false,
+        ),
+      ),
+    );
+    await tester.pump();
+
+    Text previewText() => tester.widget<Text>(
+          find.text('Sunum ağırlık önizlemesi'),
+        );
+
+    expect(previewText().style?.fontWeight, FontWeight.w900);
+    expect(previewText().style?.fontVariations?.single.value, 900);
+
+    tester.view.physicalSize = const Size(390, 844);
+    await tester.pump();
+    expect(previewText().style?.fontWeight, FontWeight.w900);
+    expect(previewText().style?.fontVariations?.single.value, 900);
     expect(tester.takeException(), isNull);
   });
 
