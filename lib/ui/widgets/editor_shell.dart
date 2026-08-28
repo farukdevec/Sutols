@@ -2610,6 +2610,8 @@ class _PageTextBlock extends StatelessWidget {
                 ? PresentationTextEffect.none
                 : block.textEffect,
             color: resolvedTextColor,
+            text: displayText,
+            style: displayStyle!,
             child: blockChild,
           );
     final textPainter = TextPainter(
@@ -2706,11 +2708,15 @@ class _PresentationTextEffectLayer extends StatefulWidget {
   const _PresentationTextEffectLayer({
     required this.effect,
     required this.color,
+    required this.text,
+    required this.style,
     required this.child,
   });
 
   final PresentationTextEffect effect;
   final Color color;
+  final String text;
+  final TextStyle style;
   final Widget child;
 
   @override
@@ -2774,22 +2780,7 @@ class _PresentationTextEffectLayerState
               (math.sin((progress * math.pi * 2) - (math.pi / 2)) + 1) / 2;
           return switch (widget.effect) {
             PresentationTextEffect.none => child!,
-            PresentationTextEffect.shimmer => ShaderMask(
-                blendMode: BlendMode.srcIn,
-                shaderCallback: (bounds) => LinearGradient(
-                  begin: Alignment(-3 + (progress * 4), 0),
-                  end: Alignment(-1 + (progress * 4), 0),
-                  colors: <Color>[
-                    widget.color,
-                    widget.color,
-                    Colors.white,
-                    widget.color,
-                    widget.color,
-                  ],
-                  stops: const <double>[0, .36, .5, .64, 1],
-                ).createShader(bounds),
-                child: child,
-              ),
+            PresentationTextEffect.shimmer => _buildLetterShimmer(progress),
             PresentationTextEffect.blink => Opacity(
                 opacity: .48 + (.52 * pulse),
                 child: child,
@@ -2815,6 +2806,52 @@ class _PresentationTextEffectLayerState
           };
         },
       ),
+    );
+  }
+
+  Widget _buildLetterShimmer(double progress) {
+    final runes = widget.text.runes.toList(growable: false);
+    final letterCount = runes.where((rune) {
+      return String.fromCharCode(rune).trim().isNotEmpty;
+    }).length;
+    final wavePosition = (progress * (letterCount + 4)) - 2;
+    var letterIndex = 0;
+    final spans = <InlineSpan>[];
+    for (final rune in runes) {
+      final character = String.fromCharCode(rune);
+      if (character.trim().isEmpty) {
+        spans.add(TextSpan(text: character));
+        continue;
+      }
+      final distance = (letterIndex - wavePosition).abs();
+      final intensity = math.exp(-math.pow(distance / .62, 2)).toDouble();
+      final glowColor = Color.lerp(widget.color, Colors.white, intensity)!;
+      spans.add(
+        TextSpan(
+          text: character,
+          style: TextStyle(
+            color: glowColor,
+            shadows: intensity < .025
+                ? null
+                : <Shadow>[
+                    Shadow(
+                      color: Colors.white.withValues(alpha: .9 * intensity),
+                      blurRadius: 3 + (11 * intensity),
+                    ),
+                    Shadow(
+                      color: widget.color.withValues(alpha: .75 * intensity),
+                      blurRadius: 7 + (15 * intensity),
+                    ),
+                  ],
+          ),
+        ),
+      );
+      letterIndex += 1;
+    }
+    return Text.rich(
+      TextSpan(children: spans),
+      style: widget.style,
+      semanticsLabel: widget.text,
     );
   }
 }

@@ -144,6 +144,10 @@ void main() {
 
     expect(document, contains('text-effect-shimmer'));
     expect(document, contains('sutol-text-effect-layer'));
+    expect(document, contains('class="sutol-shimmer-letter"'));
+    expect(document, contains('--sutol-letter-index:0'));
+    expect(
+        document, contains('animation-delay: calc(var(--sutol-letter-index)'));
     expect(document, contains('@keyframes sutolTextEffectShimmer'));
     expect(document, contains('@keyframes sutolTextEffectBlink'));
     expect(document, contains('@keyframes sutolTextEffectNeonPulse'));

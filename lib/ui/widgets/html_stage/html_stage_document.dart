@@ -493,7 +493,7 @@ String buildHtmlStageMarkup({
             ? ''
             : ' aria-label="${_escapeAttribute(displayText)}"';
     buffer.writeln(
-      '<div class="$classes" data-sutol-text-id="${_escapeAttribute(block.id)}" data-reveal-step="$displayRevealStep" data-animation-step="$effectiveRevealStep"$accessibilityAttr$hotspotAttr style="left:${_pct(block.position.dx)}%;top:${_pct(block.position.dy)}%;width:${_pct(block.widthFactor)}%;${block.heightFactor == null ? '' : 'height:${_pct(block.heightFactor!)}%;'}--sutol-left:${_pct(block.position.dx)}%;--sutol-top:${_pct(block.position.dy)}%;--base-font-size:${(block.fontSize / 10).toStringAsFixed(2)}cqw;--sutol-glow:${block.glowIntensity.toStringAsFixed(2)};--sutol-type-cycle:${typewriterCycle.toStringAsFixed(2)}s;${_animationTimingStyle(block.animationDuration, computedDelay)}${_motionPathStyle(block.motionPathPoints)}${_textFormatStyles(block)}${block.textColorHex == null ? '' : 'color:${_escapeAttribute(block.textColorHex!)};--sutol-text-color:${_escapeAttribute(block.textColorHex!)};'}">${_textBlockMarkup(displayText, block.textAnimation, block.entranceAnimation, block.textGrouping, block.groupDelay, computedDelay)}</div>',
+      '<div class="$classes" data-sutol-text-id="${_escapeAttribute(block.id)}" data-reveal-step="$displayRevealStep" data-animation-step="$effectiveRevealStep"$accessibilityAttr$hotspotAttr style="left:${_pct(block.position.dx)}%;top:${_pct(block.position.dy)}%;width:${_pct(block.widthFactor)}%;${block.heightFactor == null ? '' : 'height:${_pct(block.heightFactor!)}%;'}--sutol-left:${_pct(block.position.dx)}%;--sutol-top:${_pct(block.position.dy)}%;--base-font-size:${(block.fontSize / 10).toStringAsFixed(2)}cqw;--sutol-glow:${block.glowIntensity.toStringAsFixed(2)};--sutol-type-cycle:${typewriterCycle.toStringAsFixed(2)}s;${_animationTimingStyle(block.animationDuration, computedDelay)}${_motionPathStyle(block.motionPathPoints)}${_textFormatStyles(block)}${block.textColorHex == null ? '' : 'color:${_escapeAttribute(block.textColorHex!)};--sutol-text-color:${_escapeAttribute(block.textColorHex!)};'}">${_textBlockMarkup(displayText, block.textAnimation, block.textEffect, block.entranceAnimation, block.textGrouping, block.groupDelay, computedDelay)}</div>',
     );
   }
 
@@ -816,11 +816,30 @@ String _escapeAttribute(String value) =>
 String _textBlockMarkup(
   String text,
   PresentationTextAnimation animation,
+  PresentationTextEffect effect,
   PresentationEntranceAnimation entranceAnimation,
   PresentationTextGrouping grouping,
   double groupDelay,
   double baseDelay,
 ) {
+  var shimmerIndex = 0;
+  String effectText(String value) {
+    if (effect != PresentationTextEffect.shimmer) return _escape(value);
+    final buffer = StringBuffer();
+    for (final rune in value.runes) {
+      final character = String.fromCharCode(rune);
+      if (character.trim().isEmpty) {
+        buffer.write(_escape(character));
+      } else {
+        buffer.write(
+          '<span class="sutol-shimmer-letter" style="--sutol-letter-index:$shimmerIndex">${_escape(character)}</span>',
+        );
+        shimmerIndex += 1;
+      }
+    }
+    return buffer.toString();
+  }
+
   if (entranceAnimation != PresentationEntranceAnimation.none &&
       grouping != PresentationTextGrouping.asObject) {
     final buffer = StringBuffer(
@@ -830,7 +849,7 @@ String _textBlockMarkup(
     void segment(String value, {bool paragraph = false}) {
       final delay = baseDelay + segmentIndex * groupDelay;
       buffer.write(
-        '<span class="sutol-animation-segment ${_entranceAnimationClass(entranceAnimation)}${paragraph ? ' is-paragraph-segment' : ''}" aria-hidden="true" style="--sutol-element-delay:${delay.toStringAsFixed(2)}s">${_escape(value)}</span>',
+        '<span class="sutol-animation-segment ${_entranceAnimationClass(entranceAnimation)}${paragraph ? ' is-paragraph-segment' : ''}" aria-hidden="true" style="--sutol-element-delay:${delay.toStringAsFixed(2)}s">${effectText(value)}</span>',
       );
       segmentIndex += 1;
     }
@@ -858,7 +877,7 @@ String _textBlockMarkup(
   }
   if (animation != PresentationTextAnimation.daktilo &&
       animation != PresentationTextAnimation.kelimeKelimeBelirme) {
-    return '<span class="sutol-text-effect-layer">${_escape(text)}</span>';
+    return '<span class="sutol-text-effect-layer">${effectText(text)}</span>';
   }
 
   final buffer = StringBuffer();
@@ -870,7 +889,7 @@ String _textBlockMarkup(
       continue;
     }
     buffer.write(
-      '<span class="sutol-typewriter-word" style="--sutol-word-index:$wordIndex">${_escape(token)}</span>',
+      '<span class="sutol-typewriter-word" style="--sutol-word-index:$wordIndex">${effectText(token)}</span>',
     );
     wordIndex += 1;
   }
@@ -2197,21 +2216,14 @@ body {
 }
 
 .sutol-html-block.text-effect-shimmer > .sutol-text-effect-layer {
-  background-image: linear-gradient(
-    105deg,
-    var(--sutol-text-color, currentColor) 0%,
-    var(--sutol-text-color, currentColor) 38%,
-    #ffffff 48%,
-    #ffffff 52%,
-    var(--sutol-text-color, currentColor) 62%,
-    var(--sutol-text-color, currentColor) 100%
-  );
-  background-size: 320% 100%;
-  background-position: 125% 50%;
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  animation: sutolTextEffectShimmer 2.8s linear infinite;
+  animation: none;
+}
+
+.sutol-html-block.text-effect-shimmer .sutol-shimmer-letter {
+  color: inherit;
+  animation: sutolTextEffectShimmer 2.8s ease-in-out infinite;
+  animation-delay: calc(var(--sutol-letter-index) * 70ms);
+  will-change: color, text-shadow, filter;
 }
 
 .sutol-html-block.text-effect-blink > .sutol-text-effect-layer {
@@ -2223,8 +2235,16 @@ body {
 }
 
 @keyframes sutolTextEffectShimmer {
-  from { background-position: 125% 50%; }
-  to { background-position: -125% 50%; }
+  0%, 18%, 100% {
+    color: inherit;
+    text-shadow: none;
+    filter: brightness(1);
+  }
+  7% {
+    color: #ffffff;
+    text-shadow: 0 0 5px #ffffff, 0 0 14px #ffffff, 0 0 26px currentColor;
+    filter: brightness(1.65);
+  }
 }
 
 @keyframes sutolTextEffectBlink {
@@ -2241,8 +2261,11 @@ body {
   .sutol-text-effect-layer {
     animation: none !important;
   }
-  .sutol-html-block.text-effect-shimmer > .sutol-text-effect-layer {
-    background-position: 50% 50%;
+  .sutol-html-block.text-effect-shimmer .sutol-shimmer-letter {
+    animation: none !important;
+    color: inherit;
+    filter: none;
+    text-shadow: none;
   }
   .sutol-html-block.text-effect-blink > .sutol-text-effect-layer,
   .sutol-html-block.text-effect-neon-pulse > .sutol-text-effect-layer {
@@ -4066,6 +4089,25 @@ const String _stagePatchScript = r'''
     if (item.text !== undefined) {
       const effectLayer = document.createElement('span');
       effectLayer.className = 'sutol-text-effect-layer';
+      let shimmerIndex = 0;
+      const appendEffectText = function (parent, value) {
+        if (!element.classList.contains('text-effect-shimmer')) {
+          parent.appendChild(document.createTextNode(value));
+          return;
+        }
+        Array.from(String(value)).forEach(function (character) {
+          if (/\s/u.test(character)) {
+            parent.appendChild(document.createTextNode(character));
+            return;
+          }
+          const letter = document.createElement('span');
+          letter.className = 'sutol-shimmer-letter';
+          letter.style.setProperty('--sutol-letter-index', String(shimmerIndex));
+          letter.textContent = character;
+          parent.appendChild(letter);
+          shimmerIndex += 1;
+        });
+      };
       if (item.textGrouping && item.textGrouping !== 'asObject' &&
           item.entranceAnimationClass !== 'entrance-animation-none') {
         element.setAttribute('aria-label', String(item.text));
@@ -4096,7 +4138,7 @@ const String _stagePatchScript = r'''
             '--sutol-element-delay',
             (baseDelay + segmentIndex * groupDelay).toFixed(2) + 's'
           );
-          segment.textContent = token;
+          appendEffectText(segment, token);
           visual.appendChild(segment);
           segmentIndex += 1;
           if (item.textGrouping === 'byParagraph' && tokenIndex < tokens.length - 1) {
@@ -4122,14 +4164,14 @@ const String _stagePatchScript = r'''
           const word = document.createElement('span');
           word.className = 'sutol-typewriter-word';
           word.style.setProperty('--sutol-word-index', String(wordIndex));
-          word.textContent = token;
+          appendEffectText(word, token);
           effectLayer.appendChild(word);
           wordIndex += 1;
         });
         element.replaceChildren(effectLayer);
       } else {
         element.removeAttribute('aria-label');
-        effectLayer.textContent = item.text;
+        appendEffectText(effectLayer, item.text);
         element.replaceChildren(effectLayer);
       }
     }

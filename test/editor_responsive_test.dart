@@ -863,13 +863,22 @@ void main() {
 
     expect(previewText().style?.fontWeight, FontWeight.w900);
     expect(previewText().style?.fontVariations?.single.value, 900);
-    expect(find.byType(ShaderMask), findsOneWidget);
+    expect(find.byType(ShaderMask), findsNothing);
+    await tester.pump(const Duration(milliseconds: 700));
+    final shimmerSpan = previewText().textSpan! as TextSpan;
+    expect(
+      shimmerSpan.children
+          ?.whereType<TextSpan>()
+          .any((span) => span.style?.shadows?.isNotEmpty ?? false),
+      isTrue,
+      reason: 'Işıltı dalgası en az bir harfi ayrı olarak parlatmalı',
+    );
 
     tester.view.physicalSize = const Size(390, 844);
     await tester.pump();
     expect(previewText().style?.fontWeight, FontWeight.w900);
     expect(previewText().style?.fontVariations?.single.value, 900);
-    expect(find.byType(ShaderMask), findsOneWidget);
+    expect(find.byType(ShaderMask), findsNothing);
 
     controller.updateSelectedTextEffect(PresentationTextEffect.blink);
     await tester.pump();
