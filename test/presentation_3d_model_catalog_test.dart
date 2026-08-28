@@ -985,6 +985,89 @@ void main() {
           .allMatches(document),
       hasLength(6),
     );
+    expect(document, contains('function initializePersistentModels()'));
+    expect(document, contains('function preparePersistentModels('));
+    expect(
+      document,
+      contains("if (source && !viewer.hasAttribute('src'))"),
+    );
+    expect(document, contains('preparePersistentModels(next)'));
+  });
+
+  test('kalıcı model havuzu slayt açılarını ve tur duraklarını ayrı saklar',
+      () {
+    const pages = <PresentationPage>[
+      PresentationPage(
+        id: 'tour-front',
+        textBlocks: <PresentationTextBlock>[],
+        componentBlocks: <PresentationComponentBlock>[
+          PresentationComponentBlock(
+            id: 'anitkabir-front',
+            modelAssetId: 'anitkabir',
+            modelTourEnabled: true,
+            modelOrbitTheta: 24,
+            modelOrbitPhi: 81,
+            modelTargetX: 3,
+            modelTargetZ: -5,
+            modelTourHotspots: <ModelTourHotspot>[
+              ModelTourHotspot(
+                id: 'front-stop',
+                label: 'Ön Durak',
+                x: 1,
+                y: 2,
+                z: 3,
+              ),
+            ],
+            position: Offset.zero,
+            size: Size(1, 1),
+          ),
+        ],
+      ),
+      PresentationPage(
+        id: 'tour-back',
+        textBlocks: <PresentationTextBlock>[],
+        componentBlocks: <PresentationComponentBlock>[
+          PresentationComponentBlock(
+            id: 'anitkabir-back',
+            modelAssetId: 'anitkabir',
+            modelTourEnabled: true,
+            modelOrbitTheta: 196,
+            modelOrbitPhi: 74,
+            modelTargetX: -7,
+            modelTargetZ: 9,
+            modelTourHotspots: <ModelTourHotspot>[
+              ModelTourHotspot(
+                id: 'back-stop',
+                label: 'Arka Durak',
+                x: -1,
+                y: 4,
+                z: 6,
+              ),
+            ],
+            position: Offset.zero,
+            size: Size(1, 1),
+          ),
+        ],
+      ),
+    ];
+
+    final document = buildPresentationExportHtml(
+      pages: pages,
+      modelSourcesById: const <String, String>{
+        'anitkabir': 'data:model/gltf-binary;base64,ANITKABIR',
+      },
+    );
+
+    expect(RegExp('base64,ANITKABIR').allMatches(document), hasLength(1));
+    expect(document, contains('camera-orbit="24.00deg 81.00deg 100.00%"'));
+    expect(document, contains('camera-orbit="196.00deg 74.00deg 100.00%"'));
+    expect(document, contains('slot="hotspot-front-stop"'));
+    expect(document, contains('slot="hotspot-back-stop"'));
+    expect(document, contains('hotspotMarkup: viewer.innerHTML'));
+    expect(document, contains('viewer.innerHTML = config.hotspotMarkup'));
+    expect(document, contains('config.runtimeCameraOrbit ='));
+    expect(document, contains('window.SutolApplyModelTarget?.(viewer)'));
+    expect(document, contains('viewer.jumpCameraToGoal?.()'));
   });
 
   test('3B model proje kaydında korunur', () {

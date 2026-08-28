@@ -224,10 +224,13 @@ document.querySelectorAll('[data-sutol-background-kind]').forEach((frame) => {
   if (source) frame.srcdoc = source;
 });
 const sutolModelSources = ${_scriptSafeJson(modelSources)};
+window.SutolEmbeddedModelSources = sutolModelSources;
+${printMode ? '''
 document.querySelectorAll('[data-sutol-model-source-id]').forEach((model) => {
   const source = sutolModelSources[model.dataset.sutolModelSourceId];
   if (source) model.setAttribute('src', source);
 });
+''' : ''}
 ${printMode ? _freezeAnimatedContentScript : ''}
 ''';
 }
@@ -389,6 +392,24 @@ body {
   animation-duration: var(--sutol-transition-duration);
   animation-timing-function: cubic-bezier(.22, 1, .36, 1);
   animation-fill-mode: both;
+}
+
+.sutol-model-pool-parking {
+  position: fixed;
+  left: -10000px;
+  top: 0;
+  width: 320px;
+  height: 180px;
+  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
+  z-index: -1;
+}
+
+.sutol-3d-model-inner.has-persistent-model-snapshot {
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: contain;
 }
 
 .sutol-export-shell.transition-none .sutol-export-slide.is-active {
@@ -944,6 +965,185 @@ String _exportScript({
   let tourFrame = null;
   let tourJoystick = null;
   let tourStick = { x: 0, y: 0 };
+  const modelPools = new Map();
+  const modelPlacementsBySlide = slides.map(() => new Map());
+  const modelParking = document.createElement('div');
+  modelParking.className = 'sutol-model-pool-parking';
+  modelParking.setAttribute('aria-hidden', 'true');
+  document.body.appendChild(modelParking);
+
+  function captureModelConfiguration(viewer, placement) {
+    const attributes = {};
+    viewer.getAttributeNames().forEach((name) => {
+      if (name !== 'src') attributes[name] = viewer.getAttribute(name);
+    });
+    return {
+      modelId: placement.dataset.sutolModelId,
+      attributes: attributes,
+      hotspotMarkup: viewer.innerHTML,
+      runtimeCameraOrbit: null,
+      runtimeTargetX: null,
+      runtimeTargetY: null,
+      runtimeTargetZ: null,
+    };
+  }
+
+  function preserveModelFrame(poolItem) {
+    const placement = poolItem.placement;
+    const viewer = poolItem.viewer;
+    const inner = placement?.querySelector('.sutol-3d-model-inner');
+    if (!inner || !placement.closest('.sutol-export-slide')?.classList.contains('is-active')) {
+      return;
+    }
+    try {
+      const frame = typeof viewer.toDataURL === 'function'
+        ? viewer.toDataURL('image/png')
+        : null;
+      if (typeof frame !== 'string' || !frame.startsWith('data:image/')) return;
+      inner.style.backgroundImage = 'url("' + frame + '")';
+      inner.classList.add('has-persistent-model-snapshot');
+      window.setTimeout(() => {
+        inner.style.removeProperty('background-image');
+        inner.classList.remove('has-persistent-model-snapshot');
+      }, transitionDurationMs + 120);
+    } catch (_) {}
+  }
+
+  function saveModelRuntimeState(poolItem, keepTransitionFrame) {
+    const placement = poolItem.placement;
+    if (!placement) return;
+    const config = placement.__sutolModelConfiguration;
+    if (!config) return;
+    if (keepTransitionFrame) preserveModelFrame(poolItem);
+    try {
+      const orbit = poolItem.viewer.getCameraOrbit?.();
+      if (orbit && Number.isFinite(orbit.theta) && Number.isFinite(orbit.phi) &&
+          Number.isFinite(orbit.radius)) {
+        config.runtimeCameraOrbit = orbit.theta.toFixed(8) + 'rad ' +
+          orbit.phi.toFixed(8) + 'rad ' + orbit.radius.toFixed(8) + 'm';
+      }
+    } catch (_) {}
+    config.runtimeTargetX = poolItem.viewer.dataset.sutolTargetX ?? null;
+    config.runtimeTargetY = poolItem.viewer.dataset.sutolTargetY ?? null;
+    config.runtimeTargetZ = poolItem.viewer.dataset.sutolTargetZ ?? null;
+  }
+
+  function wireModelHotspots(viewer) {
+    viewer.querySelectorAll('.sutol-3d-tour-hotspot').forEach((hotspot) => {
+      if (hotspot.dataset.sutolPersistentBound === 'true') return;
+      hotspot.dataset.sutolPersistentBound = 'true';
+      hotspot.addEventListener('click', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        const targetPageId = String(hotspot.dataset.hotspotTarget || '').trim();
+        if (!targetPageId) return;
+        const slide = viewer.closest('.sutol-export-slide');
+        const targetIndex = slides.findIndex((item) => item.dataset.pageId === targetPageId);
+        if (slide?.classList.contains('is-active') && targetIndex >= 0) {
+          goTo(targetIndex, 0);
+        }
+      });
+    });
+  }
+
+  function applyModelConfiguration(poolItem, placement) {
+    const viewer = poolItem.viewer;
+    const config = placement.__sutolModelConfiguration;
+    if (!config) return;
+    const source = viewer.getAttribute('src');
+    viewer.getAttributeNames().forEach((name) => {
+      if (name !== 'src') viewer.removeAttribute(name);
+    });
+    Object.entries(config.attributes).forEach(([name, value]) => {
+      if (value !== null) viewer.setAttribute(name, value);
+    });
+    if (source && viewer.getAttribute('src') !== source) {
+      viewer.setAttribute('src', source);
+    }
+    if (config.runtimeCameraOrbit) {
+      viewer.setAttribute('camera-orbit', config.runtimeCameraOrbit);
+    }
+    if (config.runtimeTargetX !== null) viewer.dataset.sutolTargetX = config.runtimeTargetX;
+    if (config.runtimeTargetY !== null) viewer.dataset.sutolTargetY = config.runtimeTargetY;
+    if (config.runtimeTargetZ !== null) viewer.dataset.sutolTargetZ = config.runtimeTargetZ;
+    viewer.innerHTML = config.hotspotMarkup;
+    wireModelHotspots(viewer);
+
+    const inner = placement.querySelector('.sutol-3d-model-inner');
+    if (!inner) return;
+    inner.style.removeProperty('background-image');
+    inner.classList.remove('has-persistent-model-snapshot');
+    inner.insertBefore(viewer, inner.firstChild);
+    viewer.hidden = false;
+    if (viewer.loaded) {
+      const status = inner.querySelector('.sutol-3d-model-status');
+      const fallback = inner.querySelector('.sutol-3d-model-fallback');
+      if (status) status.hidden = true;
+      if (fallback) fallback.hidden = true;
+    }
+    poolItem.placement = placement;
+    requestAnimationFrame(() => {
+      window.SutolApplyModelTarget?.(viewer);
+      viewer.jumpCameraToGoal?.();
+    });
+  }
+
+  function initializePersistentModels() {
+    const placementsByModel = new Map();
+    slides.forEach((slide, slideIndex) => {
+      const occurrenceByModel = new Map();
+      slide.querySelectorAll('.sutol-html-component[data-sutol-model-id]').forEach((placement) => {
+        const modelId = placement.dataset.sutolModelId;
+        const viewer = placement.querySelector('model-viewer[data-sutol-model-source-id]');
+        if (!modelId || !viewer) return;
+        const occurrence = occurrenceByModel.get(modelId) || 0;
+        occurrenceByModel.set(modelId, occurrence + 1);
+        if (!modelPlacementsBySlide[slideIndex].has(modelId)) {
+          modelPlacementsBySlide[slideIndex].set(modelId, []);
+        }
+        modelPlacementsBySlide[slideIndex].get(modelId).push(placement);
+        placement.__sutolModelConfiguration = captureModelConfiguration(viewer, placement);
+        if (!placementsByModel.has(modelId)) placementsByModel.set(modelId, []);
+        placementsByModel.get(modelId).push({ placement: placement, viewer: viewer, occurrence: occurrence });
+      });
+    });
+
+    placementsByModel.forEach((entries, modelId) => {
+      const poolSize = Math.max(
+        1,
+        ...modelPlacementsBySlide.map((byModel) => (byModel.get(modelId) || []).length),
+      );
+      const items = [];
+      entries.forEach((entry) => entry.viewer.remove());
+      for (let poolIndex = 0; poolIndex < poolSize; poolIndex += 1) {
+        const viewer = entries[poolIndex].viewer;
+        modelParking.appendChild(viewer);
+        const source = window.SutolEmbeddedModelSources?.[modelId];
+        if (source && !viewer.hasAttribute('src')) viewer.setAttribute('src', source);
+        items.push({ viewer: viewer, placement: null });
+      }
+      modelPools.set(modelId, items);
+    });
+  }
+
+  function preparePersistentModels(slideIndex, keepTransitionFrame = true) {
+    modelPools.forEach((items, modelId) => {
+      const targets = modelPlacementsBySlide[slideIndex]?.get(modelId) || [];
+      items.forEach((poolItem, poolIndex) => {
+        saveModelRuntimeState(poolItem, keepTransitionFrame);
+        const target = targets[poolIndex];
+        if (target) {
+          applyModelConfiguration(poolItem, target);
+        } else {
+          modelParking.appendChild(poolItem.viewer);
+          poolItem.placement = null;
+        }
+      });
+    });
+  }
+
+  initializePersistentModels();
+  preparePersistentModels(0, false);
 
   function activeTourViewer() {
     return slides[index]?.querySelector('model-viewer[data-sutol-tour-ground="true"]') ?? null;
@@ -1413,6 +1613,7 @@ String _exportScript({
     const next = Math.max(0, Math.min(nextIndex, slides.length - 1));
     if (next !== index) {
       setZoomed(false);
+      preparePersistentModels(next);
       beginSceneTransition(index, next);
       playTransitionSound();
     }
@@ -1475,6 +1676,7 @@ String _exportScript({
   });
 
   document.querySelectorAll('[data-hotspot-target]').forEach((element) => {
+    if (element.closest('model-viewer')) return;
     element.addEventListener('click', (event) => {
       const targetPageId = element.dataset.hotspotTarget;
       const slide = element.closest('.sutol-export-slide');
@@ -1489,14 +1691,6 @@ String _exportScript({
         return;
       }
       goTo(targetIndex, 0);
-    });
-  });
-
-  document.querySelectorAll('.sutol-3d-tour-hotspot').forEach((element) => {
-    element.addEventListener('click', (event) => {
-      // Bilgi noktası, hedef slayt atanmamış olsa bile sahneye yayılıp
-      // yanlışlıkla sonraki slayta geçmemelidir.
-      event.stopPropagation();
     });
   });
 
