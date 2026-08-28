@@ -17,6 +17,7 @@ class Presentation3DModelAsset {
     this.hasAnimations = false,
     this.hasRig = false,
     this.supportsVirtualTour = false,
+    this.preferBundledAsset = false,
   });
 
   final String id;
@@ -33,6 +34,7 @@ class Presentation3DModelAsset {
   final bool hasAnimations;
   final bool hasRig;
   final bool supportsVirtualTour;
+  final bool preferBundledAsset;
 }
 
 const List<Presentation3DModelAsset> presentation3DModelCatalog =
@@ -59,6 +61,7 @@ const List<Presentation3DModelAsset> presentation3DModelCatalog =
     icon: Icons.account_balance_rounded,
     hasAnimations: true,
     supportsVirtualTour: true,
+    preferBundledAsset: true,
     // Kaynak GLB, 2185.6 şiddetinde gömülü bir yönlü güneş içeriyor.
     // model-viewer'ın ortam ışığıyla birleştiğinde renklerin beyaza kırpılmasını
     // önlemek ve GLB'deki özgün yeşil materyalleri korumak için kalibre edildi.
@@ -109,4 +112,10 @@ Presentation3DModelAsset? findPresentation3DModelAsset(String id) {
     }
   }
   return null;
+}
+
+String? preferredBundledModelAssetPath(String id) {
+  final model = findPresentation3DModelAsset(id);
+  if (model == null || !model.preferBundledAsset) return null;
+  return model.assetPath.trim().isEmpty ? null : model.assetPath.trim();
 }

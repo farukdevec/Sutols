@@ -33,4 +33,27 @@ void main() {
     expect(matches.single.modelUrl, repositoryEntry.modelUrl);
     expect(matches.single.thumbnailUrl, repositoryEntry.thumbnailUrl);
   });
+
+  test('antik silah slaytı antijen modelini eşleştirmez', () {
+    const antibody = ModelCatalogEntry(
+      id: 'antikor-antijen',
+      name: 'Antikor Antijen Modeli',
+      modelUrl: 'antikor.glb',
+      thumbnailUrl: '',
+      tags: <String>['antikor', 'antijen', 'bağışıklık', 'biyoloji'],
+      category: 'anatomi-ve-tip',
+      tier: 'free',
+    );
+
+    final matches = ModelMatchingService.rankCatalogModels(
+      models: const <ModelCatalogEntry>[antibody],
+      keywords: const <String>[
+        'Antik Menzilli Silahlar',
+        'Antik dönemde ok ve fling',
+        'uzun menzil ve delme gücü',
+      ],
+    );
+
+    expect(matches, isEmpty);
+  });
 }

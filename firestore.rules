@@ -159,6 +159,22 @@ service cloud.firestore {
     }
 
 
+    // AI üretimi sonrasında kullanıcıdan alınan gönüllü kalite değerlendirmesi.
+    // Kullanıcı yalnızca kendi kaydını oluşturabilir; sonuçlar yalnızca admin
+    // panelinde listelenir ve sonradan değiştirilemez.
+    match /presentation_feedback/{feedbackId} {
+      allow read: if isAdmin();
+      allow create: if request.auth != null
+                    && isNotSuspended(request.auth.uid)
+                    && isValidPresentationFeedback(request.resource.data)
+                    && request.resource.data.userId == request.auth.uid
+                    && exists(/databases/$(database)/documents/presentations/$(request.resource.data.presentationId))
+                    && get(/databases/$(database)/documents/presentations/$(request.resource.data.presentationId)).data.userId == request.auth.uid
+                    && request.resource.data.submittedAt == request.time;
+      allow update, delete: if isAdmin();
+    }
+
+
 
     function isAdmin() {
       return request.auth != null && (
@@ -178,6 +194,32 @@ service cloud.firestore {
         || !(exists(/databases/$(database)/documents/users/$(uid))
              && 'status' in get(/databases/$(database)/documents/users/$(uid)).data
              && get(/databases/$(database)/documents/users/$(uid)).data.status == 'suspended');
+    }
+
+
+    // presentation_feedback şeması: ilişkilendirilen sunum ve kullanıcı kimliği
+    // değişmez; dört yıldız alanı 1-5, not ise en fazla 1000 karakterdir.
+    function isValidPresentationFeedback(data) {
+      return data.keys().hasOnly([
+               'presentationId', 'userId', 'modelRating', 'textRating',
+               'visualRating', 'templateRating', 'note', 'submittedAt'
+             ])
+          && data.keys().hasAll([
+               'presentationId', 'userId', 'modelRating', 'textRating',
+               'visualRating', 'templateRating', 'note', 'submittedAt'
+             ])
+          && data.presentationId is string
+          && data.presentationId.size() > 0
+          && data.presentationId.size() <= 256
+          && data.userId is string
+          && data.userId.size() > 0
+          && data.userId.size() <= 128
+          && data.modelRating is int && data.modelRating >= 1 && data.modelRating <= 5
+          && data.textRating is int && data.textRating >= 1 && data.textRating <= 5
+          && data.visualRating is int && data.visualRating >= 1 && data.visualRating <= 5
+          && data.templateRating is int && data.templateRating >= 1 && data.templateRating <= 5
+          && data.note is string && data.note.size() <= 1000
+          && data.submittedAt is timestamp;
     }
 
 

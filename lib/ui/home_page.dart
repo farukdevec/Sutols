@@ -326,6 +326,7 @@ class _SutolHomePageState extends State<SutolHomePage> {
           builder: (_) => HtmlPresentationEditorPage(
             controller: result.controller,
             presentationId: result.presentationId,
+            requestGenerationFeedback: true,
           ),
         ),
       );

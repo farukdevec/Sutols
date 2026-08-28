@@ -206,16 +206,33 @@ class ModelRepository {
       for (final model in remoteModels) model.id: model,
     };
     for (final asset in presentation3DModelCatalog) {
-      // Paketle gelen kayıt, aynı kimlikteki eski bir bulut/önbellek kaydının
-      // modeli yanlış adrese yönlendirmesine izin vermez.
-      byId[asset.id] = ModelCatalogEntry(
-        id: asset.id,
-        name: asset.label,
-        modelUrl: asset.assetPath,
-        thumbnailUrl: asset.thumbnailPath ?? '',
-        tags: asset.tags,
-        category: asset.category,
-        tier: 'free',
+      final bundledPath = preferredBundledModelAssetPath(asset.id);
+      if (bundledPath != null) {
+        // Yerel pakette gerçekten bulunan modeller, aynı kimlikteki eski
+        // bulut/önbellek kaydının yanlış bir adrese yönlendirmesine izin
+        // vermez.
+        byId[asset.id] = ModelCatalogEntry(
+          id: asset.id,
+          name: asset.label,
+          modelUrl: bundledPath,
+          thumbnailUrl: asset.thumbnailPath ?? '',
+          tags: asset.tags,
+          category: asset.category,
+          tier: 'free',
+        );
+        continue;
+      }
+      byId.putIfAbsent(
+        asset.id,
+        () => ModelCatalogEntry(
+          id: asset.id,
+          name: asset.label,
+          modelUrl: asset.assetPath,
+          thumbnailUrl: asset.thumbnailPath ?? '',
+          tags: asset.tags,
+          category: asset.category,
+          tier: 'free',
+        ),
       );
     }
     final models = byId.values.toList(growable: false)

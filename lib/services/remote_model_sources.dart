@@ -46,7 +46,7 @@ class RemoteModelSources {
     if (key.isEmpty) return false;
     final registered = _sources[key];
     if (registered != null && _isRenderableSource(registered)) return true;
-    return findPresentation3DModelAsset(key) != null;
+    return preferredBundledModelAssetPath(key) != null;
   }
 
   static String? sourceFor(String modelId) {
@@ -57,10 +57,10 @@ class RemoteModelSources {
       return registered;
     }
 
-    final localAsset = findPresentation3DModelAsset(key);
-    if (localAsset != null && localAsset.assetPath.isNotEmpty) {
-      _sources[key] = localAsset.assetPath;
-      return localAsset.assetPath;
+    final bundledAssetPath = preferredBundledModelAssetPath(key);
+    if (bundledAssetPath != null) {
+      _sources[key] = bundledAssetPath;
+      return bundledAssetPath;
     }
 
     return null;

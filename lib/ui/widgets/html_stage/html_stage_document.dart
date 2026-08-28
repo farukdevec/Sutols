@@ -1414,7 +1414,10 @@ body {
 
 .sutol-html-block.is-title {
   font-weight: 800;
-  line-height: 1.06;
+  line-height: 1.10;
+  padding-top: clamp(14px, 2.1cqw, 28px);
+  padding-bottom: clamp(10px, 1.6cqw, 20px);
+  overflow: visible;
 }
 
 .sutol-html-block.is-subtitle {
@@ -3736,6 +3739,29 @@ const String _stagePatchScript = r'''
 
   setTourPointPlacement(tourPointPlacementEnabled());
 
+  function textOverflows(element) {
+    const widthOverflow = element.scrollWidth > element.clientWidth + 1;
+    const heightOverflow = element.scrollHeight > element.clientHeight + 1;
+    if (!element.classList.contains('is-title')) {
+      return widthOverflow || heightOverflow;
+    }
+    let drawnOverflow = false;
+    try {
+      const range = document.createRange();
+      range.selectNodeContents(element);
+      const bounds = range.getBoundingClientRect();
+      range.detach();
+      const box = element.getBoundingClientRect();
+      const inset = 3;
+      drawnOverflow =
+        bounds.top < box.top + inset ||
+        bounds.bottom > box.bottom - inset ||
+        bounds.left < box.left + inset ||
+        bounds.right > box.right - inset;
+    } catch (_) {}
+    return widthOverflow || heightOverflow || drawnOverflow;
+  }
+
   function fitText(element) {
     // Metin kutusu sahnenin güvenli alanını aşarsa yazı boyutunu kademeli
     // olarak küçültür. CSS'teki min değer okunabilirlik sınırını korur.
@@ -3743,7 +3769,7 @@ const String _stagePatchScript = r'''
     const baseSize = parseFloat(window.getComputedStyle(element).fontSize) || 12;
     let scale = 1;
     let attempts = 0;
-    while (element.scrollHeight > element.clientHeight + 1 && scale > 0.46 && attempts < 18) {
+    while (textOverflows(element) && scale > 0.46 && attempts < 18) {
       scale *= 0.92;
       element.style.fontSize = (baseSize * scale).toFixed(2) + 'px';
       attempts += 1;

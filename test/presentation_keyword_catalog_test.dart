@@ -31,6 +31,11 @@ void main() {
         PresentationKeywordCatalog.wordsMatch('gezegenler', 'gezegen'), isTrue);
   });
 
+  test('does not treat a shared word beginning as an inflection', () {
+    expect(PresentationKeywordCatalog.wordsMatch('antik', 'antijen'), isFalse);
+    expect(PresentationKeywordCatalog.wordsMatch('antik', 'antikor'), isFalse);
+  });
+
   test('matches phrases by complete words instead of raw substrings', () {
     final text = PresentationKeywordCatalog.normalize(
       'Güneş panelleri yenilenebilir enerji üretir.',

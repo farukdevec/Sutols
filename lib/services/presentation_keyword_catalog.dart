@@ -122,9 +122,17 @@ class PresentationKeywordCatalog {
             keywordWord.codeUnitAt(commonPrefixLength)) {
       commonPrefixLength += 1;
     }
-    if (commonPrefixLength >= 4 &&
-        commonPrefixLength / shorterLength >= 0.80 &&
-        longerLength - shorterLength <= 4) {
+    // A raw common-prefix rule is dangerously broad in Turkish: for example
+    // "antik" used to match both "antijen" and "antikor".  Prefixes are
+    // useful only when the remainder is a plausible inflection, such as
+    // "gezegen" -> "gezegenler" or "ekoloji" -> "ekolojisi".
+    if (commonPrefixLength == shorterLength &&
+        longerLength - shorterLength <= 6 &&
+        _isLikelyInflectionSuffix(
+          inputWord.length >= keywordWord.length
+              ? inputWord.substring(shorterLength)
+              : keywordWord.substring(shorterLength),
+        )) {
       return true;
     }
 
@@ -137,6 +145,16 @@ class PresentationKeywordCatalog {
     final threshold =
         inputWord.length <= 5 || keywordWord.length <= 5 ? 0.80 : 0.76;
     return similarity >= threshold;
+  }
+
+  /// Turkish (and a small set of English) inflection endings that may safely
+  /// extend a complete keyword stem. This intentionally excludes arbitrary
+  /// continuations: a lexical neighbour like "antikor" is not an inflection
+  /// of "antik".
+  static bool _isLikelyInflectionSuffix(String suffix) {
+    return RegExp(
+      r'^(?:lar|ler|lari|leri|larin|lerin|lara|lere|dan|den|da|de|dir|dır|dur|dür|in|ın|un|ün|i|ı|u|ü|si|sı|su|sü|im|ım|um|üm|imiz|ımız|umuz|ümüz|miz|mız|muz|müz|nin|nın|nun|nün|na|ne|yi|yı|yu|yü|ya|ye|yle|yla|ce|ca|ci|cı|cu|cü|lik|lık|luk|lük|s|es|ed|ing)$',
+    ).hasMatch(suffix);
   }
 
   static double similarityRatio(String a, String b) {

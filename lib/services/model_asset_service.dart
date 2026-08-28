@@ -46,21 +46,28 @@ class ModelAssetService {
 
     try {
       final uri = Uri.tryParse(trimmed);
-      if (uri != null) {
-        final expiresStr = uri.queryParameters['expires'];
-        if (expiresStr != null) {
-          final expiresSec = int.tryParse(expiresStr);
-          if (expiresSec != null) {
-            final expiresTime =
-                DateTime.fromMillisecondsSinceEpoch(expiresSec * 1000);
-            if (DateTime.now()
-                .isAfter(expiresTime.subtract(const Duration(seconds: 30)))) {
-              return false;
-            }
-          }
-        }
+      if (uri == null) return false;
+      // `token` is deliberately opaque: its expiration is enforced by the
+      // Worker. New links expose the timestamp, while the currently deployed
+      // Worker may still return legacy links without it. A legacy link is
+      // valid only while it is in this session's short-lived authorization
+      // cache; a restored project must authorize it again.
+      final expiresSec = int.tryParse(uri.queryParameters['expires'] ?? '');
+      if (expiresSec == null) {
+        return _signedUrlCache.values.any(
+          (cached) =>
+              cached.url == trimmed && DateTime.now().isBefore(cached.expiresAt),
+        );
       }
-    } catch (_) {}
+      final expiresTime =
+          DateTime.fromMillisecondsSinceEpoch(expiresSec * 1000);
+      if (DateTime.now()
+          .isAfter(expiresTime.subtract(const Duration(seconds: 30)))) {
+        return false;
+      }
+    } catch (_) {
+      return false;
+    }
 
     return true;
   }

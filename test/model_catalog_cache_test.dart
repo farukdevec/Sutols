@@ -58,9 +58,11 @@ void main() {
     );
     final plane = catalog.singleWhere((model) => model.id == 'yolcu-ucagi');
     final earth = catalog.singleWhere((model) => model.id == 'gercekci-dunya');
-    expect(plane.modelUrl, 'assets/models/yolcu_ucagi.glb');
+    final anitkabir = catalog.singleWhere((model) => model.id == 'anitkabir');
+    expect(plane.modelUrl, 'https://assets.sutols.com/old-plane.glb');
     expect(plane.thumbnailUrl, isEmpty);
-    expect(plane.tier, 'free');
+    expect(plane.tier, 'premium');
+    expect(anitkabir.modelUrl, '/models/anitkabir.glb');
     expect(earth.thumbnailUrl, isEmpty);
   });
 }

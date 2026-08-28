@@ -38,6 +38,7 @@ import 'presentation_preview_page.dart';
 import 'widgets/editor_shell.dart';
 import 'widgets/html_stage/html_page_stage.dart';
 import 'widgets/selection_mini_toolbar.dart';
+import 'widgets/presentation_feedback_dialog.dart';
 
 import 'design/design_system.dart';
 import 'design/sutol_widgets.dart';
@@ -106,6 +107,7 @@ class HtmlPresentationEditorPage extends StatefulWidget {
     this.initialUpdatedByName,
     this.adminReadOnly = false,
     this.modelCameraPoseReader,
+    this.requestGenerationFeedback = false,
   });
 
   final PresentationController controller;
@@ -130,6 +132,10 @@ class HtmlPresentationEditorPage extends StatefulWidget {
   /// Browser camera reader override used by focused regression tests. Runtime
   /// code reads directly from [HtmlModelCanvas].
   final ModelCameraPoseReader? modelCameraPoseReader;
+
+  /// Yalnızca yeni AI üretiminden sonra `true` verilir. Böylece mevcut bir
+  /// sunum yeniden açıldığında değerlendirme penceresi tekrar gösterilmez.
+  final bool requestGenerationFeedback;
 
   @override
   State<HtmlPresentationEditorPage> createState() =>
@@ -180,6 +186,7 @@ class _HtmlPresentationEditorPageState
   /// görünür, etkileşimle ya da süre dolunca kaybolur.
   bool _showMobileHint = true;
   Timer? _hintTimer;
+  Timer? _feedbackTimer;
 
   /// Model links are short lived. A background/template change rebuilds the
   /// HTML stage, so refresh expired links before the rebuilt iframe needs
@@ -282,6 +289,11 @@ class _HtmlPresentationEditorPageState
       _presentationFileName =
           _presentationFileNameFromDeck() ?? _presentationFileName;
     }
+    if (widget.requestGenerationFeedback &&
+        !widget.adminReadOnly &&
+        widget.presentationId != null) {
+      _feedbackTimer = Timer(const Duration(seconds: 40), _showFeedbackDialog);
+    }
     _hydrateModels();
     if (widget.adminReadOnly) {
       _adminLoading = true;
@@ -300,6 +312,17 @@ class _HtmlPresentationEditorPageState
         }
       }
     });
+  }
+
+  void _showFeedbackDialog() {
+    if (!mounted || widget.presentationId == null) return;
+    showDialog<void>(
+      context: context,
+      barrierDismissible: true,
+      builder: (_) => PresentationFeedbackDialog(
+        presentationId: widget.presentationId!,
+      ),
+    );
   }
 
   Future<void> _hydrateModels() async {
@@ -376,6 +399,7 @@ class _HtmlPresentationEditorPageState
     _editorFocusNode.dispose();
     _hintTimer?.cancel();
     widget.controller.removeListener(_captureDepartingPageCameraPoses);
+    _feedbackTimer?.cancel();
     widget.controller.removeListener(_syncTextField);
     widget.controller.removeListener(_syncTabWithSelection);
     widget.controller.removeListener(_onMobilePageChanged);

@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:sutol/models/presentation_3d_model_catalog.dart';
 import 'package:sutol/services/model_repository.dart';
 import 'package:sutol/services/presentation_model_source_resolver.dart';
 import 'package:sutol/services/remote_model_sources.dart';
@@ -39,7 +40,8 @@ void main() {
     const signedId = 'signed-render-source-test';
     RemoteModelSources.registerAll(const <String, String>{
       rawId: 'https://assets.sutols.com/raw.glb',
-      signedId: 'https://assets.sutols.com/signed.glb?token=test',
+      signedId:
+          'https://assets.sutols.com/signed.glb?token=test&expires=4102444800',
     });
 
     expect(RemoteModelSources.hasSignedSource(rawId), isFalse);
@@ -47,5 +49,19 @@ void main() {
     expect(RemoteModelSources.sourceForRefresh(rawId), contains('raw.glb'));
     expect(RemoteModelSources.hasSignedSource(signedId), isTrue);
     expect(RemoteModelSources.sourceFor(signedId), contains('token=test'));
+  });
+
+  test('yalnızca gerçekten paketli katalog modeli yerel kaynak sayılır', () {
+    final bundledModelId = presentation3DModelCatalog
+        .singleWhere((model) => model.preferBundledAsset)
+        .id;
+
+    expect(RemoteModelSources.hasSignedSource(bundledModelId), isTrue);
+    expect(
+      RemoteModelSources.sourceFor(bundledModelId),
+      preferredBundledModelAssetPath(bundledModelId),
+    );
+    expect(RemoteModelSources.hasSignedSource('yolcu-ucagi'), isFalse);
+    expect(RemoteModelSources.sourceFor('yolcu-ucagi'), isNull);
   });
 }

@@ -11,6 +11,7 @@ import 'dart:ui_web' as ui_web;
 import 'package:flutter/widgets.dart';
 
 import '../../../models/slide_model.dart';
+import '../../../services/model_asset_service.dart';
 import '../../../services/remote_image_sources.dart';
 import '../../../services/remote_model_sources.dart';
 import 'html_stage_document.dart';
@@ -485,6 +486,7 @@ class _HtmlModelCanvasState extends State<HtmlModelCanvas> {
 
   html.Element? _modelViewer;
   StreamSubscription<html.Event>? _modelLoadSubscription;
+  StreamSubscription<html.Event>? _modelErrorSubscription;
   StreamSubscription<html.MouseEvent>? _surfacePickSubscription;
   html.ResizeObserver? _resizeObserver;
   final List<Timer> _cameraRestoreTimers = <Timer>[];
@@ -527,6 +529,9 @@ class _HtmlModelCanvasState extends State<HtmlModelCanvas> {
         radius.isFinite &&
         radius > 0;
   }
+
+  bool _refreshingExpiredSource = false;
+  bool _hasRetriedLoadError = false;
 
   void _setAttribute(String name, String value) {
     final element = _modelViewer;
@@ -724,6 +729,34 @@ class _HtmlModelCanvasState extends State<HtmlModelCanvas> {
     }
   }
 
+  Future<void> _refreshSourceAfterLoadError() async {
+    // `sourceFor` deliberately rejects an expired signed URL. For renewal we
+    // still need its object key, which is retained by `sourceForRefresh`.
+    final source = RemoteModelSources.sourceForRefresh(widget.modelId);
+    if (source == null || source.isEmpty || _refreshingExpiredSource) return;
+
+    // A signed URL can expire while this editor stays open. Retry once with a
+    // fresh authorization; do not turn a corrupt GLB into an endless loop.
+    if (_hasRetriedLoadError) return;
+    _hasRetriedLoadError = true;
+    _refreshingExpiredSource = true;
+    try {
+      final refreshed = await ModelAssetService.generateSignedUrl(
+        source,
+        forceRefresh: true,
+      );
+      if (refreshed != null && refreshed.trim().isNotEmpty) {
+        RemoteModelSources.registerAll(<String, String>{
+          widget.modelId: refreshed.trim(),
+        });
+      }
+    } catch (_) {
+      // Keep the editor usable; a subsequent hydration can retry normally.
+    } finally {
+      _refreshingExpiredSource = false;
+    }
+  }
+
   void _refreshModelGeometry() {
     final element = _modelViewer;
     if (element == null) return;
@@ -902,6 +935,7 @@ class _HtmlModelCanvasState extends State<HtmlModelCanvas> {
     if (modelLoadSubscription != null) {
       unawaited(modelLoadSubscription.cancel());
     }
+    unawaited(_modelErrorSubscription?.cancel());
     unawaited(_surfacePickSubscription?.cancel());
     for (final timer in _cameraRestoreTimers) {
       timer.cancel();
@@ -940,6 +974,11 @@ class _HtmlModelCanvasState extends State<HtmlModelCanvas> {
           ..observe(modelViewer);
         _modelLoadSubscription = modelViewer.on['load'].listen((_) {
           _scheduleSavedCameraRestore();
+          _hasRetriedLoadError = false;
+          _refreshModelGeometry();
+        });
+        _modelErrorSubscription = modelViewer.on['error'].listen((_) {
+          unawaited(_refreshSourceAfterLoadError());
         });
         _surfacePickSubscription =
             modelViewer.onClick.listen(_pickSurfacePoint);

@@ -561,6 +561,32 @@ void main() {
     expect(document, contains('opacity: 0 !important;'));
   });
 
+  test('title rendering avoids clipping tall animated fonts', () {
+    const page = PresentationPage(
+      id: 'tall-title',
+      textBlocks: <PresentationTextBlock>[
+        PresentationTextBlock(
+          id: 'title',
+          text: 'Askeri Teknolojinin\nTarihi Gelişimi',
+          position: Offset(0.04, 0.10),
+          fontSize: 54,
+          type: PresentationTextType.title,
+          widthFactor: 0.62,
+          heightFactor: 0.18,
+          textStyle: PresentationTextStyle.teknolojiDramatik,
+          textAnimation: PresentationTextAnimation.teknolojiDramatik,
+        ),
+      ],
+    );
+
+    final document = buildHtmlStageDocument(page: page);
+
+    expect(document, contains('overflow: visible;'));
+    expect(document, contains('function textOverflows(element)'));
+    expect(document, contains('range.getBoundingClientRect()'));
+    expect(document, contains('while (textOverflows(element)'));
+  });
+
   test('popular reveal and display animations are available independently', () {
     const page = PresentationPage(
       id: 'display-animations',

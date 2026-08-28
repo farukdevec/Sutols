@@ -168,7 +168,8 @@ class PresentationDeckBuilder {
         case 'comparison':
         case 'cause_effect':
           // Comparison & Cause-Effect Layout: İki karşılaştırmalı sütun
-          final titleLayout = _generatedTitleLayout(title);
+          final titleLayout =
+              _generatedTitleLayout(title, hasVisual: hasVisual);
           if (title.isNotEmpty) {
             textBlocks.add(
               PresentationTextBlock(
@@ -268,7 +269,8 @@ class PresentationDeckBuilder {
 
         case 'image_focus':
           // Image Focus Layout: Görsel / 3B Model öncelikli düzen
-          final titleLayout = _generatedTitleLayout(title);
+          final titleLayout =
+              _generatedTitleLayout(title, hasVisual: hasVisual);
           if (title.isNotEmpty) {
             textBlocks.add(
               PresentationTextBlock(
@@ -308,7 +310,8 @@ class PresentationDeckBuilder {
         case 'summary':
         default:
           // Standart Süreç / Kart / Zaman Çizelgesi / Özet Layout'u
-          final titleLayout = _generatedTitleLayout(title);
+          final titleLayout =
+              _generatedTitleLayout(title, hasVisual: hasVisual);
           final bodyTop = title.isEmpty ? 0.16 : titleLayout.bodyTop;
           if (title.isNotEmpty) {
             textBlocks.add(
@@ -320,7 +323,7 @@ class PresentationDeckBuilder {
                 type: PresentationTextType.title,
                 textStyle: PresentationTextStyle.bilimTemiz,
                 textAnimation: PresentationTextAnimation.yavasBelirme,
-                widthFactor: hasVisual ? 0.58 : 0.84,
+                widthFactor: hasVisual ? 0.62 : 0.84,
                 heightFactor: titleLayout.heightFactor,
               ),
             );
@@ -499,15 +502,28 @@ class PresentationDeckBuilder {
 }
 
 ({double fontSize, double heightFactor, double bodyTop}) _generatedTitleLayout(
-    String title) {
+  String title, {
+  required bool hasVisual,
+}) {
   final length = title.replaceAll(RegExp(r'\s+'), ' ').trim().length;
-  if (length <= 34) {
-    return (fontSize: 52, heightFactor: 0.18, bodyTop: 0.30);
+  if (length <= 28) {
+    return hasVisual
+        ? (fontSize: 48, heightFactor: 0.22, bodyTop: 0.33)
+        : (fontSize: 52, heightFactor: 0.20, bodyTop: 0.31);
+  }
+  if (length <= 44) {
+    return hasVisual
+        ? (fontSize: 44, heightFactor: 0.26, bodyTop: 0.38)
+        : (fontSize: 48, heightFactor: 0.24, bodyTop: 0.36);
   }
   if (length <= 68) {
-    return (fontSize: 46, heightFactor: 0.24, bodyTop: 0.36);
+    return hasVisual
+        ? (fontSize: 40, heightFactor: 0.30, bodyTop: 0.43)
+        : (fontSize: 44, heightFactor: 0.28, bodyTop: 0.40);
   }
-  return (fontSize: 40, heightFactor: 0.30, bodyTop: 0.42);
+  return hasVisual
+      ? (fontSize: 36, heightFactor: 0.34, bodyTop: 0.48)
+      : (fontSize: 40, heightFactor: 0.32, bodyTop: 0.45);
 }
 
 double _generatedBodyFontSize(String content) {

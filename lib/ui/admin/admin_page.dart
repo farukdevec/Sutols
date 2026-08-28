@@ -7,6 +7,7 @@ import 'admin_dashboard_page.dart';
 import 'admin_expenses_page.dart';
 import 'admin_payments_page.dart';
 import 'admin_presentations_page.dart';
+import 'admin_presentation_feedback_page.dart';
 import 'admin_promo_codes_page.dart';
 import 'admin_users_page.dart';
 
@@ -25,6 +26,7 @@ class AdminPage extends StatelessWidget {
     _AdminMenuItem(title: 'Sunumlar', icon: Icons.slideshow_outlined),
     _AdminMenuItem(title: 'Promosyon Kodları', icon: Icons.confirmation_number_outlined),
     _AdminMenuItem(title: 'GLB İndirmeleri', icon: Icons.download_for_offline_outlined),
+    _AdminMenuItem(title: 'Değerlendirmeler', icon: Icons.star_outline_rounded),
     _AdminMenuItem(title: 'Settings', icon: Icons.settings_outlined),
   ];
 
@@ -61,6 +63,7 @@ class AdminPage extends StatelessWidget {
                 'Sunumlar' => const AdminPresentationsPage(),
                 'Promosyon Kodları' => const AdminPromoCodesPage(),
                 'GLB İndirmeleri' => const AdminGlbDownloadsPage(),
+                'Değerlendirmeler' => const AdminPresentationFeedbackPage(),
                 _ => _EmptySectionPage(title: item.title),
               };
 

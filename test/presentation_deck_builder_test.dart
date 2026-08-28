@@ -384,4 +384,32 @@ void main() {
     expect(body.heightFactor, isNotNull);
     expect(body.position.dy + body.heightFactor!, lessThanOrEqualTo(0.9));
   });
+
+  test('AI slide titles with visuals reserve extra room before body copy', () {
+    final pages = const PresentationDeckBuilder().buildPages(
+      topic: 'Elektrik',
+      slides: <DeckSlide>[
+        DeckSlide(
+          title: 'Alternatif Akımın Avantajları',
+          content:
+              'Uzun mesafede kayıplar düşüktür.\nVoltaj değiştirme kolaydır.\nTransformatörlerle iletim verimliliği artar.',
+          models: <ModelMatch>[model('power-grid', 9)],
+          keywords: const <String>['alternatif akım', 'transformatör'],
+        ),
+      ],
+    );
+
+    final title = pages.single.textBlocks.firstWhere(
+      (block) => block.type == PresentationTextType.title,
+    );
+    final body = pages.single.textBlocks.firstWhere(
+      (block) => block.type == PresentationTextType.body,
+    );
+
+    expect(title.widthFactor, 0.62);
+    expect(title.heightFactor, isNotNull);
+    expect(title.heightFactor!, greaterThanOrEqualTo(0.22));
+    expect(body.position.dy, greaterThanOrEqualTo(0.33));
+    expect(title.position.dy + title.heightFactor!, lessThan(body.position.dy));
+  });
 }
