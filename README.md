@@ -22,12 +22,13 @@ Bu depoya bağlı bir kamuya açık demo bağlantısı henüz eklenmemiştir. Uy
   <img src="assets/readme/preview-desktop.png" alt="Sutol editor desktop preview" width="1200" />
 </p>
 
-<table>
-  <tr>
-    <td><img src="assets/readme/preview-presentation.png" alt="Sutol presentation preview" width="100%" /></td>
-    <td><img src="assets/readme/preview-mobile.png" alt="Sutol mobile preview" width="100%" /></td>
-  </tr>
-</table>
+<p align="center">
+  <img src="assets/readme/preview-presentation.png" alt="Sutol presentation preview" width="1200" />
+</p>
+
+<p align="center">
+  <img src="assets/readme/preview-mobile.png" alt="Sutol mobile preview" width="260" />
+</p>
 
 ## İçindekiler
 
