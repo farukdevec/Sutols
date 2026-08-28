@@ -10280,7 +10280,7 @@ class _SelectionContextBarSection extends StatelessWidget {
             : null,
       ),
       const MiniToolDivider(),
-      _TextWeightPopupButton(
+      _TextWeightStepper(
         key: const ValueKey<String>('selected-text-weight-control'),
         controller: controller,
         current: block.effectiveFontWeight,
@@ -10905,25 +10905,13 @@ class _SelectedTextToolbarField extends StatelessWidget {
   }
 }
 
-class _TextWeightPopupButton extends StatelessWidget {
-  const _TextWeightPopupButton({
+class _TextWeightStepper extends StatelessWidget {
+  const _TextWeightStepper({
     super.key,
     required this.controller,
     required this.current,
     required this.compact,
   });
-
-  static Map<int, String> get _options => <int, String>{
-        100: tr('Çok İnce', 'Thin'),
-        200: tr('Ekstra İnce', 'Extra Light'),
-        300: tr('İnce', 'Light'),
-        400: tr('Normal', 'Regular'),
-        500: tr('Orta', 'Medium'),
-        600: tr('Yarı Kalın', 'Semi Bold'),
-        700: tr('Kalın', 'Bold'),
-        800: tr('Ekstra Kalın', 'Extra Bold'),
-        900: tr('Çok Kalın', 'Black'),
-      };
 
   final PresentationController controller;
   final int current;
@@ -10935,44 +10923,11 @@ class _TextWeightPopupButton extends StatelessWidget {
         .clamp(100, 900)
         .toInt();
     final selectedWeight = FontWeight.values[(normalized ~/ 100) - 1];
-    return PopupMenuButton<int>(
-      tooltip: tr('Yazı inceliği ve kalınlığı', 'Font weight'),
-      initialValue: normalized,
-      position: PopupMenuPosition.under,
-      constraints: const BoxConstraints(minWidth: 210, maxWidth: 240),
-      onSelected: controller.updateSelectedFontWeight,
-      itemBuilder: (context) => <PopupMenuEntry<int>>[
-        for (final option in _options.entries)
-          CheckedPopupMenuItem<int>(
-            key: ValueKey<String>('text-weight-${option.key}'),
-            value: option.key,
-            checked: option.key == normalized,
-            child: Row(
-              children: <Widget>[
-                SizedBox(
-                  width: 42,
-                  child: Text(
-                    '${option.key}',
-                    style: TextStyle(
-                      color: context._htmlInk,
-                      fontWeight: FontWeight.values[(option.key ~/ 100) - 1],
-                    ),
-                  ),
-                ),
-                Flexible(
-                  child: Text(
-                    option.value,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ],
-            ),
-          ),
-      ],
+    return Semantics(
+      label: tr('Yazı ağırlığı', 'Font weight'),
+      value: '$normalized',
       child: Container(
         height: 34,
-        padding: EdgeInsets.symmetric(horizontal: compact ? 8 : 10),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(10),
           border: Border.all(color: context.sutolColors.outline),
@@ -10980,32 +10935,93 @@ class _TextWeightPopupButton extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
-            Text(
-              'Aa',
-              style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                    color: context._htmlInk,
-                    fontWeight: selectedWeight,
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: compact ? 6 : 8),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  if (!compact) ...<Widget>[
+                    Text(
+                      'Aa',
+                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                            color: context._htmlInk,
+                            fontWeight: selectedWeight,
+                          ),
+                    ),
+                    const SizedBox(width: 5),
+                  ],
+                  Text(
+                    '$normalized',
+                    style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                          color: context._htmlInk,
+                          fontWeight: FontWeight.w700,
+                        ),
                   ),
-            ),
-            const SizedBox(width: 5),
-            Text(
-              '$normalized',
-              style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                    color: context._htmlInk,
-                    fontWeight: FontWeight.w700,
-                  ),
-            ),
-            if (!compact) ...<Widget>[
-              const SizedBox(width: 2),
-              Icon(
-                Icons.arrow_drop_down_rounded,
-                size: 17,
-                color: context.sutolColors.onSurfaceVariant,
+                ],
               ),
-            ],
+            ),
+            Container(
+              width: 1,
+              height: 22,
+              color: context.sutolColors.outline,
+            ),
+            _TextWeightStepButton(
+              key: const ValueKey<String>('text-weight-decrease'),
+              icon: Icons.keyboard_arrow_down_rounded,
+              tooltip: tr('Yazıyı incelt', 'Decrease font weight'),
+              onPressed: normalized > 100
+                  ? () => controller.updateSelectedFontWeight(
+                        normalized - 100,
+                      )
+                  : null,
+            ),
+            Container(
+              width: 1,
+              height: 22,
+              color: context.sutolColors.outline,
+            ),
+            _TextWeightStepButton(
+              key: const ValueKey<String>('text-weight-increase'),
+              icon: Icons.keyboard_arrow_up_rounded,
+              tooltip: tr('Yazıyı kalınlaştır', 'Increase font weight'),
+              onPressed: normalized < 900
+                  ? () => controller.updateSelectedFontWeight(
+                        normalized + 100,
+                      )
+                  : null,
+            ),
           ],
         ),
       ),
+    );
+  }
+}
+
+class _TextWeightStepButton extends StatelessWidget {
+  const _TextWeightStepButton({
+    super.key,
+    required this.icon,
+    required this.tooltip,
+    required this.onPressed,
+  });
+
+  final IconData icon;
+  final String tooltip;
+  final VoidCallback? onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(
+      tooltip: tooltip,
+      onPressed: onPressed,
+      icon: Icon(icon, size: 17),
+      color: context.sutolColors.onSurfaceVariant,
+      disabledColor:
+          context.sutolColors.onSurfaceVariant.withValues(alpha: 0.3),
+      padding: EdgeInsets.zero,
+      constraints: const BoxConstraints.tightFor(width: 28, height: 32),
+      visualDensity: VisualDensity.compact,
+      splashRadius: 16,
     );
   }
 }

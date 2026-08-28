@@ -190,18 +190,58 @@ void main() {
       const ValueKey<String>('selected-text-weight-control'),
     );
     expect(weightControl, findsOneWidget);
-    await tester.ensureVisible(weightControl);
-    await tester.tap(weightControl);
-    await tester.pumpAndSettle();
-    final thinWeightOption = find.byKey(
-      const ValueKey<String>('text-weight-300'),
+    expect(
+      find.descendant(
+          of: weightControl, matching: find.byType(PopupMenuButton)),
+      findsNothing,
     );
-    expect(thinWeightOption, findsOneWidget);
-    await tester.tap(thinWeightOption);
-    await tester.pumpAndSettle();
+    controller.controller.updateSelectedFontWeight(400);
+    await tester.pump();
+    await tester.ensureVisible(weightControl);
+    final decreaseWeight = find.byKey(
+      const ValueKey<String>('text-weight-decrease'),
+    );
+    final increaseWeight = find.byKey(
+      const ValueKey<String>('text-weight-increase'),
+    );
+    expect(decreaseWeight, findsOneWidget);
+    expect(increaseWeight, findsOneWidget);
+    await tester.tap(decreaseWeight);
+    await tester.pump();
     expect(controller.controller.selectedTextBlock!.fontWeight, 300);
     expect(controller.controller.selectedTextBlock!.textBold, isFalse);
-    expect(thinWeightOption, findsNothing, reason: 'açılır menü kapanmalı');
+    await tester.tap(increaseWeight);
+    await tester.pump();
+    expect(controller.controller.selectedTextBlock!.fontWeight, 400);
+
+    controller.controller.updateSelectedFontWeight(100);
+    await tester.pump();
+    expect(
+      tester
+          .widget<IconButton>(
+            find.descendant(
+              of: decreaseWeight,
+              matching: find.byType(IconButton),
+            ),
+          )
+          .onPressed,
+      isNull,
+    );
+    controller.controller.updateSelectedFontWeight(900);
+    await tester.pump();
+    expect(
+      tester
+          .widget<IconButton>(
+            find.descendant(
+              of: increaseWeight,
+              matching: find.byType(IconButton),
+            ),
+          )
+          .onPressed,
+      isNull,
+    );
+    controller.controller.updateSelectedFontWeight(400);
+    await tester.pump();
 
     final colorControl = find.byKey(
       const ValueKey<String>('selected-text-color-control'),
