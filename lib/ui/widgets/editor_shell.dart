@@ -2549,11 +2549,13 @@ class _PageTextBlock extends StatelessWidget {
             : textOpacity;
     final resolvedTextColor = _presentationTextColor(block.textColorHex) ??
         (darkSurface ? Colors.white : context.onSurface);
+    final resolvedFontFamily = presentationFontFamily(block.textStyle);
     final textColor = resolvedTextColor.withValues(
       alpha: effectiveTextAlpha,
     );
     final displayStyle = Theme.of(context).textTheme.headlineSmall?.copyWith(
           color: textColor,
+          fontFamily: resolvedFontFamily,
           fontWeight: _fontWeightForType(block.type),
           fontSize: adjustedFontSize,
           height: _lineHeightForType(block.type),
@@ -2561,6 +2563,7 @@ class _PageTextBlock extends StatelessWidget {
         );
     final editingStyle = Theme.of(context).textTheme.headlineSmall?.copyWith(
           color: resolvedTextColor,
+          fontFamily: resolvedFontFamily,
           fontWeight: _fontWeightForType(block.type),
           fontSize: adjustedFontSize,
           height: _lineHeightForType(block.type),
@@ -2585,6 +2588,7 @@ class _PageTextBlock extends StatelessWidget {
               hintText: tr('Buraya metin yazın', 'Type text here'),
               hintStyle: TextStyle(
                 color: resolvedTextColor.withValues(alpha: 0.52),
+                fontFamily: resolvedFontFamily,
                 fontWeight: FontWeight.w600,
               ),
             ),

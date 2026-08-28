@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show FontLoader, LogicalKeyboardKey;
 import 'package:flutter_test/flutter_test.dart';
@@ -23,6 +24,7 @@ void main() {
   // ölçüyü verir. Dock'un "Daha fazla"ya taşıma kararları ve rapor bunun
   // üzerine kuruludur.
   setUpAll(() async {
+    if (kIsWeb) return;
     final flutterRoot =
         Platform.environment['FLUTTER_ROOT'] ?? r'C:\src\flutter';
     final fontFile = File(
@@ -732,6 +734,74 @@ void main() {
       findsNWidgets(2),
       reason: 'Arama metni ve filtrelenen Roboto font satırı görünmeli',
     );
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('seçilen font editör metnine ve düzenleme alanına uygulanır', (
+    tester,
+  ) async {
+    final controller = await pumpAt(tester, const Size(1400, 900));
+    controller.updateSelectedText('Font önizleme metni');
+    await tester.pump();
+    await tester.ensureVisible(find.text('Great Vibes'));
+    await tester.pump();
+    await tester.tap(find.text('Great Vibes'));
+    await tester.pump();
+    expect(
+      controller.selectedTextBlock?.textStyle,
+      PresentationTextStyle.klasikGreatVibes,
+    );
+
+    final editorCanvas = find.byKey(
+      const ValueKey<String>('editor-page-canvas-page-1'),
+    );
+    final renderedText = find.descendant(
+      of: editorCanvas,
+      matching: find.text('Font önizleme metni'),
+    );
+    expect(renderedText, findsOneWidget);
+    expect(
+      tester.widget<Text>(renderedText).style?.fontFamily,
+      'Great Vibes',
+    );
+
+    final renderedTextCenter = tester.getCenter(renderedText);
+    await tester.tapAt(renderedTextCenter);
+    await tester.pump(const Duration(milliseconds: 50));
+    await tester.tapAt(renderedTextCenter);
+    await tester.pump();
+    final inlineEditor = find.descendant(
+      of: editorCanvas,
+      matching: find.byType(TextField),
+    );
+    expect(inlineEditor, findsOneWidget);
+    expect(
+      tester.widget<TextField>(inlineEditor).style?.fontFamily,
+      'Great Vibes',
+    );
+
+    controller.updateSelectedTextStyle(PresentationTextStyle.googleRobotoMono);
+    await tester.pump();
+    expect(
+      tester.widget<TextField>(inlineEditor).style?.fontFamily,
+      'Roboto Mono',
+    );
+
+    tester.view.physicalSize = const Size(390, 844);
+    await tester.pump();
+    final mobileRenderedText = find.byWidgetPredicate(
+      (widget) => widget is Text && widget.data == 'Font önizleme metni',
+    );
+    expect(mobileRenderedText, findsWidgets);
+    expect(
+      tester
+          .widgetList<Text>(mobileRenderedText)
+          .map((widget) => widget.style?.fontFamily)
+          .toSet(),
+      <String?>{'Roboto Mono'},
+      reason: 'Responsive mobil editör aynı seçili fontu korumalı',
+    );
+    await tester.pump(const Duration(milliseconds: 100));
     expect(tester.takeException(), isNull);
   });
 
