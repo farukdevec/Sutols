@@ -97,7 +97,8 @@ void main() {
     expect(RegExp(r'class="cloud').allMatches(source).length, 4);
   });
 
-  test('Gece Gökyüzü yalnızca küçük ve yanıp sönen yıldızlardan oluşur', () {
+  test('Gece Gökyüzü küçük yıldızları ve beş saniyelik kayan yıldızı içerir',
+      () {
     const kind = PresentationBackgroundKind.studioNightSky;
     final definition = presentationBackgroundDefinition(kind)!;
     final source = presentationBackgroundSceneHtml(kind);
@@ -109,10 +110,14 @@ void main() {
     expect(source, contains("createElementNS(namespace, 'circle')"));
     expect(source, contains('@keyframes twinkle'));
     expect(source, contains('animation:twinkle'));
+    expect(source, contains('class="shooting-star"'));
+    expect(source, contains('@keyframes shooting-star-pass'));
+    expect(source, contains('animation:shooting-star-pass 5s linear infinite'));
+    expect(source,
+        contains('.shooting-star{animation:none!important;display:none}'));
     expect(source, isNot(contains('cloud')));
     expect(source, isNot(contains('moon')));
     expect(source, isNot(contains('planet')));
-    expect(source, isNot(contains('shooting')));
 
     const page = PresentationPage(
       id: 'night-sky-page',
@@ -129,6 +134,7 @@ void main() {
     );
     expect(export, contains('const starCount = 170'));
     expect(export, contains('@keyframes twinkle'));
+    expect(export, contains('animation:shooting-star-pass 5s linear infinite'));
   });
 
   test('a page without a selected background uses a plain white scene', () {

@@ -105,17 +105,43 @@ html,body{width:100%;height:100%;margin:0;padding:0;overflow:hidden;background:v
   will-change:opacity,transform;
 }
 .star.ice{fill:#CFE3FF;filter:drop-shadow(0 0 .9px rgba(164,204,255,.54))}
+.shooting-star{
+  opacity:0;
+  transform-box:view-box;
+  transform-origin:center;
+  animation:shooting-star-pass 5s linear infinite;
+  will-change:opacity,transform;
+}
+.shooting-star .trail{stroke:url(#shooting-star-trail);stroke-width:2;stroke-linecap:round}
+.shooting-star .head{fill:#FFFFFF;filter:drop-shadow(0 0 2px rgba(207,227,255,.9))}
 @keyframes twinkle{
   0%,100%{opacity:.10;transform:scale(.72)}
   50%{opacity:var(--peak);transform:scale(1.14)}
 }
-@media (prefers-reduced-motion:reduce){.star{animation:none!important;opacity:.66;transform:none}}
+@keyframes shooting-star-pass{
+  0%,64%{opacity:0;transform:translate(0,0)}
+  66%{opacity:.88;transform:translate(-18px,11px)}
+  76%{opacity:0;transform:translate(-430px,258px)}
+  77%,100%{opacity:0;transform:translate(-430px,258px)}
+}
+@media (prefers-reduced-motion:reduce){.star{animation:none!important;opacity:.66;transform:none}.shooting-star{animation:none!important;display:none}}
 </style>
 </head>
 <body>
-<main class="scene" aria-label="Küçük yıldızların yavaşça parlayıp söndüğü gece gökyüzü">
+<main class="scene" aria-label="Küçük yıldızların parladığı ve ara sıra bir yıldızın kaydığı gece gökyüzü">
   <svg viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Gece gökyüzündeki yıldızlar">
+    <defs>
+      <linearGradient id="shooting-star-trail" x1="1548" y1="118" x2="1468" y2="166" gradientUnits="userSpaceOnUse">
+        <stop offset="0" stop-color="#CFE3FF" stop-opacity="0"/>
+        <stop offset=".72" stop-color="#EAF4FF" stop-opacity=".5"/>
+        <stop offset="1" stop-color="#FFFFFF" stop-opacity=".96"/>
+      </linearGradient>
+    </defs>
     <g id="stars" aria-hidden="true"></g>
+    <g class="shooting-star" aria-hidden="true">
+      <line class="trail" x1="1548" y1="118" x2="1468" y2="166"/>
+      <circle class="head" cx="1468" cy="166" r="2.2"/>
+    </g>
   </svg>
 </main>
 <script>
