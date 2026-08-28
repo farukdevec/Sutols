@@ -360,6 +360,12 @@ class PresentationController extends ChangeNotifier {
     );
   }
 
+  void updateSelectedTextEffect(PresentationTextEffect value) {
+    _replaceSelectedTextBlock(
+      selectedTextBlock?.copyWith(textEffect: value),
+    );
+  }
+
   void updateSelectedEntranceAnimation(PresentationEntranceAnimation value) {
     final nextOrder = _nextEntranceAnimationOrder();
     final text = selectedTextBlock;

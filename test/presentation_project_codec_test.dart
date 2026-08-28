@@ -80,6 +80,7 @@ void main() {
             heightFactor: 0.22,
             textStyle: PresentationTextStyle.bilimDramatik,
             textAnimation: PresentationTextAnimation.optikDeneysel,
+            textEffect: PresentationTextEffect.shimmer,
             textColorHex: '#A855F7',
             glowIntensity: 1.6,
             revealStep: 1,
@@ -176,6 +177,10 @@ void main() {
     expect(
       project.pages.single.textBlocks.single.textAnimation,
       PresentationTextAnimation.optikDeneysel,
+    );
+    expect(
+      project.pages.single.textBlocks.single.textEffect,
+      PresentationTextEffect.shimmer,
     );
     expect(project.pages.single.textBlocks.single.textColorHex, '#A855F7');
     expect(project.pages.single.textBlocks.single.glowIntensity, 1.6);
@@ -313,6 +318,10 @@ void main() {
       project.pages.single.textBlocks.single.textAnimation,
       PresentationTextAnimation.none,
     );
+    expect(
+      project.pages.single.textBlocks.single.textEffect,
+      PresentationTextEffect.none,
+    );
     expect(project.pages.single.textBlocks.single.textColorHex, isNull);
     expect(project.pages.single.textBlocks.single.heightFactor, isNull);
     expect(project.pages.single.textBlocks.single.fontWeight, isNull);
@@ -328,6 +337,37 @@ void main() {
     expect(legacyModel.modelAnimationEnabled, isTrue);
     expect(legacyModel.modelAutoRotate, isFalse);
     expect(legacyModel.modelOrbitEnabled, isFalse);
+  });
+
+  test('eski yüksek parlaklık değerini neon efektine dönüştürür', () {
+    final project = PresentationProjectCodec.decodeProject('''
+{
+  "format": "sutol-project",
+  "version": 1,
+  "pages": [
+    {
+      "id": "legacy-glow-page",
+      "textBlocks": [
+        {
+          "id": "legacy-glow-text",
+          "text": "Eski parlak metin",
+          "position": {"dx": 0.1, "dy": 0.1},
+          "fontSize": 42,
+          "type": "body",
+          "widthFactor": 0.4,
+          "glowIntensity": 1.6
+        }
+      ],
+      "componentBlocks": []
+    }
+  ]
+}
+''');
+
+    expect(
+      project.pages.single.textBlocks.single.textEffect,
+      PresentationTextEffect.neonPulse,
+    );
   });
 
   test('legacy kalın metni yeni ağırlık sistemiyle 700 olarak gösterir', () {

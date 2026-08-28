@@ -604,13 +604,13 @@ void main() {
     final selectionBar = find.byKey(
       const ValueKey<String>('selection-context-bar'),
     );
-    final glowControl = find.byKey(
-      const ValueKey<String>('selected-text-glow-control'),
+    final effectControl = find.byKey(
+      const ValueKey<String>('selected-text-effect-control'),
     );
     expect(selectionBar, findsOneWidget);
-    expect(glowControl, findsOneWidget);
+    expect(effectControl, findsOneWidget);
     expect(
-      tester.getRect(glowControl).right,
+      tester.getRect(effectControl).right,
       lessThanOrEqualTo(tester.getRect(selectionBar).right - 8),
       reason: 'Üst düzenleme barının son kontrolü görünür kalmalı',
     );
@@ -835,7 +835,7 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('seçilen yazı ağırlığı sunum modunda ve mobilde korunur', (
+  testWidgets('yazı ağırlığı ve efekti sunum modunda ve mobilde korunur', (
     tester,
   ) async {
     tester.view.physicalSize = const Size(1400, 900);
@@ -845,6 +845,7 @@ void main() {
     addTearDown(controller.dispose);
     controller.updateSelectedText('Sunum ağırlık önizlemesi');
     controller.updateSelectedFontWeight(900);
+    controller.updateSelectedTextEffect(PresentationTextEffect.shimmer);
 
     await tester.pumpWidget(
       MaterialApp(
@@ -862,11 +863,28 @@ void main() {
 
     expect(previewText().style?.fontWeight, FontWeight.w900);
     expect(previewText().style?.fontVariations?.single.value, 900);
+    expect(find.byType(ShaderMask), findsOneWidget);
 
     tester.view.physicalSize = const Size(390, 844);
     await tester.pump();
     expect(previewText().style?.fontWeight, FontWeight.w900);
     expect(previewText().style?.fontVariations?.single.value, 900);
+    expect(find.byType(ShaderMask), findsOneWidget);
+
+    controller.updateSelectedTextEffect(PresentationTextEffect.blink);
+    await tester.pump();
+    expect(find.byType(ShaderMask), findsNothing);
+    expect(
+      find.ancestor(
+        of: find.text('Sunum ağırlık önizlemesi'),
+        matching: find.byType(Opacity),
+      ),
+      findsWidgets,
+    );
+
+    controller.updateSelectedTextEffect(PresentationTextEffect.neonPulse);
+    await tester.pump();
+    expect(find.byType(ImageFiltered), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 

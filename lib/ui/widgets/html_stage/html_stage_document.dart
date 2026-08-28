@@ -461,6 +461,7 @@ String buildHtmlStageMarkup({
       _typeClass(block.type),
       _textStyleClass(block.textStyle),
       _textAnimationClass(block.textAnimation),
+      _textEffectClass(block.textEffect),
       if (visibleRevealStep != null &&
           block.revealStep < visibleRevealStep &&
           block.textAnimation != PresentationTextAnimation.none)
@@ -853,11 +854,11 @@ String _textBlockMarkup(
       }
     }
     buffer.write('</span>');
-    return buffer.toString();
+    return '<span class="sutol-text-effect-layer">$buffer</span>';
   }
   if (animation != PresentationTextAnimation.daktilo &&
       animation != PresentationTextAnimation.kelimeKelimeBelirme) {
-    return _escape(text);
+    return '<span class="sutol-text-effect-layer">${_escape(text)}</span>';
   }
 
   final buffer = StringBuffer();
@@ -873,7 +874,7 @@ String _textBlockMarkup(
     );
     wordIndex += 1;
   }
-  return buffer.toString();
+  return '<span class="sutol-text-effect-layer">$buffer</span>';
 }
 
 double _typewriterCycleSeconds(String text) {
@@ -1122,6 +1123,10 @@ String _textStyleClass(PresentationTextStyle style) {
 
 String _textAnimationClass(PresentationTextAnimation animation) {
   return 'text-animation-${_enumValueName(animation)}';
+}
+
+String _textEffectClass(PresentationTextEffect effect) {
+  return 'text-effect-${_enumValueName(effect)}';
 }
 
 String _entranceAnimationClass(PresentationEntranceAnimation animation) {
@@ -2176,6 +2181,73 @@ body {
   --sutol-glow: 1;
   transform-origin: center;
   will-change: transform, opacity, filter, text-shadow, background-position;
+}
+
+/* Sürekli metin efektleri giriş animasyonundan ayrı bir iç katmanda çalışır. */
+.sutol-text-effect-layer {
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  line-height: inherit;
+  white-space: inherit;
+}
+
+.sutol-html-block.text-effect-none > .sutol-text-effect-layer {
+  animation: none;
+}
+
+.sutol-html-block.text-effect-shimmer > .sutol-text-effect-layer {
+  background-image: linear-gradient(
+    105deg,
+    var(--sutol-text-color, currentColor) 0%,
+    var(--sutol-text-color, currentColor) 38%,
+    #ffffff 48%,
+    #ffffff 52%,
+    var(--sutol-text-color, currentColor) 62%,
+    var(--sutol-text-color, currentColor) 100%
+  );
+  background-size: 320% 100%;
+  background-position: 125% 50%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: sutolTextEffectShimmer 2.8s linear infinite;
+}
+
+.sutol-html-block.text-effect-blink > .sutol-text-effect-layer {
+  animation: sutolTextEffectBlink 2.2s ease-in-out infinite;
+}
+
+.sutol-html-block.text-effect-neon-pulse > .sutol-text-effect-layer {
+  animation: sutolTextEffectNeonPulse 2.6s ease-in-out infinite;
+}
+
+@keyframes sutolTextEffectShimmer {
+  from { background-position: 125% 50%; }
+  to { background-position: -125% 50%; }
+}
+
+@keyframes sutolTextEffectBlink {
+  0%, 100% { opacity: .48; text-shadow: 0 0 2px currentColor; }
+  45%, 55% { opacity: 1; text-shadow: 0 0 8px currentColor, 0 0 22px currentColor; }
+}
+
+@keyframes sutolTextEffectNeonPulse {
+  0%, 100% { opacity: .82; text-shadow: 0 0 4px currentColor, 0 0 12px currentColor; }
+  50% { opacity: 1; text-shadow: 0 0 9px #ffffff, 0 0 24px currentColor, 0 0 46px currentColor; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sutol-text-effect-layer {
+    animation: none !important;
+  }
+  .sutol-html-block.text-effect-shimmer > .sutol-text-effect-layer {
+    background-position: 50% 50%;
+  }
+  .sutol-html-block.text-effect-blink > .sutol-text-effect-layer,
+  .sutol-html-block.text-effect-neon-pulse > .sutol-text-effect-layer {
+    opacity: 1;
+  }
 }
 
 .sutol-html-block.text-animation-bilim-dramatik { animation: sutolEffectDeepGlow 3.2s ease-in-out 1 forwards !important; }
@@ -3790,10 +3862,14 @@ const String _stagePatchScript = r'''
     const element = document.querySelector(selectorFor(attribute, item.id));
     if (!element) return false;
     const previousAnimationClass = Array.from(element.classList).filter(function (name) {
-      return name.indexOf('text-animation-') === 0 || name.indexOf('entrance-animation-') === 0;
+      return name.indexOf('text-animation-') === 0 ||
+        name.indexOf('text-effect-') === 0 ||
+        name.indexOf('entrance-animation-') === 0;
     }).join('|');
     const nextAnimationClass = String(item.className || '').split(/\s+/).filter(function (name) {
-      return name.indexOf('text-animation-') === 0 || name.indexOf('entrance-animation-') === 0;
+      return name.indexOf('text-animation-') === 0 ||
+        name.indexOf('text-effect-') === 0 ||
+        name.indexOf('entrance-animation-') === 0;
     }).join('|');
     const animationChanged = previousAnimationClass !== nextAnimationClass;
     element.className = item.className;
@@ -3988,6 +4064,8 @@ const String _stagePatchScript = r'''
       element.style.setProperty('--sutol-text-color', item.textColor);
     }
     if (item.text !== undefined) {
+      const effectLayer = document.createElement('span');
+      effectLayer.className = 'sutol-text-effect-layer';
       if (item.textGrouping && item.textGrouping !== 'asObject' &&
           item.entranceAnimationClass !== 'entrance-animation-none') {
         element.setAttribute('aria-label', String(item.text));
@@ -4025,7 +4103,8 @@ const String _stagePatchScript = r'''
             visual.appendChild(document.createElement('br'));
           }
         });
-        element.replaceChildren(visual);
+        effectLayer.appendChild(visual);
+        element.replaceChildren(effectLayer);
       } else if (item.isTypewriter || item.isWordReveal) {
         element.removeAttribute('aria-label');
         const tokens = String(item.text).match(/\S+|\s+/g) || [];
@@ -4034,23 +4113,24 @@ const String _stagePatchScript = r'''
         }).length;
         const cycle = Math.max(4.8, (wordCount * 0.46) + 2.8);
         element.style.setProperty('--sutol-type-cycle', cycle.toFixed(2) + 's');
-        element.replaceChildren();
         let wordIndex = 0;
         tokens.forEach(function (token) {
           if (token.trim().length === 0) {
-            element.appendChild(document.createTextNode(token));
+            effectLayer.appendChild(document.createTextNode(token));
             return;
           }
           const word = document.createElement('span');
           word.className = 'sutol-typewriter-word';
           word.style.setProperty('--sutol-word-index', String(wordIndex));
           word.textContent = token;
-          element.appendChild(word);
+          effectLayer.appendChild(word);
           wordIndex += 1;
         });
+        element.replaceChildren(effectLayer);
       } else {
         element.removeAttribute('aria-label');
-        element.textContent = item.text;
+        effectLayer.textContent = item.text;
+        element.replaceChildren(effectLayer);
       }
     }
     if (animationChanged) {
@@ -4058,8 +4138,11 @@ const String _stagePatchScript = r'''
       // not sufficient in every browser. Force a style boundary so the newly
       // selected effect visibly starts from its first frame.
       element.style.setProperty('animation', 'none', 'important');
+      const effectLayer = element.querySelector('.sutol-text-effect-layer');
+      if (effectLayer) effectLayer.style.setProperty('animation', 'none', 'important');
       void element.offsetWidth;
       element.style.removeProperty('animation');
+      if (effectLayer) effectLayer.style.removeProperty('animation');
     }
     if (element.classList.contains('sutol-html-block')) fitText(element);
     return true;

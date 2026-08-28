@@ -1882,6 +1882,7 @@ class _HtmlPageStageState extends State<HtmlPageStage> {
                 _textTypeDomClass(block.type),
                 _textStyleDomClass(block.textStyle),
                 _textAnimationDomClass(block.textAnimation),
+                _textEffectDomClass(block.textEffect),
                 _entranceAnimationDomClass(block.entranceAnimation),
                 if (block.glowIntensity <= 0) 'is-glow-off',
                 if (block.id == widget.selectedTextBlockId) 'is-selected',
@@ -2208,6 +2209,14 @@ String _textAnimationDomClass(PresentationTextAnimation animation) {
     (match) => '-${match.group(1)!.toLowerCase()}',
   );
   return 'text-animation-$name';
+}
+
+String _textEffectDomClass(PresentationTextEffect effect) {
+  final name = effect.name.replaceAllMapped(
+    RegExp(r'([A-Z])'),
+    (match) => '-${match.group(1)!.toLowerCase()}',
+  );
+  return 'text-effect-$name';
 }
 
 String _pct(double value) => (value * 100).toStringAsFixed(2);

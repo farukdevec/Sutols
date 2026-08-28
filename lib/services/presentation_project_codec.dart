@@ -228,6 +228,7 @@ class PresentationProjectCodec {
       'heightFactor': block.heightFactor,
       'textStyle': block.textStyle.name,
       'textAnimation': block.textAnimation.name,
+      'textEffect': block.textEffect.name,
       'entranceAnimation': block.entranceAnimation.name,
       'animationTrigger': block.animationTrigger.name,
       'animationDuration': block.animationDuration,
@@ -273,6 +274,13 @@ class PresentationProjectCodec {
         json['textAnimation'],
         PresentationTextAnimation.none,
       ),
+      textEffect: json['textEffect'] == null
+          ? _legacyTextEffect(json['glowIntensity'])
+          : _enumValue(
+              PresentationTextEffect.values,
+              json['textEffect'],
+              PresentationTextEffect.none,
+            ),
       entranceAnimation: _enumValue(
         PresentationEntranceAnimation.values,
         json['entranceAnimation'],
@@ -613,6 +621,14 @@ class PresentationProjectCodec {
     return ((value.clamp(100, 900).toDouble() / 100).round() * 100)
         .clamp(100, 900)
         .toInt();
+  }
+
+  static PresentationTextEffect _legacyTextEffect(Object? glowIntensity) {
+    // Eski projelerde 1 varsayılan değerdir; yalnız kullanıcının belirgin
+    // biçimde yükselttiği parlaklığı yeni, sürekli neon efektine taşırız.
+    return glowIntensity is num && glowIntensity >= 1.5
+        ? PresentationTextEffect.neonPulse
+        : PresentationTextEffect.none;
   }
 
   static double _double(Object? value, double fallback) {

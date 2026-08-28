@@ -441,7 +441,8 @@ class _HtmlPresentationEditorPageState
           ..write('|${text.position.dy.toStringAsFixed(3)}|${text.fontSize}')
           ..write(
               '|${text.type.index}|${text.widthFactor}|${text.heightFactor}|${text.textStyle.index}')
-          ..write('|${text.textAnimation.index}|${text.textColorHex}')
+          ..write(
+              '|${text.textAnimation.index}|${text.textEffect.index}|${text.textColorHex}')
           ..write('|${text.glowIntensity}|${text.revealStep}')
           ..write(
               '|${text.hotspotTargetPageId}|${text.fontWeight}|${text.textBold}')
@@ -10328,10 +10329,10 @@ class _SelectionContextBarSection extends StatelessWidget {
         currentHex: block.textColorHex,
       ),
       const MiniToolDivider(),
-      _TextGlowPopupButton(
-        key: const ValueKey<String>('selected-text-glow-control'),
+      _TextEffectPopupButton(
+        key: const ValueKey<String>('selected-text-effect-control'),
         controller: controller,
-        current: block.glowIntensity,
+        current: block.textEffect,
         compact: compact,
       ),
     ];
@@ -11150,48 +11151,68 @@ void _showTextColorPickerDialog(
   );
 }
 
-/// Metin parlaklığını modal pencere oluşturmadan doğrudan ayarlar.
-class _TextGlowPopupButton extends StatelessWidget {
-  const _TextGlowPopupButton({
+/// Metnin ekranda kaldığı sürece çalışan görsel efekti seçer.
+class _TextEffectPopupButton extends StatelessWidget {
+  const _TextEffectPopupButton({
     super.key,
     required this.controller,
     required this.current,
     required this.compact,
   });
 
-  static Map<double, String> get _options => <double, String>{
-        0: tr('Kapalı', 'Off'),
-        0.5: tr('Hafif', 'Low'),
-        1: tr('Normal', 'Normal'),
-        1.5: tr('Güçlü', 'High'),
-        2: tr('Çok güçlü', 'Very high'),
-      };
+  static Map<PresentationTextEffect, ({String label, IconData icon})>
+      get _options => <PresentationTextEffect, ({String label, IconData icon})>{
+            PresentationTextEffect.none: (
+              label: tr('Efekt Yok', 'No Effect'),
+              icon: Icons.block_rounded,
+            ),
+            PresentationTextEffect.shimmer: (
+              label: tr('Işıltı Geçişi', 'Shimmer Sweep'),
+              icon: Icons.auto_awesome_rounded,
+            ),
+            PresentationTextEffect.blink: (
+              label: tr('Yanıp Sönme', 'Glow Blink'),
+              icon: Icons.flare_rounded,
+            ),
+            PresentationTextEffect.neonPulse: (
+              label: tr('Neon Nabız', 'Neon Pulse'),
+              icon: Icons.electric_bolt_rounded,
+            ),
+          };
 
   final PresentationController controller;
-  final double current;
+  final PresentationTextEffect current;
   final bool compact;
 
   @override
   Widget build(BuildContext context) {
-    final options = _options;
-    final selectedValue = options.keys.reduce(
-      (a, b) => (current - a).abs() <= (current - b).abs() ? a : b,
-    );
-    final active = current > 0;
+    final active = current != PresentationTextEffect.none;
     final colors = context.colors;
-    return PopupMenuButton<double>(
-      tooltip: tr('Metin parlaklığı', 'Text glow'),
-      initialValue: selectedValue,
+    return PopupMenuButton<PresentationTextEffect>(
+      tooltip: tr('Metin efekti', 'Text effect'),
+      initialValue: current,
       position: PopupMenuPosition.under,
-      constraints: const BoxConstraints(minWidth: 190, maxWidth: 220),
-      onSelected: controller.updateSelectedGlowIntensity,
-      itemBuilder: (context) => <PopupMenuEntry<double>>[
-        for (final option in options.entries)
-          CheckedPopupMenuItem<double>(
-            key: ValueKey<String>('text-glow-${option.key}'),
+      constraints: const BoxConstraints(minWidth: 220, maxWidth: 250),
+      onSelected: controller.updateSelectedTextEffect,
+      itemBuilder: (context) => <PopupMenuEntry<PresentationTextEffect>>[
+        for (final option in _options.entries)
+          CheckedPopupMenuItem<PresentationTextEffect>(
+            key: ValueKey<String>('text-effect-${option.key.name}'),
             value: option.key,
-            checked: option.key == selectedValue,
-            child: Text(option.value),
+            checked: option.key == current,
+            child: Row(
+              children: <Widget>[
+                Icon(option.value.icon, size: 18),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    option.value.label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
           ),
       ],
       child: AnimatedContainer(
@@ -11205,14 +11226,14 @@ class _TextGlowPopupButton extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
             Icon(
-              Icons.brightness_7_rounded,
+              Icons.auto_awesome_rounded,
               size: 17,
               color: active ? colors.surface : colors.onSurfaceVariant,
             ),
             if (!compact) ...<Widget>[
               const SizedBox(width: 7),
               Text(
-                tr('Parlaklık', 'Glow'),
+                tr('Efekt', 'Effect'),
                 style: Theme.of(context).textTheme.labelMedium?.copyWith(
                       fontWeight: FontWeight.w700,
                       color: active ? colors.surface : colors.onSurfaceVariant,

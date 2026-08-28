@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+import 'dart:ui' show ImageFilter;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
@@ -2602,6 +2603,15 @@ class _PageTextBlock extends StatelessWidget {
             displayText,
             style: displayStyle,
           );
+    final renderedBlockChild = isEditing
+        ? blockChild
+        : _PresentationTextEffectLayer(
+            effect: canvasSize.width < 240
+                ? PresentationTextEffect.none
+                : block.textEffect,
+            color: resolvedTextColor,
+            child: blockChild,
+          );
     final textPainter = TextPainter(
       text: TextSpan(text: displayText, style: displayStyle),
       textDirection: Directionality.of(context),
@@ -2669,7 +2679,7 @@ class _PageTextBlock extends StatelessWidget {
                       width: isSelected ? 1.6 : 1,
                     ),
                   ),
-                  child: blockChild,
+                  child: renderedBlockChild,
                 ),
               ),
             ),
@@ -2687,6 +2697,123 @@ class _PageTextBlock extends StatelessWidget {
                         ),
               ),
         ],
+      ),
+    );
+  }
+}
+
+class _PresentationTextEffectLayer extends StatefulWidget {
+  const _PresentationTextEffectLayer({
+    required this.effect,
+    required this.color,
+    required this.child,
+  });
+
+  final PresentationTextEffect effect;
+  final Color color;
+  final Widget child;
+
+  @override
+  State<_PresentationTextEffectLayer> createState() =>
+      _PresentationTextEffectLayerState();
+}
+
+class _PresentationTextEffectLayerState
+    extends State<_PresentationTextEffectLayer>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(vsync: this);
+    _syncAnimation();
+  }
+
+  @override
+  void didUpdateWidget(covariant _PresentationTextEffectLayer oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.effect != oldWidget.effect) _syncAnimation();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _syncAnimation() {
+    final duration = switch (widget.effect) {
+      PresentationTextEffect.none => Duration.zero,
+      PresentationTextEffect.shimmer => const Duration(milliseconds: 2800),
+      PresentationTextEffect.blink => const Duration(milliseconds: 2200),
+      PresentationTextEffect.neonPulse => const Duration(milliseconds: 2600),
+    };
+    _controller.stop();
+    _controller.value = 0;
+    if (duration != Duration.zero) {
+      _controller
+        ..duration = duration
+        ..repeat();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (widget.effect == PresentationTextEffect.none ||
+        MediaQuery.disableAnimationsOf(context)) {
+      return widget.child;
+    }
+    return RepaintBoundary(
+      child: AnimatedBuilder(
+        animation: _controller,
+        child: widget.child,
+        builder: (context, child) {
+          final progress = _controller.value;
+          final pulse =
+              (math.sin((progress * math.pi * 2) - (math.pi / 2)) + 1) / 2;
+          return switch (widget.effect) {
+            PresentationTextEffect.none => child!,
+            PresentationTextEffect.shimmer => ShaderMask(
+                blendMode: BlendMode.srcIn,
+                shaderCallback: (bounds) => LinearGradient(
+                  begin: Alignment(-3 + (progress * 4), 0),
+                  end: Alignment(-1 + (progress * 4), 0),
+                  colors: <Color>[
+                    widget.color,
+                    widget.color,
+                    Colors.white,
+                    widget.color,
+                    widget.color,
+                  ],
+                  stops: const <double>[0, .36, .5, .64, 1],
+                ).createShader(bounds),
+                child: child,
+              ),
+            PresentationTextEffect.blink => Opacity(
+                opacity: .48 + (.52 * pulse),
+                child: child,
+              ),
+            PresentationTextEffect.neonPulse => Stack(
+                fit: StackFit.passthrough,
+                children: <Widget>[
+                  IgnorePointer(
+                    child: Opacity(
+                      opacity: .32 + (.4 * pulse),
+                      child: ImageFiltered(
+                        imageFilter: ImageFilter.blur(
+                          sigmaX: 2 + (4 * pulse),
+                          sigmaY: 2 + (4 * pulse),
+                        ),
+                        child: child,
+                      ),
+                    ),
+                  ),
+                  child!,
+                ],
+              ),
+          };
+        },
       ),
     );
   }

@@ -241,6 +241,17 @@ enum PresentationTextAnimation {
   kelimeKelimeBelirme,
 }
 
+/// Metnin ekranda kaldığı sürece devam eden görsel efektler.
+///
+/// Giriş/metin animasyonlarından ayrı tutulur; böylece iki davranış aynı
+/// metin üzerinde birbirini ezmeden birlikte çalışabilir.
+enum PresentationTextEffect {
+  none,
+  shimmer,
+  blink,
+  neonPulse,
+}
+
 enum PresentationEntranceAnimation {
   none,
   fadeIn,
@@ -471,6 +482,7 @@ class PresentationTextBlock {
     this.heightFactor,
     this.textStyle = PresentationTextStyle.standard,
     this.textAnimation = PresentationTextAnimation.none,
+    this.textEffect = PresentationTextEffect.none,
     this.entranceAnimation = PresentationEntranceAnimation.none,
     this.animationTrigger = PresentationAnimationTrigger.withPrevious,
     this.animationDuration = .8,
@@ -504,6 +516,7 @@ class PresentationTextBlock {
   final double? heightFactor;
   final PresentationTextStyle textStyle;
   final PresentationTextAnimation textAnimation;
+  final PresentationTextEffect textEffect;
   final PresentationEntranceAnimation entranceAnimation;
   final PresentationAnimationTrigger animationTrigger;
   final double animationDuration;
@@ -549,6 +562,7 @@ class PresentationTextBlock {
     Object? heightFactor = _copySentinel,
     PresentationTextStyle? textStyle,
     PresentationTextAnimation? textAnimation,
+    PresentationTextEffect? textEffect,
     PresentationEntranceAnimation? entranceAnimation,
     PresentationAnimationTrigger? animationTrigger,
     double? animationDuration,
@@ -579,6 +593,7 @@ class PresentationTextBlock {
           : heightFactor as double?,
       textStyle: textStyle ?? this.textStyle,
       textAnimation: textAnimation ?? this.textAnimation,
+      textEffect: textEffect ?? this.textEffect,
       entranceAnimation: entranceAnimation ?? this.entranceAnimation,
       animationTrigger: animationTrigger ?? this.animationTrigger,
       animationDuration: animationDuration ?? this.animationDuration,

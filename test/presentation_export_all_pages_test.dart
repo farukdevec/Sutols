@@ -121,4 +121,31 @@ void main() {
     expect(document, contains("font-variation-settings:'wght' 200;"));
     expect(document, contains('İnce metin'));
   });
+
+  test('HTML çıktısı sürekli metin efektlerini sunumla birlikte taşır', () {
+    final document = buildPresentationExportHtml(
+      pages: const <PresentationPage>[
+        PresentationPage(
+          id: 'text-effect-page',
+          textBlocks: <PresentationTextBlock>[
+            PresentationTextBlock(
+              id: 'shimmer-text',
+              text: 'Işıltılı metin',
+              position: Offset(.1, .1),
+              fontSize: 42,
+              type: PresentationTextType.body,
+              widthFactor: .5,
+              textEffect: PresentationTextEffect.shimmer,
+            ),
+          ],
+        ),
+      ],
+    );
+
+    expect(document, contains('text-effect-shimmer'));
+    expect(document, contains('sutol-text-effect-layer'));
+    expect(document, contains('@keyframes sutolTextEffectShimmer'));
+    expect(document, contains('@keyframes sutolTextEffectBlink'));
+    expect(document, contains('@keyframes sutolTextEffectNeonPulse'));
+  });
 }

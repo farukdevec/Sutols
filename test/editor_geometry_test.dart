@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:sutol/models/slide_model.dart';
 import 'package:sutol/state/presentation_controller.dart';
 import 'package:sutol/ui/html_presentation_editor_page.dart';
 import 'package:sutol/ui/widgets/editor_shell.dart';
@@ -265,26 +266,46 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    final glowControl = find.byKey(
-      const ValueKey<String>('selected-text-glow-control'),
+    final effectControl = find.byKey(
+      const ValueKey<String>('selected-text-effect-control'),
     );
-    expect(glowControl, findsOneWidget);
+    expect(effectControl, findsOneWidget);
+    expect(
+      find.byKey(const ValueKey<String>('selected-text-glow-control')),
+      findsNothing,
+      reason: 'Eski parlaklık kontrolü üst bardan kaldırılmış olmalı',
+    );
     expect(find.byTooltip('Diğer metin ayarları'), findsNothing);
-    await tester.ensureVisible(glowControl);
-    await tester.tap(glowControl);
+    await tester.ensureVisible(effectControl);
+    await tester.tap(effectControl);
     await tester.pumpAndSettle();
-    final strongGlowOption = find.byKey(
-      const ValueKey<String>('text-glow-1.5'),
+    final shimmerOption = find.byKey(
+      const ValueKey<String>('text-effect-shimmer'),
     );
-    expect(strongGlowOption, findsOneWidget);
-    await tester.tap(strongGlowOption);
-    await tester.pumpAndSettle();
-    expect(controller.controller.selectedTextBlock!.glowIntensity, 1.5);
-    expect(strongGlowOption, findsNothing, reason: 'açılır menü kapanmalı');
+    expect(shimmerOption, findsOneWidget);
+    expect(
+      find.byKey(const ValueKey<String>('text-effect-blink')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey<String>('text-effect-neonPulse')),
+      findsOneWidget,
+    );
+    await tester.tap(shimmerOption);
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+    await tester.pump();
+    expect(
+      controller.controller.selectedTextBlock!.textEffect,
+      PresentationTextEffect.shimmer,
+    );
+    expect(shimmerOption, findsNothing, reason: 'açılır menü kapanmalı');
 
     // Seçim temizlenince bar tamamen kaybolur (bağlamsal).
     controller.controller.clearSelection();
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+    await tester.pump();
     expect(find.byType(SelectionContextBar), findsNothing);
   });
 
