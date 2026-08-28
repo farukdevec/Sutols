@@ -113,6 +113,9 @@ void main() {
     expect(source, contains('class="shooting-star"'));
     expect(source, contains('@keyframes shooting-star-pass'));
     expect(source, contains('animation:shooting-star-pass 5s linear infinite'));
+    expect(source, contains('stroke-width:3.2'));
+    expect(source, contains('mix-blend-mode:screen'));
+    expect(source, contains('class="head" cx="1468" cy="166" r="3.1"'));
     expect(source,
         contains('.shooting-star{animation:none!important;display:none}'));
     expect(source, isNot(contains('cloud')));
