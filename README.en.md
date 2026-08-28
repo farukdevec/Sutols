@@ -1,37 +1,65 @@
-# Sutol
+<p align="center">
+  <img src="assets/images/sutols_wordmark.webp" alt="Sutol" width="340" />
+</p>
 
-![Sutol wordmark](assets/images/sutols_wordmark.webp)
+<p align="center">A Flutter Web application for creating editable HTML presentations from titles and body text.</p>
 
-[![Flutter](https://img.shields.io/badge/Flutter-02569B?style=flat&logo=flutter&logoColor=white)](https://flutter.dev/)
-[![Dart](https://img.shields.io/badge/Dart-0175C2?style=flat&logo=dart&logoColor=white)](https://dart.dev/)
-[![Firebase](https://img.shields.io/badge/Firebase-FFCA28?style=flat&logo=firebase&logoColor=black)](https://firebase.google.com/)
-[![Platform](https://img.shields.io/badge/Platform-Flutter%20Web-0F766E?style=flat)](#setup)
+<p align="center">
+  <a href="https://flutter.dev/"><img src="https://img.shields.io/badge/Flutter-02569B?style=flat-square&logo=flutter&logoColor=white" alt="Flutter" /></a>
+  <a href="https://dart.dev/"><img src="https://img.shields.io/badge/Dart-0175C2?style=flat-square&logo=dart&logoColor=white" alt="Dart" /></a>
+  <a href="https://firebase.google.com/"><img src="https://img.shields.io/badge/Firebase-FFCA28?style=flat-square&logo=firebase&logoColor=black" alt="Firebase" /></a>
+  <a href="#setup"><img src="https://img.shields.io/badge/Platform-Flutter%20Web-0F766E?style=flat-square" alt="Flutter Web" /></a>
+</p>
 
-Sutol is a Flutter Web-based presentation builder that generates editable HTML presentations from titles and body text. It analyzes content through keyword and similarity matching, selects suitable backgrounds and visual components, and delivers the result as a fully editable presentation project.
+Sutol analyzes content through keyword and similarity matching, selects topic-appropriate backgrounds, layouts, and visual components, then turns the result into a fully editable presentation project.
 
 > [!NOTE]
 > The automatic generation flow runs locally with deterministic rules and does not depend on an external AI service.
 
 ## Live Demo
 
-No public demo is linked to this repository yet. You can run the app locally using the setup steps below. If you deploy it later, this section is the right place to add the demo URL.
+There is no public demo linked to this repository yet. Follow the [Setup](#setup) instructions to run the app locally.
 
-## Preview
-
-<p align="center">
-  <img src="assets/readme/preview-desktop.png" alt="Sutol editor desktop preview" width="1200" />
-</p>
+## Product Overview
 
 <p align="center">
-  <img src="assets/readme/preview-presentation.png" alt="Sutol presentation preview" width="1200" />
+  <img src="assets/readme/preview-presentation.png" alt="Sutol presentation editor" width="1080" />
 </p>
 
-<p align="center">
-  <img src="assets/readme/preview-mobile.png" alt="Sutol mobile preview" width="260" />
-</p>
+<p align="center"><sub>The presentation editor brings scenes, tools, and detailed controls into one workspace.</sub></p>
+
+<table>
+  <tr>
+    <td width="76%" align="center" valign="top">
+      <img src="assets/readme/preview-mobile.png" alt="Sutol presentation mode" width="760" />
+      <br />
+      <sub>Focused presentation mode</sub>
+    </td>
+    <td width="24%" align="center" valign="top">
+      <img src="assets/readme/preview-desktop.png" alt="Sutol mobile editor" width="230" />
+      <br />
+      <sub>Mobile editing experience</sub>
+    </td>
+  </tr>
+</table>
+
+## What It Delivers
+
+- **Content to outline:** Creates an appropriate page layout, background, and components from titles and body text.
+- **Full control:** Manage text, visuals, effects, reveal steps, hotspots, and speaker notes in the editor.
+- **Flexible output:** Save work as a Sutol JSON project, export a single HTML file, or create a PDF through the browser.
+- **Responsive experience:** Edit and present comfortably on desktop and mobile devices.
+
+## From Draft to Presentation
+
+1. Create a presentation and add a title and body text for each slide.
+2. Generate the content and let Sutol prepare appropriate components and layouts.
+3. Refine the details in the editor, review in presentation mode, and export.
 
 ## Contents
 
+- [What It Delivers](#what-it-delivers)
+- [From Draft to Presentation](#from-draft-to-presentation)
 - [Highlights](#highlights)
 - [How It Works](#how-it-works)
 - [Technology](#technology)

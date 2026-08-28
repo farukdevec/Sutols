@@ -1,37 +1,65 @@
-# Sutol
+<p align="center">
+  <img src="assets/images/sutols_wordmark.webp" alt="Sutol" width="340" />
+</p>
 
-![Sutol wordmark](assets/images/sutols_wordmark.webp)
+<p align="center">Başlık ve metinlerden düzenlenebilir HTML sunumları oluşturan Flutter Web uygulaması.</p>
 
-[![Flutter](https://img.shields.io/badge/Flutter-02569B?style=flat&logo=flutter&logoColor=white)](https://flutter.dev/)
-[![Dart](https://img.shields.io/badge/Dart-0175C2?style=flat&logo=dart&logoColor=white)](https://dart.dev/)
-[![Firebase](https://img.shields.io/badge/Firebase-FFCA28?style=flat&logo=firebase&logoColor=black)](https://firebase.google.com/)
-[![Platform](https://img.shields.io/badge/Platform-Flutter%20Web-0F766E?style=flat)](#kurulum)
+<p align="center">
+  <a href="https://flutter.dev/"><img src="https://img.shields.io/badge/Flutter-02569B?style=flat-square&logo=flutter&logoColor=white" alt="Flutter" /></a>
+  <a href="https://dart.dev/"><img src="https://img.shields.io/badge/Dart-0175C2?style=flat-square&logo=dart&logoColor=white" alt="Dart" /></a>
+  <a href="https://firebase.google.com/"><img src="https://img.shields.io/badge/Firebase-FFCA28?style=flat-square&logo=firebase&logoColor=black" alt="Firebase" /></a>
+  <a href="#kurulum"><img src="https://img.shields.io/badge/Platform-Flutter%20Web-0F766E?style=flat-square" alt="Flutter Web" /></a>
+</p>
 
-Sutol, başlık ve metinlerden düzenlenebilir HTML sunumları üreten, Flutter Web tabanlı bir sunum hazırlama uygulamasıdır. İçeriği anahtar kelime ve benzerlik eşleştirmesiyle analiz eder, uygun arka planları ve görsel bileşenleri seçer, ardından sonuçları doğrudan düzenlenebilir bir sunum projesi olarak sunar.
+Sutol, içerikleri anahtar kelime ve benzerlik eşleştirmesiyle analiz eder; konuya uygun arka planları, yerleşimleri ve görsel bileşenleri seçerek sonucu doğrudan düzenlenebilir bir sunum projesine dönüştürür.
 
 > [!NOTE]
 > Otomatik oluşturma akışı harici bir yapay zekâ servisine bağlanmadan, yerel ve deterministik kurallarla çalışır.
 
 ## Canlı Demo
 
-Bu depoya bağlı bir kamuya açık demo bağlantısı henüz eklenmemiştir. Uygulamayı yerelde çalıştırmak için aşağıdaki kurulum adımlarını kullanabilirsiniz. Eğer sonra bir dağıtım yayınlarsanız, buraya demo URL’si eklemek iyi bir fikir olur.
+Bu depo için henüz kamuya açık bir demo bağlantısı bulunmuyor. Uygulamayı yerelde başlatmak için [Kurulum](#kurulum) bölümünü izleyin.
 
-## Önizleme
-
-<p align="center">
-  <img src="assets/readme/preview-desktop.png" alt="Sutol editor desktop preview" width="1200" />
-</p>
+## Ürün Görünümü
 
 <p align="center">
-  <img src="assets/readme/preview-presentation.png" alt="Sutol presentation preview" width="1200" />
+  <img src="assets/readme/preview-presentation.png" alt="Sutol sunum editörü" width="1080" />
 </p>
 
-<p align="center">
-  <img src="assets/readme/preview-mobile.png" alt="Sutol mobile preview" width="260" />
-</p>
+<p align="center"><sub>Sunum düzenleyicisi — sahneler, araçlar ve ayrıntılı özellikler tek çalışma alanında.</sub></p>
+
+<table>
+  <tr>
+    <td width="76%" align="center" valign="top">
+      <img src="assets/readme/preview-mobile.png" alt="Sutol sunum modu" width="760" />
+      <br />
+      <sub>Odaklanmış sunum modu</sub>
+    </td>
+    <td width="24%" align="center" valign="top">
+      <img src="assets/readme/preview-desktop.png" alt="Sutol mobil düzenleyici" width="230" />
+      <br />
+      <sub>Mobil düzenleme deneyimi</sub>
+    </td>
+  </tr>
+</table>
+
+## Neler Sunar
+
+- **İçerikten taslağa:** Başlık ve metinden uygun sayfa düzeni, arka plan ve bileşenler oluşturur.
+- **Tam kontrol:** Metinler, görseller, efektler, reveal adımları, hotspot’lar ve sunucu notları editörde yönetilir.
+- **Esnek çıktı:** Çalışmalar Sutol JSON proje dosyası olarak saklanır; tek HTML dosyası veya tarayıcı üzerinden PDF olarak dışa aktarılır.
+- **Her ekrana uyum:** Düzenleme ve sunum deneyimi hem masaüstünde hem mobilde kullanılabilir.
+
+## Önizleme Akışı
+
+1. Bir sunum oluşturun ve slaytlarınız için başlık ile metin ekleyin.
+2. İçeriği oluşturun; Sutol uygun bileşenleri ve yerleşimi hazırlasın.
+3. Editörde ayrıntıları düzenleyin, sunum modunda gözden geçirin ve dışa aktarın.
 
 ## İçindekiler
 
+- [Neler Sunar](#neler-sunar)
+- [Önizleme Akışı](#önizleme-akışı)
 - [Öne Çıkanlar](#öne-çıkanlar)
 - [Nasıl Çalışır](#nasıl-çalışır)
 - [Teknoloji](#teknoloji)
