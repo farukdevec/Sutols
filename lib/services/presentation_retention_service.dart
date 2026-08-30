@@ -43,17 +43,7 @@ class PresentationRetentionService {
     if (documents.length <= limit) return;
 
     // Dart tarafında createdAt'e göre yeniden eskiye (azalan) sırala
-    documents.sort((a, b) {
-      final aFields = a['fields'] as Map<String, dynamic>? ?? const {};
-      final bFields = b['fields'] as Map<String, dynamic>? ?? const {};
-      final aTime = FirestoreRestHelper.timestampField(aFields, 'createdAt');
-      final bTime = FirestoreRestHelper.timestampField(bFields, 'createdAt');
-      final aDate =
-          DateTime.tryParse(aTime) ?? DateTime.fromMillisecondsSinceEpoch(0);
-      final bDate =
-          DateTime.tryParse(bTime) ?? DateTime.fromMillisecondsSinceEpoch(0);
-      return bDate.compareTo(aDate);
-    });
+    sortDocumentsNewestFirst(documents);
 
     // Sıralı listede limit'i aşan (en eski) sunumları bul
     final excessDocs = documents.skip(limit);
@@ -63,6 +53,31 @@ class PresentationRetentionService {
           (document['name'] as String? ?? '').split('/').last;
       if (presentationId.isEmpty) continue;
       await _deletePresentationTree(presentationId);
+    }
+  }
+
+  static void sortDocumentsNewestFirst(
+    List<Map<String, dynamic>> documents,
+  ) {
+    final epoch = DateTime.fromMillisecondsSinceEpoch(0);
+    final datedDocuments = <({
+      Map<String, dynamic> document,
+      DateTime createdAt,
+    })>[
+      for (final document in documents)
+        (
+          document: document,
+          createdAt: DateTime.tryParse(
+                FirestoreRestHelper.timestampField(
+                  document['fields'] as Map<String, dynamic>? ?? const {},
+                  'createdAt',
+                ),
+              ) ??
+              epoch,
+        ),
+    ]..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    for (var index = 0; index < documents.length; index += 1) {
+      documents[index] = datedDocuments[index].document;
     }
   }
 

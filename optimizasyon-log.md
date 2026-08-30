@@ -411,3 +411,15 @@ Başlangıç baseline (2026-08-30 03:54 +03): release `main.dart.js` 7.089.498 b
 **Not/Ders:** Küme birleşimi ve kesişimi yalnız sayısal oran için materyalize edilmemeli; küçük kümede üyelik sayımı sonucu birebir korurken bu sıcak yardımcıyı yaklaşık altıda bire indirdi.
 
 ---
+
+## Tur 35 - 2026-08-30 20:01 +03
+
+**Hipotez:** Saklama limiti sıralamasında `createdAt` değerini her karşılaştırmada yeniden parse etmek yerine belge başına bir kez parse etmek CPU ve tarih nesnesi tahsislerini azaltır.
+**Değişiklik:** Belgeler sıralama öncesi `(document, createdAt)` kayıtlarına dönüştürülerek tarihleri bir kez parse edildi; aynı azalan tarih karşılaştırması korunup deterministik 2.000 belgeli sıralama benchmarkı eklendi.
+**Baseline Metrikler:** Ayrı süreç medyanları: 76.861 / 70.354 / 72.467 µs; süreç medyanlarının medyanı 72.467 µs; checksum: 1.333.333.000; bundle: 6.988.412 bayt.
+**Sonuç Metrikler:** Ayrı süreç medyanları: 12.906 / 12.915 / 14.452 µs; süreç medyanlarının medyanı 12.915 µs (-%82,2); checksum aynı; bundle: 6.988.767 bayt (+355, +%0,0051).
+**Fonksiyonel Regresyon:** Geçti — hedefli analiz temiz; saklama limiti ve sıralama testleri 4/4 geçti; release web build başarılı.
+**Karar:** KABUL EDİLDİ (commit)
+**Not/Ders:** Sort karşılaştırıcısında pahalı parse işlemi tekrarlanmamalı; Schwartz dönüşümü aynı belge sırasını korurken tarih parse sayısını karşılaştırma sayısından belge sayısına düşürdü.
+
+---
