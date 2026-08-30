@@ -505,12 +505,21 @@ def generate(components: list[Component]) -> str:
     lines.append("String presentationComponentLabel(PresentationComponentKind kind) =>")
     lines.append("    presentationComponentDefinition(kind).label;")
     lines.append("")
+    lines.append("final List<String?> _presentationComponentSubtitles =")
+    lines.append(
+        "    List<String?>.filled(PresentationComponentKind.values.length, null);"
+    )
+    lines.append("")
     lines.append(
         "String presentationComponentSubtitle(PresentationComponentKind kind) {"
     )
+    lines.append("  final cached = _presentationComponentSubtitles[kind.index];")
+    lines.append("  if (cached != null) return cached;")
     lines.append("  final definition = presentationComponentDefinition(kind);")
     lines.append("  final tags = definition.tags.take(4).join(', ');")
-    lines.append("  return tags.isEmpty ? definition.description : tags;")
+    lines.append("  final subtitle = tags.isEmpty ? definition.description : tags;")
+    lines.append("  _presentationComponentSubtitles[kind.index] = subtitle;")
+    lines.append("  return subtitle;")
     lines.append("}")
     lines.append("")
     lines.append(

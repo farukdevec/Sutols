@@ -41028,10 +41028,17 @@ PresentationComponentDefinition presentationComponentDefinition(
 String presentationComponentLabel(PresentationComponentKind kind) =>
     presentationComponentDefinition(kind).label;
 
+final List<String?> _presentationComponentSubtitles =
+    List<String?>.filled(PresentationComponentKind.values.length, null);
+
 String presentationComponentSubtitle(PresentationComponentKind kind) {
+  final cached = _presentationComponentSubtitles[kind.index];
+  if (cached != null) return cached;
   final definition = presentationComponentDefinition(kind);
   final tags = definition.tags.take(4).join(', ');
-  return tags.isEmpty ? definition.description : tags;
+  final subtitle = tags.isEmpty ? definition.description : tags;
+  _presentationComponentSubtitles[kind.index] = subtitle;
+  return subtitle;
 }
 
 String presentationComponentCategory(PresentationComponentKind kind) =>

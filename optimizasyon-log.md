@@ -255,3 +255,15 @@ Başlangıç baseline (2026-08-30 03:54 +03): release `main.dart.js` 7.089.498 b
 **Not/Ders:** Büyük enum switch'i Dart VM'de beklenenden pahalıydı; indeksli const tablo çıktıyı korurken lookup'u yaklaşık 65 kat hızlandırdı.
 
 ---
+
+## Tur 22 - 2026-08-30 05:57 +03
+
+**Hipotez:** Değişmez bileşen alt başlıklarını her widget rebuild'inde `take(4).join` ile üretmek yerine enum başına tembel önbelleğe almak CPU/GC maliyetini azaltır.
+**Değişiklik:** En fazla 1.051 nullable slot kullanan `_presentationComponentSubtitles` eklendi; her alt başlık ilk erişimde aynı tags/description kuralıyla üretilip tekrar kullanılıyor.
+**Baseline Metrikler:** 100 bin karışık alt başlık erişimi medyanı: 19.027 µs; bundle: 6.986.867 bayt.
+**Sonuç Metrikler:** Ayrı süreç medyanları: 1.615 / 1.461 / 1.393 µs (en muhafazakâr -%91,5); bundle: 6.986.867 bayt (değişmedi).
+**Fonksiyonel Regresyon:** Geçti — 1.051/1.051 sonuç orijinal tags/description hesabıyla aynı; component/editor/codec/export/tur paketinde 77/77 test ve release build başarılı.
+**Karar:** KABUL EDİLDİ (commit)
+**Not/Ders:** Kart grid'i tekrar çizildiğinde aynı join dizeleri ve ara iterable'lar yeniden üretilmiyor; önbellek katalog boyutuyla sabit sınırlı.
+
+---
