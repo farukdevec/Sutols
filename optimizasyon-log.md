@@ -87,3 +87,15 @@ Başlangıç baseline (2026-08-30 03:54 +03): release `main.dart.js` 7.089.498 b
 **Not/Ders:** Kayıpsız accessor/buffer tekilleştirme, çizilen geometriyi değiştirmeden model payload'ından 674.412 bayt kaldırdı.
 
 ---
+
+## Tur 8 - 2026-08-30 04:29 +03
+
+**Hipotez:** Tekrarlanan animasyonsuz mesh düğümlerini `EXT_mesh_gpu_instancing` ile işaretlemek draw call yükünü geometriyi değiştirmeden azaltır.
+**Değişiklik:** Geçici GLB üzerinde `instance` dönüşümü denendi; araç animasyonlu dosyalarda dönüşümü güvenli bulmayıp uygulamadı, üretim dosyası değişmedi.
+**Baseline Metrikler:** Model: 3.627.636 bayt; GPU upload vertex: 73.278; render vertex: 922.572.
+**Sonuç Metrikler:** Model: 3.627.636 bayt; GPU upload vertex: 73.278; render vertex: 922.572 (iyileşme yok).
+**Fonksiyonel Regresyon:** Geçti — üretilen dosya metrikleri/gerekli uzantıları değişmedi; üretim değişikliği yapılmadı.
+**Karar:** REDDEDİLDİ (geri alındı)
+**Not/Ders:** Animasyonlu düğümleri elle ayıran varyasyonlar davranış riski taşıyor; GPU instancing bu modelde yeniden denenmemeli.
+
+---
