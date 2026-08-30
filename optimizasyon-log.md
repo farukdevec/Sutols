@@ -375,3 +375,15 @@ Başlangıç baseline (2026-08-30 03:54 +03): release `main.dart.js` 7.089.498 b
 **Not/Ders:** Basit ASCII sözleşmesinde genel regex motoru baskın maliyetti; eşdeğer doğrudan tarama tokenizerı yaklaşık 17 kat, bileşen eşleştirmeyi yaklaşık 2,6 kat hızlandırdı.
 
 ---
+
+## Tur 32 - 2026-08-30 19:11 +03
+
+**Hipotez:** Paketlenen en büyük uygulama asset’i `sutols_loading_logo.webm` dosyasını codec akışını değiştirmeden kapsayıcı düzeyinde remux etmek ilk yükleme transferini azaltabilir.
+**Değişiklik:** Runtime kullanımı ve 1.190.331 baytlık paket katkısı doğrulandı; ortamda `ffmpeg`, `ffprobe` veya decoded-frame eşdeğerliğini kanıtlayacak güvenilir WebM aracı bulunmadığı için üretim dosyasına dokunulmadı.
+**Baseline Metrikler:** WebM: 1.190.331 bayt; release paketteki en büyük uygulama medya asset’i.
+**Sonuç Metrikler:** Dosya ve transfer boyutu değişmedi; güvenli remux çıktısı üretilemediği için ölçülebilir kazanım yok.
+**Fonksiyonel Regresyon:** Geçti — kaynak, codec akışı, kareler ve runtime URL’si değiştirilmedi.
+**Karar:** REDDEDİLDİ (değişiklik uygulanmadı)
+**Not/Ders:** WebM üzerinde araçsız bayt düzeyi müdahale kalite/eşdeğerlik kanıtı sağlayamaz; doğrulanmış remux ve frame-hash aracı olmadan bu varyasyon yeniden denenmemeli.
+
+---
