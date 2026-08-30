@@ -207,3 +207,15 @@ Başlangıç baseline (2026-08-30 03:54 +03): release `main.dart.js` 7.089.498 b
 **Not/Ders:** Flutter klasör asset bildirimi recursive değil; kaynak kitaplık 3,54 MB olsa da release'e yalnız 55,8 KB giriyor, bu nedenle manifest varyasyonları yeniden denenmemeli.
 
 ---
+
+## Tur 18 - 2026-08-30 05:48 +03
+
+**Hipotez:** İlk rota/manifest tarafından kullanılan favicon PNG'lerini kayıpsız yeniden kodlamak ağ transferini azaltır.
+**Değişiklik:** 64, 192 ve 512 piksel faviconlar geçici dizinde PNG olarak yeniden kodlandı; üretim dosyaları değiştirilmedi.
+**Baseline Metrikler:** 64 px: 8.217 bayt; 192 px: 49.869 bayt; 512 px: 268.619 bayt.
+**Sonuç Metrikler:** Sırasıyla 8.204 / 49.856 / 268.606 bayt; en iyi kazanç 13 bayt ve `%0,16` altında.
+**Fonksiyonel Regresyon:** Geçti — deneme yalnız geçici dosyalarda yapıldı; üretim çıktısı değişmedi.
+**Karar:** REDDEDİLDİ (değişiklik uygulanmadı)
+**Not/Ders:** Mevcut favicon PNG'leri zaten etkin sıkıştırılmış; aynı yeniden kodlama veya küçük codec ayarı varyasyonları `%3` eşiğine ulaşamaz.
+
+---
