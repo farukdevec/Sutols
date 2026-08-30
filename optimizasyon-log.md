@@ -75,3 +75,15 @@ Başlangıç baseline (2026-08-30 03:54 +03): release `main.dart.js` 7.089.498 b
 **Not/Ders:** Tekrarlanan sahne/iframe üretiminde 89 KB font CSS taraması atlanıyor; önbellek bellek büyümesini engellemek için sekiz girişle sınırlı.
 
 ---
+
+## Tur 7 - 2026-08-30 04:27 +03
+
+**Hipotez:** Anıtkabir GLB içindeki yinelenen, bit düzeyinde eşdeğer veri yapılarının kayıpsız tekilleştirilmesi transfer ve GPU yükleme maliyetini görsel/işlevsel değişiklik olmadan azaltır.
+**Değişiklik:** Yalnız yapısal `dedup` uygulandı; geometri, texture, animasyon ve sıkıştırma ayarları değiştirilmedi; katalog boyut metadatası güncellendi.
+**Baseline Metrikler:** Model: 4.302.048 bayt; GPU upload vertex: 78.702; render vertex: 922.572; Bundle: 6.920.649 bayt.
+**Sonuç Metrikler:** Model: 3.627.636 bayt (-%15,7); GPU upload vertex: 73.278 (-%6,9); render vertex: 922.572; Bundle: 6.920.722 bayt.
+**Fonksiyonel Regresyon:** Geçti — durağan ve animasyonlu Chrome kare hash'leri birebir aynı; bbox, kamera hedefi, üç animasyon ve konsol çıktısı aynı; 43/43 tur testi ve release build başarılı.
+**Karar:** KABUL EDİLDİ (commit)
+**Not/Ders:** Kayıpsız accessor/buffer tekilleştirme, çizilen geometriyi değiştirmeden model payload'ından 674.412 bayt kaldırdı.
+
+---
