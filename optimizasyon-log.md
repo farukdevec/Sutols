@@ -27,3 +27,15 @@ Başlangıç baseline (2026-08-30 03:54 +03): release `main.dart.js` 7.089.498 b
 **Not/Ders:** Vsync FPS'i zaten tavanda; değişmeyen model sınırı çağrılarının yarısı ve bunların geçici nesneleri kaldırıldı.
 
 ---
+
+## Tur 3 - 2026-08-30 04:10 +03
+
+**Hipotez:** Önizleme ve geçiş iframe'lerine tüm yerel font CSS'ini gömmek yerine yalnız kullanılan aileleri eklemek belge aktarımını/CSS parse yükünü görsel fark olmadan azaltır.
+**Değişiklik:** Tek sayfa ve iki sayfalı geçiş belgeleri mevcut `sutolHtmlStageStylesForPages` filtresini kullanıyor; kullanılan fontun korunduğu test edildi.
+**Baseline Metrikler:** Tur belgesi: 238.829 bayt; geçiş belgesi: 244.845 bayt; font-face: 172; Bundle: 7.090.501 bayt; yükleme: 1.693 ms.
+**Sonuç Metrikler:** Tur belgesi: 150.261 bayt (-%37,1); geçiş belgesi: 158.341 bayt (-%35,3); font-face: 0; Bundle: 6.919.962 bayt (-%2,4); yükleme: 1.685 ms.
+**Fonksiyonel Regresyon:** Geçti — Chrome ekran görüntüsü hash'i birebir aynı, konsol temiz, kullanılan Roboto korundu ve 43/43 tur testi geçti.
+**Karar:** KABUL EDİLDİ (commit)
+**Not/Ders:** Model içeren metinsiz tur iframe'leri 88.568 bayt daha az CSS taşıyor; görsel çıktı değişmedi.
+
+---

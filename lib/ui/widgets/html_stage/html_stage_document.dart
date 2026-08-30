@@ -226,8 +226,12 @@ String buildHtmlPageTransitionDocument({
         (block) => block.modelAssetId != null,
       ) ||
       to.componentBlocks.any((block) => block.modelAssetId != null);
+  final transitionStyles = sutolHtmlStageStylesForPages(<PresentationPage>[
+    from,
+    to,
+  ]);
   return '''<!doctype html><html><head><meta charset="utf-8">${needsModelViewer ? sutolModelViewerScriptTag : ''}<style>
-$sutolHtmlStageStyles
+$transitionStyles
 html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#000}
 .sutol-transition-frame{position:absolute;inset:0;overflow:hidden;will-change:transform,opacity,clip-path;animation-duration:${durationMs}ms;animation-timing-function:cubic-bezier(.65,0,.35,1);animation-fill-mode:both;animation-play-state:paused}
 body.sutol-transition-playing .sutol-transition-frame{animation-play-state:running}
@@ -343,6 +347,7 @@ String buildHtmlStageDocument({
   Map<String, String> imageSourcesById = const <String, String>{},
   bool tourPointPlacementEnabled = false,
 }) {
+  final stageStyles = sutolHtmlStageStylesForPages(<PresentationPage>[page]);
   final buffer = StringBuffer()
     ..writeln('<!DOCTYPE html>')
     ..writeln(
@@ -359,7 +364,7 @@ String buildHtmlStageDocument({
           : '',
     )
     ..writeln('<style>')
-    ..writeln(sutolHtmlStageStyles)
+    ..writeln(stageStyles)
     ..writeln('</style>')
     ..writeln('</head>')
     ..writeln('<body>')

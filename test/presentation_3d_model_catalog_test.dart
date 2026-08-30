@@ -379,7 +379,33 @@ void main() {
         contains('https://assets.sutols.com/yolcu_ucagi.glb?token=test'));
     expect(document, contains('camera-controls'));
     expect(document, contains('camera-orbit="0.00deg 75.00deg 100.00%"'));
+    expect(document, isNot(contains('@font-face')));
     expect(document, isNot(contains(' auto-rotate')));
+  });
+
+  test('HTML sahnesi yalnız kullanılan yerel font ailesini içerir', () {
+    const page = PresentationPage(
+      id: 'filtered-font-page',
+      textBlocks: <PresentationTextBlock>[
+        PresentationTextBlock(
+          id: 'roboto-title',
+          text: 'Sutols',
+          position: Offset.zero,
+          fontSize: 32,
+          type: PresentationTextType.title,
+          widthFactor: 1,
+          textStyle: PresentationTextStyle.googleRoboto,
+        ),
+      ],
+    );
+
+    final document = buildHtmlStageDocument(page: page);
+
+    expect(document, contains("@font-face {\n  font-family: 'Roboto'"));
+    expect(
+      document,
+      isNot(contains("@font-face {\n  font-family: 'Alegreya'")),
+    );
   });
 
   test('sanal tur modeli sunum ve dışa aktarımda sürüklenerek keşfedilebilir',
