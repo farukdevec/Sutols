@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import re
 import urllib.error
 import urllib.parse
@@ -130,6 +131,7 @@ def main() -> None:
     )
     output_blocks: list[str] = []
     seen: set[tuple[str, str, str]] = set()
+    filename_by_digest: dict[str, str] = {}
 
     for subset, body in blocks:
         family_match = re.search(r"font-family:\s*'([^']+)'", body)
@@ -150,8 +152,16 @@ def main() -> None:
 
         extension = ".woff2" if url_match.group(1).endswith(".woff2") else ".ttf"
         filename = f"{slug(family)}-{weight}-{subset}{extension}"
-        (FONT_DIR / filename).write_bytes(fetch(url_match.group(1)))
-        local_url = f"assets/assets/fonts/google_fonts/{filename}"
+        font_bytes = fetch(url_match.group(1))
+        digest = hashlib.sha256(font_bytes).hexdigest()
+        local_filename = filename_by_digest.setdefault(digest, filename)
+        if local_filename == filename:
+            (FONT_DIR / filename).write_bytes(font_bytes)
+        else:
+            duplicate_path = FONT_DIR / filename
+            if duplicate_path.exists():
+                duplicate_path.unlink()
+        local_url = f"assets/assets/fonts/google_fonts/{local_filename}"
         css_lines = [
             "@font-face {",
             f"  font-family: '{family}';",

@@ -183,3 +183,15 @@ Başlangıç baseline (2026-08-30 03:54 +03): release `main.dart.js` 7.089.498 b
 **Not/Ders:** Yalnız WebP logo bildiriliyor ve kullanılıyor; manifest dışındaki PNG'yi optimize etmek repo boyutu dışında uygulama performansına etki etmiyor.
 
 ---
+
+## Tur 16 - 2026-08-30 05:45 +03
+
+**Hipotez:** Bayt düzeyinde aynı olan yerel 400/700 WOFF2 dosyalarını tek URL'de birleştirmek font transferini ve deploy boyutunu görsel fark olmadan azaltır.
+**Değişiklik:** SHA-256'sı aynı 63 adet 700 dosyasının CSS yerel kaynağı karşılık gelen 400 dosyasına yönlendirildi, kopyalar kaldırıldı ve font indirme aracı aynı içeriği yeniden üretmeyecek biçimde güncellendi.
+**Baseline Metrikler:** 178 WOFF2: 5.985.664 bayt; yinelenen içerik: 2.570.188 bayt; release font paketi: 5.985.664 bayt.
+**Sonuç Metrikler:** 115 WOFF2: 3.415.476 bayt (-%42,9); yinelenen hash grubu: 0; release `main.dart.js`: 7.002.709 bayt (değişmedi).
+**Fonksiyonel Regresyon:** Geçti — 172 CSS yerel kaynağının tamamı mevcut, 80 adet 700 yüzü korunuyor, kaldırılan her dosya canonical dosyayla bit düzeyinde aynı; 41/41 ilgili test ve release build başarılı.
+**Karar:** KABUL EDİLDİ (commit)
+**Not/Ders:** Font glif/veri ve CSS weight sözleşmesi değişmeden deploy/önbellek yükünden 2.570.188 bayt kaldırıldı; ortak yüzlerde 400+700 ağ isteği tek kaynakta birleşiyor.
+
+---

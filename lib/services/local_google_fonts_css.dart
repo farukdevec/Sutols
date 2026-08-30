@@ -27,7 +27,7 @@ const String sutolLocalGoogleFontsCss = r'''
   font-style: normal;
   font-weight: 700;
   font-display: swap;
-  src: url('assets/assets/fonts/google_fonts/alegreya-700-latin-ext.woff2') format('woff2'),
+  src: url('assets/assets/fonts/google_fonts/alegreya-400-latin-ext.woff2') format('woff2'),
        url('https://fonts.gstatic.com/s/alegreya/v41/4UaBrEBBsBhlBjvfkSLvx6jj4JN0EwI.woff2') format('woff2');
   unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
 }
@@ -37,7 +37,7 @@ const String sutolLocalGoogleFontsCss = r'''
   font-style: normal;
   font-weight: 700;
   font-display: swap;
-  src: url('assets/assets/fonts/google_fonts/alegreya-700-latin.woff2') format('woff2'),
+  src: url('assets/assets/fonts/google_fonts/alegreya-400-latin.woff2') format('woff2'),
        url('https://fonts.gstatic.com/s/alegreya/v41/4UaBrEBBsBhlBjvfkSLhx6jj4JN0.woff2') format('woff2');
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
@@ -87,7 +87,7 @@ const String sutolLocalGoogleFontsCss = r'''
   font-style: normal;
   font-weight: 700;
   font-display: swap;
-  src: url('assets/assets/fonts/google_fonts/arimo-700-latin-ext.woff2') format('woff2'),
+  src: url('assets/assets/fonts/google_fonts/arimo-400-latin-ext.woff2') format('woff2'),
        url('https://fonts.gstatic.com/s/arimo/v36/P5sMzZCDf9_T_10XxCFuj5-v6dg.woff2') format('woff2');
   unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
 }
@@ -97,7 +97,7 @@ const String sutolLocalGoogleFontsCss = r'''
   font-style: normal;
   font-weight: 700;
   font-display: swap;
-  src: url('assets/assets/fonts/google_fonts/arimo-700-latin.woff2') format('woff2'),
+  src: url('assets/assets/fonts/google_fonts/arimo-400-latin.woff2') format('woff2'),
        url('https://fonts.gstatic.com/s/arimo/v36/P5sMzZCDf9_T_10ZxCFuj5-v.woff2') format('woff2');
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
@@ -247,7 +247,7 @@ const String sutolLocalGoogleFontsCss = r'''
   font-style: normal;
   font-weight: 700;
   font-display: swap;
-  src: url('assets/assets/fonts/google_fonts/caveat-700-latin-ext.woff2') format('woff2'),
+  src: url('assets/assets/fonts/google_fonts/caveat-400-latin-ext.woff2') format('woff2'),
        url('https://fonts.gstatic.com/s/caveat/v23/Wnz6HAc5bAfYB2Q7aDYYiAzcPDKo.woff2') format('woff2');
   unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
 }
@@ -257,7 +257,7 @@ const String sutolLocalGoogleFontsCss = r'''
   font-style: normal;
   font-weight: 700;
   font-display: swap;
-  src: url('assets/assets/fonts/google_fonts/caveat-700-latin.woff2') format('woff2'),
+  src: url('assets/assets/fonts/google_fonts/caveat-400-latin.woff2') format('woff2'),
        url('https://fonts.gstatic.com/s/caveat/v23/Wnz6HAc5bAfYB2Q7ZjYYiAzcPA.woff2') format('woff2');
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
@@ -327,7 +327,7 @@ const String sutolLocalGoogleFontsCss = r'''
   font-style: normal;
   font-weight: 700;
   font-display: swap;
-  src: url('assets/assets/fonts/google_fonts/dm-sans-700-latin-ext.woff2') format('woff2'),
+  src: url('assets/assets/fonts/google_fonts/dm-sans-400-latin-ext.woff2') format('woff2'),
        url('https://fonts.gstatic.com/s/dmsans/v17/rP2Yp2ywxg089UriI5-g4vlH9VoD8Cmcqbu6-K6z9mXgjU0.woff2') format('woff2');
   unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
 }
@@ -337,7 +337,7 @@ const String sutolLocalGoogleFontsCss = r'''
   font-style: normal;
   font-weight: 700;
   font-display: swap;
-  src: url('assets/assets/fonts/google_fonts/dm-sans-700-latin.woff2') format('woff2'),
+  src: url('assets/assets/fonts/google_fonts/dm-sans-400-latin.woff2') format('woff2'),
        url('https://fonts.gstatic.com/s/dmsans/v17/rP2Yp2ywxg089UriI5-g4vlH9VoD8Cmcqbu0-K6z9mXg.woff2') format('woff2');
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
@@ -367,7 +367,7 @@ const String sutolLocalGoogleFontsCss = r'''
   font-style: normal;
   font-weight: 700;
   font-display: swap;
-  src: url('assets/assets/fonts/google_fonts/dancing-script-700-latin-ext.woff2') format('woff2'),
+  src: url('assets/assets/fonts/google_fonts/dancing-script-400-latin-ext.woff2') format('woff2'),
        url('https://fonts.gstatic.com/s/dancingscript/v29/If2RXTr6YS-zF4S-kcSWSVi_szLuiuEHiC4Wl-8.woff2') format('woff2');
   unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
 }
@@ -377,7 +377,7 @@ const String sutolLocalGoogleFontsCss = r'''
   font-style: normal;
   font-weight: 700;
   font-display: swap;
-  src: url('assets/assets/fonts/google_fonts/dancing-script-700-latin.woff2') format('woff2'),
+  src: url('assets/assets/fonts/google_fonts/dancing-script-400-latin.woff2') format('woff2'),
        url('https://fonts.gstatic.com/s/dancingscript/v29/If2RXTr6YS-zF4S-kcSWSVi_szLgiuEHiC4W.woff2') format('woff2');
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
@@ -407,7 +407,7 @@ const String sutolLocalGoogleFontsCss = r'''
   font-style: normal;
   font-weight: 700;
   font-display: swap;
-  src: url('assets/assets/fonts/google_fonts/eb-garamond-700-latin-ext.woff2') format('woff2'),
+  src: url('assets/assets/fonts/google_fonts/eb-garamond-400-latin-ext.woff2') format('woff2'),
        url('https://fonts.gstatic.com/s/ebgaramond/v33/SlGUmQSNjdsmc35JDF1K5GR7SDk_YAPIlWk.woff2') format('woff2');
   unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
 }
@@ -417,7 +417,7 @@ const String sutolLocalGoogleFontsCss = r'''
   font-style: normal;
   font-weight: 700;
   font-display: swap;
-  src: url('assets/assets/fonts/google_fonts/eb-garamond-700-latin.woff2') format('woff2'),
+  src: url('assets/assets/fonts/google_fonts/eb-garamond-400-latin.woff2') format('woff2'),
        url('https://fonts.gstatic.com/s/ebgaramond/v33/SlGUmQSNjdsmc35JDF1K5GR1SDk_YAPI.woff2') format('woff2');
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
@@ -467,7 +467,7 @@ const String sutolLocalGoogleFontsCss = r'''
   font-style: normal;
   font-weight: 700;
   font-display: swap;
-  src: url('assets/assets/fonts/google_fonts/inter-700-latin-ext.woff2') format('woff2'),
+  src: url('assets/assets/fonts/google_fonts/inter-400-latin-ext.woff2') format('woff2'),
        url('https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa25L7W0Q5n-wU.woff2') format('woff2');
   unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
 }
@@ -477,7 +477,7 @@ const String sutolLocalGoogleFontsCss = r'''
   font-style: normal;
   font-weight: 700;
   font-display: swap;
-  src: url('assets/assets/fonts/google_fonts/inter-700-latin.woff2') format('woff2'),
+  src: url('assets/assets/fonts/google_fonts/inter-400-latin.woff2') format('woff2'),
        url('https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7W0Q5nw.woff2') format('woff2');
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
@@ -587,7 +587,7 @@ const String sutolLocalGoogleFontsCss = r'''
   font-style: normal;
   font-weight: 700;
   font-display: swap;
-  src: url('assets/assets/fonts/google_fonts/libre-baskerville-700-latin-ext.woff2') format('woff2'),
+  src: url('assets/assets/fonts/google_fonts/libre-baskerville-400-latin-ext.woff2') format('woff2'),
        url('https://fonts.gstatic.com/s/librebaskerville/v24/kmKnZrc3Hgbbcjq75U4uslyuy4kn0qNXaxMaC82U-ro.woff2') format('woff2');
   unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
 }
@@ -597,7 +597,7 @@ const String sutolLocalGoogleFontsCss = r'''
   font-style: normal;
   font-weight: 700;
   font-display: swap;
-  src: url('assets/assets/fonts/google_fonts/libre-baskerville-700-latin.woff2') format('woff2'),
+  src: url('assets/assets/fonts/google_fonts/libre-baskerville-400-latin.woff2') format('woff2'),
        url('https://fonts.gstatic.com/s/librebaskerville/v24/kmKnZrc3Hgbbcjq75U4uslyuy4kn0qNZaxMaC82U.woff2') format('woff2');
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
@@ -647,7 +647,7 @@ const String sutolLocalGoogleFontsCss = r'''
   font-style: normal;
   font-weight: 700;
   font-display: swap;
-  src: url('assets/assets/fonts/google_fonts/lora-700-latin-ext.woff2') format('woff2'),
+  src: url('assets/assets/fonts/google_fonts/lora-400-latin-ext.woff2') format('woff2'),
        url('https://fonts.gstatic.com/s/lora/v37/0QIvMX1D_JOuMwT7I_FMl_GW8g.woff2') format('woff2');
   unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
 }
@@ -657,7 +657,7 @@ const String sutolLocalGoogleFontsCss = r'''
   font-style: normal;
   font-weight: 700;
   font-display: swap;
-  src: url('assets/assets/fonts/google_fonts/lora-700-latin.woff2') format('woff2'),
+  src: url('assets/assets/fonts/google_fonts/lora-400-latin.woff2') format('woff2'),
        url('https://fonts.gstatic.com/s/lora/v37/0QIvMX1D_JOuMwr7I_FMl_E.woff2') format('woff2');
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
@@ -687,7 +687,7 @@ const String sutolLocalGoogleFontsCss = r'''
   font-style: normal;
   font-weight: 700;
   font-display: swap;
-  src: url('assets/assets/fonts/google_fonts/manrope-700-latin-ext.woff2') format('woff2'),
+  src: url('assets/assets/fonts/google_fonts/manrope-400-latin-ext.woff2') format('woff2'),
        url('https://fonts.gstatic.com/s/manrope/v20/xn7gYHE41ni1AdIRggmxSvfedN62Zw.woff2') format('woff2');
   unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
 }
@@ -697,7 +697,7 @@ const String sutolLocalGoogleFontsCss = r'''
   font-style: normal;
   font-weight: 700;
   font-display: swap;
-  src: url('assets/assets/fonts/google_fonts/manrope-700-latin.woff2') format('woff2'),
+  src: url('assets/assets/fonts/google_fonts/manrope-400-latin.woff2') format('woff2'),
        url('https://fonts.gstatic.com/s/manrope/v20/xn7gYHE41ni1AdIRggexSvfedN4.woff2') format('woff2');
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
@@ -727,7 +727,7 @@ const String sutolLocalGoogleFontsCss = r'''
   font-style: normal;
   font-weight: 700;
   font-display: swap;
-  src: url('assets/assets/fonts/google_fonts/merriweather-700-latin-ext.woff2') format('woff2'),
+  src: url('assets/assets/fonts/google_fonts/merriweather-400-latin-ext.woff2') format('woff2'),
        url('https://fonts.gstatic.com/s/merriweather/v33/u-4e0qyriQwlOrhSvowK_l5UcA6zuSYEqOzpPe3HOZJ5eX1WtLaQwmYiSeqkJ-mXq1Gi3iE.woff2') format('woff2');
   unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
 }
@@ -737,7 +737,7 @@ const String sutolLocalGoogleFontsCss = r'''
   font-style: normal;
   font-weight: 700;
   font-display: swap;
-  src: url('assets/assets/fonts/google_fonts/merriweather-700-latin.woff2') format('woff2'),
+  src: url('assets/assets/fonts/google_fonts/merriweather-400-latin.woff2') format('woff2'),
        url('https://fonts.gstatic.com/s/merriweather/v33/u-4e0qyriQwlOrhSvowK_l5UcA6zuSYEqOzpPe3HOZJ5eX1WtLaQwmYiSeqqJ-mXq1Gi.woff2') format('woff2');
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
@@ -767,7 +767,7 @@ const String sutolLocalGoogleFontsCss = r'''
   font-style: normal;
   font-weight: 700;
   font-display: swap;
-  src: url('assets/assets/fonts/google_fonts/montserrat-700-latin-ext.woff2') format('woff2'),
+  src: url('assets/assets/fonts/google_fonts/montserrat-400-latin-ext.woff2') format('woff2'),
        url('https://fonts.gstatic.com/s/montserrat/v31/JTUSjIg1_i6t8kCHKm459WdhyyTh89ZNpQ.woff2') format('woff2');
   unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
 }
@@ -777,7 +777,7 @@ const String sutolLocalGoogleFontsCss = r'''
   font-style: normal;
   font-weight: 700;
   font-display: swap;
-  src: url('assets/assets/fonts/google_fonts/montserrat-700-latin.woff2') format('woff2'),
+  src: url('assets/assets/fonts/google_fonts/montserrat-400-latin.woff2') format('woff2'),
        url('https://fonts.gstatic.com/s/montserrat/v31/JTUSjIg1_i6t8kCHKm459WlhyyTh89Y.woff2') format('woff2');
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
@@ -807,7 +807,7 @@ const String sutolLocalGoogleFontsCss = r'''
   font-style: normal;
   font-weight: 700;
   font-display: swap;
-  src: url('assets/assets/fonts/google_fonts/noto-sans-700-latin-ext.woff2') format('woff2'),
+  src: url('assets/assets/fonts/google_fonts/noto-sans-400-latin-ext.woff2') format('woff2'),
        url('https://fonts.gstatic.com/s/notosans/v42/o-0bIpQlx3QUlC5A4PNB6Ryti20_6n1iPHjc5aDdu3mhPy1Fig.woff2') format('woff2');
   unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
 }
@@ -817,7 +817,7 @@ const String sutolLocalGoogleFontsCss = r'''
   font-style: normal;
   font-weight: 700;
   font-display: swap;
-  src: url('assets/assets/fonts/google_fonts/noto-sans-700-latin.woff2') format('woff2'),
+  src: url('assets/assets/fonts/google_fonts/noto-sans-400-latin.woff2') format('woff2'),
        url('https://fonts.gstatic.com/s/notosans/v42/o-0bIpQlx3QUlC5A4PNB6Ryti20_6n1iPHjc5a7du3mhPy0.woff2') format('woff2');
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
@@ -847,7 +847,7 @@ const String sutolLocalGoogleFontsCss = r'''
   font-style: normal;
   font-weight: 700;
   font-display: swap;
-  src: url('assets/assets/fonts/google_fonts/noto-sans-jp-700-latin-ext.woff2') format('woff2'),
+  src: url('assets/assets/fonts/google_fonts/noto-sans-jp-400-latin-ext.woff2') format('woff2'),
        url('https://fonts.gstatic.com/s/notosansjp/v56/-F62fjtqLzI2JPCgQBnw7HFYzwgP-FVth9IU.woff2') format('woff2');
   unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
 }
@@ -857,7 +857,7 @@ const String sutolLocalGoogleFontsCss = r'''
   font-style: normal;
   font-weight: 700;
   font-display: swap;
-  src: url('assets/assets/fonts/google_fonts/noto-sans-jp-700-latin.woff2') format('woff2'),
+  src: url('assets/assets/fonts/google_fonts/noto-sans-jp-400-latin.woff2') format('woff2'),
        url('https://fonts.gstatic.com/s/notosansjp/v56/-F62fjtqLzI2JPCgQBnw7HFYwQgP-FVthw.woff2') format('woff2');
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
@@ -887,7 +887,7 @@ const String sutolLocalGoogleFontsCss = r'''
   font-style: normal;
   font-weight: 700;
   font-display: swap;
-  src: url('assets/assets/fonts/google_fonts/noto-sans-kr-700-latin-ext.woff2') format('woff2'),
+  src: url('assets/assets/fonts/google_fonts/noto-sans-kr-400-latin-ext.woff2') format('woff2'),
        url('https://fonts.gstatic.com/s/notosanskr/v39/PbykFmXiEBPT4ITbgNA5CgmG337twpAcuV8y.woff2') format('woff2');
   unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
 }
@@ -897,7 +897,7 @@ const String sutolLocalGoogleFontsCss = r'''
   font-style: normal;
   font-weight: 700;
   font-display: swap;
-  src: url('assets/assets/fonts/google_fonts/noto-sans-kr-700-latin.woff2') format('woff2'),
+  src: url('assets/assets/fonts/google_fonts/noto-sans-kr-400-latin.woff2') format('woff2'),
        url('https://fonts.gstatic.com/s/notosanskr/v39/PbykFmXiEBPT4ITbgNA5CgmG0X7twpAcuQ.woff2') format('woff2');
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
@@ -927,7 +927,7 @@ const String sutolLocalGoogleFontsCss = r'''
   font-style: normal;
   font-weight: 700;
   font-display: swap;
-  src: url('assets/assets/fonts/google_fonts/noto-sans-tc-700-latin-ext.woff2') format('woff2'),
+  src: url('assets/assets/fonts/google_fonts/noto-sans-tc-400-latin-ext.woff2') format('woff2'),
        url('https://fonts.gstatic.com/s/notosanstc/v39/-nF7OG829Oofr2wohFbTp9i1NiEKIfVZ1-jy.woff2') format('woff2');
   unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
 }
@@ -937,7 +937,7 @@ const String sutolLocalGoogleFontsCss = r'''
   font-style: normal;
   font-weight: 700;
   font-display: swap;
-  src: url('assets/assets/fonts/google_fonts/noto-sans-tc-700-latin.woff2') format('woff2'),
+  src: url('assets/assets/fonts/google_fonts/noto-sans-tc-400-latin.woff2') format('woff2'),
        url('https://fonts.gstatic.com/s/notosanstc/v39/-nF7OG829Oofr2wohFbTp9i1OCEKIfVZ1w.woff2') format('woff2');
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
@@ -967,7 +967,7 @@ const String sutolLocalGoogleFontsCss = r'''
   font-style: normal;
   font-weight: 700;
   font-display: swap;
-  src: url('assets/assets/fonts/google_fonts/nunito-700-latin-ext.woff2') format('woff2'),
+  src: url('assets/assets/fonts/google_fonts/nunito-400-latin-ext.woff2') format('woff2'),
        url('https://fonts.gstatic.com/s/nunito/v32/XRXV3I6Li01BKofIO-aBTMnFcQIG.woff2') format('woff2');
   unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
 }
@@ -977,7 +977,7 @@ const String sutolLocalGoogleFontsCss = r'''
   font-style: normal;
   font-weight: 700;
   font-display: swap;
-  src: url('assets/assets/fonts/google_fonts/nunito-700-latin.woff2') format('woff2'),
+  src: url('assets/assets/fonts/google_fonts/nunito-400-latin.woff2') format('woff2'),
        url('https://fonts.gstatic.com/s/nunito/v32/XRXV3I6Li01BKofINeaBTMnFcQ.woff2') format('woff2');
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
@@ -1007,7 +1007,7 @@ const String sutolLocalGoogleFontsCss = r'''
   font-style: normal;
   font-weight: 700;
   font-display: swap;
-  src: url('assets/assets/fonts/google_fonts/nunito-sans-700-latin-ext.woff2') format('woff2'),
+  src: url('assets/assets/fonts/google_fonts/nunito-sans-400-latin-ext.woff2') format('woff2'),
        url('https://fonts.gstatic.com/s/nunitosans/v19/pe0TMImSLYBIv1o4X1M8ce2xCx3yop4tQpF_MeTm0lfGWVpNn64CL7U8upHZIbMV51Q42ptCp7t7R-tQKr51pE8.woff2') format('woff2');
   unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
 }
@@ -1017,7 +1017,7 @@ const String sutolLocalGoogleFontsCss = r'''
   font-style: normal;
   font-weight: 700;
   font-display: swap;
-  src: url('assets/assets/fonts/google_fonts/nunito-sans-700-latin.woff2') format('woff2'),
+  src: url('assets/assets/fonts/google_fonts/nunito-sans-400-latin.woff2') format('woff2'),
        url('https://fonts.gstatic.com/s/nunitosans/v19/pe0TMImSLYBIv1o4X1M8ce2xCx3yop4tQpF_MeTm0lfGWVpNn64CL7U8upHZIbMV51Q42ptCp7t1R-tQKr51.woff2') format('woff2');
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
@@ -1047,7 +1047,7 @@ const String sutolLocalGoogleFontsCss = r'''
   font-style: normal;
   font-weight: 700;
   font-display: swap;
-  src: url('assets/assets/fonts/google_fonts/open-sans-700-latin-ext.woff2') format('woff2'),
+  src: url('assets/assets/fonts/google_fonts/open-sans-400-latin-ext.woff2') format('woff2'),
        url('https://fonts.gstatic.com/s/opensans/v44/memvYaGs126MiZpBA-UvWbX2vVnXBbObj2OVTSGmu0SC55K5gw.woff2') format('woff2');
   unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
 }
@@ -1057,7 +1057,7 @@ const String sutolLocalGoogleFontsCss = r'''
   font-style: normal;
   font-weight: 700;
   font-display: swap;
-  src: url('assets/assets/fonts/google_fonts/open-sans-700-latin.woff2') format('woff2'),
+  src: url('assets/assets/fonts/google_fonts/open-sans-400-latin.woff2') format('woff2'),
        url('https://fonts.gstatic.com/s/opensans/v44/memvYaGs126MiZpBA-UvWbX2vVnXBbObj2OVTS-mu0SC55I.woff2') format('woff2');
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
@@ -1087,7 +1087,7 @@ const String sutolLocalGoogleFontsCss = r'''
   font-style: normal;
   font-weight: 700;
   font-display: swap;
-  src: url('assets/assets/fonts/google_fonts/oswald-700-latin-ext.woff2') format('woff2'),
+  src: url('assets/assets/fonts/google_fonts/oswald-400-latin-ext.woff2') format('woff2'),
        url('https://fonts.gstatic.com/s/oswald/v57/TK3IWkUHHAIjg75cFRf3bXL8LICs1_Fv40pKlN4NNSeSASz7FmlYHYjMdZwlou4.woff2') format('woff2');
   unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
 }
@@ -1097,7 +1097,7 @@ const String sutolLocalGoogleFontsCss = r'''
   font-style: normal;
   font-weight: 700;
   font-display: swap;
-  src: url('assets/assets/fonts/google_fonts/oswald-700-latin.woff2') format('woff2'),
+  src: url('assets/assets/fonts/google_fonts/oswald-400-latin.woff2') format('woff2'),
        url('https://fonts.gstatic.com/s/oswald/v57/TK3IWkUHHAIjg75cFRf3bXL8LICs1_Fv40pKlN4NNSeSASz7FmlWHYjMdZwl.woff2') format('woff2');
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
@@ -1127,7 +1127,7 @@ const String sutolLocalGoogleFontsCss = r'''
   font-style: normal;
   font-weight: 700;
   font-display: swap;
-  src: url('assets/assets/fonts/google_fonts/outfit-700-latin-ext.woff2') format('woff2'),
+  src: url('assets/assets/fonts/google_fonts/outfit-400-latin-ext.woff2') format('woff2'),
        url('https://fonts.gstatic.com/s/outfit/v15/QGYvz_MVcBeNP4NJuktqUYLkn8BJ.woff2') format('woff2');
   unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
 }
@@ -1137,7 +1137,7 @@ const String sutolLocalGoogleFontsCss = r'''
   font-style: normal;
   font-weight: 700;
   font-display: swap;
-  src: url('assets/assets/fonts/google_fonts/outfit-700-latin.woff2') format('woff2'),
+  src: url('assets/assets/fonts/google_fonts/outfit-400-latin.woff2') format('woff2'),
        url('https://fonts.gstatic.com/s/outfit/v15/QGYvz_MVcBeNP4NJtEtqUYLknw.woff2') format('woff2');
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
@@ -1227,7 +1227,7 @@ const String sutolLocalGoogleFontsCss = r'''
   font-style: normal;
   font-weight: 700;
   font-display: swap;
-  src: url('assets/assets/fonts/google_fonts/playfair-display-700-latin-ext.woff2') format('woff2'),
+  src: url('assets/assets/fonts/google_fonts/playfair-display-400-latin-ext.woff2') format('woff2'),
        url('https://fonts.gstatic.com/s/playfairdisplay/v40/nuFiD-vYSZviVYUb_rj3ij__anPXDTLYgEM86xRbPQ.woff2') format('woff2');
   unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
 }
@@ -1237,7 +1237,7 @@ const String sutolLocalGoogleFontsCss = r'''
   font-style: normal;
   font-weight: 700;
   font-display: swap;
-  src: url('assets/assets/fonts/google_fonts/playfair-display-700-latin.woff2') format('woff2'),
+  src: url('assets/assets/fonts/google_fonts/playfair-display-400-latin.woff2') format('woff2'),
        url('https://fonts.gstatic.com/s/playfairdisplay/v40/nuFiD-vYSZviVYUb_rj3ij__anPXDTzYgEM86xQ.woff2') format('woff2');
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
@@ -1347,7 +1347,7 @@ const String sutolLocalGoogleFontsCss = r'''
   font-style: normal;
   font-weight: 700;
   font-display: swap;
-  src: url('assets/assets/fonts/google_fonts/raleway-700-latin-ext.woff2') format('woff2'),
+  src: url('assets/assets/fonts/google_fonts/raleway-400-latin-ext.woff2') format('woff2'),
        url('https://fonts.gstatic.com/s/raleway/v37/1Ptug8zYS_SKggPNyCMIT4ttDfCmxA.woff2') format('woff2');
   unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
 }
@@ -1357,7 +1357,7 @@ const String sutolLocalGoogleFontsCss = r'''
   font-style: normal;
   font-weight: 700;
   font-display: swap;
-  src: url('assets/assets/fonts/google_fonts/raleway-700-latin.woff2') format('woff2'),
+  src: url('assets/assets/fonts/google_fonts/raleway-400-latin.woff2') format('woff2'),
        url('https://fonts.gstatic.com/s/raleway/v37/1Ptug8zYS_SKggPNyC0IT4ttDfA.woff2') format('woff2');
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
@@ -1387,7 +1387,7 @@ const String sutolLocalGoogleFontsCss = r'''
   font-style: normal;
   font-weight: 700;
   font-display: swap;
-  src: url('assets/assets/fonts/google_fonts/roboto-700-latin-ext.woff2') format('woff2'),
+  src: url('assets/assets/fonts/google_fonts/roboto-400-latin-ext.woff2') format('woff2'),
        url('https://fonts.gstatic.com/s/roboto/v51/KFO7CnqEu92Fr1ME7kSn66aGLdTylUAMa3KUBHMdazTgWw.woff2') format('woff2');
   unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
 }
@@ -1397,7 +1397,7 @@ const String sutolLocalGoogleFontsCss = r'''
   font-style: normal;
   font-weight: 700;
   font-display: swap;
-  src: url('assets/assets/fonts/google_fonts/roboto-700-latin.woff2') format('woff2'),
+  src: url('assets/assets/fonts/google_fonts/roboto-400-latin.woff2') format('woff2'),
        url('https://fonts.gstatic.com/s/roboto/v51/KFO7CnqEu92Fr1ME7kSn66aGLdTylUAMa3yUBHMdazQ.woff2') format('woff2');
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
@@ -1427,7 +1427,7 @@ const String sutolLocalGoogleFontsCss = r'''
   font-style: normal;
   font-weight: 700;
   font-display: swap;
-  src: url('assets/assets/fonts/google_fonts/roboto-condensed-700-latin-ext.woff2') format('woff2'),
+  src: url('assets/assets/fonts/google_fonts/roboto-condensed-400-latin-ext.woff2') format('woff2'),
        url('https://fonts.gstatic.com/s/robotocondensed/v31/ieVl2ZhZI2eCN5jzbjEETS9weq8-19y7DQk6YvNkeg.woff2') format('woff2');
   unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
 }
@@ -1437,7 +1437,7 @@ const String sutolLocalGoogleFontsCss = r'''
   font-style: normal;
   font-weight: 700;
   font-display: swap;
-  src: url('assets/assets/fonts/google_fonts/roboto-condensed-700-latin.woff2') format('woff2'),
+  src: url('assets/assets/fonts/google_fonts/roboto-condensed-400-latin.woff2') format('woff2'),
        url('https://fonts.gstatic.com/s/robotocondensed/v31/ieVl2ZhZI2eCN5jzbjEETS9weq8-19K7DQk6YvM.woff2') format('woff2');
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
@@ -1467,7 +1467,7 @@ const String sutolLocalGoogleFontsCss = r'''
   font-style: normal;
   font-weight: 700;
   font-display: swap;
-  src: url('assets/assets/fonts/google_fonts/roboto-mono-700-latin-ext.woff2') format('woff2'),
+  src: url('assets/assets/fonts/google_fonts/roboto-mono-400-latin-ext.woff2') format('woff2'),
        url('https://fonts.gstatic.com/s/robotomono/v31/L0x5DF4xlVMF-BfR8bXMIjhFq3-cXbKDO1w.woff2') format('woff2');
   unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
 }
@@ -1477,7 +1477,7 @@ const String sutolLocalGoogleFontsCss = r'''
   font-style: normal;
   font-weight: 700;
   font-display: swap;
-  src: url('assets/assets/fonts/google_fonts/roboto-mono-700-latin.woff2') format('woff2'),
+  src: url('assets/assets/fonts/google_fonts/roboto-mono-400-latin.woff2') format('woff2'),
        url('https://fonts.gstatic.com/s/robotomono/v31/L0x5DF4xlVMF-BfR8bXMIjhLq3-cXbKD.woff2') format('woff2');
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
@@ -1507,7 +1507,7 @@ const String sutolLocalGoogleFontsCss = r'''
   font-style: normal;
   font-weight: 700;
   font-display: swap;
-  src: url('assets/assets/fonts/google_fonts/roboto-slab-700-latin-ext.woff2') format('woff2'),
+  src: url('assets/assets/fonts/google_fonts/roboto-slab-400-latin-ext.woff2') format('woff2'),
        url('https://fonts.gstatic.com/s/robotoslab/v36/BngMUXZYTXPIvIBgJJSb6ufD5qWr4xCCQ_k.woff2') format('woff2');
   unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
 }
@@ -1517,7 +1517,7 @@ const String sutolLocalGoogleFontsCss = r'''
   font-style: normal;
   font-weight: 700;
   font-display: swap;
-  src: url('assets/assets/fonts/google_fonts/roboto-slab-700-latin.woff2') format('woff2'),
+  src: url('assets/assets/fonts/google_fonts/roboto-slab-400-latin.woff2') format('woff2'),
        url('https://fonts.gstatic.com/s/robotoslab/v36/BngMUXZYTXPIvIBgJJSb6ufN5qWr4xCC.woff2') format('woff2');
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
@@ -1547,7 +1547,7 @@ const String sutolLocalGoogleFontsCss = r'''
   font-style: normal;
   font-weight: 700;
   font-display: swap;
-  src: url('assets/assets/fonts/google_fonts/rubik-700-latin-ext.woff2') format('woff2'),
+  src: url('assets/assets/fonts/google_fonts/rubik-400-latin-ext.woff2') format('woff2'),
        url('https://fonts.gstatic.com/s/rubik/v31/iJWKBXyIfDnIV7nPrXyw023e1Ik.woff2') format('woff2');
   unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
 }
@@ -1557,7 +1557,7 @@ const String sutolLocalGoogleFontsCss = r'''
   font-style: normal;
   font-weight: 700;
   font-display: swap;
-  src: url('assets/assets/fonts/google_fonts/rubik-700-latin.woff2') format('woff2'),
+  src: url('assets/assets/fonts/google_fonts/rubik-400-latin.woff2') format('woff2'),
        url('https://fonts.gstatic.com/s/rubik/v31/iJWKBXyIfDnIV7nBrXyw023e.woff2') format('woff2');
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
@@ -1667,7 +1667,7 @@ const String sutolLocalGoogleFontsCss = r'''
   font-style: normal;
   font-weight: 700;
   font-display: swap;
-  src: url('assets/assets/fonts/google_fonts/unbounded-700-latin-ext.woff2') format('woff2'),
+  src: url('assets/assets/fonts/google_fonts/unbounded-400-latin-ext.woff2') format('woff2'),
        url('https://fonts.gstatic.com/s/unbounded/v12/Yq6W-LOTXCb04q32xlpwtcZfvRIkSYZH.woff2') format('woff2');
   unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
 }
@@ -1677,7 +1677,7 @@ const String sutolLocalGoogleFontsCss = r'''
   font-style: normal;
   font-weight: 700;
   font-display: swap;
-  src: url('assets/assets/fonts/google_fonts/unbounded-700-latin.woff2') format('woff2'),
+  src: url('assets/assets/fonts/google_fonts/unbounded-400-latin.woff2') format('woff2'),
        url('https://fonts.gstatic.com/s/unbounded/v12/Yq6W-LOTXCb04q32xlpwu8ZfvRIkSQ.woff2') format('woff2');
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
@@ -1707,7 +1707,7 @@ const String sutolLocalGoogleFontsCss = r'''
   font-style: normal;
   font-weight: 700;
   font-display: swap;
-  src: url('assets/assets/fonts/google_fonts/work-sans-700-latin-ext.woff2') format('woff2'),
+  src: url('assets/assets/fonts/google_fonts/work-sans-400-latin-ext.woff2') format('woff2'),
        url('https://fonts.gstatic.com/s/worksans/v24/QGYsz_wNahGAdqQ43Rh_cqDptfpA4cD3.woff2') format('woff2');
   unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
 }
@@ -1717,7 +1717,7 @@ const String sutolLocalGoogleFontsCss = r'''
   font-style: normal;
   font-weight: 700;
   font-display: swap;
-  src: url('assets/assets/fonts/google_fonts/work-sans-700-latin.woff2') format('woff2'),
+  src: url('assets/assets/fonts/google_fonts/work-sans-400-latin.woff2') format('woff2'),
        url('https://fonts.gstatic.com/s/worksans/v24/QGYsz_wNahGAdqQ43Rh_fKDptfpA4Q.woff2') format('woff2');
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
