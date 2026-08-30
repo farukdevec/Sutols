@@ -839,6 +839,8 @@ void main() {
     expect(document, contains('const movement = 36.0 * elapsed'));
     expect(document, contains('function requestTourFrame()'));
     expect(document, contains('tourFrame = null;'));
+    expect(document, contains('const tourBoundsByViewer = new WeakMap()'));
+    expect(document, contains('tourBoundsByViewer.set(viewer, bounds)'));
     expect(
         document,
         isNot(contains(

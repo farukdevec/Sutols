@@ -15,3 +15,15 @@ Başlangıç baseline (2026-08-30 03:54 +03): release `main.dart.js` 7.089.498 b
 **Not/Ders:** Hareket FPS'i aynı kalırken sunumun boşta çalışan tur döngüsü tamamen kaldırıldı; tekrar denenmemeli.
 
 ---
+
+## Tur 2 - 2026-08-30 04:04 +03
+
+**Hipotez:** Aktif yürüyüşte değişmeyen model sınırlarını her karede tekrar almak yerine doğrulanmış sınırları model-viewer başına önbelleğe almak API/GC yükünü azaltır.
+**Değişiklik:** Export `constrainTourTarget` için `WeakMap` tabanlı geometri sınırı önbelleği eklendi; geçersiz/yüklenmemiş geometri önbelleğe alınmıyor.
+**Baseline Metrikler:** FPS: 60,08; 1% low: 56,82; 3 sn geometri API çağrısı: 724; Bundle: 7.089.801 bayt.
+**Sonuç Metrikler:** FPS: 60,03; 1% low: 56,82; 3 sn geometri API çağrısı: 362 (-%50); Bundle: 7.090.501 bayt (+%0,010).
+**Fonksiyonel Regresyon:** Geçti — hedef hareketi eşdeğer, frame spike 0 → 0, konsol hatası yok ve 42/42 tur testi geçti.
+**Karar:** KABUL EDİLDİ (commit)
+**Not/Ders:** Vsync FPS'i zaten tavanda; değişmeyen model sınırı çağrılarının yarısı ve bunların geçici nesneleri kaldırıldı.
+
+---

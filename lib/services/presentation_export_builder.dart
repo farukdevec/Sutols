@@ -965,6 +965,7 @@ String _exportScript({
   let tourFrame = null;
   let tourJoystick = null;
   let tourStick = { x: 0, y: 0 };
+  const tourBoundsByViewer = new WeakMap();
   const modelPools = new Map();
   const modelPlacementsBySlide = slides.map(() => new Map());
   const modelParking = document.createElement('div');
@@ -1158,14 +1159,33 @@ String _exportScript({
   function constrainTourTarget(viewer, x, z) {
     x = Math.max(-500, Math.min(500, x));
     z = Math.max(-500, Math.min(500, z));
+    let bounds = tourBoundsByViewer.get(viewer);
+    if (bounds) {
+      return {
+        x: Math.max(bounds.minX, Math.min(bounds.maxX, x)),
+        z: Math.max(bounds.minZ, Math.min(bounds.maxZ, z)),
+      };
+    }
     try {
       const dimensions = viewer.getDimensions();
       const center = viewer.getBoundingBoxCenter();
+      if (!Number.isFinite(dimensions.x) || dimensions.x <= 0 ||
+          !Number.isFinite(dimensions.z) || dimensions.z <= 0 ||
+          !Number.isFinite(center.x) || !Number.isFinite(center.z)) {
+        return { x: x, z: z };
+      }
       const halfX = Math.max(.125, dimensions.x / 2 - Math.min(dimensions.x * .08, .75));
       const halfZ = Math.max(.125, dimensions.z / 2 - Math.min(dimensions.z * .08, .75));
+      bounds = {
+        minX: center.x - halfX,
+        maxX: center.x + halfX,
+        minZ: center.z - halfZ,
+        maxZ: center.z + halfZ,
+      };
+      tourBoundsByViewer.set(viewer, bounds);
       return {
-        x: Math.max(center.x - halfX, Math.min(center.x + halfX, x)),
-        z: Math.max(center.z - halfZ, Math.min(center.z + halfZ, z)),
+        x: Math.max(bounds.minX, Math.min(bounds.maxX, x)),
+        z: Math.max(bounds.minZ, Math.min(bounds.maxZ, z)),
       };
     } catch (_) {
       return { x: x, z: z };
