@@ -315,3 +315,15 @@ Başlangıç baseline (2026-08-30 03:54 +03): release `main.dart.js` 7.089.498 b
 **Not/Ders:** Tüketici zaten idempotent; fallback'i geciktirmek veya kaldırmak iframe hazır olma davranışını değiştireceğinden bu varyasyonlar denenmemeli.
 
 ---
+
+## Tur 27 - 2026-08-30 06:15 +03
+
+**Hipotez:** Proje yüklenirken her bileşen türünü 1.051 üyeli enum listesinde doğrusal aramak yerine değişmez ad→enum indeksi kullanmak büyük proje decode CPU maliyetini azaltır.
+**Değişiklik:** `PresentationComponentKind` adları bir kez `asNameMap()` ile indekslendi; bileşen çözümleme aynı varsayılan değeri koruyan doğrudan map lookup kullanıyor.
+**Baseline Metrikler:** 240 bileşenli projeyi 100 kez decode etme ayrı süreç ölçümleri: 80.344 / 80.190 / 81.397 µs; medyan: 80.344 µs; release `main.dart.js`: 6.987.202 bayt.
+**Sonuç Metrikler:** Ayrı süreç ölçümleri: 36.796 / 36.358 / 36.994 µs; medyan: 36.796 µs (-%54,2); bundle: 6.987.370 bayt (+168 bayt, +%0,0024).
+**Fonksiyonel Regresyon:** Geçti — 1.051/1.051 bileşen türü ve bilinmeyen türün `edebiyat01` geri dönüşü doğrulandı; seçili codec/controller/export/3B/tur paketinde 74/74 test ve release build başarılı.
+**Karar:** KABUL EDİLDİ (commit)
+**Not/Ders:** Büyük katalogda doğrusal isim taraması proje dosyasındaki her bileşen için tekrarlanıyordu; sabit indeks çıktıyı korurken benchmark süresini yarıdan fazla düşürdü.
+
+---

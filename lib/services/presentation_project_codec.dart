@@ -21,6 +21,8 @@ class PresentationProjectCodec {
   const PresentationProjectCodec._();
 
   static const int version = 1;
+  static final Map<String, PresentationComponentKind> _componentKindsByName =
+      PresentationComponentKind.values.asNameMap();
 
   static String encodeProject({
     required List<PresentationPage> pages,
@@ -389,11 +391,7 @@ class PresentationProjectCodec {
     final modelAssetId = imageAssetId == null ? rawModelAssetId : null;
     return PresentationComponentBlock(
       id: _string(json['id'], 'component-1'),
-      kind: _enumValue(
-        PresentationComponentKind.values,
-        json['kind'],
-        PresentationComponentKind.edebiyat01,
-      ),
+      kind: _componentKindValue(json['kind']),
       modelAssetId: modelAssetId,
       imageAssetId: imageAssetId,
       imageAspectRatio: json['imageAspectRatio'] is num
@@ -600,6 +598,12 @@ class PresentationProjectCodec {
       (item) => item.name == value,
       orElse: () => fallback,
     );
+  }
+
+  static PresentationComponentKind _componentKindValue(Object? value) {
+    return value is String
+        ? _componentKindsByName[value] ?? PresentationComponentKind.edebiyat01
+        : PresentationComponentKind.edebiyat01;
   }
 
   static String _string(Object? value, String fallback) {
