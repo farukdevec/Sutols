@@ -171,3 +171,15 @@ Başlangıç baseline (2026-08-30 03:54 +03): release `main.dart.js` 7.089.498 b
 **Not/Ders:** Dört ardışık aday anlamlı ölçülebilir kazanım vermedi; promptun durma koşulu uygulandı.
 
 ---
+
+## Tur 15 - 2026-08-30 05:42 +03
+
+**Hipotez:** Büyük `assets/images/logo.png` dosyasını kayıpsız PNG filtre/DEFLATE optimizasyonuyla yeniden paketlemek uygulama transferini azaltır.
+**Değişiklik:** Asset bildirimi ve release manifesti ölçüldü; dosyanın uygulamaya dahil edilmediği görüldüğü için üretim dosyasına dokunulmadı.
+**Baseline Metrikler:** Kaynak PNG: 1.734.427 bayt; release manifestindeki PNG kaydı: 0; runtime transfer katkısı: 0 bayt.
+**Sonuç Metrikler:** Bundle/asset transferi değişmedi; ölçülebilir çalışma zamanı kazanımı yok.
+**Fonksiyonel Regresyon:** Geçti — kaynak ve üretim kodu değiştirilmedi.
+**Karar:** REDDEDİLDİ (değişiklik uygulanmadı)
+**Not/Ders:** Yalnız WebP logo bildiriliyor ve kullanılıyor; manifest dışındaki PNG'yi optimize etmek repo boyutu dışında uygulama performansına etki etmiyor.
+
+---
