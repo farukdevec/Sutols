@@ -279,3 +279,15 @@ Başlangıç baseline (2026-08-30 03:54 +03): release `main.dart.js` 7.089.498 b
 **Not/Ders:** Arama yazımı ve panel rebuild'lerinde yaklaşık 5,3 ms'lik değişmez katalog hazırlığı ile ilgili geçici map/list/string tahsisleri kaldırıldı.
 
 ---
+
+## Tur 24 - 2026-08-30 06:03 +03
+
+**Hipotez:** Kökü array olan geçerli sunum JSON'unu map ve list için iki kez decode etmek yerine tek decode sonucunu tipe göre yönlendirmek parse süresini azaltır.
+**Değişiklik:** 30 slaytlık array-root payload üzerinde tek-decode yolu geçici olarak uygulandı; ölçüm eşiği aşılmadığı için üretim kodu ve benchmark geri alındı.
+**Baseline Metrikler:** 100 parse medyanı: 72.692 µs.
+**Sonuç Metrikler:** Ayrı süreç medyanları: 71.573 / 70.414 / 68.327 µs; en muhafazakâr kazanç yalnız `%1,54`.
+**Fonksiyonel Regresyon:** Geçti — benchmark çıktısı 30/30 slaytı korudu; üretim değişikliği tamamen geri alındı.
+**Karar:** REDDEDİLDİ (geri alındı)
+**Not/Ders:** Array decode tekrarı toplam normalize/temizleme maliyetinin küçük bölümü; aynı decode-birleştirme varyasyonları `%3` eşiğini güvenilir geçmiyor.
+
+---
