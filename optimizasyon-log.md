@@ -219,3 +219,15 @@ Başlangıç baseline (2026-08-30 03:54 +03): release `main.dart.js` 7.089.498 b
 **Not/Ders:** Mevcut favicon PNG'leri zaten etkin sıkıştırılmış; aynı yeniden kodlama veya küçük codec ayarı varyasyonları `%3` eşiğine ulaşamaz.
 
 ---
+
+## Tur 19 - 2026-08-30 05:50 +03
+
+**Hipotez:** Üretilen 1.027 HTML bileşenindeki yalnız sunumsal whitespace/girintiyi güvenle sıkıştırmak ana JS bundle'ını anlamlı ölçüde küçültür.
+**Değişiklik:** Etiket arası whitespace ve satır girintisi varyasyonları salt okunur olarak ölçüldü; script/preformatted içeriğe girmeyen güvenli sınırda üretim değişikliği uygulanmadı.
+**Baseline Metrikler:** Katalog kaynağı: 2.099.087 bayt; release `main.dart.js`: 7.002.709 bayt; HTML içeriği: 1.466.312 karakter.
+**Sonuç Metrikler:** Güvenli etiket arası kazanç: 36.294 bayt; girinti dahil üst sınır: 84.918 bayt / bundle'ın teorik `%1,21`'i.
+**Fonksiyonel Regresyon:** Geçti — üretim kodu ve HTML çıktısı değiştirilmedi.
+**Karar:** REDDEDİLDİ (değişiklik uygulanmadı)
+**Not/Ders:** `%3` için script/CSS minification gerekirdi; bu varyasyonlar JS veya preformatted whitespace semantiği taşıyabildiğinden görsel/davranış eşdeğerliği garanti edilemiyor.
+
+---
