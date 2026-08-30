@@ -16,6 +16,21 @@ import '../../../services/remote_image_sources.dart';
 import '../../../services/remote_model_sources.dart';
 import 'html_stage_document.dart';
 
+const String _modelViewerScriptMarker = 'data-sutol-model-viewer-loader';
+
+void _ensureModelViewerLoaded() {
+  final existing = html.document.querySelector(
+    'script[$_modelViewerScriptMarker], '
+    'script[src="$sutolModelViewerScriptUrl"]',
+  );
+  if (existing != null) return;
+  final script = html.ScriptElement()
+    ..type = 'module'
+    ..src = sutolModelViewerScriptUrl
+    ..setAttribute(_modelViewerScriptMarker, 'true');
+  (html.document.head ?? html.document.body)?.append(script);
+}
+
 class HtmlPageTransitionStage extends StatefulWidget {
   const HtmlPageTransitionStage({
     super.key,
@@ -548,6 +563,7 @@ class _HtmlModelCanvasState extends State<HtmlModelCanvas> {
   @override
   void initState() {
     super.initState();
+    _ensureModelViewerLoaded();
     _registerCameraState();
     RemoteModelSources.revision.addListener(_applyAttributes);
   }

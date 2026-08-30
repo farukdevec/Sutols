@@ -51,3 +51,15 @@ Başlangıç baseline (2026-08-30 03:54 +03): release `main.dart.js` 7.089.498 b
 **Not/Ders:** Azalan küçük nesne tahsisi widget-pump maliyetini iyileştirmedi; bu yöntem ve küçük varyasyonları tekrar denenmemeli.
 
 ---
+
+## Tur 5 - 2026-08-30 04:16 +03
+
+**Hipotez:** Ana sayfada kullanılmayan `model-viewer` modülünü ilk gerçek 3B tuvale kadar ertelemek ilk yükleme transferini ve render gecikmesini azaltır.
+**Değişiklik:** Eager `<script>` web shell'den kaldırıldı; `HtmlModelCanvas` ilk oluşturulduğunda modülü yalnız bir kez ekleyen lazy loader eklendi.
+**Baseline Metrikler:** FCP: 228 ms; DCL: 245,1 ms; Load: 509,2 ms; transfer: 381.201 bayt; Bundle: 6.919.962 bayt.
+**Sonuç Metrikler:** FCP: 216 ms (-%5,3); DCL: 219,6 ms (-%10,4); Load: 438,2 ms (-%13,9); transfer: 89.137 bayt (-%76,6); Bundle: 6.920.413 bayt.
+**Fonksiyonel Regresyon:** Geçti — 43/43 tur testi, Chrome `HtmlModelCanvas` platform testi ve release build başarılı; ilk rotada model-viewer isteği yok.
+**Karar:** KABUL EDİLDİ (commit)
+**Not/Ders:** 292.064 baytlık model-viewer modülü yalnız 3B özellik gerçekten açıldığında yükleniyor; çıktı davranışı korunuyor.
+
+---
