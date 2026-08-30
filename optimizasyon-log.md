@@ -351,3 +351,15 @@ Başlangıç baseline (2026-08-30 03:54 +03): release `main.dart.js` 7.089.498 b
 **Not/Ders:** Sıralamayı veya eşleşme sınırlarını değiştirmeden değişmez UI arama alanlarını paylaşmak, tekrar eden lowercase tahsislerini kaldırıp ölçülen süreyi yaklaşık üçte bire indirdi.
 
 ---
+
+## Tur 30 - 2026-08-30 19:12 +03
+
+**Hipotez:** Otomatik eşleştirme normalde tek bileşen istediği için tüm uygun adayları listeleyip sıralamak yerine aynı skor/label kuralıyla tek kazananı akış içinde tutmak CPU ve tahsis maliyetini azaltır.
+**Değişiklik:** `maxComponents == 1` yolunda geçici tek-kazanan seçimi denendi; çoklu seçim yolu korunarak ölçüldü ve eşik aşılmadığı için üretim kodu tamamen geri alındı.
+**Baseline Metrikler:** 12 eşleştirme için ayrı süreç medyanları: 275.519 / 258.164 / 266.653 µs; süreç medyanlarının medyanı 266.653 µs; checksum: 2.314.
+**Sonuç Metrikler:** Ayrı süreç medyanları: 274.299 / 270.286 / 266.500 µs; süreç medyanlarının medyanı 270.286 µs (+%1,4 daha yavaş); checksum: 2.314.
+**Fonksiyonel Regresyon:** Geçti — altı golden eşleşme ve checksum birebir aynı; üretim değişikliği geri alındı.
+**Karar:** REDDEDİLDİ (geri alındı)
+**Not/Ders:** Aday sıralama maliyeti toplam 1.051 tanımlı skorlamanın küçük bir bölümü; tek-kazanan dalı eklemek sıcak döngüyü iyileştirmedi ve yeniden denenmemeli.
+
+---
