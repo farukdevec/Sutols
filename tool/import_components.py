@@ -594,6 +594,34 @@ def generate(components: list[Component]) -> str:
     )
     lines.append("    const <PresentationComponentDefinition>[];")
     lines.append("")
+    lines.append("final List<PresentationComponentDefinition>")
+    lines.append("    _presentationComponentDefinitionsSortedByLabel = () {")
+    lines.append("  final definitionsByKind =")
+    lines.append(
+        "      <PresentationComponentKind, PresentationComponentDefinition>{"
+    )
+    lines.append("    for (final category in presentationComponentCategories())")
+    lines.append("      for (final definition")
+    lines.append("          in presentationComponentDefinitionsForCategory(category))")
+    lines.append("        definition.kind: definition,")
+    lines.append("  };")
+    lines.append(
+        "  final definitions = definitionsByKind.values.toList(growable: false)"
+    )
+    lines.append("    ..sort(")
+    lines.append(
+        "      (a, b) => a.label.toLowerCase().compareTo(b.label.toLowerCase()),"
+    )
+    lines.append("    );")
+    lines.append(
+        "  return List<PresentationComponentDefinition>.unmodifiable(definitions);"
+    )
+    lines.append("}();")
+    lines.append("")
+    lines.append("List<PresentationComponentDefinition>")
+    lines.append("    presentationComponentDefinitionsSortedByLabel() =>")
+    lines.append("        _presentationComponentDefinitionsSortedByLabel;")
+    lines.append("")
     return "\n".join(lines)
 
 

@@ -267,3 +267,15 @@ Başlangıç baseline (2026-08-30 03:54 +03): release `main.dart.js` 7.089.498 b
 **Not/Ders:** Kart grid'i tekrar çizildiğinde aynı join dizeleri ve ara iterable'lar yeniden üretilmiyor; önbellek katalog boyutuyla sabit sınırlı.
 
 ---
+
+## Tur 23 - 2026-08-30 06:01 +03
+
+**Hipotez:** Editör bileşen panelinde değişmez 1.051 tanımı her build'de map/list/sort ile yeniden hazırlamak yerine bir kez sıralayıp paylaşmak frame CPU/GC maliyetini azaltır.
+**Değişiklik:** Eski algoritmanın birebir sonucunu unmodifiable listede tutan `presentationComponentDefinitionsSortedByLabel` eklendi; panel build'i bu listeyi kullanıyor.
+**Baseline Metrikler:** 100 katalog hazırlama medyanı: 529.855 µs; bundle: 6.986.867 bayt.
+**Sonuç Metrikler:** 100 önbellek erişimi medyanı: 5 µs (-%99,999); bundle: 6.987.017 bayt (+150 bayt).
+**Fonksiyonel Regresyon:** Geçti — 1.051 kimliğin sırası eski map+sort algoritmasıyla birebir aynı; component/editor/codec/export/tur paketinde 78/78 test ve release build başarılı.
+**Karar:** KABUL EDİLDİ (commit)
+**Not/Ders:** Arama yazımı ve panel rebuild'lerinde yaklaşık 5,3 ms'lik değişmez katalog hazırlığı ile ilgili geçici map/list/string tahsisleri kaldırıldı.
+
+---

@@ -8533,17 +8533,8 @@ class _HtmlComponentControlsState extends State<_HtmlComponentControls> {
   @override
   Widget build(BuildContext context) {
     final controller = widget.controller;
-    final categories = presentationComponentCategories();
     final query = _query.trim().toLowerCase();
-    final definitionsByKind =
-        <PresentationComponentKind, PresentationComponentDefinition>{
-      for (final category in categories)
-        for (final definition
-            in presentationComponentDefinitionsForCategory(category))
-          definition.kind: definition,
-    };
-    final allDefinitions = definitionsByKind.values.toList(growable: false)
-      ..sort((a, b) => a.label.toLowerCase().compareTo(b.label.toLowerCase()));
+    final allDefinitions = presentationComponentDefinitionsSortedByLabel();
     final visibleDefinitions = query.isEmpty
         ? allDefinitions
         : allDefinitions

@@ -111,4 +111,36 @@ void main() {
     // ignore: avoid_print
     print('component_subtitle_samples_us=$samples median_us=${samples[2]}');
   });
+
+  test('sorted component library benchmark', () {
+    var checksum = 0;
+    final expectedByKind =
+        <PresentationComponentKind, PresentationComponentDefinition>{
+      for (final category in presentationComponentCategories())
+        for (final definition
+            in presentationComponentDefinitionsForCategory(category))
+          definition.kind: definition,
+    };
+    final expected = expectedByKind.values.toList(growable: false)
+      ..sort((a, b) => a.label.toLowerCase().compareTo(b.label.toLowerCase()));
+    final initial = presentationComponentDefinitionsSortedByLabel();
+    expect(
+        initial.map((definition) => definition.id), expected.map((d) => d.id));
+
+    final samples = <int>[];
+    for (var run = 0; run < 5; run += 1) {
+      final stopwatch = Stopwatch()..start();
+      for (var iteration = 0; iteration < 100; iteration += 1) {
+        final definitions = presentationComponentDefinitionsSortedByLabel();
+        checksum += definitions.first.id.length + definitions.last.id.length;
+      }
+      stopwatch.stop();
+      samples.add(stopwatch.elapsedMicroseconds);
+    }
+    samples.sort();
+
+    expect(checksum, greaterThan(0));
+    // ignore: avoid_print
+    print('component_sort_samples_us=$samples median_us=${samples[2]}');
+  });
 }

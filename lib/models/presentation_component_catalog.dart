@@ -42436,3 +42436,23 @@ List<PresentationComponentDefinition>
 ) =>
         _presentationComponentDefinitionsByCategory[category] ??
         const <PresentationComponentDefinition>[];
+
+final List<PresentationComponentDefinition>
+    _presentationComponentDefinitionsSortedByLabel = () {
+  final definitionsByKind =
+      <PresentationComponentKind, PresentationComponentDefinition>{
+    for (final category in presentationComponentCategories())
+      for (final definition
+          in presentationComponentDefinitionsForCategory(category))
+        definition.kind: definition,
+  };
+  final definitions = definitionsByKind.values.toList(growable: false)
+    ..sort(
+      (a, b) => a.label.toLowerCase().compareTo(b.label.toLowerCase()),
+    );
+  return List<PresentationComponentDefinition>.unmodifiable(definitions);
+}();
+
+List<PresentationComponentDefinition>
+    presentationComponentDefinitionsSortedByLabel() =>
+        _presentationComponentDefinitionsSortedByLabel;
