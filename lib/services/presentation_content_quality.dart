@@ -450,9 +450,13 @@ class PresentationContentQuality {
   static double jaccardSimilarity(Set<String> a, Set<String> b) {
     if (a.isEmpty && b.isEmpty) return 1.0;
     if (a.isEmpty || b.isEmpty) return 0.0;
-    final intersection = a.intersection(b).length;
-    final union = a.union(b).length;
-    return intersection / union;
+    final smaller = a.length <= b.length ? a : b;
+    final larger = identical(smaller, a) ? b : a;
+    var intersectionCount = 0;
+    for (final value in smaller) {
+      if (larger.contains(value)) intersectionCount += 1;
+    }
+    return intersectionCount / (a.length + b.length - intersectionCount);
   }
 
   /// `null` kaliteli içerik, aksi halde sağlayıcıyı reddetme nedenidir.

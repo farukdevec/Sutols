@@ -399,3 +399,15 @@ Başlangıç baseline (2026-08-30 03:54 +03): release `main.dart.js` 7.089.498 b
 **Not/Ders:** Aynı büyük JSON dizesinin ardışık tam taramalarını birleştirmek, kaçış baytlarını ve export çıktısını birebir korurken ölçülen süreyi yaklaşık dörtte bir azalttı.
 
 ---
+
+## Tur 34 - 2026-08-30 19:56 +03
+
+**Hipotez:** Kalite değerlendirmesindeki her Jaccard hesabında `intersection` ve `union` kümeleri oluşturmak yerine küçük kümede üyelik sayıp birleşim boyutunu aritmetik hesaplamak CPU ve geçici küme tahsislerini azaltır.
+**Değişiklik:** `jaccardSimilarity`, küçük küme üzerinde tek üyelik döngüsü ve `|A| + |B| - |A∩B|` formülünü kullanacak biçimde değiştirildi; sonuç, boş küme sınırları ve yoğun benchmark için deterministik test eklendi.
+**Baseline Metrikler:** Ayrı süreç medyanları: 627.293 / 620.782 / 621.006 µs; süreç medyanlarının medyanı 621.006 µs; checksum: 16.666,666667; bundle: 6.988.476 bayt.
+**Sonuç Metrikler:** Ayrı süreç medyanları: 94.668 / 110.974 / 106.082 µs; süreç medyanlarının medyanı 106.082 µs (-%82,9); checksum aynı; bundle: 6.988.412 bayt (-64, -%0,0009).
+**Fonksiyonel Regresyon:** Geçti — hedefli analiz temiz; kalite ve benchmark testleri 4/4 geçti; release web build başarılı.
+**Karar:** KABUL EDİLDİ (commit)
+**Not/Ders:** Küme birleşimi ve kesişimi yalnız sayısal oran için materyalize edilmemeli; küçük kümede üyelik sayımı sonucu birebir korurken bu sıcak yardımcıyı yaklaşık altıda bire indirdi.
+
+---
