@@ -1191,6 +1191,7 @@ String _exportScript({
   }
 
   function tickTour(now) {
+    tourFrame = null;
     const viewer = activeTourViewer();
     if (viewer && (tourKeys.size || tourStick.x || tourStick.y)) {
       const elapsed = Math.min(.05, Math.max(.001, (now - (tickTour.last || now)) / 1000));
@@ -1207,6 +1208,16 @@ String _exportScript({
       moveTour(viewer, forward, right);
     }
     tickTour.last = now;
+    if (tourKeys.size || tourStick.x || tourStick.y) {
+      tourFrame = requestAnimationFrame(tickTour);
+    } else {
+      tickTour.last = 0;
+    }
+  }
+
+  function requestTourFrame() {
+    if (tourFrame !== null) return;
+    tickTour.last = performance.now();
     tourFrame = requestAnimationFrame(tickTour);
   }
 
@@ -1229,6 +1240,7 @@ String _exportScript({
         const dx = Math.max(-1, Math.min(1, (event.clientX - rect.left - rect.width / 2) / 42));
         const dy = Math.max(-1, Math.min(1, (event.clientY - rect.top - rect.height / 2) / 42));
         tourStick = { x: dx, y: dy };
+        requestTourFrame();
         thumb.style.transform = 'translate(' + (dx * 27).toFixed(1) + 'px,' + (dy * 27).toFixed(1) + 'px)';
       };
       tourJoystick.addEventListener('pointerdown', (event) => { tourJoystick.setPointerCapture(event.pointerId); update(event); });
@@ -1719,6 +1731,7 @@ String _exportScript({
     if (activeTourViewer() && ['w', 'a', 's', 'd'].includes(tourKey)) {
       event.preventDefault();
       tourKeys.add(tourKey);
+      requestTourFrame();
     } else if (event.key === 'ArrowRight' || event.key === 'PageDown' || event.key === ' ' || event.code === 'Space') {
       event.preventDefault();
       goNext();
@@ -1756,7 +1769,6 @@ String _exportScript({
   });
 
   toggleLaser(initialLaserPointer);
-  tourFrame = requestAnimationFrame(tickTour);
   resetAutoTimer();
   render();
 })();

@@ -837,6 +837,12 @@ void main() {
     expect(document, contains("arrowright: 'd'"));
     expect(document, contains('const magnitude = Math.hypot(forward, right)'));
     expect(document, contains('const movement = 36.0 * elapsed'));
+    expect(document, contains('function requestTourFrame()'));
+    expect(document, contains('tourFrame = null;'));
+    expect(
+        document,
+        isNot(contains(
+            'toggleLaser(initialLaserPointer);\n  tourFrame = requestAnimationFrame(tickTour);')));
   });
 
   test('yumuşak geçiş aynı 3B modelin açılarını HTML içinde dönüştürür', () {
