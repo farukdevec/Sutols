@@ -231,3 +231,15 @@ Başlangıç baseline (2026-08-30 03:54 +03): release `main.dart.js` 7.089.498 b
 **Not/Ders:** `%3` için script/CSS minification gerekirdi; bu varyasyonlar JS veya preformatted whitespace semantiği taşıyabildiğinden görsel/davranış eşdeğerliği garanti edilemiyor.
 
 ---
+
+## Tur 20 - 2026-08-30 05:52 +03
+
+**Hipotez:** Enum ile aynı sıradaki 1.027 bileşen tanımını hash-map yerine `kind.index` ile doğrudan listeden okumak lookup CPU/heap maliyetini çıktı değişmeden azaltır.
+**Değişiklik:** `_presentationComponentDefinitionByKind` kaldırıldı; erişim `presentationComponentDefinitions[kind.index]` oldu ve üretici araç aynı çıktıyı kalıcı üretecek şekilde güncellendi.
+**Baseline Metrikler:** 5 milyon karışık lookup medyanı: 14.597 µs; release `main.dart.js`: 7.002.709 bayt.
+**Sonuç Metrikler:** Ayrı süreç medyanları: 10.268 / 10.096 / 9.869 µs; en muhafazakâr kazanç -%29,7; bundle: 7.002.572 bayt (-137 bayt).
+**Fonksiyonel Regresyon:** Geçti — 1.027/1.027 enum-tanım hizası doğrulandı; component/editor/codec/export/tur paketinde 75/75 test ve release build başarılı.
+**Karar:** KABUL EDİLDİ (commit)
+**Not/Ders:** Davranış ve HTML dizeleri birebir kalırken her bileşen erişimindeki hash hesabı ve 1.027 girişli lookup map tahsisi kaldırıldı.
+
+---

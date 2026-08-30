@@ -473,17 +473,6 @@ def generate(components: list[Component]) -> str:
     lines.append("];")
     lines.append("")
     lines.append(
-        "final Map<PresentationComponentKind, PresentationComponentDefinition>"
-    )
-    lines.append("    _presentationComponentDefinitionByKind =")
-    lines.append(
-        "        <PresentationComponentKind, PresentationComponentDefinition>{"
-    )
-    lines.append("  for (final definition in presentationComponentDefinitions)")
-    lines.append("    definition.kind: definition,")
-    lines.append("};")
-    lines.append("")
-    lines.append(
         "final Map<String, List<PresentationComponentDefinition>>"
     )
     lines.append("    _presentationComponentDefinitionsByCategory = () {")
@@ -511,7 +500,7 @@ def generate(components: list[Component]) -> str:
     lines.append("PresentationComponentDefinition presentationComponentDefinition(")
     lines.append("  PresentationComponentKind kind,")
     lines.append(") =>")
-    lines.append("    _presentationComponentDefinitionByKind[kind]!;")
+    lines.append("    presentationComponentDefinitions[kind.index];")
     lines.append("")
     lines.append("String presentationComponentLabel(PresentationComponentKind kind) =>")
     lines.append("    presentationComponentDefinition(kind).label;")

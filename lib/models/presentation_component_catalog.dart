@@ -40997,13 +40997,6 @@ if(svg && svg.pauseAnimations) svg.pauseAnimations();
   ),
 ];
 
-final Map<PresentationComponentKind, PresentationComponentDefinition>
-    _presentationComponentDefinitionByKind =
-    <PresentationComponentKind, PresentationComponentDefinition>{
-  for (final definition in presentationComponentDefinitions)
-    definition.kind: definition,
-};
-
 final Map<String, List<PresentationComponentDefinition>>
     _presentationComponentDefinitionsByCategory = () {
   final index = <String, List<PresentationComponentDefinition>>{};
@@ -41030,7 +41023,7 @@ final List<String> _presentationComponentCategories = List<String>.unmodifiable(
 PresentationComponentDefinition presentationComponentDefinition(
   PresentationComponentKind kind,
 ) =>
-    _presentationComponentDefinitionByKind[kind]!;
+    presentationComponentDefinitions[kind.index];
 
 String presentationComponentLabel(PresentationComponentKind kind) =>
     presentationComponentDefinition(kind).label;
