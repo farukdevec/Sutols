@@ -111,3 +111,15 @@ Başlangıç baseline (2026-08-30 03:54 +03): release `main.dart.js` 7.089.498 b
 **Not/Ders:** 3,6 KB transfer bedeli karşılığında küçük GPU cache'lerde yaklaşık %10 daha az vertex yeniden işleme bekleniyor; veri değerleri değiştirilmedi.
 
 ---
+
+## Tur 10 - 2026-08-30 04:40 +03
+
+**Hipotez:** GLB içindeki iki PNG roughness texture'ını kayıpsız PNG filtre/deflate optimizasyonuyla yeniden paketlemek görsel çıktıyı değiştirmeden transferi azaltır.
+**Değişiklik:** Yalnız PNG kapsayıcı sıkıştırması optimize edildi; çözümlenen RGBA pikselleri, geometri ve animasyon verileri değiştirilmedi; boyut/SHA-256 metadatası güncellendi.
+**Baseline Metrikler:** Model: 3.631.196 bayt; iki PNG: 380.821 bayt; Cache-16 miss: 482.536; Bundle: 6.920.722 bayt.
+**Sonuç Metrikler:** Model: 3.507.628 bayt (-%3,40); iki PNG: 257.256 bayt (-%32,4); Cache-16 miss: 482.536; Bundle: 6.920.722 bayt.
+**Fonksiyonel Regresyon:** Geçti — 2×512×512 texture'da 0 farklı RGBA kanal; bbox/kamera/animasyon aynı; 43/43 tur testi ve release build başarılı.
+**Karar:** KABUL EDİLDİ (commit)
+**Not/Ders:** Palette/deflate kodlaması 123.568 bayt kaldırırken shader'a ulaşan texture pikselleri bit düzeyinde aynı kaldı.
+
+---
