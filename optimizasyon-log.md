@@ -327,3 +327,15 @@ Başlangıç baseline (2026-08-30 03:54 +03): release `main.dart.js` 7.089.498 b
 **Not/Ders:** Büyük katalogda doğrusal isim taraması proje dosyasındaki her bileşen için tekrarlanıyordu; sabit indeks çıktıyı korurken benchmark süresini yarıdan fazla düşürdü.
 
 ---
+
+## Tur 28 - 2026-08-30 18:52 +03
+
+**Hipotez:** Otomatik bileşen eşleştirmesinde aynı slayt başlık/gövde metnini her katalog anahtar sözcüğü için tekrar parçalamak yerine çağrı başına bir kez tokenlaştırmak CPU/GC maliyetini azaltır.
+**Değişiklik:** Başlık ve gövdenin tam/önemli kelime listeleri eşleştirme çağrısı başında bir kez üretilip mevcut aynı `wordsMatch` ve puanlama kurallarına aktarıldı; altı temalı sonuç için deterministik benchmark/golden testi eklendi.
+**Baseline Metrikler:** 12 eşleştirme için ayrı süreç medyanları: 1.139.182 / 1.154.659 / 1.132.963 µs; checksum: 2.314; release `main.dart.js`: 6.987.370 bayt.
+**Sonuç Metrikler:** Ayrı süreç medyanları: 182.571 / 188.649 / 187.494 µs; süreç medyanlarının medyanı 187.494 µs (-%83,5); checksum: 2.314; bundle: 6.987.717 bayt (+347, +%0,005).
+**Fonksiyonel Regresyon:** Geçti — golden sonuçlar birebir aynı; ilgili geniş pakette değişiklik ve temiz `HEAD` aynı 70/79 sonucu verdi (9 mevcut hata); hedefli analiz temiz ve release build başarılı.
+**Karar:** KABUL EDİLDİ (commit)
+**Not/Ders:** Katalog indeksini büyütmeden yalnızca tek skor çağrısındaki değişmez giriş tokenlarını paylaşmak, eşleştirme sonucunu korurken ölçülen CPU süresini yaklaşık altıda bire indirdi.
+
+---

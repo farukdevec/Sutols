@@ -628,6 +628,12 @@ class PresentationAutoBuilder {
 
     final normalizedTitle = _normalize(title);
     final normalizedBody = _normalize(body);
+    final titleWords = PresentationKeywordCatalog.words(normalizedTitle);
+    final bodyWords = PresentationKeywordCatalog.words(normalizedBody);
+    final importantTitleWords =
+        titleWords.where(_isImportantComponentWord).toList(growable: false);
+    final importantBodyWords =
+        bodyWords.where(_isImportantComponentWord).toList(growable: false);
     final candidates = <_AutoComponentCandidate>[];
 
     for (final definition in presentationComponentDefinitions) {
@@ -638,8 +644,10 @@ class PresentationAutoBuilder {
       }
       final score = _componentScore(
         definition,
-        normalizedTitle: normalizedTitle,
-        normalizedBody: normalizedBody,
+        titleWords: titleWords,
+        bodyWords: bodyWords,
+        importantTitleWords: importantTitleWords,
+        importantBodyWords: importantBodyWords,
       );
       if (score >= _minimumComponentScore) {
         candidates.add(_AutoComponentCandidate(definition, score));
@@ -670,8 +678,10 @@ class PresentationAutoBuilder {
 
   int _componentScore(
     PresentationComponentDefinition definition, {
-    required String normalizedTitle,
-    required String normalizedBody,
+    required List<String> titleWords,
+    required List<String> bodyWords,
+    required List<String> importantTitleWords,
+    required List<String> importantBodyWords,
   }) {
     var score = 0;
 
@@ -681,8 +691,10 @@ class PresentationAutoBuilder {
           (_componentTagCategoryCounts[normalizedTag] ?? 0) > 1;
       score += _scoreKeyword(
         tag,
-        normalizedTitle: normalizedTitle,
-        normalizedBody: normalizedBody,
+        titleWords: titleWords,
+        bodyWords: bodyWords,
+        importantTitleWords: importantTitleWords,
+        importantBodyWords: importantBodyWords,
         titleExactScore: isAmbiguous ? 6 : 20,
         bodyExactScore: isAmbiguous ? 4 : 14,
         titlePartialScore: isAmbiguous ? 0 : 5,
@@ -694,8 +706,10 @@ class PresentationAutoBuilder {
 
     score += _scoreKeyword(
       definition.label,
-      normalizedTitle: normalizedTitle,
-      normalizedBody: normalizedBody,
+      titleWords: titleWords,
+      bodyWords: bodyWords,
+      importantTitleWords: importantTitleWords,
+      importantBodyWords: importantBodyWords,
       titleExactScore: 18,
       bodyExactScore: 12,
       titlePartialScore: 6,
@@ -705,8 +719,10 @@ class PresentationAutoBuilder {
     );
     score += _scoreKeyword(
       definition.category,
-      normalizedTitle: normalizedTitle,
-      normalizedBody: normalizedBody,
+      titleWords: titleWords,
+      bodyWords: bodyWords,
+      importantTitleWords: importantTitleWords,
+      importantBodyWords: importantBodyWords,
       titleExactScore: 4,
       bodyExactScore: 3,
       titlePartialScore: 0,
@@ -716,8 +732,10 @@ class PresentationAutoBuilder {
     );
     score += _scoreKeyword(
       definition.description,
-      normalizedTitle: normalizedTitle,
-      normalizedBody: normalizedBody,
+      titleWords: titleWords,
+      bodyWords: bodyWords,
+      importantTitleWords: importantTitleWords,
+      importantBodyWords: importantBodyWords,
       titleExactScore: 4,
       bodyExactScore: 3,
       titlePartialScore: 1,
@@ -731,8 +749,10 @@ class PresentationAutoBuilder {
 
   int _scoreKeyword(
     String value, {
-    required String normalizedTitle,
-    required String normalizedBody,
+    required List<String> titleWords,
+    required List<String> bodyWords,
+    required List<String> importantTitleWords,
+    required List<String> importantBodyWords,
     required int titleExactScore,
     required int bodyExactScore,
     required int titlePartialScore,
@@ -744,17 +764,24 @@ class PresentationAutoBuilder {
     if (normalizedKeyword.isEmpty) {
       return 0;
     }
+    final keywordWords = PresentationKeywordCatalog.words(normalizedKeyword);
+    final importantKeywordWords =
+        keywordWords.where(_isImportantComponentWord).toSet();
 
     return _scoreTextAgainstKeyword(
-          normalizedTitle,
-          normalizedKeyword,
+          titleWords,
+          keywordWords,
+          importantTextWords: importantTitleWords,
+          importantKeywordWords: importantKeywordWords,
           exactScore: titleExactScore,
           partialScore: titlePartialScore,
           partialCap: titlePartialCap,
         ) +
         _scoreTextAgainstKeyword(
-          normalizedBody,
-          normalizedKeyword,
+          bodyWords,
+          keywordWords,
+          importantTextWords: importantBodyWords,
+          importantKeywordWords: importantKeywordWords,
           exactScore: bodyExactScore,
           partialScore: bodyPartialScore,
           partialCap: bodyPartialCap,
@@ -762,25 +789,31 @@ class PresentationAutoBuilder {
   }
 
   int _scoreTextAgainstKeyword(
-    String normalizedText,
-    String normalizedKeyword, {
+    List<String> textWords,
+    List<String> keywordWords, {
+    required List<String> importantTextWords,
+    required Set<String> importantKeywordWords,
     required int exactScore,
     required int partialScore,
     required int partialCap,
   }) {
-    if (normalizedText.isEmpty || normalizedKeyword.isEmpty) {
+    if (textWords.isEmpty || keywordWords.isEmpty) {
       return 0;
     }
-    if (PresentationKeywordCatalog.textMatchesKeyword(
-      normalizedText,
-      normalizedKeyword,
+    if (keywordWords.every(
+      (keywordWord) => textWords.any(
+        (textWord) => PresentationKeywordCatalog.wordsMatch(
+          textWord,
+          keywordWord,
+        ),
+      ),
     )) {
       return exactScore;
     }
 
     return _partialWordScore(
-      normalizedText,
-      normalizedKeyword,
+      importantTextWords,
+      importantKeywordWords,
       perWordScore: partialScore,
       cap: partialCap,
     );
@@ -827,21 +860,14 @@ PresentationPage presentationTemplatePreviewPage(
 }
 
 int _partialWordScore(
-  String normalizedText,
-  String normalizedKeyword, {
+  List<String> inputWords,
+  Set<String> keywordWords, {
   required int perWordScore,
   required int cap,
 }) {
-  final inputWords = PresentationKeywordCatalog.words(normalizedText)
-      .where(_isImportantComponentWord)
-      .toList(growable: false);
   if (inputWords.isEmpty) {
     return 0;
   }
-
-  final keywordWords = PresentationKeywordCatalog.words(normalizedKeyword)
-      .where(_isImportantComponentWord)
-      .toSet();
   var matches = 0;
   for (final keywordWord in keywordWords) {
     if (inputWords.any(
