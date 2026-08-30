@@ -22,7 +22,7 @@ void main() {
     expect(model.hasAnimations, isTrue);
     expect(model.hasRig, isFalse);
     expect(model.supportsVirtualTour, isTrue);
-    expect(model.byteSize, 3627636);
+    expect(model.byteSize, 3631196);
     expect(model.exposure, 0.003);
     expect(model.environmentImage, 'neutral');
     expect(ModelAssetService.isLocalAssetPath(model.assetPath), isTrue);

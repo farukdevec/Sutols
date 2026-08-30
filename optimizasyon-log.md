@@ -99,3 +99,15 @@ Başlangıç baseline (2026-08-30 03:54 +03): release `main.dart.js` 7.089.498 b
 **Not/Ders:** Animasyonlu düğümleri elle ayıran varyasyonlar davranış riski taşıyor; GPU instancing bu modelde yeniden denenmemeli.
 
 ---
+
+## Tur 9 - 2026-08-30 04:36 +03
+
+**Hipotez:** Mesh indeks/vertex sırasını GPU post-transform önbellek yerelliğine göre kayıpsız düzenlemek vertex shader tekrarlarını azaltır.
+**Değişiklik:** Anıtkabir GLB'ye `reorder --target performance` uygulandı; katalog boyut ve SHA-256 metadatası güncellendi.
+**Baseline Metrikler:** Cache-16 miss: 535.608 (ACMR 1,742); Model: 3.627.636 bayt; Bundle: 6.920.722 bayt.
+**Sonuç Metrikler:** Cache-16 miss: 482.536 (-%9,9, ACMR 1,569); Model: 3.631.196 bayt (+%0,10); Bundle: 6.920.722 bayt.
+**Fonksiyonel Regresyon:** Geçti — bbox/kamera/animasyon aynı; sabit karede yalnız 3/480.000 piksel raster gürültüsü (ortalama kanal farkı 0,00001); 43/43 tur testi ve release build başarılı.
+**Karar:** KABUL EDİLDİ (commit)
+**Not/Ders:** 3,6 KB transfer bedeli karşılığında küçük GPU cache'lerde yaklaşık %10 daha az vertex yeniden işleme bekleniyor; veri değerleri değiştirilmedi.
+
+---
