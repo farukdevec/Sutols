@@ -8521,25 +8521,11 @@ class _HtmlComponentControlsState extends State<_HtmlComponentControls> {
     setState(() => _query = '');
   }
 
-  bool _matches(PresentationComponentDefinition definition, String query) {
-    return definition.label.toLowerCase().contains(query) ||
-        definition.category.toLowerCase().contains(query) ||
-        definition.description.toLowerCase().contains(query) ||
-        definition.tags.any(
-          (tag) => tag.toLowerCase().contains(query),
-        );
-  }
-
   @override
   Widget build(BuildContext context) {
     final controller = widget.controller;
-    final query = _query.trim().toLowerCase();
-    final allDefinitions = presentationComponentDefinitionsSortedByLabel();
-    final visibleDefinitions = query.isEmpty
-        ? allDefinitions
-        : allDefinitions
-            .where((definition) => _matches(definition, query))
-            .toList(growable: false);
+    final visibleDefinitions =
+        presentationComponentDefinitionsMatching(_query);
 
     final isExpandedMode = widget.expandResults || widget.isExpanded;
 

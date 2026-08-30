@@ -143,4 +143,68 @@ void main() {
     // ignore: avoid_print
     print('component_sort_samples_us=$samples median_us=${samples[2]}');
   });
+
+  test('component library search benchmark', () {
+    const queries = <String>[
+      'teknoloji',
+      'eğitim',
+      'harita',
+      'analiz',
+      'sağlık',
+      'müzik',
+      'enerji',
+      'timeline',
+    ];
+    final definitions = presentationComponentDefinitionsSortedByLabel();
+
+    List<PresentationComponentDefinition> search(String rawQuery) {
+      final query = rawQuery.trim().toLowerCase();
+      if (query.isEmpty) return definitions;
+      return definitions.where((definition) {
+        return definition.label.toLowerCase().contains(query) ||
+            definition.category.toLowerCase().contains(query) ||
+            definition.description.toLowerCase().contains(query) ||
+            definition.tags.any(
+              (tag) => tag.toLowerCase().contains(query),
+            );
+      }).toList(growable: false);
+    }
+
+    var checksum = 0;
+    for (final query in queries) {
+      expect(
+        presentationComponentDefinitionsMatching(query)
+            .map((definition) => definition.id),
+        search(query).map((definition) => definition.id),
+      );
+    }
+    expect(
+      identical(
+        presentationComponentDefinitionsMatching('   '),
+        definitions,
+      ),
+      isTrue,
+    );
+    for (final query in queries) {
+      checksum += presentationComponentDefinitionsMatching(query).length;
+    }
+    final samples = <int>[];
+    for (var run = 0; run < 5; run += 1) {
+      final stopwatch = Stopwatch()..start();
+      for (var iteration = 0; iteration < 100; iteration += 1) {
+        for (final query in queries) {
+          checksum += presentationComponentDefinitionsMatching(query).length;
+        }
+      }
+      stopwatch.stop();
+      samples.add(stopwatch.elapsedMicroseconds);
+    }
+    samples.sort();
+
+    expect(checksum, greaterThan(0));
+    // ignore: avoid_print
+    print(
+      'component_search_checksum=$checksum samples_us=$samples median_us=${samples[2]}',
+    );
+  });
 }

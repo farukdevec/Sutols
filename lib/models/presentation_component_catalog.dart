@@ -42456,3 +42456,40 @@ final List<PresentationComponentDefinition>
 List<PresentationComponentDefinition>
     presentationComponentDefinitionsSortedByLabel() =>
         _presentationComponentDefinitionsSortedByLabel;
+
+final List<({
+  String label,
+  String category,
+  String description,
+  List<String> tags,
+})> _presentationComponentSearchTerms = <({
+  String label,
+  String category,
+  String description,
+  List<String> tags,
+})>[
+  for (final definition in presentationComponentDefinitions)
+    (
+      label: definition.label.toLowerCase(),
+      category: definition.category.toLowerCase(),
+      description: definition.description.toLowerCase(),
+      tags: <String>[
+        for (final tag in definition.tags) tag.toLowerCase(),
+      ],
+    ),
+];
+
+List<PresentationComponentDefinition> presentationComponentDefinitionsMatching(
+  String rawQuery,
+) {
+  final query = rawQuery.trim().toLowerCase();
+  final definitions = presentationComponentDefinitionsSortedByLabel();
+  if (query.isEmpty) return definitions;
+  return definitions.where((definition) {
+    final terms = _presentationComponentSearchTerms[definition.kind.index];
+    return terms.label.contains(query) ||
+        terms.category.contains(query) ||
+        terms.description.contains(query) ||
+        terms.tags.any((tag) => tag.contains(query));
+  }).toList(growable: false);
+}

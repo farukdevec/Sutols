@@ -339,3 +339,15 @@ Başlangıç baseline (2026-08-30 03:54 +03): release `main.dart.js` 7.089.498 b
 **Not/Ders:** Katalog indeksini büyütmeden yalnızca tek skor çağrısındaki değişmez giriş tokenlarını paylaşmak, eşleştirme sonucunu korurken ölçülen CPU süresini yaklaşık altıda bire indirdi.
 
 ---
+
+## Tur 29 - 2026-08-30 19:05 +03
+
+**Hipotez:** Editör bileşen aramasında 1.051 değişmez tanımın metin alanlarını her tuş vuruşunda yeniden küçük harfe çevirmek yerine enum indeksli arama terimlerini bir kez hazırlamak arama CPU/GC maliyetini azaltır.
+**Değişiklik:** Etiket, kategori, açıklama ve tag alanlarının küçük harfli karşılıkları sınırlı bir indeksle paylaşıldı; aynı alan-bazlı `contains` ve alfabetik sıra korundu, üretici araç ve birebir kimlik karşılaştırmalı benchmark güncellendi.
+**Baseline Metrikler:** 800 arama için ayrı süreç medyanları: 1.532.025 / 1.568.279 / 1.562.848 µs; checksum: 123.747; release `main.dart.js`: 6.987.717 bayt.
+**Sonuç Metrikler:** Ayrı süreç medyanları: 465.806 / 442.695 / 448.928 µs; süreç medyanlarının medyanı 448.928 µs (-%71,3); checksum: 123.747; bundle: 6.988.182 bayt (+465, +%0,0067).
+**Fonksiyonel Regresyon:** Geçti — arama/katalog 6/6 ve sorgu kimlikleri birebir aynı; geniş paket öncekiyle aynı 70/79, editor paketi 9 mevcut hata ve izole tekrarda geçen bir zamanlama flake'i dışında aynı; release build başarılı.
+**Karar:** KABUL EDİLDİ (commit)
+**Not/Ders:** Sıralamayı veya eşleşme sınırlarını değiştirmeden değişmez UI arama alanlarını paylaşmak, tekrar eden lowercase tahsislerini kaldırıp ölçülen süreyi yaklaşık üçte bire indirdi.
+
+---
