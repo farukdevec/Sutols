@@ -234,12 +234,24 @@ Başlangıç baseline (2026-08-30 03:54 +03): release `main.dart.js` 7.089.498 b
 
 ## Tur 20 - 2026-08-30 05:52 +03
 
-**Hipotez:** Enum ile aynı sıradaki 1.027 bileşen tanımını hash-map yerine `kind.index` ile doğrudan listeden okumak lookup CPU/heap maliyetini çıktı değişmeden azaltır.
+**Hipotez:** Enum ile aynı sıradaki 1.051 bileşen tanımını hash-map yerine `kind.index` ile doğrudan listeden okumak lookup CPU/heap maliyetini çıktı değişmeden azaltır.
 **Değişiklik:** `_presentationComponentDefinitionByKind` kaldırıldı; erişim `presentationComponentDefinitions[kind.index]` oldu ve üretici araç aynı çıktıyı kalıcı üretecek şekilde güncellendi.
 **Baseline Metrikler:** 5 milyon karışık lookup medyanı: 14.597 µs; release `main.dart.js`: 7.002.709 bayt.
 **Sonuç Metrikler:** Ayrı süreç medyanları: 10.268 / 10.096 / 9.869 µs; en muhafazakâr kazanç -%29,7; bundle: 7.002.572 bayt (-137 bayt).
-**Fonksiyonel Regresyon:** Geçti — 1.027/1.027 enum-tanım hizası doğrulandı; component/editor/codec/export/tur paketinde 75/75 test ve release build başarılı.
+**Fonksiyonel Regresyon:** Geçti — 1.051/1.051 enum-tanım hizası doğrulandı; component/editor/codec/export/tur paketinde 75/75 test ve release build başarılı.
 **Karar:** KABUL EDİLDİ (commit)
-**Not/Ders:** Davranış ve HTML dizeleri birebir kalırken her bileşen erişimindeki hash hesabı ve 1.027 girişli lookup map tahsisi kaldırıldı.
+**Not/Ders:** Davranış ve HTML dizeleri birebir kalırken her bileşen erişimindeki hash hesabı ve 1.051 girişli lookup map tahsisi kaldırıldı.
+
+---
+
+## Tur 21 - 2026-08-30 05:55 +03
+
+**Hipotez:** 1.051 dallı bileşen DOM-adı switch'ini enum indeksli sabit dize listesine çevirmek lookup ve bundle maliyetini aynı çıktı ile azaltır.
+**Değişiklik:** `presentationComponentDomName` switch yerine `_presentationComponentDomNames[kind.index]` kullanıyor; üretici araç aynı temsili kalıcı üretiyor.
+**Baseline Metrikler:** 1 milyon karışık lookup medyanı: 893.842 µs; generated kaynak: 2.082.020 karakter; bundle: 7.002.572 bayt.
+**Sonuç Metrikler:** Ayrı süreç medyanları: 13.680 / 13.096 / 13.088 µs (en muhafazakâr -%98,47); kaynak -61.421 karakter; bundle: 6.986.867 bayt (-15.705).
+**Fonksiyonel Regresyon:** Geçti — 1.051/1.051 DOM adı enumdan türetilen beklenen değerle aynı; component/editor/codec/export/tur paketinde 76/76 test ve release build başarılı.
+**Karar:** KABUL EDİLDİ (commit)
+**Not/Ders:** Büyük enum switch'i Dart VM'de beklenenden pahalıydı; indeksli const tablo çıktıyı korurken lookup'u yaklaşık 65 kat hızlandırdı.
 
 ---

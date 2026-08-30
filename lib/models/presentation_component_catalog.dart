@@ -41363,2113 +41363,1062 @@ List<Color> presentationComponentPreviewColors(
   }
 }
 
-String presentationComponentDomName(PresentationComponentKind kind) {
-  switch (kind) {
-    case PresentationComponentKind.edebiyat01:
-      return 'edebiyat01';
-    case PresentationComponentKind.edebiyat02:
-      return 'edebiyat02';
-    case PresentationComponentKind.edebiyat03:
-      return 'edebiyat03';
-    case PresentationComponentKind.edebiyat04:
-      return 'edebiyat04';
-    case PresentationComponentKind.edebiyat05:
-      return 'edebiyat05';
-    case PresentationComponentKind.edebiyat06:
-      return 'edebiyat06';
-    case PresentationComponentKind.edebiyat07:
-      return 'edebiyat07';
-    case PresentationComponentKind.edebiyat08:
-      return 'edebiyat08';
-    case PresentationComponentKind.edebiyat09:
-      return 'edebiyat09';
-    case PresentationComponentKind.edebiyat10:
-      return 'edebiyat10';
-    case PresentationComponentKind.edebiyat11:
-      return 'edebiyat11';
-    case PresentationComponentKind.edebiyat12:
-      return 'edebiyat12';
-    case PresentationComponentKind.edebiyat13:
-      return 'edebiyat13';
-    case PresentationComponentKind.edebiyat14:
-      return 'edebiyat14';
-    case PresentationComponentKind.edebiyat15:
-      return 'edebiyat15';
-    case PresentationComponentKind.edebiyat16:
-      return 'edebiyat16';
-    case PresentationComponentKind.edebiyat17:
-      return 'edebiyat17';
-    case PresentationComponentKind.edebiyat18:
-      return 'edebiyat18';
-    case PresentationComponentKind.edebiyat19:
-      return 'edebiyat19';
-    case PresentationComponentKind.edebiyat20:
-      return 'edebiyat20';
-    case PresentationComponentKind.edebiyat21:
-      return 'edebiyat21';
-    case PresentationComponentKind.edebiyat22:
-      return 'edebiyat22';
-    case PresentationComponentKind.edebiyat23:
-      return 'edebiyat23';
-    case PresentationComponentKind.edebiyat24:
-      return 'edebiyat24';
-    case PresentationComponentKind.edebiyat25:
-      return 'edebiyat25';
-    case PresentationComponentKind.edebiyat26:
-      return 'edebiyat26';
-    case PresentationComponentKind.edebiyat27:
-      return 'edebiyat27';
-    case PresentationComponentKind.edebiyat28:
-      return 'edebiyat28';
-    case PresentationComponentKind.edebiyat29:
-      return 'edebiyat29';
-    case PresentationComponentKind.edebiyat30:
-      return 'edebiyat30';
-    case PresentationComponentKind.edebiyat31:
-      return 'edebiyat31';
-    case PresentationComponentKind.edebiyat32:
-      return 'edebiyat32';
-    case PresentationComponentKind.edebiyat33:
-      return 'edebiyat33';
-    case PresentationComponentKind.edebiyat34:
-      return 'edebiyat34';
-    case PresentationComponentKind.edebiyat35:
-      return 'edebiyat35';
-    case PresentationComponentKind.edebiyat36:
-      return 'edebiyat36';
-    case PresentationComponentKind.edebiyat37:
-      return 'edebiyat37';
-    case PresentationComponentKind.edebiyat38:
-      return 'edebiyat38';
-    case PresentationComponentKind.edebiyat39:
-      return 'edebiyat39';
-    case PresentationComponentKind.edebiyat40:
-      return 'edebiyat40';
-    case PresentationComponentKind.egitim01:
-      return 'egitim01';
-    case PresentationComponentKind.egitim02:
-      return 'egitim02';
-    case PresentationComponentKind.egitim03:
-      return 'egitim03';
-    case PresentationComponentKind.egitim04:
-      return 'egitim04';
-    case PresentationComponentKind.egitim05:
-      return 'egitim05';
-    case PresentationComponentKind.egitim06:
-      return 'egitim06';
-    case PresentationComponentKind.egitim07:
-      return 'egitim07';
-    case PresentationComponentKind.egitim08:
-      return 'egitim08';
-    case PresentationComponentKind.egitim09:
-      return 'egitim09';
-    case PresentationComponentKind.egitim10:
-      return 'egitim10';
-    case PresentationComponentKind.egitim11:
-      return 'egitim11';
-    case PresentationComponentKind.egitim12:
-      return 'egitim12';
-    case PresentationComponentKind.egitim13:
-      return 'egitim13';
-    case PresentationComponentKind.egitim14:
-      return 'egitim14';
-    case PresentationComponentKind.egitim15:
-      return 'egitim15';
-    case PresentationComponentKind.egitim16:
-      return 'egitim16';
-    case PresentationComponentKind.egitim17:
-      return 'egitim17';
-    case PresentationComponentKind.egitim18:
-      return 'egitim18';
-    case PresentationComponentKind.egitim19:
-      return 'egitim19';
-    case PresentationComponentKind.egitim20:
-      return 'egitim20';
-    case PresentationComponentKind.egitim21:
-      return 'egitim21';
-    case PresentationComponentKind.egitim22:
-      return 'egitim22';
-    case PresentationComponentKind.egitim23:
-      return 'egitim23';
-    case PresentationComponentKind.egitim24:
-      return 'egitim24';
-    case PresentationComponentKind.egitim25:
-      return 'egitim25';
-    case PresentationComponentKind.egitim26:
-      return 'egitim26';
-    case PresentationComponentKind.egitim27:
-      return 'egitim27';
-    case PresentationComponentKind.egitim28:
-      return 'egitim28';
-    case PresentationComponentKind.egitim29:
-      return 'egitim29';
-    case PresentationComponentKind.egitim30:
-      return 'egitim30';
-    case PresentationComponentKind.egitim31:
-      return 'egitim31';
-    case PresentationComponentKind.egitim32:
-      return 'egitim32';
-    case PresentationComponentKind.egitim33:
-      return 'egitim33';
-    case PresentationComponentKind.egitim34:
-      return 'egitim34';
-    case PresentationComponentKind.egitim35:
-      return 'egitim35';
-    case PresentationComponentKind.egitim36:
-      return 'egitim36';
-    case PresentationComponentKind.egitim37:
-      return 'egitim37';
-    case PresentationComponentKind.egitim38:
-      return 'egitim38';
-    case PresentationComponentKind.egitim39:
-      return 'egitim39';
-    case PresentationComponentKind.egitim40:
-      return 'egitim40';
-    case PresentationComponentKind.genelSunumIs01:
-      return 'genel-sunum-is01';
-    case PresentationComponentKind.genelSunumIs02:
-      return 'genel-sunum-is02';
-    case PresentationComponentKind.genelSunumIs03:
-      return 'genel-sunum-is03';
-    case PresentationComponentKind.genelSunumIs04:
-      return 'genel-sunum-is04';
-    case PresentationComponentKind.genelSunumIs05:
-      return 'genel-sunum-is05';
-    case PresentationComponentKind.genelSunumIs06:
-      return 'genel-sunum-is06';
-    case PresentationComponentKind.genelSunumIs07:
-      return 'genel-sunum-is07';
-    case PresentationComponentKind.genelSunumIs08:
-      return 'genel-sunum-is08';
-    case PresentationComponentKind.genelSunumIs09:
-      return 'genel-sunum-is09';
-    case PresentationComponentKind.genelSunumIs10:
-      return 'genel-sunum-is10';
-    case PresentationComponentKind.genelSunumIs11:
-      return 'genel-sunum-is11';
-    case PresentationComponentKind.genelSunumIs12:
-      return 'genel-sunum-is12';
-    case PresentationComponentKind.genelSunumIs13:
-      return 'genel-sunum-is13';
-    case PresentationComponentKind.genelSunumIs14:
-      return 'genel-sunum-is14';
-    case PresentationComponentKind.genelSunumIs15:
-      return 'genel-sunum-is15';
-    case PresentationComponentKind.genelSunumIs16:
-      return 'genel-sunum-is16';
-    case PresentationComponentKind.genelSunumIs17:
-      return 'genel-sunum-is17';
-    case PresentationComponentKind.genelSunumIs18:
-      return 'genel-sunum-is18';
-    case PresentationComponentKind.genelSunumIs19:
-      return 'genel-sunum-is19';
-    case PresentationComponentKind.genelSunumIs20:
-      return 'genel-sunum-is20';
-    case PresentationComponentKind.genelSunumIs21:
-      return 'genel-sunum-is21';
-    case PresentationComponentKind.genelSunumIs22:
-      return 'genel-sunum-is22';
-    case PresentationComponentKind.genelSunumIs23:
-      return 'genel-sunum-is23';
-    case PresentationComponentKind.genelSunumIs24:
-      return 'genel-sunum-is24';
-    case PresentationComponentKind.genelSunumIs25:
-      return 'genel-sunum-is25';
-    case PresentationComponentKind.genelSunumIs26:
-      return 'genel-sunum-is26';
-    case PresentationComponentKind.genelSunumIs27:
-      return 'genel-sunum-is27';
-    case PresentationComponentKind.genelSunumIs28:
-      return 'genel-sunum-is28';
-    case PresentationComponentKind.genelSunumIs29:
-      return 'genel-sunum-is29';
-    case PresentationComponentKind.genelSunumIs30:
-      return 'genel-sunum-is30';
-    case PresentationComponentKind.genelSunumIs31:
-      return 'genel-sunum-is31';
-    case PresentationComponentKind.genelSunumIs32:
-      return 'genel-sunum-is32';
-    case PresentationComponentKind.genelSunumIs33:
-      return 'genel-sunum-is33';
-    case PresentationComponentKind.genelSunumIs34:
-      return 'genel-sunum-is34';
-    case PresentationComponentKind.genelSunumIs35:
-      return 'genel-sunum-is35';
-    case PresentationComponentKind.genelSunumIs36:
-      return 'genel-sunum-is36';
-    case PresentationComponentKind.genelSunumIs37:
-      return 'genel-sunum-is37';
-    case PresentationComponentKind.genelSunumIs38:
-      return 'genel-sunum-is38';
-    case PresentationComponentKind.genelSunumIs39:
-      return 'genel-sunum-is39';
-    case PresentationComponentKind.genelSunumIs40:
-      return 'genel-sunum-is40';
-    case PresentationComponentKind.cografya01:
-      return 'cografya01';
-    case PresentationComponentKind.cografya02:
-      return 'cografya02';
-    case PresentationComponentKind.cografya03:
-      return 'cografya03';
-    case PresentationComponentKind.cografya04:
-      return 'cografya04';
-    case PresentationComponentKind.cografya05:
-      return 'cografya05';
-    case PresentationComponentKind.cografya06:
-      return 'cografya06';
-    case PresentationComponentKind.cografya07:
-      return 'cografya07';
-    case PresentationComponentKind.cografya08:
-      return 'cografya08';
-    case PresentationComponentKind.cografya09:
-      return 'cografya09';
-    case PresentationComponentKind.cografya10:
-      return 'cografya10';
-    case PresentationComponentKind.cografya11:
-      return 'cografya11';
-    case PresentationComponentKind.cografya12:
-      return 'cografya12';
-    case PresentationComponentKind.cografya13:
-      return 'cografya13';
-    case PresentationComponentKind.cografya14:
-      return 'cografya14';
-    case PresentationComponentKind.cografya15:
-      return 'cografya15';
-    case PresentationComponentKind.cografya16:
-      return 'cografya16';
-    case PresentationComponentKind.cografya17:
-      return 'cografya17';
-    case PresentationComponentKind.cografya18:
-      return 'cografya18';
-    case PresentationComponentKind.cografya19:
-      return 'cografya19';
-    case PresentationComponentKind.cografya20:
-      return 'cografya20';
-    case PresentationComponentKind.cografya21:
-      return 'cografya21';
-    case PresentationComponentKind.cografya22:
-      return 'cografya22';
-    case PresentationComponentKind.cografya23:
-      return 'cografya23';
-    case PresentationComponentKind.cografya24:
-      return 'cografya24';
-    case PresentationComponentKind.cografya25:
-      return 'cografya25';
-    case PresentationComponentKind.cografya26:
-      return 'cografya26';
-    case PresentationComponentKind.cografya27:
-      return 'cografya27';
-    case PresentationComponentKind.cografya28:
-      return 'cografya28';
-    case PresentationComponentKind.cografya29:
-      return 'cografya29';
-    case PresentationComponentKind.cografya30:
-      return 'cografya30';
-    case PresentationComponentKind.cografya31:
-      return 'cografya31';
-    case PresentationComponentKind.cografya32:
-      return 'cografya32';
-    case PresentationComponentKind.cografya33:
-      return 'cografya33';
-    case PresentationComponentKind.cografya34:
-      return 'cografya34';
-    case PresentationComponentKind.cografya35:
-      return 'cografya35';
-    case PresentationComponentKind.cografya36:
-      return 'cografya36';
-    case PresentationComponentKind.cografya37:
-      return 'cografya37';
-    case PresentationComponentKind.cografya38:
-      return 'cografya38';
-    case PresentationComponentKind.cografya39:
-      return 'cografya39';
-    case PresentationComponentKind.cografya40:
-      return 'cografya40';
-    case PresentationComponentKind.muzik01:
-      return 'muzik01';
-    case PresentationComponentKind.muzik02:
-      return 'muzik02';
-    case PresentationComponentKind.muzik03:
-      return 'muzik03';
-    case PresentationComponentKind.muzik04:
-      return 'muzik04';
-    case PresentationComponentKind.muzik05:
-      return 'muzik05';
-    case PresentationComponentKind.muzik06:
-      return 'muzik06';
-    case PresentationComponentKind.muzik07:
-      return 'muzik07';
-    case PresentationComponentKind.muzik08:
-      return 'muzik08';
-    case PresentationComponentKind.muzik09:
-      return 'muzik09';
-    case PresentationComponentKind.muzik10:
-      return 'muzik10';
-    case PresentationComponentKind.muzik11:
-      return 'muzik11';
-    case PresentationComponentKind.muzik12:
-      return 'muzik12';
-    case PresentationComponentKind.muzik13:
-      return 'muzik13';
-    case PresentationComponentKind.muzik14:
-      return 'muzik14';
-    case PresentationComponentKind.muzik15:
-      return 'muzik15';
-    case PresentationComponentKind.muzik16:
-      return 'muzik16';
-    case PresentationComponentKind.muzik17:
-      return 'muzik17';
-    case PresentationComponentKind.muzik18:
-      return 'muzik18';
-    case PresentationComponentKind.muzik19:
-      return 'muzik19';
-    case PresentationComponentKind.muzik20:
-      return 'muzik20';
-    case PresentationComponentKind.muzik21:
-      return 'muzik21';
-    case PresentationComponentKind.muzik22:
-      return 'muzik22';
-    case PresentationComponentKind.muzik23:
-      return 'muzik23';
-    case PresentationComponentKind.muzik24:
-      return 'muzik24';
-    case PresentationComponentKind.muzik25:
-      return 'muzik25';
-    case PresentationComponentKind.muzik26:
-      return 'muzik26';
-    case PresentationComponentKind.muzik27:
-      return 'muzik27';
-    case PresentationComponentKind.muzik28:
-      return 'muzik28';
-    case PresentationComponentKind.muzik29:
-      return 'muzik29';
-    case PresentationComponentKind.muzik30:
-      return 'muzik30';
-    case PresentationComponentKind.muzik31:
-      return 'muzik31';
-    case PresentationComponentKind.muzik32:
-      return 'muzik32';
-    case PresentationComponentKind.muzik33:
-      return 'muzik33';
-    case PresentationComponentKind.muzik34:
-      return 'muzik34';
-    case PresentationComponentKind.muzik35:
-      return 'muzik35';
-    case PresentationComponentKind.muzik36:
-      return 'muzik36';
-    case PresentationComponentKind.muzik37:
-      return 'muzik37';
-    case PresentationComponentKind.muzik38:
-      return 'muzik38';
-    case PresentationComponentKind.muzik39:
-      return 'muzik39';
-    case PresentationComponentKind.muzik40:
-      return 'muzik40';
-    case PresentationComponentKind.ekonomiIsFinans01:
-      return 'ekonomi-is-finans01';
-    case PresentationComponentKind.ekonomiIsFinans02:
-      return 'ekonomi-is-finans02';
-    case PresentationComponentKind.ekonomiIsFinans03:
-      return 'ekonomi-is-finans03';
-    case PresentationComponentKind.ekonomiIsFinans04:
-      return 'ekonomi-is-finans04';
-    case PresentationComponentKind.ekonomiIsFinans05:
-      return 'ekonomi-is-finans05';
-    case PresentationComponentKind.ekonomiIsFinans06:
-      return 'ekonomi-is-finans06';
-    case PresentationComponentKind.ekonomiIsFinans07:
-      return 'ekonomi-is-finans07';
-    case PresentationComponentKind.ekonomiIsFinans08:
-      return 'ekonomi-is-finans08';
-    case PresentationComponentKind.ekonomiIsFinans09:
-      return 'ekonomi-is-finans09';
-    case PresentationComponentKind.ekonomiIsFinans10:
-      return 'ekonomi-is-finans10';
-    case PresentationComponentKind.ekonomiIsFinans11:
-      return 'ekonomi-is-finans11';
-    case PresentationComponentKind.ekonomiIsFinans12:
-      return 'ekonomi-is-finans12';
-    case PresentationComponentKind.ekonomiIsFinans13:
-      return 'ekonomi-is-finans13';
-    case PresentationComponentKind.ekonomiIsFinans14:
-      return 'ekonomi-is-finans14';
-    case PresentationComponentKind.ekonomiIsFinans15:
-      return 'ekonomi-is-finans15';
-    case PresentationComponentKind.ekonomiIsFinans16:
-      return 'ekonomi-is-finans16';
-    case PresentationComponentKind.ekonomiIsFinans17:
-      return 'ekonomi-is-finans17';
-    case PresentationComponentKind.ekonomiIsFinans18:
-      return 'ekonomi-is-finans18';
-    case PresentationComponentKind.ekonomiIsFinans19:
-      return 'ekonomi-is-finans19';
-    case PresentationComponentKind.ekonomiIsFinans20:
-      return 'ekonomi-is-finans20';
-    case PresentationComponentKind.ekonomiIsFinans21:
-      return 'ekonomi-is-finans21';
-    case PresentationComponentKind.ekonomiIsFinans22:
-      return 'ekonomi-is-finans22';
-    case PresentationComponentKind.ekonomiIsFinans23:
-      return 'ekonomi-is-finans23';
-    case PresentationComponentKind.ekonomiIsFinans24:
-      return 'ekonomi-is-finans24';
-    case PresentationComponentKind.ekonomiIsFinans25:
-      return 'ekonomi-is-finans25';
-    case PresentationComponentKind.ekonomiIsFinans26:
-      return 'ekonomi-is-finans26';
-    case PresentationComponentKind.ekonomiIsFinans27:
-      return 'ekonomi-is-finans27';
-    case PresentationComponentKind.ekonomiIsFinans28:
-      return 'ekonomi-is-finans28';
-    case PresentationComponentKind.ekonomiIsFinans29:
-      return 'ekonomi-is-finans29';
-    case PresentationComponentKind.ekonomiIsFinans30:
-      return 'ekonomi-is-finans30';
-    case PresentationComponentKind.ekonomiIsFinans31:
-      return 'ekonomi-is-finans31';
-    case PresentationComponentKind.ekonomiIsFinans32:
-      return 'ekonomi-is-finans32';
-    case PresentationComponentKind.ekonomiIsFinans33:
-      return 'ekonomi-is-finans33';
-    case PresentationComponentKind.ekonomiIsFinans34:
-      return 'ekonomi-is-finans34';
-    case PresentationComponentKind.ekonomiIsFinans35:
-      return 'ekonomi-is-finans35';
-    case PresentationComponentKind.ekonomiIsFinans36:
-      return 'ekonomi-is-finans36';
-    case PresentationComponentKind.ekonomiIsFinans37:
-      return 'ekonomi-is-finans37';
-    case PresentationComponentKind.ekonomiIsFinans38:
-      return 'ekonomi-is-finans38';
-    case PresentationComponentKind.ekonomiIsFinans39:
-      return 'ekonomi-is-finans39';
-    case PresentationComponentKind.ekonomiIsFinans40:
-      return 'ekonomi-is-finans40';
-    case PresentationComponentKind.cevreDoga01:
-      return 'cevre-doga01';
-    case PresentationComponentKind.cevreDoga02:
-      return 'cevre-doga02';
-    case PresentationComponentKind.cevreDoga03:
-      return 'cevre-doga03';
-    case PresentationComponentKind.cevreDoga04:
-      return 'cevre-doga04';
-    case PresentationComponentKind.cevreDoga05:
-      return 'cevre-doga05';
-    case PresentationComponentKind.cevreDoga06:
-      return 'cevre-doga06';
-    case PresentationComponentKind.cevreDoga07:
-      return 'cevre-doga07';
-    case PresentationComponentKind.cevreDoga08:
-      return 'cevre-doga08';
-    case PresentationComponentKind.cevreDoga09:
-      return 'cevre-doga09';
-    case PresentationComponentKind.cevreDoga10:
-      return 'cevre-doga10';
-    case PresentationComponentKind.cevreDoga11:
-      return 'cevre-doga11';
-    case PresentationComponentKind.cevreDoga12:
-      return 'cevre-doga12';
-    case PresentationComponentKind.cevreDoga13:
-      return 'cevre-doga13';
-    case PresentationComponentKind.cevreDoga14:
-      return 'cevre-doga14';
-    case PresentationComponentKind.cevreDoga15:
-      return 'cevre-doga15';
-    case PresentationComponentKind.cevreDoga16:
-      return 'cevre-doga16';
-    case PresentationComponentKind.cevreDoga17:
-      return 'cevre-doga17';
-    case PresentationComponentKind.cevreDoga18:
-      return 'cevre-doga18';
-    case PresentationComponentKind.cevreDoga19:
-      return 'cevre-doga19';
-    case PresentationComponentKind.cevreDoga20:
-      return 'cevre-doga20';
-    case PresentationComponentKind.felsefeDin01:
-      return 'felsefe-din01';
-    case PresentationComponentKind.felsefeDin02:
-      return 'felsefe-din02';
-    case PresentationComponentKind.felsefeDin03:
-      return 'felsefe-din03';
-    case PresentationComponentKind.felsefeDin04:
-      return 'felsefe-din04';
-    case PresentationComponentKind.felsefeDin05:
-      return 'felsefe-din05';
-    case PresentationComponentKind.felsefeDin06:
-      return 'felsefe-din06';
-    case PresentationComponentKind.felsefeDin07:
-      return 'felsefe-din07';
-    case PresentationComponentKind.felsefeDin08:
-      return 'felsefe-din08';
-    case PresentationComponentKind.felsefeDin09:
-      return 'felsefe-din09';
-    case PresentationComponentKind.felsefeDin10:
-      return 'felsefe-din10';
-    case PresentationComponentKind.felsefeDin11:
-      return 'felsefe-din11';
-    case PresentationComponentKind.felsefeDin12:
-      return 'felsefe-din12';
-    case PresentationComponentKind.felsefeDin13:
-      return 'felsefe-din13';
-    case PresentationComponentKind.felsefeDin14:
-      return 'felsefe-din14';
-    case PresentationComponentKind.felsefeDin15:
-      return 'felsefe-din15';
-    case PresentationComponentKind.felsefeDin16:
-      return 'felsefe-din16';
-    case PresentationComponentKind.felsefeDin17:
-      return 'felsefe-din17';
-    case PresentationComponentKind.felsefeDin18:
-      return 'felsefe-din18';
-    case PresentationComponentKind.felsefeDin19:
-      return 'felsefe-din19';
-    case PresentationComponentKind.felsefeDin20:
-      return 'felsefe-din20';
-    case PresentationComponentKind.hukuk01:
-      return 'hukuk01';
-    case PresentationComponentKind.hukuk02:
-      return 'hukuk02';
-    case PresentationComponentKind.hukuk03:
-      return 'hukuk03';
-    case PresentationComponentKind.hukuk04:
-      return 'hukuk04';
-    case PresentationComponentKind.hukuk05:
-      return 'hukuk05';
-    case PresentationComponentKind.hukuk06:
-      return 'hukuk06';
-    case PresentationComponentKind.hukuk07:
-      return 'hukuk07';
-    case PresentationComponentKind.hukuk08:
-      return 'hukuk08';
-    case PresentationComponentKind.hukuk09:
-      return 'hukuk09';
-    case PresentationComponentKind.hukuk10:
-      return 'hukuk10';
-    case PresentationComponentKind.hukuk11:
-      return 'hukuk11';
-    case PresentationComponentKind.hukuk12:
-      return 'hukuk12';
-    case PresentationComponentKind.hukuk13:
-      return 'hukuk13';
-    case PresentationComponentKind.hukuk14:
-      return 'hukuk14';
-    case PresentationComponentKind.hukuk15:
-      return 'hukuk15';
-    case PresentationComponentKind.hukuk16:
-      return 'hukuk16';
-    case PresentationComponentKind.hukuk17:
-      return 'hukuk17';
-    case PresentationComponentKind.hukuk18:
-      return 'hukuk18';
-    case PresentationComponentKind.hukuk19:
-      return 'hukuk19';
-    case PresentationComponentKind.hukuk20:
-      return 'hukuk20';
-    case PresentationComponentKind.muhendislik01:
-      return 'muhendislik01';
-    case PresentationComponentKind.muhendislik02:
-      return 'muhendislik02';
-    case PresentationComponentKind.muhendislik03:
-      return 'muhendislik03';
-    case PresentationComponentKind.muhendislik04:
-      return 'muhendislik04';
-    case PresentationComponentKind.muhendislik05:
-      return 'muhendislik05';
-    case PresentationComponentKind.muhendislik06:
-      return 'muhendislik06';
-    case PresentationComponentKind.muhendislik07:
-      return 'muhendislik07';
-    case PresentationComponentKind.muhendislik08:
-      return 'muhendislik08';
-    case PresentationComponentKind.muhendislik09:
-      return 'muhendislik09';
-    case PresentationComponentKind.muhendislik10:
-      return 'muhendislik10';
-    case PresentationComponentKind.muhendislik11:
-      return 'muhendislik11';
-    case PresentationComponentKind.muhendislik12:
-      return 'muhendislik12';
-    case PresentationComponentKind.muhendislik13:
-      return 'muhendislik13';
-    case PresentationComponentKind.muhendislik14:
-      return 'muhendislik14';
-    case PresentationComponentKind.muhendislik15:
-      return 'muhendislik15';
-    case PresentationComponentKind.muhendislik16:
-      return 'muhendislik16';
-    case PresentationComponentKind.muhendislik17:
-      return 'muhendislik17';
-    case PresentationComponentKind.muhendislik18:
-      return 'muhendislik18';
-    case PresentationComponentKind.muhendislik19:
-      return 'muhendislik19';
-    case PresentationComponentKind.muhendislik20:
-      return 'muhendislik20';
-    case PresentationComponentKind.psikoloji01:
-      return 'psikoloji01';
-    case PresentationComponentKind.psikoloji02:
-      return 'psikoloji02';
-    case PresentationComponentKind.psikoloji03:
-      return 'psikoloji03';
-    case PresentationComponentKind.psikoloji04:
-      return 'psikoloji04';
-    case PresentationComponentKind.psikoloji05:
-      return 'psikoloji05';
-    case PresentationComponentKind.psikoloji06:
-      return 'psikoloji06';
-    case PresentationComponentKind.psikoloji07:
-      return 'psikoloji07';
-    case PresentationComponentKind.psikoloji08:
-      return 'psikoloji08';
-    case PresentationComponentKind.psikoloji09:
-      return 'psikoloji09';
-    case PresentationComponentKind.psikoloji10:
-      return 'psikoloji10';
-    case PresentationComponentKind.psikoloji11:
-      return 'psikoloji11';
-    case PresentationComponentKind.psikoloji12:
-      return 'psikoloji12';
-    case PresentationComponentKind.psikoloji13:
-      return 'psikoloji13';
-    case PresentationComponentKind.psikoloji14:
-      return 'psikoloji14';
-    case PresentationComponentKind.psikoloji15:
-      return 'psikoloji15';
-    case PresentationComponentKind.psikoloji16:
-      return 'psikoloji16';
-    case PresentationComponentKind.psikoloji17:
-      return 'psikoloji17';
-    case PresentationComponentKind.psikoloji18:
-      return 'psikoloji18';
-    case PresentationComponentKind.psikoloji19:
-      return 'psikoloji19';
-    case PresentationComponentKind.psikoloji20:
-      return 'psikoloji20';
-    case PresentationComponentKind.tarimGida01:
-      return 'tarim-gida01';
-    case PresentationComponentKind.tarimGida02:
-      return 'tarim-gida02';
-    case PresentationComponentKind.tarimGida03:
-      return 'tarim-gida03';
-    case PresentationComponentKind.tarimGida04:
-      return 'tarim-gida04';
-    case PresentationComponentKind.tarimGida05:
-      return 'tarim-gida05';
-    case PresentationComponentKind.tarimGida06:
-      return 'tarim-gida06';
-    case PresentationComponentKind.tarimGida07:
-      return 'tarim-gida07';
-    case PresentationComponentKind.tarimGida08:
-      return 'tarim-gida08';
-    case PresentationComponentKind.tarimGida09:
-      return 'tarim-gida09';
-    case PresentationComponentKind.tarimGida10:
-      return 'tarim-gida10';
-    case PresentationComponentKind.tarimGida11:
-      return 'tarim-gida11';
-    case PresentationComponentKind.tarimGida12:
-      return 'tarim-gida12';
-    case PresentationComponentKind.tarimGida13:
-      return 'tarim-gida13';
-    case PresentationComponentKind.tarimGida14:
-      return 'tarim-gida14';
-    case PresentationComponentKind.tarimGida15:
-      return 'tarim-gida15';
-    case PresentationComponentKind.tarimGida16:
-      return 'tarim-gida16';
-    case PresentationComponentKind.tarimGida17:
-      return 'tarim-gida17';
-    case PresentationComponentKind.tarimGida18:
-      return 'tarim-gida18';
-    case PresentationComponentKind.tarimGida19:
-      return 'tarim-gida19';
-    case PresentationComponentKind.tarimGida20:
-      return 'tarim-gida20';
-    case PresentationComponentKind.toplum01:
-      return 'toplum01';
-    case PresentationComponentKind.toplum02:
-      return 'toplum02';
-    case PresentationComponentKind.toplum03:
-      return 'toplum03';
-    case PresentationComponentKind.toplum04:
-      return 'toplum04';
-    case PresentationComponentKind.toplum05:
-      return 'toplum05';
-    case PresentationComponentKind.toplum06:
-      return 'toplum06';
-    case PresentationComponentKind.toplum07:
-      return 'toplum07';
-    case PresentationComponentKind.toplum08:
-      return 'toplum08';
-    case PresentationComponentKind.toplum09:
-      return 'toplum09';
-    case PresentationComponentKind.toplum10:
-      return 'toplum10';
-    case PresentationComponentKind.toplum11:
-      return 'toplum11';
-    case PresentationComponentKind.toplum12:
-      return 'toplum12';
-    case PresentationComponentKind.toplum13:
-      return 'toplum13';
-    case PresentationComponentKind.toplum14:
-      return 'toplum14';
-    case PresentationComponentKind.toplum15:
-      return 'toplum15';
-    case PresentationComponentKind.toplum16:
-      return 'toplum16';
-    case PresentationComponentKind.toplum17:
-      return 'toplum17';
-    case PresentationComponentKind.toplum18:
-      return 'toplum18';
-    case PresentationComponentKind.toplum19:
-      return 'toplum19';
-    case PresentationComponentKind.toplum20:
-      return 'toplum20';
-    case PresentationComponentKind.saglik01:
-      return 'saglik01';
-    case PresentationComponentKind.saglik02:
-      return 'saglik02';
-    case PresentationComponentKind.saglik03:
-      return 'saglik03';
-    case PresentationComponentKind.saglik04:
-      return 'saglik04';
-    case PresentationComponentKind.saglik05:
-      return 'saglik05';
-    case PresentationComponentKind.saglik06:
-      return 'saglik06';
-    case PresentationComponentKind.saglik07:
-      return 'saglik07';
-    case PresentationComponentKind.saglik08:
-      return 'saglik08';
-    case PresentationComponentKind.saglik09:
-      return 'saglik09';
-    case PresentationComponentKind.saglik10:
-      return 'saglik10';
-    case PresentationComponentKind.saglik11:
-      return 'saglik11';
-    case PresentationComponentKind.saglik12:
-      return 'saglik12';
-    case PresentationComponentKind.saglik13:
-      return 'saglik13';
-    case PresentationComponentKind.saglik14:
-      return 'saglik14';
-    case PresentationComponentKind.saglik15:
-      return 'saglik15';
-    case PresentationComponentKind.saglik16:
-      return 'saglik16';
-    case PresentationComponentKind.saglik17:
-      return 'saglik17';
-    case PresentationComponentKind.saglik18:
-      return 'saglik18';
-    case PresentationComponentKind.saglik19:
-      return 'saglik19';
-    case PresentationComponentKind.saglik20:
-      return 'saglik20';
-    case PresentationComponentKind.spor01:
-      return 'spor01';
-    case PresentationComponentKind.spor02:
-      return 'spor02';
-    case PresentationComponentKind.spor03:
-      return 'spor03';
-    case PresentationComponentKind.spor04:
-      return 'spor04';
-    case PresentationComponentKind.spor05:
-      return 'spor05';
-    case PresentationComponentKind.spor06:
-      return 'spor06';
-    case PresentationComponentKind.spor07:
-      return 'spor07';
-    case PresentationComponentKind.spor08:
-      return 'spor08';
-    case PresentationComponentKind.spor09:
-      return 'spor09';
-    case PresentationComponentKind.spor10:
-      return 'spor10';
-    case PresentationComponentKind.spor11:
-      return 'spor11';
-    case PresentationComponentKind.spor12:
-      return 'spor12';
-    case PresentationComponentKind.spor13:
-      return 'spor13';
-    case PresentationComponentKind.spor14:
-      return 'spor14';
-    case PresentationComponentKind.spor15:
-      return 'spor15';
-    case PresentationComponentKind.spor16:
-      return 'spor16';
-    case PresentationComponentKind.spor17:
-      return 'spor17';
-    case PresentationComponentKind.spor18:
-      return 'spor18';
-    case PresentationComponentKind.spor19:
-      return 'spor19';
-    case PresentationComponentKind.spor20:
-      return 'spor20';
-    case PresentationComponentKind.sanat01:
-      return 'sanat01';
-    case PresentationComponentKind.sanat02:
-      return 'sanat02';
-    case PresentationComponentKind.sanat03:
-      return 'sanat03';
-    case PresentationComponentKind.sanat04:
-      return 'sanat04';
-    case PresentationComponentKind.sanat05:
-      return 'sanat05';
-    case PresentationComponentKind.sanat06:
-      return 'sanat06';
-    case PresentationComponentKind.sanat07:
-      return 'sanat07';
-    case PresentationComponentKind.sanat08:
-      return 'sanat08';
-    case PresentationComponentKind.sanat09:
-      return 'sanat09';
-    case PresentationComponentKind.sanat10:
-      return 'sanat10';
-    case PresentationComponentKind.sanat11:
-      return 'sanat11';
-    case PresentationComponentKind.sanat12:
-      return 'sanat12';
-    case PresentationComponentKind.sanat13:
-      return 'sanat13';
-    case PresentationComponentKind.sanat14:
-      return 'sanat14';
-    case PresentationComponentKind.sanat15:
-      return 'sanat15';
-    case PresentationComponentKind.sanat16:
-      return 'sanat16';
-    case PresentationComponentKind.sanat17:
-      return 'sanat17';
-    case PresentationComponentKind.sanat18:
-      return 'sanat18';
-    case PresentationComponentKind.sanat19:
-      return 'sanat19';
-    case PresentationComponentKind.sanat20:
-      return 'sanat20';
-    case PresentationComponentKind.tarih01:
-      return 'tarih01';
-    case PresentationComponentKind.tarih02:
-      return 'tarih02';
-    case PresentationComponentKind.tarih03:
-      return 'tarih03';
-    case PresentationComponentKind.tarih04:
-      return 'tarih04';
-    case PresentationComponentKind.tarih05:
-      return 'tarih05';
-    case PresentationComponentKind.tarih06:
-      return 'tarih06';
-    case PresentationComponentKind.tarih07:
-      return 'tarih07';
-    case PresentationComponentKind.tarih08:
-      return 'tarih08';
-    case PresentationComponentKind.tarih09:
-      return 'tarih09';
-    case PresentationComponentKind.tarih10:
-      return 'tarih10';
-    case PresentationComponentKind.tarih11:
-      return 'tarih11';
-    case PresentationComponentKind.tarih12:
-      return 'tarih12';
-    case PresentationComponentKind.tarih13:
-      return 'tarih13';
-    case PresentationComponentKind.tarih14:
-      return 'tarih14';
-    case PresentationComponentKind.tarih15:
-      return 'tarih15';
-    case PresentationComponentKind.tarih16:
-      return 'tarih16';
-    case PresentationComponentKind.tarih17:
-      return 'tarih17';
-    case PresentationComponentKind.tarih18:
-      return 'tarih18';
-    case PresentationComponentKind.tarih19:
-      return 'tarih19';
-    case PresentationComponentKind.tarih20:
-      return 'tarih20';
-    case PresentationComponentKind.teknoloji01:
-      return 'teknoloji01';
-    case PresentationComponentKind.teknoloji02:
-      return 'teknoloji02';
-    case PresentationComponentKind.teknoloji03:
-      return 'teknoloji03';
-    case PresentationComponentKind.teknoloji04:
-      return 'teknoloji04';
-    case PresentationComponentKind.teknoloji05:
-      return 'teknoloji05';
-    case PresentationComponentKind.teknoloji06:
-      return 'teknoloji06';
-    case PresentationComponentKind.teknoloji07:
-      return 'teknoloji07';
-    case PresentationComponentKind.teknoloji08:
-      return 'teknoloji08';
-    case PresentationComponentKind.teknoloji09:
-      return 'teknoloji09';
-    case PresentationComponentKind.teknoloji10:
-      return 'teknoloji10';
-    case PresentationComponentKind.teknoloji11:
-      return 'teknoloji11';
-    case PresentationComponentKind.teknoloji12:
-      return 'teknoloji12';
-    case PresentationComponentKind.teknoloji13:
-      return 'teknoloji13';
-    case PresentationComponentKind.teknoloji14:
-      return 'teknoloji14';
-    case PresentationComponentKind.teknoloji15:
-      return 'teknoloji15';
-    case PresentationComponentKind.teknoloji16:
-      return 'teknoloji16';
-    case PresentationComponentKind.teknoloji17:
-      return 'teknoloji17';
-    case PresentationComponentKind.teknoloji18:
-      return 'teknoloji18';
-    case PresentationComponentKind.teknoloji19:
-      return 'teknoloji19';
-    case PresentationComponentKind.teknoloji20:
-      return 'teknoloji20';
-    case PresentationComponentKind.astronomi01:
-      return 'astronomi01';
-    case PresentationComponentKind.astronomi02:
-      return 'astronomi02';
-    case PresentationComponentKind.astronomi03:
-      return 'astronomi03';
-    case PresentationComponentKind.astronomi04:
-      return 'astronomi04';
-    case PresentationComponentKind.astronomi05:
-      return 'astronomi05';
-    case PresentationComponentKind.astronomi06:
-      return 'astronomi06';
-    case PresentationComponentKind.astronomi07:
-      return 'astronomi07';
-    case PresentationComponentKind.astronomi08:
-      return 'astronomi08';
-    case PresentationComponentKind.astronomi09:
-      return 'astronomi09';
-    case PresentationComponentKind.astronomi10:
-      return 'astronomi10';
-    case PresentationComponentKind.astronomi11:
-      return 'astronomi11';
-    case PresentationComponentKind.astronomi12:
-      return 'astronomi12';
-    case PresentationComponentKind.astronomi13:
-      return 'astronomi13';
-    case PresentationComponentKind.astronomi14:
-      return 'astronomi14';
-    case PresentationComponentKind.astronomi15:
-      return 'astronomi15';
-    case PresentationComponentKind.astronomi16:
-      return 'astronomi16';
-    case PresentationComponentKind.astronomi17:
-      return 'astronomi17';
-    case PresentationComponentKind.astronomi18:
-      return 'astronomi18';
-    case PresentationComponentKind.astronomi19:
-      return 'astronomi19';
-    case PresentationComponentKind.astronomi20:
-      return 'astronomi20';
-    case PresentationComponentKind.biyoloji01:
-      return 'biyoloji01';
-    case PresentationComponentKind.biyoloji02:
-      return 'biyoloji02';
-    case PresentationComponentKind.biyoloji03:
-      return 'biyoloji03';
-    case PresentationComponentKind.biyoloji04:
-      return 'biyoloji04';
-    case PresentationComponentKind.biyoloji05:
-      return 'biyoloji05';
-    case PresentationComponentKind.biyoloji06:
-      return 'biyoloji06';
-    case PresentationComponentKind.biyoloji07:
-      return 'biyoloji07';
-    case PresentationComponentKind.biyoloji08:
-      return 'biyoloji08';
-    case PresentationComponentKind.biyoloji09:
-      return 'biyoloji09';
-    case PresentationComponentKind.biyoloji10:
-      return 'biyoloji10';
-    case PresentationComponentKind.biyoloji11:
-      return 'biyoloji11';
-    case PresentationComponentKind.biyoloji12:
-      return 'biyoloji12';
-    case PresentationComponentKind.biyoloji13:
-      return 'biyoloji13';
-    case PresentationComponentKind.biyoloji14:
-      return 'biyoloji14';
-    case PresentationComponentKind.biyoloji15:
-      return 'biyoloji15';
-    case PresentationComponentKind.biyoloji16:
-      return 'biyoloji16';
-    case PresentationComponentKind.biyoloji17:
-      return 'biyoloji17';
-    case PresentationComponentKind.biyoloji18:
-      return 'biyoloji18';
-    case PresentationComponentKind.biyoloji19:
-      return 'biyoloji19';
-    case PresentationComponentKind.biyoloji20:
-      return 'biyoloji20';
-    case PresentationComponentKind.fizik01:
-      return 'fizik01';
-    case PresentationComponentKind.fizik02:
-      return 'fizik02';
-    case PresentationComponentKind.fizik03:
-      return 'fizik03';
-    case PresentationComponentKind.fizik04:
-      return 'fizik04';
-    case PresentationComponentKind.fizik05:
-      return 'fizik05';
-    case PresentationComponentKind.fizik06:
-      return 'fizik06';
-    case PresentationComponentKind.fizik07:
-      return 'fizik07';
-    case PresentationComponentKind.fizik08:
-      return 'fizik08';
-    case PresentationComponentKind.fizik09:
-      return 'fizik09';
-    case PresentationComponentKind.fizik10:
-      return 'fizik10';
-    case PresentationComponentKind.fizik11:
-      return 'fizik11';
-    case PresentationComponentKind.fizik12:
-      return 'fizik12';
-    case PresentationComponentKind.fizik13:
-      return 'fizik13';
-    case PresentationComponentKind.fizik14:
-      return 'fizik14';
-    case PresentationComponentKind.fizik15:
-      return 'fizik15';
-    case PresentationComponentKind.fizik16:
-      return 'fizik16';
-    case PresentationComponentKind.fizik17:
-      return 'fizik17';
-    case PresentationComponentKind.fizik18:
-      return 'fizik18';
-    case PresentationComponentKind.fizik19:
-      return 'fizik19';
-    case PresentationComponentKind.fizik20:
-      return 'fizik20';
-    case PresentationComponentKind.matematik01:
-      return 'matematik01';
-    case PresentationComponentKind.matematik02:
-      return 'matematik02';
-    case PresentationComponentKind.matematik03:
-      return 'matematik03';
-    case PresentationComponentKind.matematik04:
-      return 'matematik04';
-    case PresentationComponentKind.matematik05:
-      return 'matematik05';
-    case PresentationComponentKind.matematik06:
-      return 'matematik06';
-    case PresentationComponentKind.matematik07:
-      return 'matematik07';
-    case PresentationComponentKind.matematik08:
-      return 'matematik08';
-    case PresentationComponentKind.matematik09:
-      return 'matematik09';
-    case PresentationComponentKind.matematik10:
-      return 'matematik10';
-    case PresentationComponentKind.matematik11:
-      return 'matematik11';
-    case PresentationComponentKind.matematik12:
-      return 'matematik12';
-    case PresentationComponentKind.matematik13:
-      return 'matematik13';
-    case PresentationComponentKind.matematik14:
-      return 'matematik14';
-    case PresentationComponentKind.matematik15:
-      return 'matematik15';
-    case PresentationComponentKind.matematik16:
-      return 'matematik16';
-    case PresentationComponentKind.matematik17:
-      return 'matematik17';
-    case PresentationComponentKind.matematik18:
-      return 'matematik18';
-    case PresentationComponentKind.matematik19:
-      return 'matematik19';
-    case PresentationComponentKind.matematik20:
-      return 'matematik20';
-    case PresentationComponentKind.kimya01:
-      return 'kimya01';
-    case PresentationComponentKind.kimya02:
-      return 'kimya02';
-    case PresentationComponentKind.kimya03:
-      return 'kimya03';
-    case PresentationComponentKind.kimya04:
-      return 'kimya04';
-    case PresentationComponentKind.kimya05:
-      return 'kimya05';
-    case PresentationComponentKind.kimya06:
-      return 'kimya06';
-    case PresentationComponentKind.kimya07:
-      return 'kimya07';
-    case PresentationComponentKind.kimya08:
-      return 'kimya08';
-    case PresentationComponentKind.kimya09:
-      return 'kimya09';
-    case PresentationComponentKind.kimya10:
-      return 'kimya10';
-    case PresentationComponentKind.kimya11:
-      return 'kimya11';
-    case PresentationComponentKind.kimya12:
-      return 'kimya12';
-    case PresentationComponentKind.kimya13:
-      return 'kimya13';
-    case PresentationComponentKind.kimya14:
-      return 'kimya14';
-    case PresentationComponentKind.kimya15:
-      return 'kimya15';
-    case PresentationComponentKind.kimya16:
-      return 'kimya16';
-    case PresentationComponentKind.kimya17:
-      return 'kimya17';
-    case PresentationComponentKind.kimya18:
-      return 'kimya18';
-    case PresentationComponentKind.kimya19:
-      return 'kimya19';
-    case PresentationComponentKind.kimya20:
-      return 'kimya20';
-    case PresentationComponentKind.turizmSeyahat01:
-      return 'turizm-seyahat01';
-    case PresentationComponentKind.turizmSeyahat02:
-      return 'turizm-seyahat02';
-    case PresentationComponentKind.turizmSeyahat03:
-      return 'turizm-seyahat03';
-    case PresentationComponentKind.turizmSeyahat04:
-      return 'turizm-seyahat04';
-    case PresentationComponentKind.turizmSeyahat05:
-      return 'turizm-seyahat05';
-    case PresentationComponentKind.turizmSeyahat06:
-      return 'turizm-seyahat06';
-    case PresentationComponentKind.turizmSeyahat07:
-      return 'turizm-seyahat07';
-    case PresentationComponentKind.turizmSeyahat08:
-      return 'turizm-seyahat08';
-    case PresentationComponentKind.turizmSeyahat09:
-      return 'turizm-seyahat09';
-    case PresentationComponentKind.turizmSeyahat10:
-      return 'turizm-seyahat10';
-    case PresentationComponentKind.turizmSeyahat11:
-      return 'turizm-seyahat11';
-    case PresentationComponentKind.turizmSeyahat12:
-      return 'turizm-seyahat12';
-    case PresentationComponentKind.turizmSeyahat13:
-      return 'turizm-seyahat13';
-    case PresentationComponentKind.turizmSeyahat14:
-      return 'turizm-seyahat14';
-    case PresentationComponentKind.turizmSeyahat15:
-      return 'turizm-seyahat15';
-    case PresentationComponentKind.turizmSeyahat16:
-      return 'turizm-seyahat16';
-    case PresentationComponentKind.turizmSeyahat17:
-      return 'turizm-seyahat17';
-    case PresentationComponentKind.turizmSeyahat18:
-      return 'turizm-seyahat18';
-    case PresentationComponentKind.turizmSeyahat19:
-      return 'turizm-seyahat19';
-    case PresentationComponentKind.turizmSeyahat20:
-      return 'turizm-seyahat20';
-    case PresentationComponentKind.ulasimLojistik01:
-      return 'ulasim-lojistik01';
-    case PresentationComponentKind.ulasimLojistik02:
-      return 'ulasim-lojistik02';
-    case PresentationComponentKind.ulasimLojistik03:
-      return 'ulasim-lojistik03';
-    case PresentationComponentKind.ulasimLojistik04:
-      return 'ulasim-lojistik04';
-    case PresentationComponentKind.ulasimLojistik05:
-      return 'ulasim-lojistik05';
-    case PresentationComponentKind.ulasimLojistik06:
-      return 'ulasim-lojistik06';
-    case PresentationComponentKind.ulasimLojistik07:
-      return 'ulasim-lojistik07';
-    case PresentationComponentKind.ulasimLojistik08:
-      return 'ulasim-lojistik08';
-    case PresentationComponentKind.ulasimLojistik09:
-      return 'ulasim-lojistik09';
-    case PresentationComponentKind.ulasimLojistik10:
-      return 'ulasim-lojistik10';
-    case PresentationComponentKind.ulasimLojistik11:
-      return 'ulasim-lojistik11';
-    case PresentationComponentKind.ulasimLojistik12:
-      return 'ulasim-lojistik12';
-    case PresentationComponentKind.ulasimLojistik13:
-      return 'ulasim-lojistik13';
-    case PresentationComponentKind.ulasimLojistik14:
-      return 'ulasim-lojistik14';
-    case PresentationComponentKind.ulasimLojistik15:
-      return 'ulasim-lojistik15';
-    case PresentationComponentKind.ulasimLojistik16:
-      return 'ulasim-lojistik16';
-    case PresentationComponentKind.ulasimLojistik17:
-      return 'ulasim-lojistik17';
-    case PresentationComponentKind.ulasimLojistik18:
-      return 'ulasim-lojistik18';
-    case PresentationComponentKind.ulasimLojistik19:
-      return 'ulasim-lojistik19';
-    case PresentationComponentKind.ulasimLojistik20:
-      return 'ulasim-lojistik20';
-    case PresentationComponentKind.sehirKentsel01:
-      return 'sehir-kentsel01';
-    case PresentationComponentKind.sehirKentsel02:
-      return 'sehir-kentsel02';
-    case PresentationComponentKind.sehirKentsel03:
-      return 'sehir-kentsel03';
-    case PresentationComponentKind.sehirKentsel04:
-      return 'sehir-kentsel04';
-    case PresentationComponentKind.sehirKentsel05:
-      return 'sehir-kentsel05';
-    case PresentationComponentKind.sehirKentsel06:
-      return 'sehir-kentsel06';
-    case PresentationComponentKind.sehirKentsel07:
-      return 'sehir-kentsel07';
-    case PresentationComponentKind.sehirKentsel08:
-      return 'sehir-kentsel08';
-    case PresentationComponentKind.sehirKentsel09:
-      return 'sehir-kentsel09';
-    case PresentationComponentKind.sehirKentsel10:
-      return 'sehir-kentsel10';
-    case PresentationComponentKind.sehirKentsel11:
-      return 'sehir-kentsel11';
-    case PresentationComponentKind.sehirKentsel12:
-      return 'sehir-kentsel12';
-    case PresentationComponentKind.sehirKentsel13:
-      return 'sehir-kentsel13';
-    case PresentationComponentKind.sehirKentsel14:
-      return 'sehir-kentsel14';
-    case PresentationComponentKind.sehirKentsel15:
-      return 'sehir-kentsel15';
-    case PresentationComponentKind.sehirKentsel16:
-      return 'sehir-kentsel16';
-    case PresentationComponentKind.sehirKentsel17:
-      return 'sehir-kentsel17';
-    case PresentationComponentKind.sehirKentsel18:
-      return 'sehir-kentsel18';
-    case PresentationComponentKind.sehirKentsel19:
-      return 'sehir-kentsel19';
-    case PresentationComponentKind.sehirKentsel20:
-      return 'sehir-kentsel20';
-    case PresentationComponentKind.enerjiAltyapisi01:
-      return 'enerji-altyapisi01';
-    case PresentationComponentKind.enerjiAltyapisi02:
-      return 'enerji-altyapisi02';
-    case PresentationComponentKind.enerjiAltyapisi03:
-      return 'enerji-altyapisi03';
-    case PresentationComponentKind.enerjiAltyapisi04:
-      return 'enerji-altyapisi04';
-    case PresentationComponentKind.enerjiAltyapisi05:
-      return 'enerji-altyapisi05';
-    case PresentationComponentKind.elSanatlari01:
-      return 'el-sanatlari01';
-    case PresentationComponentKind.elSanatlari02:
-      return 'el-sanatlari02';
-    case PresentationComponentKind.elSanatlari03:
-      return 'el-sanatlari03';
-    case PresentationComponentKind.elSanatlari04:
-      return 'el-sanatlari04';
-    case PresentationComponentKind.elSanatlari05:
-      return 'el-sanatlari05';
-    case PresentationComponentKind.elSanatlari06:
-      return 'el-sanatlari06';
-    case PresentationComponentKind.sinemaFilm01:
-      return 'sinema-film01';
-    case PresentationComponentKind.sinemaFilm02:
-      return 'sinema-film02';
-    case PresentationComponentKind.sinemaFilm03:
-      return 'sinema-film03';
-    case PresentationComponentKind.sinemaFilm04:
-      return 'sinema-film04';
-    case PresentationComponentKind.sinemaFilm05:
-      return 'sinema-film05';
-    case PresentationComponentKind.sinemaFilm06:
-      return 'sinema-film06';
-    case PresentationComponentKind.sinemaFilm07:
-      return 'sinema-film07';
-    case PresentationComponentKind.sinemaFilm08:
-      return 'sinema-film08';
-    case PresentationComponentKind.sinemaFilm09:
-      return 'sinema-film09';
-    case PresentationComponentKind.sinemaFilm10:
-      return 'sinema-film10';
-    case PresentationComponentKind.sinemaFilm11:
-      return 'sinema-film11';
-    case PresentationComponentKind.sinemaFilm12:
-      return 'sinema-film12';
-    case PresentationComponentKind.sinemaFilm13:
-      return 'sinema-film13';
-    case PresentationComponentKind.sinemaFilm14:
-      return 'sinema-film14';
-    case PresentationComponentKind.sinemaFilm15:
-      return 'sinema-film15';
-    case PresentationComponentKind.sinemaFilm16:
-      return 'sinema-film16';
-    case PresentationComponentKind.sinemaFilm17:
-      return 'sinema-film17';
-    case PresentationComponentKind.sinemaFilm18:
-      return 'sinema-film18';
-    case PresentationComponentKind.sinemaFilm19:
-      return 'sinema-film19';
-    case PresentationComponentKind.sinemaFilm20:
-      return 'sinema-film20';
-    case PresentationComponentKind.oyun01:
-      return 'oyun01';
-    case PresentationComponentKind.oyun02:
-      return 'oyun02';
-    case PresentationComponentKind.oyun03:
-      return 'oyun03';
-    case PresentationComponentKind.oyun04:
-      return 'oyun04';
-    case PresentationComponentKind.oyun05:
-      return 'oyun05';
-    case PresentationComponentKind.oyun06:
-      return 'oyun06';
-    case PresentationComponentKind.oyun07:
-      return 'oyun07';
-    case PresentationComponentKind.oyun08:
-      return 'oyun08';
-    case PresentationComponentKind.oyun09:
-      return 'oyun09';
-    case PresentationComponentKind.oyun10:
-      return 'oyun10';
-    case PresentationComponentKind.oyun11:
-      return 'oyun11';
-    case PresentationComponentKind.oyun12:
-      return 'oyun12';
-    case PresentationComponentKind.oyun13:
-      return 'oyun13';
-    case PresentationComponentKind.oyun14:
-      return 'oyun14';
-    case PresentationComponentKind.oyun15:
-      return 'oyun15';
-    case PresentationComponentKind.oyun16:
-      return 'oyun16';
-    case PresentationComponentKind.oyun17:
-      return 'oyun17';
-    case PresentationComponentKind.oyun18:
-      return 'oyun18';
-    case PresentationComponentKind.oyun19:
-      return 'oyun19';
-    case PresentationComponentKind.oyun20:
-      return 'oyun20';
-    case PresentationComponentKind.moda01:
-      return 'moda01';
-    case PresentationComponentKind.moda02:
-      return 'moda02';
-    case PresentationComponentKind.moda03:
-      return 'moda03';
-    case PresentationComponentKind.moda04:
-      return 'moda04';
-    case PresentationComponentKind.moda05:
-      return 'moda05';
-    case PresentationComponentKind.moda06:
-      return 'moda06';
-    case PresentationComponentKind.moda07:
-      return 'moda07';
-    case PresentationComponentKind.moda08:
-      return 'moda08';
-    case PresentationComponentKind.moda09:
-      return 'moda09';
-    case PresentationComponentKind.moda10:
-      return 'moda10';
-    case PresentationComponentKind.moda11:
-      return 'moda11';
-    case PresentationComponentKind.moda12:
-      return 'moda12';
-    case PresentationComponentKind.moda13:
-      return 'moda13';
-    case PresentationComponentKind.moda14:
-      return 'moda14';
-    case PresentationComponentKind.moda15:
-      return 'moda15';
-    case PresentationComponentKind.moda16:
-      return 'moda16';
-    case PresentationComponentKind.moda17:
-      return 'moda17';
-    case PresentationComponentKind.moda18:
-      return 'moda18';
-    case PresentationComponentKind.moda19:
-      return 'moda19';
-    case PresentationComponentKind.moda20:
-      return 'moda20';
-    case PresentationComponentKind.mitolojiFantastik01:
-      return 'mitoloji-fantastik01';
-    case PresentationComponentKind.mitolojiFantastik02:
-      return 'mitoloji-fantastik02';
-    case PresentationComponentKind.mitolojiFantastik03:
-      return 'mitoloji-fantastik03';
-    case PresentationComponentKind.mitolojiFantastik04:
-      return 'mitoloji-fantastik04';
-    case PresentationComponentKind.mitolojiFantastik05:
-      return 'mitoloji-fantastik05';
-    case PresentationComponentKind.mitolojiFantastik06:
-      return 'mitoloji-fantastik06';
-    case PresentationComponentKind.mitolojiFantastik07:
-      return 'mitoloji-fantastik07';
-    case PresentationComponentKind.mitolojiFantastik08:
-      return 'mitoloji-fantastik08';
-    case PresentationComponentKind.mitolojiFantastik09:
-      return 'mitoloji-fantastik09';
-    case PresentationComponentKind.mitolojiFantastik10:
-      return 'mitoloji-fantastik10';
-    case PresentationComponentKind.mitolojiFantastik11:
-      return 'mitoloji-fantastik11';
-    case PresentationComponentKind.mitolojiFantastik12:
-      return 'mitoloji-fantastik12';
-    case PresentationComponentKind.mitolojiFantastik13:
-      return 'mitoloji-fantastik13';
-    case PresentationComponentKind.mitolojiFantastik14:
-      return 'mitoloji-fantastik14';
-    case PresentationComponentKind.mitolojiFantastik15:
-      return 'mitoloji-fantastik15';
-    case PresentationComponentKind.mitolojiFantastik16:
-      return 'mitoloji-fantastik16';
-    case PresentationComponentKind.mitolojiFantastik17:
-      return 'mitoloji-fantastik17';
-    case PresentationComponentKind.mitolojiFantastik18:
-      return 'mitoloji-fantastik18';
-    case PresentationComponentKind.mitolojiFantastik19:
-      return 'mitoloji-fantastik19';
-    case PresentationComponentKind.mitolojiFantastik20:
-      return 'mitoloji-fantastik20';
-    case PresentationComponentKind.meteoroloji01:
-      return 'meteoroloji01';
-    case PresentationComponentKind.meteoroloji02:
-      return 'meteoroloji02';
-    case PresentationComponentKind.meteoroloji03:
-      return 'meteoroloji03';
-    case PresentationComponentKind.meteoroloji04:
-      return 'meteoroloji04';
-    case PresentationComponentKind.meteoroloji05:
-      return 'meteoroloji05';
-    case PresentationComponentKind.meteoroloji06:
-      return 'meteoroloji06';
-    case PresentationComponentKind.meteoroloji07:
-      return 'meteoroloji07';
-    case PresentationComponentKind.meteoroloji08:
-      return 'meteoroloji08';
-    case PresentationComponentKind.meteoroloji09:
-      return 'meteoroloji09';
-    case PresentationComponentKind.meteoroloji10:
-      return 'meteoroloji10';
-    case PresentationComponentKind.meteoroloji11:
-      return 'meteoroloji11';
-    case PresentationComponentKind.meteoroloji12:
-      return 'meteoroloji12';
-    case PresentationComponentKind.meteoroloji13:
-      return 'meteoroloji13';
-    case PresentationComponentKind.meteoroloji14:
-      return 'meteoroloji14';
-    case PresentationComponentKind.meteoroloji15:
-      return 'meteoroloji15';
-    case PresentationComponentKind.meteoroloji16:
-      return 'meteoroloji16';
-    case PresentationComponentKind.meteoroloji17:
-      return 'meteoroloji17';
-    case PresentationComponentKind.meteoroloji18:
-      return 'meteoroloji18';
-    case PresentationComponentKind.meteoroloji19:
-      return 'meteoroloji19';
-    case PresentationComponentKind.meteoroloji20:
-      return 'meteoroloji20';
-    case PresentationComponentKind.havacilik01:
-      return 'havacilik01';
-    case PresentationComponentKind.havacilik02:
-      return 'havacilik02';
-    case PresentationComponentKind.havacilik03:
-      return 'havacilik03';
-    case PresentationComponentKind.havacilik04:
-      return 'havacilik04';
-    case PresentationComponentKind.havacilik05:
-      return 'havacilik05';
-    case PresentationComponentKind.havacilik06:
-      return 'havacilik06';
-    case PresentationComponentKind.havacilik07:
-      return 'havacilik07';
-    case PresentationComponentKind.havacilik08:
-      return 'havacilik08';
-    case PresentationComponentKind.havacilik09:
-      return 'havacilik09';
-    case PresentationComponentKind.havacilik10:
-      return 'havacilik10';
-    case PresentationComponentKind.havacilik11:
-      return 'havacilik11';
-    case PresentationComponentKind.havacilik12:
-      return 'havacilik12';
-    case PresentationComponentKind.havacilik13:
-      return 'havacilik13';
-    case PresentationComponentKind.havacilik14:
-      return 'havacilik14';
-    case PresentationComponentKind.havacilik15:
-      return 'havacilik15';
-    case PresentationComponentKind.havacilik16:
-      return 'havacilik16';
-    case PresentationComponentKind.havacilik17:
-      return 'havacilik17';
-    case PresentationComponentKind.havacilik18:
-      return 'havacilik18';
-    case PresentationComponentKind.havacilik19:
-      return 'havacilik19';
-    case PresentationComponentKind.havacilik20:
-      return 'havacilik20';
-    case PresentationComponentKind.gastronomi01:
-      return 'gastronomi01';
-    case PresentationComponentKind.gastronomi02:
-      return 'gastronomi02';
-    case PresentationComponentKind.gastronomi03:
-      return 'gastronomi03';
-    case PresentationComponentKind.gastronomi04:
-      return 'gastronomi04';
-    case PresentationComponentKind.gastronomi05:
-      return 'gastronomi05';
-    case PresentationComponentKind.gastronomi06:
-      return 'gastronomi06';
-    case PresentationComponentKind.gastronomi07:
-      return 'gastronomi07';
-    case PresentationComponentKind.gastronomi08:
-      return 'gastronomi08';
-    case PresentationComponentKind.gastronomi09:
-      return 'gastronomi09';
-    case PresentationComponentKind.gastronomi10:
-      return 'gastronomi10';
-    case PresentationComponentKind.gastronomi11:
-      return 'gastronomi11';
-    case PresentationComponentKind.gastronomi12:
-      return 'gastronomi12';
-    case PresentationComponentKind.gastronomi13:
-      return 'gastronomi13';
-    case PresentationComponentKind.gastronomi14:
-      return 'gastronomi14';
-    case PresentationComponentKind.gastronomi15:
-      return 'gastronomi15';
-    case PresentationComponentKind.gastronomi16:
-      return 'gastronomi16';
-    case PresentationComponentKind.gastronomi17:
-      return 'gastronomi17';
-    case PresentationComponentKind.gastronomi18:
-      return 'gastronomi18';
-    case PresentationComponentKind.gastronomi19:
-      return 'gastronomi19';
-    case PresentationComponentKind.gastronomi20:
-      return 'gastronomi20';
-    case PresentationComponentKind.fotografcilik01:
-      return 'fotografcilik01';
-    case PresentationComponentKind.fotografcilik02:
-      return 'fotografcilik02';
-    case PresentationComponentKind.fotografcilik03:
-      return 'fotografcilik03';
-    case PresentationComponentKind.fotografcilik04:
-      return 'fotografcilik04';
-    case PresentationComponentKind.fotografcilik05:
-      return 'fotografcilik05';
-    case PresentationComponentKind.fotografcilik06:
-      return 'fotografcilik06';
-    case PresentationComponentKind.fotografcilik07:
-      return 'fotografcilik07';
-    case PresentationComponentKind.fotografcilik08:
-      return 'fotografcilik08';
-    case PresentationComponentKind.fotografcilik09:
-      return 'fotografcilik09';
-    case PresentationComponentKind.fotografcilik10:
-      return 'fotografcilik10';
-    case PresentationComponentKind.fotografcilik11:
-      return 'fotografcilik11';
-    case PresentationComponentKind.fotografcilik12:
-      return 'fotografcilik12';
-    case PresentationComponentKind.fotografcilik13:
-      return 'fotografcilik13';
-    case PresentationComponentKind.fotografcilik14:
-      return 'fotografcilik14';
-    case PresentationComponentKind.fotografcilik15:
-      return 'fotografcilik15';
-    case PresentationComponentKind.fotografcilik16:
-      return 'fotografcilik16';
-    case PresentationComponentKind.fotografcilik17:
-      return 'fotografcilik17';
-    case PresentationComponentKind.fotografcilik18:
-      return 'fotografcilik18';
-    case PresentationComponentKind.fotografcilik19:
-      return 'fotografcilik19';
-    case PresentationComponentKind.fotografcilik20:
-      return 'fotografcilik20';
-    case PresentationComponentKind.evcilHayvanlar01:
-      return 'evcil-hayvanlar01';
-    case PresentationComponentKind.evcilHayvanlar02:
-      return 'evcil-hayvanlar02';
-    case PresentationComponentKind.evcilHayvanlar03:
-      return 'evcil-hayvanlar03';
-    case PresentationComponentKind.evcilHayvanlar04:
-      return 'evcil-hayvanlar04';
-    case PresentationComponentKind.evcilHayvanlar05:
-      return 'evcil-hayvanlar05';
-    case PresentationComponentKind.evcilHayvanlar06:
-      return 'evcil-hayvanlar06';
-    case PresentationComponentKind.evcilHayvanlar07:
-      return 'evcil-hayvanlar07';
-    case PresentationComponentKind.evcilHayvanlar08:
-      return 'evcil-hayvanlar08';
-    case PresentationComponentKind.evcilHayvanlar09:
-      return 'evcil-hayvanlar09';
-    case PresentationComponentKind.evcilHayvanlar10:
-      return 'evcil-hayvanlar10';
-    case PresentationComponentKind.evcilHayvanlar11:
-      return 'evcil-hayvanlar11';
-    case PresentationComponentKind.evcilHayvanlar12:
-      return 'evcil-hayvanlar12';
-    case PresentationComponentKind.evcilHayvanlar13:
-      return 'evcil-hayvanlar13';
-    case PresentationComponentKind.evcilHayvanlar14:
-      return 'evcil-hayvanlar14';
-    case PresentationComponentKind.evcilHayvanlar15:
-      return 'evcil-hayvanlar15';
-    case PresentationComponentKind.evcilHayvanlar16:
-      return 'evcil-hayvanlar16';
-    case PresentationComponentKind.evcilHayvanlar17:
-      return 'evcil-hayvanlar17';
-    case PresentationComponentKind.evcilHayvanlar18:
-      return 'evcil-hayvanlar18';
-    case PresentationComponentKind.evcilHayvanlar19:
-      return 'evcil-hayvanlar19';
-    case PresentationComponentKind.evcilHayvanlar20:
-      return 'evcil-hayvanlar20';
-    case PresentationComponentKind.tarih21:
-      return 'tarih21';
-    case PresentationComponentKind.tarih22:
-      return 'tarih22';
-    case PresentationComponentKind.tarih23:
-      return 'tarih23';
-    case PresentationComponentKind.tarih24:
-      return 'tarih24';
-    case PresentationComponentKind.tarih25:
-      return 'tarih25';
-    case PresentationComponentKind.tarih26:
-      return 'tarih26';
-    case PresentationComponentKind.tarih27:
-      return 'tarih27';
-    case PresentationComponentKind.tarih28:
-      return 'tarih28';
-    case PresentationComponentKind.tarih29:
-      return 'tarih29';
-    case PresentationComponentKind.tarih30:
-      return 'tarih30';
-    case PresentationComponentKind.tarih31:
-      return 'tarih31';
-    case PresentationComponentKind.tarih32:
-      return 'tarih32';
-    case PresentationComponentKind.tarih33:
-      return 'tarih33';
-    case PresentationComponentKind.tarih34:
-      return 'tarih34';
-    case PresentationComponentKind.tarih35:
-      return 'tarih35';
-    case PresentationComponentKind.tarih36:
-      return 'tarih36';
-    case PresentationComponentKind.tarih37:
-      return 'tarih37';
-    case PresentationComponentKind.tarih38:
-      return 'tarih38';
-    case PresentationComponentKind.tarih39:
-      return 'tarih39';
-    case PresentationComponentKind.tarih40:
-      return 'tarih40';
-    case PresentationComponentKind.turizmSeyahat21:
-      return 'turizm-seyahat21';
-    case PresentationComponentKind.turizmSeyahat22:
-      return 'turizm-seyahat22';
-    case PresentationComponentKind.turizmSeyahat23:
-      return 'turizm-seyahat23';
-    case PresentationComponentKind.turizmSeyahat24:
-      return 'turizm-seyahat24';
-    case PresentationComponentKind.turizmSeyahat25:
-      return 'turizm-seyahat25';
-    case PresentationComponentKind.turizmSeyahat26:
-      return 'turizm-seyahat26';
-    case PresentationComponentKind.turizmSeyahat27:
-      return 'turizm-seyahat27';
-    case PresentationComponentKind.turizmSeyahat28:
-      return 'turizm-seyahat28';
-    case PresentationComponentKind.turizmSeyahat29:
-      return 'turizm-seyahat29';
-    case PresentationComponentKind.turizmSeyahat30:
-      return 'turizm-seyahat30';
-    case PresentationComponentKind.turizmSeyahat31:
-      return 'turizm-seyahat31';
-    case PresentationComponentKind.turizmSeyahat32:
-      return 'turizm-seyahat32';
-    case PresentationComponentKind.turizmSeyahat33:
-      return 'turizm-seyahat33';
-    case PresentationComponentKind.turizmSeyahat34:
-      return 'turizm-seyahat34';
-    case PresentationComponentKind.turizmSeyahat35:
-      return 'turizm-seyahat35';
-    case PresentationComponentKind.turizmSeyahat36:
-      return 'turizm-seyahat36';
-    case PresentationComponentKind.turizmSeyahat37:
-      return 'turizm-seyahat37';
-    case PresentationComponentKind.turizmSeyahat38:
-      return 'turizm-seyahat38';
-    case PresentationComponentKind.turizmSeyahat39:
-      return 'turizm-seyahat39';
-    case PresentationComponentKind.turizmSeyahat40:
-      return 'turizm-seyahat40';
-    case PresentationComponentKind.teknoloji21:
-      return 'teknoloji21';
-    case PresentationComponentKind.teknoloji22:
-      return 'teknoloji22';
-    case PresentationComponentKind.teknoloji23:
-      return 'teknoloji23';
-    case PresentationComponentKind.teknoloji24:
-      return 'teknoloji24';
-    case PresentationComponentKind.teknoloji25:
-      return 'teknoloji25';
-    case PresentationComponentKind.teknoloji26:
-      return 'teknoloji26';
-    case PresentationComponentKind.teknoloji27:
-      return 'teknoloji27';
-    case PresentationComponentKind.teknoloji28:
-      return 'teknoloji28';
-    case PresentationComponentKind.teknoloji29:
-      return 'teknoloji29';
-    case PresentationComponentKind.teknoloji30:
-      return 'teknoloji30';
-    case PresentationComponentKind.teknoloji31:
-      return 'teknoloji31';
-    case PresentationComponentKind.teknoloji32:
-      return 'teknoloji32';
-    case PresentationComponentKind.teknoloji33:
-      return 'teknoloji33';
-    case PresentationComponentKind.teknoloji34:
-      return 'teknoloji34';
-    case PresentationComponentKind.teknoloji35:
-      return 'teknoloji35';
-    case PresentationComponentKind.teknoloji36:
-      return 'teknoloji36';
-    case PresentationComponentKind.teknoloji37:
-      return 'teknoloji37';
-    case PresentationComponentKind.teknoloji38:
-      return 'teknoloji38';
-    case PresentationComponentKind.teknoloji39:
-      return 'teknoloji39';
-    case PresentationComponentKind.teknoloji40:
-      return 'teknoloji40';
-    case PresentationComponentKind.kimya21:
-      return 'kimya21';
-    case PresentationComponentKind.kimya22:
-      return 'kimya22';
-    case PresentationComponentKind.kimya23:
-      return 'kimya23';
-    case PresentationComponentKind.kimya24:
-      return 'kimya24';
-    case PresentationComponentKind.kimya25:
-      return 'kimya25';
-    case PresentationComponentKind.kimya26:
-      return 'kimya26';
-    case PresentationComponentKind.kimya27:
-      return 'kimya27';
-    case PresentationComponentKind.kimya28:
-      return 'kimya28';
-    case PresentationComponentKind.kimya29:
-      return 'kimya29';
-    case PresentationComponentKind.kimya30:
-      return 'kimya30';
-    case PresentationComponentKind.kimya31:
-      return 'kimya31';
-    case PresentationComponentKind.kimya32:
-      return 'kimya32';
-    case PresentationComponentKind.kimya33:
-      return 'kimya33';
-    case PresentationComponentKind.kimya34:
-      return 'kimya34';
-    case PresentationComponentKind.kimya35:
-      return 'kimya35';
-    case PresentationComponentKind.kimya36:
-      return 'kimya36';
-    case PresentationComponentKind.kimya37:
-      return 'kimya37';
-    case PresentationComponentKind.kimya38:
-      return 'kimya38';
-    case PresentationComponentKind.kimya39:
-      return 'kimya39';
-    case PresentationComponentKind.kimya40:
-      return 'kimya40';
-    case PresentationComponentKind.biyoloji21:
-      return 'biyoloji21';
-    case PresentationComponentKind.biyoloji22:
-      return 'biyoloji22';
-    case PresentationComponentKind.biyoloji23:
-      return 'biyoloji23';
-    case PresentationComponentKind.biyoloji24:
-      return 'biyoloji24';
-    case PresentationComponentKind.biyoloji25:
-      return 'biyoloji25';
-    case PresentationComponentKind.biyoloji26:
-      return 'biyoloji26';
-    case PresentationComponentKind.biyoloji27:
-      return 'biyoloji27';
-    case PresentationComponentKind.biyoloji28:
-      return 'biyoloji28';
-    case PresentationComponentKind.biyoloji29:
-      return 'biyoloji29';
-    case PresentationComponentKind.biyoloji30:
-      return 'biyoloji30';
-    case PresentationComponentKind.biyoloji31:
-      return 'biyoloji31';
-    case PresentationComponentKind.biyoloji32:
-      return 'biyoloji32';
-    case PresentationComponentKind.biyoloji33:
-      return 'biyoloji33';
-    case PresentationComponentKind.biyoloji34:
-      return 'biyoloji34';
-    case PresentationComponentKind.biyoloji35:
-      return 'biyoloji35';
-    case PresentationComponentKind.biyoloji36:
-      return 'biyoloji36';
-    case PresentationComponentKind.biyoloji37:
-      return 'biyoloji37';
-    case PresentationComponentKind.biyoloji38:
-      return 'biyoloji38';
-    case PresentationComponentKind.biyoloji39:
-      return 'biyoloji39';
-    case PresentationComponentKind.biyoloji40:
-      return 'biyoloji40';
-    case PresentationComponentKind.spor21:
-      return 'spor21';
-    case PresentationComponentKind.spor22:
-      return 'spor22';
-    case PresentationComponentKind.spor23:
-      return 'spor23';
-    case PresentationComponentKind.spor24:
-      return 'spor24';
-    case PresentationComponentKind.spor25:
-      return 'spor25';
-    case PresentationComponentKind.spor26:
-      return 'spor26';
-    case PresentationComponentKind.spor27:
-      return 'spor27';
-    case PresentationComponentKind.spor28:
-      return 'spor28';
-    case PresentationComponentKind.spor29:
-      return 'spor29';
-    case PresentationComponentKind.spor30:
-      return 'spor30';
-    case PresentationComponentKind.spor31:
-      return 'spor31';
-    case PresentationComponentKind.spor32:
-      return 'spor32';
-    case PresentationComponentKind.spor33:
-      return 'spor33';
-    case PresentationComponentKind.spor34:
-      return 'spor34';
-    case PresentationComponentKind.spor35:
-      return 'spor35';
-    case PresentationComponentKind.spor36:
-      return 'spor36';
-    case PresentationComponentKind.spor37:
-      return 'spor37';
-    case PresentationComponentKind.spor38:
-      return 'spor38';
-    case PresentationComponentKind.spor39:
-      return 'spor39';
-    case PresentationComponentKind.spor40:
-      return 'spor40';
-    case PresentationComponentKind.sanat21:
-      return 'sanat21';
-    case PresentationComponentKind.sanat22:
-      return 'sanat22';
-    case PresentationComponentKind.sanat23:
-      return 'sanat23';
-    case PresentationComponentKind.sanat24:
-      return 'sanat24';
-    case PresentationComponentKind.sanat25:
-      return 'sanat25';
-    case PresentationComponentKind.sanat26:
-      return 'sanat26';
-    case PresentationComponentKind.sanat27:
-      return 'sanat27';
-    case PresentationComponentKind.sanat28:
-      return 'sanat28';
-    case PresentationComponentKind.sanat29:
-      return 'sanat29';
-    case PresentationComponentKind.sanat30:
-      return 'sanat30';
-    case PresentationComponentKind.sanat31:
-      return 'sanat31';
-    case PresentationComponentKind.sanat32:
-      return 'sanat32';
-    case PresentationComponentKind.sanat33:
-      return 'sanat33';
-    case PresentationComponentKind.sanat34:
-      return 'sanat34';
-    case PresentationComponentKind.sanat35:
-      return 'sanat35';
-    case PresentationComponentKind.sanat36:
-      return 'sanat36';
-    case PresentationComponentKind.sanat37:
-      return 'sanat37';
-    case PresentationComponentKind.sanat38:
-      return 'sanat38';
-    case PresentationComponentKind.sanat39:
-      return 'sanat39';
-    case PresentationComponentKind.sanat40:
-      return 'sanat40';
-    case PresentationComponentKind.saglik21:
-      return 'saglik21';
-    case PresentationComponentKind.saglik22:
-      return 'saglik22';
-    case PresentationComponentKind.saglik23:
-      return 'saglik23';
-    case PresentationComponentKind.saglik24:
-      return 'saglik24';
-    case PresentationComponentKind.saglik25:
-      return 'saglik25';
-    case PresentationComponentKind.saglik26:
-      return 'saglik26';
-    case PresentationComponentKind.saglik27:
-      return 'saglik27';
-    case PresentationComponentKind.saglik28:
-      return 'saglik28';
-    case PresentationComponentKind.saglik29:
-      return 'saglik29';
-    case PresentationComponentKind.saglik30:
-      return 'saglik30';
-    case PresentationComponentKind.saglik31:
-      return 'saglik31';
-    case PresentationComponentKind.saglik32:
-      return 'saglik32';
-    case PresentationComponentKind.saglik33:
-      return 'saglik33';
-    case PresentationComponentKind.saglik34:
-      return 'saglik34';
-    case PresentationComponentKind.saglik35:
-      return 'saglik35';
-    case PresentationComponentKind.saglik36:
-      return 'saglik36';
-    case PresentationComponentKind.saglik37:
-      return 'saglik37';
-    case PresentationComponentKind.saglik38:
-      return 'saglik38';
-    case PresentationComponentKind.saglik39:
-      return 'saglik39';
-    case PresentationComponentKind.saglik40:
-      return 'saglik40';
-    case PresentationComponentKind.matematik21:
-      return 'matematik21';
-    case PresentationComponentKind.matematik22:
-      return 'matematik22';
-    case PresentationComponentKind.matematik23:
-      return 'matematik23';
-    case PresentationComponentKind.matematik24:
-      return 'matematik24';
-    case PresentationComponentKind.matematik25:
-      return 'matematik25';
-    case PresentationComponentKind.matematik26:
-      return 'matematik26';
-    case PresentationComponentKind.matematik27:
-      return 'matematik27';
-    case PresentationComponentKind.matematik28:
-      return 'matematik28';
-    case PresentationComponentKind.matematik29:
-      return 'matematik29';
-    case PresentationComponentKind.matematik30:
-      return 'matematik30';
-    case PresentationComponentKind.matematik31:
-      return 'matematik31';
-    case PresentationComponentKind.matematik32:
-      return 'matematik32';
-    case PresentationComponentKind.matematik33:
-      return 'matematik33';
-    case PresentationComponentKind.matematik34:
-      return 'matematik34';
-    case PresentationComponentKind.matematik35:
-      return 'matematik35';
-    case PresentationComponentKind.matematik36:
-      return 'matematik36';
-    case PresentationComponentKind.matematik37:
-      return 'matematik37';
-    case PresentationComponentKind.matematik38:
-      return 'matematik38';
-    case PresentationComponentKind.matematik39:
-      return 'matematik39';
-    case PresentationComponentKind.matematik40:
-      return 'matematik40';
-    case PresentationComponentKind.fizik21:
-      return 'fizik21';
-    case PresentationComponentKind.fizik22:
-      return 'fizik22';
-    case PresentationComponentKind.fizik23:
-      return 'fizik23';
-    case PresentationComponentKind.fizik24:
-      return 'fizik24';
-    case PresentationComponentKind.fizik25:
-      return 'fizik25';
-    case PresentationComponentKind.fizik26:
-      return 'fizik26';
-    case PresentationComponentKind.fizik27:
-      return 'fizik27';
-    case PresentationComponentKind.fizik28:
-      return 'fizik28';
-    case PresentationComponentKind.fizik29:
-      return 'fizik29';
-    case PresentationComponentKind.fizik30:
-      return 'fizik30';
-    case PresentationComponentKind.fizik31:
-      return 'fizik31';
-    case PresentationComponentKind.fizik32:
-      return 'fizik32';
-    case PresentationComponentKind.fizik33:
-      return 'fizik33';
-    case PresentationComponentKind.fizik34:
-      return 'fizik34';
-    case PresentationComponentKind.fizik35:
-      return 'fizik35';
-    case PresentationComponentKind.fizik36:
-      return 'fizik36';
-    case PresentationComponentKind.fizik37:
-      return 'fizik37';
-    case PresentationComponentKind.fizik38:
-      return 'fizik38';
-    case PresentationComponentKind.fizik39:
-      return 'fizik39';
-    case PresentationComponentKind.fizik40:
-      return 'fizik40';
-    case PresentationComponentKind.astronomi21:
-      return 'astronomi21';
-    case PresentationComponentKind.astronomi22:
-      return 'astronomi22';
-    case PresentationComponentKind.astronomi23:
-      return 'astronomi23';
-    case PresentationComponentKind.astronomi24:
-      return 'astronomi24';
-    case PresentationComponentKind.astronomi25:
-      return 'astronomi25';
-    case PresentationComponentKind.astronomi26:
-      return 'astronomi26';
-    case PresentationComponentKind.astronomi27:
-      return 'astronomi27';
-    case PresentationComponentKind.astronomi28:
-      return 'astronomi28';
-    case PresentationComponentKind.astronomi29:
-      return 'astronomi29';
-    case PresentationComponentKind.astronomi30:
-      return 'astronomi30';
-    case PresentationComponentKind.astronomi31:
-      return 'astronomi31';
-    case PresentationComponentKind.astronomi32:
-      return 'astronomi32';
-    case PresentationComponentKind.astronomi33:
-      return 'astronomi33';
-    case PresentationComponentKind.astronomi34:
-      return 'astronomi34';
-    case PresentationComponentKind.astronomi35:
-      return 'astronomi35';
-    case PresentationComponentKind.astronomi36:
-      return 'astronomi36';
-    case PresentationComponentKind.astronomi37:
-      return 'astronomi37';
-    case PresentationComponentKind.astronomi38:
-      return 'astronomi38';
-    case PresentationComponentKind.astronomi39:
-      return 'astronomi39';
-    case PresentationComponentKind.astronomi40:
-      return 'astronomi40';
-  }
-}
+const List<String> _presentationComponentDomNames = <String>[
+  'edebiyat01',
+  'edebiyat02',
+  'edebiyat03',
+  'edebiyat04',
+  'edebiyat05',
+  'edebiyat06',
+  'edebiyat07',
+  'edebiyat08',
+  'edebiyat09',
+  'edebiyat10',
+  'edebiyat11',
+  'edebiyat12',
+  'edebiyat13',
+  'edebiyat14',
+  'edebiyat15',
+  'edebiyat16',
+  'edebiyat17',
+  'edebiyat18',
+  'edebiyat19',
+  'edebiyat20',
+  'edebiyat21',
+  'edebiyat22',
+  'edebiyat23',
+  'edebiyat24',
+  'edebiyat25',
+  'edebiyat26',
+  'edebiyat27',
+  'edebiyat28',
+  'edebiyat29',
+  'edebiyat30',
+  'edebiyat31',
+  'edebiyat32',
+  'edebiyat33',
+  'edebiyat34',
+  'edebiyat35',
+  'edebiyat36',
+  'edebiyat37',
+  'edebiyat38',
+  'edebiyat39',
+  'edebiyat40',
+  'egitim01',
+  'egitim02',
+  'egitim03',
+  'egitim04',
+  'egitim05',
+  'egitim06',
+  'egitim07',
+  'egitim08',
+  'egitim09',
+  'egitim10',
+  'egitim11',
+  'egitim12',
+  'egitim13',
+  'egitim14',
+  'egitim15',
+  'egitim16',
+  'egitim17',
+  'egitim18',
+  'egitim19',
+  'egitim20',
+  'egitim21',
+  'egitim22',
+  'egitim23',
+  'egitim24',
+  'egitim25',
+  'egitim26',
+  'egitim27',
+  'egitim28',
+  'egitim29',
+  'egitim30',
+  'egitim31',
+  'egitim32',
+  'egitim33',
+  'egitim34',
+  'egitim35',
+  'egitim36',
+  'egitim37',
+  'egitim38',
+  'egitim39',
+  'egitim40',
+  'genel-sunum-is01',
+  'genel-sunum-is02',
+  'genel-sunum-is03',
+  'genel-sunum-is04',
+  'genel-sunum-is05',
+  'genel-sunum-is06',
+  'genel-sunum-is07',
+  'genel-sunum-is08',
+  'genel-sunum-is09',
+  'genel-sunum-is10',
+  'genel-sunum-is11',
+  'genel-sunum-is12',
+  'genel-sunum-is13',
+  'genel-sunum-is14',
+  'genel-sunum-is15',
+  'genel-sunum-is16',
+  'genel-sunum-is17',
+  'genel-sunum-is18',
+  'genel-sunum-is19',
+  'genel-sunum-is20',
+  'genel-sunum-is21',
+  'genel-sunum-is22',
+  'genel-sunum-is23',
+  'genel-sunum-is24',
+  'genel-sunum-is25',
+  'genel-sunum-is26',
+  'genel-sunum-is27',
+  'genel-sunum-is28',
+  'genel-sunum-is29',
+  'genel-sunum-is30',
+  'genel-sunum-is31',
+  'genel-sunum-is32',
+  'genel-sunum-is33',
+  'genel-sunum-is34',
+  'genel-sunum-is35',
+  'genel-sunum-is36',
+  'genel-sunum-is37',
+  'genel-sunum-is38',
+  'genel-sunum-is39',
+  'genel-sunum-is40',
+  'cografya01',
+  'cografya02',
+  'cografya03',
+  'cografya04',
+  'cografya05',
+  'cografya06',
+  'cografya07',
+  'cografya08',
+  'cografya09',
+  'cografya10',
+  'cografya11',
+  'cografya12',
+  'cografya13',
+  'cografya14',
+  'cografya15',
+  'cografya16',
+  'cografya17',
+  'cografya18',
+  'cografya19',
+  'cografya20',
+  'cografya21',
+  'cografya22',
+  'cografya23',
+  'cografya24',
+  'cografya25',
+  'cografya26',
+  'cografya27',
+  'cografya28',
+  'cografya29',
+  'cografya30',
+  'cografya31',
+  'cografya32',
+  'cografya33',
+  'cografya34',
+  'cografya35',
+  'cografya36',
+  'cografya37',
+  'cografya38',
+  'cografya39',
+  'cografya40',
+  'muzik01',
+  'muzik02',
+  'muzik03',
+  'muzik04',
+  'muzik05',
+  'muzik06',
+  'muzik07',
+  'muzik08',
+  'muzik09',
+  'muzik10',
+  'muzik11',
+  'muzik12',
+  'muzik13',
+  'muzik14',
+  'muzik15',
+  'muzik16',
+  'muzik17',
+  'muzik18',
+  'muzik19',
+  'muzik20',
+  'muzik21',
+  'muzik22',
+  'muzik23',
+  'muzik24',
+  'muzik25',
+  'muzik26',
+  'muzik27',
+  'muzik28',
+  'muzik29',
+  'muzik30',
+  'muzik31',
+  'muzik32',
+  'muzik33',
+  'muzik34',
+  'muzik35',
+  'muzik36',
+  'muzik37',
+  'muzik38',
+  'muzik39',
+  'muzik40',
+  'ekonomi-is-finans01',
+  'ekonomi-is-finans02',
+  'ekonomi-is-finans03',
+  'ekonomi-is-finans04',
+  'ekonomi-is-finans05',
+  'ekonomi-is-finans06',
+  'ekonomi-is-finans07',
+  'ekonomi-is-finans08',
+  'ekonomi-is-finans09',
+  'ekonomi-is-finans10',
+  'ekonomi-is-finans11',
+  'ekonomi-is-finans12',
+  'ekonomi-is-finans13',
+  'ekonomi-is-finans14',
+  'ekonomi-is-finans15',
+  'ekonomi-is-finans16',
+  'ekonomi-is-finans17',
+  'ekonomi-is-finans18',
+  'ekonomi-is-finans19',
+  'ekonomi-is-finans20',
+  'ekonomi-is-finans21',
+  'ekonomi-is-finans22',
+  'ekonomi-is-finans23',
+  'ekonomi-is-finans24',
+  'ekonomi-is-finans25',
+  'ekonomi-is-finans26',
+  'ekonomi-is-finans27',
+  'ekonomi-is-finans28',
+  'ekonomi-is-finans29',
+  'ekonomi-is-finans30',
+  'ekonomi-is-finans31',
+  'ekonomi-is-finans32',
+  'ekonomi-is-finans33',
+  'ekonomi-is-finans34',
+  'ekonomi-is-finans35',
+  'ekonomi-is-finans36',
+  'ekonomi-is-finans37',
+  'ekonomi-is-finans38',
+  'ekonomi-is-finans39',
+  'ekonomi-is-finans40',
+  'cevre-doga01',
+  'cevre-doga02',
+  'cevre-doga03',
+  'cevre-doga04',
+  'cevre-doga05',
+  'cevre-doga06',
+  'cevre-doga07',
+  'cevre-doga08',
+  'cevre-doga09',
+  'cevre-doga10',
+  'cevre-doga11',
+  'cevre-doga12',
+  'cevre-doga13',
+  'cevre-doga14',
+  'cevre-doga15',
+  'cevre-doga16',
+  'cevre-doga17',
+  'cevre-doga18',
+  'cevre-doga19',
+  'cevre-doga20',
+  'felsefe-din01',
+  'felsefe-din02',
+  'felsefe-din03',
+  'felsefe-din04',
+  'felsefe-din05',
+  'felsefe-din06',
+  'felsefe-din07',
+  'felsefe-din08',
+  'felsefe-din09',
+  'felsefe-din10',
+  'felsefe-din11',
+  'felsefe-din12',
+  'felsefe-din13',
+  'felsefe-din14',
+  'felsefe-din15',
+  'felsefe-din16',
+  'felsefe-din17',
+  'felsefe-din18',
+  'felsefe-din19',
+  'felsefe-din20',
+  'hukuk01',
+  'hukuk02',
+  'hukuk03',
+  'hukuk04',
+  'hukuk05',
+  'hukuk06',
+  'hukuk07',
+  'hukuk08',
+  'hukuk09',
+  'hukuk10',
+  'hukuk11',
+  'hukuk12',
+  'hukuk13',
+  'hukuk14',
+  'hukuk15',
+  'hukuk16',
+  'hukuk17',
+  'hukuk18',
+  'hukuk19',
+  'hukuk20',
+  'muhendislik01',
+  'muhendislik02',
+  'muhendislik03',
+  'muhendislik04',
+  'muhendislik05',
+  'muhendislik06',
+  'muhendislik07',
+  'muhendislik08',
+  'muhendislik09',
+  'muhendislik10',
+  'muhendislik11',
+  'muhendislik12',
+  'muhendislik13',
+  'muhendislik14',
+  'muhendislik15',
+  'muhendislik16',
+  'muhendislik17',
+  'muhendislik18',
+  'muhendislik19',
+  'muhendislik20',
+  'psikoloji01',
+  'psikoloji02',
+  'psikoloji03',
+  'psikoloji04',
+  'psikoloji05',
+  'psikoloji06',
+  'psikoloji07',
+  'psikoloji08',
+  'psikoloji09',
+  'psikoloji10',
+  'psikoloji11',
+  'psikoloji12',
+  'psikoloji13',
+  'psikoloji14',
+  'psikoloji15',
+  'psikoloji16',
+  'psikoloji17',
+  'psikoloji18',
+  'psikoloji19',
+  'psikoloji20',
+  'tarim-gida01',
+  'tarim-gida02',
+  'tarim-gida03',
+  'tarim-gida04',
+  'tarim-gida05',
+  'tarim-gida06',
+  'tarim-gida07',
+  'tarim-gida08',
+  'tarim-gida09',
+  'tarim-gida10',
+  'tarim-gida11',
+  'tarim-gida12',
+  'tarim-gida13',
+  'tarim-gida14',
+  'tarim-gida15',
+  'tarim-gida16',
+  'tarim-gida17',
+  'tarim-gida18',
+  'tarim-gida19',
+  'tarim-gida20',
+  'toplum01',
+  'toplum02',
+  'toplum03',
+  'toplum04',
+  'toplum05',
+  'toplum06',
+  'toplum07',
+  'toplum08',
+  'toplum09',
+  'toplum10',
+  'toplum11',
+  'toplum12',
+  'toplum13',
+  'toplum14',
+  'toplum15',
+  'toplum16',
+  'toplum17',
+  'toplum18',
+  'toplum19',
+  'toplum20',
+  'saglik01',
+  'saglik02',
+  'saglik03',
+  'saglik04',
+  'saglik05',
+  'saglik06',
+  'saglik07',
+  'saglik08',
+  'saglik09',
+  'saglik10',
+  'saglik11',
+  'saglik12',
+  'saglik13',
+  'saglik14',
+  'saglik15',
+  'saglik16',
+  'saglik17',
+  'saglik18',
+  'saglik19',
+  'saglik20',
+  'spor01',
+  'spor02',
+  'spor03',
+  'spor04',
+  'spor05',
+  'spor06',
+  'spor07',
+  'spor08',
+  'spor09',
+  'spor10',
+  'spor11',
+  'spor12',
+  'spor13',
+  'spor14',
+  'spor15',
+  'spor16',
+  'spor17',
+  'spor18',
+  'spor19',
+  'spor20',
+  'sanat01',
+  'sanat02',
+  'sanat03',
+  'sanat04',
+  'sanat05',
+  'sanat06',
+  'sanat07',
+  'sanat08',
+  'sanat09',
+  'sanat10',
+  'sanat11',
+  'sanat12',
+  'sanat13',
+  'sanat14',
+  'sanat15',
+  'sanat16',
+  'sanat17',
+  'sanat18',
+  'sanat19',
+  'sanat20',
+  'tarih01',
+  'tarih02',
+  'tarih03',
+  'tarih04',
+  'tarih05',
+  'tarih06',
+  'tarih07',
+  'tarih08',
+  'tarih09',
+  'tarih10',
+  'tarih11',
+  'tarih12',
+  'tarih13',
+  'tarih14',
+  'tarih15',
+  'tarih16',
+  'tarih17',
+  'tarih18',
+  'tarih19',
+  'tarih20',
+  'teknoloji01',
+  'teknoloji02',
+  'teknoloji03',
+  'teknoloji04',
+  'teknoloji05',
+  'teknoloji06',
+  'teknoloji07',
+  'teknoloji08',
+  'teknoloji09',
+  'teknoloji10',
+  'teknoloji11',
+  'teknoloji12',
+  'teknoloji13',
+  'teknoloji14',
+  'teknoloji15',
+  'teknoloji16',
+  'teknoloji17',
+  'teknoloji18',
+  'teknoloji19',
+  'teknoloji20',
+  'astronomi01',
+  'astronomi02',
+  'astronomi03',
+  'astronomi04',
+  'astronomi05',
+  'astronomi06',
+  'astronomi07',
+  'astronomi08',
+  'astronomi09',
+  'astronomi10',
+  'astronomi11',
+  'astronomi12',
+  'astronomi13',
+  'astronomi14',
+  'astronomi15',
+  'astronomi16',
+  'astronomi17',
+  'astronomi18',
+  'astronomi19',
+  'astronomi20',
+  'biyoloji01',
+  'biyoloji02',
+  'biyoloji03',
+  'biyoloji04',
+  'biyoloji05',
+  'biyoloji06',
+  'biyoloji07',
+  'biyoloji08',
+  'biyoloji09',
+  'biyoloji10',
+  'biyoloji11',
+  'biyoloji12',
+  'biyoloji13',
+  'biyoloji14',
+  'biyoloji15',
+  'biyoloji16',
+  'biyoloji17',
+  'biyoloji18',
+  'biyoloji19',
+  'biyoloji20',
+  'fizik01',
+  'fizik02',
+  'fizik03',
+  'fizik04',
+  'fizik05',
+  'fizik06',
+  'fizik07',
+  'fizik08',
+  'fizik09',
+  'fizik10',
+  'fizik11',
+  'fizik12',
+  'fizik13',
+  'fizik14',
+  'fizik15',
+  'fizik16',
+  'fizik17',
+  'fizik18',
+  'fizik19',
+  'fizik20',
+  'matematik01',
+  'matematik02',
+  'matematik03',
+  'matematik04',
+  'matematik05',
+  'matematik06',
+  'matematik07',
+  'matematik08',
+  'matematik09',
+  'matematik10',
+  'matematik11',
+  'matematik12',
+  'matematik13',
+  'matematik14',
+  'matematik15',
+  'matematik16',
+  'matematik17',
+  'matematik18',
+  'matematik19',
+  'matematik20',
+  'kimya01',
+  'kimya02',
+  'kimya03',
+  'kimya04',
+  'kimya05',
+  'kimya06',
+  'kimya07',
+  'kimya08',
+  'kimya09',
+  'kimya10',
+  'kimya11',
+  'kimya12',
+  'kimya13',
+  'kimya14',
+  'kimya15',
+  'kimya16',
+  'kimya17',
+  'kimya18',
+  'kimya19',
+  'kimya20',
+  'turizm-seyahat01',
+  'turizm-seyahat02',
+  'turizm-seyahat03',
+  'turizm-seyahat04',
+  'turizm-seyahat05',
+  'turizm-seyahat06',
+  'turizm-seyahat07',
+  'turizm-seyahat08',
+  'turizm-seyahat09',
+  'turizm-seyahat10',
+  'turizm-seyahat11',
+  'turizm-seyahat12',
+  'turizm-seyahat13',
+  'turizm-seyahat14',
+  'turizm-seyahat15',
+  'turizm-seyahat16',
+  'turizm-seyahat17',
+  'turizm-seyahat18',
+  'turizm-seyahat19',
+  'turizm-seyahat20',
+  'ulasim-lojistik01',
+  'ulasim-lojistik02',
+  'ulasim-lojistik03',
+  'ulasim-lojistik04',
+  'ulasim-lojistik05',
+  'ulasim-lojistik06',
+  'ulasim-lojistik07',
+  'ulasim-lojistik08',
+  'ulasim-lojistik09',
+  'ulasim-lojistik10',
+  'ulasim-lojistik11',
+  'ulasim-lojistik12',
+  'ulasim-lojistik13',
+  'ulasim-lojistik14',
+  'ulasim-lojistik15',
+  'ulasim-lojistik16',
+  'ulasim-lojistik17',
+  'ulasim-lojistik18',
+  'ulasim-lojistik19',
+  'ulasim-lojistik20',
+  'sehir-kentsel01',
+  'sehir-kentsel02',
+  'sehir-kentsel03',
+  'sehir-kentsel04',
+  'sehir-kentsel05',
+  'sehir-kentsel06',
+  'sehir-kentsel07',
+  'sehir-kentsel08',
+  'sehir-kentsel09',
+  'sehir-kentsel10',
+  'sehir-kentsel11',
+  'sehir-kentsel12',
+  'sehir-kentsel13',
+  'sehir-kentsel14',
+  'sehir-kentsel15',
+  'sehir-kentsel16',
+  'sehir-kentsel17',
+  'sehir-kentsel18',
+  'sehir-kentsel19',
+  'sehir-kentsel20',
+  'enerji-altyapisi01',
+  'enerji-altyapisi02',
+  'enerji-altyapisi03',
+  'enerji-altyapisi04',
+  'enerji-altyapisi05',
+  'el-sanatlari01',
+  'el-sanatlari02',
+  'el-sanatlari03',
+  'el-sanatlari04',
+  'el-sanatlari05',
+  'el-sanatlari06',
+  'sinema-film01',
+  'sinema-film02',
+  'sinema-film03',
+  'sinema-film04',
+  'sinema-film05',
+  'sinema-film06',
+  'sinema-film07',
+  'sinema-film08',
+  'sinema-film09',
+  'sinema-film10',
+  'sinema-film11',
+  'sinema-film12',
+  'sinema-film13',
+  'sinema-film14',
+  'sinema-film15',
+  'sinema-film16',
+  'sinema-film17',
+  'sinema-film18',
+  'sinema-film19',
+  'sinema-film20',
+  'oyun01',
+  'oyun02',
+  'oyun03',
+  'oyun04',
+  'oyun05',
+  'oyun06',
+  'oyun07',
+  'oyun08',
+  'oyun09',
+  'oyun10',
+  'oyun11',
+  'oyun12',
+  'oyun13',
+  'oyun14',
+  'oyun15',
+  'oyun16',
+  'oyun17',
+  'oyun18',
+  'oyun19',
+  'oyun20',
+  'moda01',
+  'moda02',
+  'moda03',
+  'moda04',
+  'moda05',
+  'moda06',
+  'moda07',
+  'moda08',
+  'moda09',
+  'moda10',
+  'moda11',
+  'moda12',
+  'moda13',
+  'moda14',
+  'moda15',
+  'moda16',
+  'moda17',
+  'moda18',
+  'moda19',
+  'moda20',
+  'mitoloji-fantastik01',
+  'mitoloji-fantastik02',
+  'mitoloji-fantastik03',
+  'mitoloji-fantastik04',
+  'mitoloji-fantastik05',
+  'mitoloji-fantastik06',
+  'mitoloji-fantastik07',
+  'mitoloji-fantastik08',
+  'mitoloji-fantastik09',
+  'mitoloji-fantastik10',
+  'mitoloji-fantastik11',
+  'mitoloji-fantastik12',
+  'mitoloji-fantastik13',
+  'mitoloji-fantastik14',
+  'mitoloji-fantastik15',
+  'mitoloji-fantastik16',
+  'mitoloji-fantastik17',
+  'mitoloji-fantastik18',
+  'mitoloji-fantastik19',
+  'mitoloji-fantastik20',
+  'meteoroloji01',
+  'meteoroloji02',
+  'meteoroloji03',
+  'meteoroloji04',
+  'meteoroloji05',
+  'meteoroloji06',
+  'meteoroloji07',
+  'meteoroloji08',
+  'meteoroloji09',
+  'meteoroloji10',
+  'meteoroloji11',
+  'meteoroloji12',
+  'meteoroloji13',
+  'meteoroloji14',
+  'meteoroloji15',
+  'meteoroloji16',
+  'meteoroloji17',
+  'meteoroloji18',
+  'meteoroloji19',
+  'meteoroloji20',
+  'havacilik01',
+  'havacilik02',
+  'havacilik03',
+  'havacilik04',
+  'havacilik05',
+  'havacilik06',
+  'havacilik07',
+  'havacilik08',
+  'havacilik09',
+  'havacilik10',
+  'havacilik11',
+  'havacilik12',
+  'havacilik13',
+  'havacilik14',
+  'havacilik15',
+  'havacilik16',
+  'havacilik17',
+  'havacilik18',
+  'havacilik19',
+  'havacilik20',
+  'gastronomi01',
+  'gastronomi02',
+  'gastronomi03',
+  'gastronomi04',
+  'gastronomi05',
+  'gastronomi06',
+  'gastronomi07',
+  'gastronomi08',
+  'gastronomi09',
+  'gastronomi10',
+  'gastronomi11',
+  'gastronomi12',
+  'gastronomi13',
+  'gastronomi14',
+  'gastronomi15',
+  'gastronomi16',
+  'gastronomi17',
+  'gastronomi18',
+  'gastronomi19',
+  'gastronomi20',
+  'fotografcilik01',
+  'fotografcilik02',
+  'fotografcilik03',
+  'fotografcilik04',
+  'fotografcilik05',
+  'fotografcilik06',
+  'fotografcilik07',
+  'fotografcilik08',
+  'fotografcilik09',
+  'fotografcilik10',
+  'fotografcilik11',
+  'fotografcilik12',
+  'fotografcilik13',
+  'fotografcilik14',
+  'fotografcilik15',
+  'fotografcilik16',
+  'fotografcilik17',
+  'fotografcilik18',
+  'fotografcilik19',
+  'fotografcilik20',
+  'evcil-hayvanlar01',
+  'evcil-hayvanlar02',
+  'evcil-hayvanlar03',
+  'evcil-hayvanlar04',
+  'evcil-hayvanlar05',
+  'evcil-hayvanlar06',
+  'evcil-hayvanlar07',
+  'evcil-hayvanlar08',
+  'evcil-hayvanlar09',
+  'evcil-hayvanlar10',
+  'evcil-hayvanlar11',
+  'evcil-hayvanlar12',
+  'evcil-hayvanlar13',
+  'evcil-hayvanlar14',
+  'evcil-hayvanlar15',
+  'evcil-hayvanlar16',
+  'evcil-hayvanlar17',
+  'evcil-hayvanlar18',
+  'evcil-hayvanlar19',
+  'evcil-hayvanlar20',
+  'tarih21',
+  'tarih22',
+  'tarih23',
+  'tarih24',
+  'tarih25',
+  'tarih26',
+  'tarih27',
+  'tarih28',
+  'tarih29',
+  'tarih30',
+  'tarih31',
+  'tarih32',
+  'tarih33',
+  'tarih34',
+  'tarih35',
+  'tarih36',
+  'tarih37',
+  'tarih38',
+  'tarih39',
+  'tarih40',
+  'turizm-seyahat21',
+  'turizm-seyahat22',
+  'turizm-seyahat23',
+  'turizm-seyahat24',
+  'turizm-seyahat25',
+  'turizm-seyahat26',
+  'turizm-seyahat27',
+  'turizm-seyahat28',
+  'turizm-seyahat29',
+  'turizm-seyahat30',
+  'turizm-seyahat31',
+  'turizm-seyahat32',
+  'turizm-seyahat33',
+  'turizm-seyahat34',
+  'turizm-seyahat35',
+  'turizm-seyahat36',
+  'turizm-seyahat37',
+  'turizm-seyahat38',
+  'turizm-seyahat39',
+  'turizm-seyahat40',
+  'teknoloji21',
+  'teknoloji22',
+  'teknoloji23',
+  'teknoloji24',
+  'teknoloji25',
+  'teknoloji26',
+  'teknoloji27',
+  'teknoloji28',
+  'teknoloji29',
+  'teknoloji30',
+  'teknoloji31',
+  'teknoloji32',
+  'teknoloji33',
+  'teknoloji34',
+  'teknoloji35',
+  'teknoloji36',
+  'teknoloji37',
+  'teknoloji38',
+  'teknoloji39',
+  'teknoloji40',
+  'kimya21',
+  'kimya22',
+  'kimya23',
+  'kimya24',
+  'kimya25',
+  'kimya26',
+  'kimya27',
+  'kimya28',
+  'kimya29',
+  'kimya30',
+  'kimya31',
+  'kimya32',
+  'kimya33',
+  'kimya34',
+  'kimya35',
+  'kimya36',
+  'kimya37',
+  'kimya38',
+  'kimya39',
+  'kimya40',
+  'biyoloji21',
+  'biyoloji22',
+  'biyoloji23',
+  'biyoloji24',
+  'biyoloji25',
+  'biyoloji26',
+  'biyoloji27',
+  'biyoloji28',
+  'biyoloji29',
+  'biyoloji30',
+  'biyoloji31',
+  'biyoloji32',
+  'biyoloji33',
+  'biyoloji34',
+  'biyoloji35',
+  'biyoloji36',
+  'biyoloji37',
+  'biyoloji38',
+  'biyoloji39',
+  'biyoloji40',
+  'spor21',
+  'spor22',
+  'spor23',
+  'spor24',
+  'spor25',
+  'spor26',
+  'spor27',
+  'spor28',
+  'spor29',
+  'spor30',
+  'spor31',
+  'spor32',
+  'spor33',
+  'spor34',
+  'spor35',
+  'spor36',
+  'spor37',
+  'spor38',
+  'spor39',
+  'spor40',
+  'sanat21',
+  'sanat22',
+  'sanat23',
+  'sanat24',
+  'sanat25',
+  'sanat26',
+  'sanat27',
+  'sanat28',
+  'sanat29',
+  'sanat30',
+  'sanat31',
+  'sanat32',
+  'sanat33',
+  'sanat34',
+  'sanat35',
+  'sanat36',
+  'sanat37',
+  'sanat38',
+  'sanat39',
+  'sanat40',
+  'saglik21',
+  'saglik22',
+  'saglik23',
+  'saglik24',
+  'saglik25',
+  'saglik26',
+  'saglik27',
+  'saglik28',
+  'saglik29',
+  'saglik30',
+  'saglik31',
+  'saglik32',
+  'saglik33',
+  'saglik34',
+  'saglik35',
+  'saglik36',
+  'saglik37',
+  'saglik38',
+  'saglik39',
+  'saglik40',
+  'matematik21',
+  'matematik22',
+  'matematik23',
+  'matematik24',
+  'matematik25',
+  'matematik26',
+  'matematik27',
+  'matematik28',
+  'matematik29',
+  'matematik30',
+  'matematik31',
+  'matematik32',
+  'matematik33',
+  'matematik34',
+  'matematik35',
+  'matematik36',
+  'matematik37',
+  'matematik38',
+  'matematik39',
+  'matematik40',
+  'fizik21',
+  'fizik22',
+  'fizik23',
+  'fizik24',
+  'fizik25',
+  'fizik26',
+  'fizik27',
+  'fizik28',
+  'fizik29',
+  'fizik30',
+  'fizik31',
+  'fizik32',
+  'fizik33',
+  'fizik34',
+  'fizik35',
+  'fizik36',
+  'fizik37',
+  'fizik38',
+  'fizik39',
+  'fizik40',
+  'astronomi21',
+  'astronomi22',
+  'astronomi23',
+  'astronomi24',
+  'astronomi25',
+  'astronomi26',
+  'astronomi27',
+  'astronomi28',
+  'astronomi29',
+  'astronomi30',
+  'astronomi31',
+  'astronomi32',
+  'astronomi33',
+  'astronomi34',
+  'astronomi35',
+  'astronomi36',
+  'astronomi37',
+  'astronomi38',
+  'astronomi39',
+  'astronomi40',
+];
 
+String presentationComponentDomName(PresentationComponentKind kind) =>
+    _presentationComponentDomNames[kind.index];
 List<String> presentationComponentCategories() {
   return _presentationComponentCategories;
 }

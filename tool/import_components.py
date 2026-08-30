@@ -561,15 +561,15 @@ def generate(components: list[Component]) -> str:
     lines.append("  }")
     lines.append("}")
     lines.append("")
-    lines.append(
-        "String presentationComponentDomName(PresentationComponentKind kind) {"
-    )
-    lines.append("  switch (kind) {")
+    lines.append("const List<String> _presentationComponentDomNames = <String>[")
     for c in components:
-        lines.append(f"    case PresentationComponentKind.{c.enum_name}:")
-        lines.append(f"      return '{component_dom_name(c.enum_name)}';")
-    lines.append("  }")
-    lines.append("}")
+        lines.append(f"  '{component_dom_name(c.enum_name)}',")
+    lines.append("];")
+    lines.append("")
+    lines.append(
+        "String presentationComponentDomName(PresentationComponentKind kind) =>"
+    )
+    lines.append("    _presentationComponentDomNames[kind.index];")
     lines.append("")
     lines.append("List<String> presentationComponentCategories() {")
     lines.append("  return _presentationComponentCategories;")
