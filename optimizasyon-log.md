@@ -291,3 +291,15 @@ Başlangıç baseline (2026-08-30 03:54 +03): release `main.dart.js` 7.089.498 b
 **Not/Ders:** Array decode tekrarı toplam normalize/temizleme maliyetinin küçük bölümü; aynı decode-birleştirme varyasyonları `%3` eşiğini güvenilir geçmiyor.
 
 ---
+
+## Tur 25 - 2026-08-30 06:06 +03
+
+**Hipotez:** `tryParsePresentationPayload` içinde parse aşamasında zaten temizlenmiş payload'ı ikinci kez kopyalayıp temizlemeyi kimlik işaretiyle atlamak CPU/GC maliyetini azaltır.
+**Değişiklik:** `_cleanAllContent` çıktıları zayıf `Expando` işareti alıyor; try-parse işaretli sonucu doğrulama sonrası doğrudan döndürüyor, işaretsiz kurtarma yollarını eskisi gibi temizliyor.
+**Baseline Metrikler:** 30 slaytlı map için 100 doğrulanmış parse medyanı: 125.043 µs; bundle: 6.987.017 bayt.
+**Sonuç Metrikler:** Ayrı süreç medyanları: 69.131 / 68.113 / 67.650 µs (en muhafazakâr -%44,7); bundle: 6.987.202 bayt (+185).
+**Fonksiyonel Regresyon:** Geçti — 11/11 parser testi ve yeni çıktı eşitliği testi geçti; geniş pakette 105/106 geçti, Tur 13'ten beri mevcut solar-photon→optics beklenti hatası izole iki koşuda da değişmeden kaldı; release build başarılı.
+**Karar:** KABUL EDİLDİ (commit)
+**Not/Ders:** Payload şeması/değeri değişmeden normal doğrulanmış parse yolundaki ikinci 30-slidelık map/list temizleme ve kopyalama geçişi kaldırıldı.
+
+---

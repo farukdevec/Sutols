@@ -6,6 +6,9 @@ import 'presentation_content_quality.dart';
 class SafeJsonParser {
   const SafeJsonParser._();
 
+  static final Expando<bool> _cleanedPayloads =
+      Expando<bool>('safe-json-cleaned-payload');
+
   /// Ham model çıktısını güvenli şekilde ayrıştırır ve standart `{'slides': [...]}`
   /// Map yapısına dönüştürür.
   ///
@@ -116,6 +119,7 @@ class SafeJsonParser {
     try {
       final parsed = parsePresentationPayload(rawContent);
       validateSchema(parsed);
+      if (_cleanedPayloads[parsed] == true) return parsed;
       // Ek olarak content temizle
       final cleaned = _cleanAllContent(parsed);
       return cleaned;
@@ -179,6 +183,7 @@ class SafeJsonParser {
       cleaned['slides'] = cleanedSlides;
     }
     
+    _cleanedPayloads[cleaned] = true;
     return cleaned;
   }
 
