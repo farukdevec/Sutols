@@ -123,3 +123,51 @@ Başlangıç baseline (2026-08-30 03:54 +03): release `main.dart.js` 7.089.498 b
 **Not/Ders:** Palette/deflate kodlaması 123.568 bayt kaldırırken shader'a ulaşan texture pikselleri bit düzeyinde aynı kaldı.
 
 ---
+
+## Tur 11 - 2026-08-30 05:05 +03
+
+**Hipotez:** Export reveal-step sayacında birleştirilmiş geçici liste ve `where` tahsislerini iki doğrudan döngüyle kaldırmak export üretimini hızlandırır.
+**Değişiklik:** Yalnız `_revealStepCountForPage` içinde click animasyonu sayımı geçici liste yerine iki döngüyle denendi; üretim kodu ölçüm sonrası geri alındı.
+**Baseline Metrikler:** 40×30 sayfalı export benchmark ortalaması: 9.104 ms; çıktı: 111.332.040 bayt.
+**Sonuç Metrikler:** 40×30 benchmark ortalaması: 9.116 ms (+%0,1 daha yavaş); çıktı: 111.332.040 bayt.
+**Fonksiyonel Regresyon:** Geçti — çıktı boyutu aynı; yeni üretim değişikliği korunmadı.
+**Karar:** REDDEDİLDİ (geri alındı)
+**Not/Ders:** Bu küçük tahsis azaltımı ölçüm gürültüsü içinde fayda üretmedi; reveal-step hesabında yeniden denenmemeli.
+
+---
+
+## Tur 12 - 2026-08-30 05:10 +03
+
+**Hipotez:** Export sıkıştırmasında her çağrıda aynı üç regex'i yeniden derlemek yerine değişmez regex nesnelerini paylaşmak üretim süresini azaltır.
+**Değişiklik:** `_compactHtml` regex'leri dosya düzeyinde paylaşıldı; çıktı ve export testleri doğrulandı, ölçüm sonrası üretim değişikliği geri alındı.
+**Baseline Metrikler:** 40×30 sayfalı export benchmark ortalaması: 9.104 ms; çıktı: 111.332.040 bayt.
+**Sonuç Metrikler:** Benchmark üç koşuda: 9.298, 9.288, 9.515 ms; çıktı: 111.332.040 bayt (baseline'dan yaklaşık %2,9 daha yavaş).
+**Fonksiyonel Regresyon:** Geçti — export testleri 5/5; yeni hata yok.
+**Karar:** REDDEDİLDİ (geri alındı)
+**Not/Ders:** Regex derleme paylaşımı bu export senaryosunda ölçülebilir kazanım vermedi; tekrar denenmemeli.
+
+---
+
+## Tur 13 - 2026-08-30 05:15 +03
+
+**Hipotez:** Model indeksinde normalize edilmiş etiket ve isim kelimelerini önceden saklamak, her model skorlamasında tekrar `split` maliyetini kaldırır.
+**Değişiklik:** `_IndexedModel` içine önceden bölünmüş isim/etiket kelimeleri eklendi; eşleşme sonuçları aynı kaldı, ölçüm sonrası üretim kodu geri alındı.
+**Baseline Metrikler:** 20×240 model benchmark ortalaması: 731,1 ms; toplam eşleşme: 4.800.
+**Sonuç Metrikler:** Üç koşu: 746,3 / 742,9 / 743,0 ms; toplam eşleşme: 4.800 (yaklaşık %1,8 daha yavaş).
+**Fonksiyonel Regresyon:** Model eşleştirme testleri geçti; keyword test paketi mevcut `güneş paneli` beklentisinde başarısız oldu.
+**Karar:** REDDEDİLDİ (geri alındı)
+**Not/Ders:** Bu indeks tahsisi, skorlamadaki kazancı aşarak benchmark’ı yavaşlattı; aynı kelime önbellekleme varyasyonu yeniden denenmemeli.
+
+---
+
+## Tur 14 - 2026-08-30 05:20 +03
+
+**Hipotez:** Stage patch sonunda yapılan toplu `fitAllText` zaten tüm metinleri ölçtüğü için `patchElement` içindeki tekil `fitText` çağrısı kaldırılabilir.
+**Değişiklik:** Yalnız tekil fit çağrısı geçici olarak kaldırıldı; export testi geçti, Chrome frame ölçümü ortamda tamamlanamadı ve değişiklik geri alındı.
+**Baseline Metrikler:** Release `main.dart.js`: 7.002.709 bayt; 5/5 export testi geçti.
+**Sonuç Metrikler:** Release `main.dart.js`: 7.002.559 bayt (-150 bayt, -%0,002); Chrome patch/frame metriği alınamadı.
+**Fonksiyonel Regresyon:** Export testi geçti; görsel eşdeğerlik ölçülemediği için kabul edilmedi.
+**Karar:** REDDEDİLDİ (geri alındı)
+**Not/Ders:** Dört ardışık aday anlamlı ölçülebilir kazanım vermedi; promptun durma koşulu uygulandı.
+
+---
