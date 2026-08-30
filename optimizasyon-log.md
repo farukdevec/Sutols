@@ -447,3 +447,15 @@ Başlangıç baseline (2026-08-30 03:54 +03): release `main.dart.js` 7.089.498 b
 **Not/Ders:** Mevcut doğrudan bağımlılıkların hiçbiri ölü değil; paket kaldırma ancak ilgili üretim özelliği değiştirilecekse mümkün ve bu katı eşdeğerlik kapsamında yeniden denenmemeli.
 
 ---
+
+## Tur 38 - 2026-08-30 20:05 +03
+
+**Hipotez:** Paketlenen runtime assetleri arasında font dışı birebir kopyaları tek dosyaya yönlendirmek deploy/transfer boyutunu davranış değiştirmeden azaltabilir.
+**Değişiklik:** `build/web/assets/assets` altındaki tüm dosyalar SHA-256 ile gruplandı. Yalnız üç Noto ailesine ait aynı 4.481 baytlık lisans metni bulundu; veri, medya veya font ikili kopyası bulunmadığı için üretim/manifest değişikliği yapılmadı.
+**Baseline Metrikler:** Paketlenen uygulama assetleri: 5.308.132 bayt; tek yinelenen hash grubu: 3×4.481 bayt lisans metni; teorik yinelenen bayt: 8.962.
+**Sonuç Metrikler:** Teorik üst sınır yalnız 8.962 bayt (-%0,17 asset); `%3` kabul eşiğinin altında, gerçek paket değişmedi.
+**Fonksiyonel Regresyon:** Geçti — asset URL’leri, lisans dosyaları ve runtime içeriği değiştirilmedi.
+**Karar:** REDDEDİLDİ (değişiklik uygulanmadı)
+**Not/Ders:** Tur 16 sonrası anlamlı ikili asset kopyası kalmamış; küçük lisans metni tekilleştirmesi kabul eşiğine ulaşamaz ve bu varyasyon yeniden denenmemeli.
+
+---
