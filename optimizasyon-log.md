@@ -303,3 +303,15 @@ Başlangıç baseline (2026-08-30 03:54 +03): release `main.dart.js` 7.089.498 b
 **Not/Ders:** Payload şeması/değeri değişmeden normal doğrulanmış parse yolundaki ikinci 30-slidelık map/list temizleme ve kopyalama geçişi kaldırıldı.
 
 ---
+
+## Tur 26 - 2026-08-30 06:07 +03
+
+**Hipotez:** Web geçiş iframe'inin fallback ve load yollarından gelebilen çift `onReady` bildirimini tekilleştirmek yinelenen geçiş işini azaltır.
+**Değişiklik:** Üretici ve tüketici kontrol akışı incelendi; zamanlamayı değiştirecek üretim değişikliği uygulanmadı.
+**Baseline Metrikler:** Olası callback teslimi: 2; `_startLoadedTransition` animasyon başlatma: 1; ikinci çağrı `isAnimating` nedeniyle no-op.
+**Sonuç Metrikler:** Tekilleştirmede callback 1 olsa da animasyon/frame/re-render sayısı 1→1; ölçülebilir uygulama kazanımı yok.
+**Fonksiyonel Regresyon:** Geçti — kod değiştirilmedi; mevcut fallback ve yükleme zamanlaması korundu.
+**Karar:** REDDEDİLDİ (değişiklik uygulanmadı)
+**Not/Ders:** Tüketici zaten idempotent; fallback'i geciktirmek veya kaldırmak iframe hazır olma davranışını değiştireceğinden bu varyasyonlar denenmemeli.
+
+---
