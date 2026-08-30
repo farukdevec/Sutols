@@ -63,3 +63,15 @@ Başlangıç baseline (2026-08-30 03:54 +03): release `main.dart.js` 7.089.498 b
 **Not/Ders:** 292.064 baytlık model-viewer modülü yalnız 3B özellik gerçekten açıldığında yükleniyor; çıktı davranışı korunuyor.
 
 ---
+
+## Tur 6 - 2026-08-30 04:20 +03
+
+**Hipotez:** Aynı font kombinasyonu için saf sahne CSS sonucunu sınırlı önbellekte tutmak, tekrar belge üretimindeki regex/tahsis maliyetini çıktıyı değiştirmeden azaltır.
+**Değişiklik:** Font kombinasyonu anahtarlı, sekiz girişli LRU sahne stili önbelleği eklendi; aynı kombinasyonun aynı dizeyi döndürdüğü test edildi.
+**Baseline Metrikler:** 100 belge üretim medyanı: 141,9 ms; Bundle: 6.920.413 bayt.
+**Sonuç Metrikler:** 100 belge üretim medyanı: 50,8 ms (-%64,2); Bundle: 6.920.649 bayt (+%0,003).
+**Fonksiyonel Regresyon:** Geçti — CSS dizesi birebir aynı, 43/43 tur testi ve release build başarılı.
+**Karar:** KABUL EDİLDİ (commit)
+**Not/Ders:** Tekrarlanan sahne/iframe üretiminde 89 KB font CSS taraması atlanıyor; önbellek bellek büyümesini engellemek için sekiz girişle sınırlı.
+
+---

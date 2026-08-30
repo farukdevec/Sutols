@@ -406,6 +406,13 @@ void main() {
       document,
       isNot(contains("@font-face {\n  font-family: 'Alegreya'")),
     );
+    expect(
+      identical(
+        sutolHtmlStageStylesForPages(const <PresentationPage>[page]),
+        sutolHtmlStageStylesForPages(const <PresentationPage>[page]),
+      ),
+      isTrue,
+    );
   });
 
   test('sanal tur modeli sunum ve dışa aktarımda sürüklenerek keşfedilebilir',

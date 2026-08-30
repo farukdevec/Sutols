@@ -22,6 +22,9 @@ const String sutolModelViewerScriptTag =
 String get sutolHtmlStageStyles =>
     '$_stageStyles\n\n$sutolCombinedTemplatesCSS\n\n$_transparentComponentOverrides';
 
+const int _stageStylesCacheCapacity = 8;
+final Map<String, String> _stageStylesByFontFamilies = <String, String>{};
+
 String sutolHtmlStageStylesForPages(Iterable<PresentationPage> pages) {
   final families = <String>{};
   for (final page in pages) {
@@ -37,6 +40,12 @@ String sutolHtmlStageStylesForPages(Iterable<PresentationPage> pages) {
       if (effectiveFamily != null) families.add(effectiveFamily);
     }
   }
+  final cacheKey = (families.toList()..sort()).join('\u0000');
+  final cached = _stageStylesByFontFamilies.remove(cacheKey);
+  if (cached != null) {
+    _stageStylesByFontFamilies[cacheKey] = cached;
+    return cached;
+  }
   final filteredFonts = sutolLocalGoogleFontsCssForFamilies(families);
   final withoutGoogleImport = _stageStyles.replaceFirst(
     RegExp(r"@import url\('https://fonts\.googleapis\.com/[^']+'\);\s*"),
@@ -46,7 +55,13 @@ String sutolHtmlStageStylesForPages(Iterable<PresentationPage> pages) {
     sutolLocalGoogleFontsCss,
     filteredFonts,
   );
-  return '$filteredStageStyles\n\n$sutolCombinedTemplatesCSS\n\n$_transparentComponentOverrides';
+  final styles =
+      '$filteredStageStyles\n\n$sutolCombinedTemplatesCSS\n\n$_transparentComponentOverrides';
+  if (_stageStylesByFontFamilies.length >= _stageStylesCacheCapacity) {
+    _stageStylesByFontFamilies.remove(_stageStylesByFontFamilies.keys.first);
+  }
+  _stageStylesByFontFamilies[cacheKey] = styles;
+  return styles;
 }
 
 String? _fontFamilyFromRule(String selector) {
