@@ -459,3 +459,15 @@ Başlangıç baseline (2026-08-30 03:54 +03): release `main.dart.js` 7.089.498 b
 **Not/Ders:** Tur 16 sonrası anlamlı ikili asset kopyası kalmamış; küçük lisans metni tekilleştirmesi kabul eşiğine ulaşamaz ve bu varyasyon yeniden denenmemeli.
 
 ---
+
+## Tur 39 - 2026-08-30 20:06 +03
+
+**Hipotez:** Flutter’ın ürettiği büyük `assets/NOTICES` lisans dosyasını paket dışında bırakmak toplam deploy/transfer boyutunu anlamlı ölçüde azaltabilir.
+**Değişiklik:** Release dosyaları boyuta göre sıralandı ve kodda açık lisans sayfası kullanımı arandı. Dosyanın tamamını kaldırmanın teorik kazancı bile eşik altında kaldığı, ayrıca Flutter lisans kaynağını/yasal görünürlüğü değiştireceği için üretim veya build yapılandırması değiştirilmedi.
+**Baseline Metrikler:** Release dizini: 56.570.122 bayt; `assets/NOTICES`: 1.344.746 bayt.
+**Sonuç Metrikler:** Teorik tam kaldırma üst sınırı -%2,38; `%3` kabul eşiğinin altında, gerçek paket değişmedi.
+**Fonksiyonel Regresyon:** Geçti — lisans kaynağı, release dosyaları ve runtime davranışı değiştirilmedi.
+**Karar:** REDDEDİLDİ (değişiklik uygulanmadı)
+**Not/Ders:** Üretilen lisans bildirimi toplam paketin `%3`’üne ulaşmıyor ve hukuki/çerçeve davranışı taşıyor; kaldırma veya kırpma varyasyonları yeniden denenmemeli. Bu turla ardışık 4 ret koşulu oluştu ve döngü durduruldu.
+
+---
