@@ -195,3 +195,15 @@ Başlangıç baseline (2026-08-30 03:54 +03): release `main.dart.js` 7.089.498 b
 **Not/Ders:** Font glif/veri ve CSS weight sözleşmesi değişmeden deploy/önbellek yükünden 2.570.188 bayt kaldırıldı; ortak yüzlerde 400+700 ağ isteği tek kaynakta birleşiyor.
 
 ---
+
+## Tur 17 - 2026-08-30 05:46 +03
+
+**Hipotez:** Runtime tarafından okunmayan güzel şablon kaynak klasörünü Flutter asset manifestinden çıkarmak deploy boyutunu azaltır.
+**Değişiklik:** Manifest kapsamı ve release çıktısı ölçüldü; Flutter dizin bildiriminin alt klasörleri değil yalnız iki kök dosyayı paketlediği görüldü, üretim değişikliği uygulanmadı.
+**Baseline Metrikler:** Release toplamı: 56.584.066 bayt; paketlenen aday: 2 dosya / 55.798 bayt.
+**Sonuç Metrikler:** Öngörülen toplam küçülme yalnız 55.798 bayt (-%0,099); `%3` kabul eşiğinin altında.
+**Fonksiyonel Regresyon:** Geçti — kaynak, manifest ve üretim çıktısı değiştirilmedi.
+**Karar:** REDDEDİLDİ (değişiklik uygulanmadı)
+**Not/Ders:** Flutter klasör asset bildirimi recursive değil; kaynak kitaplık 3,54 MB olsa da release'e yalnız 55,8 KB giriyor, bu nedenle manifest varyasyonları yeniden denenmemeli.
+
+---
