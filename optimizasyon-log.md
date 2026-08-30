@@ -387,3 +387,15 @@ Başlangıç baseline (2026-08-30 03:54 +03): release `main.dart.js` 7.089.498 b
 **Not/Ders:** WebM üzerinde araçsız bayt düzeyi müdahale kalite/eşdeğerlik kanıtı sağlayamaz; doğrulanmış remux ve frame-hash aracı olmadan bu varyasyon yeniden denenmemeli.
 
 ---
+
+## Tur 33 - 2026-08-30 19:51 +03
+
+**Hipotez:** Export sırasında JSON metnini `<`, `>` ve `&` için üç ayrı `replaceAll` geçişiyle taramak yerine aynı kaçış dizilerini tek geçişte üretmek büyük konuşmacı notlarında CPU ve geçici dize maliyetini azaltır.
+**Değişiklik:** `_scriptSafeJson`, `jsonEncode` çıktısını özel karakterler arasındaki değişmeyen parçaları toplu yazarak tek kez tarayacak biçimde değiştirildi; 30 slaytlık özel-karakter yoğun deterministik benchmark ve checksum kontrolü eklendi.
+**Baseline Metrikler:** Ayrı süreç medyanları: 37.038 / 37.238 / 42.037 µs; süreç medyanlarının medyanı 37.238 µs; checksum: 201.113.319; çıktı: 2.099.840 karakter; bundle: 6.988.221 bayt.
+**Sonuç Metrikler:** Ayrı süreç medyanları: 28.150 / 25.240 / 27.114 µs; süreç medyanlarının medyanı 27.114 µs (-%27,2); checksum ve çıktı uzunluğu aynı; bundle: 6.988.476 bayt (+255, +%0,0036).
+**Fonksiyonel Regresyon:** Geçti — hedefli analiz temiz; JSON/export/3B paketleri 38/38 geçti; geniş background/export grubu yalnız önceki turlarda doğrulanmış 6 mevcut beklentide kaldı; release web build başarılı. Tüm depo denemesi canlı ağ testi ve bağımsız widget zaman aşımları nedeniyle sonlandırıldı.
+**Karar:** KABUL EDİLDİ (commit)
+**Not/Ders:** Aynı büyük JSON dizesinin ardışık tam taramalarını birleştirmek, kaçış baytlarını ve export çıktısını birebir korurken ölçülen süreyi yaklaşık dörtte bir azalttı.
+
+---

@@ -276,10 +276,28 @@ document.querySelectorAll('.sutol-bg-scene-frame').forEach((frame) => {
 });
 ''';
 
-String _scriptSafeJson(Object value) => jsonEncode(value)
-    .replaceAll('<', r'\u003C')
-    .replaceAll('>', r'\u003E')
-    .replaceAll('&', r'\u0026');
+String _scriptSafeJson(Object value) {
+  final encoded = jsonEncode(value);
+  StringBuffer? escaped;
+  var chunkStart = 0;
+  for (var index = 0; index < encoded.length; index += 1) {
+    final replacement = switch (encoded.codeUnitAt(index)) {
+      0x3C => r'\u003C',
+      0x3E => r'\u003E',
+      0x26 => r'\u0026',
+      _ => null,
+    };
+    if (replacement == null) continue;
+    escaped ??= StringBuffer();
+    escaped
+      ..write(encoded.substring(chunkStart, index))
+      ..write(replacement);
+    chunkStart = index + 1;
+  }
+  if (escaped == null) return encoded;
+  escaped.write(encoded.substring(chunkStart));
+  return escaped.toString();
+}
 
 String _compactHtml(String source) => source
     .replaceAll(RegExp(r'<!--[\s\S]*?-->'), '')
