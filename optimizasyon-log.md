@@ -423,3 +423,15 @@ Başlangıç baseline (2026-08-30 03:54 +03): release `main.dart.js` 7.089.498 b
 **Not/Ders:** Sort karşılaştırıcısında pahalı parse işlemi tekrarlanmamalı; Schwartz dönüşümü aynı belge sırasını korurken tarih parse sayısını karşılaştırma sayısından belge sayısına düşürdü.
 
 ---
+
+## Tur 36 - 2026-08-30 20:03 +03
+
+**Hipotez:** Prompt üreticisinin aynı `language` değerini çağrı başına iki kez küçük harfe çevirmesi yerine tek normalize sonucu paylaşmak prompt oluşturma CPU/tahsis maliyetini azaltır.
+**Değişiklik:** Sistem, kullanıcı ve revizyon promptu girişlerinde tek `toLowerCase` sonucu iki dil karşılaştırmasında paylaştırıldı; deterministik sistem+kullanıcı prompt benchmarkı çalıştırıldı ve ardından üretim değişikliği tamamen geri alındı.
+**Baseline Metrikler:** Ayrı süreç medyanları: 28.350 / 27.010 / 27.811 µs; süreç medyanlarının medyanı 27.811 µs; checksum: 506.900.000.
+**Sonuç Metrikler:** Ayrı süreç medyanları: 30.321 / 28.092 / 27.763 µs; süreç medyanlarının medyanı 28.092 µs (+%1,0 daha yavaş); checksum aynı.
+**Fonksiyonel Regresyon:** Geçti — benchmark çıktısı aynı kaldı; üretim ve geçici benchmark dosyası geri alındı, çalışma ağacında yalnız günlük değişikliği bırakıldı.
+**Karar:** REDDEDİLDİ (değişiklik geri alındı)
+**Not/Ders:** Kısa dil dizesindeki ikinci lowercase çağrısı ölçülebilir darboğaz değil; tek-normalizasyon varyantı yeniden denenmemeli.
+
+---
