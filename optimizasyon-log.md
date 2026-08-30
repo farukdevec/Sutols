@@ -39,3 +39,15 @@ Başlangıç baseline (2026-08-30 03:54 +03): release `main.dart.js` 7.089.498 b
 **Not/Ders:** Model içeren metinsiz tur iframe'leri 88.568 bayt daha az CSS taşıyor; görsel çıktı değişmedi.
 
 ---
+
+## Tur 4 - 2026-08-30 04:12 +03
+
+**Hipotez:** Flutter tur önizlemesinde `_effectivePage` sonucunu build başına bir kez paylaşmak geçici sayfa/model tahsislerini ve frame oluşturma süresini azaltır.
+**Değişiklik:** Geçici olarak `_effectivePage` tek yerel değere indirildi; ölçüm sonrası üretim değişikliği geri alındı.
+**Baseline Metrikler:** 500 kare medyanı: 240.941 µs; Bundle: 6.919.962 bayt.
+**Sonuç Metrikler:** 500 kare medyanı: 246.400 µs (+%2,27 daha yavaş); Bundle: değişmedi (geri alındı).
+**Fonksiyonel Regresyon:** Geçti — aktif WASD tur benchmark widget testi tamamlandı.
+**Karar:** REDDEDİLDİ (geri alındı)
+**Not/Ders:** Azalan küçük nesne tahsisi widget-pump maliyetini iyileştirmedi; bu yöntem ve küçük varyasyonları tekrar denenmemeli.
+
+---
