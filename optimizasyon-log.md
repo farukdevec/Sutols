@@ -435,3 +435,15 @@ Başlangıç baseline (2026-08-30 03:54 +03): release `main.dart.js` 7.089.498 b
 **Not/Ders:** Kısa dil dizesindeki ikinci lowercase çağrısı ölçülebilir darboğaz değil; tek-normalizasyon varyantı yeniden denenmemeli.
 
 ---
+
+## Tur 37 - 2026-08-30 20:04 +03
+
+**Hipotez:** Release paketinde üretim kodunun kullanmadığı doğrudan bir Dart/Flutter bağımlılığını kaldırmak JS bundle ve başlangıç parse maliyetini azaltabilir.
+**Değişiklik:** `pubspec.yaml` doğrudan bağımlılıkları üretim importlarıyla karşılaştırıldı; font/template asset bildirimleri önceki turların sonuçlarına göre denetlendi. Kullanılmayan güvenli bir bağımlılık bulunmadığı için üretim dosyası değiştirilmedi.
+**Baseline Metrikler:** Release `main.dart.js`: 6.988.767 bayt; paketlenen uygulama assetleri: 5.308.132 bayt; doğrudan harici bağımlılıkların tamamı üretim kodunda kullanılıyor.
+**Sonuç Metrikler:** Bundle ve asset boyutu değişmedi; kaldırılabilir bağımlılık bulunmadığından ölçülebilir kazanım yok.
+**Fonksiyonel Regresyon:** Geçti — bağımlılık, asset manifesti ve üretim davranışı değiştirilmedi.
+**Karar:** REDDEDİLDİ (değişiklik uygulanmadı)
+**Not/Ders:** Mevcut doğrudan bağımlılıkların hiçbiri ölü değil; paket kaldırma ancak ilgili üretim özelliği değiştirilecekse mümkün ve bu katı eşdeğerlik kapsamında yeniden denenmemeli.
+
+---
