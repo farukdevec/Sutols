@@ -352,7 +352,7 @@ Başlangıç baseline (2026-08-30 03:54 +03): release `main.dart.js` 7.089.498 b
 
 ---
 
-## Tur 30 - 2026-08-30 19:12 +03
+## Tur 30 - 2026-08-30 19:08 +03
 
 **Hipotez:** Otomatik eşleştirme normalde tek bileşen istediği için tüm uygun adayları listeleyip sıralamak yerine aynı skor/label kuralıyla tek kazananı akış içinde tutmak CPU ve tahsis maliyetini azaltır.
 **Değişiklik:** `maxComponents == 1` yolunda geçici tek-kazanan seçimi denendi; çoklu seçim yolu korunarak ölçüldü ve eşik aşılmadığı için üretim kodu tamamen geri alındı.
@@ -361,5 +361,17 @@ Başlangıç baseline (2026-08-30 03:54 +03): release `main.dart.js` 7.089.498 b
 **Fonksiyonel Regresyon:** Geçti — altı golden eşleşme ve checksum birebir aynı; üretim değişikliği geri alındı.
 **Karar:** REDDEDİLDİ (geri alındı)
 **Not/Ders:** Aday sıralama maliyeti toplam 1.051 tanımlı skorlamanın küçük bir bölümü; tek-kazanan dalı eklemek sıcak döngüyü iyileştirmedi ve yeniden denenmemeli.
+
+---
+
+## Tur 31 - 2026-08-30 19:10 +03
+
+**Hipotez:** Yoğun eşleştirme yollarında ASCII kelime ayrıştırmasını regex `split` ve iterable filtre yerine aynı `[a-z0-9]` sınırlarını tarayan tek geçişle yapmak CPU/GC maliyetini azaltır.
+**Değişiklik:** `PresentationKeywordCatalog.words` doğrudan code-unit taramasına geçirildi; boş ayraçları atlama ve sabit uzunluklu liste sözleşmesi korundu, altı farklı giriş için deterministik golden/benchmark eklendi.
+**Baseline Metrikler:** 60.000 tokenizasyon medyanları: 168.876 / 169.552 / 156.569 µs; uçtan uca 12 eşleştirme süreç medyanı: 266.653 µs; checksumlar: 1.070.000 / 2.314; bundle: 6.988.182 bayt.
+**Sonuç Metrikler:** Tokenizasyon medyanları: 10.198 / 9.681 / 9.925 µs; süreç medyanlarının medyanı 9.925 µs (-%94,1); eşleştirme 103.363 µs (-%61,2); checksumlar aynı; bundle: 6.988.221 bayt (+39).
+**Fonksiyonel Regresyon:** Geçti — hedefli analiz temiz; model/golden 3/3, tur-kamera-geçiş 16/16 ve FPS kontrolü geçti; geniş paket yeni test dahil 71/80 ile aynı 9 mevcut hatayı verdi; release build başarılı.
+**Karar:** KABUL EDİLDİ (commit)
+**Not/Ders:** Basit ASCII sözleşmesinde genel regex motoru baskın maliyetti; eşdeğer doğrudan tarama tokenizerı yaklaşık 17 kat, bileşen eşleştirmeyi yaklaşık 2,6 kat hızlandırdı.
 
 ---

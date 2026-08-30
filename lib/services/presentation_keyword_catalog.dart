@@ -1,8 +1,6 @@
 class PresentationKeywordCatalog {
   const PresentationKeywordCatalog._();
 
-  static final RegExp _wordBoundary = RegExp(r'[^a-z0-9]+');
-
   static String normalize(String value) {
     return value
         .toLowerCase()
@@ -17,10 +15,22 @@ class PresentationKeywordCatalog {
   }
 
   static List<String> words(String normalizedText) {
-    return normalizedText
-        .split(_wordBoundary)
-        .where((word) => word.isNotEmpty)
-        .toList(growable: false);
+    final words = <String>[];
+    var wordStart = -1;
+    for (var index = 0; index <= normalizedText.length; index += 1) {
+      final isWordCharacter = index < normalizedText.length &&
+          ((normalizedText.codeUnitAt(index) >= 0x61 &&
+                  normalizedText.codeUnitAt(index) <= 0x7A) ||
+              (normalizedText.codeUnitAt(index) >= 0x30 &&
+                  normalizedText.codeUnitAt(index) <= 0x39));
+      if (isWordCharacter) {
+        if (wordStart < 0) wordStart = index;
+      } else if (wordStart >= 0) {
+        words.add(normalizedText.substring(wordStart, index));
+        wordStart = -1;
+      }
+    }
+    return words.toList(growable: false);
   }
 
   /// Sunum metinlerinde sık geçen ama HİÇBİR modele özgü olmayan, ayırt

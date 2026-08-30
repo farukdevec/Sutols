@@ -56,4 +56,52 @@ void main() {
       isFalse,
     );
   });
+
+  test('word tokenizer benchmark', () {
+    const inputs = <String>[
+      'artificial intelligence and machine learning',
+      'space-exploration: planets, stars, galaxy 2026',
+      'renewable_energy + carbon/emissions',
+      'human anatomy; heart & circulatory system',
+      '123 alpha42 beta-7 gamma',
+      '...leading and trailing...',
+    ];
+    const expected = <List<String>>[
+      <String>['artificial', 'intelligence', 'and', 'machine', 'learning'],
+      <String>['space', 'exploration', 'planets', 'stars', 'galaxy', '2026'],
+      <String>['renewable', 'energy', 'carbon', 'emissions'],
+      <String>['human', 'anatomy', 'heart', 'circulatory', 'system'],
+      <String>['123', 'alpha42', 'beta', '7', 'gamma'],
+      <String>['leading', 'and', 'trailing'],
+    ];
+    for (var index = 0; index < inputs.length; index += 1) {
+      expect(PresentationKeywordCatalog.words(inputs[index]), expected[index]);
+    }
+
+    int runBatch() {
+      var checksum = 0;
+      for (var iteration = 0; iteration < 10000; iteration += 1) {
+        for (final input in inputs) {
+          final words = PresentationKeywordCatalog.words(input);
+          checksum += words.length + words.first.length + words.last.length;
+        }
+      }
+      return checksum;
+    }
+
+    final expectedChecksum = runBatch();
+    final samples = <int>[];
+    var checksum = 0;
+    for (var run = 0; run < 5; run += 1) {
+      final stopwatch = Stopwatch()..start();
+      checksum = runBatch();
+      stopwatch.stop();
+      samples.add(stopwatch.elapsedMicroseconds);
+    }
+    samples.sort();
+
+    expect(checksum, expectedChecksum);
+    // ignore: avoid_print
+    print('keyword_words_checksum=$checksum samples_us=$samples median_us=${samples[2]}');
+  });
 }
