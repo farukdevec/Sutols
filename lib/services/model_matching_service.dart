@@ -10,6 +10,10 @@ class ModelMatch {
   final String modelUrl;
   final String thumbnailUrl;
   final int score;
+  /// Eşleşmeyi oluşturan ayırt edici kelimeler. Log ve son güven kapısı için
+  /// saklanır; böylece yalnızca yüksek bir sayıya değil, neden eşleştiğine de
+  /// bakılabilir.
+  final List<String> matchedTerms;
 
   ModelMatch({
     required this.id,
@@ -17,6 +21,7 @@ class ModelMatch {
     required this.modelUrl,
     required this.thumbnailUrl,
     required this.score,
+    this.matchedTerms = const <String>[],
   });
 }
 
@@ -36,6 +41,8 @@ class ModelMatchingService {
   /// çağıran taraf (PresentationService) rastgele/alakasız bir model
   /// atamak yerine 2D bileşen düzenine (fallback) düşebilir.
   static const double _minConfidentWeightedScore = 2.0;
+  static const int _strongSingleTermScore = 30;
+  static const int _strongMultiTermScore = 20;
 
   static List<ModelCatalogEntry> get localCatalogEntries =>
       presentation3DModelCatalog
@@ -176,6 +183,13 @@ class ModelMatchingService {
 
     final matches = <ModelMatch>[];
     for (final indexed in models) {
+      // Katalogda GLB olarak duran bazı varlıklar, gerçekte bir sunum
+      // bileşenidir (matris, Gantt, KPI panosu vb.); gerçek dünyadaki 3B
+      // nesneyi temsil etmez. Otomatik sunumda bunları hiç aday yapma.
+      // Fizik deney düzenekleri ve kesit modelleri "analiz-modeli"
+      // kategorisinde olabildiği için kategori yerine somut etiket/ad
+      // işaretlerine göre eliyoruz.
+      if (_isPresentationComponentLike(indexed)) continue;
       // excludeTags: model açıkça bu kelimelerden birini dışlıyorsa (yanlış
       // domain koruması), skorlamaya hiç girmeden ele.
       if (indexed.normalizedExcludeTags.isNotEmpty &&
@@ -187,13 +201,20 @@ class ModelMatchingService {
       //    çarpılır. Yaygın kelimeler düşük katkı, nadir/spesifik kelimeler
       //    yüksek katkı sağlar.
       var weighted = 0.0;
+      final matchedTerms = <String>{};
       for (final tag in indexed.normalizedTags) {
         final w = _bestMatchWeight(limitedKeywords, tag);
-        if (w > 0) weighted += 2 * w;
+        if (w > 0) {
+          weighted += 2 * w;
+          matchedTerms.addAll(_matchingWords(limitedKeywords, tag));
+        }
       }
       final nameWeight =
           _bestMatchWeight(limitedKeywords, indexed.normalizedName);
-      if (nameWeight > 0) weighted += 1 * nameWeight;
+      if (nameWeight > 0) {
+        weighted += 1 * nameWeight;
+        matchedTerms.addAll(_matchingWords(limitedKeywords, indexed.normalizedName));
+      }
 
       if (weighted <= 0) continue;
 
@@ -205,6 +226,7 @@ class ModelMatchingService {
         thumbnailUrl: model.thumbnailUrl,
         // Ondalıklı ağırlığı okunabilir bir tamsayı skoruna çevir (×10).
         score: (weighted * 10).round(),
+        matchedTerms: matchedTerms.toList()..sort(),
       ));
     }
 
@@ -238,6 +260,51 @@ class ModelMatchingService {
       }
     }
     return best;
+  }
+
+  static List<String> _matchingWords(
+    List<String> keywordWords,
+    String candidateText,
+  ) => keywordWords
+      .where((keyword) => PresentationKeywordCatalog.words(candidateText).any(
+            (candidateWord) =>
+                PresentationKeywordCatalog.wordsMatch(keyword, candidateWord) ||
+                PresentationKeywordCatalog.wordsMatch(candidateWord, keyword),
+          ))
+      .toList(growable: false);
+
+  /// Yalnızca kanıtı yeterince güçlü adaylar 3B varlık olarak kullanılabilir.
+  /// Bu, "gantt blokları" gibi tek, zayıf ortak kelimeyle gelen alakasız
+  /// eşleşmeleri engeller; doğrudan nesne adı eşleşmelerini ise korur.
+  static bool isStrong3dMatch(ModelMatch match) =>
+      _hasConcreteObjectEvidence(match) &&
+      (match.score >= _strongSingleTermScore ||
+          (match.score >= _strongMultiTermScore &&
+              match.matchedTerms.length >= 2));
+
+  /// Bazı kelimeler (ör. soğutma veya çevre) bir alanı tarif eder, modelin
+  /// gerçekten o slaytın nesnesi olduğunu kanıtlamaz. Bu koruma, "soğutma"
+  /// sözcüğüyle soğutma kulesi ya da "döngü" sözcüğüyle yaşam döngüsü gibi
+  /// yakın görünüp yanlış eşleşmeleri 3B seçiminden çıkarır. Modelin adıyla
+  /// birlikte kule/kompresör gibi somut bir ikinci kanıt varsa seçilebilir.
+  static const Set<String> _contextOnlyMatchTerms = <String>{
+    'sogutma', 'sogutucu', 'iklimlendirme', 'cevre', 'enerji',
+    'verimlilik', 'kullanim', 'gelecek', 'yenilik', 'dongu', 'dongusu',
+  };
+
+  static bool _hasConcreteObjectEvidence(ModelMatch match) => match.matchedTerms
+      .any((term) => !_contextOnlyMatchTerms.contains(term));
+
+  static ModelMatch? bestStrongMatchPreferUnused(
+    List<ModelMatch> matches,
+    Set<String> usedModelIds,
+  ) {
+    for (final match in matches) {
+      if (isStrong3dMatch(match) && !usedModelIds.contains(match.id)) {
+        return match;
+      }
+    }
+    return null;
   }
 
   /// Verilen katalog üzerinde çalışan saf eşleştirme girişi. Üretimdeki
@@ -497,6 +564,21 @@ class ModelMatchingService {
             keyword,
           ),
     );
+  }
+
+  static const Set<String> _presentationComponentMarkers = <String>{
+    'swot', 'pestel', 'kpi', 'gantt', 'matris', 'grafik', 'sema', 'harita',
+    'kanvas', 'pano', 'portfoy', 'oncelik', 'konumlandirma', 'paydas',
+    'musteri', 'yolculuk', 'puan', 'kart',
+  };
+
+  static bool _isPresentationComponentLike(_IndexedModel indexed) {
+    final words = <String>{
+      ...PresentationKeywordCatalog.words(indexed.normalizedName),
+      for (final tag in indexed.normalizedTags)
+        ...PresentationKeywordCatalog.words(tag),
+    };
+    return words.any(_presentationComponentMarkers.contains);
   }
 }
 

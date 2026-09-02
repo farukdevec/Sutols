@@ -7,8 +7,28 @@ import 'package:sutol/services/presentation_judge_service.dart';
 
 void main() {
   group('PresentationJudgeService Tests', () {
-    test('Deterministic high quality deck passes judge immediately without extra network call', () async {
-      final judge = PresentationJudgeService();
+    test('high quality deck passes when the mandatory AI fact judge approves it', () async {
+      final judge = PresentationJudgeService(
+        client: MockClient((_) async => http.Response(
+              jsonEncode({
+                'choices': [
+                  {
+                    'message': {
+                      'content': jsonEncode({
+                        'score': 94,
+                        'factual_accuracy': 96,
+                        'visual_relevance': 90,
+                        'revision_required': false,
+                        'issues': [],
+                        'global_issues': [],
+                      }),
+                    },
+                  },
+                ],
+              }),
+              200,
+            )),
+      );
       final presentation = NvidiaPresentation(
         slides: const [
           NvidiaSlide(
@@ -44,6 +64,62 @@ void main() {
       expect(result.overallScore, greaterThanOrEqualTo(85));
       expect(result.needsRevision, isFalse);
       expect(result.isPass, isTrue);
+    });
+
+    test('fact judge rejects a fluent but physically incorrect claim', () async {
+      final judge = PresentationJudgeService(
+        client: MockClient((request) async {
+          expect(request.body, contains('Sürtünme kuvveti her zaman hareket yönündedir'));
+          expect(request.body, contains('HEDEF KİTLE: ortaokul'));
+          return http.Response(
+            jsonEncode({
+              'choices': [
+                {
+                  'message': {
+                    'content': jsonEncode({
+                      'score': 88,
+                      'factual_accuracy': 15,
+                      'visual_relevance': 80,
+                      'revision_required': true,
+                      'issues': [
+                        {
+                          'slide': 1,
+                          'category': 'factual_accuracy',
+                          'problem': 'Sürtünme kuvvetinin yönü ters yazılmış.'
+                        }
+                      ],
+                      'global_issues': ['Fiziksel yön bilgisi düzeltilmeli.']
+                    })
+                  }
+                }
+              ]
+            }),
+            200,
+          );
+        }),
+      );
+      final result = await judge.judgePresentation(
+        presentation: const NvidiaPresentation(
+          slides: [
+            NvidiaSlide(
+              title: 'Sürtünmenin Yönü',
+              type: 'concept',
+              content: '- Sürtünme kuvveti her zaman hareket yönündedir.',
+              keywords: ['kutu', 'zemin'],
+              visual: {
+                'kind': 'photo',
+                'subject': 'wooden block sliding on a rough surface',
+              },
+            ),
+          ],
+        ),
+        topic: 'Statik ve kinetik sürtünme',
+        targetAudience: 'ortaokul',
+      );
+
+      expect(result.overallScore, lessThan(75));
+      expect(result.factualAccuracy, lessThan(5));
+      expect(result.isPass, isFalse);
     });
 
     test('Judge identifies issues and requests revision when mock AI judge detects problem', () async {

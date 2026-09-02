@@ -164,10 +164,10 @@ void main() {
       expect(result.slides.first.title, 'GPT-OSS 120B Başlık');
     });
 
-    test('default candidates contains Super 120B, GPT-OSS 120B, Llama 3.3 70B, GPT-OSS 20B, Nano, Llama 3.1 8B and excludes Ultra', () {
-      expect(NvidiaPresentationService.defaultCandidateModels.first, AiModelConfig.modelNemotronSuper);
+    test('default candidates starts with GPT-OSS 120B and keeps verified fallbacks', () {
+      expect(NvidiaPresentationService.defaultCandidateModels.first, AiModelConfig.modelGptOss120b);
       expect(NvidiaPresentationService.defaultCandidateModels, contains(AiModelConfig.modelGptOss120b));
-      expect(NvidiaPresentationService.defaultCandidateModels, contains(AiModelConfig.modelNemotronSuper));
+      expect(NvidiaPresentationService.defaultCandidateModels, isNot(contains(AiModelConfig.modelNemotronSuper)));
       expect(NvidiaPresentationService.defaultCandidateModels, contains(AiModelConfig.modelGptOss20b));
       expect(NvidiaPresentationService.defaultCandidateModels, contains(AiModelConfig.modelNemotronNano));
       expect(NvidiaPresentationService.defaultCandidateModels, contains(AiModelConfig.modelLlama31_8b));

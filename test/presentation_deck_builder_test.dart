@@ -53,7 +53,7 @@ void main() {
     expect(presentationComponentCategory(visual.kind), 'Fizik');
   });
 
-  test('model without a usable source falls back to a tagged component', () {
+  test('model without a usable source stays text-only instead of adding a 2D component', () {
     final pages = PresentationDeckBuilder().buildPages(
       topic: 'Çevre',
       slides: <DeckSlide>[
@@ -74,12 +74,10 @@ void main() {
       ],
     );
 
-    final visual = pages.single.componentBlocks.single;
-    expect(visual.modelAssetId, isNull);
-    expect(visual.kind, PresentationComponentKind.cevreDoga03);
+    expect(pages.single.componentBlocks, isEmpty);
   });
 
-  test('matching component is used only when no 3D model exists', () {
+  test('slide stays text-only when no 3D model exists', () {
     final pages = const PresentationDeckBuilder().buildPages(
       topic: 'Atom',
       slides: const <DeckSlide>[
@@ -92,18 +90,10 @@ void main() {
       ],
     );
 
-    final visual = pages.single.componentBlocks.single;
-    expect(visual.modelAssetId, isNull);
-    expect(visual.position.dx, greaterThanOrEqualTo(0.68));
-    expect(
-      pages.single.textBlocks.every(
-        (text) => text.position.dx + text.widthFactor <= visual.position.dx,
-      ),
-      isTrue,
-    );
+    expect(pages.single.componentBlocks, isEmpty);
   });
 
-  test('3D fallback component follows the slide topic metadata', () {
+  test('topic metadata does not inject a 2D fallback component', () {
     final pages = const PresentationDeckBuilder().buildPages(
       topic: 'Fen Bilimleri',
       slides: const <DeckSlide>[
@@ -122,8 +112,7 @@ void main() {
       ],
     );
 
-    final visual = pages.single.componentBlocks.single;
-    expect(visual.kind, PresentationComponentKind.cevreDoga03);
+    expect(pages.single.componentBlocks, isEmpty);
   });
 
   test('slide stays text-only when neither model nor component matches', () {

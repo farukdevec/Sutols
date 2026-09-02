@@ -14,6 +14,8 @@ enum AiErrorType {
   unknown,
 }
 
+enum PresentationGenerationMode { standard, deep }
+
 /// Merkezi AI Model ve Router Yapılandırması
 class AiModelConfig {
   const AiModelConfig._();
@@ -21,6 +23,8 @@ class AiModelConfig {
   // Model Adları
   static const String modelNemotronSuper = 'nvidia/nemotron-3-super-120b-a12b';
   static const String modelGptOss120b = 'openai/gpt-oss-120b';
+  static const String modelNemotronLightning =
+      'nvidia/nemotron-3.5-lightning-30b-a3b';
   static const String modelLlama33_70b = 'meta/llama-3.3-70b-instruct';
   static const String modelGptOss20b = 'openai/gpt-oss-20b';
   static const String modelNemotronNano = 'nvidia/nemotron-3-nano-30b-a3b';
@@ -28,25 +32,56 @@ class AiModelConfig {
   static const String modelNemotronUltra =
       'nvidia/nemotron-3-ultra-550b-a55b'; // Yalnızca premium/deep reasoning için
 
-  static const String modelGeminiFlash = 'gemini-2.0-flash';
-  static const String modelGeminiFallback = 'gemini-1.5-flash';
+  // Firebase AI Logic no longer serves the Gemini 2.x Flash aliases.
+  static const String modelGeminiFlash = 'gemini-3.6-flash';
+  static const String modelGeminiFallback = 'gemini-3.6-flash';
 
   static const String modelGrokDefault = 'grok-4.3';
   static const String modelGrok45 = 'grok-4.5';
   static const String modelGrok46 = 'grok-4.6';
 
-  // NVIDIA Aday Sırası: Profesyonel sunum kalitesi öncelikli.
-  // 1-2: 120B Yüksek Kalite Ana Modeller
-  // 3: 70B Kaliteli Fallback
-  // 4-6: 20B/Nano/8B Hızlı Fallback Modelleri
+  // Standart üretimde, gerçek üretim telemetrisi en hızlı ve tutarlı aday
+  // olduğunu gösteren GPT-OSS ile başlar. Super yalnızca deep moddadır.
   static const List<String> defaultNvidiaCandidateModels = [
-    modelNemotronSuper,
     modelGptOss120b,
     modelLlama33_70b,
     modelGptOss20b,
     modelNemotronNano,
     modelLlama31_8b,
   ];
+
+  static const List<String> deepNvidiaCandidateModels = [
+    modelNemotronSuper,
+    ...defaultNvidiaCandidateModels,
+  ];
+
+  // NVIDIA'da yalnızca GPT-OSS-120B üretim için doğrulandı. Lightning'in
+  // timeout'u canlı taleplerde güvenilir sonuç vermediğinden A/B kovası yeni
+  // ölçüm altyapısı kurulana kadar kapalı tutulur.
+  static const int lightningChallengerPercent = 0;
+
+  /// Stabil, konu-bağımsız bir örnekleme ile isteklerin %15'i challenger'a
+  /// gider. Aynı konu aynı kovada kalır; karşılaştırmalı telemetri tutarlı olur.
+  static bool useLightningChallenger(String topic) {
+    var hash = 2166136261;
+    for (final codeUnit in topic.trim().toLowerCase().codeUnits) {
+      hash ^= codeUnit;
+      hash = (hash * 16777619) & 0x7fffffff;
+    }
+    return hash % 100 < lightningChallengerPercent;
+  }
+
+  static List<String> presentationCandidatesFor(
+    String topic, {
+    PresentationGenerationMode mode = PresentationGenerationMode.standard,
+  }) {
+    // The proxy owns NVIDIA failover and is production-verified only with
+    // GPT-OSS-120B. Starting a second model from Flutter after a slow or
+    // short response consumes the shared 120s budget and causes a 504 before
+    // the proxy can finish its own key fallback. Keep one canonical route;
+    // explicit custom candidateModels remain available for diagnostics/tests.
+    return const <String>[modelGptOss120b];
+  }
 
   // Normal Üretim Grok Aday Sırası
   static const List<String> defaultGrokCandidateModels = [
@@ -56,15 +91,35 @@ class AiModelConfig {
   ];
 
   // Model Bazlı Dinamik Zaman Aşımları (Timeouts)
-  static const Duration timeoutSuper = Duration(seconds: 75);
-  static const Duration timeoutGptOss120b = Duration(seconds: 75);
-  static const Duration timeoutLlama33 = Duration(seconds: 60);
-  static const Duration timeoutGptOss20b = Duration(seconds: 40);
-  static const Duration timeoutNano = Duration(seconds: 40);
-  static const Duration timeoutLlama31 = Duration(seconds: 30);
-  static const Duration timeoutGemini = Duration(seconds: 30);
-  static const Duration timeoutGrok = Duration(seconds: 30);
-  static const Duration timeoutDefaultNvidia = Duration(seconds: 60);
+  // Proxy timeout + istemci payı: proxy'nin anahtar/model failover zincirini
+  // tamamlamasına izin verilir.
+  static const Duration timeoutSuper = Duration(seconds: 80);
+  static const Duration timeoutGptOss120b = Duration(seconds: 120);
+  // Worker kendi tekil 70 sn deadline'ı içinde Lightning -> GPT-OSS
+  // zincirini yönetir. İstemcinin 45 sn'de iptal etmesi bu zinciri yarıda
+  // kesiyordu; Worker'ın kontrollü fallback yanıtını alacak kadar bekle.
+  static const Duration timeoutLightning = Duration(seconds: 72);
+  static const Duration timeoutLlama33 = Duration(seconds: 65);
+  static const Duration timeoutGptOss20b = Duration(seconds: 45);
+  static const Duration timeoutNano = Duration(seconds: 45);
+  static const Duration timeoutLlama31 = Duration(seconds: 35);
+  static const Duration timeoutGemini = Duration(seconds: 35);
+  static const Duration timeoutGrok = Duration(seconds: 35);
+  static const Duration timeoutDefaultNvidia = Duration(seconds: 65);
+  static const Duration presentationRequestDeadline = Duration(seconds: 120);
+
+  /// Yeni bir HTTP denemesini başlatmak için gereken asgari gerçekçi süre.
+  /// Bu, istemcinin Worker'ın tekli deadline'ını boşa çıkaracak ikinci bir
+  /// uzun zincir başlatmasını engeller.
+  static Duration minimumViableAttemptFor(String model) {
+    if (model.contains('gpt-oss-120b') || model.contains('lightning')) {
+      return const Duration(seconds: 24);
+    }
+    if (model.contains('super') || model.contains('llama-3.3')) {
+      return const Duration(seconds: 30);
+    }
+    return const Duration(seconds: 18);
+  }
 
   // Router Global Maksimum Süre
   static const Duration maxTotalAiTime = Duration(seconds: 180);
@@ -79,6 +134,10 @@ class AiModelConfig {
     if (model.contains('gpt-oss-120b')) {
       return Duration(
           milliseconds: (timeoutGptOss120b.inMilliseconds * scale).toInt());
+    }
+    if (model.contains('lightning')) {
+      return Duration(
+          milliseconds: (timeoutLightning.inMilliseconds * scale).toInt());
     }
     if (model.contains('llama-3.3-70b')) {
       return Duration(
@@ -265,7 +324,8 @@ Action: FALLBACK_TO_${toKey.toUpperCase()}''');
   }
 
   static void logQualityScore({required int score, String? details}) {
-    final detailsStr = details != null && details.isNotEmpty ? ' ($details)' : '';
+    final detailsStr =
+        details != null && details.isNotEmpty ? ' ($details)' : '';
     // ignore: avoid_print
     print('[SUTOL AI][QUALITY]\nScore: $score/100$detailsStr');
   }
@@ -291,6 +351,20 @@ Narrative: $narrative/15
 Redundancy: $redundancy/10
 Readability: $readability/10
 Visual Potential: $visual/5''');
+  }
+
+  static void logExperiment({
+    required String experiment,
+    required String model,
+    required Duration latency,
+    required int judgeScore,
+    required int factualAccuracy,
+  }) {
+    // ignore: avoid_print
+    print('[SUTOL AI][EXPERIMENT] '
+        'bucket=$experiment model=$model '
+        'latency_ms=${latency.inMilliseconds} '
+        'judge_score=$judgeScore factual_accuracy=$factualAccuracy');
   }
 
   static void logJudge({
@@ -329,7 +403,8 @@ Status: $status$latencyStr''');
     String? details,
   }) {
     final secondsStr = (latency.inMilliseconds / 1000.0).toStringAsFixed(2);
-    final detailsStr = details != null && details.isNotEmpty ? '\nDetails: $details' : '';
+    final detailsStr =
+        details != null && details.isNotEmpty ? '\nDetails: $details' : '';
     // ignore: avoid_print
     print('''
 [SUTOL AI][$stepName]
@@ -343,7 +418,8 @@ Latency: ${secondsStr}s (${latency.inMilliseconds}ms)$detailsStr''');
   }) {
     final secondsStr = (latency.inMilliseconds / 1000.0).toStringAsFixed(2);
     final statusStr = success ? 'SUCCESS' : 'FAILED';
-    final detailsStr = details != null && details.isNotEmpty ? '\nDetails: $details' : '';
+    final detailsStr =
+        details != null && details.isNotEmpty ? '\nDetails: $details' : '';
     // ignore: avoid_print
     print('''
 [SUTOL AI][TOTAL]
@@ -351,4 +427,3 @@ Status: $statusStr
 Total: ${secondsStr}s (${latency.inMilliseconds}ms)$detailsStr''');
   }
 }
-

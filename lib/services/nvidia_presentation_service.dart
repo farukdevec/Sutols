@@ -207,7 +207,7 @@ class NvidiaPresentation {
 
 class NvidiaPresentationService {
   static const String defaultProxyUrl = 'https://sutols.online/';
-  static const String defaultModelName = AiModelConfig.modelNemotronSuper;
+  static const String defaultModelName = AiModelConfig.modelGptOss120b;
   static const List<String> defaultCandidateModels =
       AiModelConfig.defaultNvidiaCandidateModels;
 
@@ -230,6 +230,8 @@ class NvidiaPresentationService {
     String? model,
     List<String>? candidateModels,
     bool checkQuality = true,
+    PresentationGenerationMode generationMode =
+        PresentationGenerationMode.standard,
   }) async {
     final systemInstruction =
         PresentationPromptBuilder.buildSystemInstruction(language: language);
@@ -238,15 +240,27 @@ class NvidiaPresentationService {
       slideCount: slideCount,
       language: language,
     );
-    final maxTokens = (slideCount * 800 + 2000).clamp(4096, 8192);
+    // Kalite modu: zengin açıklama ve somut görsel plan için tam çıktı alanı.
+    final maxTokens = (slideCount * 650 + 1800).clamp(4096, 6144);
 
     final selectedModel = model ?? modelName;
     final modelsToTry = candidateModels ??
         customCandidateModels ??
-        [
-          selectedModel,
-          ...defaultCandidateModels.where((m) => m != selectedModel),
-        ];
+        (model == null && modelName == defaultModelName
+            ? AiModelConfig.presentationCandidatesFor(
+                topic,
+                mode: generationMode,
+              )
+            : <String>[
+                selectedModel,
+                ...defaultCandidateModels.where((m) => m != selectedModel),
+              ]);
+    final isLightningExperiment = modelsToTry.isNotEmpty &&
+        modelsToTry.first == AiModelConfig.modelNemotronLightning;
+    final experiment =
+        isLightningExperiment ? 'lightning_challenger' : 'control';
+    final requestId =
+        '${DateTime.now().microsecondsSinceEpoch}-${topic.hashCode.abs()}';
 
     assert(() {
       // ignore: avoid_print
@@ -263,11 +277,24 @@ class NvidiaPresentationService {
     }());
 
     String lastError = '';
+    final requestStopwatch = Stopwatch()..start();
 
     for (var i = 0; i < modelsToTry.length; i++) {
       final candidateModel = modelsToTry[i];
-      final timeout =
+      final remaining = AiModelConfig.presentationRequestDeadline -
+          requestStopwatch.elapsed;
+      if (remaining.compareTo(
+            AiModelConfig.minimumViableAttemptFor(candidateModel),
+          ) <
+          0) {
+        lastError = 'Toplam AI istek bütçesinde $candidateModel için yeterli süre kalmadı.';
+        break;
+      }
+      final configuredTimeout =
           AiModelConfig.timeoutForModel(candidateModel, slideCount: slideCount);
+      final timeout = configuredTimeout.compareTo(remaining) < 0
+          ? configuredTimeout
+          : remaining;
       final nextModel =
           i + 1 < modelsToTry.length ? modelsToTry[i + 1] : 'Gemini Fallback';
 
@@ -294,7 +321,12 @@ class NvidiaPresentationService {
           'stream': false,
         };
 
-        final response = await _postWithTimeout(body, timeout: timeout);
+        final response = await _postWithTimeout(
+          body,
+          timeout: timeout,
+          experiment: experiment,
+          requestId: requestId,
+        );
         final responseJson = _decodeJsonMap(
           response.body,
           onError: 'NVIDIA API / Proxy geçerli JSON döndürmedi.',
@@ -324,6 +356,24 @@ class NvidiaPresentationService {
           );
         }
 
+        final rejectionReason = PresentationContentQuality.rejectionReason(
+          presentation.slides
+              .map(
+                (slide) => PresentationContentSample(
+                  title: slide.title,
+                  content: slide.content,
+                  type: slide.type,
+                  purpose: slide.purpose,
+                  keywords: slide.keywords,
+                  visual: slide.visual,
+                ),
+              )
+              .toList(growable: false),
+        );
+        if (rejectionReason != null) {
+          throw FormatException('İçerik kalite kapısı reddetti: $rejectionReason');
+        }
+
         final judgeService = PresentationJudgeService(
           proxyUrl: proxyUrl,
           client: client,
@@ -332,7 +382,7 @@ class NvidiaPresentationService {
         var qualityResult = await judgeService.judgePresentation(
           presentation: presentation,
           topic: topic,
-          targetAudience: topic,
+          targetAudience: presentation.targetAudience ?? 'general',
         );
 
         AiRouterLogger.logDetailedQuality(
@@ -372,7 +422,9 @@ class NvidiaPresentationService {
             final revisedQuality = await judgeService.judgePresentation(
               presentation: revised,
               topic: topic,
-              targetAudience: topic,
+              targetAudience: revised.targetAudience ??
+                  presentation.targetAudience ??
+                  'general',
             );
 
             if (revisedQuality.overallScore > qualityResult.overallScore) {
@@ -435,6 +487,13 @@ class NvidiaPresentationService {
           schemaValid: true,
           qualityPass: true,
         );
+        AiRouterLogger.logExperiment(
+          experiment: experiment,
+          model: modelHeader,
+          latency: stopwatch.elapsed,
+          judgeScore: qualityResult.overallScore,
+          factualAccuracy: qualityResult.factualAccuracy,
+        );
 
         return presentation;
       } catch (e) {
@@ -462,14 +521,18 @@ class NvidiaPresentationService {
   Future<http.Response> _postWithTimeout(
     Map<String, dynamic> body, {
     required Duration timeout,
+    required String experiment,
+    required String requestId,
   }) async {
     final httpClient = client;
     http.Response response;
 
-    final headers = const {
+    final headers = {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
       'Origin': 'https://sutols.com',
+      'X-Sutol-AI-Experiment': experiment,
+      'X-Sutol-AI-Request-Id': requestId,
     };
 
     try {

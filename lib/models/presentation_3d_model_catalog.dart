@@ -103,6 +103,62 @@ const List<Presentation3DModelAsset> presentation3DModelCatalog =
     icon: Icons.public_rounded,
     hasAnimations: true,
   ),
+  Presentation3DModelAsset(
+    id: 'kompresor-kesiti',
+    label: 'Kompresör Kesiti',
+    assetPath: 'https://assets.sutols.com/237_kompresor_kesiti.glb',
+    thumbnailPath:
+        'https://assets.sutols.com/thumbnails/237_kompresor_kesiti.webp',
+    category: 'Enerji ve İklimlendirme',
+    tags: <String>[
+      'kompresör',
+      'soğutma kompresörü',
+      'refrigeration compressor',
+      'compressor',
+      'soğutucu akışkan',
+      'HVAC',
+      'makine',
+    ],
+    byteSize: 0,
+    sha256: '',
+  ),
+  Presentation3DModelAsset(
+    id: 'sogutma-kulesi',
+    label: 'Soğutma Kulesi',
+    assetPath: 'https://assets.sutols.com/243_sogutma_kulesi.glb',
+    thumbnailPath:
+        'https://assets.sutols.com/thumbnails/243_sogutma_kulesi.webp',
+    category: 'Enerji ve İklimlendirme',
+    tags: <String>[
+      'soğutma kulesi',
+      'cooling tower',
+      'endüstriyel soğutma',
+      'HVAC',
+      'iklimlendirme',
+      'kule',
+    ],
+    byteSize: 0,
+    sha256: '',
+  ),
+  Presentation3DModelAsset(
+    id: 'hvac-klima-santrali',
+    label: 'HVAC Klima Santrali',
+    assetPath: 'https://assets.sutols.com/244_hvac_klima_santrali.glb',
+    thumbnailPath:
+        'https://assets.sutols.com/thumbnails/244_hvac_klima_santrali.webp',
+    category: 'Enerji ve İklimlendirme',
+    tags: <String>[
+      'HVAC',
+      'klima santrali',
+      'air conditioner',
+      'air conditioning',
+      'iklimlendirme',
+      'havalandırma',
+      'soğutma',
+    ],
+    byteSize: 0,
+    sha256: '',
+  ),
 ];
 
 Presentation3DModelAsset? findPresentation3DModelAsset(String id) {

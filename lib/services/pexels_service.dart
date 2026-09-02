@@ -69,6 +69,7 @@ class PexelsPhoto {
     required this.avgColor,
     required this.src,
     required this.alt,
+    this.searchTerm,
   });
 
   factory PexelsPhoto.fromJson(Map<String, dynamic> json) {
@@ -101,6 +102,23 @@ class PexelsPhoto {
   final String avgColor;
   final PexelsPhotoSrc src;
   final String alt;
+  /// Seçimin hangi sorgudan geldiği; üretim logunda gerçek eşleşmeyi
+  /// inceleyebilmek için yanıt nesnesiyle taşınır.
+  final String? searchTerm;
+
+  PexelsPhoto withSearchTerm(String value) => PexelsPhoto(
+        id: id,
+        width: width,
+        height: height,
+        url: url,
+        photographer: photographer,
+        photographerUrl: photographerUrl,
+        photographerId: photographerId,
+        avgColor: avgColor,
+        src: src,
+        alt: alt,
+        searchTerm: value,
+      );
 
   /// Sutols sahnesinde ve kayıt defterinde kullanılan benzersiz kimlik.
   String get sourceId => 'pexels-$id';
@@ -310,6 +328,8 @@ class PexelsService {
     required String title,
     String? topic,
     String? subject,
+    List<String> mustInclude = const <String>[],
+    List<String> mustAvoid = const <String>[],
     Set<int> excludedPhotoIds = const <int>{},
   }) async {
     try {
@@ -334,16 +354,31 @@ class PexelsService {
           final chosen = _chooseProfessionalLandscape(
             result.photos,
             excludedPhotoIds: excludedPhotoIds,
+            // Sonuç metadatası çoğunlukla İngilizce olduğundan, seçimi
+            // kullanıcının Türkçe yönergesiyle değil gerçekten çağrılan sorgu
+            // ile doğrula. Böylece "çevre" aramasından gelen rastgele sazlık
+            // fotoğrafı teknik bir soğutma slaydına yerleşmez.
+            subject: term,
+            mustInclude: mustInclude,
+            mustAvoid: mustAvoid,
           );
           if (chosen == null) continue;
+          developer.log(
+            '[PexelsService] selected id=${chosen.id} term="$term" '
+            'subject="$subject"',
+          );
           // Slayt sahnesinin görseli hemen gösterebilmesi için kaydedelim
           RemoteImageSources.register(
             chosen.sourceId,
             chosen.bestDisplayUrl,
           );
-          return chosen;
+          return chosen.withSearchTerm(term);
         }
       }
+      developer.log(
+        '[PexelsService] no suitable photo; subject="$subject" '
+        'keywords=${keywords.join(',')}',
+      );
       return null;
     } catch (e) {
       developer.log('[PexelsService] matchPhotoForSlide safe fallback: $e');
@@ -359,6 +394,13 @@ class PexelsService {
     String? subject,
   }) {
     final terms = <String>[];
+
+    // Pexels'in indeks dili ağırlıkla İngilizce. Yaygın teknik Türkçe
+    // kavramlarda doğrudan alan karşılığını ilk sorgu yaparak arama kalitesini
+    // yükselt; özgün konu/başlık sorguları yine aşağıdaki sırada korunur.
+    for (final alias in _englishSearchAliases('$subject $title $topic')) {
+      if (!terms.contains(alias)) terms.add(alias);
+    }
 
     // Modelin kurduğu somut görsel cümlesi, tekil anahtar kelimelerden daha
     // iyi Pexels sonucu verir. Örn. "solar panels on a factory roof".
@@ -397,9 +439,35 @@ class PexelsService {
     return terms;
   }
 
+  static List<String> _englishSearchAliases(String value) {
+    final normalized = value
+        .toLowerCase()
+        .replaceAll('ç', 'c')
+        .replaceAll('ğ', 'g')
+        .replaceAll('ı', 'i')
+        .replaceAll('ö', 'o')
+        .replaceAll('ş', 's')
+        .replaceAll('ü', 'u');
+    final aliases = <String>[];
+    void addWhen(bool condition, String alias) {
+      if (condition && !aliases.contains(alias)) aliases.add(alias);
+    }
+    addWhen(normalized.contains('sogutucu akiskan'), 'refrigerant');
+    addWhen(normalized.contains('sogutma dongu'), 'refrigeration cycle');
+    addWhen(normalized.contains('buharlasma'), 'evaporation cooling');
+    addWhen(normalized.contains('yogunlasma'), 'condenser refrigeration');
+    addWhen(normalized.contains('enerji verimlil'), 'energy efficient cooling');
+    addWhen(normalized.contains('cevre'), 'sustainable refrigeration');
+    addWhen(normalized.contains('sogutma'), 'refrigeration system');
+    return aliases;
+  }
+
   static PexelsPhoto? _chooseProfessionalLandscape(
     List<PexelsPhoto> photos, {
     required Set<int> excludedPhotoIds,
+    String? subject,
+    List<String> mustInclude = const <String>[],
+    List<String> mustAvoid = const <String>[],
   }) {
     final available = photos
         .where((photo) =>
@@ -409,15 +477,65 @@ class PexelsService {
         .toList(growable: false);
     if (available.isEmpty) return null;
 
-    // Pexels zaten sorgu ilgisine göre sıralar. Bu küçük ikinci sıralama,
-    // slaytta daha dengeli duran yatay fotoğrafı tercih eder.
-    available.sort((a, b) {
-      final aDistance = (a.aspectRatio - (16 / 9)).abs();
-      final bDistance = (b.aspectRatio - (16 / 9)).abs();
+    final scored = available
+        .map((photo) => (
+              photo: photo,
+              score: scorePhotoRelevance(
+                photo,
+                subject: subject,
+                mustInclude: mustInclude,
+                mustAvoid: mustAvoid,
+              ),
+            ))
+        .where((item) => item.score >= 3)
+        .toList(growable: false);
+    if (scored.isEmpty) return null;
+
+    // Pexels sonucu yalnızca görsel sinyalle asgari alaka gösteriyorsa
+    // tutulur; eşitlikte sunumda dengeli duran yatay kare tercih edilir.
+    scored.sort((a, b) {
+      final relevance = b.score.compareTo(a.score);
+      if (relevance != 0) return relevance;
+      final aDistance = (a.photo.aspectRatio - (16 / 9)).abs();
+      final bDistance = (b.photo.aspectRatio - (16 / 9)).abs();
       return aDistance.compareTo(bDistance);
     });
-    return available.first;
+    return scored.first.photo;
   }
+
+  /// Pexels metadata'sı sınırlı olduğundan bu bilerek muhafazakâr bir eşiktir:
+  /// yeterli sinyal yoksa alakasız stok fotoğraf yerine null döner.
+  static int scorePhotoRelevance(
+    PexelsPhoto photo, {
+    String? subject,
+    List<String> mustInclude = const <String>[],
+    List<String> mustAvoid = const <String>[],
+  }) {
+    final searchable = _cleanKeyword('${photo.alt} ${photo.url}').toLowerCase();
+    final tokens = searchable.split(RegExp(r'\s+')).where((t) => t.length >= 3).toSet();
+    final subjectTerms = <String>[
+      if (subject != null) ..._signalTokens(subject),
+    ].toSet();
+    final requiredObjects = mustInclude.expand(_signalTokens).toSet();
+    final required = <String>{...subjectTerms, ...requiredObjects};
+    final avoided = mustAvoid.expand(_signalTokens).toSet();
+    if (avoided.any(tokens.contains)) return -100;
+    // A required object is evidence, not a preference: never accept a
+    // generic result such as a boat for a refrigeration-maintenance slide.
+    if (requiredObjects.isNotEmpty && !requiredObjects.any(tokens.contains)) {
+      return 0;
+    }
+    if (required.isEmpty) return 2;
+    final matches = required.where(tokens.contains).length;
+    // Sıralama tek başına kanıt değildir: sonuç sayfasındaki ilgisiz bir doğa
+    // fotoğrafı teknik slayta taşınmamalı. En az bir sorgu sinyali gerekir.
+    return matches == 0 ? 0 : matches * 3;
+  }
+
+  static Iterable<String> _signalTokens(String value) => _cleanKeyword(value)
+      .toLowerCase()
+      .split(RegExp(r'\s+'))
+      .where((token) => token.length >= 3 && !_isStopWord(token));
 
   static String _cleanKeyword(String kw) {
     return kw

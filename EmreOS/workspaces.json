@@ -1,0 +1,9 @@
+{
+  "workspaces": [
+    {
+      "name": "Sutols",
+      "path": "C:\\sutol\\Sutols",
+      "agent": "codex.cmd"
+    }
+  ]
+}

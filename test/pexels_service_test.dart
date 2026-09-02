@@ -72,5 +72,54 @@ void main() {
       expect(result.photos.first.sourceId, 'pexels-101');
       expect(result.photos.first.aspectRatio, closeTo(16 / 9, 0.01));
     });
+
+    test('photo relevance rejects conflicting visual signals', () {
+      final solarPhoto = PexelsPhoto.fromJson({
+        'id': 202,
+        'width': 1920,
+        'height': 1080,
+        'url': 'https://www.pexels.com/photo/solar-panels-roof-202/',
+        'src': {'large': 'https://images.pexels.com/photos/202/large.jpeg'},
+        'alt': 'Solar panels on a factory roof',
+      });
+
+      expect(
+        PexelsService.scorePhotoRelevance(
+          solarPhoto,
+          subject: 'solar panels on factory roof',
+          mustInclude: const ['solar panels'],
+          mustAvoid: const ['wind turbine'],
+        ),
+        greaterThanOrEqualTo(2),
+      );
+      expect(
+        PexelsService.scorePhotoRelevance(
+          solarPhoto,
+          subject: 'solar panels',
+          mustAvoid: const ['solar panels'],
+        ),
+        lessThan(0),
+      );
+    });
+
+    test('photo relevance rejects a result missing its required object', () {
+      final coastGuardPhoto = PexelsPhoto.fromJson({
+        'id': 303,
+        'width': 1920,
+        'height': 1080,
+        'url': 'https://www.pexels.com/photo/coast-guard-boat-303/',
+        'src': {'large': 'https://images.pexels.com/photos/303/large.jpeg'},
+        'alt': 'Coast guard boat in a harbor',
+      });
+
+      expect(
+        PexelsService.scorePhotoRelevance(
+          coastGuardPhoto,
+          subject: 'refrigeration maintenance',
+          mustInclude: const ['compressor'],
+        ),
+        0,
+      );
+    });
   });
 }

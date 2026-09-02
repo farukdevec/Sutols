@@ -1,0 +1,2 @@
+C:\sutol\Sutols\EmreOS\app\desktop\publish\Atlas.pdb
+C:\sutol\Sutols\EmreOS\app\desktop\publish\Atlas.exe

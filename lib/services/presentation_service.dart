@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:http/http.dart' as http;
@@ -71,6 +72,8 @@ class PresentationService {
     String? userId,
     required String topic,
     int slideCount = 5,
+    PresentationGenerationMode generationMode =
+        PresentationGenerationMode.standard,
     PresentationProgressCallback? onProgress,
   }) async {
     final uid = userId ?? FirebaseAuth.instance.currentUser?.uid;
@@ -79,7 +82,8 @@ class PresentationService {
     }
 
     if (slideCount < minSlideCount || slideCount > maxSlideCount) {
-      throw Exception(tr('Slayt sayısı 1 ile 30 arasında olmalıdır.', 'Slide count must be between 1 and 30.'));
+      throw Exception(tr('Slayt sayısı 1 ile 30 arasında olmalıdır.',
+          'Slide count must be between 1 and 30.'));
     }
 
     final totalStopwatch = Stopwatch()..start();
@@ -97,8 +101,7 @@ class PresentationService {
       );
     }
     final dailyLimit = UsageService.dailyLimitForTier(tier);
-    final allowed =
-        await UsageService().tryConsumeDailyQuota(uid, dailyLimit);
+    final allowed = await UsageService().tryConsumeDailyQuota(uid, dailyLimit);
     if (!allowed) {
       throw Exception(
         tr(
@@ -112,7 +115,8 @@ class PresentationService {
 
     onProgress?.call(
       tr('İçerik Oluşturuluyor...', 'Generating Content...'),
-      tr('Yüksek kaliteli yapay zekâ modeli slayt içeriğini hazırlıyor.', 'AI model is crafting slide content.'),
+      tr('Yüksek kaliteli yapay zekâ modeli slayt içeriğini hazırlıyor.',
+          'AI model is crafting slide content.'),
     );
 
     final selectedLanguage =
@@ -127,6 +131,7 @@ class PresentationService {
         topic,
         slideCount: slideCount,
         language: selectedLanguage,
+        generationMode: generationMode,
       );
       resultPresentation = GeminiPresentation(
         slides: nvidiaResult.slides
@@ -148,6 +153,10 @@ class PresentationService {
       );
     } catch (error) {
       nvidiaError = error;
+      // NVIDIA'nın Worker içi failover'ı başarısız olsa bile istemci tarafı
+      // sağlayıcıları bağımsız kimlik bilgileri/rotalar kullanabilir. Önceki
+      // 60 saniyelik erken kesme, bu iki gerçek yedeği hiç denemeden kullanıcıya
+      // hata döndürüyordu. Zincirin tamamlanmasına izin ver.
       try {
         final grokResult = await _grok.generatePresentation(
           topic,
@@ -185,7 +194,8 @@ class PresentationService {
           AiRouterLogger.logTotal(
             latency: totalStopwatch.elapsed,
             success: false,
-            details: 'NVIDIA: $nvidiaError Grok: $grokError Gemini: $geminiError',
+            details:
+                'NVIDIA: $nvidiaError Grok: $grokError Gemini: $geminiError',
           );
           throw Exception(
             '${tr('Sunum yapay zekâ servisleri yanıt veremedi.', 'AI presentation services failed to respond.')} '
@@ -197,8 +207,10 @@ class PresentationService {
 
     // 2. Her slayt için model eşleştir ve layout belirle
     onProgress?.call(
-      tr('Görseller ve 3B Modeller Eşleştiriliyor...', 'Matching Visuals & 3D Models...'),
-      tr('Slayt konularına uygun 3B nesneler katalogdan seçiliyor.', 'Matching 3D objects and visuals from catalog.'),
+      tr('Görseller ve 3B Modeller Eşleştiriliyor...',
+          'Matching Visuals & 3D Models...'),
+      tr('Slayt konularına uygun 3B nesneler katalogdan seçiliyor.',
+          'Matching 3D objects and visuals from catalog.'),
     );
 
     final matchingStopwatch = Stopwatch()..start();
@@ -207,31 +219,43 @@ class PresentationService {
     final usedModelIds = <String>{};
 
     final searchKeywordsBySlide = resultPresentation.slides.map((slide) {
+      final visualSubject = slide.visual?['subject']?.toString() ?? '';
       return <String>[
+        // Titles often contain the concrete object that a terse keyword list
+        // omits; preserve that evidence for the 3D catalogue matcher.
+        slide.title,
         ...slide.keywords,
-        ...slide.title.split(' '),
-        ...slide.content.split(' '),
-        ...topic.split(' '),
+        visualSubject,
       ];
     }).toList(growable: false);
 
     final matchesBySlide =
         await _matcher.matchModelsForSlides(searchKeywordsBySlide);
+    // 3B kararını LLM'in `object_3d` alanına bağlamıyoruz: katalogdaki
+    // kanıtı yeterli aday her zaman önceliklidir. Kanıt yoksa fotoğraf
+    // eşleşmesi devreye girer; zayıf/tesadüfi 3B adaylar asla seçilmez.
+    final hasStrong3dBySlide = matchesBySlide
+        .map((matches) => matches.any(ModelMatchingService.isStrong3dMatch))
+        .toList(growable: false);
     final photoCandidates = <int>[];
     for (var index = 0; index < resultPresentation.slides.length; index += 1) {
       final slide = resultPresentation.slides[index];
-      final has3d = matchesBySlide[index].isNotEmpty;
+      final visualKind = (slide.visual?['kind']?.toString() ?? slide.type)
+          .trim()
+          .toLowerCase()
+          .replaceAll('-', '_');
       if (PresentationVisualPlan.isPhotoCandidate(
-        visualKind: slide.visual?['kind']?.toString() ?? slide.type,
-        hasConfident3dModel: has3d,
+        visualKind: visualKind,
+        hasConfident3dModel: hasStrong3dBySlide[index],
       )) {
         photoCandidates.add(index);
       }
     }
-    final photoSlideIndexes = PresentationVisualPlan.choosePhotoSlides(
-      slideCount: resultPresentation.slides.length,
-      candidates: photoCandidates,
-    ).toSet();
+    // Her slaytın bir model ya da doğrulanmış fotoğrafla desteklenmesi gerekir.
+    // Fotoğraf istekleri paralel olduğu için bunun gecikme maliyeti en yavaş
+    // tek aramayla sınırlıdır; kota uygulamak ise özellikle model tekrar
+    // önleme devreye girdiğinde bazı slaytları tamamen görselsiz bırakıyordu.
+    final photoSlideIndexes = photoCandidates.toSet();
 
     // Seçilen fotoğraflar aynı anda aranır. Bu aşama üretim sonrasına eklenen
     // gecikmeyi, her slaytı sırayla bekletmek yerine en yavaş tek sorgunun
@@ -240,11 +264,15 @@ class PresentationService {
     for (final index in photoSlideIndexes) {
       final slide = resultPresentation.slides[index];
       final visualSubject = slide.visual?['subject']?.toString();
+      final mustInclude = _visualSignalList(slide.visual, 'must_include');
+      final mustAvoid = _visualSignalList(slide.visual, 'must_avoid');
       photoSearches[index] = _pexels.matchPhotoForSlide(
         keywords: slide.keywords,
         title: slide.title,
         topic: topic,
         subject: visualSubject,
+        mustInclude: mustInclude,
+        mustAvoid: mustAvoid,
         // Aramalar paralel başladığından burada yalnızca daha önceki
         // eşleştirmelerden gelen kimlikler elenir. Aynı sonuç dönerse aşağıda
         // deterministik olarak yalnızca ilk slayt korur.
@@ -268,23 +296,37 @@ class PresentationService {
         slideIndex += 1) {
       final slide = resultPresentation.slides[slideIndex];
       final matches = matchesBySlide[slideIndex];
-
-      var selectedModel = ModelMatchingService.bestMatchPreferUnused(
-        matches,
-        usedModelIds,
-      );
-
       final matchedPhoto = resolvedPhotos[slideIndex];
-      final visualKind = slide.visual?['kind']?.toString() ?? slide.type;
-      if (matchedPhoto != null &&
-          PresentationVisualPlan.prefersPhotoOver3d(visualKind)) {
-        selectedModel = null;
-      }
+      final visualKind = (slide.visual?['kind']?.toString() ?? slide.type)
+          .trim()
+          .toLowerCase()
+          .replaceAll('-', '_');
+      // Açık fotoğraf/illüstrasyon planı doğrulanmış bir fotoğraf bulduysa
+      // onu kullan. Fotoğraf bulunamazsa güvenilir 3B eşleşme yedek olarak
+      // kalır; bu sayede slayt görselsizleşmez.
+      final selectedModel = matchedPhoto != null &&
+              PresentationVisualPlan.prefersPhotoOver3d(visualKind)
+          ? null
+          : ModelMatchingService.bestStrongMatchPreferUnused(
+              matches,
+              usedModelIds,
+            );
 
       final selectedModels = selectedModel == null
           ? const <ModelMatch>[]
           : <ModelMatch>[selectedModel];
       if (selectedModel != null) usedModelIds.add(selectedModel.id);
+      final candidateSummary = matches
+          .take(3)
+          .map((m) => '${m.name}(${m.score}; ${m.matchedTerms.join(',')})')
+          .join(' | ');
+      debugPrint(
+        '[SUTOL AI][VISUAL_MATCH] slide=${slideIndex + 1} '
+        'title="${slide.title}" kind=$visualKind '
+        '3d=${selectedModel == null ? 'NONE' : '${selectedModel.name} score=${selectedModel.score} terms=${selectedModel.matchedTerms.join(',')}'} '
+        'photo=${matchedPhoto == null ? 'NONE' : 'id=${matchedPhoto.id} alt="${matchedPhoto.alt}" query="${matchedPhoto.searchTerm}"'} '
+        'candidates=${candidateSummary.isEmpty ? 'NONE' : candidateSummary}',
+      );
       final layout = _layout.decideLayout(selectedModels);
       final maxShow = _layout.maxModelsToShow(layout);
       final shownModelIds =
@@ -325,7 +367,8 @@ class PresentationService {
     // 2b. Düzenlenebilir deck'i oluştur
     onProgress?.call(
       tr('Sunum Düzeni Hazırlanıyor...', 'Preparing Presentation Layout...'),
-      tr('Slayt şablonları ve görsel yerleşimler oluşturuluyor.', 'Generating slide templates and visual layouts.'),
+      tr('Slayt şablonları ve görsel yerleşimler oluşturuluyor.',
+          'Generating slide templates and visual layouts.'),
     );
 
     final controller = await PresentationDeckBuilder.buildControllerAsync(
@@ -340,7 +383,8 @@ class PresentationService {
     // 3. Firestore'a kaydet
     onProgress?.call(
       tr('Sunum Kaydediliyor...', 'Saving Presentation...'),
-      tr('Sunum projesi veritabanına aktarılıyor.', 'Saving presentation project to database.'),
+      tr('Sunum projesi veritabanına aktarılıyor.',
+          'Saving presentation project to database.'),
     );
 
     final firestoreStopwatch = Stopwatch()..start();
@@ -485,6 +529,18 @@ class PresentationService {
       controller: controller,
       usedFallback: false,
     );
+  }
+
+  static List<String> _visualSignalList(
+    Map<String, dynamic>? visual,
+    String key,
+  ) {
+    final value = visual?[key];
+    if (value is List) {
+      return value.map((item) => item.toString()).toList(growable: false);
+    }
+    if (value is String && value.trim().isNotEmpty) return <String>[value];
+    return const <String>[];
   }
 
   Future<void> _incrementPresentationCount(String userId) async {

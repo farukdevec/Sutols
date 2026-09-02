@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Atlas — EmreOS</title>
+  <style>
+    :root { --ink:#d9e7ff; --muted:#8fa4c5; --line:#263958; --deep:#07101f; --panel:#0c1930cc; --aqua:#67f0d0; --violet:#a991ff; --gold:#ffc870; }
+    * { box-sizing:border-box; } body { margin:0; min-height:100vh; color:var(--ink); font:15px/1.55 Inter,Segoe UI,system-ui,sans-serif; background:radial-gradient(circle at 50% 45%,#172b55 0,#0a1530 35%,#050a14 80%); overflow:hidden; }
+    body:before { content:""; position:fixed; inset:0; pointer-events:none; background-image:linear-gradient(#ffffff08 1px,transparent 1px),linear-gradient(90deg,#ffffff08 1px,transparent 1px); background-size:42px 42px; mask-image:radial-gradient(circle at center,#000 0,transparent 75%); }
+    header { position:relative; z-index:2; display:flex; align-items:center; justify-content:space-between; padding:26px 34px; } h1 { margin:0; font:600 22px Georgia,serif; letter-spacing:.08em; } .tag { color:var(--aqua); font-size:12px; letter-spacing:.13em; text-transform:uppercase; } .status { color:var(--muted); font-size:13px; }
+    main { position:relative; height:calc(100vh - 86px); min-height:610px; } .orbit { position:absolute; left:4%; right:35%; top:4%; bottom:7%; }
+    .ring { position:absolute; border:1px solid #84a7de33; border-radius:50%; left:50%; top:50%; transform:translate(-50%,-50%); } .r1{width:240px;height:240px}.r2{width:470px;height:470px}.r3{width:680px;height:680px}
+    .node { position:absolute; z-index:1; border:1px solid var(--line); border-radius:18px; padding:13px 17px; background:linear-gradient(140deg,#152745e8,#0d172bdc); color:var(--ink); box-shadow:0 12px 35px #0007; cursor:pointer; transition:.2s transform,.2s border-color; text-align:left; min-width:148px; } .node:hover,.node.active { transform:translateY(-4px); border-color:var(--aqua); } .node small { display:block;color:var(--muted);font-size:11px;margin-top:2px; } .node:before { content:""; display:inline-block; width:8px;height:8px;border-radius:50%;margin-right:8px;background:var(--aqua);box-shadow:0 0 16px var(--aqua); }
+    .center { position:absolute; left:50%;top:50%; transform:translate(-50%,-50%); width:156px;height:156px;border-radius:50%; display:grid;place-items:center; text-align:center; cursor:pointer; background:radial-gradient(circle at 35% 30%,#4267a6,#152448 55%,#0c1328); border:1px solid #a991ff99; box-shadow:0 0 0 18px #7799ff0b,0 0 75px #697ffb66; }.center strong{font:500 25px Georgia,serif;letter-spacing:.07em}.center span{font-size:11px;color:#c6d4ee;letter-spacing:.12em;text-transform:uppercase}
+    [data-node="projects"]{left:4%;top:24%}[data-node="career"]{right:5%;top:17%}[data-node="ideas"]{left:13%;bottom:13%}[data-node="knowledge"]{right:3%;bottom:22%}[data-node="daily"]{left:43%;bottom:1%}
+    aside { position:absolute; right:28px; top:0; bottom:28px; width:30%; min-width:330px; padding:24px; border:1px solid #314462; border-radius:22px; background:var(--panel); backdrop-filter:blur(14px); box-shadow:0 18px 65px #0007; overflow:auto; } aside h2 { margin:0 0 6px; font:500 24px Georgia,serif; } aside .path{color:var(--aqua);font-size:12px;margin-bottom:21px}.content{white-space:pre-wrap;color:#c5d2e8}.content h1,.content h2,.content h3 {color:#fff}.actions{display:flex;gap:8px;margin-top:20px}.actions a{color:var(--ink);text-decoration:none;border:1px solid #3c5273;padding:8px 11px;border-radius:9px;font-size:12px}.actions a:hover{border-color:var(--aqua);color:var(--aqua)}
+    @media(max-width:900px){body{overflow:auto}.orbit{left:0;right:0}.r3{width:570px;height:570px}aside{position:fixed;z-index:3;inset:auto 12px 12px;width:auto;max-height:42vh}.node{min-width:112px;padding:10px}.center{width:125px;height:125px}[data-node="projects"]{left:3%}[data-node="career"]{right:2%}[data-node="ideas"]{left:4%}[data-node="knowledge"]{right:1%}}
+  </style>
+</head>
+<body>
+  <header><div><div class="tag">EmreOS / ikinci beyin</div><h1>ATLAS</h1></div><div class="status" id="status">Merkez çevrimiçi</div></header>
+  <main>
+    <section class="orbit" aria-label="Atlas bağlam haritası"><i class="ring r1"></i><i class="ring r2"></i><i class="ring r3"></i>
+      <button class="node" data-node="projects" data-file="nodes/Projects.md">Projeler<small>Ürünler & işler</small></button>
+      <button class="node" data-node="career" data-file="nodes/Career-Abroad.md">Kariyer / Yurtdışı<small>Hedefler & fırsatlar</small></button>
+      <button class="node" data-node="ideas" data-file="nodes/Ideas.md">Fikirler<small>Keşfet & doğrula</small></button>
+      <button class="node" data-node="knowledge" data-file="nodes/Knowledge.md">Bilgi<small>Öğren & bağla</small></button>
+      <button class="node" data-node="daily" data-file="daily/2026-09-02.md">Günlük<small>Oturum izleri</small></button>
+      <button class="center" data-file="Atlas.md"><div><strong>ATLAS</strong><br><span>Emre'nin merkezi</span></div></button>
+    </section>
+    <aside><h2 id="title">Atlas</h2><div class="path" id="path">Atlas.md</div><article class="content" id="content">Bir düğüme tıkla; bağlamı burada oku ve kaynak notu aç.</article><div class="actions"><a id="open" href="Atlas.md" target="_blank">Notu aç</a><a href="README.md" target="_blank">Kullanım rehberi</a></div></aside>
+  </main>
+  <script>
+    const content = document.querySelector('#content'), title = document.querySelector('#title'), path = document.querySelector('#path'), open = document.querySelector('#open');
+    function render(md) { return md.replace(/^---[\\s\\S]*?---\\s*/,'').replace(/^# (.*)$/gm,'<h1>$1</h1>').replace(/^## (.*)$/gm,'<h2>$1</h2>').replace(/^### (.*)$/gm,'<h3>$1</h3>').replace(/^- (.*)$/gm,'• $1'); }
+    async function load(file, label) { document.querySelectorAll('.node').forEach(n=>n.classList.toggle('active',n.dataset.file===file)); title.textContent=label; path.textContent=file; open.href=file; content.textContent='Bağlam yükleniyor…'; try { const r=await fetch(encodeURI(file)); if(!r.ok) throw Error(); content.innerHTML=render(await r.text()); } catch { content.textContent='Bu not okunamadı. Atlas kısayolunu kullanarak arayüzü aç veya notu doğrudan aç.'; } }
+    document.querySelectorAll('[data-file]').forEach(el=>el.addEventListener('click',()=>load(el.dataset.file,el.textContent.trim().split('\n')[0])));
+  </script>
+</body>
+</html>

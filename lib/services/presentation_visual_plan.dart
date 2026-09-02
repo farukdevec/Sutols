@@ -6,26 +6,30 @@
 class PresentationVisualPlan {
   const PresentationVisualPlan._();
 
-  /// [visualKind] üretici modelin görsel planından gelir. Bilinmeyen eski
-  /// yanıtlarda, yalnızca 3B modeli olmayan slaytlar aday yapılır.
+  /// [visualKind] üretici modelin görsel planından gelir. Belirsiz planlarda
+  /// stok fotoğraf adaylığı, zayıf bir 3B anahtar kelime eşleşmesinden önce
+  /// gelir; aksi halde alakasız 3B varlıklar fotoğraf aramasını tamamen
+  /// engelliyordu.
   static bool isPhotoCandidate({
     required String? visualKind,
     required bool hasConfident3dModel,
   }) {
     final kind = _normalize(visualKind);
-    if (kind == 'none' ||
-        kind == 'chart' ||
-        kind == 'table' ||
-        kind == 'comparison' ||
-        kind == 'process_diagram' ||
-        kind == 'particle_diagram') {
-      return false;
-    }
+    // Bir diyagram isteği gerçek bir 3B nesneyle karşılanamıyorsa, boş
+    // bırakmak yerine konuya doğrulanmış bir fotoğraf yerleştir. Diyagramın
+    // metin düzeni korunur; fotoğraf yalnızca anlatısal görsel ankordur.
+    // `none` da üreticinin görsel öneremediği eski yanıtlar için aynı güvenli
+    // fallback'i kullanır.
+    if (!hasConfident3dModel) return true;
+    // 3B istendiğinde önce katalogdaki güçlü aday kullanılır. Katalogda
+    // yeterli kanıt yoksa yanlış bir 3B nesne yerine fotoğraf aramaya izin ver.
     if (kind == 'object_3d') return false;
     if (kind == 'photo' || kind == 'illustration' || kind == 'image_focus') {
       return true;
     }
-    return !hasConfident3dModel;
+    // Bilinmeyen/gelecek şema türlerinde fotoğraf adaylığını koru; katalog
+    // modeli kullanılsa bile son karar aşamasında tek görsel seçilir.
+    return true;
   }
 
   /// Fotoğraf isteği bütçesi: slaytların yaklaşık üçte biri. Böylece sunum

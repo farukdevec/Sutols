@@ -56,4 +56,75 @@ void main() {
 
     expect(matches, isEmpty);
   });
+
+  test('generic physics words do not select an unrelated catalyst surface', () {
+    const catalyst = ModelCatalogEntry(
+      id: 'katalizor-yuzeyi',
+      name: 'Katalizör Yüzey Modeli',
+      modelUrl: 'katalizor.glb',
+      thumbnailUrl: '',
+      tags: <String>['katalizör', 'yüzey', 'kimya'],
+      category: 'kimya',
+      tier: 'free',
+    );
+
+    final matches = ModelMatchingService.rankCatalogModels(
+      models: const <ModelCatalogEntry>[catalyst],
+      keywords: const <String>[
+        'statik sürtünme',
+        'kuvvet',
+        'hareket',
+        'temas yüzeyi',
+      ],
+    );
+
+    expect(matches, isEmpty);
+  });
+
+  test('presentation-like GLB assets are never used as automatic 3D objects', () {
+    const matrix = ModelCatalogEntry(
+      id: 'etki-efor-matrisi',
+      name: 'Etki Efor Matrisi',
+      modelUrl: 'matrix.glb',
+      thumbnailUrl: '',
+      tags: <String>['etki', 'efor', 'matris', 'analiz'],
+      category: 'analiz-modeli',
+      tier: 'free',
+    );
+    const wheel = ModelCatalogEntry(
+      id: 'eylemsizlik-tekerlegi',
+      name: 'Eylemsizlik Tekerleği',
+      modelUrl: 'wheel.glb',
+      thumbnailUrl: '',
+      tags: <String>['tekerlek', 'dönme', 'fizik', 'deney'],
+      category: 'analiz-modeli',
+      tier: 'free',
+    );
+
+    final matches = ModelMatchingService.rankCatalogModels(
+      models: const <ModelCatalogEntry>[matrix, wheel],
+      keywords: const <String>['etki', 'tekerlek'],
+    );
+
+    expect(matches.map((match) => match.id), <String>['eylemsizlik-tekerlegi']);
+  });
+
+  test('context-only cooling terms do not select a cooling tower', () {
+    const coolingTower = ModelCatalogEntry(
+      id: 'sogutma-kulesi',
+      name: 'Soğutma Kulesi',
+      modelUrl: 'tower.glb',
+      thumbnailUrl: '',
+      tags: <String>['soğutma', 'endüstri'],
+      category: 'endustri',
+      tier: 'free',
+    );
+    final matches = ModelMatchingService.rankCatalogModels(
+      models: const <ModelCatalogEntry>[coolingTower],
+      keywords: const <String>['soğutma', 'enerji verimliliği', 'çevre'],
+    );
+
+    expect(matches, isNotEmpty);
+    expect(ModelMatchingService.isStrong3dMatch(matches.single), isFalse);
+  });
 }

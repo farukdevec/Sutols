@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:math' as math;
 import 'package:http/http.dart' as http;
 import 'ai_model_config.dart';
 import 'nvidia_presentation_service.dart';
@@ -42,12 +43,8 @@ class PresentationJudgeService {
       targetAudience: targetAudience,
     );
 
-    // Skor zaten yüksekse (>=85) veya tamamen geçersizse (<60) ve zorlama yoksa ek AI çağrısına gerek yok
-    if (!forceAiJudge && (heuristicResult.overallScore >= 85 || heuristicResult.overallScore < 60)) {
-      return heuristicResult;
-    }
-
-    // 75-84 aralığında hızlı model ile AI Judge denetimi
+    // Heuristik yalnızca biçim, yoğunluk ve tekrar sinyalidir; konu
+    // doğruluğunu kanıtlayamaz. Bu nedenle her üretim AI denetiminden geçer.
     try {
       final judgePrompt = '''Aşağıdaki sunumu pedagojik doğruluk, hedef kitle uyumu, anlatı akışı ve tekrar açısından denetle.
 
@@ -62,18 +59,29 @@ ${jsonEncode({
               'purpose': s.purpose,
               'content': s.content,
               'type': s.type,
+              'visual': s.visual,
             }).toList()
       })}
 
 Yalnızca ve doğrudan tek bir JSON nesnesi dön:
 {
-  "score": 0-100_arasi_puan,
+  "score": 0-100_arasi_genel_puan,
+  "factual_accuracy": 0-100_arasi_konu_dogrulugu,
+  "visual_relevance": 0-100_arasi_gorsel_alaka,
   "revision_required": true/false,
   "issues": [
-    {"slide": 1, "category": "audience_fit|redundancy|pedagogy", "problem": "Kısa problem tanımı"}
+    {"slide": 1, "category": "factual_accuracy|visual_relevance|audience_fit|redundancy|pedagogy", "problem": "Kısa problem tanımı"}
   ],
   "global_issues": ["Genel sorun varsa"]
-}''';
+}
+
+ZORUNLU DENETİM:
+1. Her iddiayı konunun yerleşik bilgisiyle karşılaştır. Fizik, kimya, tarih,
+   biyoloji veya matematikte yanlış/uydurma ifade varsa factual_accuracy'yi
+   ciddi biçimde düşür ve ilgili slaytı issue olarak yaz.
+2. visual.subject, must_include, must_avoid veya kind varsa; bunların slayt
+   metnini somut biçimde destekleyip desteklemediğini ayrıca denetle.
+3. Biçim düzgün olsa bile kavramsal hata varsa yüksek puan verme.''';
 
       final httpClient = client;
       final body = {
@@ -130,6 +138,24 @@ Yalnızca ve doğrudan tek bir JSON nesnesi dön:
           final judgeScore = parsedJudge['score'] is num
               ? (parsedJudge['score'] as num).toInt()
               : heuristicResult.overallScore;
+          final factualPercent = parsedJudge['factual_accuracy'] is num
+              ? (parsedJudge['factual_accuracy'] as num)
+                  .toInt()
+                  .clamp(0, 100)
+                  .toInt()
+              : heuristicResult.factualAccuracy * 5;
+          final visualPercent = parsedJudge['visual_relevance'] is num
+              ? (parsedJudge['visual_relevance'] as num)
+                  .toInt()
+                  .clamp(0, 100)
+                  .toInt()
+              : heuristicResult.visualPotential * 20;
+          // A deck cannot pass merely because it is well formatted.  Topic
+          // correctness is a hard ceiling on the aggregate result.
+          final correctedScore = math.min(
+            judgeScore.clamp(0, 100),
+            factualPercent,
+          ).toInt();
 
           final rawIssues = parsedJudge['issues'];
           final issuesList = <Map<String, dynamic>>[];
@@ -147,18 +173,23 @@ Yalnızca ve doğrudan tek bir JSON nesnesi dön:
               : heuristicResult.globalIssues;
 
           return QualityScoreResult(
-            overallScore: judgeScore,
-            factualAccuracy: heuristicResult.factualAccuracy,
+            overallScore: correctedScore,
+            factualAccuracy:
+                (factualPercent / 5).round().clamp(0, 20).toInt(),
             audienceFit: heuristicResult.audienceFit,
             pedagogicalValue: heuristicResult.pedagogicalValue,
             narrativeCoherence: heuristicResult.narrativeCoherence,
             redundancy: heuristicResult.redundancy,
             readability: heuristicResult.readability,
-            visualPotential: heuristicResult.visualPotential,
+            visualPotential: math.min(
+              heuristicResult.visualPotential,
+              (visualPercent / 20).round().clamp(0, 5),
+            ).toInt(),
             slideIssues: issuesList.isNotEmpty ? issuesList : heuristicResult.slideIssues,
             globalIssues: globalList,
-            needsRevision: judgeScore >= 75 && judgeScore < 85,
-            isPass: judgeScore >= 85,
+            needsRevision: parsedJudge['revision_required'] == true ||
+                (correctedScore >= 75 && correctedScore < 85),
+            isPass: correctedScore >= 85,
           );
         }
       }

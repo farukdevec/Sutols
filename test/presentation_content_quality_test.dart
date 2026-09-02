@@ -105,5 +105,21 @@ void main() {
       expect(result.redundancy, lessThan(10));
       expect(result.slideIssues.any((i) => i['category'] == 'redundancy'), isTrue);
     });
+
+    test('rejects corrupted foreign characters and invalid static-friction term',
+        () {
+      const corrupted = PresentationContentSample(
+        title: 'Stok Sürtünme Kuvveti',
+        content: '- Uygulanan力がこの力を aşınca nesne hareket eder.',
+        keywords: <String>['stok sürtünme'],
+      );
+
+      expect(
+        PresentationContentQuality.rejectionReason(
+          const <PresentationContentSample>[corrupted],
+        ),
+        isNotNull,
+      );
+    });
   });
 }

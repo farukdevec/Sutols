@@ -46,6 +46,7 @@ CORE PRINCIPLES:
    - "subject": Concrete physical object or diagram subject
    - "caption": Short pedagogical caption below visual
    - "visual_keywords": ONLY concrete, physical objects (e.g., ["ice", "water", "steam", "crystal"]). NEVER abstract words like ["strategy", "history", "importance"].
+   - Select "object_3d" only when subject and visual_keywords name a real, recognizable object. For forces, relationships, or processes, choose a photo or diagram and name the objects that must appear.
    - Use a photo only when it makes the idea clearer; do not request a stock photo for every slide. Prefer diagrams, data, comparison, or no visual when those communicate the point better.
 
 6. JSON SCHEMA:
@@ -69,6 +70,8 @@ CORE PRINCIPLES:
       "visual": {
         "kind": "photo | particle_diagram | object_3d | process_diagram | comparison | chart | table | illustration | none",
         "subject": "concrete_visual_subject",
+        "must_include": ["specific concrete objects that must be visible"],
+        "must_avoid": ["objects, settings, or concepts that would mislead"],
         "caption": "Brief explanation of the visual or diagram"
       },
       "visual_keywords": ["concrete_object1", "concrete_object2"]
@@ -118,9 +121,12 @@ TEMEL PRENSİPLER:
    - Her slayt için bir görsel plan tanımla:
      * "kind": "photo" | "object_3d" | "particle_diagram" | "process_diagram" | "comparison" | "chart" | "table" | "illustration" | "none"
      * "subject": Görselleştirilecek somut nesne veya şema konusu
+     * "must_include": Görselde mutlaka bulunması gereken 1-3 somut nesne
+     * "must_avoid": Görseli yanıltıcı kılacak nesne, ortam veya kavramlar
      * "caption": Görselin altındaki kısa pedagojik açıklama
    - "visual_keywords" listesine ASLA soyut kelimeler ("strateji", "değerlendirme", "tarihçe", "önem") YAZMA!
    - Yalnızca fiziksel, görsel karşılığı olan nesneleri yaz (Örn: ["buz", "su", "buhar", "tanecik", "kristal"]).
+   - "object_3d" yalnızca adı net olan gerçek bir nesne için seçilir. Kuvvet, süreç veya ilişki anlatımında fotoğraf/diyagram seç ve görünmesi gereken somut nesneleri yaz.
    - Fotoğrafı yalnızca fikri belirgin biçimde güçlendirdiğinde seç; her slayta stok fotoğraf isteme. Diyagram, veri, karşılaştırma veya görselsiz düzen daha doğruysa onları tercih et.
 
 6. JSON FORMAT KURALLARI:

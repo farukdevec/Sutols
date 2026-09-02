@@ -57,6 +57,21 @@ class PresentationKeywordCatalog {
     'yapi', 'yapisi', 'sistem', 'sistemi', 'temel', 'temeli',
     'cesit', 'cesidi', 'cesitleri', 'tur', 'turu', 'turleri', 'turlerini', 'turleriyle',
     'ornek', 'ornegi', 'ornekleri', 'ozellik', 'ozelligi', 'ozellikleri',
+    // Tek başına bir 3B varlığı tanımlamayan fiziksel/arayüzsel kelimeler.
+    // Bunlar eşleştirmede katalizör yüzeyi, Gantt şeması veya telefon gibi
+    // alakasız katalog öğelerini tetikleyebiliyordu.
+    'kuvvet', 'hareket', 'yuzey', 'temas', 'cisim', 'nesne', 'blok', 'kutu',
+    'malzeme', 'uygulama', 'plan', 'sema', 'sekil', 'gorsel',
+    // "Etki", "analiz" ve benzeri soyut ifade kelimeleri bir nesneyi
+    // tanımlamaz. Bunlar, Etki-Efor Matrisi gibi sunum bileşenlerinin fen
+    // konularında yanlışlıkla gerçek 3B nesne seçilmesine yol açıyordu.
+    'etki', 'etkisi', 'etkileri', 'efor', 'analiz', 'analizi', 'matris',
+    'matrisi', 'oncelik', 'onceligi', 'karsilastirma', 'iliskisi',
+    // Bir işlemin bağlamını anlatır; tek başına temsil edilecek 3B nesneyi
+    // belirtmez. Örneğin "soğutma döngüsü" bir kelebek yaşam döngüsü değildir.
+    'dongu', 'dongusu', 'donguler', 'donguleri', 'asama', 'asamalari',
+    'kullanim', 'kullanimlari', 'kullanim_alani', 'verimlilik',
+    'enerji', 'cevre', 'gelecek', 'yenilik', 'yenilikler',
     // Yaygın fiil/edat/bağlaç kalıpları
     'ortaya', 'cikarmistir', 'cikmistir', 'olusturmustur', 'olusmustur',
     'tuketilmektedir', 'tuketilir', 'tuketim', 'kullanilmaktadir', 'kullanilir',

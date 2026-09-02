@@ -3,20 +3,30 @@ import 'package:sutol/services/presentation_visual_plan.dart';
 
 void main() {
   group('PresentationVisualPlan', () {
-    test('diagram and table slides do not receive stock photos', () {
+    test('slides without a reliable 3D model reserve a visual fallback', () {
       expect(
         PresentationVisualPlan.isPhotoCandidate(
           visualKind: 'chart',
           hasConfident3dModel: false,
         ),
-        isFalse,
+        isTrue,
       );
       expect(
         PresentationVisualPlan.isPhotoCandidate(
           visualKind: 'none',
           hasConfident3dModel: false,
         ),
-        isFalse,
+        isTrue,
+      );
+    });
+
+    test('unknown visual plans still reserve photo candidates despite a weak 3D match', () {
+      expect(
+        PresentationVisualPlan.isPhotoCandidate(
+          visualKind: 'concept',
+          hasConfident3dModel: true,
+        ),
+        isTrue,
       );
     });
 

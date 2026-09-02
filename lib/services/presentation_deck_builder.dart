@@ -3,7 +3,6 @@ import 'package:flutter/widgets.dart';
 import '../models/slide_model.dart';
 import '../state/presentation_controller.dart';
 import 'model_matching_service.dart';
-import 'presentation_auto_builder.dart';
 import 'presentation_keyword_catalog.dart';
 
 import 'presentation_model_source_resolver.dart';
@@ -29,42 +28,19 @@ class PresentationDeckBuilder {
       final content = slide.content.trim();
       final slideType =
           (slide.type.isEmpty ? 'cards' : slide.type).toLowerCase().trim();
-
       if (title.isEmpty && content.isEmpty && subtitle.isEmpty) {
         continue;
       }
 
-      // Bir fotoğraf seçildiyse fotoğraf, 3B katalogdan yeniden yapılan
-      // eşleştirmeye karşı önceliklidir. Aksi halde Pexels görseli bulunmuş
-      // olsa bile burada tekrar bir 3B model seçilip hiç görünmeyebilirdi.
-      var selectedModel = slide.imageAssetId == null &&
+      // Görsel eşleştirme PresentationService'te tek kez, güven eşiğiyle
+      // yapılır. Burada yeniden katalog taramak 2B/ilgisiz bir bileşenin
+      // seçimi geçersiz kılmasına yol açıyordu.
+      final selectedModel = slide.imageAssetId == null &&
               slide.models.isNotEmpty &&
               slide.models.first.modelUrl.trim().isNotEmpty
           ? slide.models.first
           : null;
-      if (selectedModel == null && slide.imageAssetId == null) {
-        final searchKeywords = <String>[
-          ...slide.keywords,
-          ...title.split(' '),
-          ...subtitle.split(' '),
-          ...content.split(' '),
-          ...topic.split(' '),
-        ];
-        final catalogMatches = ModelMatchingService.rankCatalogModels(
-          models: ModelMatchingService.localCatalogEntries,
-          keywords: searchKeywords,
-        );
-        if (catalogMatches.isNotEmpty) {
-          selectedModel = catalogMatches.first;
-        }
-      }
-      final fallbackComponent = bestPresentationComponentForSlide(
-        title: title,
-        body: '${slide.keywords.join(' ')} $subtitle $content',
-      );
-      final hasVisual = selectedModel != null ||
-          slide.imageAssetId != null ||
-          fallbackComponent != null;
+      final hasVisual = selectedModel != null || slide.imageAssetId != null;
       final background =
           _bestBackground(topic: topic, title: title, content: content);
 
@@ -353,7 +329,7 @@ class PresentationDeckBuilder {
         componentBlocks.add(
           PresentationComponentBlock(
             id: 'component-${componentCounter++}',
-            kind: fallbackComponent ?? PresentationComponentKind.edebiyat01,
+            kind: PresentationComponentKind.edebiyat01,
             modelAssetId: selectedModel.id,
             modelAnimationEnabled: true,
             modelAutoRotate: true,
@@ -386,15 +362,6 @@ class PresentationDeckBuilder {
             ),
             size: Size(widthFactor, heightFactor),
             entranceAnimation: PresentationEntranceAnimation.fadeIn,
-          ),
-        );
-      } else if (fallbackComponent != null) {
-        componentBlocks.add(
-          PresentationComponentBlock(
-            id: 'component-${componentCounter++}',
-            kind: fallbackComponent,
-            position: const Offset(0.68, 0.24),
-            size: const Size(0.27, 0.5),
           ),
         );
       }

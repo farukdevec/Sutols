@@ -468,6 +468,27 @@ class PresentationContentQuality {
       return 'Boş başlık veya içerik var.';
     }
 
+    // Türkçe/İngilizce sunum sözleşmesinde CJK ve Hangul karakterleri, model
+    // yanıtına başka bir dilin veya bozuk tokenların karıştığını gösterir.
+    // Bunları temizlemek yerine yanıtı reddetmek, kavramın anlamını korur.
+    final allText = slides
+        .map(
+          (slide) =>
+              '${slide.title}\n${slide.content}\n${slide.keywords.join(' ')}',
+        )
+        .join('\n');
+    if (RegExp(r'[\u3040-\u30ff\u3400-\u9fff\uac00-\ud7af]')
+        .hasMatch(allText)) {
+      return 'Yanıta desteklenmeyen yabancı karakterler karışmış.';
+    }
+
+    // Sık görülen hatalı çeviri/model halüsinasyonunu fizik terimi düzeyinde
+    // yakala. "Stok sürtünme" geçerli bir fizik terimi değildir; doğrusu
+    // "statik sürtünme"dir. Bu durum düzeltme değil yeniden üretim gerektirir.
+    if (_normalize(allText).contains('stok surtunme')) {
+      return 'Geçersiz fizik terimi: "stok sürtünme".';
+    }
+
     final slidePrefixRegex =
         RegExp(r'^(?:slayt|slide)\s*\d+[\s:\-–—]', caseSensitive: false);
     if (slides.any((slide) => slidePrefixRegex.hasMatch(slide.title.trim()))) {

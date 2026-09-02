@@ -115,7 +115,7 @@ void main() {
     );
   });
 
-  test('model yoksa bileşen, ikisi de yoksa yalnızca metin kullanır', () {
+  test('güvenilir görsel yoksa 2B bileşen enjekte etmeden yalnızca metin kullanır', () {
     final pages = const PresentationDeckBuilder().buildPages(
       topic: 'Fen',
       slides: <DeckSlide>[
@@ -134,8 +134,7 @@ void main() {
       ],
     );
 
-    expect(pages.first.componentBlocks, hasLength(1));
-    expect(pages.first.componentBlocks.single.modelAssetId, isNull);
+    expect(pages.first.componentBlocks, isEmpty);
     expect(pages.last.componentBlocks, isEmpty);
   });
 
