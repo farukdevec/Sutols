@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
@@ -28,9 +30,11 @@ class AuthService {
   bool get isSignedIn => _auth.currentUser != null;
 
   Stream<User?> get authStateChanges {
-    return _auth.authStateChanges().asyncMap((user) async {
+    return _auth.authStateChanges().map((user) {
       if (user != null) {
-        await _ensureUserDocument(user);
+        // Ağdaki belge, son-etkinlik ve IP güncellemeleri ilk arayüz
+        // çizimini bekletmemelidir; bunlar arka planda tamamlanır.
+        unawaited(_ensureUserDocument(user).catchError((_) {}));
       }
       return user;
     });

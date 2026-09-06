@@ -5,8 +5,7 @@ C:\Users\Emre\Documents\EmreOS
 
 ## Oturum protokolü
 
-- Başlarken C:\Users\Emre\Documents\EmreOS\AGENTS.md ve
-  C:\Users\Emre\Documents\EmreOS\memory\Last-Session.md dosyalarını oku.
+- Dış dizin izni yoksa başlangıç dosyalarını okumaya çalışma.
 - Anlamlı bir karar, araştırma bulgusu, proje kilometre taşı veya açık iş oluştuğunda
   ilgili Atlas düğüm notunu güncelle.
 - Oturum bitmeden önce şu komutla günlük kaydı bırak:

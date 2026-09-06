@@ -637,6 +637,8 @@ class NvidiaPresentationService {
         return 'AI kimlik doğrulaması başarısız (401). API anahtarını kontrol edin. Detay: $detail';
       case 403:
         return 'AI erişim engellendi (403). Origin/CORS ayarlarını kontrol edin. Detay: $detail';
+      case 410:
+        return 'NVIDIA Public API Endpoints erişimi bu hesapta etkin değil (410). NVIDIA Build hesabında erişimi etkinleştirip yeni API anahtarı tanımlayın. Detay: $detail';
       case 429:
         return 'AI hız limiti aşıldı (429 Rate Limit). Başka modele geçiliyor. Detay: $detail';
       case 500:
