@@ -1,0 +1,23 @@
+{
+  "checkedAt": "2026-09-08T14:42:57.959127+00:00",
+  "browser": "Existing Chrome Sutols session",
+  "authenticatedUiEvidence": [
+    "Sunumlarım list visible",
+    "Blank editor 3D Modeller search returned Ambulans and Ambulans İç Düzeni",
+    "Ambulans selection created model-viewer elements with /Ambulans.glb source"
+  ],
+  "liveFirestoreDocumentIdVerified": false,
+  "downloadedGlb": false,
+  "modelRenderVisuallyVerified": false,
+  "signedResourceRequest": {
+    "httpStatus": 403,
+    "response": "error code: 1010",
+    "signedQueryPersisted": false
+  },
+  "browserToolLimitations": [
+    "pageAssets bundle rejected kind other",
+    "content.export unsupported by Chrome",
+    "chrome://downloads navigation rejected by browser URL policy; no attempt to bypass policy"
+  ],
+  "nextAction": "Use authorized project R2/Firestore configuration or local original GLB source folder. Do not equate catalog selection with successful model inspection."
+}

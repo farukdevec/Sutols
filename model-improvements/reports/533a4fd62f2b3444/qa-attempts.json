@@ -1,0 +1,26 @@
+{
+  "attempts": [
+    {
+      "environment": "Playwright video recording initial attempt",
+      "result": "failed",
+      "reason": "FFmpeg executable missing; resolved by installing Playwright ffmpeg v1011"
+    },
+    {
+      "environment": "Concurrent headless Chrome SwiftShader",
+      "result": "inconclusive",
+      "pauseResume": {
+        "t1": 0.05009999999999855,
+        "t2": 0.05009999999999855,
+        "t3": 0.05009999999999855,
+        "pausedStable": true,
+        "resumed": false
+      },
+      "reason": "Wall-clock wait did not demonstrate resumed advancement; repeat serially and wait for actual advancement and loop events."
+    },
+    {
+      "environment": "Serial Chrome, Metal requested",
+      "result": "test_harness_timeout",
+      "reason": "Waiting for public loop events timed out at 180000 ms. Follow-up diagnosis showed currentTime progressing 0.9999,2.0166,3.0166,0.0165,1.0331,2.0331 while visible=true and paused=false; loopEvents remained empty. Revised QA observes currentTime wraps instead."
+    }
+  ]
+}

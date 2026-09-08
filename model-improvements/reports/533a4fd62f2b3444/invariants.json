@@ -1,0 +1,19 @@
+{
+  "bounds": true,
+  "rootTransforms": true,
+  "meshes": true,
+  "primitives": true,
+  "materials": true,
+  "images": true,
+  "skins": true,
+  "morphMeshes": true,
+  "uniqueMeshTriangles": true,
+  "scenePrimitiveInstances": true,
+  "motionEnvelopeUnchanged": true,
+  "allFlagPartsShareSampler": true,
+  "loopEndpointWeightsIdentical": true,
+  "rootAnimationChannels": 0,
+  "sampleCount": 97,
+  "animationDuration": 4,
+  "unsupportedRequiredExtensions": []
+}

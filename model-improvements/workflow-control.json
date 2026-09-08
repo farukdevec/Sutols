@@ -1,0 +1,8 @@
+{
+  "status": "paused_by_user",
+  "updatedAt": "2026-09-08T14:46:29.776464+00:00",
+  "reason": "User requested pushing current prompt, logs and development artifacts to GitHub for colleague review; model improvements deferred until later.",
+  "resumeRequires": "A new user instruction to resume model development.",
+  "resumeGuide": "model-improvements/RESUME.md",
+  "checkpoint": "model-improvements/checkpoint.json"
+}

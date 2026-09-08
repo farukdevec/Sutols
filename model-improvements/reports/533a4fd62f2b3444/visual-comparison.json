@@ -1,0 +1,17 @@
+{
+  "sameRendererSettings": true,
+  "sameDimensionsAndCenter": true,
+  "staticViews": {
+    "front": {
+      "exactPixelMatch": true
+    },
+    "side": {
+      "exactPixelMatch": true
+    },
+    "three-quarter": {
+      "exactPixelMatch": true
+    }
+  },
+  "flagCloseups": "reviewed at t=1,3 and end of loop; candidate symbol remains attached",
+  "threeLoopContactSheet": "reviewed"
+}

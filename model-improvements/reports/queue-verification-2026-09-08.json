@@ -1,0 +1,12 @@
+{
+  "queueIntegrity": "ok",
+  "candidateCount": 1043,
+  "pendingOutbox": 0,
+  "duplicateEventIds": 0,
+  "queueRecoveryTests": 8,
+  "anitkabirR1Hash": "matches",
+  "modelRecordCounts": {
+    "blocked": 7,
+    "candidate": 1
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "recordKey": "e5aaad036a812677",
+  "modelId": null,
+  "name": "Kalp Dolaşım Sistemi",
+  "category": "anatomi-ve-tip",
+  "baseRevision": null,
+  "candidateRevision": null,
+  "publishedRevision": null,
+  "sourceObjectKey": "kalp_dolasim_sistemi.glb",
+  "sourceSha256": null,
+  "outputObjectKey": null,
+  "outputSha256": null,
+  "sourceProjectPath": null,
+  "metricsBefore": null,
+  "metricsAfter": null,
+  "animationDecision": null,
+  "clipName": null,
+  "durationSeconds": null,
+  "exceptionReason": null,
+  "updatedAt": "2026-09-07T19:45:59.920186+00:00",
+  "nextAction": "Acquire through an authorized Sutols session or project service configuration; reconcile live document ID/aliases/object key/hash before editing.",
+  "schemaVersion": 1,
+  "aliases": [],
+  "status": "blocked",
+  "changes": [],
+  "validation": {
+    "identityReconciliation": "blocked",
+    "assetAcquisition": "blocked_http_403",
+    "visualReview": "not_run",
+    "runtimeReview": "not_run"
+  },
+  "evidencePaths": [
+    "model-improvements/reports/pilot-access.json"
+  ]
+}

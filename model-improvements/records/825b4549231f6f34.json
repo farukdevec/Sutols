@@ -1,0 +1,36 @@
+{
+  "recordKey": "825b4549231f6f34",
+  "modelId": "yolcu-ucagi",
+  "name": "Yolcu Uçağı",
+  "category": null,
+  "baseRevision": null,
+  "candidateRevision": null,
+  "publishedRevision": null,
+  "sourceObjectKey": "assets/models/yolcu_ucagi.glb",
+  "sourceSha256": null,
+  "outputObjectKey": null,
+  "outputSha256": null,
+  "sourceProjectPath": null,
+  "metricsBefore": null,
+  "metricsAfter": null,
+  "animationDecision": null,
+  "clipName": null,
+  "durationSeconds": null,
+  "exceptionReason": null,
+  "updatedAt": "2026-09-08T14:42:57.959127+00:00",
+  "nextAction": "Recover original packaged GLB matching catalog SHA-256 or reconcile a valid live source; do not treat HTML fallback as model data.",
+  "schemaVersion": 1,
+  "aliases": [],
+  "status": "blocked",
+  "changes": [],
+  "validation": {
+    "localSource": "missing",
+    "publishedPathResponse": "http_200_html_not_glb",
+    "visualReview": "not_run",
+    "runtimeReview": "not_run"
+  },
+  "evidencePaths": [
+    "model-improvements/reports/bundled-access.json"
+  ],
+  "identityScope": "bundled_dart_catalog_only"
+}

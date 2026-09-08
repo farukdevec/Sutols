@@ -1,0 +1,16 @@
+[
+  {
+    "url": "https://sutols.web.app/assets/models/yolcu_ucagi.glb",
+    "status": 200,
+    "contentType": "text/html; charset=utf-8",
+    "isGlb": false,
+    "byteSize": 15849
+  },
+  {
+    "url": "https://sutols.web.app/assets/models/gercekci_dunya.glb",
+    "status": 200,
+    "contentType": "text/html; charset=utf-8",
+    "isGlb": false,
+    "byteSize": 15849
+  }
+]

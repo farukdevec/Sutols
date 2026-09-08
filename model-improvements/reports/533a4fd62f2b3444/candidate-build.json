@@ -1,0 +1,23 @@
+{
+  "baseRevision": "baseline-sha256-15f5d50eb5dd9c433a458d77d09a55c40cc390134a67c018c070ff5ebf5348eb",
+  "candidateRevision": "r1",
+  "sourceSha256": "15f5d50eb5dd9c433a458d77d09a55c40cc390134a67c018c070ff5ebf5348eb",
+  "outputSha256": "e87627a22ff27accbd0dd0ec043d0800474bc3e499ed9dd932648634d5e7f274",
+  "candidatePath": "model-improvements/reports/533a4fd62f2b3444/anitkabir-r1-e87627a22ff27accbd0dd0ec043d0800474bc3e499ed9dd932648634d5e7f274.glb",
+  "bytesBefore": 3507628,
+  "bytesAfter": 3507296,
+  "byteDelta": -332,
+  "nonAnimationJsonUnchanged": true,
+  "binaryUnchangedExceptTimeAccessor": true,
+  "modifiedBinaryRange": [
+    0,
+    388
+  ],
+  "clipTargets": [
+    1998,
+    1999,
+    2000
+  ],
+  "durationSeconds": 4,
+  "liveDeployment": "not_performed"
+}

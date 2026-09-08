@@ -1,0 +1,12 @@
+# Yerel çalışma kilitleri ve Python önbelleği
+.queue.lock
+__pycache__/
+*.pyc
+*.sqlite3-journal
+*.sqlite3-wal
+*.sqlite3-shm
+
+# Tekrarlanan/başarısız QA videoları yerelde kalır.
+reports/**/video/*.webm
+# Doğrulanan üç döngünün paylaşılacak kanıtı.
+!reports/533a4fd62f2b3444/after/video/page@52d170d62a7b9bc212d10b151fdd9f8b.webm

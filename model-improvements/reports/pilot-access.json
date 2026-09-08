@@ -1,0 +1,13 @@
+{
+  "checkedAt": "2026-09-07T19:36:34.020753+00:00",
+  "firestoreUnauthenticatedHttpStatus": 403,
+  "localServiceAccountAvailable": false,
+  "localR2EnvFileAvailable": false,
+  "assetHttpStatus": {
+    "Ambulans": 403,
+    "helikopter_rotor_sistemi": 403,
+    "elektrik_motoru_kesiti": 403,
+    "otomobil_parcalari_motor_sistemi": 403,
+    "kalp_dolasim_sistemi": 403
+  }
+}
