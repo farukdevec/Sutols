@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -14,10 +15,10 @@ import 'ui/widgets/terms_consent_dialog.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   usePathUrlStrategy();
-  
+
   // SharedPreferences'i önceden yükle (tüm controller'lar tarafından kullanılır)
   await SharedPrefsService.instance.preload();
-  
+
   await Future.wait<void>(<Future<void>>[
     Firebase.initializeApp(options: DefaultFirebaseOptions.web),
     ThemeController.instance.init(),
@@ -51,7 +52,11 @@ class SutolApp extends StatelessWidget {
                   child: child ?? const SizedBox.shrink(),
                 );
               },
-              initialRoute: AppRoutes.home,
+              // Firebase'in özel e-posta eylem URL'si gibi doğrudan açılan
+              // web rotalarını koru; mobil/masaüstünde varsayılan ana sayfa.
+              initialRoute: kIsWeb
+                  ? (Uri.base.path.isEmpty ? AppRoutes.home : Uri.base.path)
+                  : AppRoutes.home,
               routes: AppRoutes.routes,
               onGenerateRoute: AppRoutes.onGenerateRoute,
               onUnknownRoute: AppRoutes.onUnknownRoute,
@@ -62,4 +67,3 @@ class SutolApp extends StatelessWidget {
     );
   }
 }
-

@@ -131,14 +131,16 @@ void showSutolContactDialog(BuildContext context) {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          tr('İletişim & Sosyal Medya', 'Contact & Social Media'),
+                          tr('İletişim & Sosyal Medya',
+                              'Contact & Social Media'),
                           style: AppTypography.titleMedium.copyWith(
                             color: colors.textPrimary,
                             fontWeight: FontWeight.w700,
                           ),
                         ),
                         Text(
-                          tr('Bizimle doğrudan bağlantı kurun.', 'Connect with us directly.'),
+                          tr('Bizimle doğrudan bağlantı kurun.',
+                              'Connect with us directly.'),
                           style: AppTypography.labelMedium.copyWith(
                             color: colors.textSecondary,
                           ),
@@ -170,7 +172,7 @@ void showSutolContactDialog(BuildContext context) {
   );
 }
 
-/// Shık ve modern Instagram & E-posta iletişim bileşeni.
+/// Şık ve modern sosyal medya ve e-posta iletişim bileşeni.
 class SutolContactChips extends StatelessWidget {
   const SutolContactChips({
     super.key,
@@ -206,10 +208,81 @@ class SutolContactChips extends StatelessWidget {
           runSpacing: compact ? AppSpacing.s8 : AppSpacing.s12,
           children: const [
             _InstagramChip(handle: '@sutolscom'),
+            _YoutubeChip(),
             _EmailChip(email: 'contact@sutols.com'),
           ],
         ),
       ],
+    );
+  }
+}
+
+class _YoutubeChip extends StatefulWidget {
+  const _YoutubeChip();
+
+  @override
+  State<_YoutubeChip> createState() => _YoutubeChipState();
+}
+
+class _YoutubeChipState extends State<_YoutubeChip> {
+  bool _isHovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    const youtubeRed = Color(0xFFFF0000);
+
+    return Tooltip(
+      message: tr('YouTube’da Bizi Takip Edin', 'Follow Us on YouTube'),
+      child: MouseRegion(
+        cursor: SystemMouseCursors.click,
+        onEnter: (_) => setState(() => _isHovered = true),
+        onExit: (_) => setState(() => _isHovered = false),
+        child: GestureDetector(
+          onTap: () =>
+              UrlLauncherService.openUrl('https://www.youtube.com/@Sutols'),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 180),
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.s12,
+              vertical: AppSpacing.s8,
+            ),
+            decoration: BoxDecoration(
+              color: _isHovered
+                  ? youtubeRed.withValues(alpha: 0.1)
+                  : colors.surfaceElevated,
+              borderRadius: BorderRadius.circular(AppRadius.full),
+              border: Border.all(
+                color: _isHovered
+                    ? youtubeRed.withValues(alpha: 0.5)
+                    : colors.border,
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.play_circle_fill_rounded,
+                    size: 22, color: youtubeRed),
+                const SizedBox(width: AppSpacing.s8),
+                Text(
+                  'YouTube',
+                  style: AppTypography.labelMedium.copyWith(
+                    color:
+                        _isHovered ? colors.textPrimary : colors.textSecondary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.s4),
+                Icon(Icons.open_in_new_rounded,
+                    size: 13,
+                    color: _isHovered
+                        ? youtubeRed
+                        : colors.textSecondary.withValues(alpha: 0.6)),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
@@ -293,9 +366,8 @@ class _InstagramChipState extends State<_InstagramChip> {
                 Text(
                   widget.handle,
                   style: AppTypography.labelMedium.copyWith(
-                    color: _isHovered
-                        ? colors.textPrimary
-                        : colors.textSecondary,
+                    color:
+                        _isHovered ? colors.textPrimary : colors.textSecondary,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -335,7 +407,8 @@ class _EmailChipState extends State<_EmailChip> {
       SnackBar(
         content: Row(
           children: [
-            const Icon(Icons.check_circle_rounded, color: Colors.white, size: 18),
+            const Icon(Icons.check_circle_rounded,
+                color: Colors.white, size: 18),
             const SizedBox(width: 8),
             Text(
               tr('${widget.email} kopyalandı!', '${widget.email} copied!'),
@@ -409,9 +482,8 @@ class _EmailChipState extends State<_EmailChip> {
                 Text(
                   widget.email,
                   style: AppTypography.labelMedium.copyWith(
-                    color: _isHovered
-                        ? colors.textPrimary
-                        : colors.textSecondary,
+                    color:
+                        _isHovered ? colors.textPrimary : colors.textSecondary,
                     fontWeight: FontWeight.w600,
                   ),
                 ),

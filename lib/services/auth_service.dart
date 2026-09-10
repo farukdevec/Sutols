@@ -16,6 +16,14 @@ class TermsConsentNotApprovedException implements Exception {
   String toString() => 'Kullanım şartları onaylanmadı.';
 }
 
+/// E-posta/şifre hesabı henüz Firebase doğrulama bağlantısını tamamlamadı.
+class EmailNotVerifiedException implements Exception {
+  const EmailNotVerifiedException();
+
+  @override
+  String toString() => 'E-posta adresi doğrulanmadı.';
+}
+
 class AuthService {
   AuthService._();
   static final AuthService instance = AuthService._();
@@ -24,7 +32,8 @@ class AuthService {
 
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  static final Map<String, Future<void>> _ensureUserRequests = <String, Future<void>>{};
+  static final Map<String, Future<void>> _ensureUserRequests =
+      <String, Future<void>>{};
 
   User? get currentUser => _auth.currentUser;
   bool get isSignedIn => _auth.currentUser != null;
@@ -155,9 +164,19 @@ class AuthService {
   }
 
   Future<UserCredential> signInWithEmailAndPassword(
-      String email, String password) {
-    // Zaten kayıtlı kullanıcı girişi: onay dialogu gerektirmez.
-    return _auth.signInWithEmailAndPassword(email: email, password: password);
+      String email, String password) async {
+    final credential = await _auth.signInWithEmailAndPassword(
+      email: email,
+      password: password,
+    );
+    await credential.user?.reload();
+    final user = _auth.currentUser;
+    if (user == null || !user.emailVerified) {
+      await _sendVerificationEmail(user);
+      await signOut();
+      throw const EmailNotVerifiedException();
+    }
+    return credential;
   }
 
   /// Email/şifre ile YENİ KAYIT akışı.
@@ -167,7 +186,7 @@ class AuthService {
   /// sonra onay kaydı users/{uid} dokümanına yazılır.
   Future<UserCredential> createUserWithEmailAndPassword(
       String email, String password,
-      {bool termsAccepted = false}) async {
+      {bool termsAccepted = false, String? displayName}) async {
     if (!termsAccepted) {
       throw const TermsConsentNotApprovedException();
     }
@@ -176,8 +195,36 @@ class AuthService {
       email: email,
       password: password,
     );
+    final user = credential.user;
+    if (displayName != null && displayName.trim().isNotEmpty) {
+      await user?.updateDisplayName(displayName.trim());
+    }
     await _recordTermsAcceptance(credential.user?.uid);
+    await _sendVerificationEmail(user);
+    await signOut();
     return credential;
+  }
+
+  Future<void> _sendVerificationEmail(User? user) async {
+    if (user == null || user.emailVerified) return;
+    await _auth.setLanguageCode('tr');
+    await user.sendEmailVerification(_verificationActionSettings);
+  }
+
+  final ActionCodeSettings _verificationActionSettings = ActionCodeSettings(
+    url: 'https://sutols.com/verify-email?verified=1',
+    handleCodeInApp: false,
+  );
+
+  Future<void> sendPasswordResetEmail(String email) async {
+    await _auth.setLanguageCode('tr');
+    await _auth.sendPasswordResetEmail(
+      email: email.trim(),
+      actionCodeSettings: ActionCodeSettings(
+        url: 'https://sutols.com/reset-password?reset=1',
+        handleCodeInApp: false,
+      ),
+    );
   }
 
   /// Google ile giriş akışı.
@@ -189,8 +236,25 @@ class AuthService {
   /// kapatılarak giriş ekranına dönülür. Zaten kayıtlı kullanıcılara hiçbir
   /// onay adımı gösterilmez.
   Future<UserCredential> signInWithGoogle({bool termsAccepted = false}) async {
-    var accepted = termsAccepted;
     final credential = await _auth.signInWithPopup(GoogleAuthProvider());
+    await _completeFederatedSignIn(credential, termsAccepted: termsAccepted);
+    return credential;
+  }
+
+  /// Apple ile giriş akışı. Web'de Firebase Authentication'ın OAuth popup
+  /// akışını kullanır; yeni hesaplar Google ile girişteki şartlar onayı
+  /// korumasından aynen geçer.
+  Future<UserCredential> signInWithApple({bool termsAccepted = false}) async {
+    final credential = await _auth.signInWithPopup(AppleAuthProvider());
+    await _completeFederatedSignIn(credential, termsAccepted: termsAccepted);
+    return credential;
+  }
+
+  Future<void> _completeFederatedSignIn(
+    UserCredential credential, {
+    required bool termsAccepted,
+  }) async {
+    var accepted = termsAccepted;
     final user = credential.user;
     if (user != null && _isFirstSignIn(user)) {
       if (!accepted) {
@@ -202,7 +266,6 @@ class AuthService {
         await _cancelFirstSignIn(credential);
       }
     }
-    return credential;
   }
 
   Future<void> signOut() {

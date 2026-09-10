@@ -12,6 +12,7 @@ import 'ui/membership_page.dart';
 import 'ui/my_presentations_page.dart';
 import 'ui/presentation_open_page.dart';
 import 'ui/redeem_code_page.dart';
+import 'ui/verify_email_page.dart';
 import 'ui/widgets/authenticated_route_guard.dart';
 
 /// Web ve mobil platformlar için merkezi rota ve URL yöneticisi.
@@ -29,6 +30,8 @@ class AppRoutes {
   static const String privacy = '/gizlilik';
   static const String terms = '/sartlar';
   static const String faq = '/sss';
+  static const String verifyEmail = '/verify-email';
+  static const String resetPassword = '/reset-password';
 
   /// Verilen konu başlığı ve ID için SEO ve kullanıcı dostu sunum URL'i üretir.
   /// Örn: /cernobil-nukleer-faciasi-id54445484 veya /en/slide54445484
@@ -173,6 +176,8 @@ class AppRoutes {
         privacy: (_) => const PrivacyPolicyPage(),
         terms: (_) => const TermsOfServicePage(),
         faq: (_) => const FaqPage(),
+        verifyEmail: (_) => const VerifyEmailPage(),
+        resetPassword: (_) => const VerifyEmailPage(),
 
         // /en ve İngilizce doğrudan rotalar
         '/en': (_) => const SutolHomePage(),

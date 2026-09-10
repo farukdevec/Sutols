@@ -7,18 +7,18 @@ service cloud.firestore {
 
 
     match /models/{modelId} {
-      allow read: if request.auth != null;
+      allow read: if isVerifiedUser();
       allow write: if false;
     }
 
 
     match /presentations/{presentationId} {
-      allow read: if request.auth != null
+      allow read: if isVerifiedUser()
                    && (isAdmin() || request.auth.uid == resource.data.userId
                        || resource.data.shared == true);
-      allow create: if request.auth != null && isNotSuspended(request.auth.uid)
+      allow create: if isVerifiedUser() && isNotSuspended(request.auth.uid)
                     && request.auth.uid == request.resource.data.userId;
-      allow update: if request.auth != null && isNotSuspended(request.auth.uid)
+      allow update: if isVerifiedUser() && isNotSuspended(request.auth.uid)
                     && (isAdmin() || (
                          (request.auth.uid == resource.data.userId
                           || resource.data.shared == true)
@@ -28,21 +28,21 @@ service cloud.firestore {
                          && request.resource.data.diff(resource.data).affectedKeys()
                               .hasOnly(['wasEdited', 'wasExported', 'editCount',
                                         'timeSpentSeconds', 'lastOpenedAt', 'slides'])));
-      allow delete: if request.auth != null && isNotSuspended(request.auth.uid)
+      allow delete: if isVerifiedUser() && isNotSuspended(request.auth.uid)
                     && (isAdmin() || request.auth.uid == resource.data.userId);
     }
 
 
     // Slaytlar alt koleksiyonda; sahiplik ana belge üzerinden doğrulanır.
     match /presentations/{presentationId}/slides/{slideId} {
-      allow read: if request.auth != null
+      allow read: if isVerifiedUser()
                   && (isAdmin() || parentReadable(request.auth.uid, presentationId));
-      allow create: if request.auth != null && isNotSuspended(request.auth.uid)
+      allow create: if isVerifiedUser() && isNotSuspended(request.auth.uid)
                     && parentWritable(request.auth.uid, presentationId)
                     && request.resource.data.order is int;
-      allow update: if request.auth != null && isNotSuspended(request.auth.uid)
+      allow update: if isVerifiedUser() && isNotSuspended(request.auth.uid)
                     && (isAdmin() || parentWritable(request.auth.uid, presentationId));
-      allow delete: if request.auth != null && isNotSuspended(request.auth.uid)
+      allow delete: if isVerifiedUser() && isNotSuspended(request.auth.uid)
                     && (isAdmin() || parentWritable(request.auth.uid, presentationId));
     }
 
@@ -50,23 +50,23 @@ service cloud.firestore {
     // Editör proje durumu (deck JSON). Paylaşılan sunumda her yetkili kullanıcı
     // kendi kimliğiyle yazabilir (updatedByUid imzası zorunlu).
     match /presentations/{presentationId}/project/{projectDocId} {
-      allow read: if request.auth != null
+      allow read: if isVerifiedUser()
                   && (isAdmin() || parentReadable(request.auth.uid, presentationId));
-      allow create: if request.auth != null && isNotSuspended(request.auth.uid)
+      allow create: if isVerifiedUser() && isNotSuspended(request.auth.uid)
                     && (isAdmin() || (
                          parentWritable(request.auth.uid, presentationId)
                          && request.resource.data.updatedByUid == request.auth.uid));
-      allow update: if request.auth != null && isNotSuspended(request.auth.uid)
+      allow update: if isVerifiedUser() && isNotSuspended(request.auth.uid)
                     && (isAdmin() || (
                          parentWritable(request.auth.uid, presentationId)
                          && request.resource.data.updatedByUid == request.auth.uid));
-      allow delete: if request.auth != null && isNotSuspended(request.auth.uid)
+      allow delete: if isVerifiedUser() && isNotSuspended(request.auth.uid)
                     && (isAdmin() || parentWritable(request.auth.uid, presentationId));
     }
 
 
     match /users/{uid} {
-      allow read: if request.auth != null && (isAdmin() || request.auth.uid == uid);
+      allow read: if isVerifiedUser() && (isAdmin() || request.auth.uid == uid);
       allow create: if request.auth != null && isNotSuspended(request.auth.uid)
                     && request.auth.uid == uid
                     && request.resource.data.tier == 'free'
@@ -107,7 +107,7 @@ service cloud.firestore {
       // (kullanım için); hedefli kodları yalnızca hedef kullanıcı ve admin görür.
       // Sorgu/liste çekimleri kurallar gereği engellenir (koşul içerik bağımlı),
       // böylece kodlar enumerate edilemez.
-      allow read: if request.auth != null
+      allow read: if isVerifiedUser()
                   && (isAdmin() || codeTargets(request.auth.uid));
       allow create: if isAdmin()
                     && request.resource.data.grantsTier == 'plus'
@@ -116,7 +116,7 @@ service cloud.firestore {
       // Kullanıcı yalnızca kendi kullanımı sırasında usedCount artırabilir;
       // tier yükseltmesi users/{uid} güncelleme kuralında doğrulanır.
       allow update: if isAdmin()
-                    || (request.auth != null
+                    || (isVerifiedUser()
                         && isNotSuspended(request.auth.uid)
                         && request.resource.data.diff(resource.data).affectedKeys()
                              .hasOnly(['usedCount'])
@@ -127,13 +127,13 @@ service cloud.firestore {
 
     // Günlük sunum kotası: users/{uid}/usage/{date} (docId = YYYY-MM-DD).
     match /users/{uid}/usage/{date} {
-      allow read: if request.auth != null
+      allow read: if isVerifiedUser()
                   && (isAdmin() || request.auth.uid == uid);
-      allow create: if request.auth != null && isNotSuspended(request.auth.uid)
+      allow create: if isVerifiedUser() && isNotSuspended(request.auth.uid)
                     && request.auth.uid == uid
                     && isValidUsage(request.resource.data, uid, date)
                     && request.resource.data.count == 1;
-      allow update: if request.auth != null && isNotSuspended(request.auth.uid)
+      allow update: if isVerifiedUser() && isNotSuspended(request.auth.uid)
                     && request.auth.uid == uid
                     && isValidUsage(request.resource.data, uid, date)
                     && request.resource.data.diff(resource.data).affectedKeys()
@@ -154,7 +154,7 @@ service cloud.firestore {
     // GLB indirme ve erişim kayıtları
     match /glb_downloads/{downloadId} {
       allow read: if isAdmin();
-      allow create: if request.auth != null && isNotSuspended(request.auth.uid);
+      allow create: if isVerifiedUser() && isNotSuspended(request.auth.uid);
       allow update, delete: if isAdmin();
     }
 
@@ -164,7 +164,7 @@ service cloud.firestore {
     // panelinde listelenir ve sonradan değiştirilemez.
     match /presentation_feedback/{feedbackId} {
       allow read: if isAdmin();
-      allow create: if request.auth != null
+      allow create: if isVerifiedUser()
                     && isNotSuspended(request.auth.uid)
                     && isValidPresentationFeedback(request.resource.data)
                     && request.resource.data.userId == request.auth.uid
@@ -183,6 +183,10 @@ service cloud.firestore {
          && 'role' in get(/databases/$(database)/documents/users/$(request.auth.uid)).data
          && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin')
       );
+    }
+
+    function isVerifiedUser() {
+      return request.auth != null && request.auth.token.email_verified == true;
     }
 
 

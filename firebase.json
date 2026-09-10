@@ -90,6 +90,14 @@
     ],
     "rewrites": [
       {
+        "source": "/verify-email",
+        "destination": "/index.html"
+      },
+      {
+        "source": "/reset-password",
+        "destination": "/index.html"
+      },
+      {
         "source": "/login",
         "destination": "/index.html"
       },

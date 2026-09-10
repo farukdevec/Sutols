@@ -30,8 +30,9 @@ class _AuthenticatedRouteGuardState extends State<AuthenticatedRouteGuard> {
   @override
   void initState() {
     super.initState();
-    _authStateStream = widget.authStateStream ??
-        FirebaseAuth.instance.authStateChanges().map((user) => user != null);
+    _authStateStream = widget.authStateStream ?? FirebaseAuth.instance
+        .authStateChanges()
+        .map((user) => user != null && user.emailVerified);
   }
 
   void _redirectToPublicHome() {
