@@ -31,7 +31,7 @@ void main() {
                   promptController: promptController,
                   titleFocusNode: titleFocusNode,
                   promptFocusNode: promptFocusNode,
-                  onGenerate: () {},
+                  onGenerate: (_, __) {},
                   slideCount: 5,
                   hasPlusSlideAccess: false,
                   onSlideCountChanged: (_) {},
@@ -62,5 +62,53 @@ void main() {
     await tester.testTextInput.receiveAction(TextInputAction.next);
     await tester.pump();
     expect(promptFocusNode.hasFocus, isTrue);
+  });
+
+  testWidgets('form sends title and prompt as separate generation values',
+      (tester) async {
+    final titleController = TextEditingController();
+    final promptController = TextEditingController();
+    final titleFocusNode = FocusNode();
+    final promptFocusNode = FocusNode();
+    addTearDown(titleController.dispose);
+    addTearDown(promptController.dispose);
+    addTearDown(titleFocusNode.dispose);
+    addTearDown(promptFocusNode.dispose);
+
+    String? submittedTitle;
+    String? submittedTopic;
+    await tester.pumpWidget(MaterialApp(
+      theme: sutolLightTheme,
+      home: Scaffold(
+        body: PresentationCreationCard(
+          titleController: titleController,
+          promptController: promptController,
+          titleFocusNode: titleFocusNode,
+          promptFocusNode: promptFocusNode,
+          onGenerate: (title, topic) {
+            submittedTitle = title;
+            submittedTopic = topic;
+          },
+          slideCount: 5,
+          hasPlusSlideAccess: false,
+          onSlideCountChanged: (_) {},
+        ),
+      ),
+    ));
+
+    await tester.enterText(
+      find.byKey(const ValueKey<String>('presentation-title-field')),
+      'Eğitimde Yapay Zekâ',
+    );
+    await tester.enterText(
+      find.byKey(const ValueKey<String>('presentation-prompt-field')),
+      'Ders planlama ve etik riskleri ayrıntılandır.',
+    );
+    await tester.tap(
+      find.byKey(const ValueKey<String>('presentation-generate-button')),
+    );
+
+    expect(submittedTitle, 'Eğitimde Yapay Zekâ');
+    expect(submittedTopic, 'Ders planlama ve etik riskleri ayrıntılandır.');
   });
 }

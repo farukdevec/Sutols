@@ -38,16 +38,23 @@ class NvidiaSlide {
 
   factory NvidiaSlide.fromJson(Map<String, dynamic> json) {
     final title = json['title'] ?? json['baslik'];
-    final subtitle = (json['subtitle'] ?? json['alt_baslik'] ?? json['sub_title'])?.toString();
+    final subtitle =
+        (json['subtitle'] ?? json['alt_baslik'] ?? json['sub_title'])
+            ?.toString();
     final rawContent = json['content'] ?? json['icerik'];
-    final rawKeywords = json['visual_keywords'] ?? json['keywords'] ?? json['anahtar_kelimeler'];
+    final rawKeywords = json['visual_keywords'] ??
+        json['keywords'] ??
+        json['anahtar_kelimeler'];
     final rawType = json['type'] ??
         json['slide_type'] ??
         json['layout'] ??
         json['tip'] ??
         'concept';
-    final purpose = (json['purpose'] ?? json['amac'] ?? json['role'])?.toString();
-    final keyMessage = (json['key_message'] ?? json['keyMessage'] ?? json['ana_mesaj'])?.toString();
+    final purpose =
+        (json['purpose'] ?? json['amac'] ?? json['role'])?.toString();
+    final keyMessage =
+        (json['key_message'] ?? json['keyMessage'] ?? json['ana_mesaj'])
+            ?.toString();
     final rawSections = json['sections'] ?? json['bolumler'];
     final rawVisual = json['visual'] ?? json['gorsel'];
     final rawSources = json['sources'] ?? json['kaynaklar'];
@@ -73,9 +80,16 @@ class NvidiaSlide {
         final lines = <String>[];
         for (final sec in sectionsList) {
           final heading = sec['heading'] ?? sec['title'] ?? sec['baslik'] ?? '';
-          final desc = sec['description'] ?? sec['desc'] ?? sec['text'] ?? sec['aciklama'] ?? sec['content'] ?? '';
-          if (heading.toString().trim().isNotEmpty && desc.toString().trim().isNotEmpty) {
-            lines.add('- ${heading.toString().trim()}: ${desc.toString().trim()}');
+          final desc = sec['description'] ??
+              sec['desc'] ??
+              sec['text'] ??
+              sec['aciklama'] ??
+              sec['content'] ??
+              '';
+          if (heading.toString().trim().isNotEmpty &&
+              desc.toString().trim().isNotEmpty) {
+            lines.add(
+                '- ${heading.toString().trim()}: ${desc.toString().trim()}');
           } else if (desc.toString().trim().isNotEmpty) {
             lines.add('- ${desc.toString().trim()}');
           } else if (heading.toString().trim().isNotEmpty) {
@@ -109,12 +123,17 @@ class NvidiaSlide {
 
     return NvidiaSlide(
       title: cleanedTitle,
-      subtitle: subtitle != null && subtitle.trim().isNotEmpty ? subtitle.trim() : null,
+      subtitle: subtitle != null && subtitle.trim().isNotEmpty
+          ? subtitle.trim()
+          : null,
       content: normalizedContent,
       keywords: keywordsList,
       type: rawType.toString().toLowerCase().trim(),
-      purpose: purpose != null && purpose.trim().isNotEmpty ? purpose.trim() : null,
-      keyMessage: keyMessage != null && keyMessage.trim().isNotEmpty ? keyMessage.trim() : null,
+      purpose:
+          purpose != null && purpose.trim().isNotEmpty ? purpose.trim() : null,
+      keyMessage: keyMessage != null && keyMessage.trim().isNotEmpty
+          ? keyMessage.trim()
+          : null,
       sections: sectionsList,
       visual: visualMap,
       sources: sourcesList,
@@ -127,11 +146,13 @@ class NvidiaSlide {
     }
     if (rawContent is Map) {
       final headline = rawContent['headline'] ?? rawContent['ana_fikir'] ?? '';
-      final supportingText = rawContent['supporting_text'] ?? rawContent['aciklama'] ?? '';
+      final supportingText =
+          rawContent['supporting_text'] ?? rawContent['aciklama'] ?? '';
       final rawKeyPoints = rawContent['key_points'] ?? rawContent['maddeler'];
       final lines = <String>[];
       final cleanHeadline = headline.toString().replaceAll('*', '').trim();
-      final cleanSupporting = supportingText.toString().replaceAll('*', '').trim();
+      final cleanSupporting =
+          supportingText.toString().replaceAll('*', '').trim();
       if (cleanHeadline.isNotEmpty && cleanSupporting.isNotEmpty) {
         lines.add('- $cleanHeadline: $cleanSupporting');
       } else if (cleanHeadline.isNotEmpty) {
@@ -148,7 +169,8 @@ class NvidiaSlide {
         }
       }
       if (lines.isNotEmpty) {
-        return PresentationContentQuality.normalizeContentBullets(lines.join('\n'));
+        return PresentationContentQuality.normalizeContentBullets(
+            lines.join('\n'));
       }
     }
     if (rawContent is List) {
@@ -175,8 +197,10 @@ class NvidiaPresentation {
 
   factory NvidiaPresentation.fromJson(Map<String, dynamic> json) {
     final title = (json['title'] ?? json['baslik'])?.toString();
-    final targetAudience = (json['target_audience'] ?? json['hedef_kitle'])?.toString();
-    final learningObjective = (json['learning_objective'] ?? json['ogrenme_hedefi'])?.toString();
+    final targetAudience =
+        (json['target_audience'] ?? json['hedef_kitle'])?.toString();
+    final learningObjective =
+        (json['learning_objective'] ?? json['ogrenme_hedefi'])?.toString();
     final rawSlides = json['slides'];
     if (rawSlides is! List) {
       throw const FormatException('Yanıtta "slides" listesi bulunamadı.');
@@ -198,8 +222,13 @@ class NvidiaPresentation {
     }
     return NvidiaPresentation(
       title: title != null && title.trim().isNotEmpty ? title.trim() : null,
-      targetAudience: targetAudience != null && targetAudience.trim().isNotEmpty ? targetAudience.trim() : null,
-      learningObjective: learningObjective != null && learningObjective.trim().isNotEmpty ? learningObjective.trim() : null,
+      targetAudience: targetAudience != null && targetAudience.trim().isNotEmpty
+          ? targetAudience.trim()
+          : null,
+      learningObjective:
+          learningObjective != null && learningObjective.trim().isNotEmpty
+              ? learningObjective.trim()
+              : null,
       slides: slides,
     );
   }
@@ -222,6 +251,13 @@ class NvidiaPresentationService {
     this.customCandidateModels,
     this.client,
   });
+
+  @visibleForTesting
+  static int minimumAllowedSlides(int slideCount) {
+    // A one- or two-slide request is valid; the previous lower bound of 3
+    // made num.clamp throw because its lower bound exceeded its upper bound.
+    return slideCount <= 3 ? slideCount : slideCount - 1;
+  }
 
   Future<NvidiaPresentation> generatePresentation(
     String topic, {
@@ -281,13 +317,14 @@ class NvidiaPresentationService {
 
     for (var i = 0; i < modelsToTry.length; i++) {
       final candidateModel = modelsToTry[i];
-      final remaining = AiModelConfig.presentationRequestDeadline -
-          requestStopwatch.elapsed;
+      final remaining =
+          AiModelConfig.presentationRequestDeadline - requestStopwatch.elapsed;
       if (remaining.compareTo(
             AiModelConfig.minimumViableAttemptFor(candidateModel),
           ) <
           0) {
-        lastError = 'Toplam AI istek bütçesinde $candidateModel için yeterli süre kalmadı.';
+        lastError =
+            'Toplam AI istek bütçesinde $candidateModel için yeterli süre kalmadı.';
         break;
       }
       final configuredTimeout =
@@ -348,7 +385,7 @@ class NvidiaPresentationService {
                 presentation.slides.take(slideCount).toList(growable: false),
           );
         }
-        final minAllowedSlides = (slideCount - 1).clamp(3, slideCount);
+        final minAllowedSlides = minimumAllowedSlides(slideCount);
         if (client == null && presentation.slides.length < minAllowedSlides) {
           throw FormatException(
             'NVIDIA $candidateModel $slideCount yerine '
@@ -371,7 +408,8 @@ class NvidiaPresentationService {
               .toList(growable: false),
         );
         if (rejectionReason != null) {
-          throw FormatException('İçerik kalite kapısı reddetti: $rejectionReason');
+          throw FormatException(
+              'İçerik kalite kapısı reddetti: $rejectionReason');
         }
 
         final judgeService = PresentationJudgeService(
@@ -383,6 +421,7 @@ class NvidiaPresentationService {
           presentation: presentation,
           topic: topic,
           targetAudience: presentation.targetAudience ?? 'general',
+          language: language,
         );
 
         AiRouterLogger.logDetailedQuality(
@@ -425,9 +464,11 @@ class NvidiaPresentationService {
               targetAudience: revised.targetAudience ??
                   presentation.targetAudience ??
                   'general',
+              language: language,
             );
 
-            if (revisedQuality.overallScore > qualityResult.overallScore) {
+            if (revisedQuality.isPass ||
+                revisedQuality.overallScore > qualityResult.overallScore) {
               presentation = revised;
               qualityResult = revisedQuality;
               AiRouterLogger.logRevision(
@@ -462,13 +503,51 @@ class NvidiaPresentationService {
         }
 
         if (checkQuality) {
+          final finalReason = PresentationContentQuality.rejectionReason(
+            presentation.slides
+                .map((s) => PresentationContentSample(
+                      title: s.title,
+                      content: s.content,
+                      type: s.type,
+                      keywords: s.keywords,
+                    ))
+                .toList(growable: false),
+            language: language,
+          );
+          if (finalReason != null) {
+            throw FormatException(
+                'Revizyon sonrası içerik kalite kontrolü: $finalReason');
+          }
+          if (qualityResult.needsRevision &&
+              qualityResult.slideIssues.any((issue) => const {
+                    'content_format',
+                    'readability',
+                    'redundancy',
+                  }.contains(issue['category']))) {
+            throw const FormatException(
+                'Revizyon sonrası metin biçimi, dil veya tekrar sorunu sürüyor.');
+          }
+          const seriousJudgeIssueCategories = {
+            'factual_accuracy',
+            'visual_relevance',
+            'audience_fit',
+            'pedagogy',
+            'redundancy',
+            'content_format',
+            'readability',
+          };
+          final unresolvedJudgeIssue = qualityResult.slideIssues.any(
+            (issue) => seriousJudgeIssueCategories.contains(issue['category']),
+          );
+          if (unresolvedJudgeIssue) {
+            throw const FormatException(
+              'Kalite denetçisi ciddi bir sorunu çözülmemiş olarak bildirdi.',
+            );
+          }
           if (qualityResult.overallScore < 75) {
-            final isLastCandidate = i == modelsToTry.length - 1;
-            if (!isLastCandidate) {
-              throw FormatException(
-                'Kalite kontrolü ve denetçi reddetti (Skor: ${qualityResult.overallScore}/100, minimum 75 gereklidir).',
-              );
-            }
+            throw FormatException(
+              'Kalite kontrolü ve denetçi reddetti (Skor: ${qualityResult.overallScore}/100, minimum 75 gereklidir).',
+            );
           }
         }
 

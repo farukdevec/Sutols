@@ -13,6 +13,9 @@ service cloud.firestore {
 
 
     match /presentations/{presentationId} {
+      // An absent create-only ID is also the receipt check for an atomic save.
+      allow get: if isVerifiedUser()
+                    && !exists(/databases/$(database)/documents/presentations/$(presentationId));
       allow read: if isVerifiedUser()
                    && (isAdmin() || request.auth.uid == resource.data.userId
                        || resource.data.shared == true);
@@ -38,7 +41,7 @@ service cloud.firestore {
       allow read: if isVerifiedUser()
                   && (isAdmin() || parentReadable(request.auth.uid, presentationId));
       allow create: if isVerifiedUser() && isNotSuspended(request.auth.uid)
-                    && parentWritable(request.auth.uid, presentationId)
+                    && parentWritableAfter(request.auth.uid, presentationId)
                     && request.resource.data.order is int;
       allow update: if isVerifiedUser() && isNotSuspended(request.auth.uid)
                     && (isAdmin() || parentWritable(request.auth.uid, presentationId));
@@ -54,7 +57,7 @@ service cloud.firestore {
                   && (isAdmin() || parentReadable(request.auth.uid, presentationId));
       allow create: if isVerifiedUser() && isNotSuspended(request.auth.uid)
                     && (isAdmin() || (
-                         parentWritable(request.auth.uid, presentationId)
+                         parentWritableAfter(request.auth.uid, presentationId)
                          && request.resource.data.updatedByUid == request.auth.uid));
       allow update: if isVerifiedUser() && isNotSuspended(request.auth.uid)
                     && (isAdmin() || (
@@ -244,6 +247,14 @@ service cloud.firestore {
 
     function parentWritable(uid, presentationId) {
       return parentOwnedBy(uid, presentationId) || parentShared(presentationId);
+    }
+
+    // Creation may include the parent in the same atomic commit. Existing
+    // update/delete checks deliberately continue to inspect the current parent.
+    function parentWritableAfter(uid, presentationId) {
+      let parent = getAfter(/databases/$(database)/documents/presentations/$(presentationId)).data;
+      return parent.userId == uid
+        || ('shared' in parent && parent.shared == true);
     }
 
 

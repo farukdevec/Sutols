@@ -87,7 +87,8 @@ void main() {
 
   group('GrokPresentationService API key configuration tests', () {
     test('throws exception when API key and proxy URL are both empty', () {
-      final service = GrokPresentationService(customApiKey: '', customProxyUrl: '');
+      final service =
+          GrokPresentationService(customApiKey: '', customProxyUrl: '');
       expect(
         () => service.generatePresentation('Yapay Zeka'),
         throwsA(isA<Exception>()),
@@ -96,7 +97,8 @@ void main() {
 
     test('effectiveApiKey prefers customApiKey over static apiKey', () {
       GrokPresentationService.apiKey = 'static_key';
-      final serviceWithCustom = GrokPresentationService(customApiKey: 'custom_key');
+      final serviceWithCustom =
+          GrokPresentationService(customApiKey: 'custom_key');
       final serviceWithoutCustom = GrokPresentationService();
 
       expect(serviceWithCustom.effectiveApiKey, 'custom_key');
@@ -108,17 +110,20 @@ void main() {
 
     test('effectiveProxyUrl prefers customProxyUrl over static proxyUrl', () {
       GrokPresentationService.proxyUrl = 'https://sutols.online/grok';
-      final serviceWithCustom = GrokPresentationService(customProxyUrl: 'https://custom.proxy/grok');
+      final serviceWithCustom =
+          GrokPresentationService(customProxyUrl: 'https://custom.proxy/grok');
       final serviceWithoutCustom = GrokPresentationService();
 
       expect(serviceWithCustom.effectiveProxyUrl, 'https://custom.proxy/grok');
-      expect(serviceWithoutCustom.effectiveProxyUrl, 'https://sutols.online/grok');
+      expect(
+          serviceWithoutCustom.effectiveProxyUrl, 'https://sutols.online/grok');
 
       // Reset static proxyUrl
       GrokPresentationService.proxyUrl = '';
     });
 
-    test('generatePresentation succeeds when mockClient returns valid response', () async {
+    test('generatePresentation succeeds when mockClient returns valid response',
+        () async {
       final mockClient = MockClient((request) async {
         return http.Response.bytes(
           utf8.encode(jsonEncode({
@@ -129,7 +134,8 @@ void main() {
                     'slides': [
                       {
                         'title': 'Grok Slayt',
-                        'content': '- Model mimarisinin ilk temeli\n- İkinci derin analitik aşama\n- Üçüncü stratejik optimizasyon',
+                        'content':
+                            '- Mimari: Katmanlar verideki ilişkileri öğrenir.\n- Analiz: Model girdilerdeki örüntüleri belirler.\n- Optimizasyon: Eğitim hatası parametre güncellemeleriyle azaltılır.',
                         'keywords': ['grok'],
                       }
                     ]

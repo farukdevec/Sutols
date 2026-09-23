@@ -593,6 +593,59 @@ class PresentationController extends ChangeNotifier {
     );
   }
 
+  void updateSelectedTextVerticalAlign(PresentationTextVerticalAlign value) {
+    _replaceSelectedTextBlock(
+      selectedTextBlock?.copyWith(verticalAlign: value),
+    );
+  }
+
+  void updateSelectedTextOverflow(PresentationTextOverflow value) {
+    _replaceSelectedTextBlock(
+      selectedTextBlock?.copyWith(overflow: value),
+    );
+  }
+
+  void updateSelectedTextResizeMode(PresentationTextResizeMode value) {
+    _replaceSelectedTextBlock(
+      selectedTextBlock?.copyWith(resizeMode: value),
+    );
+  }
+
+  void updateSelectedTextPadding(double value) {
+    _replaceSelectedTextBlock(
+      selectedTextBlock?.copyWith(padding: value.clamp(0, 80).toDouble()),
+    );
+  }
+
+  void updateSelectedTextLineHeight(double? value) {
+    _replaceSelectedTextBlock(
+      selectedTextBlock?.copyWith(
+        lineHeight: value?.clamp(.6, 3).toDouble(),
+      ),
+    );
+  }
+
+  void updateSelectedTextRotation(double value) {
+    _replaceSelectedTextBlock(
+      selectedTextBlock?.copyWith(
+        rotationDegrees: ((value + 180) % 360) - 180,
+      ),
+    );
+  }
+
+  void rotateSelectedTextBy(double deltaDegrees) {
+    final current = selectedTextBlock;
+    if (current == null || deltaDegrees == 0) return;
+    _beginSelectionTransform();
+    _replaceSelectedTextBlockWithoutHistory(
+      current.copyWith(
+        rotationDegrees:
+            ((current.rotationDegrees + deltaDegrees + 180) % 360) - 180,
+      ),
+    );
+    notifyListeners();
+  }
+
   void updateSelectedModelAutoRotate(bool value) {
     final current = selectedComponentBlock;
     if (current == null ||
@@ -2254,6 +2307,16 @@ class PresentationController extends ChangeNotifier {
     _moveSelection(delta, canvasSize);
   }
 
+  void nudgeSelectedItems(Offset pixelDelta) {
+    if (!hasSelection) return;
+    final referenceCanvas = Size(
+      1000,
+      1000 / effectSettings.calculatedAspectRatio,
+    );
+    _beginSelectionTransform();
+    _moveSelection(pixelDelta, referenceCanvas);
+  }
+
   void _beginSelectionTransform() {
     _selectionTransformIdleTimer?.cancel();
     if (!_selectionTransformActive) {
@@ -2340,10 +2403,14 @@ class PresentationController extends ChangeNotifier {
 
     final deltaX = delta.dx / canvasSize.width;
     final deltaY = delta.dy / canvasSize.height;
+    final minWidth = 20 / canvasSize.width;
     var left = current.position.dx;
     var top = current.position.dy;
     var right = left + current.widthFactor;
-    final currentHeight = current.heightFactor ?? renderedHeightFactor;
+    final currentHeight = current.heightFactor == null ||
+            current.overflow == PresentationTextOverflow.expand
+        ? renderedHeightFactor
+        : current.heightFactor!;
     var bottom = top + currentHeight;
 
     if (fromLeft) left += deltaX;
@@ -2351,13 +2418,13 @@ class PresentationController extends ChangeNotifier {
     if (fromTop) top += deltaY;
     if (fromBottom) bottom += deltaY;
 
-    const minHeight = 0.06;
+    final minHeight = 20 / canvasSize.height;
 
     if (fromLeft) {
-      left = math.min(left, right - _minTextWidthFactor);
+      left = math.min(left, right - minWidth);
     }
     if (fromRight) {
-      right = math.max(right, left + _minTextWidthFactor);
+      right = math.max(right, left + minWidth);
     }
     if (fromTop) {
       top = math.min(top, bottom - minHeight);
@@ -2366,18 +2433,51 @@ class PresentationController extends ChangeNotifier {
       bottom = math.max(bottom, top + minHeight);
     }
 
-    final nextHeight = bottom - top;
+    var nextHeight = bottom - top;
     final resizeVertically = fromTop || fromBottom;
-    final nextFontSize = resizeVertically && currentHeight > 0
-        ? (current.fontSize * (nextHeight / currentHeight))
-            .clamp(minTextFontSize, maxTextFontSize)
-            .toDouble()
-        : current.fontSize;
+    final resizeHorizontally = fromLeft || fromRight;
+    final isCorner = resizeVertically && resizeHorizontally;
+    var nextWidth = right - left;
+    var nextFontSize = current.fontSize;
+
+    if (isCorner &&
+        current.resizeMode == PresentationTextResizeMode.proportional &&
+        current.widthFactor > 0 &&
+        currentHeight > 0) {
+      final widthScale = nextWidth / current.widthFactor;
+      final heightScale = nextHeight / currentHeight;
+      var scale = (widthScale - 1).abs() >= (heightScale - 1).abs()
+          ? widthScale
+          : heightScale;
+      final minScale = math.max(
+        minWidth / current.widthFactor,
+        math.max(
+          minHeight / currentHeight,
+          minTextFontSize / current.fontSize,
+        ),
+      );
+      final maxScale = maxTextFontSize / current.fontSize;
+      scale = scale.clamp(minScale, maxScale).toDouble();
+      nextWidth = current.widthFactor * scale;
+      nextHeight = currentHeight * scale;
+      nextFontSize = current.fontSize * scale;
+
+      if (fromLeft) {
+        left = right - nextWidth;
+      } else {
+        right = left + nextWidth;
+      }
+      if (fromTop) {
+        top = bottom - nextHeight;
+      } else {
+        bottom = top + nextHeight;
+      }
+    }
 
     _replaceSelectedTextBlockWithoutHistory(
       current.copyWith(
         position: Offset(left, top),
-        widthFactor: right - left,
+        widthFactor: nextWidth,
         heightFactor: resizeVertically ? nextHeight : current.heightFactor,
         fontSize: nextFontSize,
       ),

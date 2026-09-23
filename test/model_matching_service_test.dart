@@ -81,7 +81,8 @@ void main() {
     expect(matches, isEmpty);
   });
 
-  test('presentation-like GLB assets are never used as automatic 3D objects', () {
+  test('presentation-like GLB assets are never used as automatic 3D objects',
+      () {
     const matrix = ModelCatalogEntry(
       id: 'etki-efor-matrisi',
       name: 'Etki Efor Matrisi',
@@ -125,6 +126,89 @@ void main() {
     );
 
     expect(matches, isNotEmpty);
+    expect(
+      ModelMatchingService.isStrong3dMatch(matches.single),
+      isFalse,
+      reason: 'matched terms: ${matches.single.matchedTerms}',
+    );
+  });
+
+  test('education ethics does not select an ethical hacker workstation', () {
+    const hacker = ModelCatalogEntry(
+      id: 'etik-hacker-istasyonu',
+      name: 'Etik Hacker Çalışma İstasyonu',
+      modelUrl: 'hacker.glb',
+      thumbnailUrl: '',
+      tags: <String>['etik', 'hacker', 'siber güvenlik', 'bilgisayar'],
+      category: 'teknoloji',
+      tier: 'free',
+    );
+
+    final matches = ModelMatchingService.rankCatalogModels(
+      models: const <ModelCatalogEntry>[hacker],
+      keywords: const <String>[
+        'Eğitimde Yapay Zekâ',
+        'Etik İlkeler',
+        'öğrenci verisinin adil ve sorumlu kullanımı',
+      ],
+    );
+
+    expect(matches, isNotEmpty);
     expect(ModelMatchingService.isStrong3dMatch(matches.single), isFalse);
+    expect(
+      ModelMatchingService.bestStrongMatchPreferUnused(matches, <String>{}),
+      isNull,
+    );
+  });
+
+  test('generic benefits and risks do not select a bankruptcy scene', () {
+    const bankruptcy = ModelCatalogEntry(
+      id: 'iflas-eden-sirket',
+      name: 'İflas Eden Şirket Binası',
+      modelUrl: 'iflas.glb',
+      thumbnailUrl: '',
+      tags: <String>['iflas', 'şirket', 'ekonomi', 'risk'],
+      category: 'ekonomi',
+      tier: 'free',
+    );
+
+    final matches = ModelMatchingService.rankCatalogModels(
+      models: const <ModelCatalogEntry>[bankruptcy],
+      keywords: const <String>[
+        'Faydalar ve Riskler',
+        'öğrenme verimliliği ve yanlış bilgi riski',
+        'eğitim',
+      ],
+    );
+
+    expect(matches, isNotEmpty);
+    expect(
+      ModelMatchingService.isStrong3dMatch(matches.single),
+      isFalse,
+      reason: 'matched terms: ${matches.single.matchedTerms}',
+    );
+  });
+
+  test('specific cybersecurity evidence can still select ethical hacker', () {
+    const hacker = ModelCatalogEntry(
+      id: 'etik-hacker-istasyonu',
+      name: 'Etik Hacker Çalışma İstasyonu',
+      modelUrl: 'hacker.glb',
+      thumbnailUrl: '',
+      tags: <String>['etik', 'hacker', 'siber güvenlik', 'bilgisayar'],
+      category: 'teknoloji',
+      tier: 'free',
+    );
+
+    final matches = ModelMatchingService.rankCatalogModels(
+      models: const <ModelCatalogEntry>[hacker],
+      keywords: const <String>[
+        'Etik Hacker',
+        'siber güvenlik uzmanının çalışma istasyonu',
+      ],
+    );
+
+    expect(matches, hasLength(1));
+    expect(ModelMatchingService.isStrong3dMatch(matches.single), isTrue);
   });
 }

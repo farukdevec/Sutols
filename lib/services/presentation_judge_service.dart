@@ -19,12 +19,13 @@ class PresentationJudgeService {
   });
 
   /// Sunumu çok boyutlu olarak denetler.
-  /// Skor >= 85 ise ek ağ maliyeti yaratmadan anında PASS döner.
-  /// Skor 75-84 aralığında ise hızlı AI Judge analizi yapar.
+  /// Yerel biçim denetimini AI konu/dil denetimiyle birleştirir.
+  /// Yüksek bir AI puanı yerel biçim ihlalini geçersiz kılamaz.
   Future<QualityScoreResult> judgePresentation({
     required NvidiaPresentation presentation,
     required String topic,
     String targetAudience = 'general',
+    String language = 'turkish',
     bool forceAiJudge = false,
   }) async {
     final samples = presentation.slides
@@ -41,27 +42,32 @@ class PresentationJudgeService {
     final heuristicResult = PresentationContentQuality.evaluateQuality(
       samples,
       targetAudience: targetAudience,
+      language: language,
     );
 
     // Heuristik yalnızca biçim, yoğunluk ve tekrar sinyalidir; konu
     // doğruluğunu kanıtlayamaz. Bu nedenle her üretim AI denetiminden geçer.
     try {
-      final judgePrompt = '''Aşağıdaki sunumu pedagojik doğruluk, hedef kitle uyumu, anlatı akışı ve tekrar açısından denetle.
+      final judgePrompt =
+          '''Aşağıdaki sunumu pedagojik doğruluk, hedef kitle uyumu, anlatı akışı ve tekrar açısından denetle.
 
 KONU: $topic
 HEDEF KİTLE: $targetAudience
+DİL: $language
 SLAYT SAYISI: ${presentation.slides.length}
 
 SUNUM:
 ${jsonEncode({
-        'slides': presentation.slides.map((s) => {
-              'title': s.title,
-              'purpose': s.purpose,
-              'content': s.content,
-              'type': s.type,
-              'visual': s.visual,
-            }).toList()
-      })}
+            'slides': presentation.slides
+                .map((s) => {
+                      'title': s.title,
+                      'purpose': s.purpose,
+                      'content': s.content,
+                      'type': s.type,
+                      'visual': s.visual,
+                    })
+                .toList()
+          })}
 
 Yalnızca ve doğrudan tek bir JSON nesnesi dön:
 {
@@ -81,7 +87,14 @@ ZORUNLU DENETİM:
    ciddi biçimde düşür ve ilgili slaytı issue olarak yaz.
 2. visual.subject, must_include, must_avoid veya kind varsa; bunların slayt
    metnini somut biçimde destekleyip desteklemediğini ayrıca denetle.
-3. Biçim düzgün olsa bile kavramsal hata varsa yüksek puan verme.''';
+3. Biçim düzgün olsa bile kavramsal hata varsa yüksek puan verme.
+4. Türkçe madde slaytlarında Vurgulu Başlık: Açıklama biçimini denetle:
+   başlık 1-5 kelime, açıklama en fazla 20 kelimelik tam bir cümle olmalı.
+   Kapak, alıntı ve tek soruluk slaytlar hariç eksik biçimi content_format
+   kategorisinde bildir ve revision_required=true yap.
+5. Eksik yüklem, yanlış iyelik/durum/bağlaç eki, birebir çeviri ve yinelenen
+   fikirleri denetle; bozuk Türkçeyi readability kategorisinde bildir.
+   Girişte kapsam, ana düşünce ve temel sorunun açık olduğunu kontrol et.''';
 
       final httpClient = client;
       final body = {
@@ -114,7 +127,8 @@ ZORUNLU DENETİM:
 
       if (response.statusCode == 200) {
         final decoded = jsonDecode(response.body);
-        final content = (decoded['choices']?[0]?['message']?['content'] ?? '').toString();
+        final content =
+            (decoded['choices']?[0]?['message']?['content'] ?? '').toString();
         Map<String, dynamic>? parsedJudge;
         try {
           final direct = jsonDecode(content);
@@ -122,7 +136,9 @@ ZORUNLU DENETİM:
             parsedJudge = direct.map((k, v) => MapEntry(k.toString(), v));
           }
         } catch (_) {}
-        if (parsedJudge == null && content.contains('{') && content.contains('}')) {
+        if (parsedJudge == null &&
+            content.contains('{') &&
+            content.contains('}')) {
           try {
             final firstBrace = content.indexOf('{');
             final lastBrace = content.lastIndexOf('}');
@@ -152,16 +168,28 @@ ZORUNLU DENETİM:
               : heuristicResult.visualPotential * 20;
           // A deck cannot pass merely because it is well formatted.  Topic
           // correctness is a hard ceiling on the aggregate result.
-          final correctedScore = math.min(
-            judgeScore.clamp(0, 100),
-            factualPercent,
-          ).toInt();
+          final correctedScore = math
+              .min(
+                judgeScore.clamp(0, 100),
+                factualPercent,
+              )
+              .toInt();
 
           final rawIssues = parsedJudge['issues'];
-          final issuesList = <Map<String, dynamic>>[];
+          final issuesList = <Map<String, dynamic>>[
+            ...heuristicResult.slideIssues,
+          ];
           if (rawIssues is List) {
             for (final item in rawIssues) {
               if (item is Map) {
+                // Exact label and word-count rules are deterministic. The
+                // small AI judge can incorrectly flag already-valid bullets.
+                if (item['category'] == 'content_format' &&
+                    !heuristicResult.slideIssues.any((issue) =>
+                        issue['category'] == 'content_format' &&
+                        issue['slide'] == item['slide'])) {
+                  continue;
+                }
                 issuesList.add(item.map((k, v) => MapEntry(k.toString(), v)));
               }
             }
@@ -174,22 +202,28 @@ ZORUNLU DENETİM:
 
           return QualityScoreResult(
             overallScore: correctedScore,
-            factualAccuracy:
-                (factualPercent / 5).round().clamp(0, 20).toInt(),
+            factualAccuracy: (factualPercent / 5).round().clamp(0, 20).toInt(),
             audienceFit: heuristicResult.audienceFit,
             pedagogicalValue: heuristicResult.pedagogicalValue,
             narrativeCoherence: heuristicResult.narrativeCoherence,
             redundancy: heuristicResult.redundancy,
             readability: heuristicResult.readability,
-            visualPotential: math.min(
-              heuristicResult.visualPotential,
-              (visualPercent / 20).round().clamp(0, 5),
-            ).toInt(),
-            slideIssues: issuesList.isNotEmpty ? issuesList : heuristicResult.slideIssues,
+            visualPotential: math
+                .min(
+                  heuristicResult.visualPotential,
+                  (visualPercent / 20).round().clamp(0, 5),
+                )
+                .toInt(),
+            slideIssues: issuesList.isNotEmpty
+                ? issuesList
+                : heuristicResult.slideIssues,
             globalIssues: globalList,
-            needsRevision: parsedJudge['revision_required'] == true ||
+            needsRevision: heuristicResult.needsRevision ||
+                parsedJudge['revision_required'] == true ||
                 (correctedScore >= 75 && correctedScore < 85),
-            isPass: correctedScore >= 85,
+            isPass: correctedScore >= 85 &&
+                !heuristicResult.needsRevision &&
+                parsedJudge['revision_required'] != true,
           );
         }
       }
@@ -210,14 +244,16 @@ ZORUNLU DENETİM:
     String modelName = AiModelConfig.modelNemotronSuper,
   }) async {
     final originalJson = jsonEncode({
-      'slides': originalPresentation.slides.map((s) => {
-            'title': s.title,
-            if (s.purpose != null) 'purpose': s.purpose,
-            'type': s.type,
-            'content': s.content,
-            if (s.keywords.isNotEmpty) 'visual_keywords': s.keywords,
-            if (s.visual != null) 'visual': s.visual,
-          }).toList()
+      'slides': originalPresentation.slides
+          .map((s) => {
+                'title': s.title,
+                if (s.purpose != null) 'purpose': s.purpose,
+                'type': s.type,
+                'content': s.content,
+                if (s.keywords.isNotEmpty) 'visual_keywords': s.keywords,
+                if (s.visual != null) 'visual': s.visual,
+              })
+          .toList()
     });
 
     final revisionPrompt = PresentationPromptBuilder.buildRevisionPrompt(
@@ -233,10 +269,15 @@ ZORUNLU DENETİM:
     final body = {
       'model': modelName,
       'messages': [
+        {
+          'role': 'system',
+          'content': PresentationPromptBuilder.buildSystemInstruction(
+              language: language)
+        },
         {'role': 'user', 'content': revisionPrompt}
       ],
       'temperature': 0.3,
-      'max_tokens': 4096,
+      'max_tokens': (slideCount * 650 + 1800).clamp(4096, 6144),
     };
 
     final response = await (httpClient != null
@@ -260,11 +301,13 @@ ZORUNLU DENETİM:
 
     if (response.statusCode == 200) {
       final decoded = jsonDecode(response.body);
-      final content = (decoded['choices']?[0]?['message']?['content'] ?? '').toString();
+      final content =
+          (decoded['choices']?[0]?['message']?['content'] ?? '').toString();
       final parsed = SafeJsonParser.parsePresentationPayload(content);
       return NvidiaPresentation.fromJson(parsed);
     }
 
-    throw Exception('Revizyon isteği başarısız oldu (HTTP ${response.statusCode}).');
+    throw Exception(
+        'Revizyon isteği başarısız oldu (HTTP ${response.statusCode}).');
   }
 }

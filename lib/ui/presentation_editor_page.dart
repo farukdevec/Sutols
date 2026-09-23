@@ -61,6 +61,7 @@ class _PresentationEditorPageState extends State<PresentationEditorPage> {
           onDragSelectedText: controller.moveSelectedText,
           onInlineTextChanged: controller.updateSelectedText,
           onResizeSelectedText: controller.resizeSelectedTextByHandle,
+          onRotateSelectedText: controller.rotateSelectedTextBy,
           onMarqueeSelectionChanged: ({
             required textBlockIds,
             required componentBlockIds,

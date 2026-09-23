@@ -54,6 +54,7 @@ class _PresentationPreviewPageState extends State<PresentationPreviewPage>
   Offset _pendingTourLook = Offset.zero;
   bool _pointerLocked = false;
   bool _tourStarted = false;
+  double _tourSpeed = .35;
   bool _tourNarrationOpen = false;
   bool _returnToTourEditor = false;
   _TourPlacementAction? _tourPlacementAction;
@@ -379,7 +380,8 @@ class _PresentationPreviewPageState extends State<PresentationPreviewPage>
                     ? LogicalKeyboardKey.keyD
                     : null;
     if (key != null) {
-      final tourActive = _tourStageKey.currentState?.hasTour == true &&
+      final tourActive = _tourStarted &&
+          _tourStageKey.currentState?.hasTour == true &&
           _tourStageKey.currentState?.isTourPointPlacementActive != true;
       if (event is KeyDownEvent || event is KeyRepeatEvent) {
         if (tourActive) {
@@ -538,6 +540,16 @@ class _PresentationPreviewPageState extends State<PresentationPreviewPage>
                     _TourExperienceHud(
                       tourStarted: _tourStarted,
                       onEngage: _engageTour,
+                      onPause: _pauseTour,
+                      speed: _tourSpeed,
+                      onSpeedChanged: (value) =>
+                          setState(() => _tourSpeed = value),
+                      onPrevious:
+                          safeIndex > 0 || _fragmentStep > 0 ? _previous : null,
+                      onNext: safeIndex < pageCount - 1 ||
+                              _fragmentStep < maxFragmentStep
+                          ? _next
+                          : null,
                       onReset: () =>
                           _tourStageKey.currentState?.resetTourView(),
                       onEdit: _returnToEditor,
@@ -545,13 +557,13 @@ class _PresentationPreviewPageState extends State<PresentationPreviewPage>
                       onToggleNarration: _toggleTourNarration,
                       onClose: _close,
                     ),
-                  if (isTourPage)
+                  if (isTourPage && _tourStarted)
                     _TourJoystick(
                       onMove: ({required forward, required right}) {
                         _engageTour();
                         _tourStageKey.currentState?.moveTour(
-                          forward: forward,
-                          right: right,
+                          forward: forward * _tourSpeed,
+                          right: right * _tourSpeed,
                         );
                       },
                     ),
@@ -605,8 +617,9 @@ class _PresentationPreviewPageState extends State<PresentationPreviewPage>
             Duration.microsecondsPerSecond;
     // Tüm çalışma ortamları aynı, daha tepkisel yürüme hızını kullanır.
     // İvme kuyruğu yoktur; tuş bırakıldığında hareket hemen kesilir.
-    final movement =
-        ModelTourRuntime.keyboardWalkSpeedMetersPerSecond * seconds;
+    final movement = ModelTourRuntime.keyboardWalkSpeedMetersPerSecond *
+        seconds *
+        _tourSpeed;
     stage.moveTour(
       forward: forward * movement,
       right: right * movement,
@@ -651,6 +664,15 @@ class _PresentationPreviewPageState extends State<PresentationPreviewPage>
     // sürükle-bak akışında tutmak, hem fareyi hem de yönü kameraya bağlı
     // WASD hareketini kararlı hale getirir.
     if (!_tourStarted && mounted) setState(() => _tourStarted = true);
+    _focusNode.requestFocus();
+  }
+
+  void _pauseTour() {
+    _stopTourMovement();
+    _flushPendingTourLook();
+    _stopTourLook();
+    if (isPointerLocked) exitPointerLock();
+    setState(() => _tourStarted = false);
     _focusNode.requestFocus();
   }
 
@@ -941,7 +963,8 @@ class _TourJoystickState extends State<_TourJoystick> {
       final ratio = _stick / _radius;
       if (ratio.distanceSquared < .0025) return;
       // Yukarı W/ileri, sağ D/sağ olacak şekilde hareketi tur kamerasına ver.
-      widget.onMove(forward: -ratio.dy * .72, right: ratio.dx * .72);
+      final step = ModelTourRuntime.keyboardWalkSpeedMetersPerSecond * .032;
+      widget.onMove(forward: -ratio.dy * step, right: ratio.dx * step);
     });
   }
 
@@ -1019,9 +1042,19 @@ class _TourExperienceHud extends StatelessWidget {
     required this.narrationOpen,
     required this.onToggleNarration,
     required this.onClose,
+    required this.onPause,
+    required this.speed,
+    required this.onSpeedChanged,
+    required this.onPrevious,
+    required this.onNext,
   });
 
   final bool tourStarted;
+  final VoidCallback onPause;
+  final double speed;
+  final ValueChanged<double> onSpeedChanged;
+  final VoidCallback? onPrevious;
+  final VoidCallback? onNext;
   final VoidCallback onEngage;
   final VoidCallback onReset;
   final VoidCallback onEdit;
@@ -1032,108 +1065,83 @@ class _TourExperienceHud extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Positioned(
-      top: 18,
-      left: 18,
-      right: 18,
+      top: 12,
+      left: 12,
+      right: 12,
       child: SafeArea(
-        child: Row(
-          children: <Widget>[
-            DecoratedBox(
-              decoration: BoxDecoration(
-                color: const Color(0xDC071426),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: const Color(0x4D7DD3FC)),
-                boxShadow: const <BoxShadow>[
-                  BoxShadow(
-                    color: Color(0x55000000),
-                    blurRadius: 22,
-                    offset: Offset(0, 8),
-                  ),
-                ],
-              ),
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(13, 10, 10, 10),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: <Widget>[
-                    Icon(
-                      tourStarted
-                          ? Icons.gamepad_rounded
-                          : Icons.explore_rounded,
-                      color: const Color(0xFF7DD3FC),
-                      size: 19,
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      tourStarted
-                          ? 'Keşif modu · WASD / Oklar'
-                          : 'Sanal tur hazır',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    if (!tourStarted)
-                      _TourHudButton(
-                        icon: Icons.play_arrow_rounded,
-                        label: 'Turu başlat',
-                        onPressed: onEngage,
-                      )
-                    else
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: <Widget>[
-                          const Icon(
-                            Icons.mouse_rounded,
-                            size: 15,
-                            color: Color(0xFFA5F3FC),
-                          ),
-                          const SizedBox(width: 5),
-                          const Text(
-                            'Sürükle: bak · WASD / Oklar: yürü',
-                            style: TextStyle(
-                              color: Color(0xFFA5F3FC),
-                              fontSize: 12,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          _TourHudButton(
-                            icon: Icons.explore_off_rounded,
-                            label: 'Sanal turu kapat',
-                            onPressed: onEdit,
-                          ),
-                        ],
-                      ),
-                  ],
+        child: Material(
+          color: const Color(0xED071426),
+          borderRadius: BorderRadius.circular(16),
+          child: Padding(
+            padding: const EdgeInsets.all(8),
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 4,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: <Widget>[
+                _TourHudButton(
+                  icon: tourStarted
+                      ? Icons.pause_rounded
+                      : Icons.play_arrow_rounded,
+                  label: tourStarted ? 'Gezinmeyi durdur' : 'Turu başlat',
+                  onPressed: tourStarted ? onPause : onEngage,
                 ),
-              ),
+                PopupMenuButton<double>(
+                  tooltip: 'Gezinme hızı',
+                  initialValue: speed,
+                  onSelected: onSpeedChanged,
+                  itemBuilder: (_) => const [
+                    PopupMenuItem(value: .15, child: Text('Yavaş')),
+                    PopupMenuItem(value: .35, child: Text('Normal')),
+                    PopupMenuItem(value: 1.0, child: Text('Hızlı')),
+                  ],
+                  child: Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: Text(
+                        'Hız: ${speed == .15 ? 'Yavaş' : speed == 1 ? 'Hızlı' : 'Normal'}',
+                        style: const TextStyle(color: Colors.white)),
+                  ),
+                ),
+                _TourHudIconButton(
+                    tooltip: 'Başlangıç görünümüne dön',
+                    icon: Icons.center_focus_strong_rounded,
+                    onPressed: onReset),
+                IconButton(
+                    tooltip: 'Önceki slayt',
+                    onPressed: onPrevious,
+                    color: Colors.white,
+                    disabledColor: Colors.white30,
+                    icon: const Icon(Icons.chevron_left_rounded)),
+                IconButton(
+                    tooltip: 'Sonraki slayt',
+                    onPressed: onNext,
+                    color: Colors.white,
+                    disabledColor: Colors.white30,
+                    icon: const Icon(Icons.chevron_right_rounded)),
+                _TourHudIconButton(
+                    tooltip: narrationOpen
+                        ? 'Anlatım panelini kapat'
+                        : 'Slayt anlatımını aç',
+                    icon: Icons.speaker_notes_rounded,
+                    onPressed: onToggleNarration),
+                _TourHudButton(
+                    icon: Icons.save_outlined,
+                    label: 'Görünümü kaydet ve editöre dön',
+                    onPressed: onEdit),
+                _TourHudIconButton(
+                    tooltip: 'Sunumu kapat',
+                    icon: Icons.close_rounded,
+                    onPressed: onClose),
+                if (tourStarted)
+                  const Padding(
+                      padding: EdgeInsets.all(8),
+                      child: Text(
+                          'Sürükle: etrafa bak · WASD / Oklar veya joystick: ilerle',
+                          style: TextStyle(
+                              color: Color(0xFFA5F3FC), fontSize: 12))),
+              ],
             ),
-            const Spacer(),
-            _TourHudIconButton(
-              tooltip: 'Başlangıç görünümüne dön',
-              icon: Icons.center_focus_strong_rounded,
-              onPressed: onReset,
-            ),
-            const SizedBox(width: 8),
-            _TourHudIconButton(
-              tooltip: narrationOpen
-                  ? 'Anlatım panelini kapat'
-                  : 'Slayt anlatımını aç',
-              icon: narrationOpen
-                  ? Icons.speaker_notes_off_rounded
-                  : Icons.speaker_notes_rounded,
-              onPressed: onToggleNarration,
-            ),
-            const SizedBox(width: 8),
-            _TourHudIconButton(
-              tooltip: 'Sunumu kapat',
-              icon: Icons.close_rounded,
-              onPressed: onClose,
-            ),
-          ],
+          ),
         ),
       ),
     );
@@ -1177,7 +1185,7 @@ class _TourNarrationPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     final availableWidth = MediaQuery.sizeOf(context).width - 36;
     return Positioned(
-      top: 96,
+      top: MediaQuery.sizeOf(context).width < 600 ? 250 : 150,
       right: 18,
       child: SafeArea(
         child: SizedBox(

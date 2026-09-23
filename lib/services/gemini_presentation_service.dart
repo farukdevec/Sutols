@@ -36,12 +36,23 @@ class GeminiSlide {
 
   factory GeminiSlide.fromJson(Map<String, dynamic> json) {
     final rawTitle = (json['title'] ?? json['baslik']) as String? ?? '';
-    final subtitle = (json['subtitle'] ?? json['alt_baslik'] ?? json['sub_title'])?.toString();
+    final subtitle =
+        (json['subtitle'] ?? json['alt_baslik'] ?? json['sub_title'])
+            ?.toString();
     final rawContent = json['content'] ?? json['icerik'];
-    final rawKeywords = json['visual_keywords'] ?? json['keywords'] ?? json['anahtar_kelimeler'];
-    final rawType = json['type'] ?? json['slide_type'] ?? json['layout'] ?? json['tip'] ?? 'concept';
-    final purpose = (json['purpose'] ?? json['amac'] ?? json['role'])?.toString();
-    final keyMessage = (json['key_message'] ?? json['keyMessage'] ?? json['ana_mesaj'])?.toString();
+    final rawKeywords = json['visual_keywords'] ??
+        json['keywords'] ??
+        json['anahtar_kelimeler'];
+    final rawType = json['type'] ??
+        json['slide_type'] ??
+        json['layout'] ??
+        json['tip'] ??
+        'concept';
+    final purpose =
+        (json['purpose'] ?? json['amac'] ?? json['role'])?.toString();
+    final keyMessage =
+        (json['key_message'] ?? json['keyMessage'] ?? json['ana_mesaj'])
+            ?.toString();
     final rawSections = json['sections'] ?? json['bolumler'];
     final rawVisual = json['visual'] ?? json['gorsel'];
     final rawSources = json['sources'] ?? json['kaynaklar'];
@@ -51,11 +62,13 @@ class GeminiSlide {
       contentStr = rawContent;
     } else if (rawContent is Map) {
       final headline = rawContent['headline'] ?? rawContent['ana_fikir'] ?? '';
-      final supportingText = rawContent['supporting_text'] ?? rawContent['aciklama'] ?? '';
+      final supportingText =
+          rawContent['supporting_text'] ?? rawContent['aciklama'] ?? '';
       final rawKeyPoints = rawContent['key_points'] ?? rawContent['maddeler'];
       final lines = <String>[];
       final cleanHeadline = headline.toString().replaceAll('*', '').trim();
-      final cleanSupporting = supportingText.toString().replaceAll('*', '').trim();
+      final cleanSupporting =
+          supportingText.toString().replaceAll('*', '').trim();
       if (cleanHeadline.isNotEmpty && cleanSupporting.isNotEmpty) {
         lines.add('- $cleanHeadline: $cleanSupporting');
       } else if (cleanHeadline.isNotEmpty) {
@@ -91,9 +104,16 @@ class GeminiSlide {
         final lines = <String>[];
         for (final sec in sectionsList) {
           final heading = sec['heading'] ?? sec['title'] ?? sec['baslik'] ?? '';
-          final desc = sec['description'] ?? sec['desc'] ?? sec['text'] ?? sec['aciklama'] ?? sec['content'] ?? '';
-          if (heading.toString().trim().isNotEmpty && desc.toString().trim().isNotEmpty) {
-            lines.add('- ${heading.toString().trim()}: ${desc.toString().trim()}');
+          final desc = sec['description'] ??
+              sec['desc'] ??
+              sec['text'] ??
+              sec['aciklama'] ??
+              sec['content'] ??
+              '';
+          if (heading.toString().trim().isNotEmpty &&
+              desc.toString().trim().isNotEmpty) {
+            lines.add(
+                '- ${heading.toString().trim()}: ${desc.toString().trim()}');
           } else if (desc.toString().trim().isNotEmpty) {
             lines.add('- ${desc.toString().trim()}');
           } else if (heading.toString().trim().isNotEmpty) {
@@ -121,12 +141,17 @@ class GeminiSlide {
 
     return GeminiSlide(
       title: PresentationContentQuality.sanitizeTitle(rawTitle),
-      subtitle: subtitle != null && subtitle.trim().isNotEmpty ? subtitle.trim() : null,
+      subtitle: subtitle != null && subtitle.trim().isNotEmpty
+          ? subtitle.trim()
+          : null,
       content: PresentationContentQuality.normalizeContentBullets(contentStr),
       keywords: keywordsList,
       type: rawType.toString().toLowerCase().trim(),
-      purpose: purpose != null && purpose.trim().isNotEmpty ? purpose.trim() : null,
-      keyMessage: keyMessage != null && keyMessage.trim().isNotEmpty ? keyMessage.trim() : null,
+      purpose:
+          purpose != null && purpose.trim().isNotEmpty ? purpose.trim() : null,
+      keyMessage: keyMessage != null && keyMessage.trim().isNotEmpty
+          ? keyMessage.trim()
+          : null,
       sections: sectionsList,
       visual: visualMap,
       sources: sourcesList,
@@ -217,8 +242,9 @@ class GeminiPresentationService {
       );
 
       // Geçmiş referans aramasını 1.5s ile sınırla (üretimi geciktirmesin)
-      final references = await _findSimilarExported(topic)
-          .timeout(const Duration(milliseconds: 1500), onTimeout: () => const []);
+      final references = await _findSimilarExported(topic).timeout(
+          const Duration(milliseconds: 1500),
+          onTimeout: () => const []);
       final referenceBlock =
           references.isEmpty ? '' : _buildReferenceBlock(references);
 
@@ -230,9 +256,10 @@ class GeminiPresentationService {
       );
 
       final response = await model
-          .generateContent([Content.text(prompt)])
-          .timeout(timeout, onTimeout: () {
-        throw TimeoutException('Gemini isteği ${timeout.inSeconds} saniyede zaman aşımına uğradı.');
+          .generateContent([Content.text(prompt)]).timeout(timeout,
+              onTimeout: () {
+        throw TimeoutException(
+            'Gemini isteği ${timeout.inSeconds} saniyede zaman aşımına uğradı.');
       });
 
       final text = response.text;
@@ -253,9 +280,11 @@ class GeminiPresentationService {
                 (s) => PresentationContentSample(
                   title: s.title,
                   content: s.content,
+                  type: s.type,
                 ),
               )
               .toList(growable: false),
+          language: language,
         );
         if (reason != null) {
           throw FormatException('Gemini sunum kalite kontrolü: $reason');
@@ -277,7 +306,8 @@ class GeminiPresentationService {
       return presentation;
     } catch (e) {
       stopwatch.stop();
-      final errorType = e is TimeoutException ? AiErrorType.timeout : AiErrorType.unknown;
+      final errorType =
+          e is TimeoutException ? AiErrorType.timeout : AiErrorType.unknown;
       AiRouterLogger.logFailure(
         provider: 'Gemini',
         model: modelName,
@@ -384,9 +414,7 @@ class GeminiPresentationService {
       topic: data['topic'] as String? ?? '',
       titles: slides
           .map((s) => s['title'] as String)
-          .where((t) =>
-              t.isNotEmpty &&
-              !_isUiInstructionTitle(t))
+          .where((t) => t.isNotEmpty && !_isUiInstructionTitle(t))
           .toList(),
       layouts: slides
           .map((s) => s['layout'] as String)

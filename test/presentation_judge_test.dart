@@ -6,8 +6,96 @@ import 'package:sutol/services/nvidia_presentation_service.dart';
 import 'package:sutol/services/presentation_judge_service.dart';
 
 void main() {
+  test('AI format false positive does not override exact labeled-bullet checks',
+      () async {
+    final judge = PresentationJudgeService(
+        client: MockClient((_) async => http.Response(
+            jsonEncode({
+              'choices': [
+                {
+                  'message': {
+                    'content': jsonEncode({
+                      'score': 90,
+                      'factual_accuracy': 95,
+                      'revision_required': true,
+                      'issues': [
+                        {
+                          'slide': 1,
+                          'category': 'content_format',
+                          'problem': 'Labels missing'
+                        }
+                      ],
+                    })
+                  }
+                }
+              ]
+            }),
+            200)));
+    final result = await judge.judgePresentation(
+      presentation: const NvidiaPresentation(slides: [
+        NvidiaSlide(
+          title: 'Eğitim',
+          content:
+              '• **Uyarlama:** Alıştırmalar öğrencinin öğrenme hızına göre değişir.\n• **Denetim:** Öğretmen önerilerin doğruluğunu kontrol eder.',
+          keywords: [],
+          type: 'concept',
+        )
+      ]),
+      topic: 'Eğitim',
+      language: 'tr',
+    );
+    expect(result.slideIssues.where((i) => i['category'] == 'content_format'),
+        isEmpty);
+  });
+  test('high AI score cannot bypass deterministic Turkish format revision',
+      () async {
+    final judge = PresentationJudgeService(
+        client: MockClient((_) async => http.Response(
+            jsonEncode({
+              'choices': [
+                {
+                  'message': {
+                    'content': jsonEncode({
+                      'score': 99,
+                      'factual_accuracy': 99,
+                      'revision_required': false,
+                      'issues': [
+                        {
+                          'slide': 1,
+                          'category': 'visual_relevance',
+                          'problem': 'Check image'
+                        }
+                      ],
+                    })
+                  }
+                }
+              ]
+            }),
+            200)));
+    final result = await judge.judgePresentation(
+      presentation: const NvidiaPresentation(slides: [
+        NvidiaSlide(
+          title: 'Eğitim',
+          content:
+              'Öğrenciler kendi hızlarında öğrenir ve öğretmen onlara destek olur.',
+          keywords: [],
+          type: 'concept',
+        )
+      ]),
+      topic: 'Eğitim',
+      language: 'tr',
+    );
+    expect(result.needsRevision, isTrue);
+    expect(result.isPass, isFalse);
+    expect(result.slideIssues.any((i) => i['category'] == 'content_format'),
+        isTrue);
+    expect(result.slideIssues.any((i) => i['category'] == 'visual_relevance'),
+        isTrue);
+  });
   group('PresentationJudgeService Tests', () {
-    test('high quality deck passes when the mandatory AI fact judge approves it', () async {
+    test(
+        'high quality deck passes when the mandatory AI fact judge approves it',
+        () async {
       final judge = PresentationJudgeService(
         client: MockClient((_) async => http.Response(
               jsonEncode({
@@ -19,8 +107,8 @@ void main() {
                         'factual_accuracy': 96,
                         'visual_relevance': 90,
                         'revision_required': false,
-                        'issues': [],
-                        'global_issues': [],
+                        'issues': <Map<String, dynamic>>[],
+                        'global_issues': <String>[],
                       }),
                     },
                   },
@@ -35,14 +123,16 @@ void main() {
             title: 'Maddenin Halleri',
             purpose: 'Temel kavramı tanıtmak',
             type: 'concept',
-            content: '- **Tanecik Yapısı:** Madde atom ve moleküllerden oluşur.',
+            content:
+                '- **Tanecik Yapısı:** Madde atom ve moleküllerden oluşur.',
             keywords: ['su', 'buz', 'tanecik'],
           ),
           NvidiaSlide(
             title: 'Katı Hâl',
             purpose: 'Katıların düzenini öğretmek',
             type: 'concept',
-            content: '- **Sabit Şekil:** Tanecikler titreşir ve sıkı dizilidir.',
+            content:
+                '- **Sabit Şekil:** Tanecikler titreşir ve sıkı dizilidir.',
             keywords: ['kristal', 'buz'],
           ),
           NvidiaSlide(
@@ -66,10 +156,12 @@ void main() {
       expect(result.isPass, isTrue);
     });
 
-    test('fact judge rejects a fluent but physically incorrect claim', () async {
+    test('fact judge rejects a fluent but physically incorrect claim',
+        () async {
       final judge = PresentationJudgeService(
         client: MockClient((request) async {
-          expect(request.body, contains('Sürtünme kuvveti her zaman hareket yönündedir'));
+          expect(request.body,
+              contains('Sürtünme kuvveti her zaman hareket yönündedir'));
           expect(request.body, contains('HEDEF KİTLE: ortaokul'));
           return http.Response(
             jsonEncode({
@@ -95,6 +187,7 @@ void main() {
               ]
             }),
             200,
+            headers: {'content-type': 'application/json; charset=utf-8'},
           );
         }),
       );
@@ -122,7 +215,9 @@ void main() {
       expect(result.isPass, isFalse);
     });
 
-    test('Judge identifies issues and requests revision when mock AI judge detects problem', () async {
+    test(
+        'Judge identifies issues and requests revision when mock AI judge detects problem',
+        () async {
       final mockClient = MockClient((request) async {
         return http.Response(
           jsonEncode({
@@ -136,7 +231,8 @@ void main() {
                       {
                         'slide': 2,
                         'category': 'audience_fit',
-                        'problem': 'Terminoloji ortaokul seviyesi için fazla ağır.'
+                        'problem':
+                            'Terminoloji ortaokul seviyesi için fazla ağır.'
                       }
                     ],
                     'global_issues': ['Genel anlatı akışını sadeleştir.']
@@ -157,14 +253,16 @@ void main() {
             title: 'Maddenin Halleri',
             purpose: 'Temel kavramı tanıtmak',
             type: 'concept',
-            content: '- **Tanecik Yapısı:** Madde atom ve moleküllerden oluşur.\n- **Üç Temel Hâl:** Katı, sıvı ve gaz temel hâllerdir.',
+            content:
+                '- **Tanecik Yapısı:** Madde atom ve moleküllerden oluşur.\n- **Üç Temel Hâl:** Katı, sıvı ve gaz temel hâllerdir.',
             keywords: ['su', 'buz', 'tanecik'],
           ),
           NvidiaSlide(
             title: 'Katı Hâl',
             purpose: 'Katıların düzenini öğretmek',
             type: 'concept',
-            content: '- **Sabit Şekil:** Katı maddelerin mikroskobik organizasyonu taneciklerin yoğun etkileşim içinde bulunmasıdır.',
+            content:
+                '- **Sabit Şekil:** Katı maddelerin mikroskobik organizasyonu taneciklerin yoğun etkileşim içinde bulunmasıdır.',
             keywords: ['kristal', 'buz'],
           ),
           NvidiaSlide(

@@ -21,13 +21,13 @@ class PresentationContentSample {
 /// 7 Boyutlu Pedagojik ve Profesyonel Sunum Kalite Değerlendirmesi
 class QualityScoreResult {
   final int overallScore;
-  final int factualAccuracy;     // Max: 20
-  final int audienceFit;          // Max: 20
-  final int pedagogicalValue;     // Max: 20
-  final int narrativeCoherence;   // Max: 15
-  final int redundancy;           // Max: 10
-  final int readability;          // Max: 10
-  final int visualPotential;      // Max: 5
+  final int factualAccuracy; // Max: 20
+  final int audienceFit; // Max: 20
+  final int pedagogicalValue; // Max: 20
+  final int narrativeCoherence; // Max: 15
+  final int redundancy; // Max: 10
+  final int readability; // Max: 10
+  final int visualPotential; // Max: 5
   final List<Map<String, dynamic>> slideIssues;
   final List<String> globalIssues;
   final bool needsRevision;
@@ -146,42 +146,17 @@ class PresentationContentQuality {
         .trim();
   }
 
-  /// İçeriği temiz "- Başlık: Açıklama" formatına normalize eder.
-  /// AŞAĞIDAKİ SORUNLARI DÜZELTİR:
-  /// - Yıldız karakterlerini temizler (markdown kalıntıları)
-  /// - "ve:" gibi bozuk formatlamaları düzeltilir
-  /// - Çift noktalama işaretlerini temizler
-  /// - Fazla boşlukları kaldırır
+  /// Biçimi normalize eder; içerik uydurmaz veya cümleyi keserek kısaltmaz.
+  /// Başlık vurgusu tüm sağlayıcılarda ve tekrar normalizasyonda korunur.
   static String normalizeContentBullets(String rawContent) {
     final text = rawContent.trim();
     if (text.isEmpty) return '';
-
-    // 1. Tüm yıldız karakterlerini temizle (markdown kalıntıları)
-    // **klima** -> klima
-    // **Klima:** -> Klima:
-    var cleaned = text
-        .replaceAllMapped(RegExp(r'\*{2,}([^*]+?)\*{2,}'), (m) => m[1]!) // **metin** -> metin
-        .replaceAllMapped(RegExp(r'\*([^*]+?)\*'), (m) => m[1]!); // *metin* -> metin
-
-    // 2. "ve:" "ve " gibi bozuk formatlamaları düzelt
-    cleaned = cleaned
-        .replaceAllMapped(RegExp(r'(\w+)\s*:\s*'), (m) => '${m[1]}: ') // "ve:" -> "ve: "
-        .replaceAllMapped(RegExp(r'(\w+)\s*:\s*(\w+)'), (m) => '${m[1]}: ${m[2]}') // "ve:nemi" -> "ve: nemi"
-        .replaceAll(RegExp(r':\s+:'), ':') // "::" -> ":"
-        .replaceAll(RegExp(r'\s+:\s+'), ': '); // çoklu boşluk + : + çoklu boşluk -> ": "
-
-    // 3. Çift noktalama işaretlerini temizle
-    cleaned = cleaned
-        .replaceAllMapped(RegExp(r'[.,;:!\?]\s*[.,;:!\?]'), (Match m) => m[0]!.trim()) // "..." -> "."
-        .replaceAll(RegExp(r'\.\s+\.'), '.')
-        .replaceAll(RegExp(r':\s*:'), ':');
-
-    // 4. Eğer tek satırda birden fazla **Başlık:** yapıştırılmışsa böl
-    var preprocessed = cleaned.replaceAllMapped(
-      RegExp(r'(\S)\s*(\*\*[^*]+:\*\*)'),
-      (m) => '${m[1]}\n${m[2]}',
+    // Split joined headings before removing markup; never split decimals,
+    // abbreviations or a sentence merely because it is long.
+    final preprocessed = text.replaceAllMapped(
+      RegExp(r'([.!?]) +(?=\*\*[^*\n]+:\*\*)'),
+      (m) => '${m[1]}\n',
     );
-
     final lines = preprocessed
         .split('\n')
         .map((l) => l.trim())
@@ -190,73 +165,25 @@ class PresentationContentQuality {
 
     final normalizedLines = <String>[];
     for (final line in lines) {
-      var lineCleaned = line.replaceFirst(RegExp(r'^\s*[\-\*\•\d\.\)]+\s*'), '').trim();
-      
-      // Yıldız temizleme - kalıntıları al
-      lineCleaned = lineCleaned.replaceAll(RegExp(r'^\*+|\*+$'), '');
-      
+      final lineCleaned = line
+          .replaceFirst(RegExp(r'^(?:[-•]\s*|\*\s+|\d+[.)]\s+)'), '')
+          .replaceAll('*', '')
+          .replaceAll(RegExp(r'[ \t]+'), ' ')
+          .trim();
       if (lineCleaned.isEmpty) continue;
-
-      // "Başlık: Açıklama" formatını tespit et
-      if (RegExp(r'^[^:]+:\s*.+').hasMatch(lineCleaned)) {
-        final colonIdx = lineCleaned.indexOf(':');
-        final header = lineCleaned.substring(0, colonIdx).trim();
-        final body = lineCleaned.substring(colonIdx + 1).trim();
-        
-        // Header'da hala yıldız varsa temizle
-        final cleanHeader = header.replaceAll('*', '').trim();
-        final cleanBody = body.replaceAll('*', '').trim();
-        
-        if (cleanHeader.isNotEmpty && cleanBody.isNotEmpty) {
-          normalizedLines.add('- $cleanHeader: $cleanBody');
-        } else if (cleanHeader.isNotEmpty) {
-          normalizedLines.add('- $cleanHeader');
-        } else if (cleanBody.isNotEmpty) {
-          normalizedLines.add('- $cleanBody');
-        }
-      } else if (lineCleaned.contains(':') && !lineCleaned.startsWith('http')) {
-        final colonIdx = lineCleaned.indexOf(':');
-        final header = lineCleaned.substring(0, colonIdx).replaceAll('*', '').trim();
-        final body = lineCleaned.substring(colonIdx + 1).replaceAll('*', '').trim();
-        if (header.isNotEmpty && body.isNotEmpty) {
-          normalizedLines.add('- $header: $body');
-        } else {
-          normalizedLines.add('- $lineCleaned');
-        }
-      } else {
-        // Uzun cümleleri bölelim
-        if (lineCleaned.length > 80) {
-          // Nokta veya virgülle böl (lookbehind unsupported in Dart RegExp) — manual split preserving punctuation
-          final sentences = <String>[];
-          var rest = lineCleaned;
-          final regex = RegExp(r'([.!?])\s+');
-          while (true) {
-            final m = regex.firstMatch(rest);
-            if (m == null) {
-              if (rest.trim().isNotEmpty) sentences.add(rest.trim());
-              break;
-            }
-            final endIdx = m.start + 1; // include the punctuation
-            final sentence = rest.substring(0, endIdx).trim();
-            if (sentence.isNotEmpty) sentences.add(sentence);
-            rest = rest.substring(m.end);
-          }
-          for (final sent in sentences) {
-            normalizedLines.add('- ${sent.trim()}');
-          }
-        } else {
-          normalizedLines.add('- $lineCleaned');
-        }
-      }
+      final heading = RegExp(r'^([^:]{1,80}):\s+(.+)$').firstMatch(lineCleaned);
+      normalizedLines.add(heading == null
+          ? '• $lineCleaned'
+          : '• **${heading[1]!.trim()}:** ${heading[2]!.trim()}');
     }
-
-    return normalizedLines.isEmpty ? cleaned : normalizedLines.join('\n');
+    return normalizedLines.join('\n');
   }
 
   /// 7 Boyutlu Kalite Değerlendirmesi Yapar (0-100)
   static QualityScoreResult evaluateQuality(
     List<PresentationContentSample> slides, {
     String targetAudience = 'general',
+    String? language,
   }) {
     if (slides.isEmpty) {
       return const QualityScoreResult(
@@ -307,7 +234,8 @@ class PresentationContentQuality {
 
     // 2. Audience Fit (Hedef Kitle ve Müfredat Jargonu Kontrolü) (20p)
     final audienceLower = targetAudience.toLowerCase();
-    final isMiddleSchool = audienceLower.contains('ortaokul') || audienceLower.contains('cocuk');
+    final isMiddleSchool =
+        audienceLower.contains('ortaokul') || audienceLower.contains('cocuk');
 
     for (var i = 0; i < slides.length; i++) {
       final s = slides[i];
@@ -320,7 +248,8 @@ class PresentationContentQuality {
           slideIssues.add({
             'slide': i + 1,
             'category': 'audience_fit',
-            'problem': 'Slayt öğretmen planı/müfredat jargonu içeriyor ($meta).',
+            'problem':
+                'Slayt öğretmen planı/müfredat jargonu içeriyor ($meta).',
           });
           break;
         }
@@ -336,7 +265,8 @@ class PresentationContentQuality {
           slideIssues.add({
             'slide': i + 1,
             'category': 'audience_fit',
-            'problem': 'Ortaokul seviyesi için gereksiz üniversite formülü veya fizik sabiti içeriyor.',
+            'problem':
+                'Ortaokul seviyesi için gereksiz üniversite formülü veya fizik sabiti içeriyor.',
           });
         }
       }
@@ -366,7 +296,8 @@ class PresentationContentQuality {
     final uniqueTypes = slides.map((s) => s.type.toLowerCase()).toSet();
     if (slides.length >= 5 && uniqueTypes.length < 2) {
       narrative = math.max(0, narrative - 4);
-      globalIssues.add('Bütün slaytlar aynı tek tip şablonla üretilmiş; anlatı monoton.');
+      globalIssues.add(
+          'Bütün slaytlar aynı tek tip şablonla üretilmiş; anlatı monoton.');
     }
 
     // 5. Redundancy (Tekrar Kontrolü) (10p)
@@ -380,7 +311,8 @@ class PresentationContentQuality {
           slideIssues.add({
             'slide': j + 1,
             'category': 'redundancy',
-            'problem': 'Slayt ${j + 1}, Slayt ${i + 1} ile aşırı benzer içerik taşıyor (Benzerlik: ${(sim * 100).toInt()}%).',
+            'problem':
+                'Slayt ${j + 1}, Slayt ${i + 1} ile aşırı benzer içerik taşıyor (Benzerlik: ${(sim * 100).toInt()}%).',
           });
         }
       }
@@ -389,7 +321,8 @@ class PresentationContentQuality {
     // 6. Readability & Text Density (Okunabilirlik ve Metin Yoğunluğu) (10p)
     for (var i = 0; i < slides.length; i++) {
       final s = slides[i];
-      final wordCount = s.content.split(RegExp(r'\s+')).where((w) => w.isNotEmpty).length;
+      final wordCount =
+          s.content.split(RegExp(r'\s+')).where((w) => w.isNotEmpty).length;
       if (wordCount < 10) {
         readability = math.max(0, readability - 3);
         slideIssues.add({
@@ -402,7 +335,8 @@ class PresentationContentQuality {
         slideIssues.add({
           'slide': i + 1,
           'category': 'readability',
-          'problem': 'Slayt ortaokul düzeyi için fazla yoğun ($wordCount kelime).',
+          'problem':
+              'Slayt ortaokul düzeyi için fazla yoğun ($wordCount kelime).',
         });
       }
     }
@@ -421,9 +355,21 @@ class PresentationContentQuality {
       }
     }
 
-    final totalScore = (accuracy + audience + pedagogy + narrative + redundancy + readability + visual).clamp(0, 100);
-    final needsRevision = totalScore >= 75 && totalScore < 85;
-    final isPass = totalScore >= 85;
+    final formatIssues = turkishContentIssues(slides, language: language);
+    slideIssues.addAll(formatIssues);
+    if (formatIssues.isNotEmpty) readability = math.max(0, readability - 5);
+    final rawScore = (accuracy +
+            audience +
+            pedagogy +
+            narrative +
+            redundancy +
+            readability +
+            visual)
+        .clamp(0, 100);
+    final totalScore = formatIssues.isEmpty ? rawScore : math.min(84, rawScore);
+    final needsRevision =
+        formatIssues.isNotEmpty || (totalScore >= 75 && totalScore < 85);
+    final isPass = totalScore >= 85 && formatIssues.isEmpty;
 
     return QualityScoreResult(
       overallScore: totalScore,
@@ -460,7 +406,10 @@ class PresentationContentQuality {
   }
 
   /// `null` kaliteli içerik, aksi halde sağlayıcıyı reddetme nedenidir.
-  static String? rejectionReason(List<PresentationContentSample> slides) {
+  static String? rejectionReason(
+    List<PresentationContentSample> slides, {
+    String? language,
+  }) {
     if (slides.isEmpty) return 'Slayt listesi boş.';
     if (slides.any(
       (slide) => slide.title.trim().isEmpty || slide.content.trim().isEmpty,
@@ -533,6 +482,9 @@ class PresentationContentQuality {
       }
     }
 
+    final formatIssues = turkishContentIssues(slides, language: language);
+    if (formatIssues.isNotEmpty) return formatIssues.first['problem'] as String;
+
     if (slides.length <= 2) return null;
 
     final allowedRepeats = math.max(1, slides.length ~/ 10);
@@ -549,11 +501,14 @@ class PresentationContentQuality {
     var roboticPatternSlides = 0;
     for (final slide in slides) {
       final content = _normalize(slide.content);
-      if (content.contains('tanim:') && content.contains('amac:') && (content.contains('ornek:') || content.contains('fark:'))) {
+      if (content.contains('tanim:') &&
+          content.contains('amac:') &&
+          (content.contains('ornek:') || content.contains('fark:'))) {
         roboticPatternSlides += 1;
       }
     }
-    if (slides.length >= 4 && roboticPatternSlides >= (slides.length + 1) ~/ 2) {
+    if (slides.length >= 4 &&
+        roboticPatternSlides >= (slides.length + 1) ~/ 2) {
       return 'Monoton ve robotik "Tanım / Amaç / Örnek" şablonu tekrar ediyor.';
     }
 
@@ -561,7 +516,7 @@ class PresentationContentQuality {
     var dateBulletCount = 0;
     var totalBulletCount = 0;
     final dateBulletRegex = RegExp(
-      r'^\s*-\s*\*{0,2}\d{1,2}\s+(?:ocak|subat|mart|nisan|mayis|haziran|temmuz|agustos|eylul|ekim|kasim|aralik|\d{4})[\s:\*–—]',
+      r'^\s*[-•]\s*\*{0,2}\d{1,2}\s+(?:ocak|subat|mart|nisan|mayis|haziran|temmuz|agustos|eylul|ekim|kasim|aralik|\d{4})[\s:\*–—]',
       caseSensitive: false,
     );
     for (final slide in slides) {
@@ -575,7 +530,9 @@ class PresentationContentQuality {
         }
       }
     }
-    if (slides.length >= 6 && totalBulletCount > 0 && (dateBulletCount / totalBulletCount) >= 0.85) {
+    if (slides.length >= 6 &&
+        totalBulletCount > 0 &&
+        (dateBulletCount / totalBulletCount) >= 0.85) {
       return 'Sunum anlatı yerine baştan sona monoton tarih listesine dönüşmüş.';
     }
 
@@ -591,8 +548,7 @@ class PresentationContentQuality {
       var isDuplicate = false;
       for (var j = 0; j < i; j += 1) {
         final jaccard = jaccardSimilarity(currentStemmed, stemmedSets[j]);
-        final containment =
-            _containmentSimilarity(currentTokens, tokenSets[j]);
+        final containment = _containmentSimilarity(currentTokens, tokenSets[j]);
         if (jaccard > 0.80 || containment >= 0.92) {
           isDuplicate = true;
           break;
@@ -608,7 +564,8 @@ class PresentationContentQuality {
     var repeatedBullets = 0;
     for (final slide in slides) {
       for (final line in slide.content.split('\n')) {
-        final bullet = _normalize(line.replaceFirst(RegExp(r'^\s*-\s*'), ''));
+        final bullet =
+            _normalize(line.replaceFirst(RegExp(r'^\s*[-•]\s*'), ''));
         if (bullet.length < 18) continue;
         if (!seenBullets.add(bullet)) repeatedBullets += 1;
       }
@@ -619,13 +576,65 @@ class PresentationContentQuality {
     return null;
   }
 
+  /// Deterministic format checks complement (not replace) the AI grammar judge.
+  /// A language is explicit so existing imports and English decks are unaffected.
+  static List<Map<String, dynamic>> turkishContentIssues(
+    List<PresentationContentSample> slides, {
+    String? language,
+  }) {
+    if (!const {'tr', 'turkish', 'türkçe'}.contains(language?.toLowerCase())) {
+      return const [];
+    }
+    final issues = <Map<String, dynamic>>[];
+    for (var i = 0; i < slides.length; i++) {
+      final slide = slides[i];
+      if (const {'hero', 'quote', 'quiz', 'image_focus'}.contains(slide.type)) {
+        continue;
+      }
+      final lines = slide.content.split('\n').where((l) => l.trim().isNotEmpty);
+      final seen = <String>{};
+      for (final line in lines) {
+        final plain = line
+            .replaceFirst(RegExp(r'^\s*(?:[-•]\s*|\d+[.)]\s+)'), '')
+            .replaceAll('*', '')
+            .trim();
+        final match = RegExp(r'^([^:]+):\s*(.+)$').firstMatch(plain);
+        String? problem;
+        if (match == null ||
+            match[1]!.trim().split(RegExp(r'\s+')).length > 5) {
+          problem =
+              'Madde 1-5 kelimelik Vurgulu Başlık: Açıklama biçiminde olmalı.';
+        } else if (match[2]!.split(RegExp(r'\s+')).length > 20) {
+          problem =
+              'Madde açıklaması en fazla 20 kelimelik tam bir cümle olmalı.';
+        } else if (RegExp(r'\b(?:ve|veya|ama|çünkü)\s*[:,.!?]*$',
+                caseSensitive: false)
+            .hasMatch(match[2]!)) {
+          problem =
+              'Madde tamamlanmamış bir bağlaçla bitiyor; tam bir cümle yazılmalı.';
+        } else if (!seen.add(_normalize(plain))) {
+          problem = 'Aynı slaytta tekrarlanan madde var.';
+        }
+        if (problem != null) {
+          issues.add({
+            'slide': i + 1,
+            'category': 'content_format',
+            'problem': problem
+          });
+          break;
+        }
+      }
+    }
+    return issues;
+  }
+
   static bool _isTautological(String title, String content) {
     final normContent = _normalize(content);
 
     if (RegExp(
-              r'gelisimiyle\s+(?:teknolojik\s+)?gelismeler\s+(?:daha\s+da\s+)?hizlandi',
-              caseSensitive: false,
-            ).hasMatch(normContent) ||
+          r'gelisimiyle\s+(?:teknolojik\s+)?gelismeler\s+(?:daha\s+da\s+)?hizlandi',
+          caseSensitive: false,
+        ).hasMatch(normContent) ||
         RegExp(r'gelisimiyle\s+.*?gelisti', caseSensitive: false)
             .hasMatch(normContent) ||
         RegExp(r'etkileri\s+henuz\s+bilinmemektedir', caseSensitive: false)

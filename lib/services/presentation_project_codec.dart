@@ -20,7 +20,7 @@ class PresentationProject {
 class PresentationProjectCodec {
   const PresentationProjectCodec._();
 
-  static const int version = 1;
+  static const int version = 2;
   static final Map<String, PresentationComponentKind> _componentKindsByName =
       PresentationComponentKind.values.asNameMap();
 
@@ -248,6 +248,12 @@ class PresentationProjectCodec {
       'textItalic': block.textItalic,
       'textUnderline': block.textUnderline,
       'textAlign': block.textAlign.name,
+      'verticalAlign': block.verticalAlign.name,
+      'overflow': block.overflow.name,
+      'resizeMode': block.resizeMode.name,
+      'padding': block.padding,
+      'lineHeight': block.lineHeight,
+      'rotationDegrees': block.rotationDegrees,
     };
   }
 
@@ -323,6 +329,31 @@ class PresentationProjectCodec {
         json['textAlign'],
         PresentationTextAlign.left,
       ),
+      verticalAlign: _enumValue(
+        PresentationTextVerticalAlign.values,
+        json['verticalAlign'],
+        PresentationTextVerticalAlign.top,
+      ),
+      overflow: json['overflow'] == null
+          ? (json['heightFactor'] == null
+              ? PresentationTextOverflow.expand
+              : PresentationTextOverflow.shrink)
+          : _enumValue(
+              PresentationTextOverflow.values,
+              json['overflow'],
+              PresentationTextOverflow.shrink,
+            ),
+      resizeMode: _enumValue(
+        PresentationTextResizeMode.values,
+        json['resizeMode'],
+        PresentationTextResizeMode.proportional,
+      ),
+      padding: _double(json['padding'], 14).clamp(0, 80).toDouble(),
+      lineHeight: json['lineHeight'] is num
+          ? (json['lineHeight']! as num).toDouble().clamp(.6, 3).toDouble()
+          : null,
+      rotationDegrees:
+          _double(json['rotationDegrees'], 0).clamp(-360, 360).toDouble(),
     );
   }
 

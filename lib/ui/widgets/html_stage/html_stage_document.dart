@@ -6,6 +6,7 @@ import '../../../models/slide_model.dart';
 import '../../../services/local_google_fonts_css.dart';
 import '../../../services/model_asset_service.dart';
 import 'background_scene_sources.dart';
+import 'presentation_text_fit_script.dart';
 
 enum HtmlStageRenderMode {
   full,
@@ -76,7 +77,7 @@ String? _fontFamilyFromRule(String selector) {
 
 String get sutolHtmlStageBackgroundScript => _backgroundScript;
 String get sutolHtmlStageComponentScript => _stageComponentScript;
-String get sutolHtmlStagePatchScript => _stagePatchScript;
+String get sutolHtmlStagePatchScript => '$sutolTextFitScript\n$_stagePatchScript';
 
 /// Bileşen kütüphanesindeki küçük kartlar için hafif ve etkileşimsiz belge.
 /// Tam sahne CSS'i ve arka plan iframe'i özellikle eklenmez.
@@ -482,6 +483,8 @@ String buildHtmlStageMarkup({
       _textStyleClass(block.textStyle),
       _textAnimationClass(block.textAnimation),
       _textEffectClass(block.textEffect),
+      'text-overflow-${block.overflow.name}',
+      'text-vertical-${block.verticalAlign.name}',
       if (visibleRevealStep != null &&
           block.revealStep < visibleRevealStep &&
           block.textAnimation != PresentationTextAnimation.none)
@@ -508,12 +511,18 @@ String buildHtmlStageMarkup({
     final typewriterCycle = _typewriterCycleSeconds(displayText);
     final computedDelay =
         animationTimeline.delays[block.id] ?? block.animationDelay;
+    final accessibleText = _textDisplayValue(displayText);
     final accessibilityAttr =
         block.textGrouping == PresentationTextGrouping.asObject
             ? ''
-            : ' aria-label="${_escapeAttribute(displayText)}"';
+            : ' aria-label="${_escapeAttribute(accessibleText)}"';
+    final heightStyle = block.heightFactor == null
+        ? ''
+        : block.overflow == PresentationTextOverflow.expand
+            ? 'min-height:${_pct(block.heightFactor!)}%;'
+            : 'height:${_pct(block.heightFactor!)}%;';
     buffer.writeln(
-      '<div class="$classes" data-sutol-text-id="${_escapeAttribute(block.id)}" data-reveal-step="$displayRevealStep" data-animation-step="$effectiveRevealStep"$accessibilityAttr$hotspotAttr style="left:${_pct(block.position.dx)}%;top:${_pct(block.position.dy)}%;width:${_pct(block.widthFactor)}%;${block.heightFactor == null ? '' : 'height:${_pct(block.heightFactor!)}%;'}--sutol-left:${_pct(block.position.dx)}%;--sutol-top:${_pct(block.position.dy)}%;--base-font-size:${(block.fontSize / 10).toStringAsFixed(2)}cqw;--sutol-glow:${block.glowIntensity.toStringAsFixed(2)};--sutol-type-cycle:${typewriterCycle.toStringAsFixed(2)}s;${_animationTimingStyle(block.animationDuration, computedDelay)}${_motionPathStyle(block.motionPathPoints)}${_textFormatStyles(block)}${block.textColorHex == null ? '' : 'color:${_escapeAttribute(block.textColorHex!)};--sutol-text-color:${_escapeAttribute(block.textColorHex!)};'}">${_textBlockMarkup(displayText, block.textAnimation, block.textEffect, block.entranceAnimation, block.textGrouping, block.groupDelay, computedDelay)}</div>',
+      '<div class="$classes" data-sutol-text-id="${_escapeAttribute(block.id)}" data-reveal-step="$displayRevealStep" data-animation-step="$effectiveRevealStep"$accessibilityAttr$hotspotAttr style="left:${_pct(block.position.dx)}%;top:${_pct(block.position.dy)}%;width:${_pct(block.widthFactor)}%;$heightStyle--sutol-left:${_pct(block.position.dx)}%;--sutol-top:${_pct(block.position.dy)}%;--base-font-size:${(block.fontSize / 10).toStringAsFixed(2)}cqw;--sutol-min-font-size:1.80cqw;padding:${(block.padding / 10).toStringAsFixed(2)}cqw;line-height:${block.effectiveLineHeight.toStringAsFixed(3)};rotate:${block.rotationDegrees.toStringAsFixed(2)}deg;--sutol-glow:${block.glowIntensity.toStringAsFixed(2)};--sutol-type-cycle:${typewriterCycle.toStringAsFixed(2)}s;${_animationTimingStyle(block.animationDuration, computedDelay)}${_motionPathStyle(block.motionPathPoints)}${_textFormatStyles(block)}${block.textColorHex == null ? '' : 'color:${_escapeAttribute(block.textColorHex!)};--sutol-text-color:${_escapeAttribute(block.textColorHex!)};'}">${_textBlockMarkup(displayText, block.textAnimation, block.textEffect, block.entranceAnimation, block.textGrouping, block.groupDelay, computedDelay)}</div>',
     );
   }
 
@@ -826,12 +835,19 @@ String _textFormatStyles(PresentationTextBlock block) {
       buffer.write('text-align:center;');
     case PresentationTextAlign.right:
       buffer.write('text-align:right;');
+    case PresentationTextAlign.justify:
+      buffer.write('text-align:justify;');
   }
   return buffer.toString();
 }
 
 String _escapeAttribute(String value) =>
     const HtmlEscape(HtmlEscapeMode.attribute).convert(value);
+
+String _textDisplayValue(String value) => value.replaceAllMapped(
+      RegExp(r'\*\*([^*\n]+:)\*\*'),
+      (match) => match.group(1)!,
+    );
 
 String _textBlockMarkup(
   String text,
@@ -843,7 +859,7 @@ String _textBlockMarkup(
   double baseDelay,
 ) {
   var shimmerIndex = 0;
-  String effectText(String value) {
+  String rawEffectText(String value) {
     if (effect != PresentationTextEffect.shimmer) return _escape(value);
     final buffer = StringBuffer();
     for (final rune in value.runes) {
@@ -860,16 +876,31 @@ String _textBlockMarkup(
     return buffer.toString();
   }
 
+  String effectText(String value) {
+    final buffer = StringBuffer();
+    var offset = 0;
+    for (final match in RegExp(r'\*\*([^*\n]+:)\*\*').allMatches(value)) {
+      buffer.write(rawEffectText(value.substring(offset, match.start)));
+      buffer.write('<strong>${rawEffectText(match.group(1)!)}</strong>');
+      offset = match.end;
+    }
+    buffer.write(rawEffectText(value.substring(offset)));
+    return buffer.toString();
+  }
+
   if (entranceAnimation != PresentationEntranceAnimation.none &&
       grouping != PresentationTextGrouping.asObject) {
     final buffer = StringBuffer(
       '<span class="sutol-animation-visual" aria-hidden="true">',
     );
     var segmentIndex = 0;
-    void segment(String value, {bool paragraph = false}) {
+    void segment(String value, {bool paragraph = false, bool strong = false}) {
       final delay = baseDelay + segmentIndex * groupDelay;
+      final content = strong
+          ? '<strong>${rawEffectText(value)}</strong>'
+          : effectText(value);
       buffer.write(
-        '<span class="sutol-animation-segment ${_entranceAnimationClass(entranceAnimation)}${paragraph ? ' is-paragraph-segment' : ''}" aria-hidden="true" style="--sutol-element-delay:${delay.toStringAsFixed(2)}s">${effectText(value)}</span>',
+        '<span class="sutol-animation-segment ${_entranceAnimationClass(entranceAnimation)}${paragraph ? ' is-paragraph-segment' : ''}" aria-hidden="true" style="--sutol-element-delay:${delay.toStringAsFixed(2)}s">$content</span>',
       );
       segmentIndex += 1;
     }
@@ -883,12 +914,23 @@ String _textBlockMarkup(
           buffer.write('<br aria-hidden="true">');
       }
     } else if (grouping == PresentationTextGrouping.byWord) {
-      for (final match in RegExp(r'\S+|\s+').allMatches(text)) {
+      for (final match
+          in RegExp(r'\*\*[^*\n]+:\*\*|\S+|\s+').allMatches(text)) {
         final token = match.group(0)!;
         token.trim().isEmpty ? buffer.write(_escape(token)) : segment(token);
       }
     } else {
-      for (final rune in text.runes) {
+      var offset = 0;
+      for (final match in RegExp(r'\*\*([^*\n]+:)\*\*').allMatches(text)) {
+        for (final rune in text.substring(offset, match.start).runes) {
+          segment(String.fromCharCode(rune));
+        }
+        for (final rune in match.group(1)!.runes) {
+          segment(String.fromCharCode(rune), strong: true);
+        }
+        offset = match.end;
+      }
+      for (final rune in text.substring(offset).runes) {
         segment(String.fromCharCode(rune));
       }
     }
@@ -902,7 +944,7 @@ String _textBlockMarkup(
 
   final buffer = StringBuffer();
   var wordIndex = 0;
-  for (final match in RegExp(r'\S+|\s+').allMatches(text)) {
+  for (final match in RegExp(r'\*\*[^*\n]+:\*\*|\S+|\s+').allMatches(text)) {
     final token = match.group(0)!;
     if (token.trim().isEmpty) {
       buffer.write(_escape(token));
@@ -1444,7 +1486,7 @@ body {
   position: absolute;
   z-index: 3;
   box-sizing: border-box;
-  padding: clamp(8px, 1.4cqw, 18px);
+  padding: 1.4cqw;
   border-radius: 18px;
   color: #142033;
   font-size: clamp(12px, var(--base-font-size), 320px);
@@ -1452,10 +1494,16 @@ body {
   line-height: 1.22;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
-  max-width: calc(100% - var(--sutol-left, 0%) - 3cqw);
-  max-height: calc(100% - var(--sutol-top, 0%) - 3cqw);
-  overflow: hidden;
+  overflow: visible;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
 }
+
+.sutol-html-block.text-overflow-shrink,
+.sutol-html-block.text-overflow-clip { overflow: hidden; }
+.sutol-html-block.text-vertical-center { justify-content: center; }
+.sutol-html-block.text-vertical-bottom { justify-content: flex-end; }
 
 .sutol-html-stage.theme-dark .sutol-html-block {
   color: #F8FBFF;
@@ -1465,9 +1513,6 @@ body {
 .sutol-html-block.is-title {
   font-weight: 800;
   line-height: 1.10;
-  padding-top: clamp(14px, 2.1cqw, 28px);
-  padding-bottom: clamp(10px, 1.6cqw, 20px);
-  overflow: visible;
 }
 
 .sutol-html-block.is-subtitle {
@@ -2229,6 +2274,8 @@ body {
   letter-spacing: inherit;
   line-height: inherit;
   white-space: inherit;
+  display: block;
+  width: 100%;
 }
 
 .sutol-html-block.text-effect-none > .sutol-text-effect-layer {
@@ -3860,46 +3907,7 @@ const String _stagePatchScript = r'''
 
   setTourPointPlacement(tourPointPlacementEnabled());
 
-  function textOverflows(element) {
-    const widthOverflow = element.scrollWidth > element.clientWidth + 1;
-    const heightOverflow = element.scrollHeight > element.clientHeight + 1;
-    if (!element.classList.contains('is-title')) {
-      return widthOverflow || heightOverflow;
-    }
-    let drawnOverflow = false;
-    try {
-      const range = document.createRange();
-      range.selectNodeContents(element);
-      const bounds = range.getBoundingClientRect();
-      range.detach();
-      const box = element.getBoundingClientRect();
-      const inset = 3;
-      drawnOverflow =
-        bounds.top < box.top + inset ||
-        bounds.bottom > box.bottom - inset ||
-        bounds.left < box.left + inset ||
-        bounds.right > box.right - inset;
-    } catch (_) {}
-    return widthOverflow || heightOverflow || drawnOverflow;
-  }
-
-  function fitText(element) {
-    // Metin kutusu sahnenin güvenli alanını aşarsa yazı boyutunu kademeli
-    // olarak küçültür. CSS'teki min değer okunabilirlik sınırını korur.
-    element.style.removeProperty('font-size');
-    const baseSize = parseFloat(window.getComputedStyle(element).fontSize) || 12;
-    let scale = 1;
-    let attempts = 0;
-    while (textOverflows(element) && scale > 0.46 && attempts < 18) {
-      scale *= 0.92;
-      element.style.fontSize = (baseSize * scale).toFixed(2) + 'px';
-      attempts += 1;
-    }
-  }
-
-  function fitAllText() {
-    document.querySelectorAll('.sutol-html-block').forEach(fitText);
-  }
+  function fitAllText() { window.SutolFitText?.(); }
 
   function patchElement(attribute, item) {
     const element = document.querySelector(selectorFor(attribute, item.id));
@@ -3923,7 +3931,11 @@ const String _stagePatchScript = r'''
     element.style.width = item.width;
     element.style.setProperty('--sutol-left', item.left);
     element.style.setProperty('--sutol-top', item.top);
-    if (item.height !== undefined) element.style.height = item.height;
+    if (item.height !== undefined) {
+      element.style.height = item.height;
+      element.dataset.sutolAuthoredHeight = item.height;
+    }
+    if (item.minHeight !== undefined) element.style.minHeight = item.minHeight;
     const isTourModel = item.modelTourEnabled === true;
     if (!isTourModel &&
         item.modelOrbitTheta !== null && item.modelOrbitTheta !== undefined &&
@@ -4084,6 +4096,12 @@ const String _stagePatchScript = r'''
     if (item.baseFontSize !== undefined) {
       element.style.setProperty('--base-font-size', item.baseFontSize);
     }
+    if (item.minFontSize !== undefined) {
+      element.style.setProperty('--sutol-min-font-size', item.minFontSize);
+    }
+    if (item.padding !== undefined) element.style.padding = item.padding;
+    if (item.lineHeight !== undefined) element.style.lineHeight = item.lineHeight;
+    if (item.rotation !== undefined) element.style.rotate = item.rotation;
     if (item.glowIntensity !== undefined) {
       element.style.setProperty('--sutol-glow', item.glowIntensity);
     }
@@ -4110,7 +4128,7 @@ const String _stagePatchScript = r'''
       const effectLayer = document.createElement('span');
       effectLayer.className = 'sutol-text-effect-layer';
       let shimmerIndex = 0;
-      const appendEffectText = function (parent, value) {
+      const appendRawEffectText = function (parent, value) {
         if (!element.classList.contains('text-effect-shimmer')) {
           parent.appendChild(document.createTextNode(value));
           return;
@@ -4128,6 +4146,20 @@ const String _stagePatchScript = r'''
           shimmerIndex += 1;
         });
       };
+      const appendEffectText = function (parent, value) {
+        const source = String(value);
+        const pattern = /\*\*([^*\n]+:)\*\*/g;
+        let offset = 0;
+        let match;
+        while ((match = pattern.exec(source)) !== null) {
+          appendRawEffectText(parent, source.slice(offset, match.index));
+          const strong = document.createElement('strong');
+          appendRawEffectText(strong, match[1]);
+          parent.appendChild(strong);
+          offset = pattern.lastIndex;
+        }
+        appendRawEffectText(parent, source.slice(offset));
+      };
       if (item.textGrouping && item.textGrouping !== 'asObject' &&
           item.entranceAnimationClass !== 'entrance-animation-none') {
         element.setAttribute('aria-label', String(item.text));
@@ -4140,9 +4172,9 @@ const String _stagePatchScript = r'''
         if (item.textGrouping === 'byParagraph') {
           tokens = String(item.text).split('\n');
         } else if (item.textGrouping === 'byWord') {
-          tokens = String(item.text).match(/\S+|\s+/g) || [];
+          tokens = String(item.text).match(/\*\*[^*\n]+:\*\*|\S+|\s+/g) || [];
         } else {
-          tokens = Array.from(String(item.text));
+          tokens = String(item.text).match(/\*\*[^*\n]+:\*\*|[\s\S]/g) || [];
         }
         let segmentIndex = 0;
         tokens.forEach(function (token, tokenIndex) {
@@ -4169,7 +4201,7 @@ const String _stagePatchScript = r'''
         element.replaceChildren(effectLayer);
       } else if (item.isTypewriter || item.isWordReveal) {
         element.removeAttribute('aria-label');
-        const tokens = String(item.text).match(/\S+|\s+/g) || [];
+        const tokens = String(item.text).match(/\*\*[^*\n]+:\*\*|\S+|\s+/g) || [];
         const wordCount = tokens.filter(function (token) {
           return token.trim().length > 0;
         }).length;

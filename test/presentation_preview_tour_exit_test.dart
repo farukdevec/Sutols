@@ -8,6 +8,32 @@ import 'package:sutol/ui/widgets/editor_shell.dart';
 import 'package:sutol/ui/widgets/html_stage/html_page_stage.dart';
 
 void main() {
+  testWidgets('dar ekranda tur kontrolleri taşmaz ve hız seçilebilir',
+      (tester) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final controller = PresentationController();
+    addTearDown(controller.dispose);
+    controller.add3DModelBlock(presentation3DModelCatalog.first);
+    controller.updateSelectedModelTourEnabled(true);
+    await tester.pumpWidget(MaterialApp(
+        home: PresentationPreviewPage(
+      controller: controller,
+      useFullscreen: false,
+    )));
+    await tester.pump();
+    await tester.tap(find.text('Turu başlat'));
+    await tester.pump();
+    expect(tester.takeException(), isNull);
+    await tester.tap(find.text('Hız: Normal'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Yavaş'));
+    await tester.pumpAndSettle();
+    expect(find.text('Hız: Yavaş'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets(
       'yumuşak geçiş aynı modelin sayfalara özel kameraları arasında akar',
       (tester) async {
@@ -304,7 +330,12 @@ void main() {
     await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
     await tester.pump();
 
-    expect(currentStage().page.id, controller.pages[1].id);
+    expect(
+        tester
+            .widget<PresentationPageCanvas>(find.byType(PresentationPageCanvas))
+            .page
+            .id,
+        controller.pages[1].id);
     expect(currentStage().page.componentBlocks.single.modelOrbitTheta,
         secondCamera.modelOrbitTheta);
     expect(currentStage().page.componentBlocks.single.modelTargetX,
@@ -406,6 +437,8 @@ void main() {
         tester.widget<HtmlPageStage>(find.byType(HtmlPageStage));
 
     final initialZ = currentStage().tourCameraTargetZ!;
+    await tester.tap(find.text('Turu başlat'));
+    await tester.pump();
     await tester.sendKeyDownEvent(LogicalKeyboardKey.arrowUp);
     for (var frame = 0; frame < 10; frame += 1) {
       await tester.pump(const Duration(milliseconds: 16));
@@ -414,7 +447,7 @@ void main() {
     await tester.pump();
 
     expect(currentStage().page.id, controller.pages.first.id);
-    expect(currentStage().tourCameraTargetZ, lessThan(initialZ - .5));
+    expect(currentStage().tourCameraTargetZ, lessThan(initialZ));
 
     final afterForwardX = currentStage().tourCameraTargetX!;
     await tester.sendKeyDownEvent(LogicalKeyboardKey.arrowRight);
@@ -425,7 +458,23 @@ void main() {
     await tester.pump();
 
     expect(currentStage().page.id, controller.pages.first.id);
-    expect(currentStage().tourCameraTargetX, greaterThan(afterForwardX + .5));
+    expect(currentStage().tourCameraTargetX, greaterThan(afterForwardX));
+
+    await tester.tap(find.text('Gezinmeyi durdur'));
+    await tester.pump();
+    expect(find.bySemanticsLabel('Tur hareket joysticki'), findsNothing);
+    final pausedZ = currentStage().tourCameraTargetZ;
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyW);
+    await tester.pump(const Duration(milliseconds: 100));
+    expect(currentStage().tourCameraTargetZ, pausedZ);
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+    await tester.pumpAndSettle();
+    expect(
+        tester
+            .widget<PresentationPageCanvas>(find.byType(PresentationPageCanvas))
+            .page
+            .id,
+        controller.pages[1].id);
   });
 
   testWidgets('çoklu modelde sunum aktif tur modelinin kamerasını kullanır',

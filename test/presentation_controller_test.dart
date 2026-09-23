@@ -488,6 +488,16 @@ void main() {
   test('selected text and components can be copied duplicated and deleted', () {
     final controller = PresentationController();
     addTearDown(controller.dispose);
+    controller.updateSelectedTextVerticalAlign(
+      PresentationTextVerticalAlign.bottom,
+    );
+    controller.updateSelectedTextOverflow(PresentationTextOverflow.clip);
+    controller.updateSelectedTextResizeMode(
+      PresentationTextResizeMode.fixedFont,
+    );
+    controller.updateSelectedTextPadding(24);
+    controller.updateSelectedTextLineHeight(1.5);
+    controller.updateSelectedTextRotation(18);
     controller.addComponentBlock(PresentationComponentKind.edebiyat01);
     controller.selectItems(
       textBlockIds: const <String>['text-1'],
@@ -501,6 +511,15 @@ void main() {
     expect(controller.selectedPage.textBlocks, hasLength(2));
     expect(controller.selectedPage.componentBlocks, hasLength(2));
     expect(controller.selectedItemCount, 2);
+    final pastedText = controller.selectedPage.findTextBlock(
+      controller.selectedTextBlockId,
+    )!;
+    expect(pastedText.verticalAlign, PresentationTextVerticalAlign.bottom);
+    expect(pastedText.overflow, PresentationTextOverflow.clip);
+    expect(pastedText.resizeMode, PresentationTextResizeMode.fixedFont);
+    expect(pastedText.padding, 24);
+    expect(pastedText.lineHeight, 1.5);
+    expect(pastedText.rotationDegrees, 18);
 
     controller.undo();
     expect(controller.selectedPage.textBlocks, hasLength(1));
@@ -513,6 +532,21 @@ void main() {
     controller.removeSelectedItems();
     expect(controller.selectedPage.textBlocks, hasLength(1));
     expect(controller.selectedPage.componentBlocks, hasLength(1));
+  });
+
+  test('keyboard nudging moves selected items in reference pixels', () {
+    final controller = PresentationController();
+    addTearDown(controller.dispose);
+    final before = controller.selectedTextBlock!.position;
+
+    controller.nudgeSelectedItems(const Offset(1, 10));
+
+    final after = controller.selectedTextBlock!.position;
+    expect(after.dx - before.dx, closeTo(.001, .000001));
+    expect(
+      after.dy - before.dy,
+      closeTo(10 / (1000 / (16 / 9)), .000001),
+    );
   });
 
   test('3B model copy and duplicate preserve model settings', () {
@@ -763,7 +797,7 @@ void main() {
         closeTo(2.0 / (16 / 9), 0.0001));
   });
 
-  test('selected text can be resized from every edge', () {
+  test('text edges resize the box without changing font size', () {
     final controller = PresentationController();
     addTearDown(controller.dispose);
 
@@ -800,7 +834,7 @@ void main() {
       fromBottom: true,
     );
     expect(controller.selectedTextBlock!.heightFactor, closeTo(0.38, 0.0001));
-    expect(controller.selectedTextBlock!.fontSize, closeTo(91.2, 0.0001));
+    expect(controller.selectedTextBlock!.fontSize, closeTo(48, 0.0001));
 
     controller.resizeSelectedTextByHandle(
       const Offset(0, 25),
@@ -813,7 +847,56 @@ void main() {
     );
     expect(controller.selectedTextBlock!.position.dy, closeTo(0.21, 0.0001));
     expect(controller.selectedTextBlock!.heightFactor, closeTo(0.33, 0.0001));
-    expect(controller.selectedTextBlock!.fontSize, closeTo(79.2, 0.0001));
+    expect(controller.selectedTextBlock!.fontSize, closeTo(48, 0.0001));
+  });
+
+  test('text corners proportionally resize box and font', () {
+    final controller = PresentationController();
+    addTearDown(controller.dispose);
+    const canvas = Size(1000, 500);
+    const renderedHeight = 0.2;
+    final before = controller.selectedTextBlock!;
+
+    controller.resizeSelectedTextByHandle(
+      const Offset(100, 50),
+      canvas,
+      renderedHeightFactor: renderedHeight,
+      fromLeft: false,
+      fromTop: false,
+      fromRight: true,
+      fromBottom: true,
+    );
+
+    final after = controller.selectedTextBlock!;
+    final widthScale = after.widthFactor / before.widthFactor;
+    final heightScale = after.heightFactor! / renderedHeight;
+    final fontScale = after.fontSize / before.fontSize;
+    expect(widthScale, closeTo(heightScale, 0.0001));
+    expect(fontScale, closeTo(widthScale, 0.0001));
+  });
+
+  test('fixed-font corner mode resizes box without scaling font', () {
+    final controller = PresentationController();
+    addTearDown(controller.dispose);
+    controller.updateSelectedTextResizeMode(
+      PresentationTextResizeMode.fixedFont,
+    );
+    final before = controller.selectedTextBlock!;
+
+    controller.resizeSelectedTextByHandle(
+      const Offset(100, 50),
+      const Size(1000, 500),
+      renderedHeightFactor: 0.2,
+      fromLeft: false,
+      fromTop: false,
+      fromRight: true,
+      fromBottom: true,
+    );
+
+    final after = controller.selectedTextBlock!;
+    expect(after.widthFactor, greaterThan(before.widthFactor));
+    expect(after.heightFactor, greaterThan(0.2));
+    expect(after.fontSize, before.fontSize);
   });
 
   test('text and components can move and resize beyond every stage edge', () {

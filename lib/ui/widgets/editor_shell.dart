@@ -1,5 +1,5 @@
 import 'dart:math' as math;
-import 'dart:ui' show ImageFilter;
+import 'dart:ui' show BoxHeightStyle, ImageFilter;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
@@ -12,6 +12,7 @@ import '../../state/presentation_controller.dart';
 import '../design/design_system.dart';
 import '../design/sutol_widgets.dart';
 import 'html_stage/html_page_stage.dart';
+import 'text_editing_context_menu.dart';
 
 typedef EditorStageBuilder = Widget Function(
   BuildContext context,
@@ -57,6 +58,8 @@ typedef CanvasTextResizeChanged = void Function(
   required bool fromRight,
   required bool fromBottom,
 });
+
+typedef CanvasTextRotateChanged = void Function(double deltaDegrees);
 
 typedef CanvasSecondaryTap = void Function(Offset globalPosition);
 
@@ -1795,6 +1798,7 @@ class PresentationPageCanvas extends StatefulWidget {
     this.onInlineTextChanged,
     this.onInlineEditingChanged,
     this.onResizeSelectedText,
+    this.onRotateSelectedText,
     this.onResizeSelectedComponent,
     this.onMarqueeSelectionChanged,
     this.onClearSelection,
@@ -1833,6 +1837,7 @@ class PresentationPageCanvas extends StatefulWidget {
   final ValueChanged<String>? onInlineTextChanged;
   final ValueChanged<String?>? onInlineEditingChanged;
   final CanvasTextResizeChanged? onResizeSelectedText;
+  final CanvasTextRotateChanged? onRotateSelectedText;
   final CanvasComponentResizeChanged? onResizeSelectedComponent;
   final CanvasMultiSelectionChanged? onMarqueeSelectionChanged;
   final VoidCallback? onClearSelection;
@@ -1922,6 +1927,21 @@ class _PresentationPageCanvasState extends State<PresentationPageCanvas> {
   @override
   void didUpdateWidget(covariant PresentationPageCanvas oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (widget.interactive &&
+        _editingBlockId == null &&
+        widget.page.textBlocks.length > oldWidget.page.textBlocks.length) {
+      final oldIds = oldWidget.page.textBlocks.map((block) => block.id).toSet();
+      final added = widget.page.textBlocks
+          .where((block) => !oldIds.contains(block.id))
+          .firstOrNull;
+      if (added != null &&
+          added.text.isEmpty &&
+          widget.selectedTextBlockId == added.id) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) _startInlineEditing(added);
+        });
+      }
+    }
     final editingBlock = widget.page.findTextBlock(_editingBlockId);
     if (editingBlock == null) {
       final wasEditing = _editingBlockId != null;
@@ -1962,12 +1982,17 @@ class _PresentationPageCanvasState extends State<PresentationPageCanvas> {
     }
   }
 
-  void _startInlineEditing(PresentationTextBlock block) {
+  void _startInlineEditing(
+    PresentationTextBlock block, {
+    bool selectAll = false,
+  }) {
     widget.onSelectTextBlock?.call(block.id);
     final nextText = block.text;
     _inlineTextController.value = TextEditingValue(
       text: nextText,
-      selection: TextSelection.collapsed(offset: nextText.length),
+      selection: selectAll
+          ? TextSelection(baseOffset: 0, extentOffset: nextText.length)
+          : TextSelection.collapsed(offset: nextText.length),
     );
     setState(() {
       _editingBlockId = block.id;
@@ -2107,45 +2132,23 @@ class _PresentationPageCanvasState extends State<PresentationPageCanvas> {
     final displayText = block.text.trim().isEmpty
         ? tr('Buraya metin yazın', 'Type text here')
         : block.text;
-    final paddingX = math.max(10.0, canvasSize.width * 0.014);
-    final paddingY = math.max(8.0, canvasSize.height * 0.016);
-    final baseFontSize =
-        (block.fontSize * canvasSize.width / 1000).clamp(14.0, 320.0);
-    final adjustedFontSize = _fontSizeForType(block.type, baseFontSize);
-    final minBoxWidth = math.max(
-      72.0,
-      canvasSize.width * (widget.interactive ? 0.18 : 0.12),
-    );
-    final boxWidth = math.max(
-      minBoxWidth,
-      block.widthFactor * canvasSize.width,
-    );
-    final leftPosition = block.position.dx * canvasSize.width;
-    final textPainter = TextPainter(
-      text: TextSpan(
-        text: displayText,
-        style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-              fontWeight: _fontWeightFromValue(block.effectiveFontWeight),
-              fontVariations:
-                  _fontVariationsFromValue(block.effectiveFontWeight),
-              fontSize: adjustedFontSize,
-              height: _lineHeightForType(block.type),
-              letterSpacing: _letterSpacingForType(block.type),
-            ),
-      ),
+    final metrics = _measureTextBox(
+      block: block,
+      canvasSize: canvasSize,
+      text: displayText,
+      baseStyle: Theme.of(context).textTheme.headlineSmall!.copyWith(
+            fontFamily: presentationFontFamily(block.textStyle),
+            fontWeight: _fontWeightFromValue(block.effectiveFontWeight),
+            fontVariations: _fontVariationsFromValue(block.effectiveFontWeight),
+            letterSpacing: _letterSpacingForType(block.type),
+          ),
       textDirection: Directionality.of(context),
-    )..layout(maxWidth: math.max(0, boxWidth - (paddingX * 2)));
-
-    final naturalHeight = textPainter.height + (paddingY * 2);
-    const minH = 44.0;
-    final boxHeight = block.heightFactor == null
-        ? naturalHeight
-        : math.max(minH, block.heightFactor! * canvasSize.height);
+    );
     return Rect.fromLTWH(
-      leftPosition,
+      block.position.dx * canvasSize.width,
       block.position.dy * canvasSize.height,
-      boxWidth,
-      boxHeight,
+      metrics.width,
+      metrics.height,
     );
   }
 
@@ -2363,18 +2366,9 @@ class _PresentationPageCanvasState extends State<PresentationPageCanvas> {
                     _editingBlockId == block.id ? _inlineFocusNode : null,
                 onTap: widget.onSelectTextBlock == null
                     ? null
-                    : () {
-                        // First click selects, the next click edits. This is
-                        // quicker than requiring a precisely timed double
-                        // click, while preserving drag-to-move on selection.
-                        if (selectedTextIds.contains(block.id)) {
-                          _startInlineEditing(block);
-                        } else {
-                          widget.onSelectTextBlock!(block.id);
-                        }
-                      },
-                onDoubleTap: widget.interactive
-                    ? () => _startInlineEditing(block)
+                    : () => widget.onSelectTextBlock!(block.id),
+                onDoubleTapDown: widget.interactive
+                    ? (_) => _startInlineEditing(block, selectAll: true)
                     : null,
                 onSecondaryTapDown: widget.onSecondaryTapTextBlock == null
                     ? null
@@ -2409,6 +2403,14 @@ class _PresentationPageCanvasState extends State<PresentationPageCanvas> {
                           fromBottom: _componentResizeFromBottom(handle),
                         );
                       }
+                    : null,
+                onRotateUpdate: widget.interactive &&
+                        _editingBlockId != block.id &&
+                        widget.onRotateSelectedText != null
+                    ? (DragUpdateDetails details) =>
+                        widget.onRotateSelectedText!(
+                          (details.delta.dx - details.delta.dy) * .65,
+                        )
                     : null,
                 onInlineTextChanged: widget.onInlineTextChanged,
                 onEditingFinished: _stopInlineEditing,
@@ -2496,10 +2498,11 @@ class _PageTextBlock extends StatelessWidget {
     this.editingController,
     this.editingFocusNode,
     this.onTap,
-    this.onDoubleTap,
+    this.onDoubleTapDown,
     this.onSecondaryTapDown,
     this.onPanUpdate,
     this.onResizeUpdate,
+    this.onRotateUpdate,
     this.onInlineTextChanged,
     this.onEditingFinished,
   });
@@ -2515,7 +2518,7 @@ class _PageTextBlock extends StatelessWidget {
   final TextEditingController? editingController;
   final FocusNode? editingFocusNode;
   final VoidCallback? onTap;
-  final VoidCallback? onDoubleTap;
+  final GestureTapDownCallback? onDoubleTapDown;
   final GestureTapDownCallback? onSecondaryTapDown;
   final GestureDragUpdateCallback? onPanUpdate;
   final void Function(
@@ -2523,6 +2526,7 @@ class _PageTextBlock extends StatelessWidget {
     DragUpdateDetails details,
     double renderedHeightFactor,
   )? onResizeUpdate;
+  final GestureDragUpdateCallback? onRotateUpdate;
   final ValueChanged<String>? onInlineTextChanged;
   final VoidCallback? onEditingFinished;
 
@@ -2531,19 +2535,6 @@ class _PageTextBlock extends StatelessWidget {
     final displayText = block.text.trim().isEmpty
         ? tr('Buraya metin yazın', 'Type text here')
         : block.text;
-    final paddingX = math.max(10.0, canvasSize.width * 0.014);
-    final paddingY = math.max(8.0, canvasSize.height * 0.016);
-    final baseFontSize =
-        (block.fontSize * canvasSize.width / 1000).clamp(14.0, 320.0);
-    final adjustedFontSize = _fontSizeForType(block.type, baseFontSize);
-    final minBoxWidth = math.max(
-      72.0,
-      canvasSize.width * (interactive ? 0.18 : 0.12),
-    );
-    final boxWidth = math.max(
-      minBoxWidth,
-      block.widthFactor * canvasSize.width,
-    );
     final leftPosition = block.position.dx * canvasSize.width;
     final effectiveTextAlpha = textOpacity <= 0
         ? 0.0
@@ -2556,52 +2547,88 @@ class _PageTextBlock extends StatelessWidget {
     final textColor = resolvedTextColor.withValues(
       alpha: effectiveTextAlpha,
     );
-    final displayStyle = Theme.of(context).textTheme.headlineSmall?.copyWith(
+    final baseStyle = Theme.of(context).textTheme.headlineSmall!.copyWith(
           color: textColor,
           fontFamily: resolvedFontFamily,
           fontWeight: _fontWeightFromValue(block.effectiveFontWeight),
           fontVariations: _fontVariationsFromValue(block.effectiveFontWeight),
-          fontSize: adjustedFontSize,
-          height: _lineHeightForType(block.type),
           letterSpacing: _letterSpacingForType(block.type),
         );
-    final editingStyle = Theme.of(context).textTheme.headlineSmall?.copyWith(
-          color: resolvedTextColor,
-          fontFamily: resolvedFontFamily,
-          fontWeight: _fontWeightFromValue(block.effectiveFontWeight),
-          fontVariations: _fontVariationsFromValue(block.effectiveFontWeight),
-          fontSize: adjustedFontSize,
-          height: _lineHeightForType(block.type),
-          letterSpacing: _letterSpacingForType(block.type),
-        );
+    final metrics = _measureTextBox(
+      block: block,
+      canvasSize: canvasSize,
+      text: displayText,
+      baseStyle: baseStyle,
+      textDirection: Directionality.of(context),
+    );
+    final displayStyle = baseStyle.copyWith(
+      fontSize: metrics.fontSize,
+      height: block.effectiveLineHeight,
+    );
+    final editingStyle = baseStyle.copyWith(
+      color: resolvedTextColor,
+      fontSize: metrics.fontSize,
+      height: block.effectiveLineHeight,
+    );
+    final textAlign = _flutterTextAlign(block.textAlign);
     final blockChild = isEditing
-        ? TextField(
-            controller: editingController,
-            focusNode: editingFocusNode,
-            autofocus: true,
-            minLines: 1,
-            maxLines: null,
-            onChanged: onInlineTextChanged,
-            style: editingStyle,
-            decoration: InputDecoration(
-              isCollapsed: true,
-              filled: false,
-              fillColor: Colors.transparent,
-              border: InputBorder.none,
-              enabledBorder: InputBorder.none,
-              focusedBorder: InputBorder.none,
-              hintText: tr('Buraya metin yazın', 'Type text here'),
-              hintStyle: TextStyle(
-                color: resolvedTextColor.withValues(alpha: 0.52),
-                fontFamily: resolvedFontFamily,
-                fontWeight: FontWeight.w600,
+        ? ConstrainedBox(
+            constraints: BoxConstraints(
+              minHeight: metrics.fontSize * block.effectiveLineHeight + 2,
+            ),
+            child: Listener(
+              onPointerDown: (event) {
+                if (event.buttons != 2 || editingController == null) return;
+                showSutolTextEditingContextMenu(
+                  context: context,
+                  controller: editingController!,
+                  globalPosition: event.position,
+                  focusNode: editingFocusNode,
+                  onChanged: onInlineTextChanged,
+                );
+              },
+              child: TextField(
+                controller: editingController,
+                focusNode: editingFocusNode,
+                autofocus: true,
+                minLines: 1,
+                maxLines: null,
+                onChanged: onInlineTextChanged,
+                style: editingStyle,
+                strutStyle: StrutStyle(
+                  fontFamily: resolvedFontFamily,
+                  fontSize: metrics.fontSize,
+                  fontWeight: _fontWeightFromValue(block.effectiveFontWeight),
+                  height: block.effectiveLineHeight,
+                  forceStrutHeight: false,
+                ),
+                selectionHeightStyle: BoxHeightStyle.includeLineSpacingMiddle,
+                cursorHeight: metrics.fontSize * block.effectiveLineHeight,
+                clipBehavior: Clip.none,
+                textAlign: textAlign,
+                contextMenuBuilder: _buildTextEditingContextMenu,
+                decoration: InputDecoration(
+                  isCollapsed: true,
+                  filled: false,
+                  fillColor: Colors.transparent,
+                  border: InputBorder.none,
+                  enabledBorder: InputBorder.none,
+                  focusedBorder: InputBorder.none,
+                  hintText: tr('Buraya metin yazın', 'Type text here'),
+                  hintStyle: TextStyle(
+                    color: resolvedTextColor.withValues(alpha: 0.52),
+                    fontFamily: resolvedFontFamily,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                cursorColor: context.primary,
               ),
             ),
-            cursorColor: context.primary,
           )
-        : Text(
-            displayText,
+        : Text.rich(
+            _presentationTextSpan(displayText, displayStyle),
             style: displayStyle,
+            textAlign: textAlign,
           );
     final renderedBlockChild = isEditing
         ? blockChild
@@ -2610,19 +2637,13 @@ class _PageTextBlock extends StatelessWidget {
                 ? PresentationTextEffect.none
                 : block.textEffect,
             color: resolvedTextColor,
-            text: displayText,
-            style: displayStyle!,
+            text: _presentationDisplayText(displayText),
+            style: displayStyle,
             child: blockChild,
           );
-    final textPainter = TextPainter(
-      text: TextSpan(text: displayText, style: displayStyle),
-      textDirection: Directionality.of(context),
-    )..layout(maxWidth: math.max(0, boxWidth - (paddingX * 2)));
-    final naturalHeight = textPainter.height + (paddingY * 2);
-    const minH = 44.0;
-    final boxHeight = block.heightFactor == null
-        ? naturalHeight
-        : math.max(minH, block.heightFactor! * canvasSize.height);
+    final boxWidth = metrics.width;
+    final boxHeight = metrics.height;
+    final padding = metrics.padding;
     final topPosition = block.position.dy * canvasSize.height;
     final showResizeHandles =
         interactive && isSelected && !isEditing && onResizeUpdate != null;
@@ -2634,71 +2655,124 @@ class _PageTextBlock extends StatelessWidget {
       top: topPosition - gripInset,
       width: boxWidth + gripHitSize,
       height: boxHeight + gripHitSize,
-      child: Stack(
-        fit: StackFit.expand,
-        clipBehavior: Clip.none,
-        children: <Widget>[
-          Positioned(
-            left: gripInset,
-            top: gripInset,
-            width: boxWidth,
-            height: boxHeight,
-            child: MouseRegion(
-              cursor: interactive
-                  ? (isSelected
-                      ? SystemMouseCursors.move
-                      : SystemMouseCursors.click)
-                  : MouseCursor.defer,
-              child: GestureDetector(
-                behavior: HitTestBehavior.translucent,
-                onTap: onTap,
-                onDoubleTap: onDoubleTap,
-                onSecondaryTapDown: onSecondaryTapDown,
-                onPanStart: (details) {
-                  if (!isSelected) onTap?.call();
-                },
-                onPanUpdate: onPanUpdate,
-                child: AnimatedContainer(
-                  duration: isSelected
-                      ? Duration.zero
-                      : const Duration(milliseconds: 160),
-                  padding: EdgeInsets.symmetric(
-                    horizontal: paddingX,
-                    vertical: paddingY,
-                  ),
-                  clipBehavior: Clip.hardEdge,
-                  decoration: BoxDecoration(
-                    color: showSelectionBorder && isSelected
-                        ? context.primary.withValues(
-                            alpha: isEditing ? 0.04 : 0.08,
-                          )
-                        : Colors.transparent,
-                    borderRadius: BorderRadius.circular(22),
-                    border: Border.all(
-                      color: showSelectionBorder
-                          ? (isSelected ? context.primary : Colors.transparent)
+      child: Transform.rotate(
+        angle: block.rotationDegrees * math.pi / 180,
+        child: Stack(
+          fit: StackFit.expand,
+          clipBehavior: Clip.none,
+          children: <Widget>[
+            Positioned(
+              left: gripInset,
+              top: gripInset,
+              width: boxWidth,
+              height: boxHeight,
+              child: MouseRegion(
+                cursor: interactive
+                    ? (isSelected
+                        ? SystemMouseCursors.move
+                        : SystemMouseCursors.click)
+                    : MouseCursor.defer,
+                child: GestureDetector(
+                  behavior: HitTestBehavior.translucent,
+                  onTap: onTap,
+                  onDoubleTapDown: onDoubleTapDown,
+                  onSecondaryTapDown: isEditing ? null : onSecondaryTapDown,
+                  onPanStart: (details) {
+                    if (!isSelected) onTap?.call();
+                  },
+                  onPanUpdate: onPanUpdate,
+                  child: AnimatedContainer(
+                    duration: isSelected
+                        ? Duration.zero
+                        : const Duration(milliseconds: 160),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: padding,
+                      vertical: padding,
+                    ),
+                    clipBehavior: isEditing
+                        ? Clip.none
+                        : block.overflow == PresentationTextOverflow.clip
+                            ? Clip.hardEdge
+                            : Clip.none,
+                    decoration: BoxDecoration(
+                      color: showSelectionBorder && isSelected
+                          ? context.primary.withValues(
+                              alpha: isEditing ? 0.04 : 0.08,
+                            )
                           : Colors.transparent,
-                      width: isSelected ? 1.6 : 1,
+                      borderRadius: BorderRadius.circular(22),
+                      border: Border.all(
+                        color: showSelectionBorder
+                            ? (isSelected
+                                ? context.primary
+                                : Colors.transparent)
+                            : Colors.transparent,
+                        width: isSelected ? 1.6 : 1,
+                      ),
+                    ),
+                    child: Align(
+                      alignment: _flutterTextVerticalAlignment(
+                        block.verticalAlign,
+                      ),
+                      child: SizedBox(
+                        width: double.infinity,
+                        child: renderedBlockChild,
+                      ),
                     ),
                   ),
-                  child: renderedBlockChild,
                 ),
               ),
             ),
-          ),
-          if (showResizeHandles)
-            for (final handle in _ComponentResizeHandle.values)
-              _ComponentResizeGrip(
-                handle: handle,
-                onPanUpdate: onResizeUpdate == null
-                    ? null
-                    : (details) => onResizeUpdate!(
-                          handle,
-                          details,
-                          boxHeight / canvasSize.height,
+            if (showResizeHandles)
+              for (final handle in _ComponentResizeHandle.values)
+                _ComponentResizeGrip(
+                  handle: handle,
+                  onPanUpdate: onResizeUpdate == null
+                      ? null
+                      : (details) => onResizeUpdate!(
+                            handle,
+                            details,
+                            boxHeight / canvasSize.height,
+                          ),
+                ),
+            if (showResizeHandles && onRotateUpdate != null)
+              Align(
+                alignment: Alignment.topCenter,
+                child: Transform.translate(
+                  offset: const Offset(0, -28),
+                  child: MouseRegion(
+                    cursor: SystemMouseCursors.grab,
+                    child: GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onPanUpdate: onRotateUpdate,
+                      child: Container(
+                        width: 24,
+                        height: 24,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                          border:
+                              Border.all(color: context.primary, width: 1.6),
+                          boxShadow: const <BoxShadow>[
+                            BoxShadow(
+                              color: Color(0x26000000),
+                              blurRadius: 8,
+                              offset: Offset(0, 3),
+                            ),
+                          ],
                         ),
+                        child: Icon(
+                          Icons.rotate_right_rounded,
+                          size: 15,
+                          color: context.primary,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
               ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -3729,26 +3803,158 @@ List<FontVariation> _fontVariationsFromValue(int value) => <FontVariation>[
       FontVariation('wght', value.clamp(100, 900).toDouble()),
     ];
 
-double _fontSizeForType(PresentationTextType type, double fontSize) {
-  switch (type) {
-    case PresentationTextType.title:
-      return fontSize;
-    case PresentationTextType.subtitle:
-      return fontSize * 0.9;
-    case PresentationTextType.body:
-      return fontSize * 0.82;
-  }
+class _TextBoxMetrics {
+  const _TextBoxMetrics({
+    required this.width,
+    required this.height,
+    required this.padding,
+    required this.fontSize,
+  });
+
+  final double width;
+  final double height;
+  final double padding;
+  final double fontSize;
 }
 
-double _lineHeightForType(PresentationTextType type) {
-  switch (type) {
-    case PresentationTextType.title:
-      return 1.06;
-    case PresentationTextType.subtitle:
-      return 1.12;
-    case PresentationTextType.body:
-      return 1.24;
+_TextBoxMetrics _measureTextBox({
+  required PresentationTextBlock block,
+  required Size canvasSize,
+  required String text,
+  required TextStyle baseStyle,
+  required TextDirection textDirection,
+}) {
+  final referenceScale = canvasSize.width / 1000;
+  final padding = block.padding * referenceScale;
+  final width = math.max(
+    20 * referenceScale,
+    block.widthFactor * canvasSize.width,
+  );
+  final availableWidth = math.max(1.0, width - padding * 2);
+  final desiredFontSize =
+      (block.fontSize * referenceScale).clamp(4.0, 320.0).toDouble();
+
+  double textHeight(double fontSize) {
+    final style = baseStyle.copyWith(
+      fontSize: fontSize,
+      height: block.effectiveLineHeight,
+    );
+    final painter = TextPainter(
+      text: _presentationTextSpan(text, style),
+      textAlign: _flutterTextAlign(block.textAlign),
+      textDirection: textDirection,
+    )..layout(maxWidth: availableWidth);
+    return painter.height;
   }
+
+  final desiredNaturalHeight = textHeight(desiredFontSize) + padding * 2;
+  if (block.heightFactor == null) {
+    return _TextBoxMetrics(
+      width: width,
+      height: desiredNaturalHeight,
+      padding: padding,
+      fontSize: desiredFontSize,
+    );
+  }
+
+  final explicitHeight = math.max(
+    20 * referenceScale,
+    block.heightFactor! * canvasSize.height,
+  );
+  if (block.overflow == PresentationTextOverflow.expand) {
+    return _TextBoxMetrics(
+      width: width,
+      height: math.max(explicitHeight, desiredNaturalHeight),
+      padding: padding,
+      fontSize: desiredFontSize,
+    );
+  }
+
+  var resolvedFontSize = desiredFontSize;
+  if (block.overflow == PresentationTextOverflow.shrink &&
+      desiredNaturalHeight > explicitHeight) {
+    var low = math
+        .min(
+          desiredFontSize,
+          PresentationController.minTextFontSize * referenceScale,
+        )
+        .clamp(4.0, desiredFontSize)
+        .toDouble();
+    var high = desiredFontSize;
+    for (var i = 0; i < 14; i += 1) {
+      final candidate = (low + high) / 2;
+      if (textHeight(candidate) + padding * 2 <= explicitHeight) {
+        low = candidate;
+      } else {
+        high = candidate;
+      }
+    }
+    resolvedFontSize = low;
+  }
+  // Shrinking has an explicit readability floor. If a narrow/multiline title
+  // still does not fit at that floor, keep the requested height as a minimum
+  // and grow the box instead of clipping its final line. The HTML renderer
+  // applies the same shrink-then-grow contract in `fitText`.
+  final resolvedNaturalHeight = textHeight(resolvedFontSize) + padding * 2;
+  return _TextBoxMetrics(
+    width: width,
+    height: block.overflow == PresentationTextOverflow.shrink
+        ? math.max(explicitHeight, resolvedNaturalHeight)
+        : explicitHeight,
+    padding: padding,
+    fontSize: resolvedFontSize,
+  );
+}
+
+final RegExp _presentationStrongPrefixPattern = RegExp(r'\*\*([^*\n]+:)\*\*');
+
+String _presentationDisplayText(String value) => value.replaceAllMapped(
+      _presentationStrongPrefixPattern,
+      (match) => match.group(1)!,
+    );
+
+TextSpan _presentationTextSpan(String value, TextStyle style) {
+  final children = <InlineSpan>[];
+  var offset = 0;
+  for (final match in _presentationStrongPrefixPattern.allMatches(value)) {
+    if (match.start > offset) {
+      children.add(TextSpan(text: value.substring(offset, match.start)));
+    }
+    children.add(TextSpan(
+      text: match.group(1),
+      style: const TextStyle(fontWeight: FontWeight.w700),
+    ));
+    offset = match.end;
+  }
+  if (offset < value.length)
+    children.add(TextSpan(text: value.substring(offset)));
+  return TextSpan(style: style, children: children);
+}
+
+TextAlign _flutterTextAlign(PresentationTextAlign align) => switch (align) {
+      PresentationTextAlign.left => TextAlign.left,
+      PresentationTextAlign.center => TextAlign.center,
+      PresentationTextAlign.right => TextAlign.right,
+      PresentationTextAlign.justify => TextAlign.justify,
+    };
+
+Alignment _flutterTextVerticalAlignment(
+  PresentationTextVerticalAlign align,
+) =>
+    switch (align) {
+      PresentationTextVerticalAlign.top => Alignment.topCenter,
+      PresentationTextVerticalAlign.center => Alignment.center,
+      PresentationTextVerticalAlign.bottom => Alignment.bottomCenter,
+    };
+
+Widget _buildTextEditingContextMenu(
+  BuildContext context,
+  EditableTextState editableTextState,
+) {
+  return AdaptiveTextSelectionToolbar.buttonItems(
+    anchors: editableTextState.contextMenuAnchors,
+    buttonItems: editableTextState.contextMenuButtonItems,
+  );
 }
 
 double _letterSpacingForType(PresentationTextType type) {

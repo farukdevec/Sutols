@@ -17,7 +17,18 @@ enum PresentationTextAlign {
   left,
   center,
   right,
+  justify,
 }
+
+/// Metnin sabit yükseklikli kutu içindeki dikey konumu.
+enum PresentationTextVerticalAlign { top, center, bottom }
+
+/// Metin, kendisine ayrılan kutuya sığmadığında uygulanacak politika.
+enum PresentationTextOverflow { shrink, clip, expand }
+
+/// Köşe tutamaçlarının davranışı. Kenar tutamaçları her zaman yalnızca
+/// kutunun ölçüsünü değiştirir ve fontu sabit tutar.
+enum PresentationTextResizeMode { fixedFont, proportional }
 
 enum PresentationTextStyle {
   standard,
@@ -505,6 +516,12 @@ class PresentationTextBlock {
     this.textItalic = false,
     this.textUnderline = false,
     this.textAlign = PresentationTextAlign.left,
+    this.verticalAlign = PresentationTextVerticalAlign.top,
+    this.overflow = PresentationTextOverflow.shrink,
+    this.resizeMode = PresentationTextResizeMode.proportional,
+    this.padding = 14,
+    this.lineHeight,
+    this.rotationDegrees = 0,
   });
 
   final String id;
@@ -539,6 +556,24 @@ class PresentationTextBlock {
   final bool textItalic;
   final bool textUnderline;
   final PresentationTextAlign textAlign;
+  final PresentationTextVerticalAlign verticalAlign;
+  final PresentationTextOverflow overflow;
+  final PresentationTextResizeMode resizeMode;
+
+  /// 1000px genişliğindeki referans sahneye göre iç boşluk.
+  final double padding;
+
+  /// `null` eski projelerin metin türüne bağlı varsayılanını korur.
+  final double? lineHeight;
+  final double rotationDegrees;
+
+  double get effectiveLineHeight =>
+      lineHeight ??
+      switch (type) {
+        PresentationTextType.title => 1.10,
+        PresentationTextType.subtitle => 1.12,
+        PresentationTextType.body => 1.24,
+      };
 
   int get effectiveFontWeight {
     if (fontWeight case final explicitWeight?) {
@@ -580,6 +615,12 @@ class PresentationTextBlock {
     bool? textItalic,
     bool? textUnderline,
     PresentationTextAlign? textAlign,
+    PresentationTextVerticalAlign? verticalAlign,
+    PresentationTextOverflow? overflow,
+    PresentationTextResizeMode? resizeMode,
+    double? padding,
+    Object? lineHeight = _copySentinel,
+    double? rotationDegrees,
   }) {
     return PresentationTextBlock(
       id: id ?? this.id,
@@ -617,6 +658,14 @@ class PresentationTextBlock {
       textItalic: textItalic ?? this.textItalic,
       textUnderline: textUnderline ?? this.textUnderline,
       textAlign: textAlign ?? this.textAlign,
+      verticalAlign: verticalAlign ?? this.verticalAlign,
+      overflow: overflow ?? this.overflow,
+      resizeMode: resizeMode ?? this.resizeMode,
+      padding: padding ?? this.padding,
+      lineHeight: identical(lineHeight, _copySentinel)
+          ? this.lineHeight
+          : lineHeight as double?,
+      rotationDegrees: rotationDegrees ?? this.rotationDegrees,
     );
   }
 }

@@ -593,7 +593,8 @@ void main() {
     expect(document, contains('overflow: visible;'));
     expect(document, contains('function textOverflows(element)'));
     expect(document, contains('range.getBoundingClientRect()'));
-    expect(document, contains('while (textOverflows(element)'));
+    expect(document, contains('index < 14'));
+    expect(document, contains("element.style.height = 'auto'"));
   });
 
   test('popular reveal and display animations are available independently', () {
@@ -737,16 +738,12 @@ void main() {
 
     expect(
       document,
-      contains(
-        'text-animation-yavas-belirme is-text-animation-complete',
-      ),
+      matches(RegExp(r'text-animation-yavas-belirme[^"<>]*is-text-animation-complete')),
     );
     expect(
       document,
       isNot(
-        contains(
-          'text-animation-bulaniktan-net is-text-animation-complete',
-        ),
+        matches(RegExp(r'text-animation-bulaniktan-net[^"<>]*is-text-animation-complete')),
       ),
     );
   });
@@ -1336,5 +1333,141 @@ void main() {
       expect(document, contains('animation-name:${entry.value}'));
       expect(document, contains('@keyframes ${entry.value}'));
     }
+  });
+
+  test('HTML text boxes use the persisted editor layout contract', () {
+    const page = PresentationPage(
+      id: 'text-layout',
+      textBlocks: <PresentationTextBlock>[
+        PresentationTextBlock(
+          id: 'text-1',
+          text: 'Aynı metin kutusu',
+          position: Offset(.1, .2),
+          fontSize: 40,
+          type: PresentationTextType.body,
+          widthFactor: .4,
+          heightFactor: .25,
+          textAlign: PresentationTextAlign.justify,
+          verticalAlign: PresentationTextVerticalAlign.bottom,
+          overflow: PresentationTextOverflow.clip,
+          padding: 20,
+          lineHeight: 1.5,
+          rotationDegrees: 12,
+        ),
+      ],
+    );
+
+    final markup = buildHtmlStageMarkup(page: page);
+    expect(markup, contains('text-overflow-clip'));
+    expect(markup, contains('text-vertical-bottom'));
+    expect(markup, contains('padding:2.00cqw'));
+    expect(markup, contains('line-height:1.500'));
+    expect(markup, contains('rotate:12.00deg'));
+    expect(markup, contains('text-align:justify'));
+    expect(sutolHtmlStageStyles, contains('justify-content: flex-end'));
+    expect(
+      sutolHtmlStagePatchScript,
+      contains("classList.contains('text-overflow-shrink')"),
+    );
+  });
+
+  test(
+      'HTML narrow Turkish titles shrink to minimum then grow without clipping',
+      () {
+    const page = PresentationPage(
+      id: 'narrow-title',
+      textBlocks: <PresentationTextBlock>[
+        PresentationTextBlock(
+          id: 'title',
+          text: 'Kişiselleştirilmiş Öğrenme Çözümleri',
+          position: Offset.zero,
+          fontSize: 72,
+          type: PresentationTextType.title,
+          widthFactor: .12,
+          heightFactor: .04,
+          overflow: PresentationTextOverflow.shrink,
+        ),
+      ],
+    );
+    final markup = buildHtmlStageMarkup(page: page);
+    expect(markup, contains('--sutol-min-font-size:1.80cqw'));
+    expect(
+        sutolHtmlStagePatchScript, contains("element.style.height = 'auto'"));
+    expect(
+      sutolHtmlStagePatchScript,
+      contains("element.style.fontSize = 'var(--sutol-min-font-size)'"),
+    );
+    expect(sutolHtmlStagePatchScript, contains('index < 14'));
+  });
+
+  test('HTML body strong prefix renders emphasis without markdown markers', () {
+    const page = PresentationPage(
+      id: 'strong-prefix',
+      textBlocks: <PresentationTextBlock>[
+        PresentationTextBlock(
+          id: 'body',
+          text: '**Fayda:** Kişiselleştirilmiş öğrenme',
+          position: Offset.zero,
+          fontSize: 36,
+          type: PresentationTextType.body,
+          widthFactor: .5,
+        ),
+      ],
+    );
+    final markup = buildHtmlStageMarkup(page: page);
+    expect(markup, contains('<strong>Fayda:</strong>'));
+    expect(markup, isNot(contains('**Fayda:**')));
+  });
+
+  test('animated multi-word strong prefixes stay emphasized without stars', () {
+    const page = PresentationPage(
+      id: 'grouped-strong-prefix',
+      textBlocks: <PresentationTextBlock>[
+        PresentationTextBlock(
+          id: 'word',
+          text: '**Öğretmen Denetimi:** Öneriler doğrulanır.',
+          position: Offset.zero,
+          fontSize: 36,
+          type: PresentationTextType.body,
+          widthFactor: .5,
+          entranceAnimation: PresentationEntranceAnimation.fadeIn,
+          textGrouping: PresentationTextGrouping.byWord,
+        ),
+        PresentationTextBlock(
+          id: 'character',
+          text: '**Öğretmen Denetimi:** Güven sağlar.',
+          position: Offset(.1, .2),
+          fontSize: 36,
+          type: PresentationTextType.body,
+          widthFactor: .5,
+          entranceAnimation: PresentationEntranceAnimation.fadeIn,
+          textGrouping: PresentationTextGrouping.byLetter,
+        ),
+        PresentationTextBlock(
+          id: 'typewriter',
+          text: '**Öğretmen Denetimi:** Sonuçları iyileştirir.',
+          position: Offset(.1, .4),
+          fontSize: 36,
+          type: PresentationTextType.body,
+          widthFactor: .5,
+          textAnimation: PresentationTextAnimation.daktilo,
+        ),
+      ],
+    );
+    final markup = buildHtmlStageMarkup(page: page);
+    expect(markup, contains('<strong>Öğretmen Denetimi:</strong>'));
+    expect(markup, contains('<strong>Ö</strong>'));
+    expect(markup, contains('<strong>:</strong>'));
+    expect(markup, isNot(contains('**Öğretmen Denetimi:**')));
+    expect(markup, contains('sutol-animation-segment'));
+    expect(markup, contains('sutol-typewriter-word'));
+    expect(
+      sutolHtmlStagePatchScript,
+      contains(r'/\*\*[^*\n]+:\*\*|\S+|\s+/g'),
+    );
+    expect(
+      sutolHtmlStagePatchScript,
+      contains(r'/\*\*[^*\n]+:\*\*|[\s\S]/g'),
+    );
   });
 }

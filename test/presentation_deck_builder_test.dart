@@ -34,6 +34,15 @@ void main() {
     expect(modelBlock.modelAssetId, 'solar-system');
     expect(modelBlock.modelAnimationEnabled, isTrue);
     expect(modelBlock.modelAutoRotate, isTrue);
+    expect(modelBlock.modelZoom, 0.8);
+    expect(modelBlock.position.dx, greaterThanOrEqualTo(0.68));
+    expect(modelBlock.position.dy, greaterThanOrEqualTo(0.20));
+    expect(modelBlock.position.dx + modelBlock.size.width,
+        lessThanOrEqualTo(0.96));
+    expect(modelBlock.position.dy + modelBlock.size.height,
+        lessThanOrEqualTo(0.80));
+    expect(modelBlock.size.width, lessThanOrEqualTo(0.26));
+    expect(modelBlock.size.height, lessThanOrEqualTo(0.50));
   });
 
   test('3D model takes priority over a matching catalog component', () {
@@ -53,7 +62,9 @@ void main() {
     expect(presentationComponentCategory(visual.kind), 'Fizik');
   });
 
-  test('model without a usable source stays text-only instead of adding a 2D component', () {
+  test(
+      'model without a usable source stays text-only instead of adding a 2D component',
+      () {
     final pages = PresentationDeckBuilder().buildPages(
       topic: 'Çevre',
       slides: <DeckSlide>[

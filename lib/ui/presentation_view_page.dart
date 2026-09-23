@@ -8,6 +8,7 @@ import '../services/firestore_rest_helper.dart';
 import '../services/presentation_loader.dart';
 import '../services/presentation_model_source_resolver.dart';
 import '../services/presentation_project_codec.dart';
+import '../services/presentation_title.dart';
 import '../state/language_controller.dart';
 import 'design/design_system.dart';
 import 'html_presentation_editor_page.dart';
@@ -35,6 +36,7 @@ class _PresentationViewPageState extends State<PresentationViewPage> {
       'https://firestore.googleapis.com/v1/projects/sutols/databases/(default)/documents';
 
   late Future<Map<String, dynamic>> _future;
+  String _presentationTitle = '';
   Map<String, dynamic>? _shareInfo;
 
   @override
@@ -77,8 +79,7 @@ class _PresentationViewPageState extends State<PresentationViewPage> {
     );
     var slides = <Map<String, dynamic>>[];
     if (projectDoc != null) {
-      final projectFields =
-          projectDoc['fields'] as Map<String, dynamic>? ?? {};
+      final projectFields = projectDoc['fields'] as Map<String, dynamic>? ?? {};
       final projectJson =
           FirestoreRestHelper.stringField(projectFields, 'json');
       updatedByName =
@@ -89,9 +90,8 @@ class _PresentationViewPageState extends State<PresentationViewPage> {
           await hydratePresentationModelSources(decoded.pages);
 
           for (final page in decoded.pages) {
-            var title = page.textBlocks.isNotEmpty
-                ? page.textBlocks.first.text
-                : '';
+            var title =
+                page.textBlocks.isNotEmpty ? page.textBlocks.first.text : '';
             var content = page.textBlocks
                 .skip(1)
                 .map((b) => b.text)
@@ -133,12 +133,14 @@ class _PresentationViewPageState extends State<PresentationViewPage> {
             },
           ],
           'orderBy': [
-            {'field': {'fieldPath': 'order'}, 'direction': 'ASCENDING'},
+            {
+              'field': {'fieldPath': 'order'},
+              'direction': 'ASCENDING'
+            },
           ],
         });
         slides = slideDocs.map<Map<String, dynamic>>((slideDoc) {
-          final slideFields =
-              slideDoc['fields'] as Map<String, dynamic>? ?? {};
+          final slideFields = slideDoc['fields'] as Map<String, dynamic>? ?? {};
           return {
             'title': FirestoreRestHelper.stringField(slideFields, 'title'),
             'content': FirestoreRestHelper.stringField(slideFields, 'content'),
@@ -151,8 +153,14 @@ class _PresentationViewPageState extends State<PresentationViewPage> {
       }
     }
 
+    final topic = _stringField(fields, 'topic');
+    _presentationTitle = resolvePresentationTitle(
+      title: _stringField(fields, 'title'),
+      topic: topic,
+    );
     return {
-      'topic': _stringField(fields, 'topic'),
+      'topic': topic,
+      'title': _presentationTitle,
       'slides': slides,
       if (updatedByName != null && updatedByName.isNotEmpty)
         'updatedByName': updatedByName,
@@ -215,6 +223,7 @@ class _PresentationViewPageState extends State<PresentationViewPage> {
         presentationId: widget.presentationId,
         isOwner: isOwner,
         initialShared: initialShared,
+        presentationTitle: _presentationTitle,
       ),
     );
   }
@@ -234,13 +243,15 @@ class _PresentationViewPageState extends State<PresentationViewPage> {
               tooltip: tr('Editörde Düzenle', 'Edit in Editor'),
               icon: const Icon(Icons.edit_note_rounded),
               onPressed: () async {
-                final result = await loadPresentationForEdit(widget.presentationId);
+                final result =
+                    await loadPresentationForEdit(widget.presentationId);
                 if (!context.mounted) return;
                 Navigator.of(context).push(
                   MaterialPageRoute<void>(
                     builder: (_) => HtmlPresentationEditorPage(
                       controller: result.controller,
                       presentationId: widget.presentationId,
+                      initialPresentationName: _presentationTitle,
                       initialUpdatedByName: result.updatedByName,
                     ),
                   ),
@@ -289,13 +300,14 @@ class _PresentationViewPageState extends State<PresentationViewPage> {
             );
           }
 
-          final slides = (data['slides'] as List?)?.cast<Map<String, dynamic>>() ?? [];
+          final slides =
+              (data['slides'] as List?)?.cast<Map<String, dynamic>>() ?? [];
 
           return ListView(
             padding: const EdgeInsets.all(AppSpacing.s32),
             children: [
               Text(
-                data['topic'] as String? ?? '',
+                data['title'] as String? ?? '',
                 style: AppTypography.headline.copyWith(
                   color: colors.textPrimary,
                 ),
@@ -371,17 +383,24 @@ class _SlideCard extends StatelessWidget {
           // Render content lines; detect any '**Header:**' patterns and render header bold without showing '**'
           Builder(builder: (context) {
             final content = (slide['content'] as String?) ?? '';
-            final lines = content.split('\n').map((l) => l.trim()).where((l) => l.isNotEmpty).toList();
+            final lines = content
+                .split('\n')
+                .map((l) => l.trim())
+                .where((l) => l.isNotEmpty)
+                .toList();
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 for (final line in lines)
                   () {
-                    final matches = RegExp(r'\*\*([^*]+)\:\*\*').allMatches(line).toList();
+                    final matches =
+                        RegExp(r'\*\*([^*]+)\:\*\*').allMatches(line).toList();
                     if (matches.isEmpty) {
                       return Padding(
                         padding: const EdgeInsets.only(bottom: 6),
-                        child: Text(line, style: AppTypography.bodyMedium.copyWith(color: colors.textSecondary)),
+                        child: Text(line,
+                            style: AppTypography.bodyMedium
+                                .copyWith(color: colors.textSecondary)),
                       );
                     }
 
@@ -390,19 +409,24 @@ class _SlideCard extends StatelessWidget {
                     var lastIndex = 0;
                     for (final m in matches) {
                       if (m.start > lastIndex) {
-                        spans.add(TextSpan(text: line.substring(lastIndex, m.start)));
+                        spans.add(
+                            TextSpan(text: line.substring(lastIndex, m.start)));
                       }
                       final header = m.group(1) ?? '';
-                      spans.add(TextSpan(text: header + ': ', style: const TextStyle(fontWeight: FontWeight.w700)));
+                      spans.add(TextSpan(
+                          text: header + ': ',
+                          style: const TextStyle(fontWeight: FontWeight.w700)));
                       lastIndex = m.end;
                     }
-                    if (lastIndex < line.length) spans.add(TextSpan(text: line.substring(lastIndex)));
+                    if (lastIndex < line.length)
+                      spans.add(TextSpan(text: line.substring(lastIndex)));
 
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 6),
                       child: RichText(
                         text: TextSpan(
-                          style: AppTypography.bodyMedium.copyWith(color: colors.textSecondary),
+                          style: AppTypography.bodyMedium
+                              .copyWith(color: colors.textSecondary),
                           children: spans,
                         ),
                       ),

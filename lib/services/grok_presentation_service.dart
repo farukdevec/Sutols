@@ -37,16 +37,23 @@ class GrokSlide {
 
   factory GrokSlide.fromJson(Map<String, dynamic> json) {
     final title = json['title'] ?? json['baslik'];
-    final subtitle = (json['subtitle'] ?? json['alt_baslik'] ?? json['sub_title'])?.toString();
+    final subtitle =
+        (json['subtitle'] ?? json['alt_baslik'] ?? json['sub_title'])
+            ?.toString();
     final rawContent = json['content'] ?? json['icerik'];
-    final rawKeywords = json['visual_keywords'] ?? json['keywords'] ?? json['anahtar_kelimeler'];
+    final rawKeywords = json['visual_keywords'] ??
+        json['keywords'] ??
+        json['anahtar_kelimeler'];
     final rawType = json['type'] ??
         json['slide_type'] ??
         json['layout'] ??
         json['tip'] ??
         'concept';
-    final purpose = (json['purpose'] ?? json['amac'] ?? json['role'])?.toString();
-    final keyMessage = (json['key_message'] ?? json['keyMessage'] ?? json['ana_mesaj'])?.toString();
+    final purpose =
+        (json['purpose'] ?? json['amac'] ?? json['role'])?.toString();
+    final keyMessage =
+        (json['key_message'] ?? json['keyMessage'] ?? json['ana_mesaj'])
+            ?.toString();
     final rawSections = json['sections'] ?? json['bolumler'];
     final rawVisual = json['visual'] ?? json['gorsel'];
     final rawSources = json['sources'] ?? json['kaynaklar'];
@@ -72,9 +79,16 @@ class GrokSlide {
         final lines = <String>[];
         for (final sec in sectionsList) {
           final heading = sec['heading'] ?? sec['title'] ?? sec['baslik'] ?? '';
-          final desc = sec['description'] ?? sec['desc'] ?? sec['text'] ?? sec['aciklama'] ?? sec['content'] ?? '';
-          if (heading.toString().trim().isNotEmpty && desc.toString().trim().isNotEmpty) {
-            lines.add('- ${heading.toString().trim()}: ${desc.toString().trim()}');
+          final desc = sec['description'] ??
+              sec['desc'] ??
+              sec['text'] ??
+              sec['aciklama'] ??
+              sec['content'] ??
+              '';
+          if (heading.toString().trim().isNotEmpty &&
+              desc.toString().trim().isNotEmpty) {
+            lines.add(
+                '- ${heading.toString().trim()}: ${desc.toString().trim()}');
           } else if (desc.toString().trim().isNotEmpty) {
             lines.add('- ${desc.toString().trim()}');
           } else if (heading.toString().trim().isNotEmpty) {
@@ -106,12 +120,17 @@ class GrokSlide {
 
     return GrokSlide(
       title: cleanedTitle,
-      subtitle: subtitle != null && subtitle.trim().isNotEmpty ? subtitle.trim() : null,
+      subtitle: subtitle != null && subtitle.trim().isNotEmpty
+          ? subtitle.trim()
+          : null,
       content: normalizedContent,
       keywords: keywordsList,
       type: rawType.toString().toLowerCase().trim(),
-      purpose: purpose != null && purpose.trim().isNotEmpty ? purpose.trim() : null,
-      keyMessage: keyMessage != null && keyMessage.trim().isNotEmpty ? keyMessage.trim() : null,
+      purpose:
+          purpose != null && purpose.trim().isNotEmpty ? purpose.trim() : null,
+      keyMessage: keyMessage != null && keyMessage.trim().isNotEmpty
+          ? keyMessage.trim()
+          : null,
       sections: sectionsList,
       visual: visualMap,
       sources: sourcesList,
@@ -124,11 +143,13 @@ class GrokSlide {
     }
     if (rawContent is Map) {
       final headline = rawContent['headline'] ?? rawContent['ana_fikir'] ?? '';
-      final supportingText = rawContent['supporting_text'] ?? rawContent['aciklama'] ?? '';
+      final supportingText =
+          rawContent['supporting_text'] ?? rawContent['aciklama'] ?? '';
       final rawKeyPoints = rawContent['key_points'] ?? rawContent['maddeler'];
       final lines = <String>[];
       final cleanHeadline = headline.toString().replaceAll('*', '').trim();
-      final cleanSupporting = supportingText.toString().replaceAll('*', '').trim();
+      final cleanSupporting =
+          supportingText.toString().replaceAll('*', '').trim();
       if (cleanHeadline.isNotEmpty && cleanSupporting.isNotEmpty) {
         lines.add('- $cleanHeadline: $cleanSupporting');
       } else if (cleanHeadline.isNotEmpty) {
@@ -145,7 +166,8 @@ class GrokSlide {
         }
       }
       if (lines.isNotEmpty) {
-        return PresentationContentQuality.normalizeContentBullets(lines.join('\n'));
+        return PresentationContentQuality.normalizeContentBullets(
+            lines.join('\n'));
       }
     }
     if (rawContent is List) {
@@ -321,9 +343,11 @@ class GrokPresentationService {
                   (s) => PresentationContentSample(
                     title: s.title,
                     content: s.content,
+                    type: s.type,
                   ),
                 )
                 .toList(growable: false),
+            language: language,
           );
           if (qualityReason != null) {
             throw FormatException(

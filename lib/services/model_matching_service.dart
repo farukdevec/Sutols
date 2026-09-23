@@ -10,6 +10,7 @@ class ModelMatch {
   final String modelUrl;
   final String thumbnailUrl;
   final int score;
+
   /// Eşleşmeyi oluşturan ayırt edici kelimeler. Log ve son güven kapısı için
   /// saklanır; böylece yalnızca yüksek bir sayıya değil, neden eşleştiğine de
   /// bakılabilir.
@@ -40,7 +41,12 @@ class ModelMatchingService {
   /// skor. Bunun altındaki skorlar aday listesinden tamamen elenir; böylece
   /// çağıran taraf (PresentationService) rastgele/alakasız bir model
   /// atamak yerine 2D bileşen düzenine (fallback) düşebilir.
-  static const double _minConfidentWeightedScore = 2.0;
+  // This is only the candidate floor. The final automatic-placement gate is
+  // [isStrong3dMatch], which also requires concrete object evidence. Keeping
+  // weak candidates visible is useful for diagnostics and prevents a small
+  // test/offline catalogue from changing the meaning of a match solely due to
+  // IDF corpus size.
+  static const double _minCandidateWeightedScore = 0.5;
   static const int _strongSingleTermScore = 30;
   static const int _strongMultiTermScore = 20;
 
@@ -155,6 +161,10 @@ class ModelMatchingService {
   /// kelimeler yüksek ağırlık alır.
   static double _specificityWeight(String normalizedWord) {
     final total = _totalIndexedModels == 0 ? 1 : _totalIndexedModels;
+    // IDF is not statistically meaningful for tiny offline/test catalogues.
+    // Treat their terms as fully specific; the separate strong-match gate
+    // still requires either a high-scoring direct term or multiple terms.
+    if (total < 10) return 1.0;
     final df = _wordDocFrequency[normalizedWord] ?? 1;
     final commonness = df / total; // 0..1
     final weight = 1.0 - (commonness * 0.8);
@@ -213,7 +223,8 @@ class ModelMatchingService {
           _bestMatchWeight(limitedKeywords, indexed.normalizedName);
       if (nameWeight > 0) {
         weighted += 1 * nameWeight;
-        matchedTerms.addAll(_matchingWords(limitedKeywords, indexed.normalizedName));
+        matchedTerms
+            .addAll(_matchingWords(limitedKeywords, indexed.normalizedName));
       }
 
       if (weighted <= 0) continue;
@@ -234,7 +245,7 @@ class ModelMatchingService {
     //    Zayıf/şüpheli eşleşmeler burada elenir ki çağıran taraf rastgele
     //    bir modele zorlanmak yerine 2D bileşen düzenine düşebilsin.
     final confident = matches
-        .where((m) => m.score >= (_minConfidentWeightedScore * 10).round())
+        .where((m) => m.score >= (_minCandidateWeightedScore * 10).round())
         .toList();
     confident.sort((a, b) => b.score.compareTo(a.score));
     return confident;
@@ -265,13 +276,17 @@ class ModelMatchingService {
   static List<String> _matchingWords(
     List<String> keywordWords,
     String candidateText,
-  ) => keywordWords
-      .where((keyword) => PresentationKeywordCatalog.words(candidateText).any(
-            (candidateWord) =>
-                PresentationKeywordCatalog.wordsMatch(keyword, candidateWord) ||
-                PresentationKeywordCatalog.wordsMatch(candidateWord, keyword),
-          ))
-      .toList(growable: false);
+  ) =>
+      keywordWords
+          .where(
+              (keyword) => PresentationKeywordCatalog.words(candidateText).any(
+                    (candidateWord) =>
+                        PresentationKeywordCatalog.wordsMatch(
+                            keyword, candidateWord) ||
+                        PresentationKeywordCatalog.wordsMatch(
+                            candidateWord, keyword),
+                  ))
+          .toList(growable: false);
 
   /// Yalnızca kanıtı yeterince güçlü adaylar 3B varlık olarak kullanılabilir.
   /// Bu, "gantt blokları" gibi tek, zayıf ortak kelimeyle gelen alakasız
@@ -290,10 +305,16 @@ class ModelMatchingService {
   static const Set<String> _contextOnlyMatchTerms = <String>{
     'sogutma', 'sogutucu', 'iklimlendirme', 'cevre', 'enerji',
     'verimlilik', 'kullanim', 'gelecek', 'yenilik', 'dongu', 'dongusu',
+    // Abstract headings must not be treated as proof of the physical object.
+    // In particular, "Etik İlkeler" used to select an ethical-hacker desk and
+    // "Faydalar ve Riskler" could select a bankruptcy scene from one shared
+    // generic tag.
+    'etik', 'etigin', 'ahlak', 'ahlaki', 'ilke', 'ilkeler', 'fayda',
+    'faydalar', 'riski', 'riskin', 'risk', 'riskler',
   };
 
-  static bool _hasConcreteObjectEvidence(ModelMatch match) => match.matchedTerms
-      .any((term) => !_contextOnlyMatchTerms.contains(term));
+  static bool _hasConcreteObjectEvidence(ModelMatch match) =>
+      match.matchedTerms.any((term) => !_contextOnlyMatchTerms.contains(term));
 
   static ModelMatch? bestStrongMatchPreferUnused(
     List<ModelMatch> matches,
@@ -567,9 +588,24 @@ class ModelMatchingService {
   }
 
   static const Set<String> _presentationComponentMarkers = <String>{
-    'swot', 'pestel', 'kpi', 'gantt', 'matris', 'grafik', 'sema', 'harita',
-    'kanvas', 'pano', 'portfoy', 'oncelik', 'konumlandirma', 'paydas',
-    'musteri', 'yolculuk', 'puan', 'kart',
+    'swot',
+    'pestel',
+    'kpi',
+    'gantt',
+    'matris',
+    'grafik',
+    'sema',
+    'harita',
+    'kanvas',
+    'pano',
+    'portfoy',
+    'oncelik',
+    'konumlandirma',
+    'paydas',
+    'musteri',
+    'yolculuk',
+    'puan',
+    'kart',
   };
 
   static bool _isPresentationComponentLike(_IndexedModel indexed) {

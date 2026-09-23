@@ -6,8 +6,8 @@ class PresentationPromptBuilder {
 
   /// Profesyonel sunum direktörü ve içerik uzmanı sistem talimatı.
   static String buildSystemInstruction({String language = 'turkish'}) {
-    final isEn = language.toLowerCase() == 'english' ||
-        language.toLowerCase() == 'en';
+    final isEn =
+        language.toLowerCase() == 'english' || language.toLowerCase() == 'en';
 
     if (isEn) {
       return '''You are a senior presentation director and pedagogical content architect designing top-tier professional presentations comparable to Microsoft PowerPoint and Canva standards.
@@ -80,82 +80,47 @@ CORE PRINCIPLES:
 }''';
     }
 
-    return '''Sen Microsoft PowerPoint ve Canva standartlarında üst düzey profesyonel sunumlar tasarlayan kıdemli bir sunum direktörü ve pedagojik içerik mimarısın.
+    return '''Kıdemli bir sunum direktörü ve pedagojik içerik mimarısın. Konu, hedef kitle ve slayt sayısına göre doğrudan izleyiciye sunulacak, doğal akışlı ve ekranda hızla taranabilen bir sunum üret.
 
-GÖREV: Kullanıcının konusunu, hedef kitlesini ve istenen slayt sayısını analiz ederek; doğrudan izleyiciye sunulacak, yüksek pedagojik/kurumsal değere sahip, ekranda hızla anlaşılan, doğal anlatı akışına sahip modern bir sunum üretmek.
+ZORUNLU KURALLAR:
+1. Yalnız geçerli JSON döndür; markdown kod bloğu, açıklama, plan veya <think> yazma. Yanıt '{' ile başlayıp '}' ile bitsin.
+2. Hedef kitle seviyesine uygun somut kavram, günlük yaşam analojisi ve doğal Türkçe kullan. Ders planı, öğretmen notu veya müfredat ölçütü yazma.
+3. Cümleler kısa, tam ve noktalı olsun; eksik yüklem, bozuk ek, "ve:" gibi kesik ifade, birebir çeviri, tekrar ve dolgu kullanma.
+4. Her slayta benzersiz bir "purpose" ver; "type" değerini içeriğe göre seç. Açılış kapsamı, ana düşünceyi ve temel soruyu netleştirsin.
+5. "headline" en fazla 5 kelimelik odak; "supporting_text" en fazla 20 kelimelik tam cümle olsun.
+6. Madde gereken slaytta 2-3 "**Vurgulu Başlık:** Açıklama" maddesi yaz. Başlık 1-5, açıklama en fazla 20 kelime olsun; tire veya sıra numarası ekleme. Kapak, alıntı ve tek soruya madde dayatma.
+7. Uzun paragraf yerine güçlü ve görselleştirilebilir fikir kullan. Aynı fikri başlık, açıklama ve maddelerde tekrarlama.
 
-ÖNEMLİ KURALLAR:
-1. YANIT FORMATI: YALNIZCA VE YALNIZCA GEÇERLİ JSON! Asla markdown, asla düz metin, asla açıklama.
-2. JSON İÇİNDE ** (yıldız) KARAKTERİ KULLANMA! Tüm vurgular "**Başlık:**" formatında olmalı.
-3. Her cümle tam ve anlaşılır olmalı. "ve:" gibi kesik ifadeler KESİNLİKLE YASAK.
-4. Noktalama işaretlerini doğru kullan. Cümle sonlarına nokta koy.
+GÖRSEL KURALLARI:
+- Her slaytta "visual" ve "visual_keywords" bulunmalı.
+- "kind": photo | object_3d | particle_diagram | process_diagram | comparison | chart | table | illustration | none.
+- "subject" somut nesne/şema; "must_include" görünmesi gereken 1-3 nesne; "must_avoid" yanıltıcı öğeler; "caption" kısa pedagojik açıklamadır.
+- visual_keywords yalnız fiziksel ve görülebilir nesneler içersin; "strateji", "önem", "tarihçe" gibi soyut sözcükler kullanma.
+- object_3d yalnız adı net gerçek nesne içindir. Kuvvet, süreç ve ilişkilerde diyagram/fotoğraf seç. Her slayta stok fotoğraf isteme; gerekirse none kullan.
 
-ÖNEMLİ KURAL: Yanıtına ASLA iç düşünce süreci (<think>), planlama, giriş veya çıkış metni YAZMA. Doğrudan '{' karakteri ile başla ve '}' ile bitir.
-
-TEMEL PRENSİPLER:
-
-1. HEDEF KİTLE VE PEDAGOJİK SEVİYE UYUMU (EN KRİTİK KURAL):
-   - Hedef kitleyi (örn: "ortaokul", "lise", "üniversite", "kurumsal", "yönetim kurulu", "genel izleyici") analiz et.
-   - İçerik DOĞRUDAN İZLEYİCİYE SUNULACAK İÇERİK OLMALIDIR. Asla "Öğretmen ders planı", "Öğretim stratejileri" veya "Değerlendirme ölçütü" gibi müfredat notları YAZMA!
-   - Seviyeye uygun somut kavramlar, günlük yaşam analojileri ve görselleştirilebilir açıklamalar kullan.
-   - Örneğin ortaokul seviyesinde: Gaz taneciklerinin hareketi için "101,325 Pa atmosfer basıncı" veya "\$Q=mc\\Delta T" formülü YAZMA. Yerine "Gaz tanecikleri her yöne hızla hareket eder ve kabın duvarlarına çarpar; bu çarpışmalar gaz basıncını oluşturur." yaz.
-
-2. METİN KALİTESİ VE YAPISI:
-   - Her cümle tamamlanmış olmalı. Kesik cümleler, anlamsız ifadeler YASAKTIR.
-   - "ve:", "ve", "veya:" gibi bağlantı kelimelerini doğru kullan.
-   - Her madde (bullet) net ve anlamlı olmalı.
-   - Aynı fikri tekrar etme. Her slayt benzersiz bilgi içermeli.
-
-3. ANLATI AKIŞI VE SLAYT AMACI (SLIDE TYPE FOLLOWS CONTENT):
-   - Her slaytın açık bir amacı ("purpose") olmalıdır (Örn: "Katı maddelerde taneciklerin sabit konumda titreştiğini kavratmak").
-   - Her konuya ezbere tek tip şablon veya zorlama tarih çizelgesi dayatma.
-   - Slayt türü ("type") içeriğe göre seçilmelidir: "concept", "comparison", "process", "quiz", "cards", "data", "takeaway", "hero", "visual_breakdown".
-
-4. SUNUM DİLİ VE METİN YOĞUNLUĞU (WEB MAKALESİ DEĞİL, SUNUM METNİ):
-   - Uzun paragraflar, ders kitabı tekrarları ve jenerik dolgu cümleleri KESİNLİKLE YASAKTIR.
-   - Slayt metinleri ekranda hızlıca taranabilir, net ve vurucu olmalıdır.
-   - Bütün slaytları aynı "- Başlık: Açıklama" formatına zorlama! İhtiyaca göre tek güçlü ana fikir ("headline"), kısa destekleyici metin ("supporting_text"), 2-3 madde ("key_points"), karşılaştırma çiftleri veya soru-cevap formatı kullan.
-   - Boşluk doldurmak için zayıf maddeler ekleme; 3 zayıf madde yerine 1 güçlü ve net fikir tercih et.
-
-5. GÖRSEL PLAN ("visual") VE SOMUT ANAHTAR KELİMELER ("visual_keywords"):
-   - Her slayt için bir görsel plan tanımla:
-     * "kind": "photo" | "object_3d" | "particle_diagram" | "process_diagram" | "comparison" | "chart" | "table" | "illustration" | "none"
-     * "subject": Görselleştirilecek somut nesne veya şema konusu
-     * "must_include": Görselde mutlaka bulunması gereken 1-3 somut nesne
-     * "must_avoid": Görseli yanıltıcı kılacak nesne, ortam veya kavramlar
-     * "caption": Görselin altındaki kısa pedagojik açıklama
-   - "visual_keywords" listesine ASLA soyut kelimeler ("strateji", "değerlendirme", "tarihçe", "önem") YAZMA!
-   - Yalnızca fiziksel, görsel karşılığı olan nesneleri yaz (Örn: ["buz", "su", "buhar", "tanecik", "kristal"]).
-   - "object_3d" yalnızca adı net olan gerçek bir nesne için seçilir. Kuvvet, süreç veya ilişki anlatımında fotoğraf/diyagram seç ve görünmesi gereken somut nesneleri yaz.
-   - Fotoğrafı yalnızca fikri belirgin biçimde güçlendirdiğinde seç; her slayta stok fotoğraf isteme. Diyagram, veri, karşılaştırma veya görselsiz düzen daha doğruysa onları tercih et.
-
-6. JSON FORMAT KURALLARI:
-   - Tüm string değerler çift tırnak (\") içinde olmalı.
-   - JSON geçersiz karakter içermez: asla tek tırnak, asla backtick, asla <think> bloğu.
-   - Her slayt nesnesi tam olmalı: title, content, type alanları ZORUNLU.
-   - content alanı string veya object olabilir. Object kullanırsan: headline, supporting_text, key_points.
-
-7. ÇIKTI ŞEMASI (TEK GEÇERLİ JSON NESNESİ):
+ÇIKTI ŞEMASI (alanları eksiksiz koru):
 {
   "title": "Sunum Başlığı",
   "target_audience": "ortaokul | lise | universite | kurumsal | genel",
-  "learning_objective": "Sunumun izleyiciye kazandıracağı temel ana mesaj ve kavrayış",
+  "learning_objective": "İzleyicinin kazanacağı temel kavrayış",
   "slides": [
     {
       "title": "Slayt Başlığı",
-      "purpose": "Bu slaydın izleyiciye ne öğreteceği / kazandıracağı",
+      "purpose": "Slaydın tek iletişim veya öğretim amacı",
       "type": "concept | comparison | process | quiz | cards | data | takeaway | hero | visual_breakdown | image_focus",
       "content": {
-        "headline": "Slaydın en güçlü ana fikri veya odak cümlesi",
-        "supporting_text": "Ana fikri somutlaştıran 1-2 cümlelik akıcı açıklama",
+        "headline": "En fazla beş kelimelik odak",
+        "supporting_text": "En fazla yirmi kelimelik tam cümle",
         "key_points": [
-          "1. Somut özellik veya nokta",
-          "2. İkinci somut nokta veya günlük hayat örneği"
+          "**Kişiselleştirme:** Öğrenme araçları öğrencinin hızına göre alıştırma sunar.",
+          "**Öğretmen Denetimi:** Öğretmen, önerilerin doğruluğunu ders öncesinde kontrol eder."
         ]
       },
       "visual": {
         "kind": "photo | particle_diagram | object_3d | process_diagram | comparison | chart | table | illustration | none",
         "subject": "somut_gorsel_konusu",
+        "must_include": ["görünmesi gereken somut nesne"],
+        "must_avoid": ["yanıltıcı öğe"],
         "caption": "Görsel veya şemanın kısa açıklaması"
       },
       "visual_keywords": ["somut_nesne1", "somut_nesne2"]
@@ -171,12 +136,12 @@ TEMEL PRENSİPLER:
     required String language,
     String referenceBlock = '',
   }) {
-    final isEn = language.toLowerCase() == 'english' ||
-        language.toLowerCase() == 'en';
+    final isEn =
+        language.toLowerCase() == 'english' || language.toLowerCase() == 'en';
 
     if (isEn) {
-      return '''${referenceBlock}Topic: $topic
-Requested Slide Count: $slideCount (NOTE: The "slides" list must contain EXACTLY $slideCount slide objects)
+      return '''${referenceBlock}Presentation subject: $topic
+Required slides: $slideCount (NOTE: The "slides" list must contain EXACTLY $slideCount slide objects)
 Output Language: English
 
 CRITICAL RULES:
@@ -210,8 +175,11 @@ CRITICAL RULES:
 }''';
     }
 
-    return '''${referenceBlock}Konu: $topic
-İstenen Slayt Sayısı: $slideCount (DİKKAT: "slides" listesinde tam olarak $slideCount adet slayt nesnesi bulunmalıdır)
+    // The legacy proxy recognizes "Konu:" + "İstenen Slayt Sayısı:" and
+    // replaces the entire request with an obsolete plain-bullet prompt.
+    // This compact contract must reach the provider intact.
+    return '''${referenceBlock}Sunumun içeriği: $topic
+Slayt adedi: $slideCount (DİKKAT: "slides" listesinde tam olarak $slideCount adet slayt nesnesi bulunmalıdır)
 Çıktı Dili: $language
 
 ÖNEMLİ KURALLAR:
@@ -219,8 +187,8 @@ CRITICAL RULES:
 2. Asla ders planı / öğretmen notu yazma; doğrudan izleyicinin göreceği sunum içeriğini üret.
 3. Her slayta net bir "purpose", amaca uygun "type", özlü "content", "visual" planı ve somut "visual_keywords" ver.
 4. Her cümle TAM ve ANLAŞILIR olmalı. "ve:", "ve", "veya:" gibi kesik ifadeler KESİNLİKLE YASAKTIR.
-5. JSON içinde ** (yıldız) karakteri KULLANMA. Vurgular için sadece "**Başlık:**" formatı.
-6. Her madde net ve anlamlı olmalı. Boş madde ekleme.
+5. Maddeleri "**Vurgulu Başlık:** Açıklama" biçiminde yaz; tire veya sıra numarası ekleme. Başlık 1-5 kelime, açıklama en fazla 20 kelimelik tam bir cümle olsun.
+6. Her slaytta 2-3 kısa madde yeterlidir; kapak ve tek soruluk slaytlara madde dayatma. Tekrar, eksik yüklem, bozuk Türkçe ve birebir terim çevirisi kullanma. Girişte kapsamı ve temel soruyu netleştir.
 7. Ön açıklama veya düşünce metni YAZMADAN doğrudan '{' karakteri ile başlayan geçerli JSON üret:
 {
   "title": "Sunum Başlığı",
@@ -234,7 +202,7 @@ CRITICAL RULES:
       "content": {
         "headline": "Ana odak cümlesi",
         "supporting_text": "Açıklayıcı kısa metin",
-        "key_points": ["Madde 1", "Madde 2"]
+        "key_points": ["**Uyarlama:** Alıştırmalar öğrencinin öğrenme hızına göre değişir.", "**Denetim:** Öğretmen önerilerin doğruluğunu kontrol eder."]
       },
       "visual": {
         "kind": "particle_diagram | object_3d | process_diagram | comparison | chart | table | illustration | none",
@@ -256,15 +224,16 @@ CRITICAL RULES:
     required int slideCount,
     required String language,
   }) {
-    final isEn = language.toLowerCase() == 'english' ||
-        language.toLowerCase() == 'en';
+    final isEn =
+        language.toLowerCase() == 'english' || language.toLowerCase() == 'en';
 
     if (isEn) {
       final issuesBuffer = StringBuffer();
       for (final issue in issues) {
         final slideNum = issue['slide'] ?? issue['slide_index'] ?? '?';
         final category = issue['category'] ?? 'quality';
-        final problem = issue['problem'] ?? issue['issue'] ?? issue['description'] ?? '';
+        final problem =
+            issue['problem'] ?? issue['issue'] ?? issue['description'] ?? '';
         issuesBuffer.writeln('- Slide $slideNum ($category): $problem');
       }
       if (globalIssues.isNotEmpty) {
@@ -297,7 +266,8 @@ $originalJson''';
     for (final issue in issues) {
       final slideNum = issue['slide'] ?? issue['slide_index'] ?? '?';
       final category = issue['category'] ?? 'quality';
-      final problem = issue['problem'] ?? issue['issue'] ?? issue['description'] ?? '';
+      final problem =
+          issue['problem'] ?? issue['issue'] ?? issue['description'] ?? '';
       issuesBuffer.writeln('- Slayt $slideNum ($category): $problem');
     }
     if (globalIssues.isNotEmpty) {
@@ -320,7 +290,8 @@ REVİZYON GÖREVİ:
 1. YALNIZCA sorun tespit edilen slaytları düzelt.
 2. Doğru ve kaliteli olan slaytları, iyi anlatı yapısını, faydalı örnekleri ve toplam $slideCount slayt sayısını KORU.
 3. Bütün sunumu baştan rastgele değiştirme; sorunlu kısımları hedef kitleye ve pedagojik amaca uygun hale getir.
-4. Ön açıklama yazmadan doğrudan '{' ile başlayan güncellenmiş tam JSON nesnesini döndür:
+4. Türkçe maddeleri "**Vurgulu Başlık:** Açıklama" biçiminde yaz: başlık 1-5 kelime, açıklama en fazla 20 kelimelik tam bir cümle. Tire ve sıra numarası ekleme; eksik yüklemleri, bozuk ekleri, birebir çevirileri ve tekrarları düzelt.
+5. Ön açıklama yazmadan doğrudan '{' ile başlayan güncellenmiş tam JSON nesnesini döndür:
 
 MEVCUT SUNUM:
 $originalJson''';

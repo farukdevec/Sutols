@@ -3,6 +3,7 @@ import 'dart:convert';
 import '../models/model_tour_runtime.dart';
 import '../models/slide_model.dart';
 import '../ui/widgets/html_stage/html_stage_document.dart';
+import '../ui/widgets/html_stage/presentation_text_fit_script.dart';
 
 const String _exportModelTargetScript = r'''
 (function () {
@@ -120,6 +121,7 @@ String buildPresentationExportHtml({
   $embeddedAssetsScript
   $sutolHtmlStageBackgroundScript
   $sutolHtmlStageComponentScript
+  $sutolTextFitScript
   $_exportModelTargetScript
 
   ${printMode ? '' : _exportScript(
@@ -1619,6 +1621,7 @@ String _exportScript({
       dot.setAttribute('aria-current', active ? 'true' : 'false');
     });
     renderRevealState();
+    window.SutolFitText?.();
     playCurrentTextAnimations();
     if (prevBtn) {
       const disabled = index === 0 && fragmentStep === 0;

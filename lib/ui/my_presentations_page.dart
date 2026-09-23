@@ -6,6 +6,7 @@ import '../routes.dart';
 import '../services/firestore_rest_helper.dart';
 import '../services/presentation_loader.dart';
 import '../services/presentation_retention_service.dart';
+import '../services/presentation_title.dart';
 import '../state/language_controller.dart';
 import '../services/web_url_service.dart';
 import 'design/design_system.dart';
@@ -21,12 +22,14 @@ class MyPresentationsPage extends StatefulWidget {
 class _PresentationItem {
   const _PresentationItem({
     required this.id,
+    required this.title,
     required this.topic,
     required this.slideCount,
     required this.createdAt,
   });
 
   final String id;
+  final String title;
   final String topic;
   final int slideCount;
   final String createdAt;
@@ -106,6 +109,10 @@ class _MyPresentationsPageState extends State<MyPresentationsPage> {
       return _PresentationItem(
         id: id,
         topic: FirestoreRestHelper.stringField(fields, 'topic'),
+        title: resolvePresentationTitle(
+          title: FirestoreRestHelper.stringField(fields, 'title'),
+          topic: FirestoreRestHelper.stringField(fields, 'topic'),
+        ),
         slideCount: int.tryParse(
               FirestoreRestHelper.integerField(fields, 'slideCount'),
             ) ??
@@ -170,7 +177,9 @@ class _MyPresentationsPageState extends State<MyPresentationsPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Icon(
-            isAtLimit ? Icons.warning_amber_rounded : Icons.info_outline_rounded,
+            isAtLimit
+                ? Icons.warning_amber_rounded
+                : Icons.info_outline_rounded,
             size: 20,
             color: isAtLimit ? colors.danger : colors.warning,
           ),
@@ -259,7 +268,8 @@ class _MyPresentationsPageState extends State<MyPresentationsPage> {
                             Icon(
                               Icons.cloud_off_outlined,
                               size: 48,
-                              color: colors.textSecondary.withValues(alpha: 0.4),
+                              color:
+                                  colors.textSecondary.withValues(alpha: 0.4),
                             ),
                             const SizedBox(height: AppSpacing.s16),
                             Text(
@@ -326,10 +336,9 @@ class _MyPresentationsPageState extends State<MyPresentationsPage> {
 
                             return Card(
                               child: ListTile(
-                                leading:
-                                    const Icon(Icons.description_outlined),
+                                leading: const Icon(Icons.description_outlined),
                                 title: Text(
-                                  item.topic,
+                                  item.title,
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                   style: AppTypography.titleMedium.copyWith(
@@ -356,10 +365,10 @@ class _MyPresentationsPageState extends State<MyPresentationsPage> {
                                   if (!mounted) return;
                                   final targetRoute = AppRoutes.presentationUrl(
                                     id: item.id,
-                                    topic: item.topic,
+                                    topic: item.title,
                                   );
                                   updateBrowserUrl(
-                                      path: targetRoute, title: item.topic);
+                                      path: targetRoute, title: item.title);
                                   Navigator.of(context).push(
                                     MaterialPageRoute<void>(
                                       settings:
@@ -368,6 +377,7 @@ class _MyPresentationsPageState extends State<MyPresentationsPage> {
                                           HtmlPresentationEditorPage(
                                         controller: result.controller,
                                         presentationId: item.id,
+                                        initialPresentationName: item.title,
                                         initialUpdatedByName:
                                             result.updatedByName,
                                       ),

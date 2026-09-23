@@ -201,6 +201,10 @@ class _SutolHomePageState extends State<SutolHomePage> {
         return _RecentPresentation(
           id: id,
           topic: FirestoreRestHelper.stringField(fields, 'topic'),
+          title: PresentationService.resolvePresentationTitle(
+            title: FirestoreRestHelper.stringField(fields, 'title'),
+            topic: FirestoreRestHelper.stringField(fields, 'topic'),
+          ),
           slideCount: int.tryParse(
                 FirestoreRestHelper.integerField(fields, 'slideCount'),
               ) ??
@@ -271,9 +275,10 @@ class _SutolHomePageState extends State<SutolHomePage> {
     );
   }
 
-  Future<void> _generatePresentation() async {
-    final topic = _promptController.text.trim();
+  Future<void> _generatePresentation(String rawTitle, String rawTopic) async {
+    final topic = rawTopic.trim();
     if (topic.isEmpty) return;
+    final title = rawTitle.trim();
 
     final userId = FirebaseAuth.instance.currentUser?.uid;
     if (userId == null) {
@@ -303,6 +308,7 @@ class _SutolHomePageState extends State<SutolHomePage> {
       final presentationService = PresentationService();
       final result = await presentationService.createPresentation(
         userId: userId,
+        title: title,
         topic: topic,
         slideCount: _slideCount,
       );
@@ -316,9 +322,9 @@ class _SutolHomePageState extends State<SutolHomePage> {
 
       final targetRoute = AppRoutes.presentationUrl(
         id: result.presentationId,
-        topic: topic,
+        topic: result.title,
       );
-      updateBrowserUrl(path: targetRoute, title: topic);
+      updateBrowserUrl(path: targetRoute, title: result.title);
 
       Navigator.of(context).push(
         MaterialPageRoute<void>(
@@ -326,6 +332,7 @@ class _SutolHomePageState extends State<SutolHomePage> {
           builder: (_) => HtmlPresentationEditorPage(
             controller: result.controller,
             presentationId: result.presentationId,
+            initialPresentationName: result.title,
             requestGenerationFeedback: true,
           ),
         ),
@@ -755,7 +762,7 @@ class PresentationCreationCard extends StatelessWidget {
   final TextEditingController promptController;
   final FocusNode titleFocusNode;
   final FocusNode promptFocusNode;
-  final VoidCallback onGenerate;
+  final void Function(String title, String topic) onGenerate;
   final int slideCount;
   final bool hasPlusSlideAccess;
   final ValueChanged<int> onSlideCountChanged;
@@ -833,7 +840,11 @@ class PresentationCreationCard extends StatelessWidget {
             SizedBox(
               height: 48,
               child: FilledButton(
-                onPressed: onGenerate,
+                key: const ValueKey<String>('presentation-generate-button'),
+                onPressed: () => onGenerate(
+                  titleController.text,
+                  promptController.text,
+                ),
                 child: Text(tr('Oluştur', 'Generate')),
               ),
             ),
@@ -848,7 +859,11 @@ class PresentationCreationCard extends StatelessWidget {
                 ),
                 const SizedBox(width: AppSpacing.s12),
                 FilledButton(
-                  onPressed: onGenerate,
+                  key: const ValueKey<String>('presentation-generate-button'),
+                  onPressed: () => onGenerate(
+                    titleController.text,
+                    promptController.text,
+                  ),
                   child: Text(tr('Oluştur', 'Generate')),
                 ),
               ],
@@ -1014,12 +1029,14 @@ class _LoadingState extends StatelessWidget {
 class _RecentPresentation {
   const _RecentPresentation({
     required this.id,
+    required this.title,
     required this.topic,
     required this.slideCount,
     required this.createdAt,
   });
 
   final String id;
+  final String title;
   final String topic;
   final int slideCount;
   final String createdAt;
@@ -1082,7 +1099,7 @@ class _RecentPresentationTile extends StatelessWidget {
       child: ListTile(
         leading: const Icon(Icons.description_outlined),
         title: Text(
-          item.topic,
+          item.title,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: AppTypography.titleMedium.copyWith(
@@ -1107,15 +1124,16 @@ class _RecentPresentationTile extends StatelessWidget {
           if (!context.mounted) return;
           final targetRoute = AppRoutes.presentationUrl(
             id: item.id,
-            topic: item.topic,
+            topic: item.title,
           );
-          updateBrowserUrl(path: targetRoute, title: item.topic);
+          updateBrowserUrl(path: targetRoute, title: item.title);
           Navigator.of(context).push(
             MaterialPageRoute<void>(
               settings: RouteSettings(name: targetRoute),
               builder: (_) => HtmlPresentationEditorPage(
                 controller: result.controller,
                 presentationId: item.id,
+                initialPresentationName: item.title,
                 initialUpdatedByName: result.updatedByName,
               ),
             ),

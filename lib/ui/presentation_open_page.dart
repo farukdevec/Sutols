@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../routes.dart';
 import '../services/firestore_rest_helper.dart';
 import '../services/presentation_loader.dart';
+import '../services/presentation_title.dart';
 import '../services/web_url_service.dart';
 import '../state/language_controller.dart';
 import 'design/design_system.dart';
@@ -46,16 +47,20 @@ class _PresentationOpenPageState extends State<PresentationOpenPage> {
 
       final fields = doc['fields'] as Map<String, dynamic>? ?? {};
       final topic = fields['topic']?['stringValue'] as String? ?? '';
+      final title = resolvePresentationTitle(
+        title: fields['title']?['stringValue'] as String? ?? '',
+        topic: topic,
+      );
 
       final result = await loadPresentationForEdit(widget.presentationId);
 
       final targetUrl = AppRoutes.presentationUrl(
         id: widget.presentationId,
-        topic: topic,
+        topic: title,
       );
       updateBrowserUrl(
         path: targetUrl,
-        title: topic.isNotEmpty ? topic : tr('Sunum', 'Presentation'),
+        title: title.isNotEmpty ? title : tr('Sunum', 'Presentation'),
       );
 
       if (!mounted) return;
@@ -65,6 +70,7 @@ class _PresentationOpenPageState extends State<PresentationOpenPage> {
           builder: (_) => HtmlPresentationEditorPage(
             controller: result.controller,
             presentationId: widget.presentationId,
+            initialPresentationName: title,
             initialUpdatedByName: result.updatedByName,
           ),
         ),
@@ -108,7 +114,8 @@ class _PresentationOpenPageState extends State<PresentationOpenPage> {
                     const SizedBox(height: AppSpacing.s16),
                     Text(
                       _error ??
-                          tr('Sunum yüklenemedi.', 'Could not load presentation.'),
+                          tr('Sunum yüklenemedi.',
+                              'Could not load presentation.'),
                       textAlign: TextAlign.center,
                       style: AppTypography.bodyLarge.copyWith(
                         color: colors.textSecondary,

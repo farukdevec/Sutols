@@ -51,16 +51,19 @@ class PresentationKeywordCatalog {
     // Zaman / mekan / kapsam dolgu kelimeleri. "Dünya" katalogda gerçek bir
     // gezegen modelini ifade ettiği için jenerik kabul edilmez.
     'tarih', 'tarihi', 'tarihte', 'tarihinde', 'tarihsel',
-    'yuzyil', 'yuzyilda', 'yuzyilin', 'gunumuzde', 'gunumuz', 'bugun', 'bugunku',
+    'yuzyil', 'yuzyilda', 'yuzyilin', 'gunumuzde', 'gunumuz', 'bugun',
+    'bugunku',
     // Konu / yapı dolgu kelimeleri
     'konu', 'konusu', 'konusunda', 'alan', 'alani',
     'yapi', 'yapisi', 'sistem', 'sistemi', 'temel', 'temeli',
-    'cesit', 'cesidi', 'cesitleri', 'tur', 'turu', 'turleri', 'turlerini', 'turleriyle',
+    'cesit', 'cesidi', 'cesitleri', 'tur', 'turu', 'turleri', 'turlerini',
+    'turleriyle',
     'ornek', 'ornegi', 'ornekleri', 'ozellik', 'ozelligi', 'ozellikleri',
     // Tek başına bir 3B varlığı tanımlamayan fiziksel/arayüzsel kelimeler.
     // Bunlar eşleştirmede katalizör yüzeyi, Gantt şeması veya telefon gibi
     // alakasız katalog öğelerini tetikleyebiliyordu.
-    'kuvvet', 'hareket', 'yuzey', 'temas', 'cisim', 'nesne', 'blok', 'kutu',
+    'kuvvet', 'hareket', 'yuzey', 'yuzeyi', 'yuzeyler', 'temas', 'cisim',
+    'nesne', 'blok', 'kutu',
     'malzeme', 'uygulama', 'plan', 'sema', 'sekil', 'gorsel',
     // "Etki", "analiz" ve benzeri soyut ifade kelimeleri bir nesneyi
     // tanımlamaz. Bunlar, Etki-Efor Matrisi gibi sunum bileşenlerinin fen
@@ -95,7 +98,8 @@ class PresentationKeywordCatalog {
   /// [normalizedWord] eşleştirme için kullanılamayacak kadar jenerik mi?
   /// (2 karakter ve altı kelimeler de gürültü kabul edilir.)
   static bool isGenericWord(String normalizedWord) {
-    return normalizedWord.length <= 2 || genericStopwords.contains(normalizedWord);
+    return normalizedWord.length <= 2 ||
+        genericStopwords.contains(normalizedWord);
   }
 
   /// [normalizedText] içindeki jenerik olmayan, gerçekten ayırt edici

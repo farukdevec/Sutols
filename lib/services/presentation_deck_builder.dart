@@ -333,10 +333,14 @@ class PresentationDeckBuilder {
             modelAssetId: selectedModel.id,
             modelAnimationEnabled: true,
             modelAutoRotate: true,
+            // Generated models start slightly pulled back inside a bounded
+            // right-hand frame. This leaves breathing room for unusually tall
+            // or wide GLBs while model-viewer's auto framing remains active.
+            modelZoom: 0.8,
             modelOrbitTheta: 15,
             modelOrbitPhi: 70,
-            position: const Offset(0.68, 0.22),
-            size: const Size(0.29, 0.62),
+            position: const Offset(0.695, 0.25),
+            size: const Size(0.26, 0.50),
           ),
         );
       } else if (slide.imageAssetId != null) {

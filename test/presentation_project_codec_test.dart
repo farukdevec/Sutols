@@ -90,6 +90,12 @@ void main() {
             textItalic: true,
             textUnderline: true,
             textAlign: PresentationTextAlign.center,
+            verticalAlign: PresentationTextVerticalAlign.bottom,
+            overflow: PresentationTextOverflow.clip,
+            resizeMode: PresentationTextResizeMode.fixedFont,
+            padding: 22,
+            lineHeight: 1.45,
+            rotationDegrees: 17,
           ),
         ],
         componentBlocks: <PresentationComponentBlock>[
@@ -194,6 +200,21 @@ void main() {
       project.pages.single.textBlocks.single.textAlign,
       PresentationTextAlign.center,
     );
+    expect(
+      project.pages.single.textBlocks.single.verticalAlign,
+      PresentationTextVerticalAlign.bottom,
+    );
+    expect(
+      project.pages.single.textBlocks.single.overflow,
+      PresentationTextOverflow.clip,
+    );
+    expect(
+      project.pages.single.textBlocks.single.resizeMode,
+      PresentationTextResizeMode.fixedFont,
+    );
+    expect(project.pages.single.textBlocks.single.padding, 22);
+    expect(project.pages.single.textBlocks.single.lineHeight, 1.45);
+    expect(project.pages.single.textBlocks.single.rotationDegrees, 17);
     expect(project.pages.single.componentBlocks, hasLength(3));
     expect(project.pages.single.componentBlocks.first.id, 'component-3');
     expect(
@@ -235,6 +256,25 @@ void main() {
     );
     expect(project.effectSettings.zoomEnabled, isTrue);
     expect(project.effectSettings.reducedMotion, isTrue);
+  });
+
+  test('migrates legacy text boxes to compatible layout defaults', () {
+    const source = '''
+{"format":"sutol.presentation","version":1,"pages":[{"id":"page-1","backgroundKind":"plainWhite","textBlocks":[{"id":"text-1","text":"Eski kutu","position":{"x":0.1,"y":0.2},"fontSize":42,"type":"body","widthFactor":0.4,"heightFactor":0.2}],"componentBlocks":[]}]}
+''';
+
+    final block = PresentationProjectCodec.decodeProject(source)
+        .pages
+        .single
+        .textBlocks
+        .single;
+    expect(block.verticalAlign, PresentationTextVerticalAlign.top);
+    expect(block.overflow, PresentationTextOverflow.shrink);
+    expect(block.resizeMode, PresentationTextResizeMode.proportional);
+    expect(block.padding, 14);
+    expect(block.lineHeight, isNull);
+    expect(block.effectiveLineHeight, 1.24);
+    expect(block.rotationDegrees, 0);
   });
 
   test('migrates legacy photo ids out of the 3D model field', () {

@@ -1900,6 +1900,8 @@ class _HtmlPageStageState extends State<HtmlPageStage> {
                 _textAnimationDomClass(block.textAnimation),
                 _textEffectDomClass(block.textEffect),
                 _entranceAnimationDomClass(block.entranceAnimation),
+                'text-overflow-${block.overflow.name}',
+                'text-vertical-${block.verticalAlign.name}',
                 if (block.glowIntensity <= 0) 'is-glow-off',
                 if (block.id == widget.selectedTextBlockId) 'is-selected',
                 if (block.id == widget.inlineEditingTextBlockId)
@@ -1910,10 +1912,19 @@ class _HtmlPageStageState extends State<HtmlPageStage> {
               'left': '${_pct(block.position.dx)}%',
               'top': '${_pct(block.position.dy)}%',
               'width': '${_pct(block.widthFactor)}%',
-              'height': block.heightFactor == null
+              'height': block.heightFactor == null ||
+                      block.overflow == PresentationTextOverflow.expand
                   ? ''
                   : '${_pct(block.heightFactor!)}%',
+              'minHeight': block.heightFactor != null &&
+                      block.overflow == PresentationTextOverflow.expand
+                  ? '${_pct(block.heightFactor!)}%'
+                  : '',
               'baseFontSize': '${(block.fontSize / 10).toStringAsFixed(2)}cqw',
+              'minFontSize': '1.80cqw',
+              'padding': '${(block.padding / 10).toStringAsFixed(2)}cqw',
+              'lineHeight': block.effectiveLineHeight.toStringAsFixed(3),
+              'rotation': '${block.rotationDegrees.toStringAsFixed(2)}deg',
               'glowIntensity': block.glowIntensity.toStringAsFixed(2),
               'animationDuration': block.animationDuration.toStringAsFixed(2),
               'animationDelay': block.animationDelay.toStringAsFixed(2),

@@ -14,11 +14,13 @@ class SharePresentationDialog extends StatefulWidget {
     required this.presentationId,
     required this.isOwner,
     required this.initialShared,
+    this.presentationTitle = '',
   });
 
   final String presentationId;
   final bool isOwner;
   final bool initialShared;
+  final String presentationTitle;
 
   @override
   State<SharePresentationDialog> createState() =>
@@ -30,7 +32,10 @@ class _SharePresentationDialogState extends State<SharePresentationDialog> {
   bool _saving = false;
 
   String get _link {
-    final path = AppRoutes.presentationUrl(id: widget.presentationId, topic: '');
+    final path = AppRoutes.presentationUrl(
+      id: widget.presentationId,
+      topic: widget.presentationTitle,
+    );
     return '${Uri.base.origin}$path';
   }
 

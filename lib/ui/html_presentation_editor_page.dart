@@ -40,6 +40,7 @@ import 'widgets/editor_shell.dart';
 import 'widgets/html_stage/html_page_stage.dart';
 import 'widgets/selection_mini_toolbar.dart';
 import 'widgets/presentation_feedback_dialog.dart';
+import 'widgets/text_editing_context_menu.dart';
 
 import 'design/design_system.dart';
 import 'design/sutol_widgets.dart';
@@ -1073,6 +1074,19 @@ class _HtmlPresentationEditorPageState
     }
   }
 
+  void _handleArrowShortcut(Offset direction, {double distance = 1}) {
+    if (_isEditingText) return;
+    if (widget.controller.hasSelection) {
+      widget.controller.nudgeSelectedItems(direction * distance);
+      return;
+    }
+    if (direction.dx < 0 || direction.dy < 0) {
+      _handlePrevPageShortcut();
+    } else {
+      _handleNextPageShortcut();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     if (widget.adminReadOnly && (_adminLoading || _adminLoadError != null)) {
@@ -1161,17 +1175,44 @@ class _HtmlPresentationEditorPageState
                 const SingleActivator(LogicalKeyboardKey.enter, meta: true):
                     _openPresentationPreview,
 
-                // Slayt Gezinme Kısayolları (Yukarı / Aşağı Oklar)
-                const SingleActivator(LogicalKeyboardKey.arrowUp):
-                    _handlePrevPageShortcut,
-                const SingleActivator(LogicalKeyboardKey.arrowLeft):
-                    _handlePrevPageShortcut,
+                // Seçim varken 1px, Shift ile 10px taşı. Seçim yokken
+                // eski slayt gezinme davranışı korunur.
+                const SingleActivator(LogicalKeyboardKey.arrowUp): () =>
+                    _handleArrowShortcut(const Offset(0, -1)),
+                const SingleActivator(LogicalKeyboardKey.arrowLeft): () =>
+                    _handleArrowShortcut(const Offset(-1, 0)),
+                const SingleActivator(LogicalKeyboardKey.arrowUp, shift: true):
+                    () => _handleArrowShortcut(
+                          const Offset(0, -1),
+                          distance: 10,
+                        ),
+                const SingleActivator(
+                  LogicalKeyboardKey.arrowLeft,
+                  shift: true,
+                ): () => _handleArrowShortcut(
+                      const Offset(-1, 0),
+                      distance: 10,
+                    ),
                 const SingleActivator(LogicalKeyboardKey.pageUp):
                     _handlePrevPageShortcut,
-                const SingleActivator(LogicalKeyboardKey.arrowDown):
-                    _handleNextPageShortcut,
-                const SingleActivator(LogicalKeyboardKey.arrowRight):
-                    _handleNextPageShortcut,
+                const SingleActivator(LogicalKeyboardKey.arrowDown): () =>
+                    _handleArrowShortcut(const Offset(0, 1)),
+                const SingleActivator(LogicalKeyboardKey.arrowRight): () =>
+                    _handleArrowShortcut(const Offset(1, 0)),
+                const SingleActivator(
+                  LogicalKeyboardKey.arrowDown,
+                  shift: true,
+                ): () => _handleArrowShortcut(
+                      const Offset(0, 1),
+                      distance: 10,
+                    ),
+                const SingleActivator(
+                  LogicalKeyboardKey.arrowRight,
+                  shift: true,
+                ): () => _handleArrowShortcut(
+                      const Offset(1, 0),
+                      distance: 10,
+                    ),
                 const SingleActivator(LogicalKeyboardKey.pageDown):
                     _handleNextPageShortcut,
               },
@@ -8524,8 +8565,7 @@ class _HtmlComponentControlsState extends State<_HtmlComponentControls> {
   @override
   Widget build(BuildContext context) {
     final controller = widget.controller;
-    final visibleDefinitions =
-        presentationComponentDefinitionsMatching(_query);
+    final visibleDefinitions = presentationComponentDefinitionsMatching(_query);
 
     final isExpandedMode = widget.expandResults || widget.isExpanded;
 
@@ -9898,6 +9938,8 @@ class _HtmlStageCardState extends State<_HtmlStageCard>
                                 fromRight: fromRight,
                                 fromBottom: fromBottom,
                               ),
+                              onRotateSelectedText:
+                                  widget.controller.rotateSelectedTextBy,
                               onResizeSelectedComponent: (delta, size,
                                       {required fromLeft,
                                       required fromTop,
@@ -10332,6 +10374,10 @@ class _SelectionContextBarSection extends StatelessWidget {
         onTap: () =>
             controller.updateSelectedTextAlign(PresentationTextAlign.right),
       ),
+      _TextLayoutPopupButton(
+        controller: controller,
+        block: block,
+      ),
       const MiniToolDivider(),
       _TextColorPopupButton(
         key: const ValueKey<String>('selected-text-color-control'),
@@ -10441,8 +10487,8 @@ class _SelectionContextBarSection extends StatelessWidget {
           key: const ValueKey<String>('model-tour-toggle'),
           icon: Icons.explore_rounded,
           label: block.modelTourEnabled && !block.modelTourFrozen
-              ? tr('Sanal Turu Kapat', 'Close Virtual Tour')
-              : tr('Sanal Tur', 'Virtual Tour'),
+              ? tr('Görünümü Kaydet', 'Save View')
+              : tr('Turu Düzenle', 'Edit Tour'),
           active: block.modelTourEnabled && !block.modelTourFrozen,
           onTap: () {
             if (block.modelTourEnabled && !block.modelTourFrozen) {
@@ -10573,6 +10619,179 @@ class _SelectionContextBarSection extends StatelessWidget {
   }
 }
 
+enum _TextLayoutAction {
+  justify,
+  verticalTop,
+  verticalCenter,
+  verticalBottom,
+  overflowShrink,
+  overflowClip,
+  overflowExpand,
+  resizeProportional,
+  resizeFixed,
+  paddingDecrease,
+  paddingIncrease,
+  lineHeightDecrease,
+  lineHeightIncrease,
+  lineHeightDefault,
+  rotate15,
+  resetRotation,
+}
+
+class _TextLayoutPopupButton extends StatelessWidget {
+  const _TextLayoutPopupButton({
+    required this.controller,
+    required this.block,
+  });
+
+  final PresentationController controller;
+  final PresentationTextBlock block;
+
+  @override
+  Widget build(BuildContext context) => PopupMenuButton<_TextLayoutAction>(
+        key: const ValueKey<String>('text-layout-control'),
+        tooltip: tr('Metin Kutusu Düzeni', 'Text Box Layout'),
+        onSelected: (action) {
+          switch (action) {
+            case _TextLayoutAction.justify:
+              controller.updateSelectedTextAlign(PresentationTextAlign.justify);
+            case _TextLayoutAction.verticalTop:
+              controller.updateSelectedTextVerticalAlign(
+                PresentationTextVerticalAlign.top,
+              );
+            case _TextLayoutAction.verticalCenter:
+              controller.updateSelectedTextVerticalAlign(
+                PresentationTextVerticalAlign.center,
+              );
+            case _TextLayoutAction.verticalBottom:
+              controller.updateSelectedTextVerticalAlign(
+                PresentationTextVerticalAlign.bottom,
+              );
+            case _TextLayoutAction.overflowShrink:
+              controller.updateSelectedTextOverflow(
+                PresentationTextOverflow.shrink,
+              );
+            case _TextLayoutAction.overflowClip:
+              controller.updateSelectedTextOverflow(
+                PresentationTextOverflow.clip,
+              );
+            case _TextLayoutAction.overflowExpand:
+              controller.updateSelectedTextOverflow(
+                PresentationTextOverflow.expand,
+              );
+            case _TextLayoutAction.resizeProportional:
+              controller.updateSelectedTextResizeMode(
+                PresentationTextResizeMode.proportional,
+              );
+            case _TextLayoutAction.resizeFixed:
+              controller.updateSelectedTextResizeMode(
+                PresentationTextResizeMode.fixedFont,
+              );
+            case _TextLayoutAction.paddingDecrease:
+              controller.updateSelectedTextPadding(
+                math.max(0, block.padding - 2),
+              );
+            case _TextLayoutAction.paddingIncrease:
+              controller.updateSelectedTextPadding(
+                math.min(80, block.padding + 2),
+              );
+            case _TextLayoutAction.lineHeightDecrease:
+              controller.updateSelectedTextLineHeight(
+                math.max(.6, block.effectiveLineHeight - .05),
+              );
+            case _TextLayoutAction.lineHeightIncrease:
+              controller.updateSelectedTextLineHeight(
+                math.min(3, block.effectiveLineHeight + .05),
+              );
+            case _TextLayoutAction.lineHeightDefault:
+              controller.updateSelectedTextLineHeight(null);
+            case _TextLayoutAction.rotate15:
+              controller.updateSelectedTextRotation(
+                block.rotationDegrees + 15,
+              );
+            case _TextLayoutAction.resetRotation:
+              controller.updateSelectedTextRotation(0);
+          }
+        },
+        itemBuilder: (_) => <PopupMenuEntry<_TextLayoutAction>>[
+          PopupMenuItem(
+            value: _TextLayoutAction.justify,
+            child: Text(tr('Yasla', 'Justify')),
+          ),
+          const PopupMenuDivider(),
+          PopupMenuItem(
+            value: _TextLayoutAction.verticalTop,
+            child: Text(tr('Dikey: üst', 'Vertical: top')),
+          ),
+          PopupMenuItem(
+            value: _TextLayoutAction.verticalCenter,
+            child: Text(tr('Dikey: orta', 'Vertical: middle')),
+          ),
+          PopupMenuItem(
+            value: _TextLayoutAction.verticalBottom,
+            child: Text(tr('Dikey: alt', 'Vertical: bottom')),
+          ),
+          const PopupMenuDivider(),
+          PopupMenuItem(
+            value: _TextLayoutAction.overflowShrink,
+            child: Text(tr('Taşma: otomatik küçült', 'Overflow: shrink')),
+          ),
+          PopupMenuItem(
+            value: _TextLayoutAction.overflowClip,
+            child: Text(tr('Taşma: kırp', 'Overflow: clip')),
+          ),
+          PopupMenuItem(
+            value: _TextLayoutAction.overflowExpand,
+            child: Text(tr('Taşma: kutuyu büyüt', 'Overflow: expand')),
+          ),
+          const PopupMenuDivider(),
+          PopupMenuItem(
+            value: _TextLayoutAction.resizeProportional,
+            child: Text(tr('Köşe: kutu + font', 'Corner: box + font')),
+          ),
+          PopupMenuItem(
+            value: _TextLayoutAction.resizeFixed,
+            child: Text(tr('Köşe: sabit font', 'Corner: fixed font')),
+          ),
+          const PopupMenuDivider(),
+          PopupMenuItem(
+            value: _TextLayoutAction.paddingDecrease,
+            child: Text(tr('İç boşluğu azalt', 'Decrease padding')),
+          ),
+          PopupMenuItem(
+            value: _TextLayoutAction.paddingIncrease,
+            child: Text(tr('İç boşluğu artır', 'Increase padding')),
+          ),
+          PopupMenuItem(
+            value: _TextLayoutAction.lineHeightDecrease,
+            child: Text(tr('Satır aralığını azalt', 'Decrease line height')),
+          ),
+          PopupMenuItem(
+            value: _TextLayoutAction.lineHeightIncrease,
+            child: Text(tr('Satır aralığını artır', 'Increase line height')),
+          ),
+          PopupMenuItem(
+            value: _TextLayoutAction.lineHeightDefault,
+            child: Text(tr('Satır aralığını sıfırla', 'Reset line height')),
+          ),
+          const PopupMenuDivider(),
+          PopupMenuItem(
+            value: _TextLayoutAction.rotate15,
+            child: Text(tr('15° döndür', 'Rotate 15°')),
+          ),
+          PopupMenuItem(
+            value: _TextLayoutAction.resetRotation,
+            child: Text(tr('Dönüşü sıfırla', 'Reset rotation')),
+          ),
+        ],
+        child: const SizedBox(
+          width: 38,
+          height: 34,
+          child: Icon(Icons.tune_rounded, size: 19),
+        ),
+      );
+}
+
 Future<void> _showAddTourHotspotDialog(
   BuildContext context,
   PresentationController controller, {
@@ -10597,7 +10816,7 @@ Future<void> _showAddTourHotspotDialog(
     builder: (dialogContext) => StatefulBuilder(
       builder: (context, setDialogState) => AlertDialog(
         title: Text(
-          existing == null ? '360° tur metni ekle' : '360° tur metnini düzenle',
+          existing == null ? 'Tur noktası ekle' : 'Tur noktasını düzenle',
         ),
         content: SizedBox(
           width: 420,
@@ -10629,53 +10848,61 @@ Future<void> _showAddTourHotspotDialog(
                 TextField(
                   controller: labelController,
                   autofocus: true,
-                  decoration: const InputDecoration(labelText: '360° başlık'),
+                  decoration: const InputDecoration(labelText: 'Başlık'),
                 ),
                 const SizedBox(height: 12),
                 TextField(
                   controller: descriptionController,
                   maxLines: 2,
                   decoration: const InputDecoration(
-                    labelText: '360° bilgi metni (isteğe bağlı)',
+                    labelText: 'Açıklama (isteğe bağlı)',
                   ),
                 ),
                 const SizedBox(height: 12),
-                Row(
-                  children: <Widget>[
-                    for (final field
-                        in <({String label, TextEditingController controller})>[
-                      (label: 'X', controller: xController),
-                      (label: 'Y', controller: yController),
-                      (label: 'Z', controller: zController),
-                    ])
-                      Expanded(
-                        child: Padding(
-                          padding: EdgeInsets.only(
-                            right: field.label == 'Z' ? 0 : 8,
-                          ),
-                          child: TextField(
-                            controller: field.controller,
-                            readOnly: fixedPoint != null,
-                            keyboardType: const TextInputType.numberWithOptions(
-                              decimal: true,
-                              signed: true,
+                ExpansionTile(
+                  title: const Text('Gelişmiş konum ayarları'),
+                  children: [
+                    Row(
+                      children: <Widget>[
+                        for (final field in <({
+                          String label,
+                          TextEditingController controller
+                        })>[
+                          (label: 'X', controller: xController),
+                          (label: 'Y', controller: yController),
+                          (label: 'Z', controller: zController),
+                        ])
+                          Expanded(
+                            child: Padding(
+                              padding: EdgeInsets.only(
+                                right: field.label == 'Z' ? 0 : 8,
+                              ),
+                              child: TextField(
+                                controller: field.controller,
+                                readOnly: fixedPoint != null,
+                                keyboardType:
+                                    const TextInputType.numberWithOptions(
+                                  decimal: true,
+                                  signed: true,
+                                ),
+                                decoration: InputDecoration(
+                                  labelText: '${field.label} konumu',
+                                  helperText: fixedPoint == null
+                                      ? 'metre (-500…500)'
+                                      : 'Yüzey konumu (m)',
+                                ),
+                              ),
                             ),
-                            decoration: InputDecoration(
-                              labelText: '${field.label} konumu',
-                              helperText: fixedPoint == null
-                                  ? 'metre (-500…500)'
-                                  : 'Yüzey konumu (m)',
-                            ),
                           ),
-                        ),
-                      ),
+                      ],
+                    )
                   ],
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String?>(
                   value: targetPageId,
                   decoration: const InputDecoration(
-                    labelText: 'Metne tıklanınca açılacak slayt',
+                    labelText: 'Noktaya tıklanınca',
                   ),
                   items: <DropdownMenuItem<String?>>[
                     const DropdownMenuItem<String?>(
@@ -10687,7 +10914,9 @@ Future<void> _showAddTourHotspotDialog(
                         .map(
                           (page) => DropdownMenuItem<String?>(
                             value: page.id,
-                            child: Text('Slayt ${pages.indexOf(page) + 1}'),
+                            child: Text(
+                                'Slayt ${pages.indexOf(page) + 1}${page.title.trim().isEmpty ? '' : ' · ${page.title}'}',
+                                overflow: TextOverflow.ellipsis),
                           ),
                         ),
                   ],
@@ -10705,7 +10934,7 @@ Future<void> _showAddTourHotspotDialog(
           ),
           FilledButton.icon(
             icon: const Icon(Icons.add_location_alt_rounded),
-            label: Text(existing == null ? '360° metni ekle' : 'Kaydet'),
+            label: Text(existing == null ? 'Tur noktası ekle' : 'Kaydet'),
             onPressed: () {
               double coordinate(TextEditingController field) =>
                   (double.tryParse(field.text.replaceAll(',', '.')) ?? 0)
@@ -10863,7 +11092,7 @@ class _BackgroundAnimationSpeedControl extends StatelessWidget {
   }
 }
 
-class _SelectedTextToolbarField extends StatelessWidget {
+class _SelectedTextToolbarField extends StatefulWidget {
   const _SelectedTextToolbarField({
     required this.controller,
     required this.onChanged,
@@ -10875,45 +11104,112 @@ class _SelectedTextToolbarField extends StatelessWidget {
   final bool compact;
 
   @override
+  State<_SelectedTextToolbarField> createState() =>
+      _SelectedTextToolbarFieldState();
+}
+
+class _SelectedTextToolbarFieldState extends State<_SelectedTextToolbarField> {
+  final FocusNode _focusNode = FocusNode();
+  DateTime? _lastPrimaryPointerDownAt;
+  Offset? _lastPrimaryPointerPosition;
+
+  void _handlePointerDown(PointerDownEvent event) {
+    if (event.buttons == 2) {
+      showSutolTextEditingContextMenu(
+        context: context,
+        controller: widget.controller,
+        globalPosition: event.position,
+        focusNode: _focusNode,
+        onChanged: widget.onChanged,
+      );
+      return;
+    }
+    if (event.buttons != 1) return;
+    final now = DateTime.now();
+    final previousAt = _lastPrimaryPointerDownAt;
+    final previousPosition = _lastPrimaryPointerPosition;
+    final isDoubleClick = previousAt != null &&
+        now.difference(previousAt) <= const Duration(milliseconds: 500) &&
+        previousPosition != null &&
+        (event.position - previousPosition).distance <= 24;
+    if (!isDoubleClick) {
+      _lastPrimaryPointerDownAt = now;
+      _lastPrimaryPointerPosition = event.position;
+      return;
+    }
+
+    _lastPrimaryPointerDownAt = null;
+    _lastPrimaryPointerPosition = null;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      widget.controller.selection = TextSelection(
+        baseOffset: 0,
+        extentOffset: widget.controller.text.length,
+      );
+    });
+  }
+
+  @override
+  void dispose() {
+    _focusNode.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return SizedBox(
       key: const ValueKey<String>('selected-text-toolbar-field'),
-      width: compact ? 150 : 230,
+      width: widget.compact ? 150 : 230,
       height: 36,
-      child: TextField(
-        controller: controller,
-        onChanged: onChanged,
-        maxLines: 1,
-        textInputAction: TextInputAction.done,
-        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: context._htmlInk,
-              fontWeight: FontWeight.w700,
+      child: Listener(
+        onPointerDown: _handlePointerDown,
+        child: TextField(
+          controller: widget.controller,
+          focusNode: _focusNode,
+          onChanged: widget.onChanged,
+          maxLines: 1,
+          textInputAction: TextInputAction.done,
+          contextMenuBuilder: _buildHtmlTextEditingContextMenu,
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: context._htmlInk,
+                fontWeight: FontWeight.w700,
+              ),
+          decoration: InputDecoration(
+            hintText: tr('Metin yazın', 'Type text'),
+            isDense: true,
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 9,
             ),
-        decoration: InputDecoration(
-          hintText: tr('Metin yazın', 'Type text'),
-          isDense: true,
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 12,
-            vertical: 9,
-          ),
-          filled: true,
-          fillColor: context.sutolColors.surfaceSubtle,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: context.sutolColors.outline),
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: context.sutolColors.outline),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: context._htmlAccent, width: 1.5),
+            filled: true,
+            fillColor: context.sutolColors.surfaceSubtle,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: context.sutolColors.outline),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: context.sutolColors.outline),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: context._htmlAccent, width: 1.5),
+            ),
           ),
         ),
       ),
     );
   }
+}
+
+Widget _buildHtmlTextEditingContextMenu(
+  BuildContext context,
+  EditableTextState editableTextState,
+) {
+  return AdaptiveTextSelectionToolbar.buttonItems(
+    anchors: editableTextState.contextMenuAnchors,
+    buttonItems: editableTextState.contextMenuButtonItems,
+  );
 }
 
 class _TextWeightStepper extends StatelessWidget {
