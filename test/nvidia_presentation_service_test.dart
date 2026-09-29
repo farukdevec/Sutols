@@ -414,5 +414,78 @@ void main() {
         throwsA(predicate((error) => error.toString().contains('ciddi'))),
       );
     });
+
+    test(
+        'keeps a usable 75-point NVIDIA deck when only advisory readability issues remain',
+        () async {
+      var generationCalls = 0;
+      var judgeCalls = 0;
+      final deck = {
+        'slides': [
+          {
+            'title': 'Yapay Zekâdaki Güncel Gelişmeler',
+            'content':
+                '- **Çok Modlu Modeller:** Metin, görsel ve sesi aynı iş akışında birlikte yorumlar.\n- **Küçük Modeller:** Daha az kaynakla cihaz üzerinde hızlı ve özel çıkarım sunar.\n- **Yapay Zekâ Ajanları:** Araç kullanarak çok adımlı görevleri planlar ve tamamlar.',
+            'keywords': ['yapay zekâ', 'çok modlu model', 'ajan'],
+          },
+        ],
+      };
+      final mockClient = MockClient((request) async {
+        final body = jsonDecode(request.body) as Map<String, dynamic>;
+        if (body['model'] == AiModelConfig.modelLlama31_8b) {
+          judgeCalls += 1;
+          return http.Response.bytes(
+            utf8.encode(jsonEncode({
+              'choices': [
+                {
+                  'message': {
+                    'content': jsonEncode({
+                      'score': 75,
+                      'factual_accuracy': 80,
+                      'revision_required': true,
+                      'issues': [
+                        {
+                          'slide': 1,
+                          'category': 'readability',
+                          'problem': 'Metin daha akıcı olabilir.',
+                        },
+                      ],
+                    }),
+                  },
+                },
+              ],
+            })),
+            200,
+            headers: {'content-type': 'application/json; charset=utf-8'},
+          );
+        }
+
+        generationCalls += 1;
+        return http.Response.bytes(
+          utf8.encode(jsonEncode({
+            'choices': [
+              {
+                'message': {'content': jsonEncode(deck)},
+              },
+            ],
+          })),
+          200,
+          headers: {'content-type': 'application/json; charset=utf-8'},
+        );
+      });
+      final service = NvidiaPresentationService(
+        client: mockClient,
+        customCandidateModels: [AiModelConfig.modelNemotronNano],
+      );
+
+      final result = await service.generatePresentation(
+        'yapay zekadaki güncel gelişmeler neler?',
+        slideCount: 1,
+      );
+
+      expect(result.slides, hasLength(1));
+      expect(generationCalls, 2); // initial generation + revision
+      expect(judgeCalls, 2); // original + revised deck
+    });
   });
 }

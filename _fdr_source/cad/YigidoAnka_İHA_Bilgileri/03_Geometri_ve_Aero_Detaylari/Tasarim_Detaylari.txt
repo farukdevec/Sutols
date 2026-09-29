@@ -1,0 +1,107 @@
+================================================================================
+                     YİĞİDO ANKA İHA - NİHAİ TASARIM VE GEOMETRİ RAPORU
+================================================================================
+Tasarım Revizyonu   : RevC (Nihai CAD / Gazebo Simülasyon Referansı)
+Tarih               : Eylül 2026
+Proje / Takım       : Karayel / Yiğido ANKA
+
+--------------------------------------------------------------------------------
+1. GENEL UÇAK GEOMETRİSİ VE ZARF BİLGİLERİ (ENVELOPE)
+--------------------------------------------------------------------------------
+Toplam Kanat Açıklığı (Wingspan) : 2400.000 mm (2.400 m)
+Montaj X Zarfı (Uzunluk)         : 1463.000 mm (1.463 m)
+Montaj Z Zarfı (Yükseklik)       : 474.767 mm (0.4748 m)
+
+CAD Sınırları (Bounding Box):
+  - X Sınırı: -13.000 mm ... +1450.000 mm
+  - Y Sınırı: -1200.000 mm ... +1200.000 mm
+  - Z Sınırı: -124.767 mm ... +350.000 mm
+
+--------------------------------------------------------------------------------
+2. AERODİNAMİK VE KANAT VERİLERİ
+--------------------------------------------------------------------------------
+Kanat Açıklığı (b)             : 2.400 m
+Üstten Mesh İzdüşüm Alanı (S)   : ~0.6093 m² (Sağ: 0.3035 m², Sol: 0.3058 m²)
+Açıklık Oranı (Aspect Ratio, AR): ~9.45  [AR = b² / S]
+Kanat Zarf Akor Boyu (X Chord) : 266.560 mm (STL Bounding-Box Zarfı)
+
+--------------------------------------------------------------------------------
+3. PARÇA BAZLI GÜNCEL CAD VE STL BOYUTLARI
+--------------------------------------------------------------------------------
+Parça / STL Adı        X Boyutu (mm)    Y Boyutu (mm)    Z Boyutu (mm)
+--------------------------------------------------------------------------------
+Tüm Montaj (Assembly)   1463.000         2400.000          474.767
+Govde.stl               1450.000          205.868          249.514
+SagKanat_IHA.stl         266.560         1203.000           36.041
+SolKanat_IHA.stl         266.560         1203.000           35.983
+SagAileron.stl            51.270          550.000           26.335
+SolAileron.stl            53.629          550.000           27.505
+Elevator_IHA.stl         170.000          820.000           17.468
+Rudder_IHA.stl           180.657           14.789          350.000
+SagPervane.stl             4.000          199.993           53.152
+SolPervane.stl             4.000          199.993           53.152
+
+--------------------------------------------------------------------------------
+4. KONTROL YÜZEYLERİ, FİZİKSEL BİLGİLER VE LİMİTLER
+--------------------------------------------------------------------------------
+Yüzey        Kütle (kg)  Menteşe Origin CAD (m)         Dönme Eksen   Limit
+--------------------------------------------------------------------------------
+Sağ Aileron  0.163740    ( 0.640,  0.822981, 0.045)     ( 0, -1,  0)   ±15°
+Sol Aileron   0.209103    ( 0.640, -0.822432, 0.045)     ( 0, -1,  0)   ±15°
+Elevator     0.624138    ( 1.350,  0.000000, 0.050)     ( 0, -1,  0)   ±25°
+Rudder       0.056607    ( 1.400,  0.000000, 0.180)     ( 0,  0,  1)   ±20°
+
+Kontrol Yüzeyleri Lokal CoG ve Atalet Momentleri:
+- Sağ Aileron : CoG(x: +0.0148m, y: 0, z: -0.0412m)
+                Ixx: 0.004135, Iyy: 0.000035, Izz: 0.004156 [kg·m²]
+- Sol Aileron  : CoG(x: +0.0126m, y: 0, z: -0.0379m)
+                Ixx: 0.005278, Iyy: 0.000045, Izz: 0.005308 [kg·m²]
+- Elevator     : CoG(x: +0.0254m, y: 0, z: -0.0500m)
+                Ixx: 0.030860, Iyy: 0.000916, Izz: 0.031760 [kg·m²]
+- Rudder       : CoG(x: -0.0653m, y: +0.0028m, z: -0.0245m)
+                Ixx: 0.000610, Iyy: 0.000725, Izz: 0.000116 [kg·m²]
+
+--------------------------------------------------------------------------------
+5. TOPLAM KÜTLE, AĞIRLIK MERKEZİ (CoG) VE ATALET BİLGİLERİ
+--------------------------------------------------------------------------------
+Toplam Uçak Kütlesi (Simülasyon / Fizik) : 10.108 kg
+  - Rigid / Sabit Gövde Bölümü           : 9.0544 kg
+  - Hareketli Kontrol Yüzeyleri Toplamı  : 1.0536 kg
+
+Tüm Uçağın CAD CoG Konumu (Referans Başlangıcına Göre):
+  - X_CoG : 667.030 mm
+  - Y_CoG : -0.196 mm
+  - Z_CoG : 15.237 mm
+
+Rigid-Body Atalet Momentleri (Gazebo / Xacro Matrix):
+  - Ixx = 1.58534683 kg·m²
+  - Iyy = 0.67560282 kg·m²
+  - Izz = 2.21580944 kg·m²
+  - Ixy = -0.00071071 kg·m² | Ixz = +0.02501171 kg·m² | Iyz = +0.00023460 kg·m²
+
+--------------------------------------------------------------------------------
+6. KOORDİNAT SİSTEMLERİ VE DÖNÜŞÜMLER (CAD - ROS - GAZEBO)
+--------------------------------------------------------------------------------
+CAD Eksenleri  : +X = Burundan Kuyruğa | +Y = Sağ Kanat | +Z = Yukarı
+ROS Body Eksen : +X = İleri (Burun)    | +Y = Sol Kanat | +Z = Yukarı
+Dönüşüm (Yaw)  : 180° (π rad)
+
+base_to_cad_joint Dönüşümü:
+  - xyz = "0.667030 -0.000196 -0.015237"
+  - rpy = "0 0 3.14159265"
+
+--------------------------------------------------------------------------------
+7. AVİYONİK, KAMERA VE SENSÖR KONFİGÜRASYONU
+--------------------------------------------------------------------------------
+Kamera (FPV / Görüntü İşleme):
+  - Model / Sensör      : Sony IMX219 sınıfı (IMX219-77)
+  - Çözünürlük ve Hız  : 640x480 @ 30 FPS
+  - Yatay FOV           : 1.384 rad (~79.3°)
+  - CAD Konumu (cad_link): x: 0.38714m, y: -0.02786m, z: 0.01000m
+  - Açılanma            : Pitch ≈ 12° Aşağı, Yaw = π
+
+IMU ve Otonom Sistem:
+  - Otopilot Card       : Cube Orange+ / ArduPilot
+  - Companion Computer  : NVIDIA Jetson Orin Nano
+  - IMU Eksen Hizalaması : Gazebo FLU -> IMU FRD (Roll/Pitch uyumsuzluğu giderildi)
+  - IMU Pose            : <pose>0 0 0 3.141592653589793 0 0</pose>

@@ -467,8 +467,10 @@ class NvidiaPresentationService {
               language: language,
             );
 
-            if (revisedQuality.isPass ||
-                revisedQuality.overallScore > qualityResult.overallScore) {
+            if (_shouldUseRevision(
+              original: qualityResult,
+              revised: revisedQuality,
+            )) {
               presentation = revised;
               qualityResult = revisedQuality;
               AiRouterLogger.logRevision(
@@ -518,24 +520,12 @@ class NvidiaPresentationService {
             throw FormatException(
                 'Revizyon sonrası içerik kalite kontrolü: $finalReason');
           }
-          if (qualityResult.needsRevision &&
-              qualityResult.slideIssues.any((issue) => const {
-                    'content_format',
-                    'readability',
-                    'redundancy',
-                  }.contains(issue['category']))) {
-            throw const FormatException(
-                'Revizyon sonrası metin biçimi, dil veya tekrar sorunu sürüyor.');
-          }
-          const seriousJudgeIssueCategories = {
-            'factual_accuracy',
-            'visual_relevance',
-            'audience_fit',
-            'pedagogy',
-            'redundancy',
-            'content_format',
-            'readability',
-          };
+          // Biçim, okunabilirlik ve tekrar kuralları yukarıdaki deterministik
+          // quality gate tarafından zaten denetleniyor. AI jürisinin bu alanlarda
+          // iyileştirme istemesi, minimum 75 puanı alan kullanılabilir bir desteyi
+          // NVIDIA hatasına dönüştürmemeli. Olgusal bir sorun ise puandan
+          // bağımsız olarak bloklayıcı kalır.
+          const seriousJudgeIssueCategories = {'factual_accuracy'};
           final unresolvedJudgeIssue = qualityResult.slideIssues.any(
             (issue) => seriousJudgeIssueCategories.contains(issue['category']),
           );
@@ -685,7 +675,11 @@ class NvidiaPresentationService {
         msg.contains('timeout')) {
       return AiErrorType.timeout;
     }
-    if (msg.contains('kalite kontrolü') || msg.contains('yetersiz içerik')) {
+    if (msg.contains('kalite kontrolü') ||
+        msg.contains('kalite denetçisi') ||
+        msg.contains('revizyon sonrası') ||
+        msg.contains('metin biçimi') ||
+        msg.contains('yetersiz içerik')) {
       return AiErrorType.qualityRejection;
     }
     if (msg.contains('şema') ||
@@ -785,6 +779,36 @@ class NvidiaPresentationService {
 
   static Map<String, dynamic> parsePresentationPayload(String raw) =>
       SafeJsonParser.parsePresentationPayload(raw);
+
+  @visibleForTesting
+  static bool shouldUseRevisionForTesting({
+    required QualityScoreResult original,
+    required QualityScoreResult revised,
+  }) =>
+      _shouldUseRevision(original: original, revised: revised);
+
+  static bool _shouldUseRevision({
+    required QualityScoreResult original,
+    required QualityScoreResult revised,
+  }) {
+    if (revised.isPass || revised.overallScore > original.overallScore) {
+      return true;
+    }
+    if (revised.overallScore < 75) return false;
+
+    const blockingCategories = {'factual_accuracy'};
+    int blockingIssueCount(QualityScoreResult result) => result.slideIssues
+        .where((issue) => blockingCategories.contains(issue['category']))
+        .length;
+
+    final originalBlocking = blockingIssueCount(original);
+    final revisedBlocking = blockingIssueCount(revised);
+    if (revisedBlocking < originalBlocking) return true;
+
+    return revised.overallScore == original.overallScore &&
+        revisedBlocking == originalBlocking &&
+        revised.slideIssues.length < original.slideIssues.length;
+  }
 
   @visibleForTesting
   static String normalizeContentForTesting(Object? content) =>
