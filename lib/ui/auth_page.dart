@@ -272,36 +272,41 @@ class _AuthPageState extends State<AuthPage> {
               setState(() => _authMousePosition = event.localPosition),
           child: Stack(
             children: [
-            Positioned.fill(
-              child: _AuthAtmosphere(mousePosition: _authMousePosition),
-            ),
-            Center(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(AppSpacing.s24, 76, AppSpacing.s24, AppSpacing.s32),
-                child: LayoutBuilder(
-                  builder: (context, constraints) {
-                    final showQuotes = constraints.maxWidth >= 960;
-                    return Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        if (showQuotes)
-                          const Expanded(child: _RotatingBrandStory(side: _StorySide.left)),
-                        ConstrainedBox(
-                          constraints: const BoxConstraints(maxWidth: 440),
-                          child: AnimatedSwitcher(
-                            duration: AppMotion.standard,
-                            child: _buildAuthCard(colors),
+              Positioned.fill(
+                child: _AuthAtmosphere(mousePosition: _authMousePosition),
+              ),
+              Center(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(
+                      AppSpacing.s24, 76, AppSpacing.s24, AppSpacing.s32),
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      final showQuotes = constraints.maxWidth >= 960;
+                      return Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          if (showQuotes)
+                            const Expanded(
+                                child:
+                                    _RotatingBrandStory(side: _StorySide.left)),
+                          ConstrainedBox(
+                            constraints: const BoxConstraints(maxWidth: 440),
+                            child: AnimatedSwitcher(
+                              duration: AppMotion.standard,
+                              child: _buildAuthCard(colors),
+                            ),
                           ),
-                        ),
-                        if (showQuotes)
-                          const Expanded(child: _RotatingBrandStory(side: _StorySide.right)),
-                      ],
-                    );
-                  },
+                          if (showQuotes)
+                            const Expanded(
+                                child: _RotatingBrandStory(
+                                    side: _StorySide.right)),
+                        ],
+                      );
+                    },
+                  ),
                 ),
               ),
-            ),
             ],
           ),
         ),
@@ -317,8 +322,10 @@ class _AuthPageState extends State<AuthPage> {
         borderRadius: BorderRadius.circular(24),
         border: Border.all(color: Colors.white.withValues(alpha: 0.9)),
         boxShadow: const [
-          BoxShadow(color: Color(0x1A3730A3), blurRadius: 42, offset: Offset(0, 20)),
-          BoxShadow(color: Color(0x0D0F172A), blurRadius: 10, offset: Offset(0, 4)),
+          BoxShadow(
+              color: Color(0x1A3730A3), blurRadius: 42, offset: Offset(0, 20)),
+          BoxShadow(
+              color: Color(0x0D0F172A), blurRadius: 10, offset: Offset(0, 4)),
         ],
       ),
       child: Column(
@@ -652,7 +659,8 @@ class _RotatingBrandStoryState extends State<_RotatingBrandStory> {
     _BrandMessage(
       kicker: 'YARATICILIK İÇİN ALAN',
       title: 'Düşünceyi\nsahneye taşıyın.',
-      description: 'Sutols, karmaşık fikirleri iz bırakan sunumlara dönüştürür.',
+      description:
+          'Sutols, karmaşık fikirleri iz bırakan sunumlara dönüştürür.',
       icon: Icons.bubble_chart_rounded,
     ),
   ];
@@ -667,7 +675,8 @@ class _RotatingBrandStoryState extends State<_RotatingBrandStory> {
     _BrandMessage(
       kicker: 'İNOVASYONLA ANLATIN',
       title: 'Sıradanlığa\nyer bırakmayın.',
-      description: 'Yeni nesil araçlarla fikrinizin potansiyelini görünür kılın.',
+      description:
+          'Yeni nesil araçlarla fikrinizin potansiyelini görünür kılın.',
       icon: Icons.blur_on_rounded,
     ),
     _BrandMessage(
@@ -684,7 +693,7 @@ class _RotatingBrandStoryState extends State<_RotatingBrandStory> {
   @override
   void initState() {
     super.initState();
-    _timer = Timer.periodic(const Duration(seconds: 5), (_) {
+    _timer = Timer.periodic(const Duration(seconds: 7), (_) {
       if (mounted) setState(() => _messageIndex++);
     });
   }
@@ -708,262 +717,113 @@ class _RotatingBrandStoryState extends State<_RotatingBrandStory> {
       child: Align(
         alignment: alignment,
         child: Container(
-          constraints: const BoxConstraints(maxWidth: 365, minHeight: 370),
-          padding: const EdgeInsets.all(34),
+          key: ValueKey<String>(
+            isLeft ? 'auth-info-card-left' : 'auth-info-card-right',
+          ),
+          constraints: const BoxConstraints(maxWidth: 340, minHeight: 350),
+          padding: const EdgeInsets.all(30),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(28),
-            gradient: LinearGradient(
-              begin: isLeft ? Alignment.topLeft : Alignment.topRight,
-              end: isLeft ? Alignment.bottomRight : Alignment.bottomLeft,
-              colors: const [Color(0xEFFFFFFF), Color(0xB8F8FAFC)],
-            ),
-            border: Border.all(color: Colors.white.withValues(alpha: .9)),
+            color: const Color(0xF7FFFFFF),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: const Color(0xB8E2E8F0)),
             boxShadow: const [
               BoxShadow(
-                color: Color(0x123B82F6),
-                blurRadius: 48,
-                offset: Offset(0, 20),
+                color: Color(0x0D0F172A),
+                blurRadius: 30,
+                offset: Offset(0, 14),
               ),
             ],
           ),
-          child: Stack(
-            children: [
-              Positioned(
-                right: isLeft ? -8 : null,
-                left: isLeft ? null : -8,
-                bottom: -24,
-                child: Text(
-                  '0${(_messageIndex % messages.length) + 1}',
-                  style: TextStyle(
-                    fontSize: 132,
-                    height: 1,
+          child: AnimatedSwitcher(
+            duration: const Duration(milliseconds: 420),
+            switchInCurve: Curves.easeOutCubic,
+            switchOutCurve: Curves.easeInCubic,
+            transitionBuilder: (child, animation) => FadeTransition(
+              opacity: animation,
+              child: SlideTransition(
+                position: Tween<Offset>(
+                  begin: const Offset(0, .035),
+                  end: Offset.zero,
+                ).animate(animation),
+                child: child,
+              ),
+            ),
+            child: Column(
+              key: ValueKey(_messageIndex),
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment:
+                  isLeft ? CrossAxisAlignment.start : CrossAxisAlignment.end,
+              children: [
+                Container(
+                  width: 42,
+                  height: 42,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF8FAFC),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                  ),
+                  child: Icon(
+                    message.icon,
+                    color: const Color(0xFF4F46E5),
+                    size: 20,
+                  ),
+                ),
+                const SizedBox(height: 32),
+                Text(
+                  message.kicker,
+                  textAlign: textAlign,
+                  style: AppTypography.labelSmall.copyWith(
+                    color: const Color(0xFF4F46E5),
                     fontWeight: FontWeight.w700,
-                    color: const Color(0xFF4F46E5).withValues(alpha: .055),
+                    letterSpacing: 1.2,
                   ),
                 ),
-              ),
-              Align(
-                alignment: isLeft ? Alignment.topLeft : Alignment.topRight,
-                child: AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 550),
-                  switchInCurve: Curves.easeOutCubic,
-                  switchOutCurve: Curves.easeInCubic,
-                  transitionBuilder: (child, animation) => FadeTransition(
-                    opacity: animation,
-                    child: SlideTransition(
-                      position: Tween<Offset>(
-                        begin: const Offset(0, .08),
-                        end: Offset.zero,
-                      ).animate(animation),
-                      child: child,
-                    ),
-                  ),
-                  child: Column(
-                    key: ValueKey(_messageIndex),
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment:
-                        isLeft ? CrossAxisAlignment.start : CrossAxisAlignment.end,
-                    children: [
-                      Icon(message.icon, color: const Color(0xFF4F46E5), size: 27),
-                      const SizedBox(height: 56),
-                      Text(
-                        message.kicker,
-                        textAlign: textAlign,
-                        style: AppTypography.labelSmall.copyWith(
-                          color: const Color(0xFF4F46E5),
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 1.35,
-                        ),
-                      ),
-                      const SizedBox(height: 14),
-                      Text(
-                        message.title,
-                        textAlign: textAlign,
-                        style: AppTypography.titleLarge.copyWith(
-                          fontSize: 31,
-                          height: 1.12,
-                          color: const Color(0xFF172554),
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        message.description,
-                        textAlign: textAlign,
-                        style: AppTypography.bodyLarge.copyWith(
-                          color: const Color(0xFF64748B),
-                          height: 1.55,
-                        ),
-                      ),
-                    ],
+                const SizedBox(height: 12),
+                Text(
+                  message.title,
+                  textAlign: textAlign,
+                  style: AppTypography.titleLarge.copyWith(
+                    fontSize: 27,
+                    height: 1.16,
+                    color: const Color(0xFF172554),
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
-              ),
-              Align(
-                alignment:
-                    isLeft ? Alignment.bottomLeft : Alignment.bottomRight,
-                child: Row(
+                const SizedBox(height: 13),
+                Text(
+                  message.description,
+                  textAlign: textAlign,
+                  style: AppTypography.bodyMedium.copyWith(
+                    color: const Color(0xFF64748B),
+                    height: 1.55,
+                  ),
+                ),
+                const SizedBox(height: 30),
+                Row(
                   mainAxisSize: MainAxisSize.min,
                   children: List.generate(
                     messages.length,
                     (index) => AnimatedContainer(
-                      duration: const Duration(milliseconds: 300),
-                      margin: EdgeInsets.only(right: isLeft ? 7 : 0, left: isLeft ? 0 : 7),
-                      height: 3,
-                      width: index == _messageIndex % messages.length ? 28 : 8,
+                      duration: const Duration(milliseconds: 260),
+                      margin: EdgeInsets.only(
+                        right: isLeft ? 6 : 0,
+                        left: isLeft ? 0 : 6,
+                      ),
+                      height: 2,
+                      width: index == _messageIndex % messages.length ? 24 : 7,
                       decoration: BoxDecoration(
                         color: index == _messageIndex % messages.length
                             ? const Color(0xFF4F46E5)
                             : const Color(0xFFCBD5E1),
-                        borderRadius: BorderRadius.circular(9),
+                        borderRadius: BorderRadius.circular(8),
                       ),
                     ),
                   ),
                 ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _ProfessionalBrandStory extends StatelessWidget {
-  const _ProfessionalBrandStory({required this.side});
-
-  final _StorySide side;
-
-  @override
-  Widget build(BuildContext context) {
-    final left = side == _StorySide.left;
-    final title = left
-        ? tr('Fikirlerinize derinlik katın.', 'Give your ideas depth.')
-        : tr('Sunumun yeni boyutu burada.', 'The next dimension of presenting is here.');
-    final detail = left
-        ? tr('Yapay zekâ ile düşünceden etkileyici 3B hikâyelere.',
-            'From a thought to compelling 3D stories with AI.')
-        : tr('Sutols, anlatımı inovasyonla buluşturur.',
-            'Sutols brings storytelling and innovation together.');
-    final label = left ? 'SUTOLS / ANLATIM' : 'SUTOLS / BOYUT';
-
-    return Padding(
-      padding: EdgeInsets.only(right: left ? 56 : 0, left: left ? 0 : 56),
-      child: Align(
-        alignment: left ? Alignment.centerLeft : Alignment.centerRight,
-        child: Container(
-          constraints: const BoxConstraints(maxWidth: 290),
-          padding: const EdgeInsets.all(28),
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: .58),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: const Color(0xFFCBD5E1).withValues(alpha: .72),
+              ],
             ),
-            boxShadow: const [
-              BoxShadow(
-                color: Color(0x0A0F172A),
-                blurRadius: 28,
-                offset: Offset(0, 12),
-              ),
-            ],
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment:
-                left ? CrossAxisAlignment.start : CrossAxisAlignment.end,
-            children: [
-              Row(
-                mainAxisAlignment:
-                    left ? MainAxisAlignment.start : MainAxisAlignment.end,
-                children: [
-                  Icon(
-                    left ? Icons.auto_awesome_rounded : Icons.view_in_ar_rounded,
-                    color: const Color(0xFF4F46E5),
-                    size: 18,
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    label,
-                    style: AppTypography.labelSmall.copyWith(
-                      color: const Color(0xFF4F46E5),
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 1.1,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
-              Container(
-                height: 1,
-                color: const Color(0xFFCBD5E1).withValues(alpha: .7),
-              ),
-              const SizedBox(height: 20),
-              Text(
-                title,
-                textAlign: left ? TextAlign.left : TextAlign.right,
-                style: AppTypography.titleLarge.copyWith(
-                  fontSize: 25,
-                  height: 1.22,
-                  color: const Color(0xFF172554),
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                detail,
-                textAlign: left ? TextAlign.left : TextAlign.right,
-                style: AppTypography.bodyMedium.copyWith(
-                  color: const Color(0xFF64748B),
-                  height: 1.55,
-                ),
-              ),
-            ],
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _BrandStory extends StatelessWidget {
-  const _BrandStory({required this.side});
-
-  final _StorySide side;
-
-  @override
-  Widget build(BuildContext context) {
-    final left = side == _StorySide.left;
-    final primary = left
-        ? tr('Fikirlerinize derinlik katın.', 'Give your ideas depth.')
-        : tr('Sunumun yeni boyutu burada.', 'The next dimension of presenting is here.');
-    final secondary = left
-        ? tr('Yapay zekâ ile düşünceden etkileyici 3B hikâyelere.', 'From a thought to compelling 3D stories with AI.')
-        : tr('Sutols, anlatımı inovasyonla buluşturur.', 'Sutols brings storytelling and innovation together.');
-    return Padding(
-      padding: EdgeInsets.only(right: left ? 56 : 0, left: left ? 0 : 56),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: left ? CrossAxisAlignment.start : CrossAxisAlignment.end,
-        children: [
-          Icon(left ? Icons.auto_awesome_rounded : Icons.view_in_ar_rounded,
-              color: const Color(0xFF6366F1), size: 28),
-          const SizedBox(height: 16),
-          Text(primary,
-              textAlign: left ? TextAlign.left : TextAlign.right,
-              style: AppTypography.titleLarge.copyWith(
-                fontSize: 27, height: 1.2, color: const Color(0xFF172554),
-                fontWeight: FontWeight.w700,
-              )),
-          const SizedBox(height: 10),
-          Text(secondary,
-              textAlign: left ? TextAlign.left : TextAlign.right,
-              style: AppTypography.bodyLarge.copyWith(color: const Color(0xFF64748B))),
-          const SizedBox(height: 22),
-          Text(left ? 'AI · 3D · MOTION' : 'SUTOLS · CREATE · IMPACT',
-              style: AppTypography.labelSmall.copyWith(
-                color: const Color(0xFF4F46E5), fontWeight: FontWeight.w700, letterSpacing: 1.5)),
-        ],
       ),
     );
   }
@@ -979,7 +839,6 @@ class _AuthAtmosphere extends StatefulWidget {
 }
 
 class _AuthAtmosphereState extends State<_AuthAtmosphere> {
-
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;

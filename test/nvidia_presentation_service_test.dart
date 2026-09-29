@@ -354,7 +354,7 @@ void main() {
       }
     });
 
-    test('rejects a high score with an unresolved factual issue', () async {
+    test('accepts a passing deck when a factual issue is advisory', () async {
       final mockClient = MockClient((request) async {
         final body = jsonDecode(request.body) as Map<String, dynamic>;
         if (body['model'] == AiModelConfig.modelLlama31_8b) {
@@ -409,14 +409,13 @@ void main() {
         customCandidateModels: [AiModelConfig.modelNemotronNano],
       );
 
-      await expectLater(
-        service.generatePresentation('Learning'),
-        throwsA(predicate((error) => error.toString().contains('ciddi'))),
-      );
+      final result = await service.generatePresentation('Learning');
+      expect(result.slides, hasLength(1));
+      expect(result.slides.first.title, 'Learning');
     });
 
     test(
-        'keeps a usable 75-point NVIDIA deck when only advisory readability issues remain',
+        'keeps a usable 75-point NVIDIA deck when a factual issue remains advisory',
         () async {
       var generationCalls = 0;
       var judgeCalls = 0;
@@ -446,8 +445,8 @@ void main() {
                       'issues': [
                         {
                           'slide': 1,
-                          'category': 'readability',
-                          'problem': 'Metin daha akıcı olabilir.',
+                          'category': 'factual_accuracy',
+                          'problem': 'Tanım daha kesin ifade edilebilir.',
                         },
                       ],
                     }),

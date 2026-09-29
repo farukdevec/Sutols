@@ -247,34 +247,35 @@
         height: 100vh;
         flex-direction: column;
         gap: 0;
-        background:
-          radial-gradient(circle at 18% 24%, rgba(99, 102, 241, .16), transparent 28%),
-          radial-gradient(circle at 82% 72%, rgba(20, 184, 166, .13), transparent 31%),
-          #f7f8ff;
+        background: #fafafa;
         position: relative;
         z-index: 100;
       }
 
-      .loading-portal {
-        width: 72px;
-        height: 42px;
-        position: relative;
-        overflow: hidden;
-        border: 1px solid rgba(79, 70, 229, .18);
-        border-radius: 14px;
-        background: rgba(255, 255, 255, .42);
-        box-shadow: 0 16px 36px rgba(79, 70, 229, .08), inset 0 1px 0 rgba(255,255,255,.9);
+      .loading-stage {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 18px;
       }
-      .loading-portal::before {
-        content: '';
-        position: absolute;
-        top: 50%; left: -30%; width: 30%; height: 1px;
-        transform: translateY(-50%);
-        background: linear-gradient(90deg, transparent, #14b8a6, #6366f1, transparent);
-        box-shadow: 0 0 12px rgba(79, 70, 229, .8);
-        animation: light-scan 1.25s ease-in-out infinite;
+      .loading-spinner {
+        width: 34px;
+        height: 34px;
+        box-sizing: border-box;
+        border-radius: 50%;
+        border: 2px solid #e2e8f0;
+        border-top-color: #0f172a;
+        animation: sutols-spin .8s linear infinite;
       }
-      @keyframes light-scan { to { left: 100%; } }
+      .loading-brand {
+        color: #0f172a;
+        font: 700 12px/1 Inter, sans-serif;
+        letter-spacing: .22em;
+      }
+      @keyframes sutols-spin { to { transform: rotate(360deg); } }
+      @media (prefers-reduced-motion: reduce) {
+        .loading-spinner { animation-duration: 1.8s; }
+      }
 
       /* Arama motoru botları (Googlebot vb.) için anlamsal SEO içeriği */
       .seo-crawler-scaffold {
@@ -344,7 +345,10 @@
     </header>
 
     <div class="loading-container" id="loading">
-      <div class="loading-portal" role="status" aria-label="Yükleniyor"></div>
+      <div class="loading-stage" role="status" aria-label="Sutols yükleniyor">
+        <div class="loading-spinner" aria-hidden="true"></div>
+        <div class="loading-brand">SUTOLS</div>
+      </div>
     </div>
 
     <script>

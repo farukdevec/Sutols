@@ -683,11 +683,13 @@ class _FooterBar extends StatelessWidget {
                 child: Text(tr('İletişim', 'Contact')),
               ),
               TextButton(
-                onPressed: () => Navigator.of(context).pushNamed(AppRoutes.privacy),
+                onPressed: () =>
+                    Navigator.of(context).pushNamed(AppRoutes.privacy),
                 child: Text(tr('Gizlilik Politikası', 'Privacy Policy')),
               ),
               TextButton(
-                onPressed: () => Navigator.of(context).pushNamed(AppRoutes.terms),
+                onPressed: () =>
+                    Navigator.of(context).pushNamed(AppRoutes.terms),
                 child: Text(tr('Kullanım Şartları', 'Terms of Use')),
               ),
               TextButton(
@@ -1182,7 +1184,11 @@ class _TierBadgeState extends State<_TierBadge> {
     final hasPlus = PresentationService.hasPlusSlideAccess(_tier);
     final (label, color, icon) = switch (_tier) {
       'plus' || 'premium' || 'pro' => ('Plus', _plusGold, Icons.star_rounded),
-      _ => (tr('Ücretsiz', 'Free'), const Color(0xFF616161), Icons.circle_outlined),
+      _ => (
+          tr('Ücretsiz', 'Free'),
+          const Color(0xFF616161),
+          Icons.circle_outlined
+        ),
     };
 
     // Dar ekranda taşmaması için Wrap; geniş ekranda Row gibi içerik
@@ -1303,7 +1309,9 @@ class _PlanStatusBarState extends State<_PlanStatusBar> {
             ),
             const SizedBox(width: 6),
             Text(
-              hasPlus ? tr('Plus plan', 'Plus plan') : tr('Ücretsiz plan', 'Free plan'),
+              hasPlus
+                  ? tr('Plus plan', 'Plus plan')
+                  : tr('Ücretsiz plan', 'Free plan'),
               style: AppTypography.labelMedium.copyWith(
                 color: colors.textSecondary,
                 fontWeight: FontWeight.w500,
@@ -1506,8 +1514,8 @@ Future<void> _showHomeSettings(BuildContext context) {
                             style: TextStyle(
                               fontSize: 11,
                               color: Theme.of(context)
-                                   .colorScheme
-                                   .onSurfaceVariant,
+                                  .colorScheme
+                                  .onSurfaceVariant,
                             ),
                           ),
                         ),
@@ -1816,12 +1824,14 @@ class _UserAvatarState extends State<_UserAvatar> {
                       color: Colors.white, fontWeight: FontWeight.w600)),
             );
           },
-          loadingBuilder: (context, child, progress) =>
-              progress == null
-                  ? child
-                  : const Center(
-                      child: SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2)),
-                    ),
+          loadingBuilder: (context, child, progress) => progress == null
+              ? child
+              : const Center(
+                  child: SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2)),
+                ),
         ),
       );
     }

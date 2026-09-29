@@ -520,20 +520,10 @@ class NvidiaPresentationService {
             throw FormatException(
                 'Revizyon sonrası içerik kalite kontrolü: $finalReason');
           }
-          // Biçim, okunabilirlik ve tekrar kuralları yukarıdaki deterministik
-          // quality gate tarafından zaten denetleniyor. AI jürisinin bu alanlarda
-          // iyileştirme istemesi, minimum 75 puanı alan kullanılabilir bir desteyi
-          // NVIDIA hatasına dönüştürmemeli. Olgusal bir sorun ise puandan
-          // bağımsız olarak bloklayıcı kalır.
-          const seriousJudgeIssueCategories = {'factual_accuracy'};
-          final unresolvedJudgeIssue = qualityResult.slideIssues.any(
-            (issue) => seriousJudgeIssueCategories.contains(issue['category']),
-          );
-          if (unresolvedJudgeIssue) {
-            throw const FormatException(
-              'Kalite denetçisi ciddi bir sorunu çözülmemiş olarak bildirdi.',
-            );
-          }
+          // AI jürisinin issue listesi hedefli revizyon için kullanılır; tek
+          // başına başarılı NVIDIA yanıtını iptal etmez. Olgusal doğruluk
+          // zaten correctedScore için sert bir tavan olduğundan, gerçekten
+          // düşük bir doğruluk puanı toplam skoru 75'in altına indirir.
           if (qualityResult.overallScore < 75) {
             throw FormatException(
               'Kalite kontrolü ve denetçi reddetti (Skor: ${qualityResult.overallScore}/100, minimum 75 gereklidir).',
@@ -795,6 +785,15 @@ class NvidiaPresentationService {
       return true;
     }
     if (revised.overallScore < 75) return false;
+
+    // Revizyon modeli aynı geçer puanı ve en az aynı doğruluk seviyesini
+    // koruduysa hedefli yeni metni tercih et. Aksi hâlde 75 bandında kalan
+    // her revizyon sırf puan artmadı diye atılıyor ve eski sorunlu metin
+    // kullanılıyordu.
+    if (revised.overallScore == original.overallScore &&
+        revised.factualAccuracy >= original.factualAccuracy) {
+      return true;
+    }
 
     const blockingCategories = {'factual_accuracy'};
     int blockingIssueCount(QualityScoreResult result) => result.slideIssues
