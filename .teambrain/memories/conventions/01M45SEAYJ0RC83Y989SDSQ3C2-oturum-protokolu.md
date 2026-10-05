@@ -4,26 +4,26 @@ class: convention
 scope: team
 status: active
 priority: advisory
-title: "Oturum protokolü"
+title: "Sutols TeamBrain çalışma protokolü"
 created: 2026-10-05
 supersedes: []
 tags:
-  - imported
-  - "source:AGENTS.md"
+  - sutols
+  - teambrain
+  - workflow
 ttl_days: null
 ---
 
-## Oturum protokolü
+## Sutols TeamBrain çalışma protokolü
 
-- Dış dizin izni yoksa başlangıç dosyalarını okumaya çalışma.
-- Anlamlı bir karar, araştırma bulgusu, proje kilometre taşı veya açık iş oluştuğunda
-  ilgili Atlas düğüm notunu güncelle.
-- Oturum bitmeden önce şu komutla günlük kaydı bırak:
-
-  powershell -ExecutionPolicy Bypass -NoProfile -File "C:\Users\Emre\Documents\EmreOS\.atlas\atlas.ps1" Save -Title "Sutols / Codex" -Summary "Bu oturumda yapılanları, kararları ve sonraki adımı kısa yaz."
-
-- Atlas bağlamını güncel tutmak için gerekirse:
-
-  powershell -ExecutionPolicy Bypass -NoProfile -File "C:\Users\Emre\Documents\EmreOS\.atlas\atlas.ps1" Compile
-
-Bu kayıtlar yalnızca Emre'nin yerel Atlas vault'unda tutulur.
+- Sutols ekip belleğinin kaynak doğrusu bu repodaki `.teambrain/` dizinidir.
+- Oturum başında TeamBrain bağlamı kullanılmalı; geçmiş kararlar gerektiğinde
+  `memory_search` ile aranmalıdır.
+- Kalıcı değeri olan şaşırtıcı karar, tekrar eden hata, proje haritası veya çalışma
+  kuralı `memory_propose` ya da `tb propose` ile aday gösterilmelidir.
+- Bellek değişiklikleri inceleme sürecinden geçmelidir. Geçici çalışma ayrıntıları,
+  kolayca koddan çıkarılabilen bilgiler ve doğrulanmamış varsayımlar kaydedilmemelidir.
+- API anahtarı, erişim belirteci, kişisel veri veya başka sırlar belleğe yazılmamalıdır.
+- `priority: required` yalnızca her oturumda zorunlu olan az sayıdaki kural için
+  kullanılmalı; diğer kayıtlar `advisory` kalmalıdır.
+- Bellek değişikliklerinden sonra `tb lint .teambrain` çalıştırılmalıdır.
