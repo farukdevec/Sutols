@@ -20,7 +20,8 @@ void main() {
           'medium': 'https://images.pexels.com/photos/2880507/medium.jpeg',
           'small': 'https://images.pexels.com/photos/2880507/small.jpeg',
           'portrait': 'https://images.pexels.com/photos/2880507/portrait.jpeg',
-          'landscape': 'https://images.pexels.com/photos/2880507/landscape.jpeg',
+          'landscape':
+              'https://images.pexels.com/photos/2880507/landscape.jpeg',
           'tiny': 'https://images.pexels.com/photos/2880507/tiny.jpeg',
         },
         'liked': false,
@@ -117,6 +118,50 @@ void main() {
           coastGuardPhoto,
           subject: 'refrigeration maintenance',
           mustInclude: const ['compressor'],
+        ),
+        0,
+      );
+    });
+
+    test('new moon validation rejects Yeni Mosque and requires the Moon', () {
+      final mosque = PexelsPhoto.fromJson({
+        'id': 404,
+        'width': 1920,
+        'height': 1080,
+        'url': 'https://www.pexels.com/photo/yeni-mosque-404/',
+        'src': {'large': 'https://images.pexels.com/photos/404/large.jpeg'},
+        'alt': 'Istanbul Yeni Mosque at sunset',
+      });
+      final moon = PexelsPhoto.fromJson({
+        'id': 405,
+        'width': 1920,
+        'height': 1080,
+        'url': 'https://www.pexels.com/photo/moon-night-sky-405/',
+        'src': {'large': 'https://images.pexels.com/photos/405/large.jpeg'},
+        'alt': 'Moon in a dark night sky',
+      });
+      final emptyNightSky = PexelsPhoto.fromJson({
+        'id': 406,
+        'width': 1920,
+        'height': 1080,
+        'url': 'https://www.pexels.com/photo/dark-night-sky-406/',
+        'src': {'large': 'https://images.pexels.com/photos/406/large.jpeg'},
+        'alt': 'Dark starry night sky',
+      });
+
+      expect(
+        PexelsService.scorePhotoRelevance(mosque,
+            subject: 'new moon night sky'),
+        0,
+      );
+      expect(
+        PexelsService.scorePhotoRelevance(moon, subject: 'new moon night sky'),
+        greaterThan(0),
+      );
+      expect(
+        PexelsService.scorePhotoRelevance(
+          emptyNightSky,
+          subject: 'new moon night sky',
         ),
         0,
       );

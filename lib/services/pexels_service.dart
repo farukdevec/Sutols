@@ -81,8 +81,8 @@ class PexelsPhoto {
       height: (json['height'] as num?)?.toInt() ?? 1080,
       url: json['url'] as String? ?? 'https://www.pexels.com',
       photographer: json['photographer'] as String? ?? 'Pexels Photographer',
-      photographerUrl: json['photographer_url'] as String? ??
-          'https://www.pexels.com',
+      photographerUrl:
+          json['photographer_url'] as String? ?? 'https://www.pexels.com',
       photographerId: (json['photographer_id'] as num?)?.toInt() ?? 0,
       avgColor: json['avg_color'] as String? ?? '#202020',
       src: json['src'] is Map<String, dynamic>
@@ -102,6 +102,7 @@ class PexelsPhoto {
   final String avgColor;
   final PexelsPhotoSrc src;
   final String alt;
+
   /// Seçimin hangi sorgudan geldiği; üretim logunda gerçek eşleşmeyi
   /// inceleyebilmek için yanıt nesnesiyle taşınır.
   final String? searchTerm;
@@ -124,8 +125,7 @@ class PexelsPhoto {
   String get sourceId => 'pexels-$id';
 
   /// Fotoğrafın gerçek en/boy oranı.
-  double get aspectRatio =>
-      width > 0 && height > 0 ? width / height : 16 / 9;
+  double get aspectRatio => width > 0 && height > 0 ? width / height : 16 / 9;
 
   /// Sahnede ve önizlemede kullanılacak en uygun yüksek çözünürlüklü URL.
   String get bestDisplayUrl {
@@ -184,7 +184,8 @@ class PexelsSearchResult {
       photos: List<PexelsPhoto>.unmodifiable(photosList),
       page: (json['page'] as num?)?.toInt() ?? 1,
       perPage: (json['per_page'] as num?)?.toInt() ?? 15,
-      totalResults: (json['total_results'] as num?)?.toInt() ?? photosList.length,
+      totalResults:
+          (json['total_results'] as num?)?.toInt() ?? photosList.length,
       nextPage: json['next_page'] as String?,
     );
   }
@@ -452,6 +453,20 @@ class PexelsService {
     void addWhen(bool condition, String alias) {
       if (condition && !aliases.contains(alias)) aliases.add(alias);
     }
+
+    // Translate Turkish lunar headings into object-bearing English queries.
+    // Searching for "Yeni" alone can otherwise return Istanbul's Yeni Mosque.
+    addWhen(normalized.contains('yeni ay'), 'new moon night sky');
+    addWhen(normalized.contains('dolunay'), 'full moon night sky');
+    addWhen(normalized.contains('ilk dordun'), 'first quarter moon');
+    addWhen(normalized.contains('son dordun'), 'last quarter moon');
+    addWhen(normalized.contains('ayin evre') || normalized.contains('ay evre'),
+        'moon phases');
+    addWhen(
+        normalized.contains(' ay ') ||
+            normalized.startsWith('ay ') ||
+            normalized.endsWith(' ay'),
+        'moon night sky');
     addWhen(normalized.contains('sogutucu akiskan'), 'refrigerant');
     addWhen(normalized.contains('sogutma dongu'), 'refrigeration cycle');
     addWhen(normalized.contains('buharlasma'), 'evaporation cooling');
@@ -512,7 +527,8 @@ class PexelsService {
     List<String> mustAvoid = const <String>[],
   }) {
     final searchable = _cleanKeyword('${photo.alt} ${photo.url}').toLowerCase();
-    final tokens = searchable.split(RegExp(r'\s+')).where((t) => t.length >= 3).toSet();
+    final tokens =
+        searchable.split(RegExp(r'\s+')).where((t) => t.length >= 3).toSet();
     final subjectTerms = <String>[
       if (subject != null) ..._signalTokens(subject),
     ].toSet();
@@ -549,7 +565,12 @@ class PexelsService {
     const stopWords = <String>{
       've', 'veya', 'ile', 'için', 'bir', 'bu', 'şu', 'giriş', 'sonuç',
       'özet', 'hakkında', 'nedir', 'nasıl', 'neden', 'genel', 'bakış',
-      'önemli', 'temel', 'slayt', 'sunum', 'the', 'and', 'for', 'about'
+      'önemli', 'temel', 'slayt', 'sunum', 'the', 'and', 'for', 'about',
+      // Adjectives do not prove that the photographed object is relevant.
+      // Thus "new moon" requires evidence for `moon`, not merely `new`.
+      'yeni', 'new', 'full', 'first', 'last',
+      // Scene descriptors are not the object requested by a lunar slide.
+      'gece', 'gökyüzü', 'night', 'sky'
     };
     return stopWords.contains(lower);
   }

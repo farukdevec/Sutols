@@ -15,22 +15,37 @@ class PresentationVisualPlan {
     required bool hasConfident3dModel,
   }) {
     final kind = _normalize(visualKind);
-    // Bir diyagram isteği gerçek bir 3B nesneyle karşılanamıyorsa, boş
-    // bırakmak yerine konuya doğrulanmış bir fotoğraf yerleştir. Diyagramın
-    // metin düzeni korunur; fotoğraf yalnızca anlatısal görsel ankordur.
-    // `none` da üreticinin görsel öneremediği eski yanıtlar için aynı güvenli
-    // fallback'i kullanır.
-    if (!hasConfident3dModel) return true;
+    // Relationship visuals should retain their native diagram/component
+    // layout. A loosely related stock photo is not a professional substitute
+    // for a process, comparison, chart, or table.
+    if (kind == 'process_diagram' ||
+        kind == 'particle_diagram' ||
+        kind == 'comparison' ||
+        kind == 'chart' ||
+        kind == 'table') {
+      return false;
+    }
+    // Only an explicit image-oriented plan may use a stock-photo fallback.
+    // Unknown and legacy kinds stay visual-free instead of accepting a weak
+    // keyword hit merely to fill space.
+    if (!hasConfident3dModel) {
+      return kind == 'photo' || kind == 'illustration' || kind == 'image_focus';
+    }
     // 3B istendiğinde önce katalogdaki güçlü aday kullanılır. Katalogda
     // yeterli kanıt yoksa yanlış bir 3B nesne yerine fotoğraf aramaya izin ver.
     if (kind == 'object_3d') return false;
     if (kind == 'photo' || kind == 'illustration' || kind == 'image_focus') {
       return true;
     }
-    // Bilinmeyen/gelecek şema türlerinde fotoğraf adaylığını koru; katalog
-    // modeli kullanılsa bile son karar aşamasında tek görsel seçilir.
-    return true;
+    // Unknown/future schema kinds must opt in before stock imagery is used.
+    return false;
   }
+
+  /// A catalogue model is rendered only when the generated visual brief
+  /// explicitly requests a concrete 3D object. Diagram and text plans keep
+  /// their native renderer even when a loose keyword matches the catalogue.
+  static bool allows3dModel(String? visualKind) =>
+      _normalize(visualKind) == 'object_3d';
 
   /// Fotoğraf isteği bütçesi: slaytların yaklaşık üçte biri. Böylece sunum
   /// görsel olarak nefes alır; her sayfa stok fotoğrafla dolmaz.

@@ -311,10 +311,20 @@ class ModelMatchingService {
     // generic tag.
     'etik', 'etigin', 'ahlak', 'ahlaki', 'ilke', 'ilkeler', 'fayda',
     'faydalar', 'riski', 'riskin', 'risk', 'riskler',
+    // Tide is context for a tidal turbine, not proof that the turbine itself
+    // is the slide subject. A real turbine slide also matches `turbin`.
+    'gelgit', 'gelgitler', 'tidal',
   };
 
   static bool _hasConcreteObjectEvidence(ModelMatch match) =>
-      match.matchedTerms.any((term) => !_contextOnlyMatchTerms.contains(term));
+      match.matchedTerms.any((term) => !_isContextOnlyMatchTerm(term));
+
+  static bool _isContextOnlyMatchTerm(String term) =>
+      _contextOnlyMatchTerms.any(
+        (contextTerm) =>
+            PresentationKeywordCatalog.wordsMatch(term, contextTerm) ||
+            PresentationKeywordCatalog.wordsMatch(contextTerm, term),
+      );
 
   static ModelMatch? bestStrongMatchPreferUnused(
     List<ModelMatch> matches,

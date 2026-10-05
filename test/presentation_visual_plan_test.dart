@@ -3,28 +3,35 @@ import 'package:sutol/services/presentation_visual_plan.dart';
 
 void main() {
   group('PresentationVisualPlan', () {
-    test('slides without a reliable 3D model reserve a visual fallback', () {
+    test('diagrammatic plans do not fall back to stock photos', () {
       expect(
         PresentationVisualPlan.isPhotoCandidate(
           visualKind: 'chart',
           hasConfident3dModel: false,
         ),
-        isTrue,
+        isFalse,
       );
       expect(
         PresentationVisualPlan.isPhotoCandidate(
-          visualKind: 'none',
+          visualKind: 'comparison',
           hasConfident3dModel: false,
         ),
-        isTrue,
+        isFalse,
       );
     });
 
-    test('unknown visual plans still reserve photo candidates despite a weak 3D match', () {
+    test('only explicit image plans reserve a photo fallback', () {
       expect(
         PresentationVisualPlan.isPhotoCandidate(
           visualKind: 'concept',
-          hasConfident3dModel: true,
+          hasConfident3dModel: false,
+        ),
+        isFalse,
+      );
+      expect(
+        PresentationVisualPlan.isPhotoCandidate(
+          visualKind: 'illustration',
+          hasConfident3dModel: false,
         ),
         isTrue,
       );
@@ -43,6 +50,24 @@ void main() {
     test('explicit photo plans take priority over 3D', () {
       expect(PresentationVisualPlan.prefersPhotoOver3d('photo'), isTrue);
       expect(PresentationVisualPlan.prefersPhotoOver3d('object_3d'), isFalse);
+    });
+
+    test('3D models require an explicit object_3d plan', () {
+      expect(PresentationVisualPlan.allows3dModel('object_3d'), isTrue);
+      for (final kind in [
+        'process_diagram',
+        'comparison',
+        'chart',
+        'table',
+        'illustration',
+        'none',
+      ]) {
+        expect(
+          PresentationVisualPlan.allows3dModel(kind),
+          isFalse,
+          reason: kind,
+        );
+      }
     });
   });
 }

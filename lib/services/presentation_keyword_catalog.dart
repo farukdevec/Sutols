@@ -59,6 +59,10 @@ class PresentationKeywordCatalog {
     'cesit', 'cesidi', 'cesitleri', 'tur', 'turu', 'turleri', 'turlerini',
     'turleriyle',
     'ornek', 'ornegi', 'ornekleri', 'ozellik', 'ozelligi', 'ozellikleri',
+    // Akış ve bölüm sözcükleri gerçek bir 3B nesne değildir.
+    'nedir', 'tanim', 'tanimi', 'sonuc', 'sonucu', 'sonuclar',
+    'soru', 'sorular', 'cevap', 'cevaplar', 'kanit', 'kanitlar',
+    'yasa', 'yasasi', 'kanun', 'kanunu', 'teori', 'teorisi',
     // Tek başına bir 3B varlığı tanımlamayan fiziksel/arayüzsel kelimeler.
     // Bunlar eşleştirmede katalizör yüzeyi, Gantt şeması veya telefon gibi
     // alakasız katalog öğelerini tetikleyebiliyordu.
@@ -97,8 +101,13 @@ class PresentationKeywordCatalog {
 
   /// [normalizedWord] eşleştirme için kullanılamayacak kadar jenerik mi?
   /// (2 karakter ve altı kelimeler de gürültü kabul edilir.)
+  /// Short Turkish words can still name concrete objects. In particular,
+  /// dropping "Ay" made Moon slides match secondary Earth-related context.
+  static const Set<String> _significantShortWords = <String>{'ay'};
+
   static bool isGenericWord(String normalizedWord) {
-    return normalizedWord.length <= 2 ||
+    return (normalizedWord.length <= 2 &&
+            !_significantShortWords.contains(normalizedWord)) ||
         genericStopwords.contains(normalizedWord);
   }
 
@@ -133,6 +142,17 @@ class PresentationKeywordCatalog {
 
   static bool wordsMatch(String inputWord, String keywordWord) {
     if (inputWord == keywordWord) {
+      return true;
+    }
+    // `evrenin` (the universe's) is not an inflection of `evre` (phase).
+    if (_isKnownLexicalCollision(inputWord, keywordWord)) {
+      return false;
+    }
+    // Preserve inflections of the explicitly whitelisted short objects.
+    // Example: `ay` must match `ayın`, `ayı`, and `aya` without reopening
+    // fuzzy matching for arbitrary two-character words.
+    if (_isSignificantShortWordInflection(inputWord, keywordWord) ||
+        _isSignificantShortWordInflection(keywordWord, inputWord)) {
       return true;
     }
     if (inputWord.length < 4 || keywordWord.length < 4) {
@@ -174,6 +194,26 @@ class PresentationKeywordCatalog {
     final threshold =
         inputWord.length <= 5 || keywordWord.length <= 5 ? 0.80 : 0.76;
     return similarity >= threshold;
+  }
+
+  static bool _isKnownLexicalCollision(String a, String b) {
+    final shorter = a.length <= b.length ? a : b;
+    final longer = a.length > b.length ? a : b;
+    return shorter == 'evre' && longer.startsWith('evren');
+  }
+
+  static bool _isSignificantShortWordInflection(
+    String possibleStem,
+    String possibleInflection,
+  ) {
+    if (!_significantShortWords.contains(possibleStem) ||
+        !possibleInflection.startsWith(possibleStem) ||
+        possibleInflection.length == possibleStem.length) {
+      return false;
+    }
+    return _isLikelyInflectionSuffix(
+      possibleInflection.substring(possibleStem.length),
+    );
   }
 
   /// Turkish (and a small set of English) inflection endings that may safely

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -73,6 +74,41 @@ class PresentationService {
       return false;
     }
     return slideCount <= freeMaxSlideCount || hasPlusSlideAccess(tier);
+  }
+
+  /// Produces one copy-friendly JSON record for the final text of a slide.
+  /// This is intentionally provider-independent and runs after any revision,
+  /// so console reports show exactly what is sent to the deck builder.
+  @visibleForTesting
+  static String formatSlideTextLog(GeminiSlide slide, int slideNumber) {
+    final wordCount = slide.content
+        .split(RegExp(r'\s+'))
+        .where((word) => word.isNotEmpty)
+        .length;
+    return '[SUTOL AI][SLIDE_TEXT] ${jsonEncode(<String, dynamic>{
+          'slide': slideNumber,
+          'title': slide.title,
+          if (slide.subtitle != null) 'subtitle': slide.subtitle,
+          'type': slide.type,
+          if (slide.purpose != null) 'purpose': slide.purpose,
+          if (slide.keyMessage != null) 'key_message': slide.keyMessage,
+          'content': slide.content,
+          'word_count': wordCount,
+          'keywords': slide.keywords,
+          if (slide.sections != null) 'sections': slide.sections,
+          if (slide.visual != null) 'visual': slide.visual,
+          if (slide.sources.isNotEmpty) 'sources': slide.sources,
+        })}';
+  }
+
+  static void _logFinalSlideTexts(GeminiPresentation presentation) {
+    debugPrint(
+      '[SUTOL AI][SLIDES] Final revised content: '
+      '${presentation.slides.length} slide(s)',
+    );
+    for (var index = 0; index < presentation.slides.length; index += 1) {
+      debugPrint(formatSlideTextLog(presentation.slides[index], index + 1));
+    }
   }
 
   final _nvidia = NvidiaPresentationService();
@@ -226,6 +262,8 @@ class PresentationService {
         }
       }
 
+      _logFinalSlideTexts(resultPresentation);
+
       // 2. Her slayt için model eşleştir ve layout belirle
       onProgress?.call(
         tr('Görseller ve 3B Modeller Eşleştiriliyor...',
@@ -252,21 +290,25 @@ class PresentationService {
 
       final matchesBySlide =
           await _matcher.matchModelsForSlides(searchKeywordsBySlide);
-      // 3B kararını LLM'in `object_3d` alanına bağlamıyoruz: katalogdaki
-      // kanıtı yeterli aday her zaman önceliklidir. Kanıt yoksa fotoğraf
-      // eşleşmesi devreye girer; zayıf/tesadüfi 3B adaylar asla seçilmez.
-      final hasStrong3dBySlide = matchesBySlide
-          .map((matches) => matches.any(ModelMatchingService.isStrong3dMatch))
+      // Katalogdaki 3B model yalnızca plan açıkça `object_3d` istediğinde
+      // kullanılabilir. Diyagram, grafik ve karşılaştırma slaytları kendi
+      // veri odaklı çizicilerinde kalır; sözcük çakışmaları 3B'ye çevrilmez.
+      final visualKindsBySlide = resultPresentation.slides
+          .map((slide) => (slide.visual?['kind']?.toString() ?? slide.type)
+              .trim()
+              .toLowerCase()
+              .replaceAll('-', '_'))
           .toList(growable: false);
+      final hasStrong3dBySlide = <bool>[
+        for (var index = 0; index < matchesBySlide.length; index += 1)
+          PresentationVisualPlan.allows3dModel(visualKindsBySlide[index]) &&
+              matchesBySlide[index].any(ModelMatchingService.isStrong3dMatch),
+      ];
       final photoCandidates = <int>[];
       for (var index = 0;
           index < resultPresentation.slides.length;
           index += 1) {
-        final slide = resultPresentation.slides[index];
-        final visualKind = (slide.visual?['kind']?.toString() ?? slide.type)
-            .trim()
-            .toLowerCase()
-            .replaceAll('-', '_');
+        final visualKind = visualKindsBySlide[index];
         if (PresentationVisualPlan.isPhotoCandidate(
           visualKind: visualKind,
           hasConfident3dModel: hasStrong3dBySlide[index],
@@ -320,20 +362,19 @@ class PresentationService {
         final slide = resultPresentation.slides[slideIndex];
         final matches = matchesBySlide[slideIndex];
         final matchedPhoto = resolvedPhotos[slideIndex];
-        final visualKind = (slide.visual?['kind']?.toString() ?? slide.type)
-            .trim()
-            .toLowerCase()
-            .replaceAll('-', '_');
-        // Açık fotoğraf/illüstrasyon planı doğrulanmış bir fotoğraf bulduysa
-        // onu kullan. Fotoğraf bulunamazsa güvenilir 3B eşleşme yedek olarak
-        // kalır; bu sayede slayt görselsizleşmez.
-        final selectedModel = matchedPhoto != null &&
-                PresentationVisualPlan.prefersPhotoOver3d(visualKind)
-            ? null
-            : ModelMatchingService.bestStrongMatchPreferUnused(
-                matches,
-                usedModelIds,
-              );
+        final visualKind = visualKindsBySlide[slideIndex];
+        // Yalnızca açık `object_3d` planı katalog modelini kullanabilir.
+        // Fotoğraf/illüstrasyon planları doğrulanmış fotoğrafla, ilişki ve
+        // veri görselleri ise kendi slayt çizicileriyle oluşturulur.
+        final selectedModel =
+            !PresentationVisualPlan.allows3dModel(visualKind) ||
+                    (matchedPhoto != null &&
+                        PresentationVisualPlan.prefersPhotoOver3d(visualKind))
+                ? null
+                : ModelMatchingService.bestStrongMatchPreferUnused(
+                    matches,
+                    usedModelIds,
+                  );
 
         final selectedModels = selectedModel == null
             ? const <ModelMatch>[]

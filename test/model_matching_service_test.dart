@@ -211,4 +211,116 @@ void main() {
     expect(matches, hasLength(1));
     expect(ModelMatchingService.isStrong3dMatch(matches.single), isTrue);
   });
+
+  test('Ay remains significant and outranks secondary Earth context', () {
+    const moon = ModelCatalogEntry(
+      id: 'ay',
+      name: 'Ay',
+      modelUrl: 'moon.glb',
+      thumbnailUrl: '',
+      tags: <String>['ay', 'uydu', 'uzay', 'astronomi'],
+      tagsEn: <String>['moon', 'satellite', 'space', 'astronomy'],
+      category: 'uzay',
+      tier: 'free',
+    );
+    const seasons = ModelCatalogEntry(
+      id: 'dunyanin-mevsimsel-hareketi',
+      name: 'Dünyanın Mevsimsel Hareketi',
+      modelUrl: 'seasons.glb',
+      thumbnailUrl: '',
+      tags: <String>['dünya', 'mevsim', 'güneş'],
+      tagsEn: <String>['world', 'season', 'sun'],
+      category: 'coğrafya',
+      tier: 'free',
+    );
+
+    final matches = ModelMatchingService.rankCatalogModels(
+      models: const <ModelCatalogEntry>[seasons, moon],
+      keywords: const <String>[
+        'Ay Nedir?',
+        'Dünya’nın doğal uydusu',
+        'Moon orbiting Earth',
+      ],
+    );
+
+    expect(matches.first.id, 'ay');
+    expect(ModelMatchingService.isStrong3dMatch(matches.first), isTrue);
+
+    final inflectedMatches = ModelMatchingService.rankCatalogModels(
+      models: const <ModelCatalogEntry>[seasons, moon],
+      keywords: const <String>['Ayın yapısı', 'doğal uydu'],
+    );
+    expect(inflectedMatches.first.id, 'ay');
+  });
+
+  test('tide context alone does not select a tidal turbine', () {
+    const turbine = ModelCatalogEntry(
+      id: 'gelgit-turbini',
+      name: 'Gelgit Türbini',
+      modelUrl: 'tidal.glb',
+      thumbnailUrl: '',
+      tags: <String>['gelgit', 'türbin', 'deniz'],
+      tagsEn: <String>['tidal', 'turbine', 'sea'],
+      category: 'enerji',
+      tier: 'free',
+    );
+    final matches = ModelMatchingService.rankCatalogModels(
+      models: const <ModelCatalogEntry>[turbine],
+      keywords: const <String>['Gelgitlerin Önemi', 'gelgitler'],
+    );
+
+    expect(matches, isNotEmpty);
+    expect(ModelMatchingService.isStrong3dMatch(matches.single), isFalse);
+  });
+
+  test('Big Bang flow words do not select river, law, or phase models', () {
+    const models = <ModelCatalogEntry>[
+      ModelCatalogEntry(
+        id: 'nehir',
+        name: 'Nehir Kıvrımı Maketi',
+        modelUrl: 'river.glb',
+        thumbnailUrl: '',
+        tags: <String>['nehir', 'nedir'],
+        category: 'coğrafya',
+        tier: 'free',
+      ),
+      ModelCatalogEntry(
+        id: 'lenz',
+        name: 'Lenz Yasası Bakır Borusu',
+        modelUrl: 'lenz.glb',
+        thumbnailUrl: '',
+        tags: <String>['lenz', 'yasası', 'bakır'],
+        category: 'fizik',
+        tier: 'free',
+      ),
+      ModelCatalogEntry(
+        id: 'ay-evreleri',
+        name: 'Ayın Evreleri',
+        modelUrl: 'phases.glb',
+        thumbnailUrl: '',
+        tags: <String>['ay', 'evre', 'uzay'],
+        category: 'uzay',
+        tier: 'free',
+      ),
+    ];
+
+    final matches = ModelMatchingService.rankCatalogModels(
+      models: models,
+      keywords: const <String>[
+        'Big Bang Nedir?',
+        'Evrenin Genişlemesi',
+        'Hubble yasası',
+        'Sonuç',
+        'Soru-Cevap',
+      ],
+    );
+
+    expect(
+      matches,
+      isEmpty,
+      reason: matches
+          .map((match) => '${match.name}: ${match.matchedTerms}')
+          .join(' | '),
+    );
+  });
 }
