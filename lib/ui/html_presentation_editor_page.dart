@@ -6547,9 +6547,12 @@ class _Html3DModelControlsState extends State<_Html3DModelControls> {
       'diger': tr('Diğer', 'Other'),
     };
     final categories = <(String, String)>[
-      ('', tr('Tümü', 'All')),
+      ('', '${tr('Tümü', 'All')} (${_searchIndex.totalCount})'),
       for (final category in _searchIndex.categories)
-        (category, categoryLabels[category] ?? category),
+        (
+          category,
+          '${categoryLabels[category] ?? category} (${_searchIndex.categoryCounts[category]})'
+        ),
     ];
 
     final isExpandedMode = widget.expandResults || widget.isExpanded;

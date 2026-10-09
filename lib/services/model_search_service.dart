@@ -13,6 +13,27 @@ class ModelSearchIndex {
             .toList(growable: false);
 
   final List<_SearchEntry> _entries;
+  late final Map<String, int> categoryCounts = Map.unmodifiable(<String, int>{
+    for (final category in categories)
+      category:
+          _entries.where((entry) => entry.categories.contains(category)).length,
+  });
+  int get totalCount => _entries.length;
+  static const _queryFillers = {
+    'model',
+    'modeli',
+    'modelleri',
+    'models',
+    '3d',
+    '3b',
+    've',
+    'and',
+    'the',
+    'of',
+    'bir',
+    'a',
+    'an'
+  };
   List<String> get categories {
     final values = _entries
         .expand((entry) => entry.categories)
@@ -31,7 +52,9 @@ class ModelSearchIndex {
     final selectedCategory = ModelCatalogTaxonomy.canonicalCategory(category);
     final key = '$selectedCategory\u0000$normalized';
     if (_lastKey == key) return _lastResults;
-    final terms = PresentationKeywordCatalog.words(normalized).toSet();
+    final terms = PresentationKeywordCatalog.words(normalized)
+        .where((term) => !_queryFillers.contains(term))
+        .toSet();
     final scored = <(_SearchEntry, int)>[];
     for (final entry in _entries) {
       if (selectedCategory.isNotEmpty &&
@@ -44,6 +67,11 @@ class ModelSearchIndex {
           if (candidate == term)
             best = 40;
           else if (_matches(term, candidate) && best < 25) best = 25;
+        }
+        for (final candidate in entry.identityWords) {
+          if ((candidate == term ||
+                  (term.length >= 3 && candidate.startsWith(term))) &&
+              best < 12) best = 12;
         }
         for (final candidate in entry.tagWords) {
           if (_matches(term, candidate) && best < 20) best = 20;
@@ -120,17 +148,28 @@ class ModelSearchIndex {
 }
 
 class _SearchEntry {
-  _SearchEntry(this.model)
-      : name = PresentationKeywordCatalog.normalize(model.name),
-        nameWords = _words([model.name]),
-        tagWords = _words([...model.tags, ...model.tagsEn]),
-        categoryWords =
-            _words(ModelCatalogTaxonomy.discoveryCategories(model).toList()),
-        categories = ModelCatalogTaxonomy.discoveryCategories(model);
+  factory _SearchEntry(ModelCatalogEntry model) {
+    final categories = ModelCatalogTaxonomy.discoveryCategories(model);
+    return _SearchEntry._(
+      model,
+      PresentationKeywordCatalog.normalize(model.name),
+      _words([model.name]),
+      _words([model.id]),
+      _words([...model.tags, ...model.tagsEn]),
+      _words([
+        ...categories,
+        for (final alias in ModelCatalogTaxonomy.categoryAliases.entries)
+          if (categories.contains(alias.value)) alias.key,
+      ]),
+      categories,
+    );
+  }
+  const _SearchEntry._(this.model, this.name, this.nameWords,
+      this.identityWords, this.tagWords, this.categoryWords, this.categories);
   final ModelCatalogEntry model;
   final String name;
   final Set<String> categories;
-  final Set<String> nameWords, tagWords, categoryWords;
+  final Set<String> nameWords, identityWords, tagWords, categoryWords;
   static Set<String> _words(List<String> values) => values
       .map(PresentationKeywordCatalog.normalize)
       .expand(PresentationKeywordCatalog.words)
