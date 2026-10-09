@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/presentation_3d_model_catalog.dart';
 import 'firestore_rest_helper.dart';
+import 'model_catalog_taxonomy.dart';
 
 /// Firestore'daki 3B model kataloğunun oturum-içi kaynağı.
 ///
@@ -237,10 +238,11 @@ class ModelRepository {
         ),
       );
     }
-    final models = byId.values.toList(growable: false)
-      ..sort(
-        (a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()),
-      );
+    final models =
+        byId.values.map(ModelCatalogTaxonomy.enrich).toList(growable: false)
+          ..sort(
+            (a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()),
+          );
     return List<ModelCatalogEntry>.unmodifiable(models);
   }
 

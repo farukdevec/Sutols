@@ -1,4 +1,5 @@
 import 'model_repository.dart';
+import 'model_catalog_taxonomy.dart';
 import 'presentation_keyword_catalog.dart';
 
 /// User-driven discovery is intentionally separate from automatic placement:
@@ -6,12 +7,15 @@ import 'presentation_keyword_catalog.dart';
 /// for adding a 3D object to a generated presentation.
 class ModelSearchIndex {
   ModelSearchIndex(List<ModelCatalogEntry> models)
-      : _entries = models.map(_SearchEntry.new).toList(growable: false);
+      : _entries = models
+            .map(ModelCatalogTaxonomy.enrich)
+            .map(_SearchEntry.new)
+            .toList(growable: false);
 
   final List<_SearchEntry> _entries;
   List<String> get categories {
     final values = _entries
-        .map((entry) => entry.model.category.trim())
+        .expand((entry) => entry.categories)
         .where((value) => value.isNotEmpty)
         .toSet()
         .toList()
@@ -24,12 +28,14 @@ class ModelSearchIndex {
 
   List<ModelCatalogEntry> search(String query, {String category = ''}) {
     final normalized = PresentationKeywordCatalog.normalize(query);
-    final key = '$category\u0000$normalized';
+    final selectedCategory = ModelCatalogTaxonomy.canonicalCategory(category);
+    final key = '$selectedCategory\u0000$normalized';
     if (_lastKey == key) return _lastResults;
     final terms = PresentationKeywordCatalog.words(normalized).toSet();
     final scored = <(_SearchEntry, int)>[];
     for (final entry in _entries) {
-      if (category.isNotEmpty && entry.model.category != category) continue;
+      if (selectedCategory.isNotEmpty &&
+          !entry.categories.contains(selectedCategory)) continue;
       var score = 0;
       var accepts = true;
       for (final term in terms) {
@@ -118,9 +124,12 @@ class _SearchEntry {
       : name = PresentationKeywordCatalog.normalize(model.name),
         nameWords = _words([model.name]),
         tagWords = _words([...model.tags, ...model.tagsEn]),
-        categoryWords = _words([model.category]);
+        categoryWords =
+            _words(ModelCatalogTaxonomy.discoveryCategories(model).toList()),
+        categories = ModelCatalogTaxonomy.discoveryCategories(model);
   final ModelCatalogEntry model;
   final String name;
+  final Set<String> categories;
   final Set<String> nameWords, tagWords, categoryWords;
   static Set<String> _words(List<String> values) => values
       .map(PresentationKeywordCatalog.normalize)
