@@ -58,3 +58,10 @@ Mevcut test hesabıyla kullanıcı girişi istendi; bu rapor hazırlanırken gir
 Yeni 100 özgün şematik modelin varlıkları yayınlandı; insan görsel/öğretimsel kabulü hâlâ açık. Gerçek Android/iOS, GPU güç/bellek ölçümü, bulut kataloğunun toplam sayısı, insan etiket değerlendirmesi ve pilot kullanıcı kabulü tamamlanmadı. A0–A10 planının bütünü tamamlandı sayılmaz.
 
 Ekran kanıtları çalışma alanı outputs klasöründe: SUTOLS_CANLI_ANA_SAYFA.png, SUTOLS_CANLI_GIRIS_YONLENDIRMESI.png, SUTOLS_CANLI_SSS.png. Ayrıntılı komut kanıtları work klasöründedir. Bu rapor bulguları kaydeder; belirtilen hatalar bu yayın sonrasında düzeltilmiş değildir.
+
+
+## Sonraki düzeltme turu
+
+Bu ilk incelemenin bulguları DUZELTME_RAPORU_2026-10-09.md dosyasında
+çözümleri ve son test sonuçlarıyla izlenir. Son genel ve canlı AI CI turları
+başarılı; yayın sonrası misafir arayüz kontrolleri geçti. Hesapla manuel kabul açık.

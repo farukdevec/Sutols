@@ -753,3 +753,16 @@ Bu ölçüm yalnızca DOM viewer yaşam döngüsüdür; driver/SDK cache/texture
 belleği, watt/FPS veya 50 gerçek bulut projesi geçişini ölçmez. Aşamaların
 cihaz, insan ve üretim kabul kapıları kapanmış sayılmaz. Production kaynak
 web-final-34 ile eşleşir; fixture üretim rotası değildir, yayın yapılmadı.
+
+
+## 9 Ekim 2026 — Canlı inceleme bulgularının düzeltmeleri
+
+Boş konu uyarısı/odak, geri dönüşte sekme başlığı, şifre düğmesi etiketi,
+TR/EN yardım metni ve katalog açıklaması düzeltildi. AI sayı kabulü,
+korunan sunuma eksik bölüm tamamlama ve sınırlı revizyon/yeniden üretim eklendi.
+Native TTF fontlar ve incelenmiş Linux/macOS görsel referanslarıyla CI düzeltildi.
+Yerel ve Linux CI: 579 başarılı / 2 atlanan test; analiz temiz. Ayrı canlı
+AI turu: 3 başarılı test (10, 7, 10 slayt). Hosting-only yayın ve canlı misafir
+UI kontrolleri geçti. Ayrıntı: tool/development_baseline/DUZELTME_RAPORU_2026-10-09.md.
+Hesapla kayıt/yeniden açma/indirme ve insan model kabulü hâlâ açık;
+A0–A10 bütünü bu düzeltme ile tamamlandı sayılmaz.
