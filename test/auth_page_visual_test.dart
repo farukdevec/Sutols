@@ -28,7 +28,7 @@ void main() {
 
     await expectLater(
       find.byType(AuthPage),
-      matchesGoldenFile('goldens/auth_page_desktop.png'),
+      matchesGoldenFile(goldenPath('auth_page_desktop.png')),
     );
   });
 }

@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -16,3 +17,9 @@ Future<void> loadGoldenFonts() async {
     await loader.load();
   }
 }
+
+// CoreText and FreeType use different glyph metrics/rasterization. Keep strict,
+// visually reviewed references for each tested platform rather than tolerating
+// mismatches or accepting unreadable Ahem fallback screenshots.
+String goldenPath(String file) =>
+    'goldens/${Platform.isLinux ? 'linux/' : ''}$file';

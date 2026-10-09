@@ -24,7 +24,7 @@ void main() {
 
     await expectLater(
       find.byType(HtmlPresentationEditorPage),
-      matchesGoldenFile('goldens/editor_800.png'),
+      matchesGoldenFile(goldenPath('editor_800.png')),
     );
   });
 
@@ -45,7 +45,7 @@ void main() {
 
     await expectLater(
       find.byType(HtmlPresentationEditorPage),
-      matchesGoldenFile('goldens/editor_390.png'),
+      matchesGoldenFile(goldenPath('editor_390.png')),
     );
   });
 }
