@@ -24,7 +24,10 @@ void main() {
 
       expect(prompt, contains('Slayt 2 (redundancy): Tekrarlayan tanım'));
       expect(prompt, contains('Slayt 6 (audience_fit): Ağır terminoloji'));
-      expect(prompt, contains('YALNIZCA sorun tespit edilen slaytları düzelt'));
+      expect(prompt, contains('değişmeyenler dahil BÜTÜN slaytları döndür'));
+      expect(prompt, contains('TAM 7 nesne bulunmalı'));
+      expect(prompt, contains('Slayt adedi: 7'));
+      expect(prompt, isNot(contains('İSTENEN SLAYT SAYISI:')));
     });
 
     test('revisePresentation calls proxy and returns updated NvidiaPresentation', () async {
@@ -61,6 +64,9 @@ void main() {
 
       final judge = PresentationJudgeService(client: mockClient);
       final original = NvidiaPresentation(
+        title: 'Water states',
+        targetAudience: 'middle_school',
+        learningObjective: 'Explain particle motion',
         slides: const [
           NvidiaSlide(title: 'Maddenin Halleri', content: 'Eski metin', keywords: ['su']),
           NvidiaSlide(title: 'Katı Hâl', content: 'Sorunlu metin', keywords: ['buz']),
@@ -90,6 +96,9 @@ void main() {
       );
 
       expect(revised.slides.length, 2);
+      expect(revised.title, original.title);
+      expect(revised.targetAudience, original.targetAudience);
+      expect(revised.learningObjective, original.learningObjective);
       expect(revised.slides[1].title, contains('Düzeltildi'));
       expect(revised.slides[1].content, contains('titreşir'));
     });

@@ -26,19 +26,19 @@ flutter:
   fonts:
     - family: Inter Extended
       fonts:
-        - asset: assets/fonts/google_fonts/inter-400-latin-ext.woff2
+        - asset: assets/fonts/native_ui/inter-400-latin-ext.ttf
     - family: Roboto Extended
       fonts:
-        - asset: assets/fonts/google_fonts/roboto-400-latin-ext.woff2
+        - asset: assets/fonts/native_ui/roboto-400-latin-ext.ttf
     - family: Roboto
       fonts:
-        - asset: assets/fonts/google_fonts/roboto-400-latin.woff2
+        - asset: assets/fonts/native_ui/roboto-400-latin.ttf
     - family: Open Sans
       fonts:
         - asset: assets/fonts/google_fonts/open-sans-400-latin.woff2
     - family: Inter
       fonts:
-        - asset: assets/fonts/google_fonts/inter-400-latin.woff2
+        - asset: assets/fonts/native_ui/inter-400-latin.ttf
     - family: Montserrat
       fonts:
         - asset: assets/fonts/google_fonts/montserrat-400-latin.woff2

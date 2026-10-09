@@ -1,0 +1,38 @@
+[
+  {
+    "source": "assets/fonts/google_fonts/inter-400-latin.woff2",
+    "output": "assets/fonts/native_ui/inter-400-latin.ttf",
+    "sourceSha256": "c940764593d0fe5d596be327ca7558855e018039fb78509aa21921fd3644c3e4",
+    "outputSha256": "f361558ac9e082777d4bd3ef217aedee9b34bf4a342d13a67dfc006c42d88271",
+    "bytes": 122568,
+    "codepoints": 230,
+    "license": "assets/fonts/google_fonts/licenses/inter.txt"
+  },
+  {
+    "source": "assets/fonts/google_fonts/inter-400-latin-ext.woff2",
+    "output": "assets/fonts/native_ui/inter-400-latin-ext.ttf",
+    "sourceSha256": "a28eb6d3ccb534ae0c94ca999371df024aab60b08c3c8a5720ee9e32fa0faaa2",
+    "outputSha256": "5b75c61bbded9d370749fae7ecac7b70fe3ddef5c5c8c86cb40d67fb359cb0d8",
+    "bytes": 187988,
+    "codepoints": 733,
+    "license": "assets/fonts/google_fonts/licenses/inter.txt"
+  },
+  {
+    "source": "assets/fonts/google_fonts/roboto-400-latin.woff2",
+    "output": "assets/fonts/native_ui/roboto-400-latin.ttf",
+    "sourceSha256": "0a44e0bb6ba5c8537e8814c148ef7755f1bce12112361231f595ecc584a18d7a",
+    "outputSha256": "df6dd62ee862ff20a82ca1254ce9c48236a28c82e98e3baebb50e8514b7a44bc",
+    "bytes": 69500,
+    "codepoints": 229,
+    "license": "assets/fonts/google_fonts/licenses/roboto.txt"
+  },
+  {
+    "source": "assets/fonts/google_fonts/roboto-400-latin-ext.woff2",
+    "output": "assets/fonts/native_ui/roboto-400-latin-ext.ttf",
+    "sourceSha256": "cdd53dc5576a79f35cf280dfbd9c1cb2a5dd2f0ede30afba9b9ccdc7fe12e7d0",
+    "outputSha256": "fed06b51e6f6bef4825a41ad5ca09c4b755e3294335f29de7cbf6fe412a81f28",
+    "bytes": 48204,
+    "codepoints": 193,
+    "license": "assets/fonts/google_fonts/licenses/roboto.txt"
+  }
+]
