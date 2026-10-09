@@ -216,6 +216,8 @@ class HtmlModelCanvas extends StatelessWidget {
     super.key,
     required this.modelId,
     required this.animationEnabled,
+    this.animationTime = 0,
+    this.animationName,
     required this.autoRotate,
     required this.rotationSpeed,
     required this.zoom,
@@ -240,6 +242,8 @@ class HtmlModelCanvas extends StatelessWidget {
 
   final String modelId;
   final bool animationEnabled;
+  final double animationTime;
+  final String? animationName;
   final bool autoRotate;
   final double rotationSpeed;
   final double zoom;
@@ -261,7 +265,9 @@ class HtmlModelCanvas extends StatelessWidget {
   final ValueChanged<ModelTourSurfacePoint>? onSurfacePositionPicked;
   final VoidCallback? onSurfacePickMissed;
 
-  static ModelViewerCameraPose? cameraPoseFor(String cameraStateKey) => null;
+  static ModelViewerCameraPose? cameraPoseFor(String cameraStateKey,
+          {String? modelId}) =>
+      null;
 
   @override
   Widget build(BuildContext context) => const ColoredBox(

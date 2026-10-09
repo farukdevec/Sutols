@@ -2,6 +2,9 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'services/model_asset_service.dart';
+import 'services/remote_model_sources.dart';
 
 import 'routes.dart';
 import 'services/shared_prefs_service.dart';
@@ -23,6 +26,13 @@ void main() async {
     Firebase.initializeApp(options: DefaultFirebaseOptions.web),
     ThemeController.instance.init(),
   ]);
+  var assetUserScope = FirebaseAuth.instance.currentUser?.uid;
+  FirebaseAuth.instance.authStateChanges().listen((user) {
+    if (user?.uid == assetUserScope) return;
+    assetUserScope = user?.uid;
+    ModelAssetService.clearCache();
+    RemoteModelSources.invalidateAuthorization();
+  });
   // Dil kontrolörünü bloke etmeden başlat - IP tespiti arka planda yapılacak
   LanguageController.instance.init();
   runApp(const SutolApp());

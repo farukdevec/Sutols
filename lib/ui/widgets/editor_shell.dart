@@ -2,9 +2,11 @@ import 'dart:math' as math;
 import 'dart:ui' show BoxHeightStyle, ImageFilter;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/scheduler.dart';
 
 import '../../models/slide_model.dart';
+import '../../models/presentation_scene_state.dart';
 import '../../services/remote_image_sources.dart';
 import '../../services/remote_model_sources.dart';
 import '../../state/language_controller.dart';
@@ -12,6 +14,7 @@ import '../../state/presentation_controller.dart';
 import '../design/design_system.dart';
 import '../design/sutol_widgets.dart';
 import 'html_stage/html_page_stage.dart';
+import 'signed_thumbnail_image.dart';
 import 'text_editing_context_menu.dart';
 
 typedef EditorStageBuilder = Widget Function(
@@ -1793,6 +1796,7 @@ class PresentationPageCanvas extends StatefulWidget {
     this.textOpacity = 1,
     this.showEmptyState = true,
     this.captureModelCameraState = false,
+    this.staticPreview = false,
     this.onSelectTextBlock,
     this.onDragSelectedText,
     this.onInlineTextChanged,
@@ -1832,6 +1836,7 @@ class PresentationPageCanvas extends StatefulWidget {
   /// camera pose. Thumbnails and presentation canvases intentionally leave
   /// this disabled so duplicate model ids cannot replace the editor camera.
   final bool captureModelCameraState;
+  final bool staticPreview;
   final ValueChanged<String>? onSelectTextBlock;
   final void Function(Offset delta, Size canvasSize)? onDragSelectedText;
   final ValueChanged<String>? onInlineTextChanged;
@@ -1873,19 +1878,22 @@ class PresentationPageThumbnailCanvas extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return FittedBox(
-      fit: BoxFit.fill,
-      clipBehavior: Clip.hardEdge,
-      child: SizedBox(
-        width: 1000,
-        height: 562.5,
-        child: PresentationPageCanvas(
-          page: page,
-          showHint: false,
-          showSelectionBorder: false,
-        ),
-      ),
-    );
+    return TickerMode(
+        enabled: false,
+        child: FittedBox(
+          fit: BoxFit.fill,
+          clipBehavior: Clip.hardEdge,
+          child: SizedBox(
+            width: 1000,
+            height: 562.5,
+            child: PresentationPageCanvas(
+              page: page,
+              showHint: false,
+              showSelectionBorder: false,
+              staticPreview: true,
+            ),
+          ),
+        ));
   }
 }
 
@@ -2245,6 +2253,7 @@ class _PresentationPageCanvasState extends State<PresentationPageCanvas> {
               ),
             for (final block in componentBlocks)
               _PageComponentBlock(
+                staticPreview: widget.staticPreview,
                 block: block,
                 cameraStateKey: widget.captureModelCameraState
                     ? '${widget.page.id}:${block.id}'
@@ -2695,12 +2704,16 @@ class _PageTextBlock extends StatelessWidget {
                             ? Clip.hardEdge
                             : Clip.none,
                     decoration: BoxDecoration(
-                      color: showSelectionBorder && isSelected
-                          ? context.primary.withValues(
-                              alpha: isEditing ? 0.04 : 0.08,
-                            )
-                          : Colors.transparent,
-                      borderRadius: BorderRadius.circular(22),
+                      color: block.surfaceColor ??
+                          (showSelectionBorder && isSelected
+                              ? context.primary.withValues(
+                                  alpha: isEditing ? 0.04 : 0.08,
+                                )
+                              : Colors.transparent),
+                      borderRadius: BorderRadius.circular(
+                          block.surfaceColor != null
+                              ? canvasSize.width * .012
+                              : 22),
                       border: Border.all(
                         color: showSelectionBorder
                             ? (isSelected
@@ -2948,6 +2961,7 @@ Color? _presentationTextColor(String? hex) {
 
 class _PageComponentBlock extends StatelessWidget {
   const _PageComponentBlock({
+    this.staticPreview = false,
     required this.block,
     required this.cameraStateKey,
     required this.canvasSize,
@@ -2969,6 +2983,7 @@ class _PageComponentBlock extends StatelessWidget {
     this.onResizeUpdate,
   });
 
+  final bool staticPreview;
   final PresentationComponentBlock block;
   final String? cameraStateKey;
   final Size canvasSize;
@@ -3095,57 +3110,65 @@ class _PageComponentBlock extends StatelessWidget {
                             )
                           : isImage
                               ? const SizedBox.expand()
-                              : !_isRenderableCanvasModelBlock(block)
-                                  ? CustomPaint(
-                                      painter: ComponentBlockPreviewPainter(
-                                          kind: block.kind),
-                                    )
-                                  : HtmlModelCanvas(
-                                      key: ValueKey<String>(
-                                        'canvas-model-${block.id}-${block.modelAssetId}',
-                                      ),
-                                      modelId: block.modelAssetId!,
-                                      animationEnabled:
-                                          block.modelAnimationEnabled,
-                                      autoRotate: block.modelAutoRotate,
-                                      rotationSpeed: block.modelRotationSpeed,
-                                      zoom: block.modelZoom,
-                                      cameraRadius: block.modelCameraRadius,
-                                      turntableRotation:
-                                          block.modelTurntableRotation,
-                                      fieldOfView: block.modelFieldOfView,
-                                      cameraStateKey: cameraStateKey,
-                                      exposure: findPresentation3DModelAsset(
+                              : staticPreview && block.modelAssetId != null
+                                  ? _StaticModelPoster(
+                                      modelId: block.modelAssetId!)
+                                  : !_isRenderableCanvasModelBlock(block)
+                                      ? CustomPaint(
+                                          painter: ComponentBlockPreviewPainter(
+                                              kind: block.kind),
+                                        )
+                                      : HtmlModelCanvas(
+                                          key: ValueKey<String>(
+                                            'canvas-model-${block.id}-${block.modelAssetId}',
+                                          ),
+                                          modelId: block.modelAssetId!,
+                                          animationEnabled:
+                                              block.modelAnimationEnabled,
+                                          animationTime:
+                                              block.modelAnimationTime,
+                                          animationName:
+                                              block.modelAnimationName,
+                                          autoRotate: block.modelAutoRotate,
+                                          rotationSpeed:
+                                              block.modelRotationSpeed,
+                                          zoom: block.modelZoom,
+                                          cameraRadius: block.modelCameraRadius,
+                                          turntableRotation:
+                                              block.modelTurntableRotation,
+                                          fieldOfView: block.modelFieldOfView,
+                                          cameraStateKey: cameraStateKey,
+                                          exposure: PresentationSceneState
+                                              .effectiveExposure(block),
+                                          environmentImage:
+                                              findPresentation3DModelAsset(
                                             block.modelAssetId!,
-                                          )?.exposure ??
-                                          1,
-                                      environmentImage:
-                                          findPresentation3DModelAsset(
-                                        block.modelAssetId!,
-                                      )?.environmentImage,
-                                      orbitEnabled: block.modelOrbitEnabled,
-                                      tourEnabled: block.modelTourEnabled,
-                                      tourInteractive: block.modelTourEnabled &&
-                                          !block.modelTourFrozen,
-                                      orbitTheta: block.modelOrbitTheta,
-                                      orbitPhi: block.modelOrbitPhi,
-                                      targetX: block.modelTargetX,
-                                      targetY: block.modelTargetY,
-                                      targetZ: block.modelTargetZ,
-                                      pickSurfacePosition:
-                                          modelTourPointPlacementEnabled &&
-                                              isSelected,
-                                      onSurfacePositionPicked:
-                                          onModelTourSurfacePointPicked == null
-                                              ? null
-                                              : (point) =>
-                                                  onModelTourSurfacePointPicked!(
-                                                    block.id,
-                                                    point,
-                                                  ),
-                                      onSurfacePickMissed:
-                                          onModelTourSurfacePickMissed,
-                                    ),
+                                          )?.environmentImage,
+                                          orbitEnabled: block.modelOrbitEnabled,
+                                          tourEnabled: block.modelTourEnabled,
+                                          tourInteractive:
+                                              block.modelTourEnabled &&
+                                                  !block.modelTourFrozen,
+                                          orbitTheta: block.modelOrbitTheta,
+                                          orbitPhi: block.modelOrbitPhi,
+                                          targetX: block.modelTargetX,
+                                          targetY: block.modelTargetY,
+                                          targetZ: block.modelTargetZ,
+                                          pickSurfacePosition:
+                                              modelTourPointPlacementEnabled &&
+                                                  isSelected,
+                                          onSurfacePositionPicked:
+                                              onModelTourSurfacePointPicked ==
+                                                      null
+                                                  ? null
+                                                  : (point) =>
+                                                      onModelTourSurfacePointPicked!(
+                                                        block.id,
+                                                        point,
+                                                      ),
+                                          onSurfacePickMissed:
+                                              onModelTourSurfacePickMissed,
+                                        ),
                     ),
                   ),
                 ),
@@ -3792,6 +3815,11 @@ String _textStyleLabel(PresentationTextStyle style) {
   }
 }
 
+/// Shared by the canvas and the compact selected-text editor.
+FontWeight presentationFontWeight(int value) => _fontWeightFromValue(value);
+List<FontVariation> presentationFontVariations(int value) =>
+    _fontVariationsFromValue(value);
+
 FontWeight _fontWeightFromValue(int value) {
   final normalized = ((value.clamp(100, 900).toInt() / 100).round() * 100)
       .clamp(100, 900)
@@ -3965,5 +3993,32 @@ double _letterSpacingForType(PresentationTextType type) {
       return -0.1;
     case PresentationTextType.body:
       return 0;
+  }
+}
+
+/// Scene thumbnails never create a WebGL context or authorize a GLB download.
+class _StaticModelPoster extends StatelessWidget {
+  const _StaticModelPoster({required this.modelId});
+  final String modelId;
+  @override
+  Widget build(BuildContext context) {
+    final asset = findPresentation3DModelAsset(modelId);
+    final thumbnail = asset?.thumbnailPath;
+    final placeholder = ColoredBox(
+      color: const Color(0xffe8eef4),
+      child: Center(
+          child: Icon(asset?.icon ?? Icons.view_in_ar_outlined,
+              color: const Color(0xff64748b))),
+    );
+    // These root-relative posters live in web/, not the native asset bundle.
+    if (thumbnail == null ||
+        thumbnail.isEmpty ||
+        (!kIsWeb && thumbnail.startsWith('/'))) return placeholder;
+    return SignedThumbnailImage(
+      assetKey: thumbnail,
+      fit: BoxFit.contain,
+      placeholder: placeholder,
+      errorBuilder: (_) => placeholder,
+    );
   }
 }

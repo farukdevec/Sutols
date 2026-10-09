@@ -1,0 +1,67 @@
+{
+  "licenseSource": "https://raw.githubusercontent.com/googlefonts/tinos/5df023370055d3fe8f05aa288fe0ba9a6928068a/OFL.txt",
+  "licenseSha256": "cb3382d4643e8b02c12e322c220a3c76a5020d667e4fd4e7c75e744cca6caa6b",
+  "fonts": [
+    {
+      "path": "assets/fonts/google_fonts/tinos-400-latin-ext.woff2",
+      "sha256": "617ec6f5a49dadad8b3df566c18fa749b86bef6bf1777896529eb96da65ac656",
+      "nameRecords": {
+        "0": [
+          "Copyright 2026 The Tinos Project Authors (https://github.com/googlefonts/tinos)"
+        ],
+        "5": [
+          "Version 1.340; ttfautohint (v1.8.4.16-eb64)"
+        ],
+        "14": [
+          "https://openfontlicense.org"
+        ]
+      }
+    },
+    {
+      "path": "assets/fonts/google_fonts/tinos-400-latin.woff2",
+      "sha256": "3b426cf3e7ad6f3f933727403a118e3563923cdde910c27cdaf9950454b275c6",
+      "nameRecords": {
+        "0": [
+          "Copyright 2026 The Tinos Project Authors (https://github.com/googlefonts/tinos)"
+        ],
+        "5": [
+          "Version 1.340; ttfautohint (v1.8.4.16-eb64)"
+        ],
+        "14": [
+          "https://openfontlicense.org"
+        ]
+      }
+    },
+    {
+      "path": "assets/fonts/google_fonts/tinos-700-latin-ext.woff2",
+      "sha256": "b8e86472f307f2696cd8f27012de72acad41d0fa5a24dabad204caf59f9fd342",
+      "nameRecords": {
+        "0": [
+          "Copyright 2026 The Tinos Project Authors (https://github.com/googlefonts/tinos)"
+        ],
+        "5": [
+          "Version 1.340; ttfautohint (v1.8.4.16-eb64)"
+        ],
+        "14": [
+          "https://openfontlicense.org"
+        ]
+      }
+    },
+    {
+      "path": "assets/fonts/google_fonts/tinos-700-latin.woff2",
+      "sha256": "fb6cd8e90c8d964fdbb70335a5e1b7ddd3f375cca4637b91b9d1f47910581bb8",
+      "nameRecords": {
+        "0": [
+          "Copyright 2026 The Tinos Project Authors (https://github.com/googlefonts/tinos)"
+        ],
+        "5": [
+          "Version 1.340; ttfautohint (v1.8.4.16-eb64)"
+        ],
+        "14": [
+          "https://openfontlicense.org"
+        ]
+      }
+    }
+  ],
+  "scope": "Font binary name records match upstream copyright and OFL 1.1 URL; font binary unchanged."
+}

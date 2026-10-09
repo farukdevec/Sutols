@@ -60,7 +60,7 @@ void main() {
     final earth = catalog.singleWhere((model) => model.id == 'gercekci-dunya');
     final anitkabir = catalog.singleWhere((model) => model.id == 'anitkabir');
     expect(plane.modelUrl, 'https://assets.sutols.com/old-plane.glb');
-    expect(plane.thumbnailUrl, isEmpty);
+    expect(plane.thumbnailUrl, staleCloudModel.thumbnailUrl);
     expect(plane.tier, 'premium');
     expect(anitkabir.modelUrl, '/models/anitkabir.glb');
     expect(earth.thumbnailUrl, isEmpty);

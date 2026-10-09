@@ -1,10 +1,14 @@
+import 'model_context_recovery_script.dart';
+import 'model_render_budget_script.dart';
+import 'reduced_motion_script.dart';
+import 'scene_lifecycle_script.dart';
 import 'dart:convert';
 import 'dart:math' as math;
 import 'dart:ui' show Offset;
 
 import '../../../models/slide_model.dart';
+import '../../../models/presentation_scene_state.dart';
 import '../../../services/local_google_fonts_css.dart';
-import '../../../services/model_asset_service.dart';
 import 'background_scene_sources.dart';
 import 'presentation_text_fit_script.dart';
 
@@ -75,9 +79,11 @@ String? _fontFamilyFromRule(String selector) {
   ).firstMatch(rule.group(1)!)?.group(1)?.trim();
 }
 
-String get sutolHtmlStageBackgroundScript => _backgroundScript;
+String get sutolHtmlStageBackgroundScript =>
+    '$sutolSceneLifecycleScript\n$sutolModelContextRecoveryScript\n$_backgroundScript';
 String get sutolHtmlStageComponentScript => _stageComponentScript;
-String get sutolHtmlStagePatchScript => '$sutolTextFitScript\n$_stagePatchScript';
+String get sutolHtmlStagePatchScript =>
+    '$sutolTextFitScript\n$_stagePatchScript';
 
 /// Bileşen kütüphanesindeki küçük kartlar için hafif ve etkileşimsiz belge.
 /// Tam sahne CSS'i ve arka plan iframe'i özellikle eklenmez.
@@ -95,6 +101,7 @@ body{pointer-events:none;user-select:none}
 *,*::before,*::after{animation:none!important;transition:none!important}
 </style>
 <script>
+$sutolReducedMotionMediaScript
 (function(){
   let frames=0;
   const nativeRaf=window.requestAnimationFrame.bind(window);
@@ -137,6 +144,24 @@ String buildHtmlBackgroundSceneDocument(
   var document = animationEnabled
       ? sutolHtmlBackgroundScene(kind)
       : buildHtmlBackgroundPreviewDocument(kind);
+  if (animationEnabled) {
+    final lifecycle =
+        '<script data-sutol-scene-lifecycle>$sutolSceneLifecycleScript</script>';
+    final head = RegExp(r'<head\b[^>]*>', caseSensitive: false);
+    final html = RegExp(r'<html\b[^>]*>', caseSensitive: false);
+    final doctype = RegExp(r'<!doctype\b[^>]*>', caseSensitive: false);
+    // Older imported scenes can omit a head tag. Installing before the first
+    // original script is essential: loops otherwise capture native RAF first.
+    final anchor = head.hasMatch(document)
+        ? head
+        : html.hasMatch(document)
+            ? html
+            : doctype;
+    document = anchor.hasMatch(document)
+        ? document.replaceFirstMapped(
+            anchor, (match) => '${match.group(0)}$lifecycle')
+        : '$lifecycle$document';
+  }
   if (colorsInverted) {
     final resultIsDark = presentationBackgroundVariantIsDark(
       kind,
@@ -356,6 +381,8 @@ String buildHtmlStageDocument({
   String? inlineEditingTextBlockId,
   String? selectedComponentBlockId,
   int? visibleRevealStep,
+  PresentationRenderQuality renderQuality = PresentationRenderQuality.balanced,
+  bool reducedMotion = false,
   bool showBadge = true,
   bool showBackground = true,
   HtmlStageRenderMode renderMode = HtmlStageRenderMode.full,
@@ -370,13 +397,19 @@ String buildHtmlStageDocument({
       '<html lang="tr" data-sutol-tour-placement="${tourPointPlacementEnabled ? 'true' : 'false'}">',
     )
     ..writeln('<head>')
+    ..writeln(reducedMotion || renderMode == HtmlStageRenderMode.snapshot
+        ? '<script data-sutol-reduced-motion-media>$sutolReducedMotionMediaScript</script>'
+        : '')
+    ..writeln(
+        '<script data-sutol-scene-lifecycle>$sutolSceneLifecycleScript</script>'
+        '<script data-sutol-model-context>$sutolModelContextRecoveryScript</script>')
     ..writeln('<meta charset="utf-8">')
     ..writeln(
         '<meta name="viewport" content="width=device-width, initial-scale=1">')
     ..writeln(
       renderMode != HtmlStageRenderMode.snapshot &&
               page.componentBlocks.any((block) => block.modelAssetId != null)
-          ? sutolModelViewerScriptTag
+          ? '$sutolModelViewerScriptTag<script data-sutol-model-render-budget>${modelRenderBudgetScript(renderQuality)}</script>'
           : '',
     )
     ..writeln('<style>')
@@ -387,6 +420,8 @@ String buildHtmlStageDocument({
     ..writeln(
       buildHtmlStageMarkup(
         page: page,
+        renderQuality: renderQuality,
+        reducedMotion: reducedMotion,
         selectedTextBlockId: selectedTextBlockId,
         inlineEditingTextBlockId: inlineEditingTextBlockId,
         selectedComponentBlockId: selectedComponentBlockId,
@@ -415,12 +450,15 @@ String buildHtmlStageMarkup({
   String? inlineEditingTextBlockId,
   String? selectedComponentBlockId,
   int? visibleRevealStep,
+  PresentationRenderQuality renderQuality = PresentationRenderQuality.balanced,
+  bool reducedMotion = false,
   bool showBadge = true,
   bool showBackground = true,
   String? extraStageClass,
   HtmlStageRenderMode renderMode = HtmlStageRenderMode.full,
   Map<String, String> modelSourcesById = const <String, String>{},
   Map<String, String> imageSourcesById = const <String, String>{},
+  Map<String, String> modelPosterSourcesById = const <String, String>{},
   bool deferEmbeddedAssets = false,
 }) {
   final animationTimeline = _buildEntranceAnimationTimeline(page);
@@ -437,6 +475,7 @@ String buildHtmlStageMarkup({
     if (templateClass.isNotEmpty) templateClass,
     _backgroundStageClass(page.backgroundKind),
     'sutol-stage-mode-$renderModeName',
+    if (reducedMotion) 'sutol-stage-reduced-motion',
     if (!showBackground) 'sutol-stage-without-background',
     if (_isDarkBackground(
       page.backgroundKind,
@@ -449,14 +488,16 @@ String buildHtmlStageMarkup({
 
   final buffer = StringBuffer()
     ..writeln(
-      '<div class="$stageClasses"$templateAttr data-sutol-render-mode="$renderModeName">',
+      '<div class="$stageClasses"$templateAttr data-sutol-render-mode="$renderModeName" style="--sutol-component-ink:${showBackground && page.backgroundKind == PresentationBackgroundKind.plainWhite && !page.backgroundColorsInverted ? '#243145' : '#ffffff'}">',
     )
     ..writeln(
       showBackground
           ? _backgroundInnerMarkup(
               page.backgroundKind,
               renderMode,
-              animationEnabled: page.backgroundAnimationEnabled,
+              animationEnabled: !reducedMotion &&
+                  page.backgroundAnimationEnabled &&
+                  renderQuality != PresentationRenderQuality.economy,
               animationSpeed: page.backgroundAnimationSpeed,
               colorsInverted: page.backgroundColorsInverted,
               deferEmbeddedAssets: deferEmbeddedAssets,
@@ -526,7 +567,8 @@ String buildHtmlStageMarkup({
     );
   }
 
-  for (final block in page.componentBlocks) {
+  for (final sourceBlock in page.componentBlocks) {
+    final block = PresentationSceneState.normalizeBlock(sourceBlock);
     final effectiveRevealStep =
         animationTimeline.revealSteps[block.id] ?? block.revealStep;
     final entranceEffect = _isEntranceEffect(block.entranceAnimation);
@@ -545,23 +587,10 @@ String buildHtmlStageMarkup({
     final is3D = modelId != null;
     final isImage = imageId != null;
     final remoteSource = is3D ? modelSourcesById[modelId] : null;
-    final resolvableSource =
-        (remoteSource != null && remoteSource.isNotEmpty) ? remoteSource : null;
+    final resolvableSource = modelSourceForRender(modelId ?? '',
+        (remoteSource != null && remoteSource.isNotEmpty) ? remoteSource : null,
+        highQuality: renderQuality == PresentationRenderQuality.high);
     final has3D = resolvableSource != null;
-
-    if (is3D) {
-      final sourceHasToken = resolvableSource != null &&
-          ModelAssetService.isSignedUrlValid(resolvableSource);
-      final assetKey =
-          ModelAssetService.extractKey(resolvableSource ?? modelId);
-      final uri =
-          resolvableSource != null ? Uri.tryParse(resolvableSource) : null;
-      final host = uri?.host ?? '';
-      final expires = uri?.queryParameters['expires'] ?? '';
-      print(
-          '[MODEL_DEBUG] modelId=$modelId assetKey=$assetKey authSuccess=${resolvableSource != null} signed=$sourceHasToken signedUrlExists=${resolvableSource != null} signedUrlHost=$host signedUrlExpiration=$expires rendererSrcHost=$host rendererSrcIsSigned=$sourceHasToken');
-      print('[MODEL_RENDER] id=$modelId signed=$sourceHasToken');
-    }
 
     final componentHtml = _normalizeCatalogComponentScripts(
       presentationComponentHtml(block.kind),
@@ -598,15 +627,20 @@ String buildHtmlStageMarkup({
                 hasAnimations: findPresentation3DModelAsset(modelId ?? '')
                         ?.hasAnimations ??
                     true,
-                animationEnabled: block.modelAnimationEnabled,
-                autoRotate: block.modelAutoRotate,
+                animationEnabled: block.modelAnimationEnabled && !reducedMotion,
+                animationTime: block.modelAnimationTime,
+                animationName: block.modelAnimationName,
+                autoRotate: !reducedMotion &&
+                    block.modelAutoRotate &&
+                    renderQuality != PresentationRenderQuality.economy,
+                shadowIntensity:
+                    renderQuality == PresentationRenderQuality.economy ? 0 : 1,
                 rotationSpeed: block.modelRotationSpeed,
                 zoom: block.modelZoom,
                 cameraRadius: block.modelCameraRadius,
                 turntableRotation: block.modelTurntableRotation,
                 fieldOfView: block.modelFieldOfView,
-                exposure:
-                    findPresentation3DModelAsset(modelId ?? '')?.exposure ?? 1,
+                exposure: PresentationSceneState.effectiveExposure(block),
                 environmentImage: findPresentation3DModelAsset(modelId ?? '')
                     ?.environmentImage,
                 orbitEnabled: block.modelOrbitEnabled,
@@ -624,8 +658,8 @@ String buildHtmlStageMarkup({
                     ? ''
                     : componentHtml,
               )
-            : has3D && componentHtml.trim().isNotEmpty
-                ? '<div class="sutol-html-component-inner">$componentHtml</div>'
+            : is3D && isSnapshot
+                ? _modelSnapshotMarkup(modelId, modelPosterSourcesById[modelId])
                 : componentHtml.trim().isEmpty
                     ? '<span class="sutol-component-shape"></span>'
                     : '<div class="sutol-html-component-inner">$componentHtml</div>';
@@ -650,35 +684,36 @@ String buildHtmlStageMarkup({
 /// their artwork from the stage-owned wrapper.
 String _normalizeCatalogComponentScripts(String html) {
   if (!html.contains('<script')) return html;
-
+  const scope =
+      "document.currentScript.closest('.sutol-html-component-inner,.sutol-component-preview')";
   var normalized = html.replaceAll(
     'document.currentScript.previousElementSibling',
-    "document.currentScript.parentElement.querySelector(':scope > :not(style):not(script)')",
+    "$scope.querySelector(':scope > :not(style):not(script)')",
   );
   normalized = normalized.replaceAllMapped(
     RegExp(r'''document\.currentScript\.closest\((['"])([^'"]+)\1\)'''),
-    (match) =>
-        'document.currentScript.parentElement.querySelector(${match.group(1)}${match.group(2)}${match.group(1)})',
+    (match) {
+      // Preserve a real ancestor lookup; sibling scripts use the local wrapper.
+      if (match.group(2) ==
+          '.sutol-html-component-inner,.sutol-component-preview') {
+        return match.group(0)!;
+      }
+      final selector = '${match.group(1)}${match.group(2)}${match.group(1)}';
+      return '(document.currentScript.closest($selector)||$scope.querySelector($selector))';
+    },
   );
   normalized = normalized.replaceAllMapped(
     RegExp(r'''\bscript\.closest\((['"])([^'"]+)\1\)'''),
     (match) =>
-        'script.parentElement.querySelector(${match.group(1)}${match.group(2)}${match.group(1)})',
+        '(script.closest(${match.group(1)}${match.group(2)}${match.group(1)})||$scope.querySelector(${match.group(1)}${match.group(2)}${match.group(1)}))',
   );
-  // Global selectors make duplicate copies of a component control only the
-  // first matching node. Scope them to the current component instance.
+  // Include artwork roots inside this instance, never another slide's copy.
   normalized = normalized.replaceAll(
-    'document.getElementById(',
-    'document.currentScript.parentElement.querySelector(\'#\' + ',
-  );
+      'document.getElementById(', "$scope.querySelector('#' + ");
   normalized = normalized.replaceAll(
-    'document.querySelectorAll(',
-    'document.currentScript.parentElement.querySelectorAll(',
-  );
-  normalized = normalized.replaceAll(
-    'document.querySelector(',
-    'document.currentScript.parentElement.querySelector(',
-  );
+      'document.querySelectorAll(', '$scope.querySelectorAll(');
+  normalized =
+      normalized.replaceAll('document.querySelector(', '$scope.querySelector(');
   return normalized;
 }
 
@@ -688,7 +723,10 @@ String _model3DMarkup(
   required String id,
   required bool hasAnimations,
   required bool animationEnabled,
+  required double animationTime,
+  required String? animationName,
   required bool autoRotate,
+  required double shadowIntensity,
   required double rotationSpeed,
   required double zoom,
   required double? cameraRadius,
@@ -708,6 +746,11 @@ String _model3DMarkup(
   required String fallbackHtml,
   bool deferSource = false,
 }) {
+  final clipMarkup = animationName == null
+      ? ''
+      : ' animation-name="${_escapeAttribute(animationName)}"';
+  final safeAnimationTime =
+      animationTime.isFinite ? animationTime.clamp(0, 86400).toDouble() : 0.0;
   final animationMarkup = hasAnimations && animationEnabled ? ' autoplay' : '';
   // auto-rotate-delay="0": model-viewer'ın varsayılan 3000 ms başlangıç
   // gecikmesini kaldırır; sunum modunda dönme anında başlar.
@@ -793,11 +836,31 @@ String _model3DMarkup(
   }).join();
   return '''
 <div class="sutol-html-component-inner sutol-3d-model-inner">
-  <model-viewer class="sutol-3d-model-viewer" crossorigin="anonymous" data-sutol-model-id="${_escapeAttribute(id)}" data-sutol-orbit-theta="${orbitTheta.toStringAsFixed(2)}" data-sutol-orbit-phi="${effectiveOrbitPhi.toStringAsFixed(2)}" data-sutol-model-zoom="${effectiveZoom.toStringAsFixed(4)}" data-sutol-target-x="${safeTargetX.toStringAsFixed(2)}" data-sutol-target-y="${safeTargetY.toStringAsFixed(2)}" data-sutol-target-z="${safeTargetZ.toStringAsFixed(2)}" data-sutol-turntable-rotation="${safeTurntableRotation.toStringAsFixed(8)}" data-sutol-field-of-view="${safeFieldOfView.toStringAsFixed(5)}" data-sutol-tour-ground="${tourEnabled ? 'true' : 'false'}" $sourceMarkup alt="${_escapeAttribute(label)}"$cameraControlsMarkup$tourCameraTuning$animationMarkup$autoRotateMarkup$environmentImageMarkup camera-orbit="$cameraOrbit" camera-target="auto auto auto"$cameraOrbitLimits field-of-view="${safeFieldOfView.toStringAsFixed(5)}deg" interaction-prompt="none" shadow-intensity="1" shadow-softness="0.8" tone-mapping="neutral" exposure="${exposure.toStringAsFixed(4)}" loading="eager" reveal="auto" onload="this.hidden=false;const restore=window.SutolRestoreModelCamera;if(restore)restore(this);else{const target=window.SutolApplyModelTarget;if(target)target(this);}const status=this.nextElementSibling;if(status)status.hidden=true;const fallback=status?status.nextElementSibling:null;if(fallback)fallback.hidden=true;console.log('Sutols 3B model yüklendi',{modelId:this.dataset.sutolModelId})" onerror="const status=this.nextElementSibling;if(status)status.hidden=true;const fallback=status?status.nextElementSibling;if(fallback)fallback.hidden=false;this.hidden=true;console.error('Sutols 3B model yüklenemedi',{modelId:this.dataset.sutolModelId})">$hotspotMarkup</model-viewer>
+  <model-viewer class="sutol-3d-model-viewer" crossorigin="anonymous" data-sutol-model-id="${_escapeAttribute(id)}" data-sutol-animation-time="$safeAnimationTime" data-sutol-orbit-theta="${orbitTheta.toStringAsFixed(2)}" data-sutol-orbit-phi="${effectiveOrbitPhi.toStringAsFixed(2)}" data-sutol-model-zoom="${effectiveZoom.toStringAsFixed(4)}" data-sutol-target-x="${safeTargetX.toStringAsFixed(2)}" data-sutol-target-y="${safeTargetY.toStringAsFixed(2)}" data-sutol-target-z="${safeTargetZ.toStringAsFixed(2)}" data-sutol-turntable-rotation="${safeTurntableRotation.toStringAsFixed(8)}" data-sutol-field-of-view="${safeFieldOfView.toStringAsFixed(5)}" data-sutol-tour-ground="${tourEnabled ? 'true' : 'false'}" $sourceMarkup alt="${_escapeAttribute(label)}"$cameraControlsMarkup$tourCameraTuning$clipMarkup$animationMarkup$autoRotateMarkup$environmentImageMarkup camera-orbit="$cameraOrbit" camera-target="auto auto auto"$cameraOrbitLimits min-field-of-view="1deg" max-field-of-view="179deg" field-of-view="${safeFieldOfView.toStringAsFixed(5)}deg" interaction-prompt="none" shadow-intensity="${shadowIntensity.toStringAsFixed(1)}" shadow-softness="0.8" tone-mapping="neutral" exposure="${exposure.toStringAsFixed(4)}" loading="eager" reveal="auto" onload="if(event.detail&&event.detail.url!==this.getAttribute('src'))return;this.hidden=false;const recovery=window.SutolModelContextRecovery;if(recovery)recovery.loaded(this);else this.currentTime=$safeAnimationTime;const restore=window.SutolRestoreModelCamera;if(restore)restore(this);else{const target=window.SutolApplyModelTarget;if(target)target(this);}const status=this.nextElementSibling;if(status)status.hidden=true;const fallback=status?status.nextElementSibling:null;if(fallback)fallback.hidden=true;console.log('Sutols 3B model yüklendi',{modelId:this.dataset.sutolModelId})" onerror="const recovery=window.SutolModelContextRecovery;if(recovery&amp;&amp;recovery.handle(this,event))return;const status=this.nextElementSibling;if(status)status.hidden=true;const fallback=status?status.nextElementSibling:null;if(fallback)fallback.hidden=false;this.hidden=true;console.error('Sutols 3B model yüklenemedi',{modelId:this.dataset.sutolModelId})">$hotspotMarkup</model-viewer>
   <span class="sutol-3d-model-status">3B model yükleniyor…</span>
-  <div class="sutol-3d-model-fallback" hidden>$fallbackMarkup</div>
+  <div class="sutol-3d-model-fallback" hidden><div class="sutol-3d-load-fallback">$fallbackMarkup</div><div class="sutol-3d-context-poster" hidden>${_modelSnapshotMarkup(id, null)}</div></div>
 </div>
 ''';
+}
+
+String _modelSnapshotMarkup(String modelId, String? embeddedPoster) {
+  final asset = findPresentation3DModelAsset(modelId);
+  final label = _escapeAttribute(asset?.label ?? modelId);
+  final thumbnail = asset?.thumbnailPath;
+  if (embeddedPoster != null &&
+      RegExp(r'^data:image/(?:webp|png|jpeg);base64,[A-Za-z0-9+/]+=*$')
+          .hasMatch(embeddedPoster)) {
+    return '<img class="sutol-model-poster" src="${_escapeAttribute(embeddedPoster)}" alt="$label" style="width:100%;height:100%;object-fit:contain" decoding="async">';
+  }
+  // Only bundled posters are safe to request without acquiring a model URL.
+  // Unknown/remote models keep their identity instead of showing unrelated 2D art.
+  if (embeddedPoster == null &&
+      asset?.preferBundledAsset == true &&
+      thumbnail != null &&
+      thumbnail.startsWith('/model_thumbnails/')) {
+    return '<img class="sutol-model-poster" src="${_escapeAttribute(thumbnail)}" alt="$label" style="width:100%;height:100%;object-fit:contain" loading="lazy" decoding="async">';
+  }
+  return '<div class="sutol-model-poster" role="img" aria-label="$label" style="width:100%;height:100%;display:grid;place-items:center"><span>3D · $label</span></div>';
 }
 
 String _uploadedImageMarkup(String sourceId, String dataUrl) {
@@ -813,6 +876,9 @@ String _escape(String value) =>
 
 String _textFormatStyles(PresentationTextBlock block) {
   final buffer = StringBuffer();
+  if (block.surfaceColorHex case final surfaceColor?) {
+    buffer.write('background-color:$surfaceColor;border-radius:1.2cqw;');
+  }
   if (block.fontWeight case final fontWeight?) {
     buffer
       ..write('font-weight:$fontWeight;')
@@ -2254,6 +2320,19 @@ body {
   color: #f8fbff;
 }
 
+ .sutol-stage-reduced-motion *,
+.sutol-stage-reduced-motion *::before,
+.sutol-stage-reduced-motion *::after {
+  animation: none !important;
+  transition: none !important;
+}
+.sutol-stage-reduced-motion .sutol-html-block:not(.is-element-animation-pending),
+.sutol-stage-reduced-motion .sutol-animation-segment,
+.sutol-stage-reduced-motion .sutol-text-effect-layer {
+  opacity: 1 !important;
+  filter: none !important;
+}
+
 .sutol-html-block.text-animation-none {
   animation: none !important;
   filter: none;
@@ -3090,6 +3169,9 @@ body {
   overflow: hidden;
   border-radius: inherit;
 }
+
+.sutol-3d-context-poster { width: 100%; height: 100%; background: #e2e8f0; }
+.sutol-3d-context-poster[hidden], .sutol-3d-load-fallback[hidden] { display: none; }
 
 .sutol-3d-model-fallback[hidden] {
   display: none;
@@ -3974,6 +4056,13 @@ const String _stagePatchScript = r'''
         );
       }
     }
+    if (item.modelExposure !== null && item.modelExposure !== undefined) {
+      const modelViewer = element.querySelector('model-viewer');
+      const exposure = Number(item.modelExposure);
+      if (modelViewer && Number.isFinite(exposure)) {
+        modelViewer.setAttribute('exposure', Math.max(.1, Math.min(3, exposure)).toFixed(4));
+      }
+    }
     if (!isTourModel && item.modelZoom !== null && item.modelZoom !== undefined) {
       const modelViewer = element.querySelector('model-viewer');
       if (modelViewer) {
@@ -4116,6 +4205,10 @@ const String _stagePatchScript = r'''
         element.style.setProperty('--sutol-motion-x' + index, point.x);
         element.style.setProperty('--sutol-motion-y' + index, point.y);
       });
+    }
+    if (item.surfaceColor !== undefined) {
+      element.style.backgroundColor = item.surfaceColor || '';
+      element.style.borderRadius = item.surfaceColor ? '1.2cqw' : '';
     }
     if (item.textColor === null || item.textColor === undefined) {
       element.style.removeProperty('color');

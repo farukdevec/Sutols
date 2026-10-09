@@ -555,6 +555,8 @@ void main() {
       contains('data-sutol-turntable-rotation="1.23450000"'),
     );
     expect(modelTag, contains('field-of-view="37.25000deg"'));
+    expect(modelTag, contains('min-field-of-view="1deg"'));
+    expect(modelTag, contains('max-field-of-view="179deg"'));
     expect(modelTag, contains('data-sutol-exact-camera-pose="true"'));
     expect(
         document, contains('viewer.resetTurntableRotation(turntableRotation)'));

@@ -79,8 +79,8 @@ void main() {
       SafeJsonParser.validateContent(parsed);
 
       final slide = NvidiaSlide.fromJson((parsed['slides'] as List)[0] as Map<String, dynamic>);
-      expect(slide.content, contains('- **Tasarım Kusurları:** RBMK-1000 reaktörünün pozitif boşluk katsayısı dengesizlik yarattı.'));
-      expect(slide.content, contains('- **Güvenlik İhlalleri:** Test sırasında acil durum koruma sistemleri devre dışı bırakıldı.'));
+      expect(slide.content, contains('• **Tasarım Kusurları:** RBMK-1000 reaktörünün pozitif boşluk katsayısı dengesizlik yarattı.'));
+      expect(slide.content, contains('• **Güvenlik İhlalleri:** Test sırasında acil durum koruma sistemleri devre dışı bırakıldı.'));
     });
 
     test('PresentationDeckBuilder builds distinct layout with subtitle and quote', () {

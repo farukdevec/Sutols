@@ -217,6 +217,7 @@ class ModelRepository {
           modelUrl: bundledPath,
           thumbnailUrl: asset.thumbnailPath ?? '',
           tags: asset.tags,
+          tagsEn: [if (asset.labelEn case final name?) name],
           category: asset.category,
           tier: 'free',
         );
@@ -230,6 +231,7 @@ class ModelRepository {
           modelUrl: asset.assetPath,
           thumbnailUrl: asset.thumbnailPath ?? '',
           tags: asset.tags,
+          tagsEn: [if (asset.labelEn case final name?) name],
           category: asset.category,
           tier: 'free',
         ),

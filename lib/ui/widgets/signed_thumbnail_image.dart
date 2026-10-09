@@ -84,7 +84,7 @@ class _SignedThumbnailImageState extends State<SignedThumbnailImage> {
       return;
     }
 
-    if (url != null && url.isNotEmpty && url.contains('token=')) {
+    if (url != null && ModelAssetService.isSignedUrlValid(url)) {
       print('[THUMBNAIL_RENDER] key=$key signed=true');
       setState(() {
         _signedUrl = url;

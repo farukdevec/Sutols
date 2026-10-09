@@ -2,6 +2,13 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:sutol/services/presentation_keyword_catalog.dart';
 
 void main() {
+  test('normalizes Turkish dotted I and decomposed letters', () {
+    expect(PresentationKeywordCatalog.normalize('İKLİM IŞIK'), 'iklim isik');
+    expect(PresentationKeywordCatalog.normalize('I\u0307klim'), 'iklim');
+    expect(
+        PresentationKeywordCatalog.wordsMatch('paneli', 'panelleri'), isTrue);
+  });
+
   test('does not match short tags inside unrelated words', () {
     const unrelatedPairs = <(String, String)>[
       ('kultur', 'tur'),
@@ -102,6 +109,13 @@ void main() {
 
     expect(checksum, expectedChecksum);
     // ignore: avoid_print
-    print('keyword_words_checksum=$checksum samples_us=$samples median_us=${samples[2]}');
+    print(
+        'keyword_words_checksum=$checksum samples_us=$samples median_us=${samples[2]}');
   });
+  test('Turkish voiceless and plural location suffixes retain complete stems', () {
+    expect(PresentationKeywordCatalog.wordsMatch('gunesten', 'gunes'), isTrue);
+    expect(PresentationKeywordCatalog.wordsMatch('panellerde', 'paneli'), isTrue);
+    expect(PresentationKeywordCatalog.wordsMatch('antik', 'antikor'), isFalse);
+  });
+
 }

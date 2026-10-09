@@ -7,8 +7,11 @@ import 'package:flutter/material.dart';
 import '../models/slide_model.dart';
 import '../models/model_tour_runtime.dart';
 import '../services/presentation_auto_builder.dart';
+import '../services/presentation_composition_service.dart';
+import '../services/model_recommendation_feedback.dart';
 
 class PresentationController extends ChangeNotifier {
+  final modelRecommendationFeedback = ModelRecommendationFeedback();
   static const double minTextFontSize = 18;
   static const double maxTextFontSize = 320;
   static const double _minTextWidthFactor = 0.18;
@@ -81,6 +84,7 @@ class PresentationController extends ChangeNotifier {
   String? _inlineTextEditingBlockId;
   bool _inlineTextEditHasChanges = false;
   bool _selectionTransformActive = false;
+  final Set<int> _selectionPointers = <int>{};
   Timer? _selectionTransformIdleTimer;
   bool _modelOrbitGestureActive = false;
   bool _modelCameraGestureHasNotified = false;
@@ -234,6 +238,7 @@ class PresentationController extends ChangeNotifier {
     // Sayfa indeksini değiştirmeden önce onu mevcut sayfaya tamamlamak,
     // geri dönüldüğünde son bakış açısının bir önceki frame'e dönmesini önler.
     endSelectedModelOrbitGesture();
+    cancelSelectionPointerInteractions();
     _selectedPageIndex = index;
     _resetSelectionForCurrentPage();
     notifyListeners();
@@ -552,6 +557,12 @@ class PresentationController extends ChangeNotifier {
     );
   }
 
+  void updateSelectedTextSurface(PresentationTextSurface value) {
+    final block = selectedTextBlock;
+    if (block == null || block.surface == value) return;
+    _replaceSelectedTextBlock(block.copyWith(surface: value));
+  }
+
   void updateSelectedGlowIntensity(double value) {
     _replaceSelectedTextBlock(
       selectedTextBlock?.copyWith(glowIntensity: value.clamp(0, 2)),
@@ -690,6 +701,21 @@ class PresentationController extends ChangeNotifier {
     _replaceSelectedPage(
       selectedPage.copyWith(componentBlocks: nextComponents),
     );
+    notifyListeners();
+  }
+
+  void updateSelectedModelExposure(double? value) {
+    final current = selectedComponentBlock;
+    if (current == null || current.modelAssetId == null) return;
+    final next =
+        value != null && value.isFinite ? value.clamp(.1, 3).toDouble() : null;
+    if (current.modelExposure == next) return;
+    _replaceSelectedPage(selectedPage.copyWith(
+        componentBlocks: selectedPage.componentBlocks
+            .map((block) => block.id == current.id
+                ? block.copyWith(modelExposure: next)
+                : block)
+            .toList(growable: false)));
     notifyListeners();
   }
 
@@ -1313,7 +1339,12 @@ class PresentationController extends ChangeNotifier {
                 .toDouble()
             : block.modelTargetZ;
 
-        if (block.modelOrbitTheta == theta &&
+        final animationTime = pose.animationTime.isFinite
+            ? pose.animationTime.clamp(0, 86400).toDouble()
+            : block.modelAnimationTime;
+        if (block.modelAnimationTime == animationTime &&
+            block.modelAnimationName == pose.animationName &&
+            block.modelOrbitTheta == theta &&
             block.modelOrbitPhi == phi &&
             block.modelCameraRadius == radius &&
             block.modelTurntableRotation == turntableRotation &&
@@ -1327,6 +1358,8 @@ class PresentationController extends ChangeNotifier {
         changed = true;
         pageChanged = true;
         return block.copyWith(
+          modelAnimationTime: animationTime,
+          modelAnimationName: pose.animationName,
           modelOrbitTheta: theta,
           modelOrbitPhi: phi,
           modelCameraRadius: radius,
@@ -1406,6 +1439,14 @@ class PresentationController extends ChangeNotifier {
       ..clear()
       ..addAll(updatedPages);
     notifyListeners();
+  }
+
+  bool applyComposition(PresentationComposition layout) {
+    final next = PresentationCompositionService.apply(selectedPage, layout);
+    if (identical(next, selectedPage)) return false;
+    _replaceSelectedPage(next);
+    notifyListeners();
+    return true;
   }
 
   void applyTemplate(PresentationTemplate template) {
@@ -1756,6 +1797,28 @@ class PresentationController extends ChangeNotifier {
     notifyListeners();
   }
 
+  void applyVisualProfile(PresentationVisualProfile profile) {
+    final quality = switch (profile) {
+      PresentationVisualProfile.calm => PresentationRenderQuality.economy,
+      PresentationVisualProfile.standard => PresentationRenderQuality.balanced,
+      PresentationVisualProfile.expressive => PresentationRenderQuality.high,
+    };
+    final reduce = profile == PresentationVisualProfile.calm;
+    if (_effectSettings.renderQuality == quality &&
+        _effectSettings.reducedMotion == reduce) return;
+    _recordUndo();
+    _effectSettings =
+        _effectSettings.copyWith(renderQuality: quality, reducedMotion: reduce);
+    notifyListeners();
+  }
+
+  void setRenderQuality(PresentationRenderQuality value) {
+    if (_effectSettings.renderQuality == value) return;
+    _recordUndo();
+    _effectSettings = _effectSettings.copyWith(renderQuality: value);
+    notifyListeners();
+  }
+
   void updateStageDimensions({
     required String aspectRatio,
     double? customWidth,
@@ -1806,6 +1869,8 @@ class PresentationController extends ChangeNotifier {
     if (pages.isEmpty) {
       return;
     }
+    cancelSelectionPointerInteractions();
+    modelRecommendationFeedback.clear();
 
     _pages
       ..clear()
@@ -2323,9 +2388,36 @@ class PresentationController extends ChangeNotifier {
       _recordUndo();
       _selectionTransformActive = true;
     }
-    _selectionTransformIdleTimer = Timer(const Duration(milliseconds: 180), () {
+    // Pointer gestures finish on release/cancel, even when the user pauses.
+    // Keyboard nudges retain the existing short burst grouping.
+    if (_selectionPointers.isEmpty) {
+      _selectionTransformIdleTimer =
+          Timer(const Duration(milliseconds: 180), () {
+        _selectionTransformActive = false;
+      });
+    }
+  }
+
+  void beginSelectionPointerInteraction(int pointer) {
+    if (_selectionPointers.isEmpty) {
+      _selectionTransformIdleTimer?.cancel();
       _selectionTransformActive = false;
-    });
+    }
+    _selectionPointers.add(pointer);
+  }
+
+  void endSelectionPointerInteraction(int pointer) {
+    _selectionPointers.remove(pointer);
+    if (_selectionPointers.isEmpty) {
+      _selectionTransformIdleTimer?.cancel();
+      _selectionTransformActive = false;
+    }
+  }
+
+  void cancelSelectionPointerInteractions() {
+    _selectionPointers.clear();
+    _selectionTransformIdleTimer?.cancel();
+    _selectionTransformActive = false;
   }
 
   void _moveSelection(Offset delta, Size canvasSize) {
@@ -2638,6 +2730,7 @@ class PresentationController extends ChangeNotifier {
   }
 
   void _restoreSnapshot(_PresentationSnapshot snapshot) {
+    cancelSelectionPointerInteractions();
     _historySuspended = true;
     _pages
       ..clear()

@@ -1,3 +1,9 @@
+import 'widgets/presentation_quick_guide.dart';
+import '../services/presentation_composition_service.dart';
+import '../services/presentation_draft_recovery.dart';
+import '../services/serialized_save_queue.dart';
+import 'widgets/presentation_render_scope.dart';
+import 'widgets/presentation_readability_button.dart';
 import 'dart:async';
 import 'dart:math' as math;
 
@@ -12,8 +18,17 @@ import '../services/firestore_rest_helper.dart';
 import '../services/local_image_picker.dart';
 import '../services/model_asset_service.dart';
 import '../services/model_repository.dart';
+import '../services/model_search_service.dart';
+import '../services/background_search_service.dart';
+import '../services/model_capability_filter.dart';
+import '../services/model_recommendation_service.dart';
+import '../services/model_recommendation_feedback.dart';
+import '../services/latest_model_selection_request.dart';
+import '../services/model_library_preferences.dart';
 
 import '../services/presentation_export_service.dart';
+import '../services/presentation_export_asset_check.dart';
+import '../services/print_export_session.dart';
 import '../services/pexels_service.dart';
 import '../services/presentation_auto_builder.dart';
 import '../services/presentation_fullscreen_service.dart';
@@ -147,6 +162,13 @@ class HtmlPresentationEditorPage extends StatefulWidget {
 class _HtmlPresentationEditorPageState
     extends State<HtmlPresentationEditorPage> {
   final FocusNode _editorFocusNode = FocusNode();
+  final SerializedSaveQueue _saveQueue = SerializedSaveQueue();
+  Timer? _autosaveTimer;
+  String? _saveStatus;
+  String? _recoverySource;
+  int _saveRevision = 0;
+  bool _checkingRecovery = true;
+
   late final TextEditingController _textController;
   _HtmlToolTab _activeTab = _HtmlToolTab.text;
   String? _lastEditorLabel;
@@ -297,6 +319,7 @@ class _HtmlPresentationEditorPageState
         widget.presentationId != null) {
       _feedbackTimer = Timer(const Duration(seconds: 40), _showFeedbackDialog);
     }
+    _checkRecovery();
     _hydrateModels();
     if (widget.adminReadOnly) {
       _adminLoading = true;
@@ -399,6 +422,22 @@ class _HtmlPresentationEditorPageState
     HardwareKeyboard.instance.removeHandler(_handleGlobalKeyEvent);
     FocusManager.instance.removeListener(_handlePrimaryFocusChanged);
     _tourMovementTimer?.cancel();
+    if (_autosaveTimer?.isActive == true &&
+        !widget.adminReadOnly &&
+        _recoverySource == null) {
+      try {
+        final uid = FirebaseAuth.instance.currentUser?.uid;
+        final id = widget.presentationId;
+        if (uid != null && id != null) {
+          final source = PresentationProjectCodec.encodeProject(
+              pages: widget.controller.pages.toList(growable: false),
+              effectSettings: widget.controller.effectSettings);
+          unawaited(PresentationDraftRecovery.put(uid, id, source)
+              .catchError((Object _) {}));
+        }
+      } catch (_) {}
+    }
+    _autosaveTimer?.cancel();
     _editorFocusNode.dispose();
     _hintTimer?.cancel();
     widget.controller.removeListener(_captureDepartingPageCameraPoses);
@@ -432,11 +471,13 @@ class _HtmlPresentationEditorPageState
           '|${settings.transitionKind.index}|${settings.transitionDurationMs}')
       ..write(
           '|${settings.zoomEnabled}|${settings.zoomScale.toStringAsFixed(3)}')
-      ..write('|${settings.reducedMotion}');
+      ..write('|${settings.reducedMotion}|${settings.renderQuality.name}')
+      ..write(
+          '|${settings.aspectRatio}|${settings.customWidth}|${settings.customHeight}|${settings.autoPlayIntervalSec}|${settings.loop}|${settings.showProgressBar}|${settings.enableLaserPointer}|${settings.enableSoundEffects}');
     for (final page in controller.pages) {
       buf
         ..write(
-            '\n${page.id}|${page.backgroundKind.index}|${page.backgroundAnimationEnabled}|${page.backgroundAnimationSpeed}|${page.backgroundColorsInverted}|${page.speakerNotes}');
+            '\n${page.id}|${page.backgroundKind.index}|${page.backgroundAnimationEnabled}|${page.backgroundAnimationSpeed}|${page.backgroundColorsInverted}|${page.speakerNotes}|${page.templateId}|${page.transitionAfter}');
       for (final text in page.textBlocks) {
         buf
           ..write(
@@ -446,21 +487,26 @@ class _HtmlPresentationEditorPageState
               '|${text.type.index}|${text.widthFactor}|${text.heightFactor}|${text.textStyle.index}')
           ..write(
               '|${text.textAnimation.index}|${text.textEffect.index}|${text.textColorHex}')
-          ..write('|${text.glowIntensity}|${text.revealStep}')
+          ..write(
+              '|${text.surface.name}|${text.glowIntensity}|${text.revealStep}')
           ..write(
               '|${text.hotspotTargetPageId}|${text.fontWeight}|${text.textBold}')
           ..write(
-              '|${text.textItalic}|${text.textUnderline}|${text.textAlign.index}');
+              '|${text.textItalic}|${text.textUnderline}|${text.textAlign.index}')
+          ..write(
+              '|${text.entranceAnimation}|${text.animationTrigger}|${text.animationDuration}|${text.animationDelay}|${text.animationOrder}|${text.textGrouping}|${text.groupDelay}|${text.motionPathPoints}');
       }
       for (final block in page.componentBlocks) {
         buf
           ..write(
               '\nC:${block.id}|${block.kind.index}|${block.modelAssetId}|${block.imageAssetId}|${block.imageAspectRatio}')
-          ..write('|${block.modelAnimationEnabled}|${block.modelAutoRotate}')
+          ..write(
+              '|${block.modelAnimationEnabled}|${block.modelAutoRotate}|${block.modelAnimationTime}|${block.modelAnimationName}')
           ..write('|${block.modelZoom.toStringAsFixed(2)}')
           ..write('|${block.modelCameraRadius?.toStringAsFixed(7) ?? ''}')
           ..write('|${block.modelTurntableRotation.toStringAsFixed(7)}')
           ..write('|${block.modelFieldOfView.toStringAsFixed(5)}')
+          ..write('|${block.modelExposure}')
           ..write('|${block.modelOrbitEnabled}'
               '|${block.modelOrbitTheta.toStringAsFixed(3)}|${block.modelOrbitPhi.toStringAsFixed(3)}')
           ..write('|${block.modelTourEnabled}|${block.modelTourFrozen}'
@@ -469,7 +515,12 @@ class _HtmlPresentationEditorPageState
               '|${block.position.dx.toStringAsFixed(3)}|${block.position.dy.toStringAsFixed(3)}')
           ..write(
               '|${block.size.width.toStringAsFixed(3)}|${block.size.height.toStringAsFixed(3)}')
-          ..write('|${block.revealStep}|${block.hotspotTargetPageId}');
+          ..write(
+              '|${block.revealStep}|${block.hotspotTargetPageId}|${block.entranceAnimation}|${block.animationTrigger}|${block.animationDuration}|${block.animationDelay}|${block.animationOrder}|${block.motionPathPoints}');
+        for (final hotspot in block.modelTourHotspots) {
+          buf.write(
+              '|${hotspot.id}|${hotspot.label}|${hotspot.kind}|${hotspot.description}|${hotspot.targetPageId}|${hotspot.x}|${hotspot.y}|${hotspot.z}');
+        }
       }
     }
     return buf.toString();
@@ -491,7 +542,15 @@ class _HtmlPresentationEditorPageState
       return;
     }
     _trackedSignature = signature;
+    if (mounted)
+      setState(() => _saveStatus =
+          tr('Değişiklikler kaydedilmeyi bekliyor', 'Changes awaiting save'));
     _tracking.markEdited(presentationId);
+    _autosaveTimer?.cancel();
+    _autosaveTimer = Timer(const Duration(milliseconds: 1800), () {
+      if (mounted && !_checkingRecovery && _recoverySource == null)
+        unawaited(_saveProject(silent: true));
+    });
   }
 
   /// Slayt değişince mobil tuvali yeniden sığdırma görünümüne döndürür.
@@ -706,67 +765,187 @@ class _HtmlPresentationEditorPageState
     }
   }
 
+  bool _exportingHtml = false;
+  bool _exportingPdf = false;
+
   Future<void> _exportPresentation() async {
-    _stopTourKeyboardMovement();
-    _syncRenderedModelCameraPoses();
-    final presentationId = widget.presentationId;
-    if (presentationId != null && !widget.adminReadOnly) {
-      _tracking.markExported(presentationId);
+    if (_exportingHtml) return;
+    _exportingHtml = true;
+    try {
+      _stopTourKeyboardMovement();
+      _syncRenderedModelCameraPoses();
+      final cleanName = _presentationFileName.trim().isEmpty
+          ? 'Sutols Sunumu'
+          : _presentationFileName.trim();
+      final fileName = '$cleanName.html';
+      await exportPresentationAsHtml(
+        pages: widget.controller.pages.toList(growable: false),
+        effectSettings: widget.controller.effectSettings,
+        fileName: fileName,
+        title: _presentationFileName,
+      );
+      final presentationId = widget.presentationId;
+      if (presentationId != null && !widget.adminReadOnly) {
+        _tracking.markExported(presentationId);
+      }
+      _showSnack(tr('HTML indirme isteği tarayıcıya iletildi.',
+          'The HTML download request was sent to the browser.'));
+    } on PresentationExportAssetException catch (error) {
+      _showSnack(tr(
+          '${error.missingModelIds.length} model dosyası alınamadı. Bağlantınızı kontrol edip tekrar deneyin. Düzenlemeleriniz korundu.',
+          '${error.missingModelIds.length} model files could not be loaded. Check your connection and retry. Your edits are preserved.'));
+    } on UnsupportedError {
+      _showSnack(tr('HTML dışa aktarma web tarayıcısında kullanılabilir.',
+          'HTML export is available in the web browser.'));
+    } catch (_) {
+      _showSnack(tr(
+          'HTML hazırlanamadı. Düzenlemeleriniz korundu; tekrar deneyin.',
+          'The HTML could not be prepared. Your edits are preserved; retry.'));
+    } finally {
+      _exportingHtml = false;
     }
-    final cleanName = _presentationFileName.trim().isEmpty
-        ? 'Sutols Sunumu'
-        : _presentationFileName.trim();
-    final fileName = '$cleanName.html';
-    await exportPresentationAsHtml(
-      pages: widget.controller.pages.toList(growable: false),
-      effectSettings: widget.controller.effectSettings,
-      fileName: fileName,
-      title: _presentationFileName,
-    );
-    _showSnack('Sunum tek HTML dosyasi olarak disa aktarildi.');
   }
 
   Future<void> _exportPdfPresentation() async {
-    _stopTourKeyboardMovement();
-    _syncRenderedModelCameraPoses();
-    await exportPresentationAsPdfViaPrint(
-      pages: widget.controller.pages.toList(growable: false),
-      effectSettings: widget.controller.effectSettings,
-    );
-    _showSnack('PDF icin yazdirma penceresi acildi.');
+    if (_exportingPdf) return;
+    _exportingPdf = true;
+    try {
+      _stopTourKeyboardMovement();
+      _syncRenderedModelCameraPoses();
+      await exportPresentationAsPdfViaPrint(
+        pages: widget.controller.pages.toList(growable: false),
+        effectSettings: widget.controller.effectSettings,
+      );
+      _showSnack(tr('PDF için yazdırma sekmesi hazırlandı.',
+          'The PDF print tab is ready.'));
+    } on PrintExportWindowException catch (error) {
+      _showSnack(error.closedByUser
+          ? tr('PDF sekmesi kapatıldı. Yeniden deneyebilirsiniz.',
+              'The PDF tab was closed. You can retry.')
+          : tr(
+              'PDF sekmesi açılamadı. Tarayıcıda açılır pencerelere izin verip tekrar deneyin.',
+              'The PDF tab could not open. Allow pop-ups in your browser and retry.'));
+    } on UnsupportedError {
+      _showSnack(tr('PDF dışa aktarma web tarayıcısında kullanılabilir.',
+          'PDF export is available in the web browser.'));
+    } catch (_) {
+      _showSnack(tr(
+          'PDF hazırlanamadı. Düzenlemeleriniz korundu; tekrar deneyin.',
+          'The PDF could not be prepared. Your edits are preserved; retry.'));
+    } finally {
+      _exportingPdf = false;
+    }
   }
 
-  Future<void> _saveProject() async {
+  Future<void> _checkRecovery() async {
+    final id = widget.presentationId;
+    if (id == null || widget.adminReadOnly) {
+      _checkingRecovery = false;
+      return;
+    }
+    try {
+      final uid = FirebaseAuth.instance.currentUser?.uid;
+      if (uid == null) return;
+      final source = await PresentationDraftRecovery.read(uid, id);
+      if (!mounted || source == null) return;
+      PresentationProjectCodec.decodeProject(source, registerSources: false);
+      setState(() {
+        _recoverySource = source;
+        _saveStatus = tr('Kaydedilmemiş yerel taslak bulundu.',
+            'An unsaved local draft is available.');
+      });
+    } catch (_) {
+    } finally {
+      _checkingRecovery = false;
+    }
+  }
+
+  void _restoreRecovery() {
+    final source = _recoverySource;
+    if (source == null) return;
+    final project = PresentationProjectCodec.decodeProject(source);
+    setState(() => _recoverySource = null);
+    widget.controller
+        .replaceDeck(project.pages, effectSettings: project.effectSettings);
+    unawaited(_hydrateModels());
+    unawaited(_saveProject(silent: true));
+  }
+
+  Future<void> _saveProject({bool silent = false}) async {
     if (widget.adminReadOnly) {
       _showSnack('Salt okunur görüntüleme modunda kayıt yapılamaz.');
       return;
     }
-    _stopTourKeyboardMovement();
+    if (!silent) _stopTourKeyboardMovement();
     _syncRenderedModelCameraPoses();
+    _autosaveTimer?.cancel();
     final presentationId = widget.presentationId;
     if (presentationId != null) {
+      final saveSignature = _deckSignature();
       final json = PresentationProjectCodec.encodeProject(
         pages: widget.controller.pages.toList(growable: false),
         effectSettings: widget.controller.effectSettings,
       );
+      final revision = ++_saveRevision;
+      String? uid;
       try {
-        await PresentationProjectStore.saveProject(
-          presentationId: presentationId,
-          json: json,
-          presentationName: _presentationFileName,
-          slideCount: widget.controller.pages.length,
-        );
+        uid = FirebaseAuth.instance.currentUser?.uid;
+      } catch (_) {}
+      if (mounted) setState(() => _saveStatus = tr('Kaydediliyor…', 'Saving…'));
+      final savedName = _presentationFileName;
+      final savedSlideCount = widget.controller.pages.length;
+      var checkpointSaved = false;
+      try {
+        if (uid != null)
+          try {
+            await PresentationDraftRecovery.put(uid, presentationId, json);
+            checkpointSaved = true;
+          } catch (_) {
+            /* Cloud save can still succeed if local storage is full. */
+          }
+        await _saveQueue.run(() {
+          if (uid == null || FirebaseAuth.instance.currentUser?.uid != uid) {
+            throw StateError(
+                'Kayıt sırasında oturum değişti. Taslak önceki hesabınız için cihazda korunuyor.');
+          }
+          return PresentationProjectStore.saveProject(
+            presentationId: presentationId,
+            json: json,
+            presentationName: savedName,
+            slideCount: savedSlideCount,
+          );
+        });
+        if (uid != null) {
+          try {
+            await PresentationDraftRecovery.clearIfMatches(
+                uid, presentationId, json);
+          } catch (_) {}
+        }
         final user = FirebaseAuth.instance.currentUser;
         final name = user != null && (user.displayName ?? '').trim().isNotEmpty
             ? user.displayName!.trim()
             : (user?.email ?? '');
-        if (mounted) {
-          setState(() => _lastEditorLabel = name);
-          _showSnack(
-              'Sunum "$_presentationFileName" adıyla buluta kaydedildi.');
+        if (mounted && revision == _saveRevision) {
+          setState(() {
+            _lastEditorLabel = name;
+            _saveStatus = saveSignature == _deckSignature()
+                ? tr('Kaydedildi', 'Saved')
+                : tr('Yeni değişiklikler kaydedilmeyi bekliyor',
+                    'New changes awaiting save');
+            _recoverySource = null;
+          });
+          if (!silent)
+            _showSnack(
+                'Sunum "$_presentationFileName" adıyla buluta kaydedildi.');
         }
       } catch (e) {
-        _showSnack('Buluta kaydedilemedi: $e');
+        if (mounted && revision == _saveRevision)
+          setState(() => _saveStatus = checkpointSaved
+              ? tr('Buluta kaydedilemedi. Taslak bu cihazda korunuyor.',
+                  'Cloud save failed. Draft is kept on this device.')
+              : tr('Kayıt başarısız. Proje dosyasını indirerek koruyun.',
+                  'Save failed. Download the project to keep your changes.'));
+        if (!silent) _showSnack('Buluta kaydedilemedi: $e');
       }
       return;
     }
@@ -846,10 +1025,11 @@ class _HtmlPresentationEditorPageState
     for (final block in page.componentBlocks) {
       if (block.modelAssetId == null) continue;
       final cameraStateKey = '${page.id}:${block.id}';
-      final pose =
-          (widget.modelCameraPoseReader ?? HtmlModelCanvas.cameraPoseFor)(
-        cameraStateKey,
-      );
+      final reader = widget.modelCameraPoseReader;
+      final pose = reader != null
+          ? reader(cameraStateKey)
+          : HtmlModelCanvas.cameraPoseFor(cameraStateKey,
+              modelId: block.modelAssetId);
       if (pose != null) poses[cameraStateKey] = pose;
     }
     return poses;
@@ -1224,157 +1404,194 @@ class _HtmlPresentationEditorPageState
           builder: (context, _) {
             final pageCount = widget.controller.pages.length;
             final blockCount = widget.controller.selectedPageBlockCount;
-            return Scaffold(
-              body: DecoratedBox(
-                decoration: BoxDecoration(
-                  color: context.colors.surface,
-                ),
-                child: SafeArea(
-                  child: LayoutBuilder(
-                    builder: (context, constraints) {
-                      final isStudioWide = constraints.maxWidth >= 1320;
-                      final isMobile =
-                          constraints.maxWidth < AppBreakpoints.mobile;
-                      // Toggle davranışı için mevcut düzen bilgisini sakla.
-                      _studioWide = isStudioWide;
+            return PresentationRenderScope(
+              settings: widget.controller.effectSettings,
+              child: Scaffold(
+                bottomNavigationBar: _saveStatus == null
+                    ? null
+                    : SafeArea(
+                        top: false,
+                        child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 4),
+                            child: Row(children: [
+                              Expanded(
+                                  child: Semantics(
+                                      liveRegion: true,
+                                      child: Text(_saveStatus!,
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .bodySmall))),
+                              TextButton(
+                                  onPressed: _recoverySource != null
+                                      ? _restoreRecovery
+                                      : () => _saveProject(),
+                                  child: Text(_recoverySource != null
+                                      ? tr('Taslağı kurtar', 'Recover draft')
+                                      : tr('Kaydet', 'Save'))),
+                            ])),
+                      ),
+                body: DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: context.colors.surface,
+                  ),
+                  child: SafeArea(
+                    child: LayoutBuilder(
+                      builder: (context, constraints) {
+                        final isStudioWide = constraints.maxWidth >= 1280;
+                        final isMobile =
+                            constraints.maxWidth < AppBreakpoints.mobile;
+                        // Toggle davranışı için mevcut düzen bilgisini sakla.
+                        _studioWide = isStudioWide;
 
-                      if (isStudioWide) {
-                        return Column(
-                          children: <Widget>[
-                            _HtmlStudioHeader(
-                              pageCount: pageCount,
-                              blockCount: blockCount,
-                              onPreview: _openPresentationPreview,
-                              onExport: _exportPresentation,
-                              onExportPdf: _exportPdfPresentation,
-                              onUndo: widget.controller.undo,
-                              onRedo: widget.controller.redo,
-                              canUndo: widget.controller.canUndo,
-                              canRedo: widget.controller.canRedo,
-                              onAddText: widget.controller.addTextBlock,
-                              onRemoveText:
-                                  widget.controller.removeSelectedTextBlock,
-                              canRemoveText:
-                                  widget.controller.canRemoveTextBlock,
-                              lastEditorLabel: _lastEditorLabel,
-                              adminReadOnly: widget.adminReadOnly,
-                              presentationFileName: _presentationFileName,
-                              onEditFileName: widget.adminReadOnly
-                                  ? null
-                                  : _editPresentationFileName,
-                              onOpenStageDimensions: () =>
-                                  _showStageDimensionsDialog(
-                                context,
-                                widget.controller,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Expanded(
-                              child: Padding(
-                                padding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
-                                child: _HtmlStudioLayout(
-                                  controller: widget.controller,
-                                  textController: _textController,
-                                  activeTab: _activeTab,
-                                  panelOpen: _inspectorOpen,
-                                  onTabChanged: _setTab,
-                                  adminReadOnly: widget.adminReadOnly,
+                        if (isStudioWide) {
+                          return Column(
+                            children: <Widget>[
+                              _HtmlStudioHeader(
+                                pageCount: pageCount,
+                                blockCount: blockCount,
+                                onPreview: _openPresentationPreview,
+                                onExport: _exportPresentation,
+                                onExportPdf: _exportPdfPresentation,
+                                onUndo: widget.controller.undo,
+                                onRedo: widget.controller.redo,
+                                canUndo: widget.controller.canUndo,
+                                canRedo: widget.controller.canRedo,
+                                onAddText: widget.controller.addTextBlock,
+                                onRemoveText:
+                                    widget.controller.removeSelectedTextBlock,
+                                canRemoveText:
+                                    widget.controller.canRemoveTextBlock,
+                                lastEditorLabel: _lastEditorLabel,
+                                saveStatus: widget.adminReadOnly
+                                    ? tr('Salt okunur', 'Read only')
+                                    : _saveStatus ??
+                                        (widget.presentationId == null
+                                            ? tr('Yerel taslak', 'Local draft')
+                                            : tr('Bulut sunumu',
+                                                'Cloud presentation')),
+                                adminReadOnly: widget.adminReadOnly,
+                                presentationFileName: _presentationFileName,
+                                onEditFileName: widget.adminReadOnly
+                                    ? null
+                                    : _editPresentationFileName,
+                                onOpenStageDimensions: () =>
+                                    _showStageDimensionsDialog(
+                                  context,
+                                  widget.controller,
                                 ),
                               ),
-                            ),
-                          ],
-                        );
-                      }
-
-                      return Padding(
-                        padding: EdgeInsets.all(isMobile ? 4 : 14),
-                        child: Column(
-                          children: <Widget>[
-                            _HtmlHeader(
-                              pageCount: pageCount,
-                              blockCount: blockCount,
-                              onPreview: _openPresentationPreview,
-                              onExport: _exportPresentation,
-                              onExportPdf: _exportPdfPresentation,
-                              onSave: _saveProject,
-                              onLoad: _loadProject,
-                              onUndo: widget.controller.undo,
-                              onRedo: widget.controller.redo,
-                              canUndo: widget.controller.canUndo,
-                              canRedo: widget.controller.canRedo,
-                              lastEditorLabel: _lastEditorLabel,
-                              adminReadOnly: widget.adminReadOnly,
-                              presentationFileName: _presentationFileName,
-                              onEditFileName: widget.adminReadOnly
-                                  ? null
-                                  : _editPresentationFileName,
-                            ),
-                            SizedBox(height: isMobile ? 8 : 14),
-                            Expanded(
-                              child: LayoutBuilder(
-                                builder: (context, innerConstraints) {
-                                  final isWide =
-                                      innerConstraints.maxWidth >= 1080;
-
-                                  if (isWide) {
-                                    return Row(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.stretch,
-                                      children: <Widget>[
-                                        SizedBox(
-                                          width:
-                                              innerConstraints.maxWidth >= 1320
-                                                  ? 238
-                                                  : 200,
-                                          child: _HtmlPageSidebar(
-                                            controller: widget.controller,
-                                            readOnly: widget.adminReadOnly,
-                                          ),
-                                        ),
-                                        const SizedBox(width: 14),
-                                        Expanded(
-                                          child: _HtmlWorkbench(
-                                            controller: widget.controller,
-                                            textController: _textController,
-                                            activeTab: _activeTab,
-                                            onTabChanged: _setTab,
-                                            readOnly: widget.adminReadOnly,
-                                          ),
-                                        ),
-                                      ],
-                                    );
-                                  }
-
-                                  // <1080 (telefon + tablet): mobil-first
-                                  // kompozisyon. Tuval ana odaktır; tüm
-                                  // seçim panelleri alt iskeleden açılan
-                                  // bottom sheet'lerde yaşar.
-                                  return _HtmlMobileLayout(
+                              const SizedBox(height: 8),
+                              Expanded(
+                                child: Padding(
+                                  padding:
+                                      const EdgeInsets.fromLTRB(8, 0, 8, 8),
+                                  child: _HtmlStudioLayout(
                                     controller: widget.controller,
                                     textController: _textController,
                                     activeTab: _activeTab,
-                                    onOpenTool: _openMobileToolSheet,
-                                    onOpenPhotoQuick: _openMobilePhotoActions,
-                                    canvasZoom: _mobileCanvasZoom,
-                                    canvasPan: _mobileCanvasPan,
-                                    onScaleStart: _onMobileScaleStart,
-                                    onScaleUpdate: _onMobileScaleUpdate,
-                                    onScaleEnd: _onMobileScaleEnd,
-                                    onMultiTouchChanged:
-                                        _onMobileMultiTouchChanged,
-                                    canvasInteractive: !_multiTouchActive &&
-                                        !widget.adminReadOnly,
-                                    showHint: _showMobileHint &&
-                                        _mobileCanvasZoom <= 1.0001,
-                                    readOnly: widget.adminReadOnly,
-                                  );
-                                },
+                                    panelOpen: _inspectorOpen,
+                                    onTabChanged: _setTab,
+                                    adminReadOnly: widget.adminReadOnly,
+                                  ),
+                                ),
                               ),
-                            ),
-                          ],
-                        ),
-                      );
-                    },
+                            ],
+                          );
+                        }
+
+                        return Padding(
+                          padding: EdgeInsets.all(isMobile ? 4 : 14),
+                          child: Column(
+                            children: <Widget>[
+                              _HtmlHeader(
+                                pageCount: pageCount,
+                                blockCount: blockCount,
+                                onPreview: _openPresentationPreview,
+                                onExport: _exportPresentation,
+                                onExportPdf: _exportPdfPresentation,
+                                onSave: _saveProject,
+                                onLoad: _loadProject,
+                                onUndo: widget.controller.undo,
+                                onRedo: widget.controller.redo,
+                                canUndo: widget.controller.canUndo,
+                                canRedo: widget.controller.canRedo,
+                                lastEditorLabel: _lastEditorLabel,
+                                adminReadOnly: widget.adminReadOnly,
+                                presentationFileName: _presentationFileName,
+                                onEditFileName: widget.adminReadOnly
+                                    ? null
+                                    : _editPresentationFileName,
+                              ),
+                              SizedBox(height: isMobile ? 8 : 14),
+                              Expanded(
+                                child: LayoutBuilder(
+                                  builder: (context, innerConstraints) {
+                                    final isWide =
+                                        innerConstraints.maxWidth >= 1080;
+
+                                    if (isWide) {
+                                      return Row(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.stretch,
+                                        children: <Widget>[
+                                          SizedBox(
+                                            width: innerConstraints.maxWidth >=
+                                                    1320
+                                                ? 238
+                                                : 200,
+                                            child: _HtmlPageSidebar(
+                                              controller: widget.controller,
+                                              readOnly: widget.adminReadOnly,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 14),
+                                          Expanded(
+                                            child: _HtmlWorkbench(
+                                              controller: widget.controller,
+                                              textController: _textController,
+                                              activeTab: _activeTab,
+                                              onTabChanged: _setTab,
+                                              readOnly: widget.adminReadOnly,
+                                            ),
+                                          ),
+                                        ],
+                                      );
+                                    }
+
+                                    // <1080 (telefon + tablet): mobil-first
+                                    // kompozisyon. Tuval ana odaktır; tüm
+                                    // seçim panelleri alt iskeleden açılan
+                                    // bottom sheet'lerde yaşar.
+                                    return _HtmlMobileLayout(
+                                      controller: widget.controller,
+                                      textController: _textController,
+                                      activeTab: _activeTab,
+                                      onOpenTool: _openMobileToolSheet,
+                                      onOpenPhotoQuick: _openMobilePhotoActions,
+                                      canvasZoom: _mobileCanvasZoom,
+                                      canvasPan: _mobileCanvasPan,
+                                      onScaleStart: _onMobileScaleStart,
+                                      onScaleUpdate: _onMobileScaleUpdate,
+                                      onScaleEnd: _onMobileScaleEnd,
+                                      onMultiTouchChanged:
+                                          _onMobileMultiTouchChanged,
+                                      canvasInteractive: !_multiTouchActive &&
+                                          !widget.adminReadOnly,
+                                      showHint: _showMobileHint &&
+                                          _mobileCanvasZoom <= 1.0001,
+                                      readOnly: widget.adminReadOnly,
+                                    );
+                                  },
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
                   ),
                 ),
               ),
@@ -1534,6 +1751,8 @@ class _HtmlHeader extends StatelessWidget {
             switch (action) {
               case _MobileHeaderAction.preview:
                 onPreview();
+              case _MobileHeaderAction.guide:
+                showPresentationQuickGuide(context);
               case _MobileHeaderAction.settings:
                 _showEditorSettings(context);
               case _MobileHeaderAction.save:
@@ -1640,7 +1859,7 @@ class _HtmlHeader extends StatelessWidget {
                             tooltip: '',
                             size: iconSize,
                             branded: true,
-                            onTap: () {},
+                            onTap: null,
                           ),
                         ),
                         if (adminReadOnly)
@@ -1657,6 +1876,15 @@ class _HtmlHeader extends StatelessWidget {
                                 child: ListTile(
                                   leading: const Icon(Icons.settings_outlined),
                                   title: Text(tr('Ayarlar', 'Settings')),
+                                ),
+                              ),
+                              PopupMenuItem<_MobileHeaderAction>(
+                                value: _MobileHeaderAction.guide,
+                                child: ListTile(
+                                  leading:
+                                      const Icon(Icons.help_outline_rounded),
+                                  title: Text(
+                                      tr('Hızlı başlangıç', 'Quick start')),
                                 ),
                               ),
                               const PopupMenuDivider(),
@@ -1683,7 +1911,7 @@ class _HtmlHeader extends StatelessWidget {
                               tooltip: '',
                               size: iconSize,
                               branded: true,
-                              onTap: () {},
+                              onTap: null,
                             ),
                           ),
                       ],
@@ -3351,6 +3579,7 @@ enum _FileMenuAction {
 
 /// Mobil başlıktaki "⋯" overflow menüsünün eylemleri.
 enum _MobileHeaderAction {
+  guide,
   preview,
   settings,
   save,
@@ -3395,7 +3624,8 @@ Future<void> _showEditorSettings(BuildContext context) {
           contentPadding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
           content: SizedBox(
             width: 380,
-            child: Column(
+            child: SingleChildScrollView(
+                child: Column(
               mainAxisSize: MainAxisSize.min,
               children: <Widget>[
                 ValueListenableBuilder<ThemeMode>(
@@ -3473,6 +3703,16 @@ Future<void> _showEditorSettings(BuildContext context) {
                   ),
                 const Divider(height: 1),
                 ListTile(
+                  key: const ValueKey<String>('settings-quick-guide'),
+                  leading: const Icon(Icons.help_outline_rounded),
+                  title: Text(tr('Hızlı başlangıç', 'Quick start')),
+                  onTap: () {
+                    Navigator.of(dialogContext).pop();
+                    showPresentationQuickGuide(context);
+                  },
+                ),
+                const Divider(height: 1),
+                ListTile(
                   key: const ValueKey<String>('settings-plans'),
                   leading: const Icon(Icons.workspace_premium_outlined),
                   title: Text(langController.tr('Planlar', 'Plans')),
@@ -3493,7 +3733,7 @@ Future<void> _showEditorSettings(BuildContext context) {
                   },
                 ),
               ],
-            ),
+            )),
           ),
           actions: <Widget>[
             TextButton(
@@ -3623,13 +3863,29 @@ class _MobileHeaderIconButton extends StatelessWidget {
 
   final IconData icon;
   final String tooltip;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
   final bool enabled;
   final double size;
   final bool branded;
 
   @override
   Widget build(BuildContext context) {
+    final iconWidget = Icon(
+      icon,
+      size: 20,
+      color: enabled
+          ? branded
+              ? _studioHeaderForeground
+              : context._htmlInk
+          : branded
+              ? _studioHeaderMuted.withValues(alpha: 0.45)
+              : context._htmlMuted.withValues(alpha: 0.45),
+    );
+    // PopupMenuButton owns focus, semantics and input for decorative icons.
+    if (onTap == null) {
+      return SizedBox(
+          width: size, height: size, child: Center(child: iconWidget));
+    }
     return IconButton(
       tooltip: tooltip,
       onPressed: enabled ? onTap : null,
@@ -3640,17 +3896,7 @@ class _MobileHeaderIconButton extends StatelessWidget {
         minimumSize: Size(size, size),
         padding: EdgeInsets.zero,
       ),
-      icon: Icon(
-        icon,
-        size: 20,
-        color: enabled
-            ? branded
-                ? _studioHeaderForeground
-                : context._htmlInk
-            : branded
-                ? _studioHeaderMuted.withValues(alpha: 0.45)
-                : context._htmlMuted.withValues(alpha: 0.45),
-      ),
+      icon: iconWidget,
     );
   }
 }
@@ -3716,6 +3962,7 @@ class _HtmlStudioHeader extends StatelessWidget {
     required this.onRemoveText,
     required this.canRemoveText,
     this.lastEditorLabel,
+    this.saveStatus = 'Yerel taslak',
     this.adminReadOnly = false,
     this.presentationFileName = 'Sutols Sunumu',
     this.onEditFileName,
@@ -3735,6 +3982,7 @@ class _HtmlStudioHeader extends StatelessWidget {
   final VoidCallback onRemoveText;
   final bool canRemoveText;
   final String? lastEditorLabel;
+  final String saveStatus;
   final String presentationFileName;
   final VoidCallback? onEditFileName;
   final VoidCallback? onOpenStageDimensions;
@@ -3831,20 +4079,19 @@ class _HtmlStudioHeader extends StatelessWidget {
           Row(
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
-              Text(
-                lastEditorLabel == null || lastEditorLabel!.isEmpty
-                    ? tr('Kaydedildi', 'Saved')
-                    : '${tr('Kaydedildi', 'Saved')} · $lastEditorLabel',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: _studioHeaderMuted,
-                      fontWeight: FontWeight.w700,
-                    ),
-              ),
-              const SizedBox(width: 6),
-              const Icon(
-                Icons.check_rounded,
-                size: 16,
-                color: _studioHeaderMuted,
+              Tooltip(
+                message: lastEditorLabel == null || lastEditorLabel!.isEmpty
+                    ? saveStatus
+                    : '$saveStatus\n${tr('Son düzenleyen', 'Last editor')}: $lastEditorLabel',
+                child: SizedBox(
+                  width: 100,
+                  child: Text(saveStatus,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: _studioHeaderMuted,
+                          fontWeight: FontWeight.w700)),
+                ),
               ),
             ],
           ),
@@ -3881,7 +4128,7 @@ class _HtmlStudioHeader extends StatelessWidget {
   }
 }
 
-enum _HeaderBrandMenuAction { home, settings, presentations }
+enum _HeaderBrandMenuAction { home, settings, presentations, guide }
 
 class _HeaderBrandMark extends StatelessWidget {
   const _HeaderBrandMark({
@@ -3900,6 +4147,8 @@ class _HeaderBrandMark extends StatelessWidget {
     _HeaderBrandMenuAction action,
   ) {
     switch (action) {
+      case _HeaderBrandMenuAction.guide:
+        showPresentationQuickGuide(context);
       case _HeaderBrandMenuAction.home:
         Navigator.of(context).popUntil((route) => route.isFirst);
       case _HeaderBrandMenuAction.settings:
@@ -3945,6 +4194,14 @@ class _HeaderBrandMark extends StatelessWidget {
           child: _HeaderBrandMenuItem(
             icon: Icons.settings_outlined,
             label: tr('Ayarlar', 'Settings'),
+          ),
+        ),
+        PopupMenuItem<_HeaderBrandMenuAction>(
+          key: const ValueKey<String>('brand-menu-guide'),
+          value: _HeaderBrandMenuAction.guide,
+          child: _HeaderBrandMenuItem(
+            icon: Icons.help_outline_rounded,
+            label: tr('Hızlı başlangıç', 'Quick start'),
           ),
         ),
         PopupMenuItem<_HeaderBrandMenuAction>(
@@ -5940,12 +6197,64 @@ class _Html3DModelControls extends StatefulWidget {
 
 class _Html3DModelControlsState extends State<_Html3DModelControls> {
   final TextEditingController _searchController = TextEditingController();
-  List<ModelCatalogEntry> _models = const <ModelCatalogEntry>[];
-  bool _loading = true;
+  ModelSearchIndex _searchIndex =
+      ModelSearchIndex(ModelRepository.mergeWithBundledModels(const []));
+  ModelRecommendationIndex _recommendationIndex = ModelRecommendationIndex(
+      ModelRepository.mergeWithBundledModels(const []));
+  Map<String, String> _recommendationReasons = {};
+  final _selectionRequests = LatestModelSelectionRequest();
+  Timer? _searchDebounce;
+  int _loadGeneration = 0;
+  bool _loading = false;
   String? _error;
   String _query = '';
   String _category = '';
   String _userTier = 'free';
+  String _collection = '';
+  ModelCapabilityFilter _capability = ModelCapabilityFilter.all;
+  String? _similarSeedId;
+  String? _similarSeedName;
+  ModelLibraryPreferences? _preferences;
+  int _preferenceGeneration = 0;
+  StreamSubscription<User?>? _authSubscription;
+
+  String _owner() {
+    try {
+      return FirebaseAuth.instance.currentUser?.uid ?? 'guest';
+    } catch (_) {
+      return 'guest';
+    }
+  }
+
+  Future<void> _loadPreferences() async {
+    final generation = ++_preferenceGeneration;
+    final preferences = ModelLibraryPreferences(_owner());
+    _preferences = null;
+    try {
+      await preferences.load();
+    } catch (_) {}
+    if (mounted &&
+        generation == _preferenceGeneration &&
+        preferences.owner == _owner()) {
+      setState(() => _preferences = preferences);
+    }
+  }
+
+  Future<void> _toggleFavorite(String id) async {
+    final preferences = _preferences;
+    if (preferences == null) return;
+    final write = preferences.toggleFavorite(id);
+    setState(() {});
+    try {
+      await write;
+    } catch (_) {
+      if (mounted)
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text(tr(
+                'Favori bu oturumda korundu; cihaz kaydı başarısız.',
+                'Favorite kept for this session; local save failed.'))));
+    }
+  }
 
   static int _tierRank(String tier) => switch (tier) {
         'plus' || 'premium' || 'pro' => 1,
@@ -5959,17 +6268,68 @@ class _Html3DModelControlsState extends State<_Html3DModelControls> {
   void initState() {
     super.initState();
     _load();
+    _loadPreferences();
+    widget.controller.addListener(_onSlideChanged);
+    try {
+      _authSubscription = FirebaseAuth.instance.authStateChanges().listen((_) {
+        if (mounted && _preferences?.owner != _owner()) {
+          _selectionRequests.invalidate();
+          setState(() {
+            _searchIndex = ModelSearchIndex(
+                ModelRepository.mergeWithBundledModels(const []));
+            _recommendationIndex = ModelRecommendationIndex(
+                ModelRepository.mergeWithBundledModels(const []));
+            _userTier = 'free';
+          });
+          _loadPreferences();
+          _load();
+        }
+      });
+    } catch (_) {}
+  }
+
+  Object _modelSelectionScope() => (
+        controller: widget.controller,
+        page: widget.controller.selectedPage,
+        textIds: (widget.controller.selectedTextBlockIds.toList()..sort())
+            .join('\u0000'),
+        componentIds: (widget.controller.selectedComponentBlockIds.toList()
+              ..sort())
+            .join('\u0000'),
+        owner: _owner(),
+      );
+
+  void _onSlideChanged() {
+    _selectionRequests.observe(_modelSelectionScope());
+    if (mounted && _collection == 'recommended') setState(() {});
+  }
+
+  @override
+  void didUpdateWidget(covariant _Html3DModelControls oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.controller != widget.controller) {
+      _selectionRequests.invalidate();
+      oldWidget.controller.removeListener(_onSlideChanged);
+      widget.controller.addListener(_onSlideChanged);
+    }
   }
 
   @override
   void dispose() {
+    _selectionRequests.invalidate();
+    widget.controller.removeListener(_onSlideChanged);
+    _searchDebounce?.cancel();
+    _authSubscription?.cancel();
+    _loadGeneration++;
     _searchController.dispose();
     super.dispose();
   }
 
   Future<void> _load() async {
+    final generation = ++_loadGeneration;
     setState(() {
-      _loading = true;
+      // Bundled models are immediately usable, even while the cloud stalls.
+      _loading = false;
       _error = null;
     });
     try {
@@ -5996,35 +6356,132 @@ class _Html3DModelControlsState extends State<_Html3DModelControls> {
       // Katalog uygulama oturumu boyunca repository'de tutulur. Arama,
       // kategori filtresi ve sıralama bu bellek içi liste üzerinde yapılır.
       final models = await ModelRepository.instance.getModels();
-      if (!mounted) return;
+      if (!mounted || generation != _loadGeneration) return;
       setState(() {
-        _models = models;
+        _searchIndex = ModelSearchIndex(models);
+        _recommendationIndex = ModelRecommendationIndex(models);
         _userTier = userTier;
         _loading = false;
       });
     } catch (e) {
-      if (!mounted) return;
+      if (!mounted || generation != _loadGeneration) return;
       setState(() {
-        _error = 'Modeller yüklenemedi: $e';
+        _error = tr(
+            'Bulut kataloğuna ulaşılamadı. Cihazdaki modeller kullanılabilir.',
+            'Cloud catalog unavailable. Local models remain available.');
         _loading = false;
       });
     }
   }
 
+  List<PresentationTextBlock> _recommendationTextBlocks() => [
+        ...widget.controller.selectedPage.textBlocks
+      ]..sort((a, b) => (a.type == PresentationTextType.title ? 0 : 1)
+          .compareTo(b.type == PresentationTextType.title ? 0 : 1));
+
+  ModelRecommendationScope _recommendationScope() =>
+      widget.controller.modelRecommendationFeedback.scope(
+          owner: _owner(),
+          pageId: widget.controller.selectedPage.id,
+          slideTexts: _recommendationTextBlocks().map((b) => b.text));
+
+  void _dismissRecommendation(String id) {
+    final scope = _recommendationScope();
+    widget.controller.modelRecommendationFeedback.reject(scope, id);
+    setState(() {});
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text(tr('Bu oturumda, slaytın mevcut metni için gizlendi.',
+          'Hidden for this slide’s current text in this session.')),
+      action: SnackBarAction(
+          label: tr('Geri al', 'Undo'),
+          onPressed: () {
+            widget.controller.modelRecommendationFeedback.restore(scope, id);
+            if (mounted) setState(() {});
+          }),
+    ));
+  }
+
   List<ModelCatalogEntry> get _filtered {
-    final query = _query.trim().toLowerCase();
-    return _models.where((model) {
-      if (_category.isNotEmpty && model.category != _category) {
-        return false;
-      }
-      if (query.isEmpty) {
-        return true;
-      }
-      return model.name.toLowerCase().contains(query);
-    }).toList(growable: false);
+    final results = _searchIndex
+        .search(_query, category: _category)
+        .where((model) => modelMatchesCapability(model.id, _capability))
+        .toList(growable: false);
+    _recommendationReasons = {};
+    if (_collection == 'similar' && _similarSeedId != null) {
+      final byId = {for (final m in results) m.id: m};
+      final matches = _recommendationIndex.similar(_similarSeedId!);
+      _recommendationReasons = {
+        for (final m in matches)
+          m.model.id:
+              '${tr('Ortak etiketler', 'Shared tags')}: ${m.sharedTerms.join(', ')}'
+      };
+      return matches
+          .where((m) => byId.containsKey(m.model.id))
+          .map((m) => byId[m.model.id]!)
+          .toList(growable: false);
+    }
+    if (_collection == 'recommended') {
+      final page = widget.controller.selectedPage;
+      final blocks = _recommendationTextBlocks();
+      final matches = _recommendationIndex.recommend(
+        slideTexts: blocks.map((b) => b.text),
+        alreadyUsed: {
+          ...page.componentBlocks
+              .map((b) => b.modelAssetId)
+              .whereType<String>(),
+          ...widget.controller.modelRecommendationFeedback
+              .rejected(_recommendationScope()),
+        },
+      );
+      final byId = {for (final m in results) m.id: m};
+      _recommendationReasons = {
+        for (final m in matches)
+          m.id:
+              '${tr('Eşleşen kelimeler', 'Matching words')}: ${m.matchedTerms.join(', ')}'
+      };
+      return matches
+          .where((m) => byId.containsKey(m.id))
+          .map((m) => byId[m.id]!)
+          .toList(growable: false);
+    }
+    final preferences = _preferences;
+    if (_collection == 'favorites')
+      return results
+          .where((m) => preferences?.favorites.contains(m.id) ?? false)
+          .toList();
+    if (_collection == 'recent') {
+      final ranks = {
+        for (var i = 0; i < (preferences?.recent.length ?? 0); i++)
+          preferences!.recent[i]: i
+      };
+      return results.where((m) => ranks.containsKey(m.id)).toList()
+        ..sort((a, b) => ranks[a.id]!.compareTo(ranks[b.id]!));
+    }
+    return results;
+  }
+
+  void _showSimilar(ModelCatalogEntry model) {
+    _searchDebounce?.cancel();
+    _searchController.clear();
+    setState(() {
+      _query = '';
+      _category = '';
+      _similarSeedId = model.id;
+      _similarSeedName = model.name;
+      _collection = 'similar';
+    });
+  }
+
+  void _updateQuery(String value) {
+    _searchDebounce?.cancel();
+    _searchDebounce = Timer(const Duration(milliseconds: 150), () {
+      if (mounted) setState(() => _query = value);
+    });
   }
 
   Future<void> _add(ModelCatalogEntry model) async {
+    final owner = _owner();
+    final request = _selectionRequests.begin(_modelSelectionScope());
     if (_isLocked(model)) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -6040,6 +6497,8 @@ class _Html3DModelControlsState extends State<_Html3DModelControls> {
     final resolvedSource = ModelAssetService.isLocalAssetPath(rawSource)
         ? rawSource
         : await ModelAssetService.generateSignedUrl(rawSource);
+    if (!mounted ||
+        !_selectionRequests.accepts(request, _modelSelectionScope())) return;
     if (resolvedSource == null ||
         resolvedSource.isEmpty ||
         (!ModelAssetService.isLocalAssetPath(resolvedSource) &&
@@ -6056,6 +6515,7 @@ class _Html3DModelControlsState extends State<_Html3DModelControls> {
       return;
     }
 
+    if (!mounted || owner != _owner()) return;
     RemoteModelSources.registerAll(<String, String>{model.id: resolvedSource});
     widget.controller.add3DModelBlock(
       Presentation3DModelAsset(
@@ -6068,6 +6528,10 @@ class _Html3DModelControlsState extends State<_Html3DModelControls> {
         sha256: '',
       ),
     );
+    try {
+      await _preferences?.recordUse(model.id);
+    } catch (_) {}
+    if (mounted) setState(() {});
   }
 
   @override
@@ -6075,94 +6539,202 @@ class _Html3DModelControlsState extends State<_Html3DModelControls> {
     final selectedModelId =
         widget.controller.selectedComponentBlock?.modelAssetId;
     final filtered = _filtered;
+    final categoryLabels = <String, String>{
+      'analiz-modeli': tr('Analiz Modeli', 'Analysis Model'),
+      'grafik': tr('Grafik', 'Chart'),
+      'diyagram': tr('Diyagram', 'Diagram'),
+      'sembol': tr('Sembol', 'Symbol'),
+      'ikon-3d': tr('İkon 3D', '3D Icon'),
+      'diger': tr('Diğer', 'Other'),
+    };
     final categories = <(String, String)>[
       ('', tr('Tümü', 'All')),
-      ('analiz-modeli', tr('Analiz Modeli', 'Analysis Model')),
-      ('grafik', tr('Grafik', 'Chart')),
-      ('diyagram', tr('Diyagram', 'Diagram')),
-      ('sembol', tr('Sembol', 'Symbol')),
-      ('ikon-3d', tr('İkon 3D', '3D Icon')),
-      ('diger', tr('Diğer', 'Other')),
+      for (final category in _searchIndex.categories)
+        (category, categoryLabels[category] ?? category),
     ];
 
     final isExpandedMode = widget.expandResults || widget.isExpanded;
 
-    return Container(
-      key: const ValueKey<String>('model-library-panel'),
-      width: double.infinity,
-      height: double.infinity,
-      padding:
-          isExpandedMode ? const EdgeInsets.all(14) : const EdgeInsets.all(6),
-      decoration: BoxDecoration(
-        color: context.sutolColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: context.sutolColors.outline),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.max,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          _ModelSearchField(
-            controller: _searchController,
-            hintText: tr(
-              'Model ara: isim, etiket, kategori...',
-              'Search models: name, tag, category...',
-            ),
-            onChanged: (value) => setState(() => _query = value),
-            onClear: () {
-              _searchController.clear();
-              setState(() => _query = '');
-            },
-          ),
-          const SizedBox(height: 6),
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: <Widget>[
-                for (final (value, label) in categories) ...<Widget>[
+    return LayoutBuilder(builder: (context, constraints) {
+      return Container(
+        key: const ValueKey<String>('model-library-panel'),
+        width: double.infinity,
+        height: constraints.hasBoundedHeight
+            ? constraints.maxHeight
+            : (MediaQuery.sizeOf(context).height * .42).clamp(300.0, 420.0),
+        padding:
+            isExpandedMode ? const EdgeInsets.all(14) : const EdgeInsets.all(6),
+        decoration: BoxDecoration(
+          color: context.sutolColors.surface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: context.sutolColors.outline),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.max,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Row(children: [
+              Expanded(
+                  child: _ModelSearchField(
+                controller: _searchController,
+                hintText: tr(
+                  'Model ara: isim, etiket, kategori...',
+                  'Search models: name, tag, category...',
+                ),
+                onChanged: _updateQuery,
+                onClear: () {
+                  _searchController.clear();
+                  _searchDebounce?.cancel();
+                  setState(() => _query = '');
+                },
+              )),
+              PopupMenuButton<ModelCapabilityFilter>(
+                key: const ValueKey('model-capability-filter'),
+                tooltip: switch (_capability) {
+                  ModelCapabilityFilter.all =>
+                    tr('Model özellikleri', 'Model capabilities'),
+                  ModelCapabilityFilter.smallDownload => tr(
+                      'Filtre: küçük dosya (≤ 1 MB)',
+                      'Filter: small download (≤ 1 MB)'),
+                  ModelCapabilityFilter.animated =>
+                    tr('Filtre: animasyonlu', 'Filter: animated'),
+                  ModelCapabilityFilter.virtualTour =>
+                    tr('Filtre: sanal tur', 'Filter: virtual tour'),
+                },
+                initialValue: _capability,
+                icon: Icon(_capability == ModelCapabilityFilter.all
+                    ? Icons.filter_list_rounded
+                    : Icons.filter_alt_rounded),
+                onSelected: (value) => setState(() => _capability = value),
+                itemBuilder: (context) => [
+                  for (final value in ModelCapabilityFilter.values)
+                    CheckedPopupMenuItem(
+                      value: value,
+                      checked: _capability == value,
+                      child: Text(switch (value) {
+                        ModelCapabilityFilter.all =>
+                          tr('Tüm özellikler', 'All capabilities'),
+                        ModelCapabilityFilter.smallDownload =>
+                          tr('Küçük dosya (≤ 1 MB)', 'Small download (≤ 1 MB)'),
+                        ModelCapabilityFilter.animated =>
+                          tr('Animasyonlu', 'Animated'),
+                        ModelCapabilityFilter.virtualTour =>
+                          tr('Sanal tur destekli', 'Virtual tour supported'),
+                      }),
+                    ),
+                ],
+              ),
+            ]),
+            const SizedBox(height: 6),
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(children: [
+                for (final item in <(String, String)>[
+                  ('', tr('Kütüphane', 'Library')),
+                  ('favorites', tr('Favoriler', 'Favorites')),
+                  ('recent', tr('Son kullanılan', 'Recent')),
+                  ('recommended', tr('Slayta uygun', 'For this slide')),
+                  if (_similarSeedId != null)
+                    ('similar', tr('Benzer modeller', 'Similar models'))
+                ]) ...[
                   SutolChip(
-                    label: label,
-                    isSelected: _category == value,
-                    onTap: () => setState(() => _category = value),
-                  ),
+                      label: item.$2,
+                      isSelected: _collection == item.$1,
+                      onTap: () => setState(() => _collection = item.$1)),
                   const SizedBox(width: 8),
                 ],
-              ],
+              ]),
             ),
-          ),
-          if (isExpandedMode) ...<Widget>[
+            if (_collection == 'recommended' &&
+                widget.controller.modelRecommendationFeedback
+                    .rejected(_recommendationScope())
+                    .isNotEmpty)
+              Align(
+                alignment: Alignment.centerLeft,
+                child: TextButton.icon(
+                  key: const ValueKey('restore-model-suggestions'),
+                  icon: const Icon(Icons.settings_backup_restore_rounded,
+                      size: 18),
+                  label: Text(tr(
+                      'Gizlenen önerileri göster', 'Show hidden suggestions')),
+                  onPressed: () => setState(() => widget
+                      .controller.modelRecommendationFeedback
+                      .restoreAll(_recommendationScope())),
+                ),
+              ),
+            if (_collection == 'similar')
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                child: Text(
+                    '${tr('Benzerleri', 'Similar to')}: $_similarSeedName',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis),
+              ),
+            if (_error != null)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                child: Row(children: [
+                  Expanded(
+                      child: Text(_error!,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.labelSmall)),
+                  IconButton(
+                      tooltip: tr('Tekrar dene', 'Retry'),
+                      onPressed: _load,
+                      icon: const Icon(Icons.refresh_rounded, size: 18)),
+                ]),
+              ),
             const SizedBox(height: 6),
-            Row(
-              children: <Widget>[
-                Text(
-                  _loading
-                      ? tr('Yükleniyor...', 'Loading...')
-                      : '${filtered.length} ${tr('model', 'models')}${_query.isNotEmpty ? tr(' bulundu', ' found') : ''}',
-                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                        color: context._htmlMuted,
-                        fontWeight: FontWeight.w700,
-                      ),
-                ),
-                const Spacer(),
-                IconButton(
-                  tooltip: tr('Yenile', 'Refresh'),
-                  iconSize: 18,
-                  onPressed: _loading ? null : _load,
-                  icon: const Icon(Icons.refresh_rounded),
-                ),
-              ],
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: <Widget>[
+                  for (final (value, label) in categories) ...<Widget>[
+                    SutolChip(
+                      label: label,
+                      isSelected: _category == value,
+                      onTap: () => setState(() => _category = value),
+                    ),
+                    const SizedBox(width: 8),
+                  ],
+                ],
+              ),
+            ),
+            if (isExpandedMode) ...<Widget>[
+              const SizedBox(height: 6),
+              Row(
+                children: <Widget>[
+                  Text(
+                    _loading
+                        ? tr('Yükleniyor...', 'Loading...')
+                        : '${filtered.length} ${tr('model', 'models')}${_query.isNotEmpty ? tr(' bulundu', ' found') : ''}',
+                    style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                          color: context._htmlMuted,
+                          fontWeight: FontWeight.w700,
+                        ),
+                  ),
+                  const Spacer(),
+                  IconButton(
+                    tooltip: tr('Yenile', 'Refresh'),
+                    iconSize: 18,
+                    onPressed: _loading ? null : _load,
+                    icon: const Icon(Icons.refresh_rounded),
+                  ),
+                ],
+              ),
+            ],
+            const SizedBox(height: 6),
+            Expanded(
+              child: KeyedSubtree(
+                key: const ValueKey<String>('model-library-results'),
+                child: _buildBody(context, filtered, selectedModelId),
+              ),
             ),
           ],
-          const SizedBox(height: 6),
-          Expanded(
-            child: KeyedSubtree(
-              key: const ValueKey<String>('model-library-results'),
-              child: _buildBody(context, filtered, selectedModelId),
-            ),
-          ),
-        ],
-      ),
-    );
+        ),
+      );
+    });
   }
 
   Widget _buildBody(
@@ -6205,36 +6777,6 @@ class _Html3DModelControlsState extends State<_Html3DModelControls> {
       );
     }
 
-    if (_error != null) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
-              Icon(Icons.cloud_off_rounded,
-                  color: context._htmlMuted, size: 28),
-              const SizedBox(height: 8),
-              Text(
-                _error!,
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: context._htmlMuted,
-                      fontWeight: FontWeight.w600,
-                    ),
-              ),
-              const SizedBox(height: 10),
-              OutlinedButton.icon(
-                onPressed: _load,
-                icon: const Icon(Icons.refresh_rounded, size: 16),
-                label: Text(tr('Tekrar Dene', 'Retry')),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-
     if (filtered.isEmpty) {
       return Padding(
         padding: const EdgeInsets.all(16),
@@ -6243,10 +6785,36 @@ class _Html3DModelControlsState extends State<_Html3DModelControls> {
             Icon(Icons.search_off_rounded, color: context._htmlMuted, size: 28),
             const SizedBox(height: 8),
             Text(
-              _query.isEmpty && _category.isEmpty
-                  ? tr('Bulutta model bulunamadı.', 'No models found in cloud.')
-                  : tr('Bu filtrelerle model bulunamadı.',
-                      'No models found with these filters.'),
+              _capability != ModelCapabilityFilter.all
+                  ? tr(
+                      'Bu özellik ve arama filtreleriyle model bulunamadı. Özellik menüsünden Tüm özellikler’i seçebilirsiniz.',
+                      'No models match these capabilities and search filters. Choose All capabilities in the filter menu.')
+                  : _collection == 'similar'
+                      ? tr(
+                          'En az iki ortak etiket taşıyan model bulunamadı. Kütüphanede arama yapabilirsiniz.',
+                          'No model shares at least two concrete tags. You can search the library.')
+                      : _collection == 'recommended'
+                          ? widget.controller.modelRecommendationFeedback
+                                  .rejected(_recommendationScope())
+                                  .isNotEmpty
+                              ? tr(
+                                  'Bu filtrelerde gösterilecek öneri kalmadı. Gizlenen önerileri geri getirin veya kütüphanede arayın.',
+                                  'No suggestions remain with these filters. Restore hidden suggestions or search the library.')
+                              : tr(
+                                  'Bu slayt için güçlü bir eşleşme bulunamadı. Kütüphanede arama yapabilirsiniz.',
+                                  'No strong match for this slide. You can search the library.')
+                          : _collection == 'favorites'
+                              ? tr('Yıldız düğmesiyle favori modeller ekleyin.',
+                                  'Use the star button to add favorites.')
+                              : _collection == 'recent'
+                                  ? tr(
+                                      'Kullandığınız modeller burada görünecek.',
+                                      'Models you use will appear here.')
+                                  : _query.isEmpty && _category.isEmpty
+                                      ? tr('Model bulunamadı.',
+                                          'No models found.')
+                                      : tr('Bu filtrelerle model bulunamadı.',
+                                          'No models found with these filters.'),
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: context._htmlMuted,
@@ -6289,8 +6857,18 @@ class _Html3DModelControlsState extends State<_Html3DModelControls> {
                       sha256: '',
                     ),
                     thumbnailUrl: model.thumbnailUrl,
+                    recommendationReason: _recommendationReasons[model.id],
+                    onDismissRecommendation: _collection == 'recommended'
+                        ? () => _dismissRecommendation(model.id)
+                        : null,
+                    onShowSimilar: () => _showSimilar(model),
                     isSelected: selectedModelId == model.id,
                     locked: _isLocked(model),
+                    isFavorite:
+                        _preferences?.favorites.contains(model.id) ?? false,
+                    onToggleFavorite: _preferences == null
+                        ? null
+                        : () => _toggleFavorite(model.id),
                     onTap: () => _add(model),
                   ),
                 );
@@ -6334,8 +6912,16 @@ class _Html3DModelControlsState extends State<_Html3DModelControls> {
                 sha256: '',
               ),
               thumbnailUrl: model.thumbnailUrl,
+              recommendationReason: _recommendationReasons[model.id],
+              onDismissRecommendation: _collection == 'recommended'
+                  ? () => _dismissRecommendation(model.id)
+                  : null,
+              onShowSimilar: () => _showSimilar(model),
               isSelected: selectedModelId == model.id,
               locked: _isLocked(model),
+              isFavorite: _preferences?.favorites.contains(model.id) ?? false,
+              onToggleFavorite:
+                  _preferences == null ? null : () => _toggleFavorite(model.id),
               onTap: () => _add(model),
             );
           },
@@ -7637,6 +8223,11 @@ class _Model3DLibraryCard extends StatefulWidget {
     required this.isSelected,
     required this.locked,
     required this.onTap,
+    this.isFavorite = false,
+    this.recommendationReason,
+    this.onDismissRecommendation,
+    this.onShowSimilar,
+    this.onToggleFavorite,
   });
 
   final Presentation3DModelAsset model;
@@ -7644,6 +8235,11 @@ class _Model3DLibraryCard extends StatefulWidget {
   final bool isSelected;
   final bool locked;
   final VoidCallback onTap;
+  final bool isFavorite;
+  final String? recommendationReason;
+  final VoidCallback? onDismissRecommendation;
+  final VoidCallback? onShowSimilar;
+  final VoidCallback? onToggleFavorite;
 
   @override
   State<_Model3DLibraryCard> createState() => _Model3DLibraryCardState();
@@ -7754,10 +8350,62 @@ class _Model3DLibraryCardState extends State<_Model3DLibraryCard> {
                       fit: StackFit.expand,
                       children: <Widget>[
                         _thumbnail(context),
+                        if (widget.onToggleFavorite != null)
+                          Positioned(
+                            right: 0,
+                            bottom: 0,
+                            child: IconButton.filledTonal(
+                              tooltip: widget.isFavorite
+                                  ? tr('Favoriden çıkar', 'Remove favorite')
+                                  : tr('Favorilere ekle', 'Add favorite'),
+                              onPressed: widget.onToggleFavorite,
+                              icon: Icon(
+                                  widget.isFavorite
+                                      ? Icons.star_rounded
+                                      : Icons.star_outline_rounded,
+                                  size: 20),
+                            ),
+                          ),
+                        if (widget.onDismissRecommendation != null)
+                          Positioned(
+                            top: 0,
+                            left: 0,
+                            child: IconButton.filledTonal(
+                              key: ValueKey(
+                                  'dismiss-model-suggestion-${widget.model.id}'),
+                              tooltip: tr('Bu slayt için uygun değil',
+                                  'Not suitable for this slide'),
+                              onPressed: widget.onDismissRecommendation,
+                              icon: const Icon(Icons.thumb_down_off_alt_rounded,
+                                  size: 20),
+                            ),
+                          ),
+                        if (widget.recommendationReason != null)
+                          Positioned(
+                            bottom: 4,
+                            left: 4,
+                            child: Tooltip(
+                              message: widget.recommendationReason!,
+                              child: const Icon(Icons.info_outline_rounded,
+                                  size: 20),
+                            ),
+                          ),
+                        if (widget.onShowSimilar != null)
+                          Positioned(
+                            top: 0,
+                            right: 0,
+                            child: IconButton.filledTonal(
+                              tooltip: tr(
+                                  'Benzerlerini göster', 'Show similar models'),
+                              onPressed: widget.onShowSimilar,
+                              icon: const Icon(Icons.manage_search_rounded,
+                                  size: 20),
+                            ),
+                          ),
                         if (widget.isSelected)
                           Positioned(
                             top: 6,
-                            right: 6,
+                            right: 44,
                             child: Container(
                               padding: const EdgeInsets.all(3),
                               decoration: const BoxDecoration(
@@ -7850,6 +8498,56 @@ class _HtmlTemplateControls extends StatelessWidget {
         ),
         const SizedBox(height: 16),
 
+        Text(tr('SEÇİLİ SLAYTIN DÜZENİ', 'CURRENT SLIDE LAYOUT'),
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                color: context._htmlAccent, fontWeight: FontWeight.w800)),
+        const SizedBox(height: 8),
+        Text(
+            tr('Metin ve modeller korunur. Geri Al ile eski yerleşime dönebilirsiniz. Bir başlık ve en fazla dört açıklama kutusu desteklenir; uyguladıktan sonra Okunurluk kontrolünü çalıştırın.',
+                'Text and models are preserved. Undo restores the previous layout. Supports one title and up to four description boxes; check Readability after applying.'),
+            style: Theme.of(context).textTheme.bodySmall),
+        const SizedBox(height: 8),
+        Wrap(spacing: 8, runSpacing: 8, children: [
+          for (final choice in [
+            (
+              PresentationComposition.focus,
+              tr('Tek odak', 'Single focus'),
+              tr('En fazla bir görsel', 'Up to one visual')
+            ),
+            (
+              PresentationComposition.comparison,
+              tr('Karşılaştırma', 'Comparison'),
+              tr('İki görsel, en fazla iki açıklama',
+                  'Two visuals, up to two descriptions')
+            ),
+            (
+              PresentationComposition.annotated,
+              tr('Açıklamalı model', 'Annotated model'),
+              tr('Bir görsel, en fazla dört açıklama',
+                  'One visual, up to four descriptions')
+            ),
+            (
+              PresentationComposition.process,
+              tr('Süreç', 'Process'),
+              tr('İki veya üç görsel', 'Two or three visuals')
+            ),
+            (
+              PresentationComposition.data,
+              tr('Veri odağı', 'Data focus'),
+              tr('En fazla bir grafik veya görsel', 'Up to one chart or visual')
+            ),
+          ])
+            Tooltip(
+                message: choice.$3,
+                child: OutlinedButton(
+                  onPressed: PresentationCompositionService.supports(
+                          controller.selectedPage, choice.$1)
+                      ? () => controller.applyComposition(choice.$1)
+                      : null,
+                  child: Text(choice.$2),
+                )),
+        ]),
+        const SizedBox(height: 20),
         // === TEMPLATES COLLECTION (templates/{templateId}) ===
         Padding(
           padding: const EdgeInsets.only(bottom: 8),
@@ -8299,6 +8997,11 @@ class _HtmlBackgroundControls extends StatefulWidget {
 class _HtmlBackgroundControlsState extends State<_HtmlBackgroundControls> {
   final TextEditingController _searchController = TextEditingController();
   String _query = '';
+  BackgroundToneFilter _tone = BackgroundToneFilter.all;
+  final _searchIndex = BackgroundSearchIndex([
+    presentationBackgroundDefinition(PresentationBackgroundKind.plainWhite)!,
+    ...sutolStudioBackgroundLibrary,
+  ]);
 
   @override
   void dispose() {
@@ -8308,17 +9011,7 @@ class _HtmlBackgroundControlsState extends State<_HtmlBackgroundControls> {
 
   @override
   Widget build(BuildContext context) {
-    final query = _query.trim().toLowerCase();
-    final availableDefinitions = <PresentationBackgroundDefinition>[
-      presentationBackgroundDefinition(PresentationBackgroundKind.plainWhite)!,
-      ...sutolStudioBackgroundLibrary,
-    ];
-    final definitions = availableDefinitions.where((definition) {
-      if (query.isEmpty) return true;
-      return definition.label.toLowerCase().contains(query) ||
-          definition.category.toLowerCase().contains(query) ||
-          definition.tags.any((tag) => tag.toLowerCase().contains(query));
-    }).toList(growable: false);
+    final definitions = _searchIndex.search(_query, tone: _tone);
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -8377,6 +9070,20 @@ class _HtmlBackgroundControlsState extends State<_HtmlBackgroundControls> {
                 setState(() => _query = '');
               },
             ),
+            const SizedBox(height: 10),
+            Wrap(spacing: 8, runSpacing: 4, children: [
+              for (final tone in BackgroundToneFilter.values)
+                ChoiceChip(
+                  key: ValueKey('background-tone-${tone.name}'),
+                  label: Text(switch (tone) {
+                    BackgroundToneFilter.all => tr('Tüm tonlar', 'All tones'),
+                    BackgroundToneFilter.light => tr('Açık ton', 'Light tone'),
+                    BackgroundToneFilter.dark => tr('Koyu ton', 'Dark tone'),
+                  }),
+                  selected: _tone == tone,
+                  onSelected: (_) => setState(() => _tone = tone),
+                ),
+            ]),
             const SizedBox(height: 16),
             if (definitions.isEmpty)
               Padding(
@@ -8384,8 +9091,8 @@ class _HtmlBackgroundControlsState extends State<_HtmlBackgroundControls> {
                 child: Center(
                   child: Text(
                     tr(
-                      'Bu aramayla eşleşen tema bulunamadı.',
-                      'No themes found matching this search.',
+                      'Bu arama ve tonla eşleşen tema yok. Aramayı temizleyin veya Tüm tonlar seçin.',
+                      'No themes match this search and tone. Clear the search or choose All tones.',
                     ),
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: context._htmlMuted,
@@ -9417,6 +10124,38 @@ class _HtmlTextControlsState extends State<_HtmlTextControls> {
           enabled: selectedTextBlock != null,
           onChanged: controller.updateSelectedText,
         ),
+        const SizedBox(height: 8),
+        PresentationReadabilityButton(controller: controller),
+        const SizedBox(height: 12),
+        DropdownButtonFormField<PresentationTextSurface>(
+          key: ValueKey(
+              'selected-text-surface-${selectedTextBlock?.id}-${selectedTextBlock?.surface.name}'),
+          initialValue:
+              selectedTextBlock?.surface ?? PresentationTextSurface.none,
+          decoration: InputDecoration(
+            labelText: tr('Metin yüzeyi', 'Text surface'),
+            helperText: tr('Metin rengini korur; kontrastı kontrol edin.',
+                'Keeps the text color; check contrast.'),
+            helperMaxLines: 2,
+          ),
+          items: [
+            DropdownMenuItem(
+                value: PresentationTextSurface.none,
+                child: Text(tr('Yüzey yok', 'No surface'))),
+            DropdownMenuItem(
+                value: PresentationTextSurface.light,
+                child: Text(tr('Açık yüzey', 'Light surface'))),
+            DropdownMenuItem(
+                value: PresentationTextSurface.dark,
+                child: Text(tr('Koyu yüzey', 'Dark surface'))),
+          ],
+          onChanged: selectedTextBlock == null
+              ? null
+              : (value) {
+                  if (value != null)
+                    controller.updateSelectedTextSurface(value);
+                },
+        ),
         const SizedBox(height: 18),
         Text(
           tr('Metin Rengi', 'Text Color'),
@@ -9671,6 +10410,7 @@ class _HtmlStageCardState extends State<_HtmlStageCard>
   void didUpdateWidget(covariant _HtmlStageCard oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.controller == widget.controller) return;
+    oldWidget.controller.cancelSelectionPointerInteractions();
     oldWidget.controller.removeListener(_handleTransitionPreviewRequest);
     widget.controller.addListener(_handleTransitionPreviewRequest);
     _seenTransitionPreviewRevision =
@@ -9679,6 +10419,7 @@ class _HtmlStageCardState extends State<_HtmlStageCard>
 
   @override
   void dispose() {
+    widget.controller.cancelSelectionPointerInteractions();
     widget.controller.finishInlineTextEditing(_inlineEditingTextBlockId);
     widget.controller.removeListener(_handleTransitionPreviewRequest);
     unawaited(_pointerLockMovementSubscription?.cancel());
@@ -10080,16 +10821,26 @@ class _HtmlStageCardState extends State<_HtmlStageCard>
             ),
           );
           return Center(
-            child: zoom > 1.0001 || pan != Offset.zero
-                ? Transform.translate(
-                    offset: pan,
-                    child: Transform.scale(
-                      scale: zoom,
-                      alignment: Alignment.center,
-                      child: stage,
-                    ),
-                  )
-                : stage,
+            child: Listener(
+              onPointerDown: widget.readOnly
+                  ? null
+                  : (event) => widget.controller
+                      .beginSelectionPointerInteraction(event.pointer),
+              onPointerUp: (event) => widget.controller
+                  .endSelectionPointerInteraction(event.pointer),
+              onPointerCancel: (event) => widget.controller
+                  .endSelectionPointerInteraction(event.pointer),
+              child: zoom > 1.0001 || pan != Offset.zero
+                  ? Transform.translate(
+                      offset: pan,
+                      child: Transform.scale(
+                        scale: zoom,
+                        alignment: Alignment.center,
+                        child: stage,
+                      ),
+                    )
+                  : stage,
+            ),
           );
         },
       ),
@@ -10291,6 +11042,8 @@ class _SelectionContextBarSection extends StatelessWidget {
       {required bool compact}) {
     return <Widget>[
       _SelectedTextToolbarField(
+        fontFamily: presentationFontFamily(block.textStyle),
+        fontWeight: block.effectiveFontWeight,
         controller: textController,
         onChanged: controller.updateSelectedText,
         compact: compact,
@@ -10379,6 +11132,27 @@ class _SelectionContextBarSection extends StatelessWidget {
         block: block,
       ),
       const MiniToolDivider(),
+      PopupMenuButton<PresentationTextSurface>(
+        key: const ValueKey('selected-text-surface-menu'),
+        tooltip: tr('Metin yüzeyi', 'Text surface'),
+        initialValue: block.surface,
+        icon: Icon(Icons.layers_outlined,
+            color: block.surface == PresentationTextSurface.none
+                ? null
+                : context.primary),
+        onSelected: controller.updateSelectedTextSurface,
+        itemBuilder: (_) => [
+          PopupMenuItem(
+              value: PresentationTextSurface.none,
+              child: Text(tr('Yüzey yok', 'No surface'))),
+          PopupMenuItem(
+              value: PresentationTextSurface.light,
+              child: Text(tr('Açık yüzey', 'Light surface'))),
+          PopupMenuItem(
+              value: PresentationTextSurface.dark,
+              child: Text(tr('Koyu yüzey', 'Dark surface'))),
+        ],
+      ),
       _TextColorPopupButton(
         key: const ValueKey<String>('selected-text-color-control'),
         controller: controller,
@@ -10398,6 +11172,8 @@ class _SelectionContextBarSection extends StatelessWidget {
     BuildContext context,
     PresentationComponentBlock block,
   ) {
+    final catalogExposure =
+        findPresentation3DModelAsset(block.modelAssetId!)?.exposure ?? 1;
     return <Widget>[
       MiniToolLabeledToggle(
         icon: Icons.autorenew_rounded,
@@ -10566,6 +11342,34 @@ class _SelectionContextBarSection extends StatelessWidget {
             ],
           ),
         ),
+      ),
+      PopupMenuButton<String>(
+        key: const ValueKey('selected-model-lighting'),
+        tooltip: tr('Model Aydınlatması', 'Model Lighting'),
+        icon: const Icon(Icons.wb_sunny_outlined, size: 20),
+        initialValue: block.modelExposure == null
+            ? 'catalog'
+            : block.modelExposure == (catalogExposure * .8).clamp(.1, 3)
+                ? 'soft'
+                : block.modelExposure == (catalogExposure * 1.2).clamp(.1, 3)
+                    ? 'bright'
+                    : null,
+        onSelected: (choice) {
+          controller.updateSelectedModelExposure(switch (choice) {
+            'soft' => catalogExposure * .8,
+            'bright' => catalogExposure * 1.2,
+            _ => null,
+          });
+        },
+        itemBuilder: (_) => [
+          PopupMenuItem(
+              value: 'catalog',
+              child: Text(tr('Katalog aydınlatması', 'Catalog lighting'))),
+          PopupMenuItem(
+              value: 'soft', child: Text(tr('Daha yumuşak', 'Softer'))),
+          PopupMenuItem(
+              value: 'bright', child: Text(tr('Daha aydınlık', 'Brighter'))),
+        ],
       ),
     ];
   }
@@ -11097,11 +11901,15 @@ class _SelectedTextToolbarField extends StatefulWidget {
     required this.controller,
     required this.onChanged,
     required this.compact,
+    required this.fontFamily,
+    required this.fontWeight,
   });
 
   final TextEditingController controller;
   final ValueChanged<String> onChanged;
   final bool compact;
+  final String? fontFamily;
+  final int fontWeight;
 
   @override
   State<_SelectedTextToolbarField> createState() =>
@@ -11172,7 +11980,9 @@ class _SelectedTextToolbarFieldState extends State<_SelectedTextToolbarField> {
           contextMenuBuilder: _buildHtmlTextEditingContextMenu,
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 color: context._htmlInk,
-                fontWeight: FontWeight.w700,
+                fontFamily: widget.fontFamily,
+                fontWeight: presentationFontWeight(widget.fontWeight),
+                fontVariations: presentationFontVariations(widget.fontWeight),
               ),
           decoration: InputDecoration(
             hintText: tr('Metin yazın', 'Type text'),
@@ -11781,7 +12591,8 @@ bool _shouldReduceHtmlMotion(
   BuildContext context,
   PresentationEffectSettings settings,
 ) {
-  return settings.reducedMotion;
+  return settings.reducedMotion ||
+      (MediaQuery.maybeOf(context)?.disableAnimations ?? false);
 }
 
 String _studioPanelTitle(_HtmlToolTab tab) {
@@ -12104,6 +12915,55 @@ Future<void> _showStageDimensionsDialog(
                   ),
                 ),
               ],
+            ),
+            const SizedBox(height: 18),
+            Text(tr('Hızlı görünüm', 'Quick appearance'),
+                style: Theme.of(ctx).textTheme.labelLarge),
+            const SizedBox(height: 8),
+            Wrap(spacing: 8, runSpacing: 8, children: [
+              for (final item in <(PresentationVisualProfile, String)>[
+                (PresentationVisualProfile.calm, tr('Sakin', 'Calm')),
+                (
+                  PresentationVisualProfile.standard,
+                  tr('Standart', 'Standard')
+                ),
+                (
+                  PresentationVisualProfile.expressive,
+                  tr('Etkileyici', 'Expressive')
+                ),
+              ])
+                OutlinedButton(
+                    onPressed: () {
+                      controller.applyVisualProfile(item.$1);
+                      setState(() {});
+                    },
+                    child: Text(item.$2)),
+            ]),
+            const SizedBox(height: 12),
+            DropdownButtonFormField<PresentationRenderQuality>(
+              key: ValueKey(controller.effectSettings.renderQuality),
+              initialValue: controller.effectSettings.renderQuality,
+              decoration: InputDecoration(
+                  labelText: tr('Görüntü kalitesi', 'Render quality')),
+              items: <DropdownMenuItem<PresentationRenderQuality>>[
+                DropdownMenuItem(
+                    value: PresentationRenderQuality.economy,
+                    child: Text(tr(
+                        'Tasarruf · sakin hareket', 'Economy · calm motion'))),
+                DropdownMenuItem(
+                    value: PresentationRenderQuality.balanced,
+                    child: Text(tr('Dengeli', 'Balanced'))),
+                DropdownMenuItem(
+                    value: PresentationRenderQuality.high,
+                    child: Text(tr(
+                        'Yüksek · ayrıntılı model', 'High · detailed model'))),
+              ],
+              onChanged: (value) {
+                if (value != null) {
+                  controller.setRenderQuality(value);
+                  setState(() {});
+                }
+              },
             ),
             const SizedBox(height: 18),
             Text(

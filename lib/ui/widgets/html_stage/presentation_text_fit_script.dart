@@ -73,6 +73,14 @@ const String sutolTextFitScript = r'''
   }
 
 
+  let scheduledFit = null;
+  function scheduleFit() {
+    if (scheduledFit !== null) return;
+    scheduledFit = requestAnimationFrame(function () {
+      scheduledFit = null;
+      fitAllText();
+    });
+  }
   window.SutolFitText = fitAllText;
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', fitAllText, { once: true });
@@ -80,11 +88,10 @@ const String sutolTextFitScript = r'''
     fitAllText();
   }
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitAllText);
-  window.addEventListener('resize', fitAllText);
+  window.addEventListener('resize', scheduleFit);
   if (window.ResizeObserver) {
-    const observer = new ResizeObserver(fitAllText);
+    const observer = new ResizeObserver(scheduleFit);
     document.querySelectorAll('.sutol-html-stage').forEach(stage => observer.observe(stage));
   }
 })();
 ''';
-

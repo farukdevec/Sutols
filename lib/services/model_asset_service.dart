@@ -18,6 +18,7 @@ class ModelAssetService {
   static const String _authorizeEndpoint =
       'https://assets.sutols.com/authorize';
 
+  static int _authorizationGeneration = 0;
   static final Map<String, _CachedSignedUrl> _signedUrlCache =
       <String, _CachedSignedUrl>{};
   static final Map<String, Future<String?>> _inFlightRequests =
@@ -33,6 +34,7 @@ class ModelAssetService {
 
   /// Clears in-memory signed URL cache.
   static void clearCache() {
+    _authorizationGeneration++;
     _signedUrlCache.clear();
     _inFlightRequests.clear();
   }
@@ -56,7 +58,8 @@ class ModelAssetService {
       if (expiresSec == null) {
         return _signedUrlCache.values.any(
           (cached) =>
-              cached.url == trimmed && DateTime.now().isBefore(cached.expiresAt),
+              cached.url == trimmed &&
+              DateTime.now().isBefore(cached.expiresAt),
         );
       }
       final expiresTime =
@@ -156,11 +159,13 @@ class ModelAssetService {
       final result = await future;
       return result;
     } finally {
-      _inFlightRequests.remove(key);
+      if (identical(_inFlightRequests[key], future))
+        _inFlightRequests.remove(key);
     }
   }
 
   static Future<String?> _fetchSignedUrl(String key, {String? idToken}) async {
+    final generation = _authorizationGeneration;
     try {
       String? token = idToken;
       if (token == null || token.isEmpty) {
@@ -184,6 +189,7 @@ class ModelAssetService {
         }),
       );
 
+      if (generation != _authorizationGeneration) return null;
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body) as Map<String, dynamic>?;
         if (data != null) {

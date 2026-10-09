@@ -124,6 +124,18 @@ void main() {
     }
   }
 
+  testWidgets('studio header never claims an unsaved local draft is saved',
+      (tester) async {
+    final controller = await pumpAt(tester, const Size(1280, 720));
+    expect(find.text('Yerel taslak'), findsOneWidget);
+    expect(find.textContaining('Kaydedildi'), findsNothing);
+    controller.updateSelectedText('Henüz kaydedilmemiş değişiklik');
+    await tester.pumpAndSettle();
+    expect(find.text('Yerel taslak'), findsOneWidget);
+    expect(find.textContaining('Kaydedildi'), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
   for (final w in <double>[320, 360, 375, 390, 414]) {
     testWidgets('editor renders without overflow at ${w.toInt()}px (mobile)', (
       tester,
@@ -308,6 +320,111 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('text surface menu follows undo and text selection',
+      (tester) async {
+    final controller = await pumpAt(tester, const Size(1280, 900));
+    final block = controller.selectedPage.textBlocks.first;
+    controller.selectTextBlock(block.id);
+    await tester.pumpAndSettle();
+    final control = find.byKey(const ValueKey('selected-text-surface-menu'));
+    await tester.ensureVisible(control);
+    await tester.tap(control);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Açık yüzey').last);
+    await tester.pumpAndSettle();
+    expect(
+        controller.selectedTextBlock!.surface, PresentationTextSurface.light);
+    expect(controller.selectedTextBlock!.text, block.text);
+    controller.undo();
+    await tester.pumpAndSettle();
+    expect(
+        tester
+            .widget<PopupMenuButton<PresentationTextSurface>>(control)
+            .initialValue,
+        PresentationTextSurface.none);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('paused canvas drag is one undo step through pointer listeners',
+      (tester) async {
+    final controller = await pumpAt(tester, const Size(1120, 800));
+    controller.add3DModelBlock(
+        findPresentation3DModelAsset('sutols-water-molecule')!);
+    await tester.pumpAndSettle();
+    final original = controller.selectedComponentBlock!.position;
+    final target =
+        tester.getTopLeft(find.byType(HtmlModelCanvas)) + const Offset(24, 24);
+    final gesture = await tester.startGesture(target);
+    await gesture.moveBy(const Offset(35, 0));
+    await tester.pump(const Duration(milliseconds: 600));
+    await gesture.moveBy(const Offset(25, 0));
+    await tester.pump();
+    await gesture.up();
+    await tester.pumpAndSettle();
+    expect(controller.selectedComponentBlock!.position, isNot(original));
+    controller.undo();
+    expect(controller.selectedComponentBlock!.position, original);
+    controller.undo();
+    expect(controller.selectedPage.componentBlocks, isEmpty);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('model lighting menu edits only exposure and can restore catalog',
+      (tester) async {
+    final controller = await pumpAt(tester, const Size(1120, 800));
+    final model = findPresentation3DModelAsset('sutols-water-molecule')!;
+    controller.add3DModelBlock(model);
+    await tester.pumpAndSettle();
+    final before = controller.selectedComponentBlock!;
+    final control = find.byKey(const ValueKey('selected-model-lighting'));
+    await tester.ensureVisible(control);
+    await tester.tap(control);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Daha aydınlık'));
+    await tester.pumpAndSettle();
+    expect(controller.selectedComponentBlock!.modelExposure,
+        (model.exposure * 1.2).clamp(.1, 3));
+    expect(
+        tester.widget<HtmlModelCanvas>(find.byType(HtmlModelCanvas)).exposure,
+        (model.exposure * 1.2).clamp(.1, 3));
+    expect(controller.selectedComponentBlock!.modelOrbitTheta,
+        before.modelOrbitTheta);
+    expect(controller.selectedComponentBlock!.modelAnimationTime,
+        before.modelAnimationTime);
+    await tester.tap(control);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Katalog aydınlatması'));
+    await tester.pumpAndSettle();
+    expect(controller.selectedComponentBlock!.modelExposure, isNull);
+    expect(
+        tester.widget<HtmlModelCanvas>(find.byType(HtmlModelCanvas)).exposure,
+        model.exposure);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('background tone filter keeps search and selected slide',
+      (tester) async {
+    final controller = await pumpAt(tester, const Size(1120, 800));
+    await tester.tap(find.text('Arka Planlar'));
+    await tester.pumpAndSettle();
+    final search = find.byWidgetPredicate((widget) =>
+        widget is TextField &&
+        (widget.decoration?.hintText ?? '').startsWith('Tema ara:'));
+    await tester.enterText(search, 'GOKYUZU');
+    await tester.pumpAndSettle();
+    expect(find.text('Gökyüzü'), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('background-tone-dark')));
+    await tester.pumpAndSettle();
+    expect(find.text('Gökyüzü'), findsNothing);
+    expect(controller.selectedPage.backgroundKind,
+        PresentationBackgroundKind.plainWhite);
+    await tester.tap(find.byKey(const ValueKey('background-tone-all')));
+    await tester.pumpAndSettle();
+    expect(find.text('Gökyüzü'), findsOneWidget);
+    expect(tester.widget<TextField>(search).controller!.text, 'GOKYUZU');
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('arka plan sekmesi 1120px genişlikte taşmaz', (tester) async {
     final controller = await pumpAt(tester, const Size(1120, 800));
     expect(
@@ -318,7 +435,8 @@ void main() {
     await tester.tap(find.text('Arka Planlar'));
     await tester.pumpAndSettle();
     expect(find.text('Sutols Sahne Koleksiyonu'), findsOneWidget);
-    expect(find.text('21 tema'), findsOneWidget);
+    expect(find.text('${sutolStudioBackgroundLibrary.length} tema'),
+        findsOneWidget);
     expect(find.text('Arka Plansız (Beyaz)'), findsOneWidget);
     expect(find.text('Teknoloji & Yapay Zeka'), findsOneWidget);
     await tester.ensureVisible(find.text('Teknoloji & Yapay Zeka'));
@@ -638,6 +756,100 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets(
+      'unsupported HTML export reports the limitation and preserves edits',
+      (tester) async {
+    final controller = await pumpAt(tester, const Size(1400, 900));
+    final before = PresentationProjectCodec.encodeProject(
+        pages: controller.pages, effectSettings: controller.effectSettings);
+    await tester.tap(find.byKey(const ValueKey('studio-save-button')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('HTML formatı'));
+    await tester.pumpAndSettle();
+    expect(find.text('HTML dışa aktarma web tarayıcısında kullanılabilir.'),
+        findsOneWidget);
+    expect(
+        PresentationProjectCodec.encodeProject(
+            pages: controller.pages, effectSettings: controller.effectSettings),
+        before);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('unsupported PDF export preserves edits and remains retryable',
+      (tester) async {
+    final controller = await pumpAt(tester, const Size(1400, 900));
+    final before = PresentationProjectCodec.encodeProject(
+        pages: controller.pages, effectSettings: controller.effectSettings);
+    for (var attempt = 0; attempt < 2; attempt++) {
+      await tester.tap(find.byKey(const ValueKey('studio-save-button')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('PDF formatı (animasyonlar çalışmaz)'));
+      await tester.pumpAndSettle();
+      expect(find.text('PDF dışa aktarma web tarayıcısında kullanılabilir.'),
+          findsOneWidget);
+      expect(tester.takeException(), isNull);
+    }
+    expect(
+        PresentationProjectCodec.encodeProject(
+            pages: controller.pages, effectSettings: controller.effectSettings),
+        before);
+  });
+
+  for (final width in [390.0, 623.0]) {
+    testWidgets('mobile header menus respond to icon taps at $width',
+        (tester) async {
+      await pumpAt(tester, Size(width, 800));
+      await tester.tap(find.byTooltip('Dışa Aktar'));
+      await tester.pumpAndSettle();
+      expect(find.text('HTML Dışa Aktar'), findsOneWidget);
+      expect(find.text('PDF Olarak Yazdır'), findsOneWidget);
+      await tester.tap(find.text('PDF Olarak Yazdır'));
+      await tester.pumpAndSettle();
+      expect(find.text('PDF dışa aktarma web tarayıcısında kullanılabilir.'),
+          findsOneWidget);
+      await tester.tap(find.byTooltip('Diğer işlemler'));
+      await tester.pumpAndSettle();
+      expect(find.text('Projeyi Kaydet'), findsOneWidget);
+      expect(find.text('Proje Yükle'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+  }
+
+  testWidgets('mobile header menus have one working keyboard stop each',
+      (tester) async {
+    await pumpAt(tester, const Size(390, 844));
+    final visited = <FocusNode>{};
+    final menuStops = <String, int>{};
+    for (var i = 0; i < 80; i++) {
+      await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+      await tester.pumpAndSettle();
+      final focus = FocusManager.instance.primaryFocus;
+      if (focus == null) continue;
+      if (!visited.add(focus)) break;
+      String? menu;
+      focus.context?.visitAncestorElements((element) {
+        final widget = element.widget;
+        if (widget is PopupMenuButton &&
+            ['Dışa Aktar', 'Diğer işlemler'].contains(widget.tooltip)) {
+          menu = widget.tooltip;
+          return false;
+        }
+        return true;
+      });
+      if (menu == null) continue;
+      menuStops.update(menu!, (count) => count + 1, ifAbsent: () => 1);
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+      await tester.pumpAndSettle();
+      expect(
+          find.text(menu == 'Dışa Aktar' ? 'PDF Olarak Yazdır' : 'Proje Yükle'),
+          findsOneWidget);
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      await tester.pumpAndSettle();
+    }
+    expect(menuStops, {'Dışa Aktar': 1, 'Diğer işlemler': 1});
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('yarım ekranda üst bar ince ve sade kalır', (tester) async {
     await pumpAt(tester, const Size(1000, 800));
 
@@ -811,26 +1023,15 @@ void main() {
 
     tester.view.physicalSize = const Size(390, 844);
     await tester.pump();
-    final mobileRenderedText = find.byWidgetPredicate(
-      (widget) => widget is Text && widget.data == 'Font önizleme metni',
-    );
-    expect(mobileRenderedText, findsWidgets);
-    expect(
-      tester
-          .widgetList<Text>(mobileRenderedText)
-          .map((widget) => widget.style?.fontFamily)
-          .toSet(),
-      <String?>{'Roboto Mono'},
-      reason: 'Responsive mobil editör aynı seçili fontu korumalı',
-    );
-    expect(
-      tester
-          .widgetList<Text>(mobileRenderedText)
-          .map((widget) => widget.style?.fontWeight)
-          .toSet(),
-      <FontWeight?>{FontWeight.w300},
-      reason: 'Responsive mobil editör aynı yazı ağırlığını korumalı',
-    );
+    // Responsive resize retains the active inline edit rather than replacing
+    // it with a display Text widget and losing keyboard focus.
+    final mobileInlineEditor = find.byWidgetPredicate((widget) =>
+        widget is TextField &&
+        widget.controller?.text == 'Font önizleme metni');
+    expect(mobileInlineEditor, findsOneWidget);
+    final mobileStyle = tester.widget<TextField>(mobileInlineEditor).style;
+    expect(mobileStyle?.fontFamily, 'Roboto Mono');
+    expect(mobileStyle?.fontWeight, FontWeight.w300);
     await tester.pump(const Duration(milliseconds: 100));
     expect(tester.takeException(), isNull);
   });
@@ -996,33 +1197,250 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('model capability filters preserve search and can be cleared',
+      (tester) async {
+    SharedPreferences.setMockInitialValues(<String, Object>{});
+    await pumpAt(tester, const Size(1400, 900));
+    await tester.tap(find.text('3D Modeller').first);
+    await tester.pumpAndSettle();
+    final search = find.byWidgetPredicate((widget) =>
+        widget is TextField &&
+        widget.decoration?.hintText == 'Model ara: isim, etiket, kategori...');
+    await tester.enterText(search, 'Su Molekülü');
+    await tester.pump(const Duration(milliseconds: 200));
+    await tester.tap(find.byKey(const ValueKey('model-capability-filter')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Animasyonlu').last);
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Bu özellik ve arama filtreleriyle'),
+        findsOneWidget);
+    expect((tester.widget<TextField>(search).controller!).text, 'Su Molekülü');
+    await tester.tap(find.byKey(const ValueKey('model-capability-filter')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Tüm özellikler').last);
+    await tester.pumpAndSettle();
+    expect(find.text('Su Molekülü'), findsWidgets);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('küçük resmi olmayan paket 3B modelleri kütüphanede görünür', (
     tester,
   ) async {
     SharedPreferences.setMockInitialValues(<String, Object>{});
     await pumpAt(tester, const Size(1400, 900));
     await tester.tap(find.text('3D Modeller').first);
-    // Repository, Firebase oturumu olmasa da paket katalogyu döndürür.
-    for (var attempt = 0;
-        attempt < 10 &&
-            find
-                .byKey(const ValueKey<String>('model-card-anitkabir'))
-                .evaluate()
-                .isEmpty;
-        attempt++) {
-      await tester.pump(const Duration(milliseconds: 100));
-    }
-
-    for (final id in <String>[
-      'anitkabir',
-      'yolcu-ucagi',
-      'gercekci-dunya',
+    await tester.pumpAndSettle();
+    final search = find.byWidgetPredicate((widget) =>
+        widget is TextField &&
+        widget.decoration?.hintText == 'Model ara: isim, etiket, kategori...');
+    for (final item in <(String, String)>[
+      ('anitkabir', 'Anıtkabir'),
+      ('yolcu-ucagi', 'Yolcu Uçağı'),
+      ('gercekci-dunya', 'Gerçekçi Dünya')
     ]) {
-      expect(
-        find.byKey(ValueKey<String>('model-card-$id')),
-        findsOneWidget,
-      );
+      // Search brings an off-screen entry into the virtualized result list.
+      await tester.enterText(search, item.$2);
+      await tester.pump(const Duration(milliseconds: 200));
+      await tester.pumpAndSettle();
+      expect(find.byKey(ValueKey<String>('model-card-${item.$1}')),
+          findsOneWidget);
     }
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets(
+      'rejecting a model suggestion preserves the slide and supports undo',
+      (tester) async {
+    final controller = await pumpAt(tester, const Size(1400, 900));
+    controller.selectTextBlock(controller.selectedPage.textBlocks.first.id);
+    controller.updateSelectedText('Atom elektron çekirdek');
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('3D Modeller').first);
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Slayta uygun'));
+    await tester.tap(find.text('Slayta uygun'));
+    await tester.pumpAndSettle();
+    final before = PresentationProjectCodec.encodeProject(
+        pages: controller.pages, effectSettings: controller.effectSettings);
+    final dismiss =
+        find.byKey(const ValueKey('dismiss-model-suggestion-sutols-bohr-atom'));
+    await tester.ensureVisible(dismiss);
+    await tester.tap(dismiss);
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('model-card-sutols-bohr-atom')),
+        findsNothing);
+    expect(
+        PresentationProjectCodec.encodeProject(
+            pages: controller.pages, effectSettings: controller.effectSettings),
+        before);
+    await tester.tap(find.descendant(
+        of: find.byType(SnackBar), matching: find.byType(TextButton)));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('model-card-sutols-bohr-atom')),
+        findsOneWidget);
+    await tester.tap(dismiss);
+    await tester.pumpAndSettle();
+    expect(
+        find.textContaining('Gizlenen önerileri geri getirin'), findsOneWidget);
+    final reset = find.byKey(const ValueKey('restore-model-suggestions'));
+    await tester.ensureVisible(reset);
+    await tester.tap(reset);
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('model-card-sutols-bohr-atom')),
+        findsOneWidget);
+    await tester.tap(dismiss);
+    await tester.pumpAndSettle();
+    controller.updateSelectedText('Atom elektron çekirdek yapısı');
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('model-card-sutols-bohr-atom')),
+        findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('slayta uygun öneriler açıklanır ve metin değişince güncellenir',
+      (tester) async {
+    final controller = await pumpAt(tester, const Size(1400, 900));
+    controller.selectTextBlock(controller.selectedPage.textBlocks.first.id);
+    controller.updateSelectedText('Atom elektron çekirdek');
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('3D Modeller').first);
+    await tester.pumpAndSettle();
+    final before = controller.selectedPage.componentBlocks.length;
+    await tester.ensureVisible(find.text('Slayta uygun'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Slayta uygun'));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey<String>('model-card-sutols-bohr-atom')),
+        findsOneWidget);
+    expect(
+        find.byWidgetPredicate((w) =>
+            w is Tooltip && (w.message ?? '').startsWith('Eşleşen kelimeler:')),
+        findsWidgets);
+    expect(controller.selectedPage.componentBlocks.length, before);
+    controller.updateSelectedText('Şiir ve edebiyat');
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey<String>('model-card-sutols-bohr-atom')),
+        findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('benzer model keşfi aramayı sıfırlar ve slaytı değiştirmez',
+      (tester) async {
+    final controller = await pumpAt(tester, const Size(1400, 900));
+    await tester.tap(find.text('3D Modeller').first);
+    await tester.pumpAndSettle();
+    final search = find.byWidgetPredicate((widget) =>
+        widget is TextField &&
+        widget.decoration?.hintText == 'Model ara: isim, etiket, kategori...');
+    await tester.enterText(search, 'Güneş Paneli');
+    await tester.pump(const Duration(milliseconds: 200));
+    await tester.pumpAndSettle();
+    final before = controller.selectedPage.componentBlocks.length;
+    await tester.tap(find.descendant(
+        of: find.byKey(const ValueKey<String>('model-card-sutols-solar-panel')),
+        matching: find.byTooltip('Benzerlerini göster')));
+    await tester.pumpAndSettle();
+    expect(tester.widget<TextField>(search).controller!.text, isEmpty);
+    expect(find.text('Benzer modeller'), findsOneWidget);
+    expect(find.text('Benzerleri: Güneş Paneli'), findsOneWidget);
+    expect(find.byKey(const ValueKey<String>('model-card-sutols-solar-panel')),
+        findsNothing);
+    expect(controller.selectedPage.componentBlocks.length, before);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('desktop brand menu opens quick guide without changing the deck',
+      (tester) async {
+    final controller = await pumpAt(tester, const Size(1400, 900));
+    final pages = controller.pages.toList();
+    await tester.tap(find.byKey(const ValueKey<String>('studio-brand-mark')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey<String>('brand-menu-guide')));
+    await tester.pumpAndSettle();
+    expect(find.text('Fikrini slaytlara dönüştür'), findsOneWidget);
+    await tester.tap(find.text('Kapat'));
+    await tester.pumpAndSettle();
+    expect(controller.pages, orderedEquals(pages));
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets(
+      'short desktop switches into and out of the model panel without infinite constraints',
+      (tester) async {
+    await pumpAt(tester, const Size(1280, 720));
+    await tester.tap(find.text('3D Modeller').first);
+    await tester.pump(const Duration(milliseconds: 100));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey<String>('model-library-panel')),
+        findsOneWidget);
+    final canvas =
+        find.byKey(const ValueKey<String>('editor-page-canvas-page-1'));
+    expect(tester.getSize(canvas).width, greaterThan(400));
+    expect(tester.getSize(canvas).height, greaterThan(220));
+    expect(tester.takeException(), isNull);
+    await tester.tap(find.text('Metin').first);
+    await tester.pump(const Duration(milliseconds: 100));
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets(
+      'scene thumbnail uses a poster and never creates a live model canvas',
+      (tester) async {
+    const page =
+        PresentationPage(id: 'poster', textBlocks: [], componentBlocks: [
+      PresentationComponentBlock(
+          id: 'water',
+          modelAssetId: 'sutols-water-molecule',
+          position: Offset.zero,
+          size: Size(1, 1),
+          modelAutoRotate: true),
+    ]);
+    await tester.pumpWidget(const MaterialApp(
+        home: SizedBox(
+            width: 160,
+            height: 90,
+            child: PresentationPageThumbnailCanvas(page: page))));
+    await tester.pumpAndSettle();
+    expect(find.byType(HtmlModelCanvas), findsNothing);
+    expect(
+        find.byWidgetPredicate(
+            (w) => w is PresentationPageCanvas && w.staticPreview),
+        findsOneWidget);
+    expect(find.byWidgetPredicate((w) => w is TickerMode && !w.enabled),
+        findsWidgets);
+    expect(page.componentBlocks.single.modelAutoRotate, isTrue);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('model favorisi eklemek slayta model eklemez ve filtrede bulunur',
+      (tester) async {
+    SharedPreferences.setMockInitialValues(<String, Object>{});
+    final controller = await pumpAt(tester, const Size(1400, 900));
+    await tester.tap(find.text('3D Modeller').first);
+    await tester.pumpAndSettle();
+    final search = find.byWidgetPredicate((widget) =>
+        widget is TextField &&
+        widget.decoration?.hintText == 'Model ara: isim, etiket, kategori...');
+    await tester.enterText(search, 'Güneş Paneli');
+    await tester.pump(const Duration(milliseconds: 200));
+    await tester.pumpAndSettle();
+    final before = controller.selectedPage.componentBlocks.length;
+    await tester.tap(find.descendant(
+        of: find.byKey(const ValueKey<String>('model-card-sutols-solar-panel')),
+        matching: find.byTooltip('Favorilere ekle')));
+    await tester.pumpAndSettle();
+    expect(controller.selectedPage.componentBlocks.length, before);
+    await tester.tap(find.text('Favoriler'));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey<String>('model-card-sutols-solar-panel')),
+        findsOneWidget);
+    await tester.tap(find.descendant(
+        of: find.byKey(const ValueKey<String>('model-card-sutols-solar-panel')),
+        matching: find.byTooltip('Favoriden çıkar')));
+    await tester.pumpAndSettle();
+    expect(find.text('Yıldız düğmesiyle favori modeller ekleyin.'),
+        findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -1221,7 +1639,7 @@ void main() {
     await openMoreMenu(tester);
     await tester.tap(find.text('Ses').last);
     await tester.pumpAndSettle();
-    expect(find.text('Arka Plan Kutuphanesi'), findsOneWidget);
+    expect(find.text('Arka Plan Kütüphanesi'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -1299,7 +1717,7 @@ void main() {
     expect(controller.selectedComponentBlock!.modelTourEnabled, isTrue);
     expect(find.byType(HtmlPresentationEditorPage), findsOneWidget);
     expect(find.byType(PresentationPreviewPage), findsNothing);
-    expect(find.text('Sanal Turu Kapat'), findsOneWidget);
+    expect(find.text('Görünümü Kaydet'), findsOneWidget);
 
     controller.lookAroundSelectedModelTour(const Offset(36, -12));
     controller.moveSelectedModelTour(forward: 8, right: 3);
@@ -1394,7 +1812,7 @@ void main() {
     expect(frozen.modelTargetY, tourPose.modelTargetY);
     expect(frozen.modelTargetZ, tourPose.modelTargetZ);
     expect(frozen.modelZoom, tourPose.modelZoom);
-    expect(find.text('Sanal Tur'), findsOneWidget);
+    expect(find.text('Turu Düzenle'), findsOneWidget);
   });
 
   testWidgets('Sunum Modu editör kamera stateini birebir kopyalar', (

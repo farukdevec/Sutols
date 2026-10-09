@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:firebase_auth/firebase_auth.dart';
 
 import '../models/presentation_3d_model_catalog.dart';
@@ -27,7 +29,8 @@ class ModelMatch {
 }
 
 class ModelMatchingService {
-  static List<ModelCatalogEntry>? _indexedSource;
+  static String? _indexedSignature;
+  static final Map<String, List<String>> _tokenCache = {};
   static List<_IndexedModel> _indexedModels = const <_IndexedModel>[];
 
   /// Katalogdaki kelimelerin doküman-frekansı (kaç farklı modelde geçiyor).
@@ -57,7 +60,7 @@ class ModelMatchingService {
               id: m.id,
               name: m.label,
               modelUrl: m.assetPath,
-              thumbnailUrl: '',
+              thumbnailUrl: m.thumbnailPath ?? '',
               tags: m.tags,
               category: m.category,
               tier: 'free',
@@ -103,9 +106,25 @@ class ModelMatchingService {
         .toList(growable: false);
   }
 
-  List<_IndexedModel> _indexFor(List<ModelCatalogEntry> models) {
-    if (identical(_indexedSource, models)) return _indexedModels;
-    _indexedSource = models;
+  static List<_IndexedModel> _indexFor(List<ModelCatalogEntry> models) {
+    // A repository refresh creates new lists; list identity is not a revision.
+    // Include all result-affecting fields so in-place metadata edits invalidate.
+    final signature = jsonEncode(models
+        .map((m) => [
+              m.id,
+              m.name,
+              m.modelUrl,
+              m.thumbnailUrl,
+              m.tags,
+              m.tagsEn,
+              m.category,
+              m.tier,
+              m.excludeTags,
+            ])
+        .toList(growable: false));
+    if (_indexedSignature == signature) return _indexedModels;
+    _indexedSignature = signature;
+    _tokenCache.clear();
     _indexedModels = _buildIndex(models);
     return _indexedModels;
   }
@@ -203,7 +222,13 @@ class ModelMatchingService {
       // excludeTags: model açıkça bu kelimelerden birini dışlıyorsa (yanlış
       // domain koruması), skorlamaya hiç girmeden ele.
       if (indexed.normalizedExcludeTags.isNotEmpty &&
-          limitedKeywords.any(indexed.normalizedExcludeTags.contains)) {
+          indexed.normalizedExcludeTags
+              .any((excluded) => PresentationKeywordCatalog.textMatchesKeyword(
+                    keywords
+                        .map(PresentationKeywordCatalog.normalize)
+                        .join(' '),
+                    excluded,
+                  ))) {
         continue;
       }
 
@@ -247,7 +272,10 @@ class ModelMatchingService {
     final confident = matches
         .where((m) => m.score >= (_minCandidateWeightedScore * 10).round())
         .toList();
-    confident.sort((a, b) => b.score.compareTo(a.score));
+    confident.sort((a, b) {
+      final scoreOrder = b.score.compareTo(a.score);
+      return scoreOrder != 0 ? scoreOrder : a.id.compareTo(b.id);
+    });
     return confident;
   }
 
@@ -260,8 +288,7 @@ class ModelMatchingService {
   ) {
     if (candidateText.isEmpty) return 0;
     var best = 0.0;
-    for (final candidateWord
-        in PresentationKeywordCatalog.words(candidateText)) {
+    for (final candidateWord in _wordsFor(candidateText)) {
       for (final keywordWord in keywordWords) {
         if (PresentationKeywordCatalog.wordsMatch(keywordWord, candidateWord) ||
             PresentationKeywordCatalog.wordsMatch(candidateWord, keywordWord)) {
@@ -273,19 +300,21 @@ class ModelMatchingService {
     return best;
   }
 
+  static List<String> _wordsFor(String text) => _tokenCache.putIfAbsent(
+      text, () => PresentationKeywordCatalog.words(text));
+
   static List<String> _matchingWords(
     List<String> keywordWords,
     String candidateText,
   ) =>
       keywordWords
-          .where(
-              (keyword) => PresentationKeywordCatalog.words(candidateText).any(
-                    (candidateWord) =>
-                        PresentationKeywordCatalog.wordsMatch(
-                            keyword, candidateWord) ||
-                        PresentationKeywordCatalog.wordsMatch(
-                            candidateWord, keyword),
-                  ))
+          .where((keyword) => _wordsFor(candidateText).any(
+                (candidateWord) =>
+                    PresentationKeywordCatalog.wordsMatch(
+                        keyword, candidateWord) ||
+                    PresentationKeywordCatalog.wordsMatch(
+                        candidateWord, keyword),
+              ))
           .toList(growable: false);
 
   /// Yalnızca kanıtı yeterince güçlü adaylar 3B varlık olarak kullanılabilir.
@@ -336,7 +365,7 @@ class ModelMatchingService {
   }) {
     // Aynı IDF/özgüllük istatistiklerini kullanmak için slayt bazlı
     // eşleştirmedeki (_indexFor) ile aynı _buildIndex yolunu kullanır.
-    final indexedModels = _buildIndex(models);
+    final indexedModels = _indexFor(models);
     return _matchIndexed(indexedModels, keywords);
   }
 

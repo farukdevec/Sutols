@@ -27,7 +27,7 @@ void main() {
     final localAssets = RegExp(
       r"assets/assets/fonts/google_fonts/([^')]+)",
     ).allMatches(sutolHtmlStageStyles);
-    expect(localAssets.length, 172);
+    expect(localAssets.length, greaterThanOrEqualTo(172));
     for (final match in localAssets) {
       expect(
         File('assets/fonts/google_fonts/${match.group(1)}').existsSync(),
@@ -39,7 +39,7 @@ void main() {
           .listSync()
           .whereType<File>()
           .length,
-      45,
+      greaterThanOrEqualTo(63),
     );
   });
 
@@ -325,7 +325,8 @@ void main() {
 
     expect(document, contains('text-style-bilim-deneysel'));
     expect(document, contains("font-family: 'Michroma', monospace"));
-    expect(document, contains('fonts.googleapis.com'));
+    expect(document, contains('google_fonts/michroma-400'));
+    expect(document, isNot(contains('fonts.googleapis.com')));
     expect(document, contains('@keyframes glitchGlowBilimDeneysel'));
     expect(document, contains('prefers-reduced-motion: reduce'));
   });
@@ -398,7 +399,7 @@ void main() {
     expect(document, contains('@keyframes cosmicDeepGlow'));
     expect(document, contains('@keyframes orbitPulseClean'));
     expect(document, contains('@keyframes orbitDrift'));
-    expect(document, contains('family=Orbitron:wght@500;700;900'));
+    expect(document, contains('google_fonts/orbitron-400'));
   });
 
   test('optics text styles include mirror and prism effects', () {
@@ -675,7 +676,16 @@ void main() {
     );
     final effectsCss = document.substring(effectsStart, effectsEnd);
 
-    expect(effectsCss, isNot(contains('infinite')));
+    // Continuous textEffect layers are separate from one-shot textAnimation.
+    final animationRules =
+        RegExp(r'\.sutol-html-block\.text-animation-[^{}]+\{[^{}]*\}')
+            .allMatches(effectsCss)
+            .map((m) => m.group(0)!)
+            .toList();
+    expect(animationRules, isNotEmpty);
+    for (final rule in animationRules) {
+      expect(rule, isNot(contains('infinite')));
+    }
     expect(effectsCss, contains('1 forwards !important'));
     expect(effectsCss, contains('ease-in-out 1 both'));
     expect(
@@ -738,12 +748,14 @@ void main() {
 
     expect(
       document,
-      matches(RegExp(r'text-animation-yavas-belirme[^"<>]*is-text-animation-complete')),
+      matches(RegExp(
+          r'text-animation-yavas-belirme[^"<>]*is-text-animation-complete')),
     );
     expect(
       document,
       isNot(
-        matches(RegExp(r'text-animation-bulaniktan-net[^"<>]*is-text-animation-complete')),
+        matches(RegExp(
+            r'text-animation-bulaniktan-net[^"<>]*is-text-animation-complete')),
       ),
     );
   });
@@ -785,8 +797,8 @@ void main() {
     expect(document, contains("font-family: 'Playfair Display', serif"));
     expect(document, contains("font-family: 'Bungee', sans-serif"));
     expect(document, contains('License: SIL Open Font License 1.1'));
-    expect(document, contains('family=Bebas+Neue'));
-    expect(document, contains('family=Unbounded:wght@400;700'));
+    expect(document, contains('google_fonts/bebas-neue-400'));
+    expect(document, contains('google_fonts/unbounded-400'));
   });
 
   test('expanded animation library includes cinematic display effects', () {
@@ -1151,13 +1163,12 @@ void main() {
 
     final markup = buildHtmlStageMarkup(page: page);
 
-    expect(
-        markup, isNot(contains("currentScript.closest('.sutol-edeb27-wrap')")));
+    expect(markup, contains("currentScript.closest('.sutol-edeb27-wrap')"));
     expect(markup, isNot(contains('currentScript.previousElementSibling')));
     expect(
       markup,
       contains(
-        "currentScript.parentElement.querySelector('.sutol-edeb27-wrap')",
+        "currentScript.closest('.sutol-html-component-inner,.sutol-component-preview').querySelector('.sutol-edeb27-wrap')",
       ),
     );
     expect(

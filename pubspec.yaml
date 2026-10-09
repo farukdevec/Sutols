@@ -162,6 +162,60 @@ flutter:
     - family: Lobster
       fonts:
         - asset: assets/fonts/google_fonts/lobster-400-latin.woff2
+    - family: Chakra Petch
+      fonts:
+        - asset: assets/fonts/google_fonts/chakra-petch-400-latin.woff2
+    - family: Cinzel
+      fonts:
+        - asset: assets/fonts/google_fonts/cinzel-400-latin.woff2
+    - family: Cormorant Garamond
+      fonts:
+        - asset: assets/fonts/google_fonts/cormorant-garamond-400-latin.woff2
+    - family: Exo 2
+      fonts:
+        - asset: assets/fonts/google_fonts/exo-2-400-latin.woff2
+    - family: IBM Plex Mono
+      fonts:
+        - asset: assets/fonts/google_fonts/ibm-plex-mono-400-latin.woff2
+    - family: JetBrains Mono
+      fonts:
+        - asset: assets/fonts/google_fonts/jetbrains-mono-400-latin.woff2
+    - family: Marcellus
+      fonts:
+        - asset: assets/fonts/google_fonts/marcellus-400-latin.woff2
+    - family: Michroma
+      fonts:
+        - asset: assets/fonts/google_fonts/michroma-400-latin.woff2
+    - family: Mulish
+      fonts:
+        - asset: assets/fonts/google_fonts/mulish-400-latin.woff2
+    - family: Orbitron
+      fonts:
+        - asset: assets/fonts/google_fonts/orbitron-400-latin.woff2
+    - family: Rajdhani
+      fonts:
+        - asset: assets/fonts/google_fonts/rajdhani-400-latin.woff2
+    - family: Righteous
+      fonts:
+        - asset: assets/fonts/google_fonts/righteous-400-latin.woff2
+    - family: Share Tech Mono
+      fonts:
+        - asset: assets/fonts/google_fonts/share-tech-mono-400-latin.woff2
+    - family: Sora
+      fonts:
+        - asset: assets/fonts/google_fonts/sora-400-latin.woff2
+    - family: Space Grotesk
+      fonts:
+        - asset: assets/fonts/google_fonts/space-grotesk-400-latin.woff2
+    - family: Space Mono
+      fonts:
+        - asset: assets/fonts/google_fonts/space-mono-400-latin.woff2
+    - family: Syne
+      fonts:
+        - asset: assets/fonts/google_fonts/syne-400-latin.woff2
+    - family: Titillium Web
+      fonts:
+        - asset: assets/fonts/google_fonts/titillium-web-400-latin.woff2
   assets:
     - assets/images/logo.webp
     - assets/images/sutols_wordmark.webp

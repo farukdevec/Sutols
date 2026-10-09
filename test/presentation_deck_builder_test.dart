@@ -59,7 +59,10 @@ void main() {
 
     final visual = pages.single.componentBlocks.single;
     expect(visual.modelAssetId, 'atom-3d');
-    expect(presentationComponentCategory(visual.kind), 'Fizik');
+    // modelAssetId selects the 3D renderer; kind is only its legacy placeholder.
+    // A matching 2D physics component must never be added alongside the model.
+    expect(pages.single.componentBlocks, hasLength(1));
+    expect(visual.imageAssetId, isNull);
   });
 
   test(

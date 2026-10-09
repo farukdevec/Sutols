@@ -41,6 +41,22 @@ class RemoteModelSources {
     }
   }
 
+  /// Keep stable object identity for refresh while removing the previous
+  /// account's bearer URL from live renderers.
+  static void invalidateAuthorization() {
+    var changed = false;
+    for (final entry in _sources.entries.toList()) {
+      if (ModelAssetService.isLocalAssetPath(entry.value)) continue;
+      final uri = Uri.tryParse(entry.value);
+      if (uri == null ||
+          (!uri.queryParameters.containsKey('token') &&
+              !uri.queryParameters.containsKey('sig'))) continue;
+      _sources[entry.key] = entry.value.split(RegExp(r'[?#]')).first;
+      changed = true;
+    }
+    if (changed) revision.value++;
+  }
+
   static bool hasSignedSource(String modelId) {
     final key = modelId.trim();
     if (key.isEmpty) return false;

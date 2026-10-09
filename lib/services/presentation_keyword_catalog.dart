@@ -1,9 +1,13 @@
+import '../models/development_features.dart';
+
 class PresentationKeywordCatalog {
   const PresentationKeywordCatalog._();
 
   static String normalize(String value) {
     return value
+        .replaceAll('İ', 'I')
         .toLowerCase()
+        .replaceAll(RegExp(r'[\u0300-\u036f]'), '')
         .replaceAll('ç', 'c')
         .replaceAll('ğ', 'g')
         .replaceAll('ı', 'i')
@@ -165,6 +169,14 @@ class PresentationKeywordCatalog {
       return true;
     }
 
+    // Both words can be inflected: panel-i and panel-ler-i share panel.
+    // Keep a complete stem of at least four letters; never use raw prefixes.
+    if (sutolInflectedMatchingEnabled && commonPrefixLength >= 4) {
+      final inputStems = _inflectionStems(inputWord);
+      final keywordStems = _inflectionStems(keywordWord);
+      if (inputStems.any(keywordStems.contains)) return true;
+    }
+
     if (inputWord.codeUnitAt(0) != keywordWord.codeUnitAt(0) ||
         (inputWord.length - keywordWord.length).abs() > 2) {
       return false;
@@ -181,9 +193,34 @@ class PresentationKeywordCatalog {
   /// continuations: a lexical neighbour like "antikor" is not an inflection
   /// of "antik".
   static bool _isLikelyInflectionSuffix(String suffix) {
-    return RegExp(
-      r'^(?:lar|ler|lari|leri|larin|lerin|lara|lere|dan|den|da|de|dir|dır|dur|dür|in|ın|un|ün|i|ı|u|ü|si|sı|su|sü|im|ım|um|üm|imiz|ımız|umuz|ümüz|miz|mız|muz|müz|nin|nın|nun|nün|na|ne|yi|yı|yu|yü|ya|ye|yle|yla|ce|ca|ci|cı|cu|cü|lik|lık|luk|lük|s|es|ed|ing)$',
-    ).hasMatch(suffix);
+    return _inflectionSuffixPattern.hasMatch(suffix);
+  }
+
+  static final _inflectionSuffixPattern = RegExp(
+    r'^(?:lar(?:da|dan|a|i|in)?|ler(?:de|den|e|i|in)?|tan|ten|ta|te|larin|lerin|lara|lere|dan|den|da|de|dir|dır|dur|dür|in|ın|un|ün|i|ı|u|ü|si|sı|su|sü|im|ım|um|üm|imiz|ımız|umuz|ümüz|miz|mız|muz|müz|nin|nın|nun|nün|na|ne|yi|yı|yu|yü|ya|ye|yle|yla|ce|ca|ci|cı|cu|cü|lik|lık|luk|lük|s|es|ed|ing)$',
+  );
+
+  static final Map<String, Set<String>> _stemCache = {};
+
+  static Set<String> _inflectionStems(String word) {
+    final cached = _stemCache[word];
+    if (cached != null) return cached;
+    if (_stemCache.length >= 8192) _stemCache.clear();
+    final stems = <String>{word};
+    for (var split = 4; split < word.length; split++) {
+      if (_isLikelyInflectionSuffix(word.substring(split))) {
+        final stem = word.substring(0, split);
+        stems.add(stem);
+        // Turkish softening before vowel suffixes: çekirdek -> çekirdeği,
+        // kitap -> kitabı. Apply only to an explicitly removed suffix.
+        if (stem.endsWith('g'))
+          stems.add('${stem.substring(0, stem.length - 1)}k');
+        if (stem.endsWith('b'))
+          stems.add('${stem.substring(0, stem.length - 1)}p');
+      }
+    }
+    _stemCache[word] = stems;
+    return stems;
   }
 
   static double similarityRatio(String a, String b) {
