@@ -254,9 +254,18 @@ class NvidiaPresentationService {
 
   @visibleForTesting
   static int minimumAllowedSlides(int slideCount) {
-    // A one- or two-slide request is valid; the previous lower bound of 3
-    // made num.clamp throw because its lower bound exceeded its upper bound.
-    return slideCount <= 3 ? slideCount : slideCount - 1;
+    return slideCount;
+  }
+
+  /// A revision and an injected HTTP client must obey the same deck contract.
+  @visibleForTesting
+  static void validateSlideCount(
+      NvidiaPresentation presentation, int requested) {
+    if (presentation.slides.length != requested) {
+      throw FormatException(
+        'İstenen $requested slayt yerine ${presentation.slides.length} slayt döndü.',
+      );
+    }
   }
 
   Future<NvidiaPresentation> generatePresentation(
@@ -280,7 +289,7 @@ class NvidiaPresentationService {
     final maxTokens = (slideCount * 650 + 1800).clamp(4096, 6144);
 
     final selectedModel = model ?? modelName;
-    final modelsToTry = candidateModels ??
+    final modelsToTry = List<String>.of(candidateModels ??
         customCandidateModels ??
         (model == null && modelName == defaultModelName
             ? AiModelConfig.presentationCandidatesFor(
@@ -290,7 +299,7 @@ class NvidiaPresentationService {
             : <String>[
                 selectedModel,
                 ...defaultCandidateModels.where((m) => m != selectedModel),
-              ]);
+              ]));
     final isLightningExperiment = modelsToTry.isNotEmpty &&
         modelsToTry.first == AiModelConfig.modelNemotronLightning;
     final experiment =
@@ -313,6 +322,11 @@ class NvidiaPresentationService {
     }());
 
     String lastError = '';
+    String contractFeedback = '';
+    var contractRetryUsed = false;
+    var countCompletionUsed = false;
+    final allowContractRetry =
+        candidateModels == null && customCandidateModels == null;
     final requestStopwatch = Stopwatch()..start();
 
     for (var i = 0; i < modelsToTry.length; i++) {
@@ -347,7 +361,12 @@ class NvidiaPresentationService {
             },
             {
               'role': 'user',
-              'content': userPrompt,
+              'content': i == 0
+                  ? userPrompt
+                  : '$userPrompt\nPrevious candidate failed validation. Return exactly '
+                      '$slideCount complete, distinct slides. $contractFeedback Explain concrete facts '
+                      'and examples; never define a term by repeating that term. '
+                      'Check the full JSON array and all sentences before returning.',
             },
           ],
           'temperature': 0.2,
@@ -379,19 +398,28 @@ class NvidiaPresentationService {
         SafeJsonParser.validateContent(parsed);
 
         var presentation = NvidiaPresentation.fromJson(parsed);
-        if (client == null && presentation.slides.length > slideCount) {
-          presentation = NvidiaPresentation(
-            slides:
-                presentation.slides.take(slideCount).toList(growable: false),
+        final missing = slideCount - presentation.slides.length;
+        final completionBudget = AiModelConfig.presentationRequestDeadline -
+            requestStopwatch.elapsed;
+        if (!countCompletionUsed &&
+            slideCount >= 4 &&
+            missing >= 1 &&
+            missing <= 3 &&
+            completionBudget >= const Duration(seconds: 45)) {
+          countCompletionUsed = true;
+          presentation = await _completeMissingSlides(
+            presentation,
+            topic: topic,
+            missing: missing,
+            language: language,
+            model: candidateModel,
+            systemInstruction: systemInstruction,
+            timeout: const Duration(seconds: 35),
+            experiment: experiment,
+            requestId: '$requestId-completion',
           );
         }
-        final minAllowedSlides = minimumAllowedSlides(slideCount);
-        if (client == null && presentation.slides.length < minAllowedSlides) {
-          throw FormatException(
-            'NVIDIA $candidateModel $slideCount yerine '
-            '${presentation.slides.length} slayt döndürdü.',
-          );
-        }
+        validateSlideCount(presentation, slideCount);
 
         final rejectionReason = PresentationContentQuality.rejectionReason(
           presentation.slides
@@ -407,7 +435,10 @@ class NvidiaPresentationService {
               )
               .toList(growable: false),
         );
-        if (rejectionReason != null) {
+        final repairableContent =
+            rejectionReason == 'Döngüsel/totolojik içerik var.' ||
+                (rejectionReason?.contains('tekrar') ?? false);
+        if (rejectionReason != null && (!checkQuality || !repairableContent)) {
           throw FormatException(
               'İçerik kalite kapısı reddetti: $rejectionReason');
         }
@@ -424,6 +455,10 @@ class NvidiaPresentationService {
           language: language,
         );
 
+        if (rejectionReason != null) {
+          qualityResult = qualityResult.withRevisionIssue(rejectionReason);
+        }
+
         AiRouterLogger.logDetailedQuality(
           overall: qualityResult.overallScore,
           accuracy: qualityResult.factualAccuracy,
@@ -435,8 +470,9 @@ class NvidiaPresentationService {
           visual: qualityResult.visualPotential,
         );
 
-        // Smart Revision Loop (75 - 84 band)
-        if (checkQuality && qualityResult.needsRevision) {
+        // One targeted revision; all final count and content gates remain mandatory.
+        if (checkQuality &&
+            (qualityResult.needsRevision || qualityResult.overallScore < 75)) {
           AiRouterLogger.logJudge(
             score: qualityResult.overallScore,
             revision: true,
@@ -456,6 +492,21 @@ class NvidiaPresentationService {
               language: language,
               modelName: candidateModel,
             );
+            validateSlideCount(revised, slideCount);
+            final revisedReason = PresentationContentQuality.rejectionReason(
+              revised.slides
+                  .map((s) => PresentationContentSample(
+                        title: s.title,
+                        content: s.content,
+                        type: s.type,
+                        purpose: s.purpose,
+                        keywords: s.keywords,
+                        visual: s.visual,
+                      ))
+                  .toList(growable: false),
+              language: language,
+            );
+            if (revisedReason != null) throw FormatException(revisedReason);
             revStopwatch.stop();
 
             final revisedQuality = await judgeService.judgePresentation(
@@ -531,6 +582,8 @@ class NvidiaPresentationService {
           }
         }
 
+        validateSlideCount(presentation, slideCount);
+
         final keyHeader = response.headers['x-ai-key'] ?? 'key1';
         final modelHeader = response.headers['x-ai-model'] ?? candidateModel;
 
@@ -558,6 +611,23 @@ class NvidiaPresentationService {
       } catch (e) {
         stopwatch.stop();
         lastError = e.toString();
+        // The proxy owns provider/key failover. Retry the same canonical route
+        // once only for a returned invalid deck, never for network/auth failures.
+        if (allowContractRetry &&
+            !contractRetryUsed &&
+            e is FormatException &&
+            i == modelsToTry.length - 1 &&
+            (AiModelConfig.presentationRequestDeadline -
+                    requestStopwatch.elapsed) >=
+                const Duration(seconds: 45)) {
+          contractRetryUsed = true;
+          contractFeedback = lastError.contains('tekrar')
+              ? 'Use different facts, examples and bullet sentences on each slide.'
+              : lastError.contains('slayt')
+                  ? 'Do not shorten or summarize the array; include every requested slide.'
+                  : 'Replace circular definitions with specific explanations and verified facts.';
+          modelsToTry.add(candidateModel);
+        }
         final errorType = _classifyError(e);
 
         AiRouterLogger.logFailure(
@@ -568,13 +638,78 @@ class NvidiaPresentationService {
           errorType: errorType,
           latency: stopwatch.elapsed,
           details: lastError,
-          action: i == 0 ? 'FALLBACK_TO_KEY2' : 'FALLBACK → $nextModel',
+          action:
+              i + 1 < modelsToTry.length && modelsToTry[i + 1] == candidateModel
+                  ? 'RETRY_DECK_CONTRACT'
+                  : 'FALLBACK → $nextModel',
         );
       }
     }
 
     throw Exception(
         lastError.isEmpty ? 'NVIDIA sunum üretimi başarısız oldu.' : lastError);
+  }
+
+  Future<NvidiaPresentation> _completeMissingSlides(
+    NvidiaPresentation existing, {
+    required String topic,
+    required int missing,
+    required String language,
+    required String model,
+    required String systemInstruction,
+    required Duration timeout,
+    required String experiment,
+    required String requestId,
+  }) async {
+    final existingContent = jsonEncode(existing.slides
+        .map((s) => {
+              'title': s.title,
+              'content': s.content,
+              'purpose': s.purpose,
+            })
+        .toList(growable: false));
+    final prompt = PresentationPromptBuilder.buildUserPrompt(
+      topic: topic,
+      slideCount: missing,
+      language: language,
+    );
+    final response = await _postWithTimeout({
+      'model': model,
+      'messages': [
+        {'role': 'system', 'content': systemInstruction},
+        {
+          'role': 'user',
+          'content': '$prompt\n'
+              'COMPLETE THE MISSING PART ONLY: return exactly $missing NEW slides '
+              'to append to the existing deck below. Do not return or repeat the '
+              'existing slides. Add useful explanations or applications, preserving '
+              'the topic and audience; do not invent facts or add filler.\n'
+              'EXISTING DECK (context only, do not return): $existingContent'
+        },
+      ],
+      'temperature': 0.2,
+      'max_tokens': 4096,
+      'response_format': {'type': 'json_object'},
+      'stream': false,
+    }, timeout: timeout, experiment: experiment, requestId: requestId);
+    final decoded = _decodeJsonMap(response.body,
+        onError: 'Missing-slide completion returned invalid JSON.');
+    final content = _extractAssistantContent(decoded);
+    if (content == null || content.isEmpty) {
+      throw const FormatException(
+          'Missing-slide completion returned no content.');
+    }
+    final parsed = SafeJsonParser.parsePresentationPayload(content);
+    SafeJsonParser.validateSchema(parsed);
+    SafeJsonParser.validateContent(parsed);
+    final added = NvidiaPresentation.fromJson(parsed);
+    validateSlideCount(added, missing);
+    return NvidiaPresentation(
+      title: existing.title,
+      targetAudience: existing.targetAudience,
+      learningObjective: existing.learningObjective,
+      slides: [...existing.slides, ...added.slides],
+    );
   }
 
   Future<http.Response> _postWithTimeout(

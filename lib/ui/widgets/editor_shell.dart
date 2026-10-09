@@ -2209,10 +2209,14 @@ class _PresentationPageCanvasState extends State<PresentationPageCanvas> {
                   onPanCancel: () => _endSelectionDrag(canvasSize),
                 ),
               ),
-            if (widget.showHint && widget.interactive)
+            if (widget.showHint &&
+                widget.interactive &&
+                selectedTextIds.isEmpty &&
+                selectedComponentIds.isEmpty)
               Positioned(
                 top: 18,
                 right: 18,
+                left: canvasSize.width < 480 ? 18 : null,
                 child: Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 14,
@@ -2224,7 +2228,12 @@ class _PresentationPageCanvasState extends State<PresentationPageCanvas> {
                     border: Border.all(color: const Color(0xFFDCE5F1)),
                   ),
                   child: Text(
-                    'Bos alanda surukle: coklu secim, cerceveden boyutlandir',
+                    canvasSize.width < 480
+                        ? tr('Boş alanda sürükleyerek seçin.',
+                            'Drag empty space to select.')
+                        : tr(
+                            'Boş alanda sürükleyin: çoklu seçim, çerçeveden boyutlandırma',
+                            'Drag empty space to select; resize using handles'),
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: context.onSurface,
                           fontWeight: FontWeight.w700,

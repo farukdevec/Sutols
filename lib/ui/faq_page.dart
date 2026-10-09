@@ -17,12 +17,14 @@ class FaqPage extends StatelessWidget {
     final categories = isEn ? _categoriesEn : _categoriesTr;
 
     return Title(
-      title: '${tr('Sıkça Sorulan Sorular', 'Frequently Asked Questions')} – Sutols',
+      title:
+          '${tr('Sıkça Sorulan Sorular', 'Frequently Asked Questions')} – Sutols',
       color: colors.accent,
       child: Scaffold(
         backgroundColor: colors.surface,
         appBar: AppBar(
-          title: Text(tr('Sıkça Sorulan Sorular', 'Frequently Asked Questions')),
+          title:
+              Text(tr('Sıkça Sorulan Sorular', 'Frequently Asked Questions')),
           leading: IconButton(
             icon: const Icon(Icons.arrow_back_rounded),
             tooltip: tr('Geri', 'Back'),
@@ -192,7 +194,7 @@ const List<_FaqCategory> _categoriesTr = [
           ),
           _FaqBlock.paragraph(
             'Çoğu sunum aracı, görsel olarak sadece düz resimler, ikonlar '
-            'veya basit çizimler sunar. Sutols\'da ise binlerce gerçek 3D '
+            'veya basit çizimler sunar. Sutols\'da ise etkileşimli 3D '
             'model — analiz çerçeveleri (SWOT küpleri, PESTEL çarkları), '
             '3B grafikler, diyagramlar, semboller — sunumunuza doğrudan '
             'eklenebilir. Bu modeller:',
@@ -241,8 +243,9 @@ const List<_FaqCategory> _categoriesTr = [
         blocks: [
           _FaqBlock.paragraph(
             'Model kütüphanemiz özenle seçilmiş ve kategorize edilmiş '
-            'binlerce profesyonel 3D varlıktan oluşur; sürekli yeni '
-            'modeller eklenmektedir.',
+            'yerel şematik modeller ve erişilebilir bulut modellerinden oluşur. '
+            'Kategori, arama ve kalite seçenekleriyle konuya uygun varlıkları '
+            'bulabilirsiniz. Katalog kapsamı bağlantı ve hesap erişimine göre değişebilir.',
           ),
         ],
       ),
@@ -297,9 +300,10 @@ const List<_FaqCategory> _categoriesTr = [
         question: 'Sunumumu nasıl paylaşırım/indiririm?',
         blocks: [
           _FaqBlock.paragraph(
-            'Editördeki "Dışa Aktar" butonuyla sunumunuzu HTML formatında '
-            'indirip, tarayıcı üzerinden istediğiniz yerde açıp '
-            'sunabilirsiniz.',
+            'Editörde HTML ile etkileşimli sunum, PDF ile yazdırılabilir çıktı '
+            've proje JSON dosyasıyla yeniden düzenlenebilir yedek alabilirsiniz. '
+            'PDF için tarayıcının yazdırma penceresinde PDF olarak kaydet seçilir. '
+            'HTML hazırlığı için model ve görsel dosyalarının erişilebilir olması gerekir.',
           ),
         ],
       ),
@@ -412,7 +416,7 @@ const List<_FaqCategory> _categoriesEn = [
           ),
           _FaqBlock.paragraph(
             'Most presentation tools only offer static images, 2D icons, or '
-            'flat drawings. Sutols includes thousands of true 3D models — '
+            'flat drawings. Sutols includes interactive 3D models — '
             'analysis frameworks (SWOT cubes, PESTEL wheels), 3D diagrams, '
             'charts, and symbols — directly embedded in your slides. These models:',
           ),
@@ -457,8 +461,9 @@ const List<_FaqCategory> _categoriesEn = [
         question: 'Where do the 3D models come from and what is their quality?',
         blocks: [
           _FaqBlock.paragraph(
-            'Our 3D library consists of carefully curated, optimized, and '
-            'professionally crafted assets, with new models added continuously.',
+            'The library combines local schematic models with accessible cloud assets. '
+            'Use search, categories and quality options to find suitable models. '
+            'Available cloud content depends on your connection and account access.',
           ),
         ],
       ),
@@ -512,8 +517,9 @@ const List<_FaqCategory> _categoriesEn = [
         question: 'How can I share or export my presentations?',
         blocks: [
           _FaqBlock.paragraph(
-            'Use the "Export" button in the editor to download self-contained '
-            'HTML presentations or share online links playable on any modern browser.',
+            'Export interactive HTML, printable PDF, or an editable project JSON backup. '
+            'For PDF, choose Save as PDF in the browser print dialog. '
+            'HTML preparation requires access to the model and image files.',
           ),
         ],
       ),

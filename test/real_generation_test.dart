@@ -1,8 +1,6 @@
 import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
-import 'package:sutol/services/ai_model_config.dart';
-import 'package:sutol/services/nvidia_presentation_service.dart';
 
 void main() {
   test('Real Generation Test: Makine Öğrenmesi with Origin', () async {

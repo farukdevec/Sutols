@@ -24,6 +24,12 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   fonts:
+    - family: Inter Extended
+      fonts:
+        - asset: assets/fonts/google_fonts/inter-400-latin-ext.woff2
+    - family: Roboto Extended
+      fonts:
+        - asset: assets/fonts/google_fonts/roboto-400-latin-ext.woff2
     - family: Roboto
       fonts:
         - asset: assets/fonts/google_fonts/roboto-400-latin.woff2

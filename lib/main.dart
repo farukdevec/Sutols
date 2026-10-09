@@ -54,6 +54,7 @@ class SutolApp extends StatelessWidget {
               locale: Locale(language == AppLanguage.tr ? 'tr' : 'en'),
               debugShowCheckedModeBanner: false,
               navigatorKey: appNavigatorKey,
+              navigatorObservers: [SutolsRouteTitleObserver()],
               theme: sutolLightTheme,
               darkTheme: sutolDarkTheme,
               themeMode: themeMode,

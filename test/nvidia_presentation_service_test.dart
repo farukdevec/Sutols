@@ -11,8 +11,277 @@ void main() {
       expect(NvidiaPresentationService.minimumAllowedSlides(1), 1);
       expect(NvidiaPresentationService.minimumAllowedSlides(2), 2);
       expect(NvidiaPresentationService.minimumAllowedSlides(3), 3);
-      expect(NvidiaPresentationService.minimumAllowedSlides(30), 29);
+      expect(NvidiaPresentationService.minimumAllowedSlides(30), 30);
     });
+
+    test('rejects short and oversized decks independently of HTTP transport',
+        () {
+      final deck = NvidiaPresentation(slides: [
+        const NvidiaSlide(
+            title: 'Water', content: 'Water freezes.', keywords: ['water']),
+      ]);
+      expect(() => NvidiaPresentationService.validateSlideCount(deck, 2),
+          throwsFormatException);
+      expect(() => NvidiaPresentationService.validateSlideCount(deck, 0),
+          throwsFormatException);
+      expect(() => NvidiaPresentationService.validateSlideCount(deck, 1),
+          returnsNormally);
+    });
+
+    test(
+        'short deck falls back and the next candidate receives the count contract',
+        () async {
+      final generationPrompts = <String>[];
+      final slides = [
+        {
+          'title': 'Ice',
+          'content':
+              '**Freezing:** Water forms solid crystals below its freezing point.\n**Shape:** Solid ice keeps its shape.',
+          'keywords': ['ice']
+        },
+        {
+          'title': 'Steam',
+          'content':
+              '**Heating:** Heat converts liquid water into water vapor.\n**Motion:** Gas particles spread throughout their container.',
+          'keywords': ['steam']
+        },
+      ];
+      final mock = MockClient((request) async {
+        final body = jsonDecode(request.body) as Map<String, dynamic>;
+        final judging = body['model'] == AiModelConfig.modelLlama31_8b;
+        if (!judging)
+          generationPrompts
+              .add((body['messages'] as List).last['content'] as String);
+        final content = judging
+            ? {'score': 95, 'factual_accuracy': 95, 'revision_required': false}
+            : {
+                'slides': generationPrompts.length == 1
+                    ? slides.take(1).toList()
+                    : slides
+              };
+        return http.Response(
+            jsonEncode({
+              'choices': [
+                {
+                  'message': {'content': jsonEncode(content)}
+                }
+              ]
+            }),
+            200);
+      });
+      final result = await NvidiaPresentationService(
+        client: mock,
+        customCandidateModels: [
+          AiModelConfig.modelNemotronNano,
+          AiModelConfig.modelGptOss120b
+        ],
+      ).generatePresentation('States of water',
+          slideCount: 2, language: 'english');
+      expect(result.slides, hasLength(2));
+      expect(generationPrompts, hasLength(2));
+      expect(generationPrompts.last, contains('Return exactly 2 complete'));
+    });
+
+    for (final wrongRevisionCount in [false, true]) {
+      test(
+          'repairs tautology without accepting a wrong-sized revision: $wrongRevisionCount',
+          () async {
+        var generations = 0;
+        final prompts = <String>[];
+        final mock = MockClient((request) async {
+          final body = jsonDecode(request.body) as Map<String, dynamic>;
+          Object content;
+          if (body['model'] == AiModelConfig.modelLlama31_8b) {
+            content = {
+              'score': 95,
+              'factual_accuracy': 95,
+              'revision_required': false
+            };
+          } else {
+            generations++;
+            prompts.add((body['messages'] as List).last['content'] as String);
+            final slide = generations == 1
+                ? {
+                    'title': 'Radiation',
+                    'content': 'Radiation radiation radiation.',
+                    'keywords': ['radiation']
+                  }
+                : {
+                    'title': 'Shielding',
+                    'content':
+                        '**Barrier:** Concrete absorbs part of the radiation passing through it.\n**Distance:** Moving away from the source reduces exposure.',
+                    'keywords': ['concrete']
+                  };
+            content = {
+              'slides': [
+                slide,
+                if (generations > 1 && wrongRevisionCount) slide
+              ]
+            };
+          }
+          return http.Response(
+              jsonEncode({
+                'choices': [
+                  {
+                    'message': {'content': jsonEncode(content)}
+                  }
+                ]
+              }),
+              200);
+        });
+        final future = NvidiaPresentationService(
+          client: mock,
+          customCandidateModels: [AiModelConfig.modelNemotronNano],
+        ).generatePresentation('Radiation shielding',
+            slideCount: 1, language: 'english');
+        if (wrongRevisionCount) {
+          await expectLater(future,
+              throwsA(predicate((e) => e.toString().contains('totolojik'))));
+        } else {
+          final result = await future;
+          expect(result.slides, hasLength(1));
+          expect(result.slides.single.title, 'Shielding');
+        }
+        expect(generations, 2);
+        expect(prompts.last, contains('totolojik'));
+        expect(prompts.last, contains('RETURN ALL slides'));
+      });
+    }
+
+    for (final recoverySucceeds in [true, false]) {
+      test('default route retries an invalid deck only once: $recoverySucceeds',
+          () async {
+        var attempts = 0;
+        final mock = MockClient((request) async {
+          final body = jsonDecode(request.body) as Map<String, dynamic>;
+          final judging = body['model'] == AiModelConfig.modelLlama31_8b;
+          if (!judging) attempts++;
+          final content = judging
+              ? {
+                  'score': 95,
+                  'factual_accuracy': 95,
+                  'revision_required': false
+                }
+              : {
+                  'slides': [
+                    {
+                      'title': 'Ice',
+                      'content':
+                          '**Freezing:** Water forms solid crystals below its freezing point.\n**Shape:** Solid ice keeps its shape.',
+                      'keywords': ['ice']
+                    },
+                    if (recoverySucceeds && attempts == 2)
+                      {
+                        'title': 'Steam',
+                        'content':
+                            '**Heating:** Heat converts liquid water into water vapor.\n**Motion:** Gas particles spread throughout their container.',
+                        'keywords': ['steam']
+                      },
+                  ]
+                };
+          return http.Response(
+              jsonEncode({
+                'choices': [
+                  {
+                    'message': {'content': jsonEncode(content)}
+                  }
+                ]
+              }),
+              200);
+        });
+        final future = NvidiaPresentationService(client: mock)
+            .generatePresentation('States of water',
+                slideCount: 2, language: 'english');
+        if (recoverySucceeds) {
+          expect((await future).slides, hasLength(2));
+        } else {
+          await expectLater(future, throwsA(isA<Exception>()));
+        }
+        expect(attempts, 2);
+      });
+    }
+
+    for (final invalidCompletion in [false, true]) {
+      test(
+          'completes missing slides and validates the combined deck: $invalidCompletion',
+          () async {
+        final slides = [
+          {
+            'title': 'Ice',
+            'content':
+                '**Freezing:** Water forms solid crystals below its freezing point.\n**Shape:** Solid ice keeps its shape.',
+            'keywords': ['ice']
+          },
+          {
+            'title': 'Steam',
+            'content':
+                '**Heating:** Heat converts liquid water into water vapor.\n**Motion:** Gas particles spread throughout their container.',
+            'keywords': ['steam']
+          },
+          {
+            'title': 'Measurement',
+            'content':
+                '**Thermometer:** A thermometer measures the temperature of the sample.\n**Observation:** Students record the reading before and after heating.',
+            'keywords': ['thermometer']
+          },
+          {
+            'title': 'Applications',
+            'content':
+                '**Cooling:** Melting ice absorbs energy from a drink.\n**Cooking:** Boiling water transfers heat to food in a saucepan.',
+            'keywords': ['saucepan']
+          },
+        ];
+        var generations = 0;
+        final mock = MockClient((request) async {
+          final body = jsonDecode(request.body) as Map<String, dynamic>;
+          final judging = body['model'] == AiModelConfig.modelLlama31_8b;
+          if (!judging) generations++;
+          final content = judging
+              ? {
+                  'score': 95,
+                  'factual_accuracy': 95,
+                  'revision_required': false
+                }
+              : {
+                  'title': 'Water experiment',
+                  'target_audience': 'middle_school',
+                  'slides': generations == 1
+                      ? slides.take(3).toList()
+                      : invalidCompletion
+                          ? [slides.last, slides.last]
+                          : [slides.last]
+                };
+          if (!judging && generations == 2) {
+            expect((body['messages'] as List).last['content'],
+                contains('exactly 1 NEW slides'));
+          }
+          return http.Response(
+              jsonEncode({
+                'choices': [
+                  {
+                    'message': {'content': jsonEncode(content)}
+                  }
+                ]
+              }),
+              200);
+        });
+        final future = NvidiaPresentationService(
+          client: mock,
+          customCandidateModels: [AiModelConfig.modelNemotronNano],
+        ).generatePresentation('States of water',
+            slideCount: 4, language: 'english');
+        if (invalidCompletion) {
+          await expectLater(future, throwsA(isA<Exception>()));
+        } else {
+          final result = await future;
+          expect(result.slides.map((s) => s.title),
+              ['Ice', 'Steam', 'Measurement', 'Applications']);
+          expect(result.targetAudience, 'middle_school');
+          expect(result.title, 'Water experiment');
+        }
+        expect(generations, 2);
+      });
+    }
 
     test('parses standard slides object payload', () {
       const jsonStr = '''
@@ -128,7 +397,8 @@ void main() {
         customCandidateModels: [AiModelConfig.modelNemotronNano],
       );
 
-      final result = await service.generatePresentation('Test Konusu');
+      final result =
+          await service.generatePresentation('Test Konusu', slideCount: 1);
       // One generation and one judge call, no parsing repair or revision call.
       expect(requestCount, 2);
       expect(result.slides.length, 1);
@@ -204,7 +474,7 @@ void main() {
         ],
       );
 
-      final result = await service.generatePresentation('Test');
+      final result = await service.generatePresentation('Test', slideCount: 1);
       expect(calledModels, [
         AiModelConfig.modelNemotronSuper,
         AiModelConfig.modelGptOss120b,
@@ -287,17 +557,16 @@ void main() {
       );
 
       await expectLater(
-        service.generatePresentation('Learning'),
+        service.generatePresentation('Learning', slideCount: 1),
         throwsA(
           predicate((error) => error.toString().contains('minimum 75')),
         ),
       );
-      expect(judgeCalls, 1);
+      expect(judgeCalls, 2);
     });
 
-    test('generates valid one- and two-slide requests with mocked AI',
-        () async {
-      for (final requestedSlideCount in [1, 2]) {
+    test('generates a valid single-slide request with mocked AI', () async {
+      for (final requestedSlideCount in [1]) {
         final mockClient = MockClient((request) async {
           final body = jsonDecode(request.body) as Map<String, dynamic>;
           if (body['model'] == AiModelConfig.modelLlama31_8b) {
@@ -409,7 +678,8 @@ void main() {
         customCandidateModels: [AiModelConfig.modelNemotronNano],
       );
 
-      final result = await service.generatePresentation('Learning');
+      final result =
+          await service.generatePresentation('Learning', slideCount: 1);
       expect(result.slides, hasLength(1));
       expect(result.slides.first.title, 'Learning');
     });

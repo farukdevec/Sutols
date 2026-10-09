@@ -244,6 +244,12 @@ ZORUNLU DENETİM:
     String modelName = AiModelConfig.modelNemotronSuper,
   }) async {
     final originalJson = jsonEncode({
+      if (originalPresentation.title != null)
+        'title': originalPresentation.title,
+      if (originalPresentation.targetAudience != null)
+        'target_audience': originalPresentation.targetAudience,
+      if (originalPresentation.learningObjective != null)
+        'learning_objective': originalPresentation.learningObjective,
       'slides': originalPresentation.slides
           .map((s) => {
                 'title': s.title,
@@ -304,7 +310,15 @@ ZORUNLU DENETİM:
       final content =
           (decoded['choices']?[0]?['message']?['content'] ?? '').toString();
       final parsed = SafeJsonParser.parsePresentationPayload(content);
-      return NvidiaPresentation.fromJson(parsed);
+      final revised = NvidiaPresentation.fromJson(parsed);
+      return NvidiaPresentation(
+        title: revised.title ?? originalPresentation.title,
+        targetAudience:
+            revised.targetAudience ?? originalPresentation.targetAudience,
+        learningObjective:
+            revised.learningObjective ?? originalPresentation.learningObjective,
+        slides: revised.slides,
+      );
     }
 
     throw Exception(

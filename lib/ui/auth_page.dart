@@ -367,6 +367,9 @@ class _AuthPageState extends State<AuthPage> {
             decoration: InputDecoration(
               hintText: tr('Şifre', 'Password'),
               suffixIcon: IconButton(
+                tooltip: _obscurePassword
+                    ? tr('Şifreyi göster', 'Show password')
+                    : tr('Şifreyi gizle', 'Hide password'),
                 icon: Icon(
                   _obscurePassword
                       ? Icons.visibility_off_outlined

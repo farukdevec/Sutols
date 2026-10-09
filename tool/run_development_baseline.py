@@ -50,6 +50,7 @@ def test_summary(path):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output', type=pathlib.Path, default=ROOT/'build/development_baseline')
+    parser.add_argument('--tests-only', action='store_true', help='Run selected Flutter tests without unrelated backend checks')
     parser.add_argument('--live', action='store_true', help='Explicitly include production tests; can consume AI quota')
     parser.add_argument('--concurrency', type=int, choices=range(1, 33),
                         help='Optional test concurrency for constrained local machines')
@@ -73,6 +74,9 @@ def main():
     report['tests'] = run(['flutter', 'test', '--no-pub', '--reporter', 'json', *concurrency, *selected], output/'tests.jsonl')
     report['tests']['summary'] = test_summary(output/'tests.jsonl')
     print('Tests:', report['tests']['summary']['counts'], flush=True)
+    if args.tests_only:
+        (output/'baseline.json').write_text(json.dumps(report, ensure_ascii=False, indent=2))
+        return report['tests']['exit_code']
     report['analysis'] = run(['flutter', 'analyze', '--no-pub'], output/'analysis.log')
     compiler = ROOT/'functions/node_modules/.bin/tsc'
     if compiler.exists():

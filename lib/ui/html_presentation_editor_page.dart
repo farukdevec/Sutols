@@ -3316,7 +3316,6 @@ class _MobilePhotoQuickOption extends StatelessWidget {
 /// kaydırılabilen içerik taşır. Tuval arka planda görünür kalır.
 class _HtmlMobileToolSheet extends StatefulWidget {
   const _HtmlMobileToolSheet({
-    super.key,
     required this.controller,
     required this.textController,
     required this.tab,
@@ -9600,7 +9599,6 @@ class _TextColorOption {
 
 class _TextColorPickerPanel extends StatefulWidget {
   const _TextColorPickerPanel({
-    super.key,
     required this.controller,
     required this.currentHex,
   });
@@ -11704,7 +11702,7 @@ Future<void> _showAddTourHotspotDialog(
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String?>(
-                  value: targetPageId,
+                  initialValue: targetPageId,
                   decoration: const InputDecoration(
                     labelText: 'Noktaya tıklanınca',
                   ),
@@ -11780,58 +11778,6 @@ Future<void> _showAddTourHotspotDialog(
   xController.dispose();
   yController.dispose();
   zController.dispose();
-}
-
-Future<void> _showTourHotspotManager(
-  BuildContext context,
-  PresentationController controller,
-) async {
-  final hotspots = controller.selectedComponentBlock?.modelTourHotspots ??
-      const <ModelTourHotspot>[];
-  final selected = await showDialog<ModelTourHotspot>(
-    context: context,
-    builder: (dialogContext) => AlertDialog(
-      title: const Text('Tur noktaları'),
-      content: SizedBox(
-        width: 420,
-        child: ListView.separated(
-          shrinkWrap: true,
-          itemCount: hotspots.length,
-          separatorBuilder: (_, __) => const Divider(height: 1),
-          itemBuilder: (_, index) {
-            final hotspot = hotspots[index];
-            return ListTile(
-              leading: const Icon(Icons.location_on_rounded),
-              title: Text(hotspot.label),
-              subtitle: Text(
-                hotspot.targetPageId == null
-                    ? 'Bilgi noktası'
-                    : 'Bağlı slayt: ${hotspot.targetPageId}',
-              ),
-              onTap: () => Navigator.of(dialogContext).pop(hotspot),
-              trailing: IconButton(
-                icon: const Icon(Icons.delete_outline_rounded),
-                tooltip: 'Sil',
-                onPressed: () {
-                  controller.removeSelectedModelTourHotspot(hotspot.id);
-                  Navigator.of(dialogContext).pop();
-                },
-              ),
-            );
-          },
-        ),
-      ),
-      actions: <Widget>[
-        TextButton(
-          onPressed: () => Navigator.of(dialogContext).pop(),
-          child: const Text('Kapat'),
-        ),
-      ],
-    ),
-  );
-  if (selected != null && context.mounted) {
-    await _showAddTourHotspotDialog(context, controller, existing: selected);
-  }
 }
 
 class _BackgroundAnimationSpeedControl extends StatelessWidget {
@@ -12740,78 +12686,6 @@ String _htmlTextStyleLabel(PresentationTextStyle style) {
       return 'Lobster';
     default:
       return presentationGoogleFontFamily(style) ?? style.name;
-  }
-}
-
-class _QuickStageDimensionChip extends StatelessWidget {
-  const _QuickStageDimensionChip({
-    required this.label,
-    required this.icon,
-    required this.isSelected,
-    required this.onTap,
-    this.highlight = false,
-  });
-
-  final String label;
-  final IconData icon;
-  final bool isSelected;
-  final VoidCallback onTap;
-  final bool highlight;
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Material(
-      color: isSelected
-          ? (isDark
-              ? context.colors.primary.withValues(alpha: 0.2)
-              : const Color(0xFFE0F2FE))
-          : (highlight
-              ? (isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC))
-              : Colors.transparent),
-      borderRadius: BorderRadius.circular(10),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(10),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(
-              color: isSelected
-                  ? context.colors.primary
-                  : (highlight
-                      ? context.colors.primary.withValues(alpha: 0.4)
-                      : context.sutolColors.outline.withValues(alpha: 0.5)),
-              width: isSelected ? 1.6 : 1,
-            ),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
-              Icon(
-                icon,
-                size: 15,
-                color: isSelected
-                    ? context.colors.primary
-                    : (highlight ? context.colors.primary : context._htmlInk),
-              ),
-              const SizedBox(width: 6),
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
-                  color: isSelected
-                      ? context.colors.primary
-                      : (highlight ? context.colors.primary : context._htmlInk),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
   }
 }
 
