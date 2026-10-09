@@ -1,7 +1,10 @@
 # Sutols gelişim durumu — 8 Ekim 2026
 
 Yerel proje geliştirildi. Konu/metinden düzenlenebilir 2D/3D sunum üretme amacı
-korundu. A0–A10 planı bütünü henüz tamamlanmadı; production deploy/push yapılmadı.
+korundu. A0–A10 planı bütünü henüz tamamlanmadı. 9 Ekim 2026 tarihinde
+`8d06ba0` main dalına push edildi ve Firebase Hosting yayını tamamlandı.
+Canlı test bulguları ve açık kabul koşulları `CANLI_TEST_RAPORU_2026-10-09.md`
+dosyasındadır; hesapla manuel test kullanıcı girişini bekliyor.
 
 ## Uygulanan değişiklikler
 

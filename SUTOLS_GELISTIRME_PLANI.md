@@ -782,3 +782,13 @@ Bu ölçüm yalnızca DOM viewer yaşam döngüsüdür; driver/SDK cache/texture
 belleği, watt/FPS veya 50 gerçek bulut projesi geçişini ölçmez. Aşamaların
 cihaz, insan ve üretim kabul kapıları kapanmış sayılmaz. Production kaynak
 web-final-34 ile eşleşir; fixture üretim rotası değildir, yayın yapılmadı.
+
+
+## 9 Ekim 2026 — GitHub ve Hosting yayını
+
+`8d06ba0` main dalına push edildi; doğrulanmış web-final-34 Firebase Hosting
+üzerinden yayımlandı. Önceki canlı sürüm geri dönüş kanalında korunuyor.
+Canlı misafir testleri ve CI sonuçları
+`tool/development_baseline/CANLI_TEST_RAPORU_2026-10-09.md` dosyasına işlendi.
+CI 6 başarısız test içeriyor; hesapla manuel editör/kayıt/export testi ve insan
+model kabulü açık. Yayın, bütün aşamaların kabul edildiği anlamına gelmez.
