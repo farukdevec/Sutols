@@ -52,16 +52,31 @@ void main() {
   });
 
   test('yalnızca gerçekten paketli katalog modeli yerel kaynak sayılır', () {
-    final bundledModelId = presentation3DModelCatalog
-        .singleWhere((model) => model.preferBundledAsset)
-        .id;
-
-    expect(RemoteModelSources.hasSignedSource(bundledModelId), isTrue);
-    expect(
-      RemoteModelSources.sourceFor(bundledModelId),
-      preferredBundledModelAssetPath(bundledModelId),
-    );
+    final bundledModels = presentation3DModelCatalog
+        .where((model) => model.preferBundledAsset)
+        .toList();
+    expect(bundledModels, isNotEmpty);
+    for (final model in bundledModels) {
+      expect(RemoteModelSources.hasSignedSource(model.id), isTrue);
+      expect(RemoteModelSources.sourceFor(model.id),
+          preferredBundledModelAssetPath(model.id));
+    }
     expect(RemoteModelSources.hasSignedSource('yolcu-ucagi'), isFalse);
     expect(RemoteModelSources.sourceFor('yolcu-ucagi'), isNull);
+  });
+  test(
+      'account changes remove remote authorization but retain local sources and refresh identity',
+      () {
+    RemoteModelSources.registerAll(const {
+      'account-scoped-model':
+          'https://assets.sutols.com/owned.glb?token=old&expires=4102444800',
+      'local-scoped-model': '/models/anitkabir.glb'
+    });
+    RemoteModelSources.invalidateAuthorization();
+    expect(RemoteModelSources.sourceFor('account-scoped-model'), isNull);
+    expect(RemoteModelSources.sourceForRefresh('account-scoped-model'),
+        'https://assets.sutols.com/owned.glb');
+    expect(RemoteModelSources.sourceFor('local-scoped-model'),
+        '/models/anitkabir.glb');
   });
 }

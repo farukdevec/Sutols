@@ -20165,7 +20165,10 @@ if(svg && svg.pauseAnimations) svg.pauseAnimations();
   var ctx = canvas.getContext('2d');
   var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   var stars = [];
+  var t = 0, resizeFrame = 0;
+  var ink = '#ffffff';
   function resize(){
+    ink = window.getComputedStyle ? window.getComputedStyle(root).getPropertyValue('--sutol-component-ink').trim() || '#ffffff' : '#ffffff';
     var r = root.getBoundingClientRect();
     canvas.width = Math.max(1, r.width);
     canvas.height = Math.max(1, r.height);
@@ -20180,10 +20183,13 @@ if(svg && svg.pauseAnimations) svg.pauseAnimations();
         speed: 0.5 + Math.random() * 1.2
       });
     }
+    if (reduce && !resizeFrame) resizeFrame = requestAnimationFrame(function(){
+      resizeFrame = 0;
+      if (root.isConnected) draw();
+    });
   }
   if (window.ResizeObserver){ new ResizeObserver(resize).observe(root); }
   resize();
-  var t = 0;
   function draw(){
     ctx.clearRect(0,0,canvas.width,canvas.height);
     for (var i=0;i<stars.length;i++){
@@ -20192,14 +20198,14 @@ if(svg && svg.pauseAnimations) svg.pauseAnimations();
       ctx.globalAlpha = 0.25 + tw * 0.75;
       ctx.beginPath();
       ctx.arc(s.x, s.y, s.r, 0, Math.PI*2);
-      ctx.fillStyle = '#ffffff';
+      ctx.fillStyle = ink;
       ctx.fill();
     }
     ctx.globalAlpha = 1;
     t += 1;
-    if (!reduce) requestAnimationFrame(draw); else requestAnimationFrame(function(){ setTimeout(draw, 800); });
+    if (!reduce && root.isConnected) requestAnimationFrame(draw);
   }
-  requestAnimationFrame(draw);
+  if (!reduce) requestAnimationFrame(draw);
 })();
 </script>
 </div>''',
@@ -39624,14 +39630,25 @@ if(svg && svg.pauseAnimations) svg.pauseAnimations();
     ball.setAttribute('cy', topY);
     balls.appendChild(ball);
     var destX = binX0 + binIndex*spacing + spacing/2;
-    ball.animate([
+    var flight = ball.animate([
       { transform: 'translate(0px,0px)' },
       { transform: 'translate('+(destX-100)+'px,150px)' }
     ], { duration: 1400, easing:'ease-in' });
-    setTimeout(function(){ if(ball.parentNode) ball.parentNode.removeChild(ball); }, 1450);
+    flight.onfinish = function(){ if(ball.parentNode) ball.parentNode.removeChild(ball); };
   }
   if(!reduced){
-    setInterval(dropBall, 500);
+    // Lifecycle-adjusted RAF time pauses production while the scene is hidden.
+    // Do not catch up by releasing a burst of balls after a long suspension.
+    var lastDrop = null;
+    function tick(timestamp){
+      if (!balls.isConnected) return;
+      if (lastDrop === null || timestamp - lastDrop >= 500) {
+        lastDrop = timestamp;
+        dropBall();
+      }
+      requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
   } else {
     for(var i=0;i<30;i++) dropBall();
   }

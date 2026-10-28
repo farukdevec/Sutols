@@ -87,7 +87,8 @@ class AppColors extends ThemeExtension<AppColors> {
       surface: Color.lerp(surface, other.surface, t)!,
       surfaceElevated: Color.lerp(surfaceElevated, other.surfaceElevated, t)!,
       onSurface: Color.lerp(onSurface, other.onSurface, t)!,
-      onSurfaceVariant: Color.lerp(onSurfaceVariant, other.onSurfaceVariant, t)!,
+      onSurfaceVariant:
+          Color.lerp(onSurfaceVariant, other.onSurfaceVariant, t)!,
       border: Color.lerp(border, other.border, t)!,
       borderFocus: Color.lerp(borderFocus, other.borderFocus, t)!,
       textPrimary: Color.lerp(textPrimary, other.textPrimary, t)!,
@@ -145,6 +146,7 @@ class AppTypography {
 
   static const TextStyle display = TextStyle(
     fontFamily: fontFamily,
+    fontFamilyFallback: ['Inter Extended', 'Roboto Extended'],
     fontSize: 48,
     fontWeight: FontWeight.w700,
     letterSpacing: -1.0,
@@ -153,6 +155,7 @@ class AppTypography {
 
   static const TextStyle headline = TextStyle(
     fontFamily: fontFamily,
+    fontFamilyFallback: ['Inter Extended', 'Roboto Extended'],
     fontSize: 32,
     fontWeight: FontWeight.w700,
     letterSpacing: -0.5,
@@ -161,6 +164,7 @@ class AppTypography {
 
   static const TextStyle titleLarge = TextStyle(
     fontFamily: fontFamily,
+    fontFamilyFallback: ['Inter Extended', 'Roboto Extended'],
     fontSize: 24,
     fontWeight: FontWeight.w600,
     letterSpacing: -0.3,
@@ -169,6 +173,7 @@ class AppTypography {
 
   static const TextStyle titleMedium = TextStyle(
     fontFamily: fontFamily,
+    fontFamilyFallback: ['Inter Extended', 'Roboto Extended'],
     fontSize: 18,
     fontWeight: FontWeight.w600,
     letterSpacing: -0.2,
@@ -177,6 +182,7 @@ class AppTypography {
 
   static const TextStyle bodyLarge = TextStyle(
     fontFamily: fontFamily,
+    fontFamilyFallback: ['Inter Extended', 'Roboto Extended'],
     fontSize: 16,
     fontWeight: FontWeight.w400,
     letterSpacing: 0,
@@ -185,6 +191,7 @@ class AppTypography {
 
   static const TextStyle bodyMedium = TextStyle(
     fontFamily: fontFamily,
+    fontFamilyFallback: ['Inter Extended', 'Roboto Extended'],
     fontSize: 14,
     fontWeight: FontWeight.w400,
     letterSpacing: 0,
@@ -193,6 +200,7 @@ class AppTypography {
 
   static const TextStyle labelLarge = TextStyle(
     fontFamily: fontFamily,
+    fontFamilyFallback: ['Inter Extended', 'Roboto Extended'],
     fontSize: 14,
     fontWeight: FontWeight.w500,
     letterSpacing: 0,
@@ -201,14 +209,16 @@ class AppTypography {
 
   static const TextStyle labelMedium = TextStyle(
     fontFamily: fontFamily,
+    fontFamilyFallback: ['Inter Extended', 'Roboto Extended'],
     fontSize: 12,
     fontWeight: FontWeight.w500,
     letterSpacing: 0.1,
     height: 1.4,
   );
-  
+
   static const TextStyle labelSmall = TextStyle(
     fontFamily: fontFamily,
+    fontFamilyFallback: ['Inter Extended', 'Roboto Extended'],
     fontSize: 11,
     fontWeight: FontWeight.w500,
     letterSpacing: 0.2,

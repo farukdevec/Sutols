@@ -277,7 +277,14 @@ class _SutolHomePageState extends State<SutolHomePage> {
 
   Future<void> _generatePresentation(String rawTitle, String rawTopic) async {
     final topic = rawTopic.trim();
-    if (topic.isEmpty) return;
+    if (topic.isEmpty) {
+      _promptFocusNode.requestFocus();
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(tr('Lütfen sunumun konusunu yazın.',
+            'Please describe your presentation topic.')),
+      ));
+      return;
+    }
     final title = rawTitle.trim();
 
     final userId = FirebaseAuth.instance.currentUser?.uid;
@@ -351,7 +358,12 @@ class _SutolHomePageState extends State<SutolHomePage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            '${tr('Sunum oluşturulamadı', 'Failed to create presentation')}: $e',
+            tr('Sunum hazırlanamadı. Lütfen yeniden deneyin. Sorun sürerse konuyu daha açık yazın.',
+                'The presentation could not be prepared. Please retry. If the issue persists, describe the topic more clearly.'),
+          ),
+          action: SnackBarAction(
+            label: tr('Yeniden dene', 'Retry'),
+            onPressed: () => _generatePresentation(rawTitle, rawTopic),
           ),
         ),
       );
@@ -773,6 +785,18 @@ class PresentationCreationCard extends StatelessWidget {
   /// eyleme odaklı ipuçları.
   final bool isDashboard;
 
+  void _submit(BuildContext context) {
+    if (promptController.text.trim().isEmpty) {
+      promptFocusNode.requestFocus();
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(tr('Lütfen sunumun konusunu yazın.',
+            'Please describe your presentation topic.')),
+      ));
+      return;
+    }
+    onGenerate(titleController.text, promptController.text);
+  }
+
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
@@ -843,10 +867,7 @@ class PresentationCreationCard extends StatelessWidget {
               height: 48,
               child: FilledButton(
                 key: const ValueKey<String>('presentation-generate-button'),
-                onPressed: () => onGenerate(
-                  titleController.text,
-                  promptController.text,
-                ),
+                onPressed: () => _submit(context),
                 child: Text(tr('Oluştur', 'Generate')),
               ),
             ),
@@ -862,10 +883,7 @@ class PresentationCreationCard extends StatelessWidget {
                 const SizedBox(width: AppSpacing.s12),
                 FilledButton(
                   key: const ValueKey<String>('presentation-generate-button'),
-                  onPressed: () => onGenerate(
-                    titleController.text,
-                    promptController.text,
-                  ),
+                  onPressed: () => _submit(context),
                   child: Text(tr('Oluştur', 'Generate')),
                 ),
               ],

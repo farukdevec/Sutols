@@ -3,6 +3,31 @@ import 'package:sutol/services/model_matching_service.dart';
 import 'package:sutol/services/model_repository.dart';
 
 void main() {
+  test('cache invalidates edited tags and phrase exclusions', () {
+    final tags = <String>['kahve'];
+    final exclusions = <String>[];
+    final model = ModelCatalogEntry(
+        id: 'coffee',
+        name: 'Kahve Modeli',
+        modelUrl: 'coffee.glb',
+        thumbnailUrl: '',
+        tags: tags,
+        category: 'yemek',
+        tier: 'free',
+        excludeTags: exclusions);
+    List<ModelMatch> query() => ModelMatchingService.rankCatalogModels(
+        models: [model], keywords: ['kahve çekirdekleri']);
+    expect(query(), isNotEmpty);
+    exclusions.add('kahve çekirdeği');
+    expect(query(), isEmpty);
+    exclusions.clear();
+    tags[0] = 'uzay';
+    expect(
+        ModelMatchingService.rankCatalogModels(
+            models: [model], keywords: ['uzay']).single.id,
+        'coffee');
+  });
+
   test('aynı model kimliği arama indeksine yalnızca bir kez eklenir', () {
     const repositoryEntry = ModelCatalogEntry(
       id: 'gercekci-dunya',

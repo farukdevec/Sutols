@@ -1,0 +1,2881 @@
+[
+  {
+    "id": "sutols-water-molecule",
+    "label": "Su Molekülü — H₂O",
+    "category": "Kimya",
+    "tags": [
+      "su",
+      "molekül",
+      "h2o",
+      "water"
+    ],
+    "variants": {
+      "lite": {
+        "path": "/models/original-v1/water-molecule-lite.glb",
+        "bytes": 35580,
+        "sha256": "c06322198bfd05eb3f27e298ee794fed0d7f43222c61cf685a2c6b0ef7fb3554",
+        "triangles": 1200
+      },
+      "quality": {
+        "path": "/models/original-v1/water-molecule-quality.glb",
+        "bytes": 80516,
+        "sha256": "66732063416f952343994bfe6707c3a8e92742bd545455faae9f1616c33453cf",
+        "triangles": 3064
+      }
+    },
+    "thumbnail": "/model_thumbnails/original-v1/water-molecule.png",
+    "license": "Original procedural Sutols asset; see ORIGINAL_MODELS_LICENSE.md",
+    "description": "Şematik eğitim modeli; ölçek ve fiziksel ayrıntılar temsilidir.",
+    "version": 1,
+    "labelEn": "water molecule"
+  },
+  {
+    "id": "sutols-carbon-dioxide",
+    "label": "Karbondioksit Molekülü — CO₂",
+    "category": "Kimya",
+    "tags": [
+      "karbondioksit",
+      "co2",
+      "carbon dioxide"
+    ],
+    "variants": {
+      "lite": {
+        "path": "/models/original-v1/carbon-dioxide-lite.glb",
+        "bytes": 41520,
+        "sha256": "814f3ff61587749a5167706833bf4b741bd04cd339517af47d310247056c3828",
+        "triangles": 1320
+      },
+      "quality": {
+        "path": "/models/original-v1/carbon-dioxide-quality.glb",
+        "bytes": 88876,
+        "sha256": "eebeae7b21822e4ade19a78b2fd92e43cf0667735694f62a44b8dffc5467e38b",
+        "triangles": 3248
+      }
+    },
+    "thumbnail": "/model_thumbnails/original-v1/carbon-dioxide.png",
+    "license": "Original procedural Sutols asset; see ORIGINAL_MODELS_LICENSE.md",
+    "description": "Şematik eğitim modeli; ölçek ve fiziksel ayrıntılar temsilidir.",
+    "version": 1,
+    "labelEn": "carbon dioxide"
+  },
+  {
+    "id": "sutols-bohr-atom",
+    "label": "Bohr Atom Şeması",
+    "category": "Fizik",
+    "tags": [
+      "atom",
+      "bohr",
+      "elektron",
+      "nucleus"
+    ],
+    "variants": {
+      "lite": {
+        "path": "/models/original-v1/bohr-atom-lite.glb",
+        "bytes": 69064,
+        "sha256": "c7424aa024e27423c23a91d4bcb9559346c0fa80c98532e7a63df741bc6e885d",
+        "triangles": 2640
+      },
+      "quality": {
+        "path": "/models/original-v1/bohr-atom-quality.glb",
+        "bytes": 159232,
+        "sha256": "100e83173a12f00e9d3968c95ef4a44ef659991ea1802df0cff72b5a1163f11a",
+        "triangles": 6528
+      }
+    },
+    "thumbnail": "/model_thumbnails/original-v1/bohr-atom.png",
+    "license": "Original procedural Sutols asset; see ORIGINAL_MODELS_LICENSE.md",
+    "description": "Şematik eğitim modeli; ölçek ve fiziksel ayrıntılar temsilidir.",
+    "version": 1,
+    "labelEn": "bohr atom"
+  },
+  {
+    "id": "sutols-spur-gear",
+    "label": "Düz Dişli Çark",
+    "category": "Mühendislik",
+    "tags": [
+      "dişli",
+      "çark",
+      "gear",
+      "mekanik"
+    ],
+    "variants": {
+      "lite": {
+        "path": "/models/original-v1/spur-gear-lite.glb",
+        "bytes": 91580,
+        "sha256": "2c3f7de7028e003cbe8fa4e0feb1aaedb28f4ca10a646d26279fa7fe0954c0e0",
+        "triangles": 3248
+      },
+      "quality": {
+        "path": "/models/original-v1/spur-gear-quality.glb",
+        "bytes": 167368,
+        "sha256": "90a3a39dc447d486a2a448dbcc8a2ae6ce0fcf432044248cf61c114bff986407",
+        "triangles": 6448
+      }
+    },
+    "thumbnail": "/model_thumbnails/original-v1/spur-gear.png",
+    "license": "Original procedural Sutols asset; see ORIGINAL_MODELS_LICENSE.md",
+    "description": "Şematik eğitim modeli; ölçek ve fiziksel ayrıntılar temsilidir.",
+    "version": 1,
+    "labelEn": "spur gear"
+  },
+  {
+    "id": "sutols-solar-panel",
+    "label": "Güneş Paneli",
+    "category": "Enerji",
+    "tags": [
+      "güneş paneli",
+      "fotovoltaik",
+      "solar panel"
+    ],
+    "variants": {
+      "lite": {
+        "path": "/models/original-v1/solar-panel-lite.glb",
+        "bytes": 50336,
+        "sha256": "517909cbfb0ca7a77a05530e9fc5a208836267574b38772e07e4355bdf039be0",
+        "triangles": 1632
+      },
+      "quality": {
+        "path": "/models/original-v1/solar-panel-quality.glb",
+        "bytes": 79156,
+        "sha256": "e8c408b4e5975dd282e16a7981fb7323f3024b64d8a4219b3508818d846ecaf9",
+        "triangles": 2816
+      }
+    },
+    "thumbnail": "/model_thumbnails/original-v1/solar-panel.png",
+    "license": "Original procedural Sutols asset; see ORIGINAL_MODELS_LICENSE.md",
+    "description": "Şematik eğitim modeli; ölçek ve fiziksel ayrıntılar temsilidir.",
+    "version": 1,
+    "labelEn": "solar panel"
+  },
+  {
+    "id": "sutols-battery",
+    "label": "Elektrik Bataryası",
+    "category": "Enerji",
+    "tags": [
+      "batarya",
+      "pil",
+      "battery"
+    ],
+    "variants": {
+      "lite": {
+        "path": "/models/original-v1/battery-lite.glb",
+        "bytes": 16868,
+        "sha256": "2a3878dfe4344345cb1b6cc325228dc03547b46027016f163621c9fe0008236a",
+        "triangles": 444
+      },
+      "quality": {
+        "path": "/models/original-v1/battery-quality.glb",
+        "bytes": 24944,
+        "sha256": "6f6c36cf0523fbc6a472c5a4d59f3d648c51b4c9328f0c8f1e9ed7e958604319",
+        "triangles": 748
+      }
+    },
+    "thumbnail": "/model_thumbnails/original-v1/battery.png",
+    "license": "Original procedural Sutols asset; see ORIGINAL_MODELS_LICENSE.md",
+    "description": "Şematik eğitim modeli; ölçek ve fiziksel ayrıntılar temsilidir.",
+    "version": 1,
+    "labelEn": "battery"
+  },
+  {
+    "id": "sutols-wind-turbine",
+    "label": "Rüzgâr Türbini",
+    "category": "Enerji",
+    "tags": [
+      "rüzgar türbini",
+      "wind turbine"
+    ],
+    "variants": {
+      "lite": {
+        "path": "/models/original-v1/wind-turbine-lite.glb",
+        "bytes": 27848,
+        "sha256": "16528a98611d4b94bd5b1a1da2526cbd6d0630ace2dd444cd4813761a3746e75",
+        "triangles": 852
+      },
+      "quality": {
+        "path": "/models/original-v1/wind-turbine-quality.glb",
+        "bytes": 50684,
+        "sha256": "2d50dd0ebfdaa694405bb5ef5d4681c8053d2bad1f6950e3fe0bb2160d6b7dd5",
+        "triangles": 1804
+      }
+    },
+    "thumbnail": "/model_thumbnails/original-v1/wind-turbine.png",
+    "license": "Original procedural Sutols asset; see ORIGINAL_MODELS_LICENSE.md",
+    "description": "Şematik eğitim modeli; ölçek ve fiziksel ayrıntılar temsilidir.",
+    "version": 1,
+    "labelEn": "wind turbine"
+  },
+  {
+    "id": "sutols-rocket",
+    "label": "Uzay Roketi",
+    "category": "Uzay",
+    "tags": [
+      "roket",
+      "uzay roketi",
+      "rocket"
+    ],
+    "variants": {
+      "lite": {
+        "path": "/models/original-v1/rocket-lite.glb",
+        "bytes": 47088,
+        "sha256": "d530ced4020fb85353384bb91de43ee57eff071532fa029b81e58379b9bd22d0",
+        "triangles": 1522
+      },
+      "quality": {
+        "path": "/models/original-v1/rocket-quality.glb",
+        "bytes": 92296,
+        "sha256": "03161c62a555cb6dd13128229cc2b1d8767beff8e73252d8f7cb5d1b46746d0d",
+        "triangles": 3386
+      }
+    },
+    "thumbnail": "/model_thumbnails/original-v1/rocket.png",
+    "license": "Original procedural Sutols asset; see ORIGINAL_MODELS_LICENSE.md",
+    "description": "Şematik eğitim modeli; ölçek ve fiziksel ayrıntılar temsilidir.",
+    "version": 1,
+    "labelEn": "rocket"
+  },
+  {
+    "id": "sutols-classical-temple",
+    "label": "Klasik Tapınak Şeması",
+    "category": "Tarih ve Mimari",
+    "tags": [
+      "tapınak",
+      "sütun",
+      "temple"
+    ],
+    "variants": {
+      "lite": {
+        "path": "/models/original-v1/classical-temple-lite.glb",
+        "bytes": 53956,
+        "sha256": "56d23ca96384b9148929e33c446a09bf9d4d1385039cf3f4e17dd9e69d457baf",
+        "triangles": 1568
+      },
+      "quality": {
+        "path": "/models/original-v1/classical-temple-quality.glb",
+        "bytes": 82260,
+        "sha256": "cb6620f0791785b3e0d4c2f5876a81b95bcf0cbe079ff6210ca998842da7ad99",
+        "triangles": 2624
+      }
+    },
+    "thumbnail": "/model_thumbnails/original-v1/classical-temple.png",
+    "license": "Original procedural Sutols asset; see ORIGINAL_MODELS_LICENSE.md",
+    "description": "Şematik eğitim modeli; ölçek ve fiziksel ayrıntılar temsilidir.",
+    "version": 1,
+    "labelEn": "classical temple"
+  },
+  {
+    "id": "sutols-microscope",
+    "label": "Optik Mikroskop",
+    "category": "Biyoloji",
+    "tags": [
+      "mikroskop",
+      "microscope",
+      "optik"
+    ],
+    "variants": {
+      "lite": {
+        "path": "/models/original-v1/microscope-lite.glb",
+        "bytes": 28896,
+        "sha256": "b8035161e34df199fdc2c3fbfa655b51115b71386d3fb69255713433232f1765",
+        "triangles": 816
+      },
+      "quality": {
+        "path": "/models/original-v1/microscope-quality.glb",
+        "bytes": 51448,
+        "sha256": "ee0f807f1e737400ec80e9a3189de47c65b70fb01297a3df7394b1f114106581",
+        "triangles": 1704
+      }
+    },
+    "thumbnail": "/model_thumbnails/original-v1/microscope.png",
+    "license": "Original procedural Sutols asset; see ORIGINAL_MODELS_LICENSE.md",
+    "description": "Şematik eğitim modeli; ölçek ve fiziksel ayrıntılar temsilidir.",
+    "version": 1,
+    "labelEn": "microscope"
+  },
+  {
+    "id": "sutols-cube",
+    "label": "Küp",
+    "category": "Matematik",
+    "tags": [
+      "küp",
+      "cube",
+      "geometrik cisim"
+    ],
+    "variants": {
+      "lite": {
+        "path": "/models/original-v1/cube-lite.glb",
+        "bytes": 4192,
+        "sha256": "28d257502a16fe0cbb94be50604c0c62d7df63c2ef1dca64ef4ecf32a8ee832f",
+        "triangles": 108
+      },
+      "quality": {
+        "path": "/models/original-v1/cube-quality.glb",
+        "bytes": 6056,
+        "sha256": "abaa907849f0102ccada7f82f3d46e0d9d450776a7c4bd959786665af0ad3e24",
+        "triangles": 188
+      }
+    },
+    "thumbnail": "/model_thumbnails/original-v1/cube.png",
+    "license": "Original procedural Sutols asset; see ORIGINAL_MODELS_LICENSE.md",
+    "description": "Şematik eğitim modeli; ölçek ve fiziksel ayrıntılar temsilidir.",
+    "version": 1,
+    "labelEn": "cube"
+  },
+  {
+    "id": "sutols-sphere",
+    "label": "Küre",
+    "category": "Matematik",
+    "tags": [
+      "küre",
+      "sphere"
+    ],
+    "variants": {
+      "lite": {
+        "path": "/models/original-v1/sphere-lite.glb",
+        "bytes": 10748,
+        "sha256": "799eddb64e13d19158e2198b52c0966e927faf5ad6ae4220b7cf098ef96e5000",
+        "triangles": 360
+      },
+      "quality": {
+        "path": "/models/original-v1/sphere-quality.glb",
+        "bytes": 24912,
+        "sha256": "68f5917fe156555cb3e2d081486f945769c1f47a4c443cf91cf778be1a83a68b",
+        "triangles": 960
+      }
+    },
+    "thumbnail": "/model_thumbnails/original-v1/sphere.png",
+    "license": "Original procedural Sutols asset; see ORIGINAL_MODELS_LICENSE.md",
+    "description": "Şematik eğitim modeli; ölçek ve fiziksel ayrıntılar temsilidir.",
+    "version": 1,
+    "labelEn": "sphere"
+  },
+  {
+    "id": "sutols-cylinder",
+    "label": "Silindir",
+    "category": "Matematik",
+    "tags": [
+      "silindir",
+      "cylinder"
+    ],
+    "variants": {
+      "lite": {
+        "path": "/models/original-v1/cylinder-lite.glb",
+        "bytes": 3764,
+        "sha256": "73ade3a630a1806dbac18a1767f5dc0108b85eeb64286980ad7d450d3a1a6e13",
+        "triangles": 60
+      },
+      "quality": {
+        "path": "/models/original-v1/cylinder-quality.glb",
+        "bytes": 4984,
+        "sha256": "b60698696dec9fc7d3e291b77fc0a154f1ffc776c09808d1d59ea1d601f725c9",
+        "triangles": 92
+      }
+    },
+    "thumbnail": "/model_thumbnails/original-v1/cylinder.png",
+    "license": "Original procedural Sutols asset; see ORIGINAL_MODELS_LICENSE.md",
+    "description": "Şematik eğitim modeli; ölçek ve fiziksel ayrıntılar temsilidir.",
+    "version": 1,
+    "labelEn": "cylinder"
+  },
+  {
+    "id": "sutols-cone",
+    "label": "Koni",
+    "category": "Matematik",
+    "tags": [
+      "koni",
+      "cone"
+    ],
+    "variants": {
+      "lite": {
+        "path": "/models/original-v1/cone-lite.glb",
+        "bytes": 3084,
+        "sha256": "d64ba194a43f715ebfa3ad65891ebbc3e4c2fb99bd0b64f7ac07b76cc45d08aa",
+        "triangles": 46
+      },
+      "quality": {
+        "path": "/models/original-v1/cone-quality.glb",
+        "bytes": 4300,
+        "sha256": "4f842b7d1dcba9348d4393b4d539f9e588588b50be1672a8ee3b9cc6e6716edb",
+        "triangles": 78
+      }
+    },
+    "thumbnail": "/model_thumbnails/original-v1/cone.png",
+    "license": "Original procedural Sutols asset; see ORIGINAL_MODELS_LICENSE.md",
+    "description": "Şematik eğitim modeli; ölçek ve fiziksel ayrıntılar temsilidir.",
+    "version": 1,
+    "labelEn": "cone"
+  },
+  {
+    "id": "sutols-torus",
+    "label": "Torus",
+    "category": "Matematik",
+    "tags": [
+      "torus",
+      "halka yüzey"
+    ],
+    "variants": {
+      "lite": {
+        "path": "/models/original-v1/torus-lite.glb",
+        "bytes": 16860,
+        "sha256": "f782289c58ea717e62a4e8ddf68c7051f13df62f07aac8e80705d8ed71f7881b",
+        "triangles": 640
+      },
+      "quality": {
+        "path": "/models/original-v1/torus-quality.glb",
+        "bytes": 37472,
+        "sha256": "376627a8d9f93b2a76b65d49f620db5697b54433c2f9d62f2395f184662c5a92",
+        "triangles": 1536
+      }
+    },
+    "thumbnail": "/model_thumbnails/original-v1/torus.png",
+    "license": "Original procedural Sutols asset; see ORIGINAL_MODELS_LICENSE.md",
+    "description": "Şematik eğitim modeli; ölçek ve fiziksel ayrıntılar temsilidir.",
+    "version": 1,
+    "labelEn": "torus"
+  },
+  {
+    "id": "sutols-tetrahedron",
+    "label": "Düzgün Dörtyüzlü",
+    "category": "Matematik",
+    "tags": [
+      "tetrahedron",
+      "dörtyüzlü"
+    ],
+    "variants": {
+      "lite": {
+        "path": "/models/original-v1/tetrahedron-lite.glb",
+        "bytes": 1336,
+        "sha256": "3217e34817a445438c4c9ff623becd17563695eb3ecbac5854bcc969960d7fd5",
+        "triangles": 4
+      },
+      "quality": {
+        "path": "/models/original-v1/tetrahedron-quality.glb",
+        "bytes": 1340,
+        "sha256": "b96a7142da79c58205aa834e43d08fdc1731300d97531c5fc11ed0a674dfac5d",
+        "triangles": 4
+      }
+    },
+    "thumbnail": "/model_thumbnails/original-v1/tetrahedron.png",
+    "license": "Original procedural Sutols asset; see ORIGINAL_MODELS_LICENSE.md",
+    "description": "Şematik eğitim modeli; ölçek ve fiziksel ayrıntılar temsilidir.",
+    "version": 1,
+    "labelEn": "tetrahedron"
+  },
+  {
+    "id": "sutols-square-pyramid",
+    "label": "Kare Piramit",
+    "category": "Matematik",
+    "tags": [
+      "kare piramit",
+      "square pyramid"
+    ],
+    "variants": {
+      "lite": {
+        "path": "/models/original-v1/square-pyramid-lite.glb",
+        "bytes": 1520,
+        "sha256": "8009cda782c5310d98895892dd4e8362b1184f895111e08ac8aad09dbc8dc9a4",
+        "triangles": 6
+      },
+      "quality": {
+        "path": "/models/original-v1/square-pyramid-quality.glb",
+        "bytes": 1524,
+        "sha256": "0c63f46df8c3e7698b18f613b151bc183e587e82b86d43e36fb679e4b0917202",
+        "triangles": 6
+      }
+    },
+    "thumbnail": "/model_thumbnails/original-v1/square-pyramid.png",
+    "license": "Original procedural Sutols asset; see ORIGINAL_MODELS_LICENSE.md",
+    "description": "Şematik eğitim modeli; ölçek ve fiziksel ayrıntılar temsilidir.",
+    "version": 1,
+    "labelEn": "square pyramid"
+  },
+  {
+    "id": "sutols-triangular-prism",
+    "label": "Üçgen Prizma",
+    "category": "Matematik",
+    "tags": [
+      "üçgen prizma",
+      "triangular prism"
+    ],
+    "variants": {
+      "lite": {
+        "path": "/models/original-v1/triangular-prism-lite.glb",
+        "bytes": 1576,
+        "sha256": "7da22186e249b1109a62dc5f096cc2d6738f3aa89bca871e153310eee27415e2",
+        "triangles": 8
+      },
+      "quality": {
+        "path": "/models/original-v1/triangular-prism-quality.glb",
+        "bytes": 1580,
+        "sha256": "5ef224845f2707cf57fa3625642d6644b8921d47579755385541e294b38abb52",
+        "triangles": 8
+      }
+    },
+    "thumbnail": "/model_thumbnails/original-v1/triangular-prism.png",
+    "license": "Original procedural Sutols asset; see ORIGINAL_MODELS_LICENSE.md",
+    "description": "Şematik eğitim modeli; ölçek ve fiziksel ayrıntılar temsilidir.",
+    "version": 1,
+    "labelEn": "triangular prism"
+  },
+  {
+    "id": "sutols-coordinate-axes",
+    "label": "Üç Boyutlu Koordinat Eksenleri",
+    "category": "Matematik",
+    "tags": [
+      "koordinat eksenleri",
+      "coordinate axes"
+    ],
+    "variants": {
+      "lite": {
+        "path": "/models/original-v1/coordinate-axes-lite.glb",
+        "bytes": 46884,
+        "sha256": "b6a80db056660c329affa5bf795b4db9b6b7d2bb8869df3578334bdba2268797",
+        "triangles": 1620
+      },
+      "quality": {
+        "path": "/models/original-v1/coordinate-axes-quality.glb",
+        "bytes": 96936,
+        "sha256": "5334fabb84bb3d00444527d9eece508970be3fafd00fac20c5b26fd46a5d25c6",
+        "triangles": 4116
+      }
+    },
+    "thumbnail": "/model_thumbnails/original-v1/coordinate-axes.png",
+    "license": "Original procedural Sutols asset; see ORIGINAL_MODELS_LICENSE.md",
+    "description": "Şematik eğitim modeli; ölçek ve fiziksel ayrıntılar temsilidir.",
+    "version": 1,
+    "labelEn": "coordinate axes"
+  },
+  {
+    "id": "sutols-lever",
+    "label": "Kaldıraç Şeması",
+    "category": "Fizik",
+    "tags": [
+      "kaldıraç",
+      "lever",
+      "basit makine"
+    ],
+    "variants": {
+      "lite": {
+        "path": "/models/original-v1/lever-lite.glb",
+        "bytes": 13004,
+        "sha256": "062a5e0a62918e0dcb19a60db579275d4900f1448ee473216ceed0268d30e80b",
+        "triangles": 284
+      },
+      "quality": {
+        "path": "/models/original-v1/lever-quality.glb",
+        "bytes": 17952,
+        "sha256": "a17f09bc4bc30f41962761c178088dac49f4ed0f2941ec7de02bb962a3b6b825",
+        "triangles": 476
+      }
+    },
+    "thumbnail": "/model_thumbnails/original-v1/lever.png",
+    "license": "Original procedural Sutols asset; see ORIGINAL_MODELS_LICENSE.md",
+    "description": "Şematik eğitim modeli; ölçek ve fiziksel ayrıntılar temsilidir.",
+    "version": 1,
+    "labelEn": "lever"
+  },
+  {
+    "id": "sutols-pulley",
+    "label": "Sabit Makara Şeması",
+    "category": "Fizik",
+    "tags": [
+      "makara",
+      "pulley",
+      "basit makine"
+    ],
+    "variants": {
+      "lite": {
+        "path": "/models/original-v1/pulley-lite.glb",
+        "bytes": 30184,
+        "sha256": "921faa0f53d7a22de144849b5f3e9745442a719c1cb9f4a82badc8ed2506dc11",
+        "triangles": 928
+      },
+      "quality": {
+        "path": "/models/original-v1/pulley-quality.glb",
+        "bytes": 56308,
+        "sha256": "1e035d916bba4711c12ab049ec413778ad41fadb86cc18100d312c95e09b26ff",
+        "triangles": 2000
+      }
+    },
+    "thumbnail": "/model_thumbnails/original-v1/pulley.png",
+    "license": "Original procedural Sutols asset; see ORIGINAL_MODELS_LICENSE.md",
+    "description": "Şematik eğitim modeli; ölçek ve fiziksel ayrıntılar temsilidir.",
+    "version": 1,
+    "labelEn": "pulley"
+  },
+  {
+    "id": "sutols-helical-spring",
+    "label": "Helisel Yay",
+    "category": "Mühendislik",
+    "tags": [
+      "helisel yay",
+      "helical spring",
+      "spring"
+    ],
+    "variants": {
+      "lite": {
+        "path": "/models/original-v1/helical-spring-lite.glb",
+        "bytes": 47624,
+        "sha256": "4fe6c8e6159c8b7dc1df801fcd6d8337dfe7c2f32bd99e0ed51aeb6f0c26ec9d",
+        "triangles": 1920
+      },
+      "quality": {
+        "path": "/models/original-v1/helical-spring-quality.glb",
+        "bytes": 114896,
+        "sha256": "730c7dba06bbe6d6f121d41c3b0c3f5d6c998dca09ad607e22c320b6c95facc0",
+        "triangles": 4800
+      }
+    },
+    "thumbnail": "/model_thumbnails/original-v1/helical-spring.png",
+    "license": "Original procedural Sutols asset; see ORIGINAL_MODELS_LICENSE.md",
+    "description": "Şematik eğitim modeli; ölçek ve fiziksel ayrıntılar temsilidir.",
+    "version": 1,
+    "labelEn": "helical spring"
+  },
+  {
+    "id": "sutols-pendulum",
+    "label": "Basit Sarkaç",
+    "category": "Fizik",
+    "tags": [
+      "sarkaç",
+      "pendulum"
+    ],
+    "variants": {
+      "lite": {
+        "path": "/models/original-v1/pendulum-lite.glb",
+        "bytes": 24016,
+        "sha256": "9092599d5c34fea1c8f6a554313a8f1be8e6e8f68890c9e265fcd83a052fc1c6",
+        "triangles": 648
+      },
+      "quality": {
+        "path": "/models/original-v1/pendulum-quality.glb",
+        "bytes": 43692,
+        "sha256": "318d73b96f44e59a81a2a1f8567046249359b92330144e5578646f6fdb12cfee",
+        "triangles": 1424
+      }
+    },
+    "thumbnail": "/model_thumbnails/original-v1/pendulum.png",
+    "license": "Original procedural Sutols asset; see ORIGINAL_MODELS_LICENSE.md",
+    "description": "Şematik eğitim modeli; ölçek ve fiziksel ayrıntılar temsilidir.",
+    "version": 1,
+    "labelEn": "pendulum"
+  },
+  {
+    "id": "sutols-resistor",
+    "label": "Direnç Şeması",
+    "category": "Elektronik",
+    "tags": [
+      "elektrik direnci",
+      "resistor"
+    ],
+    "variants": {
+      "lite": {
+        "path": "/models/original-v1/resistor-lite.glb",
+        "bytes": 67168,
+        "sha256": "80931293cc79bd52f07d9adeffca408d1b17588b0f56483e61d06fa5c29eceb5",
+        "triangles": 2740
+      },
+      "quality": {
+        "path": "/models/original-v1/resistor-quality.glb",
+        "bytes": 142520,
+        "sha256": "76545dfbc1c277daa93b9c6c413965ca3f131dfbad2632c2e5ba4e2892e6186e",
+        "triangles": 6420
+      }
+    },
+    "thumbnail": "/model_thumbnails/original-v1/resistor.png",
+    "license": "Original procedural Sutols asset; see ORIGINAL_MODELS_LICENSE.md",
+    "description": "Şematik eğitim modeli; ölçek ve fiziksel ayrıntılar temsilidir.",
+    "version": 1,
+    "labelEn": "resistor"
+  },
+  {
+    "id": "sutols-microchip",
+    "label": "Mikroçip Şeması",
+    "category": "Teknoloji",
+    "tags": [
+      "mikroçip",
+      "microchip",
+      "entegre devre",
+      "integrated circuit"
+    ],
+    "variants": {
+      "lite": {
+        "path": "/models/original-v1/microchip-lite.glb",
+        "bytes": 79900,
+        "sha256": "8e8a0a6ccad27a0f4e85bb5682850a6965684b9eae14615435369791afb6ff74",
+        "triangles": 2808
+      },
+      "quality": {
+        "path": "/models/original-v1/microchip-quality.glb",
+        "bytes": 128976,
+        "sha256": "51f7bf75f344848623e67dff1b357262df6f9af6b72a9996a523858b72440d4e",
+        "triangles": 4888
+      }
+    },
+    "thumbnail": "/model_thumbnails/original-v1/microchip.png",
+    "license": "Original procedural Sutols asset; see ORIGINAL_MODELS_LICENSE.md",
+    "description": "Şematik eğitim modeli; ölçek ve fiziksel ayrıntılar temsilidir.",
+    "version": 1,
+    "labelEn": "microchip"
+  },
+  {
+    "id": "sutols-octahedron",
+    "label": "Düzgün Sekizyüzlü",
+    "category": "Matematik",
+    "tags": [
+      "oktahedron",
+      "sekizyüzlü",
+      "octahedron"
+    ],
+    "variants": {
+      "lite": {
+        "path": "/models/original-v1/octahedron-lite.glb",
+        "bytes": 1664,
+        "sha256": "0b02f9821997f5a544abfa3dbaf61c8859b92c9a0b0d9fd80286d2d69cce69dc",
+        "triangles": 8
+      },
+      "quality": {
+        "path": "/models/original-v1/octahedron-quality.glb",
+        "bytes": 1668,
+        "sha256": "74a87363314907c0e1b6b860916d18daf5025a29a079abf91a3069018cee88da",
+        "triangles": 8
+      }
+    },
+    "thumbnail": "/model_thumbnails/original-v1/octahedron.png",
+    "license": "Original procedural Sutols asset; see ORIGINAL_MODELS_LICENSE.md",
+    "description": "Şematik eğitim modeli; ölçek ve fiziksel ayrıntılar temsilidir.",
+    "version": 1,
+    "labelEn": "octahedron"
+  },
+  {
+    "id": "sutols-icosahedron",
+    "label": "Düzgün Yirmiyüzlü",
+    "category": "Matematik",
+    "tags": [
+      "ikosahedron",
+      "yirmiyüzlü",
+      "icosahedron"
+    ],
+    "variants": {
+      "lite": {
+        "path": "/models/original-v1/icosahedron-lite.glb",
+        "bytes": 3260,
+        "sha256": "dac80773133d13625ba737dccd65fff34b18ab524fb213c3af30bb08741588d5",
+        "triangles": 20
+      },
+      "quality": {
+        "path": "/models/original-v1/icosahedron-quality.glb",
+        "bytes": 3264,
+        "sha256": "c9f903791aa4864a4b44ac6b77e680d33c5e4fc53cb4d65ed3347a2643016f8c",
+        "triangles": 20
+      }
+    },
+    "thumbnail": "/model_thumbnails/original-v1/icosahedron.png",
+    "license": "Original procedural Sutols asset; see ORIGINAL_MODELS_LICENSE.md",
+    "description": "Şematik eğitim modeli; ölçek ve fiziksel ayrıntılar temsilidir.",
+    "version": 1,
+    "labelEn": "icosahedron"
+  },
+  {
+    "id": "sutols-cuboid",
+    "label": "Dikdörtgenler Prizması",
+    "category": "Matematik",
+    "tags": [
+      "dikdörtgenler prizması",
+      "cuboid",
+      "rectangular prism"
+    ],
+    "variants": {
+      "lite": {
+        "path": "/models/original-v1/cuboid-lite.glb",
+        "bytes": 4184,
+        "sha256": "01263b99d9146ae48efd5ce434dcbf09a553ff55906c85dbeeb055d7584bdadf",
+        "triangles": 108
+      },
+      "quality": {
+        "path": "/models/original-v1/cuboid-quality.glb",
+        "bytes": 6044,
+        "sha256": "f1a80fd77f627fe8d1de76ee323fa702c1dc8c736d132c0782e2165435d50c5b",
+        "triangles": 188
+      }
+    },
+    "thumbnail": "/model_thumbnails/original-v1/cuboid.png",
+    "license": "Original procedural Sutols asset; see ORIGINAL_MODELS_LICENSE.md",
+    "description": "Şematik eğitim modeli; ölçek ve fiziksel ayrıntılar temsilidir.",
+    "version": 1,
+    "labelEn": "cuboid"
+  },
+  {
+    "id": "sutols-ellipsoid",
+    "label": "Elipsoit",
+    "category": "Matematik",
+    "tags": [
+      "elipsoit",
+      "ellipsoid"
+    ],
+    "variants": {
+      "lite": {
+        "path": "/models/original-v1/ellipsoid-lite.glb",
+        "bytes": 10768,
+        "sha256": "72eacb055f7bdc1061ff535ff95338a361f0221698f3d2fa7b297a49edc398a6",
+        "triangles": 360
+      },
+      "quality": {
+        "path": "/models/original-v1/ellipsoid-quality.glb",
+        "bytes": 24932,
+        "sha256": "c5a6e4b7dc177f93cd6b27d6977887e1ecb64a171f867c362b2c8a5db50fe16e",
+        "triangles": 960
+      }
+    },
+    "thumbnail": "/model_thumbnails/original-v1/ellipsoid.png",
+    "license": "Original procedural Sutols asset; see ORIGINAL_MODELS_LICENSE.md",
+    "description": "Şematik eğitim modeli; ölçek ve fiziksel ayrıntılar temsilidir.",
+    "version": 1,
+    "labelEn": "ellipsoid"
+  },
+  {
+    "id": "sutols-hemisphere",
+    "label": "Yarım Küre",
+    "category": "Matematik",
+    "tags": [
+      "yarım küre",
+      "hemisphere"
+    ],
+    "variants": {
+      "lite": {
+        "path": "/models/original-v1/hemisphere-lite.glb",
+        "bytes": 21848,
+        "sha256": "2262ef9f66f75c374e25ffa7c56c70f56d4ab14b7f057288546c8a82269f4289",
+        "triangles": 382
+      },
+      "quality": {
+        "path": "/models/original-v1/hemisphere-quality.glb",
+        "bytes": 61604,
+        "sha256": "9dd7e6716cc972b49933dd562aa44777fde690cb8dcbefc769e0d76f63c2c9ab",
+        "triangles": 1118
+      }
+    },
+    "thumbnail": "/model_thumbnails/original-v1/hemisphere.png",
+    "license": "Original procedural Sutols asset; see ORIGINAL_MODELS_LICENSE.md",
+    "description": "Şematik eğitim modeli; ölçek ve fiziksel ayrıntılar temsilidir.",
+    "version": 1,
+    "labelEn": "hemisphere"
+  },
+  {
+    "id": "sutols-hexagonal-prism",
+    "label": "Altıgen Prizma",
+    "category": "Matematik",
+    "tags": [
+      "altıgen prizma",
+      "hexagonal prism"
+    ],
+    "variants": {
+      "lite": {
+        "path": "/models/original-v1/hexagonal-prism-lite.glb",
+        "bytes": 2104,
+        "sha256": "0a0def2c50dad19e767f67a2b49f572ae4b8e827ec91800c02220433d6063bde",
+        "triangles": 20
+      },
+      "quality": {
+        "path": "/models/original-v1/hexagonal-prism-quality.glb",
+        "bytes": 2108,
+        "sha256": "b599948fe22db5df840acdf8075e32d7590dd08ea6babb4cd3e3b914ad118d89",
+        "triangles": 20
+      }
+    },
+    "thumbnail": "/model_thumbnails/original-v1/hexagonal-prism.png",
+    "license": "Original procedural Sutols asset; see ORIGINAL_MODELS_LICENSE.md",
+    "description": "Şematik eğitim modeli; ölçek ve fiziksel ayrıntılar temsilidir.",
+    "version": 1,
+    "labelEn": "hexagonal prism"
+  },
+  {
+    "id": "sutols-hexagonal-pyramid",
+    "label": "Altıgen Piramit",
+    "category": "Matematik",
+    "tags": [
+      "altıgen piramit",
+      "hexagonal pyramid"
+    ],
+    "variants": {
+      "lite": {
+        "path": "/models/original-v1/hexagonal-pyramid-lite.glb",
+        "bytes": 1760,
+        "sha256": "a4956a47180fa766eb3b4ce5dba30d2ffb0a5b45a9407b0a0e68126ec086e235",
+        "triangles": 10
+      },
+      "quality": {
+        "path": "/models/original-v1/hexagonal-pyramid-quality.glb",
+        "bytes": 1764,
+        "sha256": "bf14b3b531fe43e2bf74c8e4ec68577d61db72c858b5718692d1cbb8870f08d2",
+        "triangles": 10
+      }
+    },
+    "thumbnail": "/model_thumbnails/original-v1/hexagonal-pyramid.png",
+    "license": "Original procedural Sutols asset; see ORIGINAL_MODELS_LICENSE.md",
+    "description": "Şematik eğitim modeli; ölçek ve fiziksel ayrıntılar temsilidir.",
+    "version": 1,
+    "labelEn": "hexagonal pyramid"
+  },
+  {
+    "id": "sutols-right-triangle",
+    "label": "Dik Üçgen Plakası",
+    "category": "Matematik",
+    "tags": [
+      "dik üçgen",
+      "pisagor",
+      "right triangle",
+      "pythagoras"
+    ],
+    "variants": {
+      "lite": {
+        "path": "/models/original-v1/right-triangle-lite.glb",
+        "bytes": 1544,
+        "sha256": "cc18e602bad673d45decd80a0edb0ef73bae219e2fdca467a0a252f7e3dbd7c3",
+        "triangles": 8
+      },
+      "quality": {
+        "path": "/models/original-v1/right-triangle-quality.glb",
+        "bytes": 1548,
+        "sha256": "ef6d337039c7537cedf4a5f058c6646116437d54dfe6e2dfc88ef8ed9471d5ac",
+        "triangles": 8
+      }
+    },
+    "thumbnail": "/model_thumbnails/original-v1/right-triangle.png",
+    "license": "Original procedural Sutols asset; see ORIGINAL_MODELS_LICENSE.md",
+    "description": "Şematik eğitim modeli; ölçek ve fiziksel ayrıntılar temsilidir.",
+    "version": 1,
+    "labelEn": "right triangle"
+  },
+  {
+    "id": "sutols-hydrogen-molecule",
+    "label": "Hidrojen Molekülü — H₂",
+    "category": "Kimya",
+    "tags": [
+      "hidrojen",
+      "h2",
+      "hydrogen"
+    ],
+    "variants": {
+      "lite": {
+        "path": "/models/original-v1/hydrogen-molecule-lite.glb",
+        "bytes": 22732,
+        "sha256": "cbc702be089e50e02aeb857408c0f2a80f328a857f2ea80d3dfdf57cda122845",
+        "triangles": 780
+      },
+      "quality": {
+        "path": "/models/original-v1/hydrogen-molecule-quality.glb",
+        "bytes": 52276,
+        "sha256": "3a142e5c3e803f670a123e55d5b847a99f352045e034beaf8e47c6cd2d726c47",
+        "triangles": 2012
+      }
+    },
+    "thumbnail": "/model_thumbnails/original-v1/hydrogen-molecule.png",
+    "license": "Original procedural Sutols asset; see ORIGINAL_MODELS_LICENSE.md",
+    "description": "Şematik eğitim modeli; ölçek ve fiziksel ayrıntılar temsilidir.",
+    "version": 1,
+    "labelEn": "hydrogen molecule"
+  },
+  {
+    "id": "sutols-oxygen-molecule",
+    "label": "Oksijen Molekülü — O₂",
+    "category": "Kimya",
+    "tags": [
+      "oksijen",
+      "o2",
+      "oxygen"
+    ],
+    "variants": {
+      "lite": {
+        "path": "/models/original-v1/oxygen-molecule-lite.glb",
+        "bytes": 26160,
+        "sha256": "5ba0b85b0ee89a71e228179ac986543962b1bddca59f775be6e8ef05128c7a62",
+        "triangles": 840
+      },
+      "quality": {
+        "path": "/models/original-v1/oxygen-molecule-quality.glb",
+        "bytes": 56920,
+        "sha256": "07ba33e545564b20ed1c19d479eb8ae1023795c24dd26ad915552b12cc65af4a",
+        "triangles": 2104
+      }
+    },
+    "thumbnail": "/model_thumbnails/original-v1/oxygen-molecule.png",
+    "license": "Original procedural Sutols asset; see ORIGINAL_MODELS_LICENSE.md",
+    "description": "Şematik eğitim modeli; ölçek ve fiziksel ayrıntılar temsilidir.",
+    "version": 1,
+    "labelEn": "oxygen molecule"
+  },
+  {
+    "id": "sutols-nitrogen-molecule",
+    "label": "Azot Molekülü — N₂",
+    "category": "Kimya",
+    "tags": [
+      "azot",
+      "n2",
+      "nitrogen"
+    ],
+    "variants": {
+      "lite": {
+        "path": "/models/original-v1/nitrogen-molecule-lite.glb",
+        "bytes": 28636,
+        "sha256": "068a2ad27a37a8b897f5728ccfaf74d6ee59934c4902b9e7f1d4e455975f1d8f",
+        "triangles": 900
+      },
+      "quality": {
+        "path": "/models/original-v1/nitrogen-molecule-quality.glb",
+        "bytes": 60612,
+        "sha256": "0ac96f93413dd87f8643286f88b2977d25e383482678934ddda700b465eb64c5",
+        "triangles": 2196
+      }
+    },
+    "thumbnail": "/model_thumbnails/original-v1/nitrogen-molecule.png",
+    "license": "Original procedural Sutols asset; see ORIGINAL_MODELS_LICENSE.md",
+    "description": "Şematik eğitim modeli; ölçek ve fiziksel ayrıntılar temsilidir.",
+    "version": 1,
+    "labelEn": "nitrogen molecule"
+  },
+  {
+    "id": "sutols-methane-molecule",
+    "label": "Metan Molekülü — CH₄",
+    "category": "Kimya",
+    "tags": [
+      "metan",
+      "ch4",
+      "methane"
+    ],
+    "variants": {
+      "lite": {
+        "path": "/models/original-v1/methane-molecule-lite.glb",
+        "bytes": 59544,
+        "sha256": "153eb6cc0ca36575da36057cb916bb5d8d906c114716a7ab0fb082bad4fec2cd",
+        "triangles": 2040
+      },
+      "quality": {
+        "path": "/models/original-v1/methane-molecule-quality.glb",
+        "bytes": 135216,
+        "sha256": "87ad9cd9d22f9a7c024014f42f562582eeb7f9dd5281a09e5f8fe381ad4d9b06",
+        "triangles": 5168
+      }
+    },
+    "thumbnail": "/model_thumbnails/original-v1/methane-molecule.png",
+    "license": "Original procedural Sutols asset; see ORIGINAL_MODELS_LICENSE.md",
+    "description": "Şematik eğitim modeli; ölçek ve fiziksel ayrıntılar temsilidir.",
+    "version": 1,
+    "labelEn": "methane molecule"
+  },
+  {
+    "id": "sutols-ammonia-molecule",
+    "label": "Amonyak Molekülü — NH₃",
+    "category": "Kimya",
+    "tags": [
+      "amonyak",
+      "nh3",
+      "ammonia"
+    ],
+    "variants": {
+      "lite": {
+        "path": "/models/original-v1/ammonia-molecule-lite.glb",
+        "bytes": 47608,
+        "sha256": "33a491d9604293e43aab91a301dcc9044b6a28e354559809bc9b54e91e090df3",
+        "triangles": 1620
+      },
+      "quality": {
+        "path": "/models/original-v1/ammonia-molecule-quality.glb",
+        "bytes": 107908,
+        "sha256": "ff28319fb4a3f81256ad6cbae5e2728ba091c62ad4a4cf14cfe3639307c970d5",
+        "triangles": 4116
+      }
+    },
+    "thumbnail": "/model_thumbnails/original-v1/ammonia-molecule.png",
+    "license": "Original procedural Sutols asset; see ORIGINAL_MODELS_LICENSE.md",
+    "description": "Şematik eğitim modeli; ölçek ve fiziksel ayrıntılar temsilidir.",
+    "version": 1,
+    "labelEn": "ammonia molecule"
+  },
+  {
+    "id": "sutols-capacitor",
+    "label": "Kondansatör Şeması",
+    "category": "Elektronik",
+    "tags": [
+      "kondansatör",
+      "kapasitör",
+      "capacitor"
+    ],
+    "variants": {
+      "lite": {
+        "path": "/models/original-v1/capacitor-lite.glb",
+        "bytes": 11148,
+        "sha256": "92f538ece9f0cadb3ae9054898e6080ef0310d170ddd8e4a9059d7434981c2c6",
+        "triangles": 192
+      },
+      "quality": {
+        "path": "/models/original-v1/capacitor-quality.glb",
+        "bytes": 14808,
+        "sha256": "9f4fe32b6a2308361e33cf3e2c3994c56538decb96f91336d9cc254fbee55b50",
+        "triangles": 288
+      }
+    },
+    "thumbnail": "/model_thumbnails/original-v1/capacitor.png",
+    "license": "Original procedural Sutols asset; see ORIGINAL_MODELS_LICENSE.md",
+    "description": "Şematik eğitim modeli; ölçek ve fiziksel ayrıntılar temsilidir.",
+    "version": 1,
+    "labelEn": "capacitor"
+  },
+  {
+    "id": "sutols-diode",
+    "label": "Diyot Şeması",
+    "category": "Elektronik",
+    "tags": [
+      "diyot",
+      "diode",
+      "doğrultma"
+    ],
+    "variants": {
+      "lite": {
+        "path": "/models/original-v1/diode-lite.glb",
+        "bytes": 12528,
+        "sha256": "c661b1b4da06e0e5450c26f3b3c30842162396a6fde730eb07d84092b40852f2",
+        "triangles": 240
+      },
+      "quality": {
+        "path": "/models/original-v1/diode-quality.glb",
+        "bytes": 17208,
+        "sha256": "984b6d13e33a5e8396d6b3eb0cb87c3095a82e790eb3e63dec79b3f828e1a905",
+        "triangles": 368
+      }
+    },
+    "thumbnail": "/model_thumbnails/original-v1/diode.png",
+    "license": "Original procedural Sutols asset; see ORIGINAL_MODELS_LICENSE.md",
+    "description": "Şematik eğitim modeli; ölçek ve fiziksel ayrıntılar temsilidir.",
+    "version": 1,
+    "labelEn": "diode"
+  },
+  {
+    "id": "sutols-led",
+    "label": "LED Şeması",
+    "category": "Elektronik",
+    "tags": [
+      "led",
+      "ışık yayan diyot",
+      "light emitting diode"
+    ],
+    "variants": {
+      "lite": {
+        "path": "/models/original-v1/led-lite.glb",
+        "bytes": 34804,
+        "sha256": "83bef0f2b5a38368990173ea92d06a6a997342d7715a0ebd31635b24a296c309",
+        "triangles": 1180
+      },
+      "quality": {
+        "path": "/models/original-v1/led-quality.glb",
+        "bytes": 73228,
+        "sha256": "e043bfc076f3ad11d5a623153bd71e8e87e9d595d22df6a967b872fc3c276f4f",
+        "triangles": 2772
+      }
+    },
+    "thumbnail": "/model_thumbnails/original-v1/led.png",
+    "license": "Original procedural Sutols asset; see ORIGINAL_MODELS_LICENSE.md",
+    "description": "Şematik eğitim modeli; ölçek ve fiziksel ayrıntılar temsilidir.",
+    "version": 1,
+    "labelEn": "led"
+  },
+  {
+    "id": "sutols-transformer",
+    "label": "Transformatör Şeması",
+    "category": "Elektronik",
+    "tags": [
+      "transformatör",
+      "trafo",
+      "transformer",
+      "indüksiyon"
+    ],
+    "variants": {
+      "lite": {
+        "path": "/models/original-v1/transformer-lite.glb",
+        "bytes": 143256,
+        "sha256": "c7ec7932a2d944738f30a283ee5dadc73e0f604b3e9e120cd6790cadf6ea11a6",
+        "triangles": 6508
+      },
+      "quality": {
+        "path": "/models/original-v1/transformer-quality.glb",
+        "bytes": 324324,
+        "sha256": "d4d7ea70d73ff8b58cef95ad7fd8e2c745d6b9508b9f22924611168ab8d56194",
+        "triangles": 15548
+      }
+    },
+    "thumbnail": "/model_thumbnails/original-v1/transformer.png",
+    "license": "Original procedural Sutols asset; see ORIGINAL_MODELS_LICENSE.md",
+    "description": "Şematik eğitim modeli; ölçek ve fiziksel ayrıntılar temsilidir.",
+    "version": 1,
+    "labelEn": "transformer"
+  },
+  {
+    "id": "sutols-balance-scale",
+    "label": "Eşit Kollu Terazi",
+    "category": "Fizik",
+    "tags": [
+      "terazi",
+      "denge",
+      "moment",
+      "balance scale"
+    ],
+    "variants": {
+      "lite": {
+        "path": "/models/original-v1/balance-scale-lite.glb",
+        "bytes": 23408,
+        "sha256": "314ed844af14e583865e3de70387fcc367d0461f7eed35d781b6814de49ffda2",
+        "triangles": 532
+      },
+      "quality": {
+        "path": "/models/original-v1/balance-scale-quality.glb",
+        "bytes": 34992,
+        "sha256": "e53e3dd6bc4bda32eb0b09dee7b4580038f5727f118306ad84f70e665e7bc0b2",
+        "triangles": 868
+      }
+    },
+    "thumbnail": "/model_thumbnails/original-v1/balance-scale.png",
+    "license": "Original procedural Sutols asset; see ORIGINAL_MODELS_LICENSE.md",
+    "description": "Şematik eğitim modeli; ölçek ve fiziksel ayrıntılar temsilidir.",
+    "version": 1,
+    "labelEn": "balance scale"
+  },
+  {
+    "id": "sutols-piston",
+    "label": "Piston ve Biyel Şeması",
+    "category": "Mühendislik",
+    "tags": [
+      "piston",
+      "biyel",
+      "connecting rod"
+    ],
+    "variants": {
+      "lite": {
+        "path": "/models/original-v1/piston-lite.glb",
+        "bytes": 54632,
+        "sha256": "d87eb2dc0ce9d81eabdf27377ad16b2af76f9541ebce1c6aaebc9c066ee80938",
+        "triangles": 2040
+      },
+      "quality": {
+        "path": "/models/original-v1/piston-quality.glb",
+        "bytes": 118708,
+        "sha256": "fc23f3794d0c9235b788bf981c92997fc8d1a0c1abc3567c8a048d8965823f84",
+        "triangles": 4792
+      }
+    },
+    "thumbnail": "/model_thumbnails/original-v1/piston.png",
+    "license": "Original procedural Sutols asset; see ORIGINAL_MODELS_LICENSE.md",
+    "description": "Şematik eğitim modeli; ölçek ve fiziksel ayrıntılar temsilidir.",
+    "version": 1,
+    "labelEn": "piston"
+  },
+  {
+    "id": "sutols-archimedes-screw",
+    "label": "Arşimet Burgusu",
+    "category": "Mühendislik",
+    "tags": [
+      "arşimet burgusu",
+      "archimedes screw",
+      "helisel vida"
+    ],
+    "variants": {
+      "lite": {
+        "path": "/models/original-v1/archimedes-screw-lite.glb",
+        "bytes": 18680,
+        "sha256": "86e3aec3dc03922b18765dc2b64127f1f89b4125efe353ad392fc46c49360cb3",
+        "triangles": 260
+      },
+      "quality": {
+        "path": "/models/original-v1/archimedes-screw-quality.glb",
+        "bytes": 31100,
+        "sha256": "1f476c442b231ea5a5bc3d91b02e5faf0ea219a270fb750792c3c2eaed35db90",
+        "triangles": 452
+      }
+    },
+    "thumbnail": "/model_thumbnails/original-v1/archimedes-screw.png",
+    "license": "Original procedural Sutols asset; see ORIGINAL_MODELS_LICENSE.md",
+    "description": "Şematik eğitim modeli; ölçek ve fiziksel ayrıntılar temsilidir.",
+    "version": 1,
+    "labelEn": "archimedes screw"
+  },
+  {
+    "id": "sutols-newton-cradle",
+    "label": "Newton Beşiği",
+    "category": "Fizik",
+    "tags": [
+      "newton beşiği",
+      "newton cradle",
+      "momentum"
+    ],
+    "variants": {
+      "lite": {
+        "path": "/models/original-v1/newton-cradle-lite.glb",
+        "bytes": 93108,
+        "sha256": "b369b811c16d6627064696fc851f83895bc9f9a5b969301d3d8f2ec0147dc0f8",
+        "triangles": 2868
+      },
+      "quality": {
+        "path": "/models/original-v1/newton-cradle-quality.glb",
+        "bytes": 185232,
+        "sha256": "f673b5ec4e265debc6ca57fbe3427dc2f24fa2b81a283f1482482aedd5c0523a",
+        "triangles": 6460
+      }
+    },
+    "thumbnail": "/model_thumbnails/original-v1/newton-cradle.png",
+    "license": "Original procedural Sutols asset; see ORIGINAL_MODELS_LICENSE.md",
+    "description": "Şematik eğitim modeli; ölçek ve fiziksel ayrıntılar temsilidir.",
+    "version": 1,
+    "labelEn": "newton cradle"
+  },
+  {
+    "id": "sutols-dna-helix",
+    "label": "DNA Çift Sarmal Şeması",
+    "category": "Biyoloji",
+    "tags": [
+      "dna",
+      "çift sarmal",
+      "double helix",
+      "genetik"
+    ],
+    "variants": {
+      "lite": {
+        "path": "/models/original-v1/dna-helix-lite.glb",
+        "bytes": 138212,
+        "sha256": "935ccdd8c55e5658f1131588052a01908bc168496fdf6dadf3678b917c3f5fbf",
+        "triangles": 3480
+      },
+      "quality": {
+        "path": "/models/original-v1/dna-helix-quality.glb",
+        "bytes": 204332,
+        "sha256": "832b0cef891d461fddaafb80cb6374f9483f8a9003de7e7ae327c178f93b13e2",
+        "triangles": 5336
+      }
+    },
+    "thumbnail": "/model_thumbnails/original-v1/dna-helix.png",
+    "license": "Original procedural Sutols asset; see ORIGINAL_MODELS_LICENSE.md",
+    "description": "Şematik eğitim modeli; ölçek ve fiziksel ayrıntılar temsilidir.",
+    "version": 1,
+    "labelEn": "dna helix"
+  },
+  {
+    "id": "sutols-tree",
+    "label": "Ağaç Şeması",
+    "category": "Doğa",
+    "tags": [
+      "ağaç",
+      "tree",
+      "orman",
+      "forest"
+    ],
+    "variants": {
+      "lite": {
+        "path": "/models/original-v1/tree-lite.glb",
+        "bytes": 42664,
+        "sha256": "ad70030dd9f138eb5ca4535ddeacfe6c6ba0f395cf85eaf12af7bc0c02a2aff7",
+        "triangles": 1500
+      },
+      "quality": {
+        "path": "/models/original-v1/tree-quality.glb",
+        "bytes": 100528,
+        "sha256": "201b49de3183c72fdd943d6422c18ae75ec7a766a78b944520b26e7d0d0b4b05",
+        "triangles": 3932
+      }
+    },
+    "thumbnail": "/model_thumbnails/original-v1/tree.png",
+    "license": "Original procedural Sutols asset; see ORIGINAL_MODELS_LICENSE.md",
+    "description": "Şematik eğitim modeli; ölçek ve fiziksel ayrıntılar temsilidir.",
+    "version": 1,
+    "labelEn": "tree"
+  },
+  {
+    "id": "sutols-bacterium",
+    "label": "Bakteri Şeması",
+    "category": "Biyoloji",
+    "tags": [
+      "bakteri",
+      "bacterium",
+      "bacteria",
+      "mikroorganizma"
+    ],
+    "variants": {
+      "lite": {
+        "path": "/models/original-v1/bacterium-lite.glb",
+        "bytes": 32492,
+        "sha256": "3dfbbfe4b2279e585fb7486f8865c21d7293ef672563828b1c2f11b0b33b0771",
+        "triangles": 840
+      },
+      "quality": {
+        "path": "/models/original-v1/bacterium-quality.glb",
+        "bytes": 56380,
+        "sha256": "a3c051c8409a6567df2750c98ac5ba2a5ffb13715a259d552d4d143b823e8af2",
+        "triangles": 1696
+      }
+    },
+    "thumbnail": "/model_thumbnails/original-v1/bacterium.png",
+    "license": "Original procedural Sutols asset; see ORIGINAL_MODELS_LICENSE.md",
+    "description": "Şematik eğitim modeli; ölçek ve fiziksel ayrıntılar temsilidir.",
+    "version": 1,
+    "labelEn": "bacterium"
+  },
+  {
+    "id": "sutols-neuron",
+    "label": "Nöron Şeması",
+    "category": "Biyoloji",
+    "tags": [
+      "nöron",
+      "neuron",
+      "sinir hücresi",
+      "nerve cell"
+    ],
+    "variants": {
+      "lite": {
+        "path": "/models/original-v1/neuron-lite.glb",
+        "bytes": 71620,
+        "sha256": "d1bd849813924c326c8ec892c14d738ca0f9ec00e69c633e2398b95db922b603",
+        "triangles": 1920
+      },
+      "quality": {
+        "path": "/models/original-v1/neuron-quality.glb",
+        "bytes": 124272,
+        "sha256": "079f66cacf6f1cbe6e27aa5fd792da1a1620cfb01b09c910a665bbe84f469345",
+        "triangles": 3760
+      }
+    },
+    "thumbnail": "/model_thumbnails/original-v1/neuron.png",
+    "license": "Original procedural Sutols asset; see ORIGINAL_MODELS_LICENSE.md",
+    "description": "Şematik eğitim modeli; ölçek ve fiziksel ayrıntılar temsilidir.",
+    "version": 1,
+    "labelEn": "neuron"
+  },
+  {
+    "id": "sutols-hollow-tube",
+    "label": "İçi Boş Silindir",
+    "category": "Matematik",
+    "tags": [
+      "içi boş silindir",
+      "silindir boru",
+      "hollow cylinder"
+    ],
+    "variants": {
+      "lite": {
+        "path": "/models/original-v1/hollow-tube-lite.glb",
+        "bytes": 5700,
+        "sha256": "07da9b7f423e8d34411c5b8e538abcbe878e98a15cc64d9389b8920767dde8d4",
+        "triangles": 256
+      },
+      "quality": {
+        "path": "/models/original-v1/hollow-tube-quality.glb",
+        "bytes": 10316,
+        "sha256": "a8d7e19c264b3c3c50d562e736679e400f6f11980c8f7a5aa22bce80e27b4974",
+        "triangles": 512
+      }
+    },
+    "thumbnail": "/model_thumbnails/original-v1/hollow-tube.png",
+    "license": "Original procedural Sutols asset; see ORIGINAL_MODELS_LICENSE.md",
+    "description": "Şematik eğitim modeli; ölçek ve fiziksel ayrıntılar temsilidir.",
+    "version": 1,
+    "labelEn": "hollow tube"
+  },
+  {
+    "id": "sutols-conical-frustum",
+    "label": "Kesik Koni",
+    "category": "Matematik",
+    "tags": [
+      "kesik koni",
+      "conical frustum"
+    ],
+    "variants": {
+      "lite": {
+        "path": "/models/original-v1/conical-frustum-lite.glb",
+        "bytes": 6164,
+        "sha256": "24cb87f6e826142cf60c7ff5738d131a127b34a19dc00207e96162500c3fa762",
+        "triangles": 124
+      },
+      "quality": {
+        "path": "/models/original-v1/conical-frustum-quality.glb",
+        "bytes": 11036,
+        "sha256": "83a46df0489c554c426cbbdee2ad12e981fcb4aa73591ec35875955aa3873ba2",
+        "triangles": 252
+      }
+    },
+    "thumbnail": "/model_thumbnails/original-v1/conical-frustum.png",
+    "license": "Original procedural Sutols asset; see ORIGINAL_MODELS_LICENSE.md",
+    "description": "Şematik eğitim modeli; ölçek ve fiziksel ayrıntılar temsilidir.",
+    "version": 1,
+    "labelEn": "conical frustum"
+  },
+  {
+    "id": "sutols-paraboloid",
+    "label": "Paraboloit Yüzeyi",
+    "category": "Matematik",
+    "tags": [
+      "paraboloit",
+      "paraboloid",
+      "parabol yüzeyi"
+    ],
+    "variants": {
+      "lite": {
+        "path": "/models/original-v1/paraboloid-lite.glb",
+        "bytes": 12384,
+        "sha256": "c4007acbcbfff5ba54a5d4491b62591a136b0763692aa170454122a65ca29319",
+        "triangles": 608
+      },
+      "quality": {
+        "path": "/models/original-v1/paraboloid-quality.glb",
+        "bytes": 37548,
+        "sha256": "822441b523975c9d67c8434053d2fe71fd21fc1af882d6d2b04ed4ca3a1496db",
+        "triangles": 1984
+      }
+    },
+    "thumbnail": "/model_thumbnails/original-v1/paraboloid.png",
+    "license": "Original procedural Sutols asset; see ORIGINAL_MODELS_LICENSE.md",
+    "description": "Şematik eğitim modeli; ölçek ve fiziksel ayrıntılar temsilidir.",
+    "version": 1,
+    "labelEn": "paraboloid"
+  },
+  {
+    "id": "sutols-mobius-strip",
+    "label": "Möbius Şeridi",
+    "category": "Matematik",
+    "tags": [
+      "möbius şeridi",
+      "mobius strip",
+      "topoloji"
+    ],
+    "variants": {
+      "lite": {
+        "path": "/models/original-v1/mobius-strip-lite.glb",
+        "bytes": 4944,
+        "sha256": "50d4537f9ac6d0f2e86beb720a00a3158bc001c79e7d0d662a63693defad46cd",
+        "triangles": 128
+      },
+      "quality": {
+        "path": "/models/original-v1/mobius-strip-quality.glb",
+        "bytes": 8788,
+        "sha256": "164365fc236e6993b2e13030586f49f80cea5f701d756323942f8e108b7d361d",
+        "triangles": 256
+      }
+    },
+    "thumbnail": "/model_thumbnails/original-v1/mobius-strip.png",
+    "license": "Original procedural Sutols asset; see ORIGINAL_MODELS_LICENSE.md",
+    "description": "Şematik eğitim modeli; ölçek ve fiziksel ayrıntılar temsilidir.",
+    "version": 1,
+    "labelEn": "mobius strip"
+  },
+  {
+    "id": "sutols-bar-magnet",
+    "label": "Çubuk Mıknatıs",
+    "category": "Fizik",
+    "tags": [
+      "çubuk mıknatıs",
+      "bar magnet"
+    ],
+    "variants": {
+      "lite": {
+        "path": "/models/original-v1/bar-magnet-lite.glb",
+        "bytes": 7276,
+        "sha256": "911edff1956643ba7d58e49401db1c64050772a67b30034c85a9ca5ead8e6514",
+        "triangles": 216
+      },
+      "quality": {
+        "path": "/models/original-v1/bar-magnet-quality.glb",
+        "bytes": 10520,
+        "sha256": "6a484712fe95adce3ca1a5c155085188bc555d95763f316e067a5b0f3912fe81",
+        "triangles": 376
+      }
+    },
+    "thumbnail": "/model_thumbnails/original-v1/bar-magnet.png",
+    "license": "Original procedural Sutols asset; see ORIGINAL_MODELS_LICENSE.md",
+    "description": "Şematik eğitim modeli; ölçek ve fiziksel ayrıntılar temsilidir.",
+    "version": 1,
+    "labelEn": "bar magnet"
+  },
+  {
+    "id": "sutols-inclined-plane",
+    "label": "Eğik Düzlem Şeması",
+    "category": "Fizik",
+    "tags": [
+      "eğik düzlem",
+      "inclined plane",
+      "rampa"
+    ],
+    "variants": {
+      "lite": {
+        "path": "/models/original-v1/inclined-plane-lite.glb",
+        "bytes": 5260,
+        "sha256": "528a6e66f5c0058defa91ad9c0cfddebdb1aafa82c489805798b7d94c344f003",
+        "triangles": 116
+      },
+      "quality": {
+        "path": "/models/original-v1/inclined-plane-quality.glb",
+        "bytes": 7128,
+        "sha256": "593e8c0e77df6c5a7c12796dd2ee9879afcbd4d76a396b11de50254740568cd2",
+        "triangles": 196
+      }
+    },
+    "thumbnail": "/model_thumbnails/original-v1/inclined-plane.png",
+    "license": "Original procedural Sutols asset; see ORIGINAL_MODELS_LICENSE.md",
+    "description": "Şematik eğitim modeli; ölçek ve fiziksel ayrıntılar temsilidir.",
+    "version": 1,
+    "labelEn": "inclined plane"
+  },
+  {
+    "id": "sutols-conical-flask",
+    "label": "Erlenmeyer Şeması",
+    "category": "Kimya",
+    "tags": [
+      "erlenmeyer",
+      "conical flask"
+    ],
+    "variants": {
+      "lite": {
+        "path": "/models/original-v1/conical-flask-lite.glb",
+        "bytes": 12780,
+        "sha256": "76c91cec4b102411ecf26756955fe5224bb4a7f50f79a2d03ae5efa189b0fdfb",
+        "triangles": 380
+      },
+      "quality": {
+        "path": "/models/original-v1/conical-flask-quality.glb",
+        "bytes": 23280,
+        "sha256": "1becb72769cd5a395a1767c05c6bf8e5a8063b886292255d25036cb3c19e0af7",
+        "triangles": 764
+      }
+    },
+    "thumbnail": "/model_thumbnails/original-v1/conical-flask.png",
+    "license": "Original procedural Sutols asset; see ORIGINAL_MODELS_LICENSE.md",
+    "description": "Şematik eğitim modeli; ölçek ve fiziksel ayrıntılar temsilidir.",
+    "version": 1,
+    "labelEn": "conical flask"
+  },
+  {
+    "id": "sutols-round-flask",
+    "label": "Yuvarlak Balon Şeması",
+    "category": "Kimya",
+    "tags": [
+      "yuvarlak balon",
+      "round bottom flask",
+      "laboratuvar balonu"
+    ],
+    "variants": {
+      "lite": {
+        "path": "/models/original-v1/round-flask-lite.glb",
+        "bytes": 33924,
+        "sha256": "c14b20ff8cb3496af4e99f4d42751a31ae5c888f02724949943982abc843f639",
+        "triangles": 1256
+      },
+      "quality": {
+        "path": "/models/original-v1/round-flask-quality.glb",
+        "bytes": 74332,
+        "sha256": "4cde78e4950ed69e038a93c5b85ed2b55f2324e87d68e907011370c20189d047",
+        "triangles": 3008
+      }
+    },
+    "thumbnail": "/model_thumbnails/original-v1/round-flask.png",
+    "license": "Original procedural Sutols asset; see ORIGINAL_MODELS_LICENSE.md",
+    "description": "Şematik eğitim modeli; ölçek ve fiziksel ayrıntılar temsilidir.",
+    "version": 1,
+    "labelEn": "round flask"
+  },
+  {
+    "id": "sutols-test-tube-rack",
+    "label": "Deney Tüpü Rafı",
+    "category": "Kimya",
+    "tags": [
+      "deney tüpü",
+      "test tube rack",
+      "tüp rafı"
+    ],
+    "variants": {
+      "lite": {
+        "path": "/models/original-v1/test-tube-rack-lite.glb",
+        "bytes": 56096,
+        "sha256": "4b0bb6fef4e0a0e5976d1e8ff63b2e28b4baea59e759216f9809a94c71f416bd",
+        "triangles": 1896
+      },
+      "quality": {
+        "path": "/models/original-v1/test-tube-rack-quality.glb",
+        "bytes": 120848,
+        "sha256": "54792af3395d69f529a69fab3c2f3d5d8f1309b8216cc05a68a61b9320c4354a",
+        "triangles": 4584
+      }
+    },
+    "thumbnail": "/model_thumbnails/original-v1/test-tube-rack.png",
+    "license": "Original procedural Sutols asset; see ORIGINAL_MODELS_LICENSE.md",
+    "description": "Şematik eğitim modeli; ölçek ve fiziksel ayrıntılar temsilidir.",
+    "version": 1,
+    "labelEn": "test tube rack"
+  },
+  {
+    "id": "sutols-laboratory-funnel",
+    "label": "Laboratuvar Hunisi",
+    "category": "Kimya",
+    "tags": [
+      "laboratuvar hunisi",
+      "laboratory funnel",
+      "huni"
+    ],
+    "variants": {
+      "lite": {
+        "path": "/models/original-v1/laboratory-funnel-lite.glb",
+        "bytes": 9444,
+        "sha256": "4e71ad86dfd9dd48fa8cac6490a6392fa21ea62f876d8af3e3b35c4a5480d1af",
+        "triangles": 512
+      },
+      "quality": {
+        "path": "/models/original-v1/laboratory-funnel-quality.glb",
+        "bytes": 17128,
+        "sha256": "45f7158f70ff3264b69ca4e50795644fe44af7185c5da3c8e0909e69e14698f8",
+        "triangles": 1024
+      }
+    },
+    "thumbnail": "/model_thumbnails/original-v1/laboratory-funnel.png",
+    "license": "Original procedural Sutols asset; see ORIGINAL_MODELS_LICENSE.md",
+    "description": "Şematik eğitim modeli; ölçek ve fiziksel ayrıntılar temsilidir.",
+    "version": 1,
+    "labelEn": "laboratory funnel"
+  },
+  {
+    "id": "sutols-laboratory-beaker",
+    "label": "Beher Şeması",
+    "category": "Kimya",
+    "tags": [
+      "beher",
+      "laboratory beaker",
+      "beaker"
+    ],
+    "variants": {
+      "lite": {
+        "path": "/models/original-v1/laboratory-beaker-lite.glb",
+        "bytes": 22620,
+        "sha256": "6204f6e805aa659acb7d4c39df6f997a844ed263365c98b937471a94bfc33c7c",
+        "triangles": 620
+      },
+      "quality": {
+        "path": "/models/original-v1/laboratory-beaker-quality.glb",
+        "bytes": 37988,
+        "sha256": "8f6e1382c12f3aadbba11fd9ad3823910f824395dbf3c0ab596d88178731e0f6",
+        "triangles": 1132
+      }
+    },
+    "thumbnail": "/model_thumbnails/original-v1/laboratory-beaker.png",
+    "license": "Original procedural Sutols asset; see ORIGINAL_MODELS_LICENSE.md",
+    "description": "Şematik eğitim modeli; ölçek ve fiziksel ayrıntılar temsilidir.",
+    "version": 1,
+    "labelEn": "laboratory beaker"
+  },
+  {
+    "id": "sutols-water-wheel",
+    "label": "Su Çarkı Şeması",
+    "category": "Enerji",
+    "tags": [
+      "su çarkı",
+      "water wheel",
+      "hidrolik enerji"
+    ],
+    "variants": {
+      "lite": {
+        "path": "/models/original-v1/water-wheel-lite.glb",
+        "bytes": 102112,
+        "sha256": "cf82bd41882e861363f18b168b7505125db133ec1b14fc0bbe66d250a5e658e8",
+        "triangles": 3356
+      },
+      "quality": {
+        "path": "/models/original-v1/water-wheel-quality.glb",
+        "bytes": 181432,
+        "sha256": "c5ae9e9fb956bafa96f591e644c73144653e06bb5f3df5078e078e1cbd2a78e6",
+        "triangles": 6524
+      }
+    },
+    "thumbnail": "/model_thumbnails/original-v1/water-wheel.png",
+    "license": "Original procedural Sutols asset; see ORIGINAL_MODELS_LICENSE.md",
+    "description": "Şematik eğitim modeli; ölçek ve fiziksel ayrıntılar temsilidir.",
+    "version": 1,
+    "labelEn": "water wheel"
+  },
+  {
+    "id": "sutols-hydroelectric-dam",
+    "label": "Hidroelektrik Baraj Şeması",
+    "category": "Enerji",
+    "tags": [
+      "hidroelektrik baraj",
+      "hydroelectric dam"
+    ],
+    "variants": {
+      "lite": {
+        "path": "/models/original-v1/hydroelectric-dam-lite.glb",
+        "bytes": 25304,
+        "sha256": "1d5fbd72aa00ce1ee20706922abca94a4592023f8bece91ef909baddb50db53a",
+        "triangles": 720
+      },
+      "quality": {
+        "path": "/models/original-v1/hydroelectric-dam-quality.glb",
+        "bytes": 38240,
+        "sha256": "4f5d3c38209c58fe199c1256ef59369977521a2d31adb1501822e24c1f5d7214",
+        "triangles": 1216
+      }
+    },
+    "thumbnail": "/model_thumbnails/original-v1/hydroelectric-dam.png",
+    "license": "Original procedural Sutols asset; see ORIGINAL_MODELS_LICENSE.md",
+    "description": "Şematik eğitim modeli; ölçek ve fiziksel ayrıntılar temsilidir.",
+    "version": 1,
+    "labelEn": "hydroelectric dam"
+  },
+  {
+    "id": "sutols-solar-array",
+    "label": "Güneş Paneli Dizisi",
+    "category": "Enerji",
+    "tags": [
+      "güneş paneli dizisi",
+      "solar array",
+      "güneş santrali"
+    ],
+    "variants": {
+      "lite": {
+        "path": "/models/original-v1/solar-array-lite.glb",
+        "bytes": 35324,
+        "sha256": "d2834ea10d6b2e07895432586a8e754c6f93e4876003dfe42b307aa47cd000a2",
+        "triangles": 912
+      },
+      "quality": {
+        "path": "/models/original-v1/solar-array-quality.glb",
+        "bytes": 47616,
+        "sha256": "22d4fe9208006b94ad5ef011f49ba8c8b389e703a6c596c78991cbfc2568e9bb",
+        "triangles": 1360
+      }
+    },
+    "thumbnail": "/model_thumbnails/original-v1/solar-array.png",
+    "license": "Original procedural Sutols asset; see ORIGINAL_MODELS_LICENSE.md",
+    "description": "Şematik eğitim modeli; ölçek ve fiziksel ayrıntılar temsilidir.",
+    "version": 1,
+    "labelEn": "solar array"
+  },
+  {
+    "id": "sutols-radiator",
+    "label": "Radyatör Şeması",
+    "category": "Enerji",
+    "tags": [
+      "radyatör",
+      "radiator",
+      "ısıtma peteği"
+    ],
+    "variants": {
+      "lite": {
+        "path": "/models/original-v1/radiator-lite.glb",
+        "bytes": 21940,
+        "sha256": "ea625ba79a03017d09b49d3340de611f956a443d389cce49afaafad1c5ac14d7",
+        "triangles": 660
+      },
+      "quality": {
+        "path": "/models/original-v1/radiator-quality.glb",
+        "bytes": 33652,
+        "sha256": "638929cb063d88650da009993c60f0862e9245afb95a56a96c865b0eb24e6046",
+        "triangles": 1124
+      }
+    },
+    "thumbnail": "/model_thumbnails/original-v1/radiator.png",
+    "license": "Original procedural Sutols asset; see ORIGINAL_MODELS_LICENSE.md",
+    "description": "Şematik eğitim modeli; ölçek ve fiziksel ayrıntılar temsilidir.",
+    "version": 1,
+    "labelEn": "radiator"
+  },
+  {
+    "id": "sutols-truss-bridge",
+    "label": "Kafes Köprü Şeması",
+    "category": "Mühendislik",
+    "tags": [
+      "kafes köprü",
+      "truss bridge"
+    ],
+    "variants": {
+      "lite": {
+        "path": "/models/original-v1/truss-bridge-lite.glb",
+        "bytes": 56444,
+        "sha256": "c35e69ac4092fb9d2c5ac149d5dd5c1c5f43929abe82ba186e1e0e48564f68f4",
+        "triangles": 1308
+      },
+      "quality": {
+        "path": "/models/original-v1/truss-bridge-quality.glb",
+        "bytes": 82632,
+        "sha256": "df870380612c09cf705473ebd2f27464af95d6494ea1cee49651de93465b2b02",
+        "triangles": 2028
+      }
+    },
+    "thumbnail": "/model_thumbnails/original-v1/truss-bridge.png",
+    "license": "Original procedural Sutols asset; see ORIGINAL_MODELS_LICENSE.md",
+    "description": "Şematik eğitim modeli; ölçek ve fiziksel ayrıntılar temsilidir.",
+    "version": 1,
+    "labelEn": "truss bridge"
+  },
+  {
+    "id": "sutols-hex-bolt",
+    "label": "Cıvata Şeması",
+    "category": "Mühendislik",
+    "tags": [
+      "cıvata",
+      "bolt",
+      "bağlantı elemanı"
+    ],
+    "variants": {
+      "lite": {
+        "path": "/models/original-v1/hex-bolt-lite.glb",
+        "bytes": 163408,
+        "sha256": "976a72868a2e93d4559665b67de4b041467a3610f4f068dc8770c6e48be43ea4",
+        "triangles": 6480
+      },
+      "quality": {
+        "path": "/models/original-v1/hex-bolt-quality.glb",
+        "bytes": 370708,
+        "sha256": "13f76ba9182af59537a7443c3943226380ecdde6210fb75cbf11178ab99db5ae",
+        "triangles": 15472
+      }
+    },
+    "thumbnail": "/model_thumbnails/original-v1/hex-bolt.png",
+    "license": "Original procedural Sutols asset; see ORIGINAL_MODELS_LICENSE.md",
+    "description": "Şematik eğitim modeli; ölçek ve fiziksel ayrıntılar temsilidir.",
+    "version": 1,
+    "labelEn": "hex bolt"
+  },
+  {
+    "id": "sutols-hex-nut",
+    "label": "Altıgen Somun",
+    "category": "Mühendislik",
+    "tags": [
+      "altıgen somun",
+      "hex nut",
+      "somun"
+    ],
+    "variants": {
+      "lite": {
+        "path": "/models/original-v1/hex-nut-lite.glb",
+        "bytes": 3084,
+        "sha256": "e1bf1b218ed254e8e8c578cc82cbf7a3a066dab7b8a9f212f7f0e0b202167ba4",
+        "triangles": 48
+      },
+      "quality": {
+        "path": "/models/original-v1/hex-nut-quality.glb",
+        "bytes": 3088,
+        "sha256": "727c5b391dd8cc990a747df7863b67abc0c6a352b6020c533ccd9bba2ec5976e",
+        "triangles": 48
+      }
+    },
+    "thumbnail": "/model_thumbnails/original-v1/hex-nut.png",
+    "license": "Original procedural Sutols asset; see ORIGINAL_MODELS_LICENSE.md",
+    "description": "Şematik eğitim modeli; ölçek ve fiziksel ayrıntılar temsilidir.",
+    "version": 1,
+    "labelEn": "hex nut"
+  },
+  {
+    "id": "sutols-ball-bearing",
+    "label": "Bilyalı Rulman Şeması",
+    "category": "Mühendislik",
+    "tags": [
+      "bilyalı rulman",
+      "ball bearing"
+    ],
+    "variants": {
+      "lite": {
+        "path": "/models/original-v1/ball-bearing-lite.glb",
+        "bytes": 125368,
+        "sha256": "b9391c284277aa588773f7c354f618b485b3be3116ab45880d8346a442d03803",
+        "triangles": 4880
+      },
+      "quality": {
+        "path": "/models/original-v1/ball-bearing-quality.glb",
+        "bytes": 302816,
+        "sha256": "906b98218aeeb30860ddd8c3b822102a48317ad8ef10510016afc25c83b905f2",
+        "triangles": 12672
+      }
+    },
+    "thumbnail": "/model_thumbnails/original-v1/ball-bearing.png",
+    "license": "Original procedural Sutols asset; see ORIGINAL_MODELS_LICENSE.md",
+    "description": "Şematik eğitim modeli; ölçek ve fiziksel ayrıntılar temsilidir.",
+    "version": 1,
+    "labelEn": "ball bearing"
+  },
+  {
+    "id": "sutols-universal-joint",
+    "label": "Kardan Mafsalı Şeması",
+    "category": "Mühendislik",
+    "tags": [
+      "kardan mafsalı",
+      "universal joint"
+    ],
+    "variants": {
+      "lite": {
+        "path": "/models/original-v1/universal-joint-lite.glb",
+        "bytes": 40540,
+        "sha256": "581173b8c841ce80db3cc0d659607bd04102bdbb58c88f23168a7d1eed5aee0c",
+        "triangles": 1520
+      },
+      "quality": {
+        "path": "/models/original-v1/universal-joint-quality.glb",
+        "bytes": 80864,
+        "sha256": "f143e1770f54ccd08e8b9305178b4baec865d5d4c221a97ba260a3a071a94c80",
+        "triangles": 3440
+      }
+    },
+    "thumbnail": "/model_thumbnails/original-v1/universal-joint.png",
+    "license": "Original procedural Sutols asset; see ORIGINAL_MODELS_LICENSE.md",
+    "description": "Şematik eğitim modeli; ölçek ve fiziksel ayrıntılar temsilidir.",
+    "version": 1,
+    "labelEn": "universal joint"
+  },
+  {
+    "id": "sutols-communications-satellite",
+    "label": "Haberleşme Uydusu Şeması",
+    "category": "Uzay",
+    "tags": [
+      "haberleşme uydusu",
+      "communications satellite",
+      "uydu"
+    ],
+    "variants": {
+      "lite": {
+        "path": "/models/original-v1/communications-satellite-lite.glb",
+        "bytes": 35032,
+        "sha256": "37df821782d677b9e20ca69721294bd2c875183a80a3f65274cfad6f4d92df65",
+        "triangles": 1144
+      },
+      "quality": {
+        "path": "/models/original-v1/communications-satellite-quality.glb",
+        "bytes": 64872,
+        "sha256": "7b303d532f5ea888a3ea55437ce809f17026fdaf3e7b227ee383502e97edd2b8",
+        "triangles": 2376
+      }
+    },
+    "thumbnail": "/model_thumbnails/original-v1/communications-satellite.png",
+    "license": "Original procedural Sutols asset; see ORIGINAL_MODELS_LICENSE.md",
+    "description": "Şematik eğitim modeli; ölçek ve fiziksel ayrıntılar temsilidir.",
+    "version": 1,
+    "labelEn": "communications satellite"
+  },
+  {
+    "id": "sutols-ringed-planet",
+    "label": "Halkalı Gezegen Şeması",
+    "category": "Uzay",
+    "tags": [
+      "halkalı gezegen",
+      "ringed planet",
+      "satürn"
+    ],
+    "variants": {
+      "lite": {
+        "path": "/models/original-v1/ringed-planet-lite.glb",
+        "bytes": 58624,
+        "sha256": "a20ad3d3a3b83f6ba15f5ddcfb502d3b604bbf5efa05aa82d9217ae2eb27aaef",
+        "triangles": 2280
+      },
+      "quality": {
+        "path": "/models/original-v1/ringed-planet-quality.glb",
+        "bytes": 134616,
+        "sha256": "5c3b51d4411946724589f9a5034cdd1ea2ea00918d717927943871894c254967",
+        "triangles": 5568
+      }
+    },
+    "thumbnail": "/model_thumbnails/original-v1/ringed-planet.png",
+    "license": "Original procedural Sutols asset; see ORIGINAL_MODELS_LICENSE.md",
+    "description": "Şematik eğitim modeli; ölçek ve fiziksel ayrıntılar temsilidir.",
+    "version": 1,
+    "labelEn": "ringed planet"
+  },
+  {
+    "id": "sutols-lunar-lander",
+    "label": "Ay İniş Aracı Şeması",
+    "category": "Uzay",
+    "tags": [
+      "ay iniş aracı",
+      "lunar lander"
+    ],
+    "variants": {
+      "lite": {
+        "path": "/models/original-v1/lunar-lander-lite.glb",
+        "bytes": 32708,
+        "sha256": "d9ef3ed7b0c2f14e04883a86df670e0012ec087521da334421abb5bd4f43b4fb",
+        "triangles": 904
+      },
+      "quality": {
+        "path": "/models/original-v1/lunar-lander-quality.glb",
+        "bytes": 51728,
+        "sha256": "393bfc739a4f7f2e2e5e998e4316ce30addd024fd17096a5a5aa4877b1f3f3aa",
+        "triangles": 1560
+      }
+    },
+    "thumbnail": "/model_thumbnails/original-v1/lunar-lander.png",
+    "license": "Original procedural Sutols asset; see ORIGINAL_MODELS_LICENSE.md",
+    "description": "Şematik eğitim modeli; ölçek ve fiziksel ayrıntılar temsilidir.",
+    "version": 1,
+    "labelEn": "lunar lander"
+  },
+  {
+    "id": "sutols-space-station",
+    "label": "Uzay İstasyonu Şeması",
+    "category": "Uzay",
+    "tags": [
+      "uzay istasyonu",
+      "space station"
+    ],
+    "variants": {
+      "lite": {
+        "path": "/models/original-v1/space-station-lite.glb",
+        "bytes": 22380,
+        "sha256": "dceae8a54ee76fdc49734e5dcadb58eed41497cae58f474872c78668e22fbfa5",
+        "triangles": 612
+      },
+      "quality": {
+        "path": "/models/original-v1/space-station-quality.glb",
+        "bytes": 33456,
+        "sha256": "58784ff3f9c74b8b64bb096bdc0f25cf972f0cc1254ae5dd69b184252d1807a9",
+        "triangles": 1028
+      }
+    },
+    "thumbnail": "/model_thumbnails/original-v1/space-station.png",
+    "license": "Original procedural Sutols asset; see ORIGINAL_MODELS_LICENSE.md",
+    "description": "Şematik eğitim modeli; ölçek ve fiziksel ayrıntılar temsilidir.",
+    "version": 1,
+    "labelEn": "space station"
+  },
+  {
+    "id": "sutols-astronomical-telescope",
+    "label": "Astronomi Teleskobu Şeması",
+    "category": "Uzay",
+    "tags": [
+      "astronomi teleskobu",
+      "astronomical telescope",
+      "teleskop"
+    ],
+    "variants": {
+      "lite": {
+        "path": "/models/original-v1/astronomical-telescope-lite.glb",
+        "bytes": 28788,
+        "sha256": "c994491cb3915e9206ce45692a693568af18d0e815470e3d05f5f6a11b8a24cf",
+        "triangles": 880
+      },
+      "quality": {
+        "path": "/models/original-v1/astronomical-telescope-quality.glb",
+        "bytes": 54268,
+        "sha256": "910e2c47212f3d62060dce829d89f51d36b50a05967765657240fee6aaa4bbc6",
+        "triangles": 1904
+      }
+    },
+    "thumbnail": "/model_thumbnails/original-v1/astronomical-telescope.png",
+    "license": "Original procedural Sutols asset; see ORIGINAL_MODELS_LICENSE.md",
+    "description": "Şematik eğitim modeli; ölçek ve fiziksel ayrıntılar temsilidir.",
+    "version": 1,
+    "labelEn": "astronomical telescope"
+  },
+  {
+    "id": "sutols-laptop",
+    "label": "Dizüstü Bilgisayar",
+    "category": "Teknoloji",
+    "tags": [
+      "dizüstü bilgisayar",
+      "laptop",
+      "notebook"
+    ],
+    "variants": {
+      "lite": {
+        "path": "/models/original-v1/laptop-lite.glb",
+        "bytes": 14720,
+        "sha256": "4a1c73d7c4963fe0ecde7714ff55fd536e97a35e5a4b7c5a49515fc6e660f8fe",
+        "triangles": 348
+      },
+      "quality": {
+        "path": "/models/original-v1/laptop-quality.glb",
+        "bytes": 18436,
+        "sha256": "21bfa048b42fdfbe35d07275a875e8f7156b35ed7816fed7e3ea5a6aec615b91",
+        "triangles": 508
+      }
+    },
+    "thumbnail": "/model_thumbnails/original-v1/laptop.png",
+    "license": "Original procedural Sutols asset; see ORIGINAL_MODELS_LICENSE.md",
+    "description": "Şematik eğitim modeli; ölçek ve fiziksel ayrıntılar temsilidir.",
+    "version": 1,
+    "labelEn": "laptop"
+  },
+  {
+    "id": "sutols-smartphone",
+    "label": "Akıllı Telefon",
+    "category": "Teknoloji",
+    "tags": [
+      "akıllı telefon",
+      "smartphone",
+      "cep telefonu"
+    ],
+    "variants": {
+      "lite": {
+        "path": "/models/original-v1/smartphone-lite.glb",
+        "bytes": 16116,
+        "sha256": "07ffc960a7bed91010dcee63651d92e8d83d9cdbf53c0495e2ec75877ca56297",
+        "triangles": 480
+      },
+      "quality": {
+        "path": "/models/original-v1/smartphone-quality.glb",
+        "bytes": 32140,
+        "sha256": "41e6cb2cf8f35cf6fab083bdfd298fdd5d76fe4f9b653f397b819da878750865",
+        "triangles": 1160
+      }
+    },
+    "thumbnail": "/model_thumbnails/original-v1/smartphone.png",
+    "license": "Original procedural Sutols asset; see ORIGINAL_MODELS_LICENSE.md",
+    "description": "Şematik eğitim modeli; ölçek ve fiziksel ayrıntılar temsilidir.",
+    "version": 1,
+    "labelEn": "smartphone"
+  },
+  {
+    "id": "sutols-server-rack",
+    "label": "Sunucu Rafı",
+    "category": "Teknoloji",
+    "tags": [
+      "sunucu rafı",
+      "server rack",
+      "veri merkezi"
+    ],
+    "variants": {
+      "lite": {
+        "path": "/models/original-v1/server-rack-lite.glb",
+        "bytes": 80768,
+        "sha256": "c53bbb70e9f78aeb0861a8512a1185b331eb1cac61bec3bd32ded8c3c22f0d87",
+        "triangles": 2916
+      },
+      "quality": {
+        "path": "/models/original-v1/server-rack-quality.glb",
+        "bytes": 178732,
+        "sha256": "441e2f98e7b5fecbf52d96f1016064e717f5748fa2a543ec95bcfa18414d6740",
+        "triangles": 7076
+      }
+    },
+    "thumbnail": "/model_thumbnails/original-v1/server-rack.png",
+    "license": "Original procedural Sutols asset; see ORIGINAL_MODELS_LICENSE.md",
+    "description": "Şematik eğitim modeli; ölçek ve fiziksel ayrıntılar temsilidir.",
+    "version": 1,
+    "labelEn": "server rack"
+  },
+  {
+    "id": "sutols-robotic-arm",
+    "label": "Robot Kolu Şeması",
+    "category": "Teknoloji",
+    "tags": [
+      "robot kolu",
+      "robotic arm",
+      "robotik"
+    ],
+    "variants": {
+      "lite": {
+        "path": "/models/original-v1/robotic-arm-lite.glb",
+        "bytes": 44548,
+        "sha256": "0c2c03e1fe3dcb5f1c22df81bba5593a270912b076b8729cbc753f2b8d29698a",
+        "triangles": 1428
+      },
+      "quality": {
+        "path": "/models/original-v1/robotic-arm-quality.glb",
+        "bytes": 93376,
+        "sha256": "e2d7879b8e236c437b992341ccdd2e50450a93dbf4e88fd8ff7edce2e1d3040b",
+        "triangles": 3436
+      }
+    },
+    "thumbnail": "/model_thumbnails/original-v1/robotic-arm.png",
+    "license": "Original procedural Sutols asset; see ORIGINAL_MODELS_LICENSE.md",
+    "description": "Şematik eğitim modeli; ölçek ve fiziksel ayrıntılar temsilidir.",
+    "version": 1,
+    "labelEn": "robotic arm"
+  },
+  {
+    "id": "sutols-three-d-printer",
+    "label": "3D Yazıcı Şeması",
+    "category": "Teknoloji",
+    "tags": [
+      "3d yazıcı",
+      "3b yazıcı",
+      "3d printer"
+    ],
+    "variants": {
+      "lite": {
+        "path": "/models/original-v1/three-d-printer-lite.glb",
+        "bytes": 24492,
+        "sha256": "873af8f16b2246d0f1b776e95b73af8d61f61d0768911a1e6dc10c14f8a72d50",
+        "triangles": 628
+      },
+      "quality": {
+        "path": "/models/original-v1/three-d-printer-quality.glb",
+        "bytes": 39364,
+        "sha256": "820108274b6ca5910dc90ab4c9317f77ffc90086c677121937cef36c9d52fd50",
+        "triangles": 1092
+      }
+    },
+    "thumbnail": "/model_thumbnails/original-v1/three-d-printer.png",
+    "license": "Original procedural Sutols asset; see ORIGINAL_MODELS_LICENSE.md",
+    "description": "Şematik eğitim modeli; ölçek ve fiziksel ayrıntılar temsilidir.",
+    "version": 1,
+    "labelEn": "3d printer"
+  },
+  {
+    "id": "sutols-potentiometer",
+    "label": "Potansiyometre Şeması",
+    "category": "Elektronik",
+    "tags": [
+      "potansiyometre",
+      "potentiometer"
+    ],
+    "variants": {
+      "lite": {
+        "path": "/models/original-v1/potentiometer-lite.glb",
+        "bytes": 22936,
+        "sha256": "cad2d4c85064a3bae0ca30c0a4e38b3cb8ccaeee5b647e50683cea7bd53049ff",
+        "triangles": 488
+      },
+      "quality": {
+        "path": "/models/original-v1/potentiometer-quality.glb",
+        "bytes": 36768,
+        "sha256": "d6f09ed6257f4776db82effcf4633506b20203fa946f28fa3c3bb38c29685bc6",
+        "triangles": 872
+      }
+    },
+    "thumbnail": "/model_thumbnails/original-v1/potentiometer.png",
+    "license": "Original procedural Sutols asset; see ORIGINAL_MODELS_LICENSE.md",
+    "description": "Şematik eğitim modeli; ölçek ve fiziksel ayrıntılar temsilidir.",
+    "version": 1,
+    "labelEn": "potentiometer"
+  },
+  {
+    "id": "sutols-toggle-switch",
+    "label": "Elektrik Anahtarı Şeması",
+    "category": "Elektronik",
+    "tags": [
+      "elektrik anahtarı",
+      "toggle switch"
+    ],
+    "variants": {
+      "lite": {
+        "path": "/models/original-v1/toggle-switch-lite.glb",
+        "bytes": 23964,
+        "sha256": "1dbc13772c2185818d9c59d60365fc8b31fc1a399df87d183bf9141316e6fb85",
+        "triangles": 648
+      },
+      "quality": {
+        "path": "/models/original-v1/toggle-switch-quality.glb",
+        "bytes": 43636,
+        "sha256": "ac2e894f572d1c3f5714414ab7aee2fde3e22cc6834ec2837005e5514c502c1c",
+        "triangles": 1424
+      }
+    },
+    "thumbnail": "/model_thumbnails/original-v1/toggle-switch.png",
+    "license": "Original procedural Sutols asset; see ORIGINAL_MODELS_LICENSE.md",
+    "description": "Şematik eğitim modeli; ölçek ve fiziksel ayrıntılar temsilidir.",
+    "version": 1,
+    "labelEn": "toggle switch"
+  },
+  {
+    "id": "sutols-castle-tower",
+    "label": "Kale Kulesi Şeması",
+    "category": "Tarih ve Mimari",
+    "tags": [
+      "kale kulesi",
+      "castle tower"
+    ],
+    "variants": {
+      "lite": {
+        "path": "/models/original-v1/castle-tower-lite.glb",
+        "bytes": 32208,
+        "sha256": "06dd0070e5b294bfcbd416a0dd2bad7693c2f69863d5b5c8b7d4900de291cede",
+        "triangles": 1000
+      },
+      "quality": {
+        "path": "/models/original-v1/castle-tower-quality.glb",
+        "bytes": 51924,
+        "sha256": "bff2aaa229235e6de791e20522bee56fb5a99899d2872abc6aea799a98009548",
+        "triangles": 1768
+      }
+    },
+    "thumbnail": "/model_thumbnails/original-v1/castle-tower.png",
+    "license": "Original procedural Sutols asset; see ORIGINAL_MODELS_LICENSE.md",
+    "description": "Şematik eğitim modeli; ölçek ve fiziksel ayrıntılar temsilidir.",
+    "version": 1,
+    "labelEn": "castle tower"
+  },
+  {
+    "id": "sutols-obelisk",
+    "label": "Dikilitaş Şeması",
+    "category": "Tarih ve Mimari",
+    "tags": [
+      "dikilitaş",
+      "obelisk"
+    ],
+    "variants": {
+      "lite": {
+        "path": "/models/original-v1/obelisk-lite.glb",
+        "bytes": 5452,
+        "sha256": "e4e679a0502b6cb00b3c714589c2af3904ae4373bc84b20b693f775a47db3228",
+        "triangles": 122
+      },
+      "quality": {
+        "path": "/models/original-v1/obelisk-quality.glb",
+        "bytes": 7316,
+        "sha256": "50d315f0cd3d98cbfc7e153425cd6b4fad06bfb7202dd947e6a100db87f38629",
+        "triangles": 202
+      }
+    },
+    "thumbnail": "/model_thumbnails/original-v1/obelisk.png",
+    "license": "Original procedural Sutols asset; see ORIGINAL_MODELS_LICENSE.md",
+    "description": "Şematik eğitim modeli; ölçek ve fiziksel ayrıntılar temsilidir.",
+    "version": 1,
+    "labelEn": "obelisk"
+  },
+  {
+    "id": "sutols-amphitheatre",
+    "label": "Amfitiyatro Şeması",
+    "category": "Tarih ve Mimari",
+    "tags": [
+      "amfitiyatro",
+      "amphitheatre"
+    ],
+    "variants": {
+      "lite": {
+        "path": "/models/original-v1/amphitheatre-lite.glb",
+        "bytes": 301960,
+        "sha256": "d0edcb36395e121979378ccc3c67c629456369a75b5863e7b1cd3e771e8acfbe",
+        "triangles": 7308
+      },
+      "quality": {
+        "path": "/models/original-v1/amphitheatre-quality.glb",
+        "bytes": 744792,
+        "sha256": "d05de7fac33c1d92cdc7c1656bf51bacc4a27e1f81f6ce3ae3eda3812ee8a609",
+        "triangles": 18588
+      }
+    },
+    "thumbnail": "/model_thumbnails/original-v1/amphitheatre.png",
+    "license": "Original procedural Sutols asset; see ORIGINAL_MODELS_LICENSE.md",
+    "description": "Şematik eğitim modeli; ölçek ve fiziksel ayrıntılar temsilidir.",
+    "version": 1,
+    "labelEn": "amphitheatre"
+  },
+  {
+    "id": "sutols-mountain",
+    "label": "Dağ Şeması",
+    "category": "Doğa",
+    "tags": [
+      "dağ",
+      "mountain",
+      "dağ oluşumu"
+    ],
+    "variants": {
+      "lite": {
+        "path": "/models/original-v1/mountain-lite.glb",
+        "bytes": 4744,
+        "sha256": "5c5b7aa6a446b2746ed3db49708a7478f2c4a6ce7d5c3652f399eb718e3ddf66",
+        "triangles": 68
+      },
+      "quality": {
+        "path": "/models/original-v1/mountain-quality.glb",
+        "bytes": 7188,
+        "sha256": "66fde71735f8839f664a817400378cf0eecf9468340a69cad1b2c606ae44f110",
+        "triangles": 132
+      }
+    },
+    "thumbnail": "/model_thumbnails/original-v1/mountain.png",
+    "license": "Original procedural Sutols asset; see ORIGINAL_MODELS_LICENSE.md",
+    "description": "Şematik eğitim modeli; ölçek ve fiziksel ayrıntılar temsilidir.",
+    "version": 1,
+    "labelEn": "mountain"
+  },
+  {
+    "id": "sutols-leaf",
+    "label": "Yaprak Şeması",
+    "category": "Doğa",
+    "tags": [
+      "yaprak",
+      "leaf",
+      "bitki yaprağı"
+    ],
+    "variants": {
+      "lite": {
+        "path": "/models/original-v1/leaf-lite.glb",
+        "bytes": 30872,
+        "sha256": "bb961be20d07709cfa830f3f47e438878a7359cb8939fbf0bee6d8edda499ea3",
+        "triangles": 674
+      },
+      "quality": {
+        "path": "/models/original-v1/leaf-quality.glb",
+        "bytes": 44256,
+        "sha256": "3386d4dd29d63a003cb3f79e84803e3f3bd73563a1b90a105ea0197deb7858b3",
+        "triangles": 1026
+      }
+    },
+    "thumbnail": "/model_thumbnails/original-v1/leaf.png",
+    "license": "Original procedural Sutols asset; see ORIGINAL_MODELS_LICENSE.md",
+    "description": "Şematik eğitim modeli; ölçek ve fiziksel ayrıntılar temsilidir.",
+    "version": 1,
+    "labelEn": "leaf"
+  },
+  {
+    "id": "sutols-snowflake",
+    "label": "Kar Tanesi Şeması",
+    "category": "Doğa",
+    "tags": [
+      "kar tanesi",
+      "snowflake",
+      "kar kristali"
+    ],
+    "variants": {
+      "lite": {
+        "path": "/models/original-v1/snowflake-lite.glb",
+        "bytes": 76416,
+        "sha256": "370387a20e7a06551adb39f8718b14e6d3fda0ebc80c343c4363caf904c34744",
+        "triangles": 1800
+      },
+      "quality": {
+        "path": "/models/original-v1/snowflake-quality.glb",
+        "bytes": 112900,
+        "sha256": "774c5e9c25052777b3974b2efdecc92e73cd9a9c724c360f58d64fe4e02b13bd",
+        "triangles": 2760
+      }
+    },
+    "thumbnail": "/model_thumbnails/original-v1/snowflake.png",
+    "license": "Original procedural Sutols asset; see ORIGINAL_MODELS_LICENSE.md",
+    "description": "Şematik eğitim modeli; ölçek ve fiziksel ayrıntılar temsilidir.",
+    "version": 1,
+    "labelEn": "snowflake"
+  },
+  {
+    "id": "sutols-quartz-crystal",
+    "label": "Kristal Şeması",
+    "category": "Doğa",
+    "tags": [
+      "kristal",
+      "quartz crystal",
+      "kuvars"
+    ],
+    "variants": {
+      "lite": {
+        "path": "/models/original-v1/quartz-crystal-lite.glb",
+        "bytes": 1556,
+        "sha256": "00c399a6af000f6d59d8a08205cac5133ba7bfc64188f15f2efe94ac5a7025c1",
+        "triangles": 22
+      },
+      "quality": {
+        "path": "/models/original-v1/quartz-crystal-quality.glb",
+        "bytes": 1560,
+        "sha256": "1363458f16c9c43e89b98744bc6997464aa6ce27f5a334a738bdd12013092215",
+        "triangles": 22
+      }
+    },
+    "thumbnail": "/model_thumbnails/original-v1/quartz-crystal.png",
+    "license": "Original procedural Sutols asset; see ORIGINAL_MODELS_LICENSE.md",
+    "description": "Şematik eğitim modeli; ölçek ve fiziksel ayrıntılar temsilidir.",
+    "version": 1,
+    "labelEn": "quartz crystal"
+  },
+  {
+    "id": "sutols-flower",
+    "label": "Çiçek Şeması",
+    "category": "Doğa",
+    "tags": [
+      "çiçek",
+      "flower",
+      "bitki çiçeği"
+    ],
+    "variants": {
+      "lite": {
+        "path": "/models/original-v1/flower-lite.glb",
+        "bytes": 110036,
+        "sha256": "9ff904f504e02b6a612786f95324dffb2378d385475f5edd8c7fab3576981e0b",
+        "triangles": 4020
+      },
+      "quality": {
+        "path": "/models/original-v1/flower-quality.glb",
+        "bytes": 267028,
+        "sha256": "5e579b03d47a6bc99a2abc5dda0b2b090b1509f3d4be89942657d6c91d2c8b4d",
+        "triangles": 10652
+      }
+    },
+    "thumbnail": "/model_thumbnails/original-v1/flower.png",
+    "license": "Original procedural Sutols asset; see ORIGINAL_MODELS_LICENSE.md",
+    "description": "Şematik eğitim modeli; ölçek ve fiziksel ayrıntılar temsilidir.",
+    "version": 1,
+    "labelEn": "flower"
+  },
+  {
+    "id": "sutols-sine-curve",
+    "label": "Sinüs Eğrisi",
+    "category": "Matematik",
+    "tags": [
+      "sinüs eğrisi",
+      "sine curve",
+      "trigonometri"
+    ],
+    "variants": {
+      "lite": {
+        "path": "/models/original-v1/sine-curve-lite.glb",
+        "bytes": 24768,
+        "sha256": "b4999f1675a198a90a3b4e522f711e2e63c6b04bfd14d905fdc2cbd5dcd2d54a",
+        "triangles": 872
+      },
+      "quality": {
+        "path": "/models/original-v1/sine-curve-quality.glb",
+        "bytes": 54220,
+        "sha256": "198c7fd0dc01b88e36c46ae62394e8b621e3ecf4b2b8953c7c61d653e2d2536a",
+        "triangles": 2108
+      }
+    },
+    "thumbnail": "/model_thumbnails/original-v1/sine-curve.png",
+    "license": "Original procedural Sutols asset; see ORIGINAL_MODELS_LICENSE.md",
+    "description": "Şematik eğitim modeli; ölçek ve fiziksel ayrıntılar temsilidir.",
+    "version": 1,
+    "labelEn": "sine curve"
+  },
+  {
+    "id": "sutols-horseshoe-magnet",
+    "label": "At Nalı Mıknatıs",
+    "category": "Fizik",
+    "tags": [
+      "at nalı mıknatıs",
+      "horseshoe magnet"
+    ],
+    "variants": {
+      "lite": {
+        "path": "/models/original-v1/horseshoe-magnet-lite.glb",
+        "bytes": 21560,
+        "sha256": "3ab3b6583d4e1612e904af9d9918eb311fca061c4131cbd01fd17c93acc313a2",
+        "triangles": 572
+      },
+      "quality": {
+        "path": "/models/original-v1/horseshoe-magnet-quality.glb",
+        "bytes": 37864,
+        "sha256": "d1e3b617fc51a2f1227b76bc526284f1bab3b0be65761c9d80afe090e30b4754",
+        "triangles": 1184
+      }
+    },
+    "thumbnail": "/model_thumbnails/original-v1/horseshoe-magnet.png",
+    "license": "Original procedural Sutols asset; see ORIGINAL_MODELS_LICENSE.md",
+    "description": "Şematik eğitim modeli; ölçek ve fiziksel ayrıntılar temsilidir.",
+    "version": 1,
+    "labelEn": "horseshoe magnet"
+  },
+  {
+    "id": "sutols-solenoid",
+    "label": "Solenoid Şeması",
+    "category": "Fizik",
+    "tags": [
+      "solenoid",
+      "elektromıknatıs",
+      "electromagnet"
+    ],
+    "variants": {
+      "lite": {
+        "path": "/models/original-v1/solenoid-lite.glb",
+        "bytes": 42388,
+        "sha256": "62d14d6c486d8e6ce05b76461b2d0a104df148115f3bd27c01cc04379cd835af",
+        "triangles": 1608
+      },
+      "quality": {
+        "path": "/models/original-v1/solenoid-quality.glb",
+        "bytes": 82492,
+        "sha256": "e70df10216cd1829e1a8412764f68f7b53596e51d26e13d6e1e78ee08d94496c",
+        "triangles": 3308
+      }
+    },
+    "thumbnail": "/model_thumbnails/original-v1/solenoid.png",
+    "license": "Original procedural Sutols asset; see ORIGINAL_MODELS_LICENSE.md",
+    "description": "Şematik eğitim modeli; ölçek ve fiziksel ayrıntılar temsilidir.",
+    "version": 1,
+    "labelEn": "solenoid"
+  },
+  {
+    "id": "sutols-double-pulley",
+    "label": "İki Makaralı Sistem Şeması",
+    "category": "Fizik",
+    "tags": [
+      "iki makaralı sistem",
+      "double pulley",
+      "makara sistemi"
+    ],
+    "variants": {
+      "lite": {
+        "path": "/models/original-v1/double-pulley-lite.glb",
+        "bytes": 43104,
+        "sha256": "4c22832782420aa4cd31596b7aee6f8a456db67666daee8e8524c3d8e32adb3f",
+        "triangles": 1600
+      },
+      "quality": {
+        "path": "/models/original-v1/double-pulley-quality.glb",
+        "bytes": 83908,
+        "sha256": "8799f3e06bfe2d285c40ed380d37b0138c3876d0690e21d93b86ef20779c6493",
+        "triangles": 3560
+      }
+    },
+    "thumbnail": "/model_thumbnails/original-v1/double-pulley.png",
+    "license": "Original procedural Sutols asset; see ORIGINAL_MODELS_LICENSE.md",
+    "description": "Şematik eğitim modeli; ölçek ve fiziksel ayrıntılar temsilidir.",
+    "version": 1,
+    "labelEn": "double pulley"
+  },
+  {
+    "id": "sutols-heat-exchanger",
+    "label": "Isı Eşanjörü Şeması",
+    "category": "Enerji",
+    "tags": [
+      "ısı eşanjörü",
+      "heat exchanger",
+      "iki akışkan"
+    ],
+    "variants": {
+      "lite": {
+        "path": "/models/original-v1/heat-exchanger-lite.glb",
+        "bytes": 15076,
+        "sha256": "712b181790aa5383e81453f55145821ec1d57126555904a670012a9bd92a7863",
+        "triangles": 484
+      },
+      "quality": {
+        "path": "/models/original-v1/heat-exchanger-quality.glb",
+        "bytes": 19024,
+        "sha256": "11737b3953417043274a30ac931d8873a77992082d352e48f2f988c38fdad9ea",
+        "triangles": 660
+      }
+    },
+    "thumbnail": "/model_thumbnails/original-v1/heat-exchanger.png",
+    "license": "Original procedural Sutols asset; see ORIGINAL_MODELS_LICENSE.md",
+    "description": "Şematik eğitim modeli; ölçek ve fiziksel ayrıntılar temsilidir.",
+    "version": 1,
+    "labelEn": "heat exchanger"
+  },
+  {
+    "id": "sutols-stone-arch",
+    "label": "Taş Kemer Şeması",
+    "category": "Tarih ve Mimari",
+    "tags": [
+      "taş kemer",
+      "stone arch",
+      "kemerli yapı"
+    ],
+    "variants": {
+      "lite": {
+        "path": "/models/original-v1/stone-arch-lite.glb",
+        "bytes": 16644,
+        "sha256": "011706938f7707e55ee57261874c5a4578ae5834e89c0784831d6626d93ab4fb",
+        "triangles": 548
+      },
+      "quality": {
+        "path": "/models/original-v1/stone-arch-quality.glb",
+        "bytes": 31776,
+        "sha256": "a32b22bd5535d7d2354bef3d72ad852434120b120edd5f5a62fa5229f7fc6e21",
+        "triangles": 1192
+      }
+    },
+    "thumbnail": "/model_thumbnails/original-v1/stone-arch.png",
+    "license": "Original procedural Sutols asset; see ORIGINAL_MODELS_LICENSE.md",
+    "description": "Şematik eğitim modeli; ölçek ve fiziksel ayrıntılar temsilidir.",
+    "version": 1,
+    "labelEn": "stone arch"
+  },
+  {
+    "id": "sutols-aqueduct",
+    "label": "Su Kemeri Şeması",
+    "category": "Tarih ve Mimari",
+    "tags": [
+      "su kemeri",
+      "aqueduct"
+    ],
+    "variants": {
+      "lite": {
+        "path": "/models/original-v1/aqueduct-lite.glb",
+        "bytes": 43500,
+        "sha256": "f2b5f7775461fee2b25b17d27c42df275ae65bea213d723c593798006efbac33",
+        "triangles": 1536
+      },
+      "quality": {
+        "path": "/models/original-v1/aqueduct-quality.glb",
+        "bytes": 87040,
+        "sha256": "46409840bc8039b785efe31ff3d00a2fb25dab644af42bbc8fc66c47e0eb6857",
+        "triangles": 3388
+      }
+    },
+    "thumbnail": "/model_thumbnails/original-v1/aqueduct.png",
+    "license": "Original procedural Sutols asset; see ORIGINAL_MODELS_LICENSE.md",
+    "description": "Şematik eğitim modeli; ölçek ve fiziksel ayrıntılar temsilidir.",
+    "version": 1,
+    "labelEn": "aqueduct"
+  },
+  {
+    "id": "sutols-breadboard",
+    "label": "Breadboard Şeması",
+    "category": "Elektronik",
+    "tags": [
+      "breadboard",
+      "deney devre tahtası"
+    ],
+    "variants": {
+      "lite": {
+        "path": "/models/original-v1/breadboard-lite.glb",
+        "bytes": 25512,
+        "sha256": "5a147472d22a22215510590deda094006cbe940a0d8d69ac604f4ac0bbb30edc",
+        "triangles": 516
+      },
+      "quality": {
+        "path": "/models/original-v1/breadboard-quality.glb",
+        "bytes": 36936,
+        "sha256": "5f1b0d8e46918a2fb6efc1450ffa016999d3a041e31447c0f23dfcf2da7affeb",
+        "triangles": 852
+      }
+    },
+    "thumbnail": "/model_thumbnails/original-v1/breadboard.png",
+    "license": "Original procedural Sutols asset; see ORIGINAL_MODELS_LICENSE.md",
+    "description": "Şematik eğitim modeli; ölçek ve fiziksel ayrıntılar temsilidir.",
+    "version": 1,
+    "labelEn": "breadboard"
+  },
+  {
+    "id": "sutols-electronic-inductor",
+    "label": "Bobin Şeması",
+    "category": "Elektronik",
+    "tags": [
+      "bobin",
+      "electronic inductor",
+      "endüktör"
+    ],
+    "variants": {
+      "lite": {
+        "path": "/models/original-v1/electronic-inductor-lite.glb",
+        "bytes": 44620,
+        "sha256": "5954d9e2e04729e6ff7d39e587acd3744b8b8d44548486947b80db473a9b2aaf",
+        "triangles": 1536
+      },
+      "quality": {
+        "path": "/models/original-v1/electronic-inductor-quality.glb",
+        "bytes": 78072,
+        "sha256": "b38fdd1688776b4f0959acbf1f03f4f21b163755a8026f3ae3ea85a027381fac",
+        "triangles": 2852
+      }
+    },
+    "thumbnail": "/model_thumbnails/original-v1/electronic-inductor.png",
+    "license": "Original procedural Sutols asset; see ORIGINAL_MODELS_LICENSE.md",
+    "description": "Şematik eğitim modeli; ölçek ve fiziksel ayrıntılar temsilidir.",
+    "version": 1,
+    "labelEn": "electronic inductor"
+  },
+  {
+    "id": "sutols-printed-circuit-board",
+    "label": "Baskılı Devre Kartı Şeması",
+    "category": "Elektronik",
+    "tags": [
+      "baskılı devre kartı",
+      "printed circuit board",
+      "pcb"
+    ],
+    "variants": {
+      "lite": {
+        "path": "/models/original-v1/printed-circuit-board-lite.glb",
+        "bytes": 22104,
+        "sha256": "35e2faca07649db434925619a9dc4e5c0c0999b4e3b626ce7652de20744cc22c",
+        "triangles": 624
+      },
+      "quality": {
+        "path": "/models/original-v1/printed-circuit-board-quality.glb",
+        "bytes": 30088,
+        "sha256": "f21bde32ffa65a91b901c4002a52876a7ae343ce92eaab4a5355cbd9e68c8755",
+        "triangles": 944
+      }
+    },
+    "thumbnail": "/model_thumbnails/original-v1/printed-circuit-board.png",
+    "license": "Original procedural Sutols asset; see ORIGINAL_MODELS_LICENSE.md",
+    "description": "Şematik eğitim modeli; ölçek ve fiziksel ayrıntılar temsilidir.",
+    "version": 1,
+    "labelEn": "printed circuit board"
+  }
+]

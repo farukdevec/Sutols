@@ -253,10 +253,10 @@ IDENTIFIED ISSUES:
 $issuesBuffer
 
 REVISION TASK:
-1. ONLY revise the slides where issues were identified.
+1. Edit the problematic slides, but RETURN ALL slides including unchanged slides. Never return only the edited subset.
 2. PRESERVE high-quality slides, strong narrative structure, effective examples, and the exact count of $slideCount slides.
 3. Fix identified issues to align with audience expectations and pedagogical goals.
-4. Return ONLY the complete updated JSON object starting with '{':
+4. The "slides" array must contain exactly $slideCount objects, including every unchanged slide. Return ONLY the complete updated JSON object starting with '{':
 
 CURRENT PRESENTATION:
 $originalJson''';
@@ -279,19 +279,19 @@ $originalJson''';
 
     return '''Aşağıda daha önce üretilen sunum ve yapay zeka denetçisinin (AI Judge) tespit ettiği sorunlar yer almaktadır:
 
-KONU: $topic
-İSTENEN SLAYT SAYISI: $slideCount
+Sunumun içeriği: $topic
+Slayt adedi: $slideCount
 DİL: $language
 
 TESPİT EDİLEN SORUNLAR:
 $issuesBuffer
 
 REVİZYON GÖREVİ:
-1. YALNIZCA sorun tespit edilen slaytları düzelt.
+1. Sorunlu slaytları düzelt; yanıtta değişmeyenler dahil BÜTÜN slaytları döndür. Yalnız düzenlenen slaytları döndürme.
 2. Doğru ve kaliteli olan slaytları, iyi anlatı yapısını, faydalı örnekleri ve toplam $slideCount slayt sayısını KORU.
 3. Bütün sunumu baştan rastgele değiştirme; sorunlu kısımları hedef kitleye ve pedagojik amaca uygun hale getir.
 4. Türkçe maddeleri "**Vurgulu Başlık:** Açıklama" biçiminde yaz: başlık 1-5 kelime, açıklama en fazla 20 kelimelik tam bir cümle. Tire ve sıra numarası ekleme; eksik yüklemleri, bozuk ekleri, birebir çevirileri ve tekrarları düzelt.
-5. Ön açıklama yazmadan doğrudan '{' ile başlayan güncellenmiş tam JSON nesnesini döndür:
+5. "slides" listesinde değişmeyenler dahil TAM $slideCount nesne bulunmalı. Ön açıklama yazmadan doğrudan '{' ile başlayan güncellenmiş tam JSON nesnesini döndür:
 
 MEVCUT SUNUM:
 $originalJson''';

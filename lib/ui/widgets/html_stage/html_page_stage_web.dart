@@ -1,3 +1,4 @@
+import '../../../models/presentation_scene_state.dart';
 // ignore_for_file: avoid_web_libraries_in_flutter, deprecated_member_use
 
 import 'dart:async';
@@ -11,10 +12,18 @@ import 'dart:ui_web' as ui_web;
 import 'package:flutter/widgets.dart';
 
 import '../../../models/slide_model.dart';
+import '../../../models/development_features.dart';
 import '../../../services/model_asset_service.dart';
+import '../../../services/model_render_budget.dart';
+import '../../../services/scene_camera_restore_scheduler.dart';
+import '../../../services/bounded_scene_cache.dart';
+import '../../../services/model_camera_pose_cache.dart';
+import '../../../services/model_context_recovery_state.dart';
+import '../../../state/language_controller.dart';
 import '../../../services/remote_image_sources.dart';
 import '../../../services/remote_model_sources.dart';
 import 'html_stage_document.dart';
+import '../presentation_render_scope.dart';
 
 const String _modelViewerScriptMarker = 'data-sutol-model-viewer-loader';
 
@@ -217,6 +226,38 @@ class _HtmlLiveBackgroundState extends State<HtmlLiveBackground> {
   StreamSubscription<html.Event>? _pendingLoadSubscription;
   Timer? _readinessTimer;
   int _renderGeneration = 0;
+  bool _renderEnabled = true;
+
+  PresentationEffectSettings _renderSettings =
+      const PresentationEffectSettings();
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final next = PresentationRenderScope.of(context);
+    _renderEnabled =
+        TickerMode.of(context) && (ModalRoute.of(context)?.isCurrent ?? true);
+    for (final frame in [_currentIframe, _pendingIframe]) {
+      _postSceneActivity(frame);
+    }
+    if (next.renderQuality != _renderSettings.renderQuality ||
+        next.reducedMotion != _renderSettings.reducedMotion) {
+      _renderSettings = next;
+      _queueDocument();
+    }
+  }
+
+  void _postSceneActivity(html.IFrameElement? frame) {
+    if (frame == null) return;
+    try {
+      // A newly constructed or detached iframe has no browsing context.
+      // dart:html can throw while converting its null native contentWindow,
+      // before a null-aware call can guard it. Reapply when the frame paints.
+      frame.contentWindow?.postMessage(
+          {'type': 'sutol-scene-active', 'active': _renderEnabled}, '*');
+    } catch (_) {
+      // The latest state is retained and delivered on readiness below.
+    }
+  }
 
   @override
   void initState() {
@@ -272,7 +313,9 @@ class _HtmlLiveBackgroundState extends State<HtmlLiveBackground> {
     _pendingIframe = nextIframe;
     var document = buildHtmlBackgroundSceneDocument(
       widget.kind,
-      animationEnabled: widget.animationEnabled,
+      animationEnabled: widget.animationEnabled &&
+          !_renderSettings.reducedMotion &&
+          _renderSettings.renderQuality != PresentationRenderQuality.economy,
       animationSpeed: widget.animationSpeed,
       colorsInverted: widget.colorsInverted,
     );
@@ -328,6 +371,7 @@ class _HtmlLiveBackgroundState extends State<HtmlLiveBackground> {
           final previousIframe = _currentIframe;
           _currentIframe = nextIframe;
           _pendingIframe = null;
+          _postSceneActivity(nextIframe);
           previousIframe?.remove();
         });
       });
@@ -431,6 +475,8 @@ class HtmlModelCanvas extends StatefulWidget {
     super.key,
     required this.modelId,
     required this.animationEnabled,
+    this.animationTime = 0,
+    this.animationName,
     required this.autoRotate,
     required this.rotationSpeed,
     required this.zoom,
@@ -455,6 +501,8 @@ class HtmlModelCanvas extends StatefulWidget {
 
   final String modelId;
   final bool animationEnabled;
+  final double animationTime;
+  final String? animationName;
   final bool autoRotate;
   final double rotationSpeed;
   final double zoom;
@@ -479,32 +527,141 @@ class HtmlModelCanvas extends StatefulWidget {
   /// Returns the exact, currently painted model-viewer camera for the visible
   /// editor canvas. Preview thumbnails never register a key, so they cannot
   /// overwrite the authoritative editor pose.
-  static ModelViewerCameraPose? cameraPoseFor(String cameraStateKey) =>
-      _HtmlModelCanvasState.cameraPoseFor(cameraStateKey);
+  static ModelViewerCameraPose? cameraPoseFor(String cameraStateKey,
+          {String? modelId}) =>
+      _HtmlModelCanvasState.cameraPoseFor(cameraStateKey, modelId: modelId);
 
   @override
   State<HtmlModelCanvas> createState() => _HtmlModelCanvasState();
 }
 
 class _HtmlModelCanvasState extends State<HtmlModelCanvas> {
-  static final Map<String, _ModelCanvasGeometry> _geometryByModelId =
-      <String, _ModelCanvasGeometry>{};
+  static final Set<_HtmlModelCanvasState> _renderConsumers = {};
+
+  static void _syncSharedRenderBudget() {
+    try {
+      final registry =
+          globalContext.getProperty<JSObject>('customElements'.toJS);
+      final constructor =
+          registry.callMethod<JSObject?>('get'.toJS, 'model-viewer'.toJS);
+      if (constructor == null || !constructor.has('minimumRenderScale')) return;
+      final floor = sharedModelMinimumRenderScale(_renderConsumers
+          .where((state) => state._modelViewer != null && state._sceneActive)
+          .map((state) => state._renderSettings.renderQuality));
+      final current = constructor
+          .getProperty<JSNumber>('minimumRenderScale'.toJS)
+          .toDartDouble;
+      if (current != floor)
+        constructor.setProperty('minimumRenderScale'.toJS, floor.toJS);
+    } catch (_) {
+      // Module definition may still be pending; the model load event retries.
+    }
+  }
+
+  static final _geometryByModelId =
+      BoundedSceneCache<_ModelCanvasGeometry>(capacity: 256);
   static final Map<String, _HtmlModelCanvasState> _statesByCameraKey =
       <String, _HtmlModelCanvasState>{};
-  static final Map<String, ModelViewerCameraPose> _posesByCameraKey =
-      <String, ModelViewerCameraPose>{};
+  static final _posesByCameraKey = ModelCameraPoseCache();
 
-  static ModelViewerCameraPose? cameraPoseFor(String cameraStateKey) {
+  static ModelViewerCameraPose? cameraPoseFor(String cameraStateKey,
+      {String? modelId}) {
     final state = _statesByCameraKey[cameraStateKey];
-    return state?._captureCameraPose() ?? _posesByCameraKey[cameraStateKey];
+    final expectedModel = modelId ?? state?.widget.modelId;
+    if (expectedModel == null) return null;
+    final live = state?.widget.modelId == expectedModel
+        ? state?._captureCameraPose()
+        : null;
+    return live ?? _posesByCameraKey.lookup(cameraStateKey, expectedModel);
   }
 
   html.Element? _modelViewer;
+  String? _loadedSource;
+  late final _contextRecovery =
+      ModelContextRecoveryState(modelId: widget.modelId);
+  StreamSubscription<html.Event>? _contextRestoreSubscription;
   StreamSubscription<html.Event>? _modelLoadSubscription;
   StreamSubscription<html.Event>? _modelErrorSubscription;
   StreamSubscription<html.MouseEvent>? _surfacePickSubscription;
   html.ResizeObserver? _resizeObserver;
-  final List<Timer> _cameraRestoreTimers = <Timer>[];
+  html.IntersectionObserver? _visibilityObserver;
+  StreamSubscription<html.Event>? _visibilitySubscription;
+  bool _inViewport = true;
+  bool _renderEnabled = true;
+  int _animationRevision = 0;
+
+  bool get _sceneActive =>
+      !_contextRecovery.isLost &&
+      (!sutolVisibleScenesEnabled ||
+          (_renderEnabled && _inViewport && html.document.hidden != true));
+
+  void _updateSceneActivity() {
+    final element = _modelViewer;
+    if (element == null) return;
+    final active = _sceneActive;
+    _setBooleanAttribute(
+        'auto-rotate',
+        widget.autoRotate &&
+            active &&
+            !_renderSettings.reducedMotion &&
+            _renderSettings.renderQuality != PresentationRenderQuality.economy);
+    _setBooleanAttribute('autoplay',
+        widget.animationEnabled && active && !_renderSettings.reducedMotion);
+    try {
+      final viewer = element as JSObject;
+      if (!active ||
+          !widget.animationEnabled ||
+          _renderSettings.reducedMotion) {
+        viewer.callMethod<JSAny?>('pause'.toJS);
+      } else if (viewer.getProperty<JSBoolean?>('paused'.toJS)?.toDart ==
+          true) {
+        // Resume the existing clip/time; do not reset camera or model source.
+        viewer.callMethod<JSAny?>('play'.toJS);
+      }
+    } catch (_) {
+      // The custom element can still be loading; attributes remain authoritative.
+    }
+    _cameraRestore.setActive(active);
+    _syncSharedRenderBudget();
+  }
+
+  Future<void> _applySavedAnimationState() async {
+    final element = _modelViewer;
+    if (element == null || _contextRecovery.isLost) return;
+    final source = element.getAttribute('src');
+    if (source == null || source != _loadedSource) return;
+    final revision = ++_animationRevision;
+    final modelId = widget.modelId;
+    final pose = _contextRecovery.pose;
+    final clip = pose?.animationName ?? widget.animationName;
+    final time = pose?.animationTime ?? widget.animationTime;
+    try {
+      final viewer = element as JSObject;
+      viewer.setProperty('animationName'.toJS, clip?.toJS);
+      // Lit applies a new clip asynchronously and resets its clock. Seek only
+      // after that update, and never let an older request seek a newer scene.
+      final update =
+          viewer.getProperty<JSPromise<JSAny?>?>('updateComplete'.toJS);
+      if (update != null) await update.toDart;
+      if (!mounted ||
+          revision != _animationRevision ||
+          _modelViewer != element ||
+          widget.modelId != modelId ||
+          element.getAttribute('src') != source ||
+          _loadedSource != source ||
+          _contextRecovery.isLost) return;
+      if (time.isFinite) viewer.setProperty('currentTime'.toJS, time.toJS);
+      _updateSceneActivity();
+    } catch (_) {
+      // The next accepted model load retries the saved clip and time.
+    }
+  }
+
+  late final _cameraRestore = SceneCameraRestoreScheduler(onRestore: () {
+    if (!mounted || _modelViewer == null || !_sceneActive) return;
+    _applyAttributes();
+    _refreshModelGeometry();
+  });
   double _modelWidth = 1;
   double _modelHeight = 1;
   double _modelDepth = 1;
@@ -527,6 +684,12 @@ class _HtmlModelCanvasState extends State<HtmlModelCanvas> {
   }
 
   String get _savedCameraOrbit {
+    final recoveryPose = _contextRecovery.pose;
+    if (recoveryPose != null) {
+      return '${recoveryPose.theta.toStringAsFixed(5)}deg '
+          '${recoveryPose.phi.toStringAsFixed(5)}deg '
+          '${recoveryPose.radius.toStringAsFixed(7)}m';
+    }
     final exactRadius = widget.cameraRadius;
     final radiusText = exactRadius != null &&
             exactRadius.isFinite &&
@@ -545,6 +708,7 @@ class _HtmlModelCanvasState extends State<HtmlModelCanvas> {
         radius > 0;
   }
 
+  int _sourceRefreshGeneration = 0;
   bool _refreshingExpiredSource = false;
   bool _hasRetriedLoadError = false;
 
@@ -560,10 +724,29 @@ class _HtmlModelCanvasState extends State<HtmlModelCanvas> {
     element.attributes.remove(name);
   }
 
+  PresentationEffectSettings _renderSettings =
+      const PresentationEffectSettings();
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final next = PresentationRenderScope.of(context);
+    _renderEnabled =
+        TickerMode.of(context) && (ModalRoute.of(context)?.isCurrent ?? true);
+    _updateSceneActivity();
+    if (next.renderQuality != _renderSettings.renderQuality ||
+        next.reducedMotion != _renderSettings.reducedMotion) {
+      _renderSettings = next;
+      _applyAttributes();
+    }
+  }
+
   @override
   void initState() {
     super.initState();
+    _renderConsumers.add(this);
     _ensureModelViewerLoaded();
+    _visibilitySubscription =
+        html.document.onVisibilityChange.listen((_) => _updateSceneActivity());
     _registerCameraState();
     RemoteModelSources.revision.addListener(_applyAttributes);
   }
@@ -571,6 +754,20 @@ class _HtmlModelCanvasState extends State<HtmlModelCanvas> {
   @override
   void didUpdateWidget(covariant HtmlModelCanvas oldWidget) {
     super.didUpdateWidget(oldWidget);
+    _contextRecovery.useModel(widget.modelId);
+    if (oldWidget.orbitTheta != widget.orbitTheta ||
+        oldWidget.orbitPhi != widget.orbitPhi ||
+        oldWidget.targetX != widget.targetX ||
+        oldWidget.targetY != widget.targetY ||
+        oldWidget.targetZ != widget.targetZ ||
+        oldWidget.zoom != widget.zoom ||
+        oldWidget.cameraRadius != widget.cameraRadius ||
+        oldWidget.turntableRotation != widget.turntableRotation ||
+        oldWidget.fieldOfView != widget.fieldOfView ||
+        oldWidget.animationTime != widget.animationTime ||
+        oldWidget.animationName != widget.animationName) {
+      _contextRecovery.clearPose();
+    }
     if (oldWidget.autoRotate && !widget.autoRotate && widget.tourEnabled) {
       _preserveLiveTurntableUntilCaptured = true;
     } else if (_preserveLiveTurntableUntilCaptured &&
@@ -584,10 +781,18 @@ class _HtmlModelCanvasState extends State<HtmlModelCanvas> {
       _registerCameraState();
     }
     if (oldWidget.modelId != widget.modelId) {
+      _sourceRefreshGeneration++;
+      _refreshingExpiredSource = false;
+      _hasRetriedLoadError = false;
       _modelGeometryReady = false;
       _restoreCachedGeometry();
     }
     _applyAttributes();
+    if (oldWidget.modelId != widget.modelId ||
+        oldWidget.animationName != widget.animationName ||
+        oldWidget.animationTime != widget.animationTime) {
+      unawaited(_applySavedAnimationState());
+    }
     if (oldWidget.modelId != widget.modelId ||
         oldWidget.orbitTheta != widget.orbitTheta ||
         oldWidget.orbitPhi != widget.orbitPhi ||
@@ -618,6 +823,19 @@ class _HtmlModelCanvasState extends State<HtmlModelCanvas> {
     final element = _modelViewer;
     final key = widget.cameraStateKey;
     if (element == null || key == null || key.isEmpty) return null;
+    return _posesByCameraKey.captureOrCached(
+      cameraKey: key,
+      modelId: widget.modelId,
+      source: element.getAttribute('src'),
+      loadedSource: _loadedSource,
+      readLivePose: _readCameraPose,
+    );
+  }
+
+  ModelViewerCameraPose? _readCameraPose() {
+    final element = _modelViewer;
+    final key = widget.cameraStateKey;
+    if (element == null || key == null || key.isEmpty) return null;
     try {
       final viewer = element as JSObject;
       final orbit = viewer.callMethod<JSObject>('getCameraOrbit'.toJS);
@@ -627,7 +845,7 @@ class _HtmlModelCanvasState extends State<HtmlModelCanvas> {
       final turntableRotationValue =
           viewer.getProperty<JSAny?>('turntableRotation'.toJS);
       if (turntableRotationValue is! JSNumber) {
-        return _posesByCameraKey[key];
+        return null;
       }
       final pose = ModelViewerCameraPose(
         theta: _jsCoordinate(orbit, 'theta') * 180 / math.pi,
@@ -638,6 +856,13 @@ class _HtmlModelCanvasState extends State<HtmlModelCanvas> {
         targetZ: _jsCoordinate(target, 'z'),
         turntableRotation: turntableRotationValue.toDartDouble,
         fieldOfView: fieldOfView,
+        animationTime:
+            (viewer.getProperty<JSAny?>('currentTime'.toJS) as JSNumber?)
+                    ?.toDartDouble ??
+                0,
+        animationName:
+            (viewer.getProperty<JSAny?>('animationName'.toJS) as JSString?)
+                ?.toDart,
       );
       if (!pose.theta.isFinite ||
           !pose.phi.isFinite ||
@@ -650,12 +875,11 @@ class _HtmlModelCanvasState extends State<HtmlModelCanvas> {
           !pose.fieldOfView.isFinite ||
           pose.fieldOfView <= 0 ||
           pose.fieldOfView >= 180) {
-        return _posesByCameraKey[key];
+        return null;
       }
-      _posesByCameraKey[key] = pose;
       return pose;
     } catch (_) {
-      return _posesByCameraKey[key];
+      return null;
     }
   }
 
@@ -675,7 +899,10 @@ class _HtmlModelCanvasState extends State<HtmlModelCanvas> {
     element.style.pointerEvents = widget.pickSurfacePosition ? 'auto' : 'none';
     element.style.cursor = widget.pickSurfacePosition ? 'crosshair' : 'default';
     element.style.touchAction = widget.tourEnabled ? 'none' : 'auto';
-    final source = RemoteModelSources.sourceFor(widget.modelId);
+    final source = modelSourceForRender(
+        widget.modelId, RemoteModelSources.sourceFor(widget.modelId),
+        highQuality:
+            _renderSettings.renderQuality == PresentationRenderQuality.high);
     if (source == null || source.isEmpty) {
       _removeAttribute('src');
     } else {
@@ -709,13 +936,21 @@ class _HtmlModelCanvasState extends State<HtmlModelCanvas> {
     _setAttribute('zoom-sensitivity', widget.tourEnabled ? '0.72' : '1');
     _setAttribute('loading', 'eager');
     _setAttribute('reveal', 'auto');
-    _setAttribute('shadow-intensity', '1');
+    _setAttribute(
+        'shadow-intensity',
+        _renderSettings.renderQuality == PresentationRenderQuality.economy
+            ? '0'
+            : '1');
     _setAttribute('shadow-softness', '0.8');
     _setAttribute('tone-mapping', 'neutral');
     _setAttribute('exposure', widget.exposure.toStringAsFixed(4));
+    // Honor the project's FOV range instead of model-viewer's aspect-dependent
+    // default max FOV, which can silently clamp a saved 45deg view to 30deg.
+    _setAttribute('min-field-of-view', '1deg');
+    _setAttribute('max-field-of-view', '179deg');
     _setAttribute(
       'field-of-view',
-      '${widget.fieldOfView.clamp(1.0, 179.0).toStringAsFixed(5)}deg',
+      '${(_contextRecovery.pose?.fieldOfView ?? widget.fieldOfView).clamp(1.0, 179.0).toStringAsFixed(5)}deg',
     );
     _setAttribute(
       'rotation-per-second',
@@ -727,8 +962,7 @@ class _HtmlModelCanvasState extends State<HtmlModelCanvas> {
     } else {
       _setAttribute('environment-image', environmentImage);
     }
-    _setBooleanAttribute('autoplay', widget.animationEnabled);
-    _setBooleanAttribute('auto-rotate', widget.autoRotate);
+    _updateSceneActivity();
     // Tur modu da sahne içinde doğrudan keşif gerektirir. Bu nitelik yalnızca
     // "Manuel Kontrol" açıkken verildiğinde, kaydedilmiş bir sanal tur
     // paylaşım/önizleme ekranında hareketsiz kalıyordu.
@@ -748,7 +982,9 @@ class _HtmlModelCanvasState extends State<HtmlModelCanvas> {
   Future<void> _refreshSourceAfterLoadError() async {
     // `sourceFor` deliberately rejects an expired signed URL. For renewal we
     // still need its object key, which is retained by `sourceForRefresh`.
-    final source = RemoteModelSources.sourceForRefresh(widget.modelId);
+    final modelId = widget.modelId;
+    final generation = _sourceRefreshGeneration;
+    final source = RemoteModelSources.sourceForRefresh(modelId);
     if (source == null || source.isEmpty || _refreshingExpiredSource) return;
 
     // A signed URL can expire while this editor stays open. Retry once with a
@@ -761,19 +997,26 @@ class _HtmlModelCanvasState extends State<HtmlModelCanvas> {
         source,
         forceRefresh: true,
       );
-      if (refreshed != null && refreshed.trim().isNotEmpty) {
+      if (mounted &&
+          generation == _sourceRefreshGeneration &&
+          widget.modelId == modelId &&
+          RemoteModelSources.sourceForRefresh(modelId) == source &&
+          refreshed != null &&
+          refreshed.trim().isNotEmpty) {
         RemoteModelSources.registerAll(<String, String>{
-          widget.modelId: refreshed.trim(),
+          modelId: refreshed.trim(),
         });
       }
     } catch (_) {
       // Keep the editor usable; a subsequent hydration can retry normally.
     } finally {
-      _refreshingExpiredSource = false;
+      if (generation == _sourceRefreshGeneration)
+        _refreshingExpiredSource = false;
     }
   }
 
   void _refreshModelGeometry() {
+    if (!_sceneActive) return;
     final element = _modelViewer;
     if (element == null) return;
     try {
@@ -817,6 +1060,7 @@ class _HtmlModelCanvasState extends State<HtmlModelCanvas> {
   }
 
   void _jumpCameraToSavedPose() {
+    if (!_sceneActive) return;
     final element = _modelViewer;
     if (element == null) return;
     try {
@@ -835,29 +1079,12 @@ class _HtmlModelCanvasState extends State<HtmlModelCanvas> {
   }
 
   void _scheduleSavedCameraRestore() {
-    for (final timer in _cameraRestoreTimers) {
-      timer.cancel();
-    }
-    _cameraRestoreTimers.clear();
-
     // Web component'in yükseltilmesi, GLB load olayı ve bounding-box hesabı
     // aynı anda tamamlanmayabilir. Özellikle sayfadan çıkıp geri girerken ilk
     // deneme erken kalırsa model ideal/uzak kamerada görünüyordu. Birkaç kısa
     // doğrulama geçişiyle son kaydedilen kamera kesin olarak geri yüklenir.
-    for (final delay in const <Duration>[
-      Duration.zero,
-      Duration(milliseconds: 50),
-      Duration(milliseconds: 150),
-      Duration(milliseconds: 350),
-      Duration(milliseconds: 750),
-      Duration(milliseconds: 1200),
-    ]) {
-      _cameraRestoreTimers.add(Timer(delay, () {
-        if (!mounted || _modelViewer == null) return;
-        _applyAttributes();
-        _refreshModelGeometry();
-      }));
-    }
+    _cameraRestore.setActive(_sceneActive);
+    _cameraRestore.restart();
   }
 
   double _jsCoordinate(JSObject vector, String axis) {
@@ -869,6 +1096,15 @@ class _HtmlModelCanvasState extends State<HtmlModelCanvas> {
   }
 
   void _applyCameraTarget() {
+    final recoveryPose = _contextRecovery.pose;
+    if (recoveryPose != null) {
+      final target = '${recoveryPose.targetX.toStringAsFixed(5)}m '
+          '${recoveryPose.targetY.toStringAsFixed(5)}m '
+          '${recoveryPose.targetZ.toStringAsFixed(5)}m';
+      _setAttribute('camera-target', target);
+      _applyCameraGoalProperties(cameraTarget: target);
+      return;
+    }
     if (!_modelGeometryReady) {
       _setAttribute('camera-target', 'auto auto auto');
       return;
@@ -927,11 +1163,13 @@ class _HtmlModelCanvasState extends State<HtmlModelCanvas> {
       }
       viewer.setProperty(
         'fieldOfView'.toJS,
-        '${widget.fieldOfView.clamp(1.0, 179.0).toStringAsFixed(5)}deg'.toJS,
+        '${(_contextRecovery.pose?.fieldOfView ?? widget.fieldOfView).clamp(1.0, 179.0).toStringAsFixed(5)}deg'
+            .toJS,
       );
       if (!_preserveLiveTurntableUntilCaptured && !widget.autoRotate) {
-        final turntable =
-            widget.turntableRotation.isFinite ? widget.turntableRotation : 0.0;
+        final savedTurntable = _contextRecovery.pose?.turntableRotation ??
+            widget.turntableRotation;
+        final turntable = savedTurntable.isFinite ? savedTurntable : 0.0;
         viewer.callMethod<JSAny?>(
           'resetTurntableRotation'.toJS,
           turntable.toJS,
@@ -944,19 +1182,24 @@ class _HtmlModelCanvasState extends State<HtmlModelCanvas> {
 
   @override
   void dispose() {
+    _sourceRefreshGeneration++;
     _captureCameraPose();
     _unregisterCameraState();
+    _renderConsumers.remove(this);
+    _syncSharedRenderBudget();
     RemoteModelSources.revision.removeListener(_applyAttributes);
     final modelLoadSubscription = _modelLoadSubscription;
     if (modelLoadSubscription != null) {
       unawaited(modelLoadSubscription.cancel());
     }
     unawaited(_modelErrorSubscription?.cancel());
+    _contextRecovery.dispose();
+    unawaited(_contextRestoreSubscription?.cancel());
     unawaited(_surfacePickSubscription?.cancel());
-    for (final timer in _cameraRestoreTimers) {
-      timer.cancel();
-    }
-    _cameraRestoreTimers.clear();
+    _cameraRestore.dispose();
+    _visibilityObserver?.disconnect();
+    _visibilityObserver = null;
+    unawaited(_visibilitySubscription?.cancel());
     _resizeObserver?.disconnect();
     _resizeObserver = null;
     _modelViewer?.remove();
@@ -965,43 +1208,165 @@ class _HtmlModelCanvasState extends State<HtmlModelCanvas> {
 
   @override
   Widget build(BuildContext context) {
-    return HtmlElementView.fromTagName(
-      tagName: 'model-viewer',
-      onElementCreated: (element) {
-        final modelViewer = element as html.Element;
-        _restoreCachedGeometry();
-        _modelViewer = modelViewer
-          ..style.width = '100%'
-          ..style.height = '100%'
-          ..style.display = 'block'
-          ..style.backgroundColor = 'transparent'
-          ..style.pointerEvents = widget.pickSurfacePosition ? 'auto' : 'none'
-          ..style.setProperty('contain', 'strict')
-          ..style.setProperty('--poster-color', 'transparent');
-        _resizeObserver = html.ResizeObserver((_, __) {
-          if (!mounted || _modelViewer == null) return;
-          final bounds = modelViewer.getBoundingClientRect();
-          if (bounds.width <= 0 || bounds.height <= 0) return;
-          // İlk sunum sayfası route/fullscreen yerleşimi tamamlanırken yeniden
-          // boyutlanır. model-viewer bu sırada ideal kameraya dönebildiği için
-          // kayıtlı hedefi her gerçek boyut değişiminden sonra tekrar uygula.
+    final asset = findPresentation3DModelAsset(widget.modelId);
+    final poster =
+        asset?.preferBundledAsset == true ? asset?.thumbnailPath : null;
+    return Stack(fit: StackFit.expand, children: [
+      HtmlElementView.fromTagName(
+        tagName: 'model-viewer',
+        onElementCreated: (element) {
+          final modelViewer = element as html.Element;
+          _loadedSource = null;
+          _restoreCachedGeometry();
+          _modelViewer = modelViewer
+            ..style.width = '100%'
+            ..style.height = '100%'
+            ..style.display = 'block'
+            ..style.backgroundColor = 'transparent'
+            ..style.pointerEvents = widget.pickSurfacePosition ? 'auto' : 'none'
+            ..style.setProperty('contain', 'strict')
+            ..style.setProperty('--poster-color', 'transparent');
+          if (globalContext.has('IntersectionObserver')) {
+            _visibilityObserver = html.IntersectionObserver((entries, _) {
+              if (!mounted || entries.isEmpty) return;
+              _inViewport = entries.last.isIntersecting == true;
+              _updateSceneActivity();
+            })
+              ..observe(modelViewer);
+          }
+          _resizeObserver = html.ResizeObserver((_, __) {
+            if (!mounted || _modelViewer == null) return;
+            final bounds = modelViewer.getBoundingClientRect();
+            if (bounds.width <= 0 || bounds.height <= 0) return;
+            // İlk sunum sayfası route/fullscreen yerleşimi tamamlanırken yeniden
+            // boyutlanır. model-viewer bu sırada ideal kameraya dönebildiği için
+            // kayıtlı hedefi her gerçek boyut değişiminden sonra tekrar uygula.
+            _scheduleSavedCameraRestore();
+          })
+            ..observe(modelViewer);
+          _modelLoadSubscription = modelViewer.on['load'].listen((event) {
+            // The viewer can finish an older request after its src has changed.
+            // That event must not commit geometry or camera for the new model.
+            if (event is html.CustomEvent) {
+              // dart:html's detail getter dartifies the object into a Dart map;
+              // read the original JS property for the JS interop below.
+              final detail =
+                  (event as JSObject).getProperty<JSObject?>('detail'.toJS);
+              if (detail != null) {
+                final loadedUrl =
+                    detail.getProperty<JSString?>('url'.toJS)?.toDart;
+                if (loadedUrl != null &&
+                    loadedUrl != modelViewer.getAttribute('src')) return;
+              }
+            }
+            _loadedSource = modelViewer.getAttribute('src');
+            unawaited(_applySavedAnimationState());
+            _updateSceneActivity();
+            _scheduleSavedCameraRestore();
+            _hasRetriedLoadError = false;
+            _refreshModelGeometry();
+          });
+          _modelErrorSubscription = modelViewer.on['error'].listen((event) {
+            if (event is html.CustomEvent) {
+              final detail =
+                  (event as JSObject).getProperty<JSObject?>('detail'.toJS);
+              final type = detail?.getProperty<JSString?>('type'.toJS)?.toDart;
+              // GPU context loss cannot be repaired by requesting another token.
+              if (type == 'webglcontextlost') {
+                _handleContextLoss(detail);
+                return;
+              }
+            }
+            unawaited(_refreshSourceAfterLoadError());
+          });
+          _surfacePickSubscription =
+              modelViewer.onClick.listen(_pickSurfacePoint);
+          _applyAttributes();
           _scheduleSavedCameraRestore();
-        })
-          ..observe(modelViewer);
-        _modelLoadSubscription = modelViewer.on['load'].listen((_) {
-          _scheduleSavedCameraRestore();
-          _hasRetriedLoadError = false;
-          _refreshModelGeometry();
-        });
-        _modelErrorSubscription = modelViewer.on['error'].listen((_) {
-          unawaited(_refreshSourceAfterLoadError());
-        });
-        _surfacePickSubscription =
-            modelViewer.onClick.listen(_pickSurfacePoint);
+        },
+      ),
+      if (_contextRecovery.isLost)
+        Semantics(
+            liveRegion: true,
+            child: Stack(fit: StackFit.expand, children: [
+              const ColoredBox(color: Color(0xFFF1F5F9)),
+              if (poster != null && poster.isNotEmpty)
+                Image.network(poster,
+                    fit: BoxFit.contain,
+                    excludeFromSemantics: true,
+                    errorBuilder: (_, __, ___) => const SizedBox.shrink()),
+              Positioned(
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  child: ColoredBox(
+                      color: const Color(0xE6111827),
+                      child: Padding(
+                          padding: const EdgeInsets.all(8),
+                          child: Text(
+                            tr('3D görüntüleme durakladı. Düzenlemeleriniz korundu.',
+                                '3D viewing paused. Your edits are preserved.'),
+                            textAlign: TextAlign.center,
+                            maxLines: 3,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                                fontSize: 13, color: Color(0xFFF8FBFF)),
+                          )))),
+            ])),
+    ]);
+  }
+
+  void _handleContextLoss(JSObject? detail) {
+    if (!mounted) return;
+    final element = _modelViewer;
+    if (element == null) return;
+    final revision = _contextRecovery.lose(_captureCameraPose());
+    if (revision == null) return;
+    _updateSceneActivity();
+    setState(() {});
+    unawaited(_contextRestoreSubscription?.cancel());
+    _contextRestoreSubscription = null;
+    try {
+      // The SDK's public error event forwards the original canvas event.
+      final sourceError = detail?.getProperty<JSObject?>('sourceError'.toJS);
+      final target = sourceError?.getProperty<JSObject?>('target'.toJS);
+      if (target == null) return;
+      final canvas = target as html.CanvasElement;
+      _contextRestoreSubscription =
+          canvas.on['webglcontextrestored'].listen((_) {
+        final restoreSubscription = _contextRestoreSubscription;
+        if (!mounted ||
+            _modelViewer != element ||
+            !_contextRecovery.restore(revision)) return;
+        setState(() {});
+        final pose = _contextRecovery.pose;
+        if (pose != null) {
+          final viewer = element as JSObject;
+          try {
+            if (pose.animationName != null) {
+              viewer.setProperty(
+                  'animationName'.toJS, pose.animationName!.toJS);
+            }
+            if (pose.animationTime.isFinite) {
+              viewer.setProperty('currentTime'.toJS, pose.animationTime.toJS);
+            }
+            viewer.callMethod<JSAny?>(
+                'resetTurntableRotation'.toJS, pose.turntableRotation.toJS);
+          } catch (_) {
+            // Camera goals remain available during SDK environment recovery.
+          }
+        }
         _applyAttributes();
-        _scheduleSavedCameraRestore();
-      },
-    );
+        unawaited(_applySavedAnimationState());
+        _jumpCameraToSavedPose();
+        unawaited(restoreSubscription?.cancel());
+        if (_contextRestoreSubscription == restoreSubscription) {
+          _contextRestoreSubscription = null;
+        }
+      });
+    } catch (_) {
+      // Keep the poster if the browser does not expose a restorable canvas.
+    }
   }
 
   void _pickSurfacePoint(html.MouseEvent event) {
@@ -1197,6 +1562,7 @@ class _HtmlPageStageState extends State<HtmlPageStage> {
   List<PresentationComponentBlock> get _directModelBlocks {
     final revealStep = widget.visibleRevealStep;
     return widget.page.componentBlocks
+        .map(PresentationSceneState.normalizeBlock)
         .where(
           (block) =>
               _usesDirectModelCanvas(block) &&
@@ -1231,6 +1597,32 @@ class _HtmlPageStageState extends State<HtmlPageStage> {
       widget.tourCameraTargetX != null &&
       widget.tourCameraTargetY != null &&
       widget.tourCameraTargetZ != null;
+
+  PresentationEffectSettings _renderSettings =
+      const PresentationEffectSettings();
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final next = PresentationRenderScope.of(context);
+    final active =
+        TickerMode.of(context) && (ModalRoute.of(context)?.isCurrent ?? true);
+    for (final frame in [_iframeElement, _pendingIframeElement]) {
+      // dart:html can wrap an unattached iframe's null browsing context in a
+      // WindowBase which throws NullWindowException when used.
+      if (frame == null || frame.isConnected != true) continue;
+      try {
+        frame.contentWindow?.postMessage(
+            {'type': 'sutol-scene-active', 'active': active}, '*');
+      } catch (_) {
+        // A frame can disconnect during a route/scene transition.
+      }
+    }
+    if (next.renderQuality != _renderSettings.renderQuality ||
+        next.reducedMotion != _renderSettings.reducedMotion) {
+      _renderSettings = next;
+      _render();
+    }
+  }
 
   @override
   void initState() {
@@ -1536,6 +1928,8 @@ class _HtmlPageStageState extends State<HtmlPageStage> {
   void _render() {
     final directModelBlocks = _directModelBlocks;
     final document = buildHtmlStageDocument(
+      renderQuality: _renderSettings.renderQuality,
+      reducedMotion: _renderSettings.reducedMotion,
       // Sunumda 3B model editÃ¶rle aynÄ± doÄŸrudan model-viewer bileÅŸeninde
       // Ã§izilir. Iframe yalnÄ±zca metinleri ve diÄŸer HTML bileÅŸenlerini tutar;
       // aksi halde aynÄ± kayÄ±tlÄ± kamera iki farklÄ± renderer tarafÄ±ndan farklÄ±
@@ -1813,7 +2207,8 @@ class _HtmlPageStageState extends State<HtmlPageStage> {
     final payload = <String, Object?>{
       'type': 'sutol-stage-patch',
       'components': documentPage.componentBlocks.map(
-        (block) {
+        (sourceBlock) {
+          final block = PresentationSceneState.normalizeBlock(sourceBlock);
           final legacyImageId = block.imageAssetId == null &&
                   block.modelAssetId != null &&
                   RemoteImageSources.sourceFor(block.modelAssetId!) != null
@@ -1871,6 +2266,9 @@ class _HtmlPageStageState extends State<HtmlPageStage> {
                 : block.modelTurntableRotation,
             'modelFieldOfView':
                 isImage || modelId == null ? null : block.modelFieldOfView,
+            'modelExposure': isImage || modelId == null
+                ? null
+                : PresentationSceneState.effectiveExposure(block),
             'modelTargetX':
                 isImage || modelId == null ? null : block.modelTargetX,
             'modelTargetY':
@@ -1939,6 +2337,7 @@ class _HtmlPageStageState extends State<HtmlPageStage> {
               'entranceAnimationClass':
                   _entranceAnimationDomClass(block.entranceAnimation),
               'textColor': block.textColorHex,
+              'surfaceColor': block.surfaceColorHex,
               'fontWeight': block.fontWeight,
               'textBold': block.textBold,
               'textItalic': block.textItalic,
@@ -2000,6 +2399,8 @@ class _HtmlPageStageState extends State<HtmlPageStage> {
                     ),
                     modelId: block.modelAssetId!,
                     animationEnabled: block.modelAnimationEnabled,
+                    animationTime: block.modelAnimationTime,
+                    animationName: block.modelAnimationName,
                     autoRotate: block.modelAutoRotate,
                     rotationSpeed: block.modelRotationSpeed,
                     zoom: _usesRuntimeTourCamera(block)
@@ -2008,10 +2409,7 @@ class _HtmlPageStageState extends State<HtmlPageStage> {
                     cameraRadius: block.modelCameraRadius,
                     turntableRotation: block.modelTurntableRotation,
                     fieldOfView: block.modelFieldOfView,
-                    exposure: findPresentation3DModelAsset(
-                          block.modelAssetId!,
-                        )?.exposure ??
-                        1,
+                    exposure: PresentationSceneState.effectiveExposure(block),
                     environmentImage: findPresentation3DModelAsset(
                       block.modelAssetId!,
                     )?.environmentImage,

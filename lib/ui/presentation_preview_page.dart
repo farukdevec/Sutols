@@ -1,3 +1,4 @@
+import 'widgets/presentation_render_scope.dart';
 import 'dart:async';
 import 'dart:math' as math;
 import 'dart:ui' as ui;
@@ -443,144 +444,150 @@ class _PresentationPreviewPageState extends State<PresentationPreviewPage>
           _fragmentStep = maxFragmentStep;
         }
 
-        return Scaffold(
-          backgroundColor: colors.background,
-          body: KeyboardListener(
-            focusNode: _focusNode,
-            autofocus: true,
-            onKeyEvent: _handleKeyEvent,
-            child: GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTap: isTourPage
-                  ? _engageTour
-                  : (effectSettings.zoomEnabled ? null : _next),
-              child: Stack(
-                fit: StackFit.expand,
-                children: <Widget>[
-                  DecoratedBox(
-                    decoration: BoxDecoration(
-                      color: colors.background,
-                    ),
-                    child: page == null
-                        ? Center(
-                            child: Text(
-                              'Sunumda sayfa yok.',
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .titleLarge
-                                  ?.copyWith(
-                                    color: colors.onSurface,
-                                    fontWeight: FontWeight.w700,
-                                  ),
+        return PresentationRenderScope(
+          settings: widget.controller.effectSettings,
+          child: Scaffold(
+            backgroundColor: colors.background,
+            body: KeyboardListener(
+              focusNode: _focusNode,
+              autofocus: true,
+              onKeyEvent: _handleKeyEvent,
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: isTourPage
+                    ? _engageTour
+                    : (effectSettings.zoomEnabled ? null : _next),
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: <Widget>[
+                    DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: colors.background,
+                      ),
+                      child: page == null
+                          ? Center(
+                              child: Text(
+                                'Sunumda sayfa yok.',
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .titleLarge
+                                    ?.copyWith(
+                                      color: colors.onSurface,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                              ),
+                            )
+                          : AnimatedBuilder(
+                              animation: _pageTransitionController,
+                              builder: (context, _) => _PreviewDeckStage(
+                                page: page,
+                                transitionFromPage: _transitionFromPage,
+                                currentIndex: safeIndex,
+                                pageCount: pageCount,
+                                currentRevealStep: _fragmentStep,
+                                effectSettings: transitionSettings,
+                                reduceMotion: reduceMotion,
+                                zoomed: _zoomed,
+                                onToggleZoom: _toggleZoom,
+                                onHotspot: _goToPageId,
+                                showHotspots: _showControls,
+                                onTransitionReady: _startLoadedTransition,
+                                tourStageKey: _tourStageKey,
+                                tourMode: isTourPage,
+                                onTourSurfacePointPicked:
+                                    _handleTourSurfacePointPicked,
+                                onTourSurfacePickMissed: _showTourSurfaceMiss,
+                                onTourInteraction: _engageTour,
+                                onTourHotspot: _goToPageId,
+                              ),
                             ),
-                          )
-                        : AnimatedBuilder(
-                            animation: _pageTransitionController,
-                            builder: (context, _) => _PreviewDeckStage(
-                              page: page,
-                              transitionFromPage: _transitionFromPage,
-                              currentIndex: safeIndex,
-                              pageCount: pageCount,
-                              currentRevealStep: _fragmentStep,
-                              effectSettings: transitionSettings,
-                              reduceMotion: reduceMotion,
-                              zoomed: _zoomed,
-                              onToggleZoom: _toggleZoom,
-                              onHotspot: _goToPageId,
-                              showHotspots: _showControls,
-                              onTransitionReady: _startLoadedTransition,
-                              tourStageKey: _tourStageKey,
-                              tourMode: isTourPage,
-                              onTourSurfacePointPicked:
-                                  _handleTourSurfacePointPicked,
-                              onTourSurfacePickMissed: _showTourSurfaceMiss,
-                              onTourInteraction: _engageTour,
-                              onTourHotspot: _goToPageId,
-                            ),
-                          ),
-                  ),
-                  if (_showControls && _presenterMode)
-                    _PreviewTopBar(
-                      currentIndex: safeIndex,
-                      pageCount: pageCount,
-                      currentRevealStep: _fragmentStep,
-                      maxRevealStep: maxFragmentStep,
-                      effectSettings: effectSettings,
-                      zoomed: _zoomed,
-                      hasNotes: page?.speakerNotes.trim().isNotEmpty ?? false,
-                      presenterMode: _presenterMode,
-                      onClose: _close,
-                      onToggleZoom:
-                          effectSettings.zoomEnabled ? _toggleZoom : null,
-                      onFullscreen: requestPresentationFullscreen,
-                      onTogglePresenter: _togglePresenterMode,
                     ),
-                  if (_showControls && _presenterMode && page != null)
-                    _PreviewPresenterPanel(
-                      page: page,
-                      nextPage: safeIndex + 1 < pageCount
-                          ? pages[safeIndex + 1]
-                          : null,
-                    ),
-                  if (_showControls && pageCount > 0)
-                    _PreviewBottomBar(
-                      currentIndex: safeIndex,
-                      pageCount: pageCount,
-                      onPrevious:
-                          safeIndex > 0 || _fragmentStep > 0 ? _previous : null,
-                      onNext: safeIndex < pageCount - 1 ||
-                              _fragmentStep < maxFragmentStep
-                          ? _next
-                          : null,
-                      onSelect: _goTo,
-                    ),
-                  if (isTourPage && !_tourStarted)
-                    _TourStartOverlay(onStart: _engageTour),
-                  if (isTourPage)
-                    _TourExperienceHud(
-                      tourStarted: _tourStarted,
-                      onEngage: _engageTour,
-                      onPause: _pauseTour,
-                      speed: _tourSpeed,
-                      onSpeedChanged: (value) =>
-                          setState(() => _tourSpeed = value),
-                      onPrevious:
-                          safeIndex > 0 || _fragmentStep > 0 ? _previous : null,
-                      onNext: safeIndex < pageCount - 1 ||
-                              _fragmentStep < maxFragmentStep
-                          ? _next
-                          : null,
-                      onReset: () =>
-                          _tourStageKey.currentState?.resetTourView(),
-                      onEdit: _returnToEditor,
-                      narrationOpen: _tourNarrationOpen,
-                      onToggleNarration: _toggleTourNarration,
-                      onClose: _close,
-                    ),
-                  if (isTourPage && _tourStarted)
-                    _TourJoystick(
-                      onMove: ({required forward, required right}) {
-                        _engageTour();
-                        _tourStageKey.currentState?.moveTour(
-                          forward: forward * _tourSpeed,
-                          right: right * _tourSpeed,
-                        );
-                      },
-                    ),
-                  if (isTourPage && _tourNarrationOpen && page != null)
-                    _TourNarrationPanel(
-                      page: page,
-                      currentIndex: safeIndex,
-                      pageCount: pageCount,
-                      onPrevious:
-                          safeIndex > 0 || _fragmentStep > 0 ? _previous : null,
-                      onNext: safeIndex < pageCount - 1 ||
-                              _fragmentStep < maxFragmentStep
-                          ? _next
-                          : null,
-                      onClose: _toggleTourNarration,
-                    ),
-                ],
+                    if (_showControls && _presenterMode)
+                      _PreviewTopBar(
+                        currentIndex: safeIndex,
+                        pageCount: pageCount,
+                        currentRevealStep: _fragmentStep,
+                        maxRevealStep: maxFragmentStep,
+                        effectSettings: effectSettings,
+                        zoomed: _zoomed,
+                        hasNotes: page?.speakerNotes.trim().isNotEmpty ?? false,
+                        presenterMode: _presenterMode,
+                        onClose: _close,
+                        onToggleZoom:
+                            effectSettings.zoomEnabled ? _toggleZoom : null,
+                        onFullscreen: requestPresentationFullscreen,
+                        onTogglePresenter: _togglePresenterMode,
+                      ),
+                    if (_showControls && _presenterMode && page != null)
+                      _PreviewPresenterPanel(
+                        page: page,
+                        nextPage: safeIndex + 1 < pageCount
+                            ? pages[safeIndex + 1]
+                            : null,
+                      ),
+                    if (_showControls && pageCount > 0)
+                      _PreviewBottomBar(
+                        currentIndex: safeIndex,
+                        pageCount: pageCount,
+                        onPrevious: safeIndex > 0 || _fragmentStep > 0
+                            ? _previous
+                            : null,
+                        onNext: safeIndex < pageCount - 1 ||
+                                _fragmentStep < maxFragmentStep
+                            ? _next
+                            : null,
+                        onSelect: _goTo,
+                      ),
+                    if (isTourPage && !_tourStarted)
+                      _TourStartOverlay(onStart: _engageTour),
+                    if (isTourPage)
+                      _TourExperienceHud(
+                        tourStarted: _tourStarted,
+                        onEngage: _engageTour,
+                        onPause: _pauseTour,
+                        speed: _tourSpeed,
+                        onSpeedChanged: (value) =>
+                            setState(() => _tourSpeed = value),
+                        onPrevious: safeIndex > 0 || _fragmentStep > 0
+                            ? _previous
+                            : null,
+                        onNext: safeIndex < pageCount - 1 ||
+                                _fragmentStep < maxFragmentStep
+                            ? _next
+                            : null,
+                        onReset: () =>
+                            _tourStageKey.currentState?.resetTourView(),
+                        onEdit: _returnToEditor,
+                        narrationOpen: _tourNarrationOpen,
+                        onToggleNarration: _toggleTourNarration,
+                        onClose: _close,
+                      ),
+                    if (isTourPage && _tourStarted)
+                      _TourJoystick(
+                        onMove: ({required forward, required right}) {
+                          _engageTour();
+                          _tourStageKey.currentState?.moveTour(
+                            forward: forward * _tourSpeed,
+                            right: right * _tourSpeed,
+                          );
+                        },
+                      ),
+                    if (isTourPage && _tourNarrationOpen && page != null)
+                      _TourNarrationPanel(
+                        page: page,
+                        currentIndex: safeIndex,
+                        pageCount: pageCount,
+                        onPrevious: safeIndex > 0 || _fragmentStep > 0
+                            ? _previous
+                            : null,
+                        onNext: safeIndex < pageCount - 1 ||
+                                _fragmentStep < maxFragmentStep
+                            ? _next
+                            : null,
+                        onClose: _toggleTourNarration,
+                      ),
+                  ],
+                ),
               ),
             ),
           ),

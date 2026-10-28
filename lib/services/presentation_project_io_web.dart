@@ -23,7 +23,9 @@ Future<void> savePresentationProjectAsJson({
   html.document.body?.children.add(anchor);
   anchor.click();
   anchor.remove();
-  html.Url.revokeObjectUrl(url);
+  unawaited(Future<void>.delayed(const Duration(seconds: 1), () {
+    html.Url.revokeObjectUrl(url);
+  }));
 }
 
 Future<PresentationProject?> loadPresentationProjectFromJson() async {

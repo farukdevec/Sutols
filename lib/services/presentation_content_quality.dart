@@ -48,6 +48,21 @@ class QualityScoreResult {
     required this.isPass,
   });
 
+  QualityScoreResult withRevisionIssue(String issue) => QualityScoreResult(
+        overallScore: overallScore,
+        factualAccuracy: factualAccuracy,
+        audienceFit: audienceFit,
+        pedagogicalValue: pedagogicalValue,
+        narrativeCoherence: narrativeCoherence,
+        redundancy: redundancy,
+        readability: readability,
+        visualPotential: visualPotential,
+        slideIssues: slideIssues,
+        globalIssues: [...globalIssues, issue],
+        needsRevision: true,
+        isPass: false,
+      );
+
   @override
   String toString() {
     return 'Overall: $overallScore/100 (Accuracy: $factualAccuracy, Audience: $audienceFit, Pedagogy: $pedagogicalValue, Narrative: $narrativeCoherence, Redundancy: $redundancy, Readability: $readability, Visual: $visualPotential)';

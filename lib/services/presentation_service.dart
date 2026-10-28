@@ -220,6 +220,10 @@ class PresentationService {
             slideCount: slideCount,
             language: selectedLanguage,
           );
+          if (grokResult.slides.length != slideCount) {
+            throw FormatException(
+                'Grok returned ${grokResult.slides.length} slides; $slideCount required.');
+          }
           resultPresentation = GeminiPresentation(
             slides: grokResult.slides
                 .map(
@@ -246,6 +250,10 @@ class PresentationService {
               slideCount: slideCount,
               language: selectedLanguage,
             );
+            if (resultPresentation.slides.length != slideCount) {
+              throw FormatException(
+                  'Gemini returned ${resultPresentation.slides.length} slides; $slideCount required.');
+            }
           } catch (geminiError) {
             totalStopwatch.stop();
             AiRouterLogger.logTotal(

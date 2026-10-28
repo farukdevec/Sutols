@@ -1,153 +1,74 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sutol/services/ai_model_config.dart';
 
-/// Simulated AI Router Engine implementing candidate ranking, rate limit handling,
-/// auth error exclusion, zero-Firestore write in-memory state tracking, and sequential fallback.
-class AiRouterEngine {
-  final Map<String, AiErrorType?> modelErrors = {};
-
-  final List<String> availableNvidiaModels =
-      AiModelConfig.defaultNvidiaCandidateModels;
-
-  final List<String> callLogs = [];
-
-  /// Execute sequential router request with mock responses handler
-  Future<String> executeRequest({
-    required Future<int> Function(String model) mockNvidiaHandler,
-    required Future<bool> Function() mockGeminiHandler,
-    required Future<bool> Function() mockGrokHandler,
-  }) async {
-    // 1. Sequential loop over NVIDIA candidates: Super 120B -> GPT-OSS 120B -> Llama 3.3 70B -> GPT-OSS 20B -> Nano -> Llama 3.1 8B
-    for (final model in availableNvidiaModels) {
-      callLogs.add('nvidia:$model');
-
-      final statusCode = await mockNvidiaHandler(model);
-
-      if (statusCode == 200) {
-        return 'SUCCESS_NVIDIA_$model';
-      } else {
-        modelErrors[model] = AiModelConfig.classifyStatusCode(statusCode);
-        continue;
-      }
-    }
-
-    // 2. NVIDIA candidates exhausted -> Gemini
-    callLogs.add('gemini:${AiModelConfig.modelGeminiFlash}');
-    final geminiSuccess = await mockGeminiHandler();
-    if (geminiSuccess) {
-      return 'SUCCESS_GEMINI';
-    }
-
-    // 3. Gemini failed -> Grok
-    callLogs.add('grok:${AiModelConfig.modelGrokDefault}');
-    final grokSuccess = await mockGrokHandler();
-    if (grokSuccess) {
-      return 'SUCCESS_GROK';
-    }
-
-    // 4. All AI failed -> Fallback
-    callLogs.add('fallback:word_based');
-    return 'SUCCESS_FALLBACK';
-  }
-}
-
+// Test production policy directly. The old test-only router had a different
+// provider order and an obsolete Super-first chain, so it could not verify
+// the real routing implementation. HTTP failover lives in
+// nvidia_presentation_service_test.dart with a MockClient.
 void main() {
-  group('AI Model Router & Sequential Fallback Tests', () {
-    late AiRouterEngine router;
-
-    setUp(() {
-      router = AiRouterEngine();
+  group('AI production route policy', () {
+    test('standard generation uses the canonical proxy route', () {
+      expect(AiModelConfig.presentationCandidatesFor('Atom'),
+          [AiModelConfig.modelGptOss120b]);
     });
-
-    test('Scenario 1: Super 120B -> SUCCESS (All fallback models NOT called)', () async {
-      final result = await router.executeRequest(
-        mockNvidiaHandler: (model) async =>
-            model == AiModelConfig.modelNemotronSuper ? 200 : 500,
-        mockGeminiHandler: () async => true,
-        mockGrokHandler: () async => true,
-      );
-
-      expect(result, 'SUCCESS_NVIDIA_${AiModelConfig.modelNemotronSuper}');
-      expect(router.callLogs, ['nvidia:${AiModelConfig.modelNemotronSuper}']);
-      expect(router.callLogs, isNot(contains('nvidia:${AiModelConfig.modelGptOss120b}')));
-      expect(router.callLogs, isNot(contains('nvidia:${AiModelConfig.modelLlama33_70b}')));
+    test('deep mode preserves the proxy route and its shared deadline', () {
+      expect(
+          AiModelConfig.presentationCandidatesFor('Atom',
+              mode: PresentationGenerationMode.deep),
+          [AiModelConfig.modelGptOss120b]);
     });
-
-    test('Scenario 2: Super 120B -> 429/500 -> GPT-OSS 120B -> SUCCESS', () async {
-      final result = await router.executeRequest(
-        mockNvidiaHandler: (model) async {
-          if (model == AiModelConfig.modelNemotronSuper) return 429;
-          if (model == AiModelConfig.modelGptOss120b) return 200;
-          return 500;
-        },
-        mockGeminiHandler: () async => true,
-        mockGrokHandler: () async => false,
-      );
-
-      expect(result, 'SUCCESS_NVIDIA_${AiModelConfig.modelGptOss120b}');
-      expect(router.callLogs, [
-        'nvidia:${AiModelConfig.modelNemotronSuper}',
-        'nvidia:${AiModelConfig.modelGptOss120b}',
+    test('diagnostic candidates preserve order without enabling Ultra', () {
+      expect(AiModelConfig.defaultNvidiaCandidateModels.first,
+          AiModelConfig.modelGptOss120b);
+      expect(AiModelConfig.deepNvidiaCandidateModels, [
+        AiModelConfig.modelNemotronSuper,
+        ...AiModelConfig.defaultNvidiaCandidateModels
       ]);
-      expect(router.callLogs, isNot(contains('nvidia:${AiModelConfig.modelLlama33_70b}')));
-      expect(router.callLogs, isNot(contains(contains('gemini'))));
+      expect(AiModelConfig.defaultNvidiaCandidateModels.toSet().length,
+          AiModelConfig.defaultNvidiaCandidateModels.length);
+      expect(AiModelConfig.deepNvidiaCandidateModels,
+          isNot(contains(AiModelConfig.modelNemotronUltra)));
     });
-
-    test('Scenario 3: Super 120B + GPT-OSS 120B fail -> Llama 3.3 70B -> SUCCESS', () async {
-      final result = await router.executeRequest(
-        mockNvidiaHandler: (model) async {
-          if (model == AiModelConfig.modelNemotronSuper) return 500;
-          if (model == AiModelConfig.modelGptOss120b) return 500;
-          if (model == AiModelConfig.modelLlama33_70b) return 200;
-          return 500;
-        },
-        mockGeminiHandler: () async => true,
-        mockGrokHandler: () async => false,
-      );
-
-      expect(result, 'SUCCESS_NVIDIA_${AiModelConfig.modelLlama33_70b}');
-      expect(router.callLogs, [
-        'nvidia:${AiModelConfig.modelNemotronSuper}',
-        'nvidia:${AiModelConfig.modelGptOss120b}',
-        'nvidia:${AiModelConfig.modelLlama33_70b}',
-      ]);
-      expect(router.callLogs, isNot(contains('nvidia:${AiModelConfig.modelGptOss20b}')));
-      expect(router.callLogs, isNot(contains(contains('gemini'))));
+    test('HTTP failures keep distinct authentication and retry classifications',
+        () {
+      for (final (status, error) in <(int, AiErrorType)>[
+        (400, AiErrorType.badRequest400),
+        (401, AiErrorType.authError401),
+        (403, AiErrorType.forbidden403),
+        (404, AiErrorType.notFound404),
+        (408, AiErrorType.timeout),
+        (429, AiErrorType.rateLimited429),
+        (500, AiErrorType.serverError5xx),
+        (503, AiErrorType.serverError5xx),
+        (418, AiErrorType.unknown),
+      ]) {
+        expect(AiModelConfig.classifyStatusCode(status), error);
+      }
+      for (final error in [
+        AiErrorType.timeout,
+        AiErrorType.rateLimited429,
+        AiErrorType.serverError5xx,
+        AiErrorType.networkError
+      ]) {
+        expect(AiModelConfig.isFallbackable(error), isTrue);
+      }
     });
-
-    test('Scenario 4: All NVIDIA models fail -> Gemini -> SUCCESS (Grok NOT called)', () async {
-      final result = await router.executeRequest(
-        mockNvidiaHandler: (model) async => 500,
-        mockGeminiHandler: () async => true,
-        mockGrokHandler: () async => false,
-      );
-
-      expect(result, 'SUCCESS_GEMINI');
-      expect(router.callLogs, contains('gemini:${AiModelConfig.modelGeminiFlash}'));
-      expect(router.callLogs, isNot(contains(contains('grok'))));
+    test(
+        'large decks scale the canonical model deadline within the total budget',
+        () {
+      final normal =
+          AiModelConfig.timeoutForModel(AiModelConfig.modelGptOss120b);
+      final large = AiModelConfig.timeoutForModel(AiModelConfig.modelGptOss120b,
+          slideCount: 10);
+      expect(normal, AiModelConfig.timeoutGptOss120b);
+      expect(large, greaterThan(normal));
+      expect(large, lessThanOrEqualTo(AiModelConfig.maxTotalAiTime));
     });
-
-    test('Scenario 5: All NVIDIA fail -> Gemini fails -> Grok -> SUCCESS', () async {
-      final result = await router.executeRequest(
-        mockNvidiaHandler: (model) async => 500,
-        mockGeminiHandler: () async => false,
-        mockGrokHandler: () async => true,
-      );
-
-      expect(result, 'SUCCESS_GROK');
-      expect(router.callLogs, contains('grok:${AiModelConfig.modelGrokDefault}'));
-      expect(router.callLogs, isNot(contains(contains('fallback'))));
-    });
-
-    test('Scenario 6: All AI services fail -> Word-based Fallback is used', () async {
-      final result = await router.executeRequest(
-        mockNvidiaHandler: (model) async => 500,
-        mockGeminiHandler: () async => false,
-        mockGrokHandler: () async => false,
-      );
-
-      expect(result, 'SUCCESS_FALLBACK');
-      expect(router.callLogs.last, 'fallback:word_based');
+    test('disabled challenger cannot route a topic to an unverified model', () {
+      expect(AiModelConfig.lightningChallengerPercent, 0);
+      for (final topic in ['Atom', 'İklim', 'History', '', 'Uzay']) {
+        expect(AiModelConfig.useLightningChallenger(topic), isFalse);
+      }
     });
   });
 }

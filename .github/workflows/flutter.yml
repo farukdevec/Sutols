@@ -3,6 +3,12 @@ name: Flutter Checks
 on:
   push:
   pull_request:
+  workflow_dispatch:
+    inputs:
+      live_ai:
+        description: Run production AI benchmarks (consumes inference quota)
+        type: boolean
+        default: false
 
 jobs:
   flutter:
@@ -15,12 +21,26 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: stable
+          flutter-version: 3.38.9
 
       - name: Install dependencies
         run: flutter pub get
 
       - name: Run tests
-        run: flutter test
+        run: python3 tool/run_development_baseline.py --tests-only
+
+      - name: Production AI benchmarks
+        if: github.event_name == 'workflow_dispatch' && inputs.live_ai
+        run: flutter test --concurrency=1 test/chernobyl_live_test.dart test/matter_states_live_test.dart test/live_production_benchmark_test.dart
+
+      - name: Upload test evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: flutter-test-evidence
+          path: |
+            build/development_baseline
+            test/failures
 
       - name: Analyze
         run: flutter analyze

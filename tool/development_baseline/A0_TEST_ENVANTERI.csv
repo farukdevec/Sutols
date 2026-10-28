@@ -1,0 +1,36 @@
+dosya,test,sonuc,ilk_siniflandirma,durum
+test/ai_routing_test.dart,AI Model Router & Sequential Fallback Tests Scenario 1: Super 120B -> SUCCESS (All fallback models NOT called),failure,AI yönlendirme sırası/sözleşmesi; ürün davranışı doğrulanacak,Açık; beklentiler değiştirilmedi
+test/ai_routing_test.dart,AI Model Router & Sequential Fallback Tests Scenario 2: Super 120B -> 429/500 -> GPT-OSS 120B -> SUCCESS,failure,AI yönlendirme sırası/sözleşmesi; ürün davranışı doğrulanacak,Açık; beklentiler değiştirilmedi
+test/ai_routing_test.dart,AI Model Router & Sequential Fallback Tests Scenario 3: Super 120B + GPT-OSS 120B fail -> Llama 3.3 70B -> SUCCESS,failure,AI yönlendirme sırası/sözleşmesi; ürün davranışı doğrulanacak,Açık; beklentiler değiştirilmedi
+test/auth_page_visual_test.dart,login page desktop visual,error,Görsel referans farkı; platform/tasarım incelemesi gerekli,Açık; beklentiler değiştirilmedi
+test/editor_golden_test.dart,editor golden at 800x800,error,Görsel referans farkı; platform/tasarım incelemesi gerekli,Açık; beklentiler değiştirilmedi
+test/editor_golden_test.dart,editor golden at 390x844,error,Görsel referans farkı; platform/tasarım incelemesi gerekli,Açık; beklentiler değiştirilmedi
+test/language_controller_test.dart,PresentationPromptBuilder İngilizce talimatlar üretir,failure,Güncel olmayan sözleşme beklentisi adayı; doğrulanacak,Açık; beklentiler değiştirilmedi
+test/model_catalog_cache_test.dart,küçük resmi olmayan paket modelleri de katalogda görünür,failure,Katalog/eşleştirme davranışı; hata veya beklenti farkı ayrıştırılacak,Açık; beklentiler değiştirilmedi
+test/presentation_auto_builder_test.dart,skips blank pages and builds solar photon themed page,failure,Katalog/eşleştirme davranışı; hata veya beklenti farkı ayrıştırılacak,Açık; beklentiler değiştirilmedi
+test/presentation_background_library_test.dart,science text styles are emitted with their web fonts,failure,Güncel olmayan sözleşme beklentisi adayı; doğrulanacak,Açık; beklentiler değiştirilmedi
+test/presentation_background_library_test.dart,space technology text styles are emitted with cosmic effects,failure,İçerik/render sözleşmesi; kök neden incelemesi gerekli,Açık; beklentiler değiştirilmedi
+test/presentation_background_library_test.dart,text animations run once and remain visible after revealing,failure,İçerik/render sözleşmesi; kök neden incelemesi gerekli,Açık; beklentiler değiştirilmedi
+test/presentation_background_library_test.dart,distinct OFL typography families are available without effects,failure,Güncel olmayan sözleşme beklentisi adayı; doğrulanacak,Açık; beklentiler değiştirilmedi
+test/presentation_background_library_test.dart,background tags avoid broad words that cause unrelated matches,failure,İçerik/render sözleşmesi; kök neden incelemesi gerekli,Açık; beklentiler değiştirilmedi
+test/editor_responsive_test.dart,"""Modeller"" alet paneli 360px bottom sheet taşmaz",error,Editör yerleşimi/etkileşimi; görünür davranış kontrolü gerekli,Açık; beklentiler değiştirilmedi
+test/presentation_deck_builder_test.dart,3D model takes priority over a matching catalog component,failure,Katalog/eşleştirme davranışı; hata veya beklenti farkı ayrıştırılacak,Açık; beklentiler değiştirilmedi
+test/presentation_keyword_catalog_test.dart,matches phrases by complete words instead of raw substrings,failure,Katalog/eşleştirme davranışı; hata veya beklenti farkı ayrıştırılacak,Açık; beklentiler değiştirilmedi
+test/presentation_narrative_architecture_test.dart,Presentation Narrative Architecture & Enhanced Schema Tests SafeJsonParser synthesizes content when model only provides sections,failure,İçerik/render sözleşmesi; kök neden incelemesi gerekli,Açık; beklentiler değiştirilmedi
+test/editor_responsive_test.dart,"""Modeller"" alet paneli 390px bottom sheet taşmaz",error,Editör yerleşimi/etkileşimi; görünür davranış kontrolü gerekli,Açık; beklentiler değiştirilmedi
+test/editor_responsive_test.dart,mobil araç paneli klavye açıkken görünür ve taşmasız kalır,error,Editör yerleşimi/etkileşimi; görünür davranış kontrolü gerekli,Açık; beklentiler değiştirilmedi
+test/editor_responsive_test.dart,arka plan sekmesi 1120px genişlikte taşmaz,error,Editör yerleşimi/etkileşimi; görünür davranış kontrolü gerekli,Açık; beklentiler değiştirilmedi
+test/editor_responsive_test.dart,Modeller dock kısayolu modeller panelini açar,error,Editör yerleşimi/etkileşimi; görünür davranış kontrolü gerekli,Açık; beklentiler değiştirilmedi
+test/editor_responsive_test.dart,Modeller dock kısayolu modeller panelini açar,error,Editör yerleşimi/etkileşimi; görünür davranış kontrolü gerekli,Açık; beklentiler değiştirilmedi
+test/editor_responsive_test.dart,Modeller dock kısayolu modeller panelini açar,error,Editör yerleşimi/etkileşimi; görünür davranış kontrolü gerekli,Açık; beklentiler değiştirilmedi
+test/editor_responsive_test.dart,seçilen font editör metnine ve düzenleme alanına uygulanır,error,Editör yerleşimi/etkileşimi; görünür davranış kontrolü gerekli,Açık; beklentiler değiştirilmedi
+test/editor_responsive_test.dart,küçük resmi olmayan paket 3B modelleri kütüphanede görünür,error,Editör yerleşimi/etkileşimi; görünür davranış kontrolü gerekli,Açık; beklentiler değiştirilmedi
+test/editor_responsive_test.dart,"""Ses"" menü öğesi Arka Planlar (Müzik ve Ses) panelini açar",error,Editör yerleşimi/etkileşimi; görünür davranış kontrolü gerekli,Açık; beklentiler değiştirilmedi
+test/editor_responsive_test.dart,ESC sanal tur kamerasını editör sahnesine kalıcı yazar,error,Editör yerleşimi/etkileşimi; görünür davranış kontrolü gerekli,Açık; beklentiler değiştirilmedi
+test/editor_responsive_test.dart,Sanal Turu Kapat son kamera pozunu model üzerinde dondurur,error,Editör yerleşimi/etkileşimi; görünür davranış kontrolü gerekli,Açık; beklentiler değiştirilmedi
+test/chernobyl_live_test.dart,Canlı test dosyası,Ayrı çalıştırılacak,Calls the production presentation generator,Başarılı sayılmadı; silinmedi
+test/cors_verification_test.dart,Canlı test dosyası,Ayrı çalıştırılacak,Sends production OPTIONS and inference POST requests,Başarılı sayılmadı; silinmedi
+test/live_production_benchmark_test.dart,Canlı test dosyası,Ayrı çalıştırılacak,Calls the production presentation generator,Başarılı sayılmadı; silinmedi
+test/matter_states_live_test.dart,Canlı test dosyası,Ayrı çalıştırılacak,Calls the production presentation generator,Başarılı sayılmadı; silinmedi
+test/probe_nvidia_test.dart,Canlı test dosyası,Ayrı çalıştırılacak,Probes the production AI endpoint,Başarılı sayılmadı; silinmedi
+test/real_generation_test.dart,Canlı test dosyası,Ayrı çalıştırılacak,Sends an inference request to the production proxy,Başarılı sayılmadı; silinmedi

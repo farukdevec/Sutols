@@ -381,6 +381,11 @@ enum PresentationTransitionKind {
   rotateZoom,
 }
 
+enum PresentationRenderQuality { economy, balanced, high }
+
+/// Optional one-click render presets; they never rewrite presentation content.
+enum PresentationVisualProfile { calm, standard, expressive }
+
 @immutable
 class PresentationEffectSettings {
   const PresentationEffectSettings({
@@ -389,6 +394,7 @@ class PresentationEffectSettings {
     this.zoomEnabled = false,
     this.zoomScale = 1.55,
     this.reducedMotion = false,
+    this.renderQuality = PresentationRenderQuality.balanced,
     this.autoPlayIntervalSec = 0,
     this.loop = false,
     this.showProgressBar = true,
@@ -404,6 +410,7 @@ class PresentationEffectSettings {
   final bool zoomEnabled;
   final double zoomScale;
   final bool reducedMotion;
+  final PresentationRenderQuality renderQuality;
   final int autoPlayIntervalSec;
   final bool loop;
   final bool showProgressBar;
@@ -454,6 +461,7 @@ class PresentationEffectSettings {
     bool? zoomEnabled,
     double? zoomScale,
     bool? reducedMotion,
+    PresentationRenderQuality? renderQuality,
     int? autoPlayIntervalSec,
     bool? loop,
     bool? showProgressBar,
@@ -469,6 +477,7 @@ class PresentationEffectSettings {
       zoomEnabled: zoomEnabled ?? this.zoomEnabled,
       zoomScale: zoomScale ?? this.zoomScale,
       reducedMotion: reducedMotion ?? this.reducedMotion,
+      renderQuality: renderQuality ?? this.renderQuality,
       autoPlayIntervalSec: autoPlayIntervalSec ?? this.autoPlayIntervalSec,
       loop: loop ?? this.loop,
       showProgressBar: showProgressBar ?? this.showProgressBar,
@@ -480,6 +489,8 @@ class PresentationEffectSettings {
     );
   }
 }
+
+enum PresentationTextSurface { none, light, dark }
 
 @immutable
 class PresentationTextBlock {
@@ -508,6 +519,7 @@ class PresentationTextBlock {
       Offset(.36, 0),
     ],
     this.textColorHex,
+    this.surface = PresentationTextSurface.none,
     this.glowIntensity = 1,
     this.revealStep = 0,
     this.hotspotTargetPageId,
@@ -543,6 +555,20 @@ class PresentationTextBlock {
   final double groupDelay;
   final List<Offset> motionPathPoints;
   final String? textColorHex;
+  final PresentationTextSurface surface;
+
+  Color? get surfaceColor => switch (surface) {
+        PresentationTextSurface.none => null,
+        PresentationTextSurface.light => const Color(0xffffffff),
+        PresentationTextSurface.dark => const Color(0xff111827),
+      };
+
+  String? get surfaceColorHex => switch (surface) {
+        PresentationTextSurface.none => null,
+        PresentationTextSurface.light => '#ffffff',
+        PresentationTextSurface.dark => '#111827',
+      };
+
   final double glowIntensity;
   final int revealStep;
   final String? hotspotTargetPageId;
@@ -607,6 +633,7 @@ class PresentationTextBlock {
     double? groupDelay,
     List<Offset>? motionPathPoints,
     Object? textColorHex = _copySentinel,
+    PresentationTextSurface? surface,
     double? glowIntensity,
     int? revealStep,
     Object? hotspotTargetPageId = _copySentinel,
@@ -646,6 +673,7 @@ class PresentationTextBlock {
       textColorHex: identical(textColorHex, _copySentinel)
           ? this.textColorHex
           : textColorHex as String?,
+      surface: surface ?? this.surface,
       glowIntensity: glowIntensity ?? this.glowIntensity,
       revealStep: revealStep ?? this.revealStep,
       hotspotTargetPageId: identical(hotspotTargetPageId, _copySentinel)
@@ -700,6 +728,8 @@ class ModelViewerCameraPose {
     required this.targetZ,
     this.turntableRotation = 0,
     this.fieldOfView = 45,
+    this.animationTime = 0,
+    this.animationName,
   });
 
   final double theta;
@@ -717,6 +747,8 @@ class ModelViewerCameraPose {
 
   /// The realtime vertical field of view in degrees.
   final double fieldOfView;
+  final double animationTime;
+  final String? animationName;
 }
 
 /// Tur yüzeyindeki öğenin görsel biçimi. Eski projeler alanı içermediğinden
@@ -784,12 +816,15 @@ class PresentationComponentBlock {
     this.imageAssetId,
     this.imageAspectRatio,
     this.modelAnimationEnabled = true,
+    this.modelAnimationTime = 0,
+    this.modelAnimationName,
     this.modelAutoRotate = false,
     this.modelRotationSpeed = 30,
     this.modelZoom = 1,
     this.modelCameraRadius,
     this.modelTurntableRotation = 0,
     this.modelFieldOfView = 45,
+    this.modelExposure,
     this.modelOrbitEnabled = false,
     this.modelTourEnabled = false,
     this.modelTourFrozen = false,
@@ -822,12 +857,17 @@ class PresentationComponentBlock {
   final String? imageAssetId;
   final double? imageAspectRatio;
   final bool modelAnimationEnabled;
+  final double modelAnimationTime;
+  final String? modelAnimationName;
   final bool modelAutoRotate;
   final double modelRotationSpeed;
   final double modelZoom;
   final double? modelCameraRadius;
   final double modelTurntableRotation;
   final double modelFieldOfView;
+
+  /// Null preserves the catalog's lighting. Explicit exposure is per instance.
+  final double? modelExposure;
   final bool modelOrbitEnabled;
   final bool modelTourEnabled;
   final bool modelTourFrozen;
@@ -855,12 +895,15 @@ class PresentationComponentBlock {
     Object? imageAssetId = _copySentinel,
     Object? imageAspectRatio = _copySentinel,
     bool? modelAnimationEnabled,
+    double? modelAnimationTime,
+    Object? modelAnimationName = _copySentinel,
     bool? modelAutoRotate,
     double? modelRotationSpeed,
     double? modelZoom,
     Object? modelCameraRadius = _copySentinel,
     double? modelTurntableRotation,
     double? modelFieldOfView,
+    Object? modelExposure = _copySentinel,
     bool? modelOrbitEnabled,
     bool? modelTourEnabled,
     bool? modelTourFrozen,
@@ -895,6 +938,10 @@ class PresentationComponentBlock {
           : imageAspectRatio as double?,
       modelAnimationEnabled:
           modelAnimationEnabled ?? this.modelAnimationEnabled,
+      modelAnimationTime: modelAnimationTime ?? this.modelAnimationTime,
+      modelAnimationName: identical(modelAnimationName, _copySentinel)
+          ? this.modelAnimationName
+          : modelAnimationName as String?,
       modelAutoRotate: modelAutoRotate ?? this.modelAutoRotate,
       modelRotationSpeed: modelRotationSpeed ?? this.modelRotationSpeed,
       modelZoom: modelZoom ?? this.modelZoom,
@@ -904,6 +951,9 @@ class PresentationComponentBlock {
       modelTurntableRotation:
           modelTurntableRotation ?? this.modelTurntableRotation,
       modelFieldOfView: modelFieldOfView ?? this.modelFieldOfView,
+      modelExposure: identical(modelExposure, _copySentinel)
+          ? this.modelExposure
+          : (modelExposure as num?)?.toDouble(),
       modelOrbitEnabled: modelOrbitEnabled ?? this.modelOrbitEnabled,
       modelTourEnabled: modelTourEnabled ?? this.modelTourEnabled,
       modelTourFrozen: modelTourFrozen ?? this.modelTourFrozen,
@@ -1523,7 +1573,7 @@ const List<PresentationBackgroundDefinition> sutolStudioBackgroundLibrary =
       'bulut',
       'sade',
       'açık',
-      'hava',
+      'bulutlu gökyüzü',
       'sky',
     ],
     previewColors: <Color>[
@@ -2158,7 +2208,7 @@ const List<PresentationBackgroundDefinition> presentationBackgroundLibrary =
       'minimal',
       'profesyonel',
       'temiz',
-      'iş',
+      'iş dünyası',
       'minimalist',
       'clean',
       'professional'
@@ -2198,7 +2248,7 @@ const List<PresentationBackgroundDefinition> presentationBackgroundLibrary =
     tags: <String>[
       'kurumsal',
       'mavi',
-      'iş',
+      'iş dünyası',
       'profesyonel',
       'business',
       'corporate',

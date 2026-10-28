@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 
 import '../models/slide_model.dart';
+import '../models/presentation_scene_state.dart';
 import 'remote_image_sources.dart';
 import 'remote_model_sources.dart';
 
@@ -51,6 +52,7 @@ class PresentationProjectCodec {
     final data = <String, Object?>{
       'format': 'sutol.presentation',
       'version': version,
+      'sceneStateVersion': PresentationSceneState.version,
       'effectSettings': _effectSettingsToJson(effectSettings),
       'modelSourcesById': modelSourcesById,
       'imageSourcesById': imageSourcesById,
@@ -60,7 +62,8 @@ class PresentationProjectCodec {
     return const JsonEncoder.withIndent('  ').convert(data);
   }
 
-  static PresentationProject decodeProject(String source) {
+  static PresentationProject decodeProject(String source,
+      {bool registerSources = true}) {
     final decoded = jsonDecode(source);
     if (decoded is! Map<String, Object?>) {
       throw const FormatException('Gecersiz Sutols proje dosyasi.');
@@ -72,7 +75,7 @@ class PresentationProjectCodec {
     }
 
     final modelSourcesJson = decoded['modelSourcesById'];
-    if (modelSourcesJson is Map<String, Object?>) {
+    if (registerSources && modelSourcesJson is Map<String, Object?>) {
       RemoteModelSources.registerAll(<String, String>{
         for (final entry in modelSourcesJson.entries)
           if (entry.value is String) entry.key: entry.value! as String,
@@ -80,7 +83,7 @@ class PresentationProjectCodec {
     }
 
     final imageSourcesJson = decoded['imageSourcesById'];
-    if (imageSourcesJson is Map<String, Object?>) {
+    if (registerSources && imageSourcesJson is Map<String, Object?>) {
       RemoteImageSources.registerAll(<String, String>{
         for (final entry in imageSourcesJson.entries)
           if (entry.value is String) entry.key: entry.value! as String,
@@ -240,6 +243,7 @@ class PresentationProjectCodec {
       'groupDelay': block.groupDelay,
       'motionPathPoints': block.motionPathPoints.map(_offsetToJson).toList(),
       'textColorHex': block.textColorHex,
+      'surface': block.surface.name,
       'glowIntensity': block.glowIntensity,
       'revealStep': block.revealStep,
       'hotspotTargetPageId': block.hotspotTargetPageId,
@@ -312,6 +316,8 @@ class PresentationProjectCodec {
       textColorHex: json['textColorHex'] is String
           ? json['textColorHex']! as String
           : null,
+      surface: _enumValue(PresentationTextSurface.values, json['surface'],
+          PresentationTextSurface.none),
       glowIntensity: _double(json['glowIntensity'], 1),
       revealStep: _int(json['revealStep'], 0),
       hotspotTargetPageId: json['hotspotTargetPageId'] is String
@@ -358,8 +364,9 @@ class PresentationProjectCodec {
   }
 
   static Map<String, Object?> _componentBlockToJson(
-    PresentationComponentBlock block,
+    PresentationComponentBlock sourceBlock,
   ) {
+    final block = PresentationSceneState.normalizeBlock(sourceBlock);
     return <String, Object?>{
       'id': block.id,
       'kind': block.kind.name,
@@ -367,12 +374,15 @@ class PresentationProjectCodec {
       'imageAssetId': block.imageAssetId,
       'imageAspectRatio': block.imageAspectRatio,
       'modelAnimationEnabled': block.modelAnimationEnabled,
+      'modelAnimationTime': block.modelAnimationTime,
+      'modelAnimationName': block.modelAnimationName,
       'modelAutoRotate': block.modelAutoRotate,
       'modelRotationSpeed': block.modelRotationSpeed,
       'modelZoom': block.modelZoom,
       'modelCameraRadius': block.modelCameraRadius,
       'modelTurntableRotation': block.modelTurntableRotation,
       'modelFieldOfView': block.modelFieldOfView,
+      'modelExposure': block.modelExposure,
       'modelOrbitEnabled': block.modelOrbitEnabled,
       'modelTourEnabled': block.modelTourEnabled,
       'modelTourFrozen': block.modelTourFrozen,
@@ -420,7 +430,7 @@ class PresentationProjectCodec {
         : null;
     final imageAssetId = explicitImageAssetId ?? legacyImageAssetId;
     final modelAssetId = imageAssetId == null ? rawModelAssetId : null;
-    return PresentationComponentBlock(
+    return PresentationSceneState.normalizeBlock(PresentationComponentBlock(
       id: _string(json['id'], 'component-1'),
       kind: _componentKindValue(json['kind']),
       modelAssetId: modelAssetId,
@@ -433,26 +443,27 @@ class PresentationProjectCodec {
       modelAnimationEnabled: json['modelAnimationEnabled'] is bool
           ? json['modelAnimationEnabled']! as bool
           : true,
+      modelAnimationTime: _double(json['modelAnimationTime'], 0),
+      modelAnimationName: json['modelAnimationName'] is String
+          ? json['modelAnimationName'] as String
+          : null,
       modelAutoRotate: json['modelAutoRotate'] is bool
           ? json['modelAutoRotate']! as bool
           : false,
       modelRotationSpeed: _double(json['modelRotationSpeed'], 30),
-      modelZoom: _double(json['modelZoom'], 1).clamp(0.5, 10.0).toDouble(),
+      modelZoom: _double(json['modelZoom'], 1),
       modelCameraRadius: json['modelCameraRadius'] is num
-          ? (json['modelCameraRadius']! as num)
-              .toDouble()
-              .clamp(0.001, 100000)
-              .toDouble()
+          ? (json['modelCameraRadius']! as num).toDouble()
           : null,
       modelTurntableRotation: json['modelTurntableRotation'] is num
           ? (json['modelTurntableRotation']! as num).toDouble()
           : 0,
       modelFieldOfView: json['modelFieldOfView'] is num
-          ? (json['modelFieldOfView']! as num)
-              .toDouble()
-              .clamp(1.0, 179.0)
-              .toDouble()
+          ? (json['modelFieldOfView']! as num).toDouble()
           : 45,
+      modelExposure: json['modelExposure'] is num
+          ? (json['modelExposure']! as num).toDouble()
+          : null,
       modelOrbitEnabled: json['modelOrbitEnabled'] is bool
           ? json['modelOrbitEnabled']! as bool
           : false,
@@ -464,12 +475,9 @@ class PresentationProjectCodec {
           : false,
       modelOrbitTheta: _double(json['modelOrbitTheta'], 0),
       modelOrbitPhi: _double(json['modelOrbitPhi'], 75),
-      modelTargetX:
-          _double(json['modelTargetX'], 0).clamp(-500, 500).toDouble(),
-      modelTargetY:
-          _double(json['modelTargetY'], 0).clamp(-500, 500).toDouble(),
-      modelTargetZ:
-          _double(json['modelTargetZ'], 0).clamp(-500, 500).toDouble(),
+      modelTargetX: _double(json['modelTargetX'], 0),
+      modelTargetY: _double(json['modelTargetY'], 0),
+      modelTargetZ: _double(json['modelTargetZ'], 0),
       modelTourHotspots: _modelTourHotspotsFromJson(json['modelTourHotspots']),
       position: _offsetFromJson(json['position']),
       size: _sizeFromJson(json['size']),
@@ -491,7 +499,7 @@ class PresentationProjectCodec {
       animationDelay: _double(json['animationDelay'], 0),
       animationOrder: _int(json['animationOrder'], 0),
       motionPathPoints: _offsetListFromJson(json['motionPathPoints']),
-    );
+    ));
   }
 
   static List<ModelTourHotspot> _modelTourHotspotsFromJson(Object? value) {
@@ -526,6 +534,7 @@ class PresentationProjectCodec {
       'zoomEnabled': settings.zoomEnabled,
       'zoomScale': settings.zoomScale,
       'reducedMotion': settings.reducedMotion,
+      'renderQuality': settings.renderQuality.name,
       'autoPlayIntervalSec': settings.autoPlayIntervalSec,
       'loop': settings.loop,
       'showProgressBar': settings.showProgressBar,
@@ -550,6 +559,8 @@ class PresentationProjectCodec {
       zoomEnabled: _bool(json['zoomEnabled'], false),
       zoomScale: _double(json['zoomScale'], 1.55),
       reducedMotion: _bool(json['reducedMotion'], false),
+      renderQuality: _enumValue(PresentationRenderQuality.values,
+          json['renderQuality'], PresentationRenderQuality.balanced),
       autoPlayIntervalSec: _int(json['autoPlayIntervalSec'], 0),
       loop: _bool(json['loop'], false),
       showProgressBar: _bool(json['showProgressBar'], true),

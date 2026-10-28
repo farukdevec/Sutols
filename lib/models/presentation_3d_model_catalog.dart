@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'development_features.dart';
+
+part 'original_model_catalog.dart';
 
 @immutable
 class Presentation3DModelAsset {
@@ -11,6 +14,8 @@ class Presentation3DModelAsset {
     required this.byteSize,
     required this.sha256,
     this.thumbnailPath,
+    this.labelEn,
+    this.qualityAssetPath,
     this.exposure = 1,
     this.environmentImage,
     this.icon = Icons.view_in_ar_rounded,
@@ -22,12 +27,14 @@ class Presentation3DModelAsset {
 
   final String id;
   final String label;
+  final String? labelEn;
   final String assetPath;
   final String category;
   final List<String> tags;
   final int byteSize;
   final String sha256;
   final String? thumbnailPath;
+  final String? qualityAssetPath;
   final double exposure;
   final String? environmentImage;
   final IconData icon;
@@ -159,6 +166,7 @@ const List<Presentation3DModelAsset> presentation3DModelCatalog =
     byteSize: 0,
     sha256: '',
   ),
+  if (sutolOriginalModelsEnabled) ...originalPresentation3DModels,
 ];
 
 Presentation3DModelAsset? findPresentation3DModelAsset(String id) {
@@ -174,4 +182,18 @@ String? preferredBundledModelAssetPath(String id) {
   final model = findPresentation3DModelAsset(id);
   if (model == null || !model.preferBundledAsset) return null;
   return model.assetPath.trim().isEmpty ? null : model.assetPath.trim();
+}
+
+/// Only switches variants of a known bundled asset; imported/embedded sources
+/// are preserved verbatim so a saved presentation never changes ownership.
+String? modelSourceForRender(String id, String? source,
+    {bool highQuality = false}) {
+  final asset = findPresentation3DModelAsset(id);
+  final resolved = source ?? preferredBundledModelAssetPath(id);
+  if (highQuality &&
+      asset?.qualityAssetPath != null &&
+      resolved == asset!.assetPath) {
+    return asset.qualityAssetPath;
+  }
+  return resolved;
 }

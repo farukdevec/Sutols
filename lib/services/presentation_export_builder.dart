@@ -1,3 +1,5 @@
+import '../ui/widgets/html_stage/model_render_budget_script.dart';
+import '../ui/widgets/html_stage/reduced_motion_script.dart';
 import 'dart:convert';
 
 import '../models/model_tour_runtime.dart';
@@ -47,6 +49,7 @@ String buildPresentationExportHtml({
   String? title,
   Map<String, String> modelSourcesById = const <String, String>{},
   Map<String, String> imageSourcesById = const <String, String>{},
+  Map<String, String> modelPosterSourcesById = const <String, String>{},
   bool compact = true,
   bool printMode = false,
 }) {
@@ -72,13 +75,18 @@ String buildPresentationExportHtml({
       ..writeln(
         buildHtmlStageMarkup(
           page: page,
+          renderQuality: effectSettings.renderQuality,
+          reducedMotion: effectSettings.reducedMotion,
           showBadge: false,
           extraStageClass: 'sutol-export-stage',
-          renderMode: printMode || effectSettings.reducedMotion
+          renderMode: printMode
               ? HtmlStageRenderMode.snapshot
-              : HtmlStageRenderMode.full,
+              : effectSettings.reducedMotion
+                  ? HtmlStageRenderMode.preview
+                  : HtmlStageRenderMode.full,
           modelSourcesById: modelSourcesById,
           imageSourcesById: imageSourcesById,
+          modelPosterSourcesById: modelPosterSourcesById,
           deferEmbeddedAssets: true,
         ),
       )
@@ -93,10 +101,11 @@ String buildPresentationExportHtml({
 <!DOCTYPE html>
 <html lang="tr">
 <head>
+  ${effectSettings.reducedMotion || printMode ? '<script data-sutol-reduced-motion-media>$sutolReducedMotionMediaScript</script>' : ''}
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>$escapedDocumentTitle</title>
-  ${pages.any((page) => page.componentBlocks.any((block) => block.modelAssetId != null)) ? sutolModelViewerScriptTag : ''}
+  ${!printMode && pages.any((page) => page.componentBlocks.any((block) => block.modelAssetId != null)) ? '$sutolModelViewerScriptTag<script data-sutol-model-render-budget>${modelRenderBudgetScript(effectSettings.renderQuality)}</script>' : ''}
   <style>
   $exportStageStyles
   ${_exportStyles(effectSettings)}
@@ -396,6 +405,10 @@ body {
   height: 100%;
   place-items: center;
 }
+
+.sutol-export-slide:not(.is-active):not(.is-leaving) *,
+.sutol-export-slide:not(.is-active):not(.is-leaving) *::before,
+.sutol-export-slide:not(.is-active):not(.is-leaving) *::after { animation-play-state: paused !important; }
 
 .sutol-export-slide.is-active {
   display: grid;
@@ -1006,6 +1019,10 @@ String _exportScript({
       runtimeTargetX: null,
       runtimeTargetY: null,
       runtimeTargetZ: null,
+      runtimeTurntable: null,
+      runtimeFieldOfView: null,
+      runtimeAnimationTime: null,
+      runtimeAnimationName: null,
     };
   }
 
@@ -1044,6 +1061,11 @@ String _exportScript({
           orbit.phi.toFixed(8) + 'rad ' + orbit.radius.toFixed(8) + 'm';
       }
     } catch (_) {}
+    if (Number.isFinite(poolItem.viewer.turntableRotation)) config.runtimeTurntable = poolItem.viewer.turntableRotation;
+    const fov = poolItem.viewer.getFieldOfView?.();
+    if (Number.isFinite(fov)) config.runtimeFieldOfView = fov;
+    if (Number.isFinite(poolItem.viewer.currentTime)) config.runtimeAnimationTime = poolItem.viewer.currentTime;
+    config.runtimeAnimationName = poolItem.viewer.animationName || null;
     config.runtimeTargetX = poolItem.viewer.dataset.sutolTargetX ?? null;
     config.runtimeTargetY = poolItem.viewer.dataset.sutolTargetY ?? null;
     config.runtimeTargetZ = poolItem.viewer.dataset.sutolTargetZ ?? null;
@@ -1084,6 +1106,12 @@ String _exportScript({
     if (config.runtimeCameraOrbit) {
       viewer.setAttribute('camera-orbit', config.runtimeCameraOrbit);
     }
+    if (config.runtimeTurntable !== null) viewer.turntableRotation = config.runtimeTurntable;
+    if (config.runtimeFieldOfView !== null) viewer.setAttribute('field-of-view', config.runtimeFieldOfView + 'deg');
+    if (config.runtimeAnimationName !== null) viewer.animationName = config.runtimeAnimationName;
+    if (config.runtimeAnimationTime !== null) viewer.currentTime = config.runtimeAnimationTime;
+    if (viewer.hasAttribute('autoplay')) viewer.play?.();
+    else viewer.pause?.();
     if (config.runtimeTargetX !== null) viewer.dataset.sutolTargetX = config.runtimeTargetX;
     if (config.runtimeTargetY !== null) viewer.dataset.sutolTargetY = config.runtimeTargetY;
     if (config.runtimeTargetZ !== null) viewer.dataset.sutolTargetZ = config.runtimeTargetZ;
@@ -1156,6 +1184,8 @@ String _exportScript({
         if (target) {
           applyModelConfiguration(poolItem, target);
         } else {
+          poolItem.viewer.pause?.();
+          poolItem.viewer.removeAttribute('auto-rotate');
           modelParking.appendChild(poolItem.viewer);
           poolItem.placement = null;
         }
@@ -1323,7 +1353,7 @@ String _exportScript({
 
   function resetAutoTimer() {
     if (autoTimer) clearInterval(autoTimer);
-    if (autoPlayIntervalSec > 0) {
+    if (autoPlayIntervalSec > 0 && !document.hidden) {
       autoTimer = setInterval(() => {
         if (index < slides.length - 1) {
           goNext();
@@ -1614,6 +1644,9 @@ String _exportScript({
       const active = slideIndex === index;
       slide.classList.toggle('is-active', active);
       slide.setAttribute('aria-hidden', active ? 'false' : 'true');
+      slide.querySelectorAll('iframe').forEach(frame => {
+        frame.contentWindow?.postMessage({type:'sutol-scene-active', active:active}, '*');
+      });
     });
     dots.forEach((dot, dotIndex) => {
       const active = dotIndex === index;
@@ -1810,6 +1843,9 @@ String _exportScript({
   });
 
   toggleLaser(initialLaserPointer);
+  document.addEventListener('visibilitychange', resetAutoTimer);
+  window.addEventListener('pagehide', () => { if (autoTimer) clearInterval(autoTimer); });
+  window.addEventListener('pageshow', resetAutoTimer);
   resetAutoTimer();
   render();
 })();

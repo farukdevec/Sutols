@@ -98,7 +98,7 @@ void main() {
       slideCount: 5,
       language: 'english',
     );
-    expect(userPrompt, contains('Topic: Quantum Computing'));
+    expect(userPrompt, contains('Presentation subject: Quantum Computing'));
     expect(userPrompt, contains('Output Language: English'));
   });
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import 'state/language_controller.dart';
 import 'state/presentation_controller.dart';
@@ -376,6 +377,21 @@ class AppRoutes {
     } else {
       final isEn = LanguageController.instance.isEnglish;
       Navigator.of(context).pushReplacementNamed(isEn ? '/en' : home);
+    }
+  }
+}
+
+/// Restores the home document title when an informational route is popped.
+/// Title widgets on the covered route are not rebuilt by Navigator.pop.
+class SutolsRouteTitleObserver extends NavigatorObserver {
+  @override
+  void didPop(Route<dynamic> route, Route<dynamic>? previousRoute) {
+    super.didPop(route, previousRoute);
+    final name = previousRoute?.settings.name;
+    if (name == AppRoutes.home || name == '/en') {
+      SystemChrome.setApplicationSwitcherDescription(
+        const ApplicationSwitcherDescription(label: 'Sutols'),
+      );
     }
   }
 }

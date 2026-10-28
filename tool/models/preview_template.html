@@ -1,0 +1,44 @@
+<!doctype html><html lang="tr"><head><meta charset="utf-8"><title>Sutols · Sahne ve Model Kontrolü</title><script>window.addEventListener("error",event=>{if(event instanceof ErrorEvent){const output=document.getElementById("page-errors");if(output)output.textContent+=JSON.stringify({message:event.message,filename:event.filename,line:event.lineno,column:event.colno,stack:event.error?.stack})+"\n"}});</script><script type="module" src="https://cdn.jsdelivr.net/npm/@google/model-viewer@4.3.1/dist/model-viewer.min.js"></script><style>*{box-sizing:border-box}body{background:#f0f5f8;color:#112a40;font:16px system-ui;margin:30px}h1{font-size:28px}.grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}.model-card{background:white;border:1px solid #c9d7df;border-radius:14px;cursor:pointer;padding:8px;color:#112a40}.model-card img{width:100%;height:80px;object-fit:contain}.model-card span{display:block}.viewer{display:flex;margin:24px 0;gap:24px}model-viewer{width:480px;height:350px;background:white;border-radius:16px}button{padding:10px;border-radius:8px;border:1px solid #89a8b6;background:white;cursor:pointer}iframe{width:480px;height:220px;border:0}output{display:block;padding:12px}.state{font-weight:bold}pre{max-height:160px;overflow:auto;font-size:11px;background:#fff;padding:10px;border-radius:10px}</style></head><body><h1>Sutols · Özgün eğitim modeli pilotu</h1><p>Hafif/kaliteli GLB karşılaştırması · tek etkin 3B görüntüleyici · {{MODEL_COUNT}} gerçek önizleme</p><button id="audit">Tüm modelleri doğrula</button><output id="audit-status">Kontrol başlatılmadı</output><pre id="audit-results"></pre><pre id="page-errors" aria-label="Sayfa hata ayrıntıları"></pre><div class="grid">{{MODEL_CARDS}}</div><div class="viewer"><model-viewer loading="eager" id="model" src="{{FIRST_MODEL_URL}}" camera-controls environment-image="neutral" exposure="1" shadow-intensity="1" alt="{{FIRST_MODEL_LABEL}}"></model-viewer><div><h2 id="label">{{FIRST_MODEL_LABEL}}</h2><p>Şematik eğitim modeli. Fiziksel ayrıntılar temsilidir.</p><button id="lite">Hafif sürüm</button><button id="quality">Kaliteli sürüm</button><output id="status">Yükleniyor…</output><output id="source"></output><p>Model başına ölçülen bayt, SHA-256 ve üçgen manifestte kayıtlı.</p></div></div><h2>Görünürlük testi</h2><button id="suspend">Sahneyi durdur</button><button id="resume">Sahneyi sürdür</button><output id="state">Etkin</output><iframe title="Kontrollü animasyon sahnesi" src="scene.html"></iframe><script>
+const model=document.getElementById('model');
+const status=document.getElementById('status');
+const source=document.getElementById('source');
+let selected=document.querySelector('.model-card');
+function setSource(path){
+  if(model.src===path && model.loaded){status.textContent='Model yüklendi';source.textContent=model.src;return}
+  status.textContent='Yükleniyor…';source.textContent='';model.setAttribute('src',path);
+}
+document.querySelectorAll('.model-card').forEach(card=>card.onclick=()=>{
+  selected=card;model.alt=card.textContent;document.getElementById('label').textContent=card.textContent;setSource(card.dataset.lite);
+});
+document.getElementById('lite').onclick=()=>setSource(selected.dataset.lite);
+document.getElementById('quality').onclick=()=>setSource(selected.dataset.quality);
+model.addEventListener('load',()=>{status.textContent='Model yüklendi';source.textContent=model.src});
+model.addEventListener('error',()=>{status.textContent='Model yüklenemedi';source.textContent=model.src});
+function active(value){document.querySelector('iframe').contentWindow.postMessage({type:'sutol-scene-active',active:value},'*');document.getElementById('state').textContent=value?'Etkin':'Durduruldu'}
+document.getElementById('suspend').onclick=()=>active(false);document.getElementById('resume').onclick=()=>active(true);
+document.getElementById('audit').onclick=async()=>{
+ const button=document.getElementById('audit');button.disabled=true;
+ const progress=document.getElementById('audit-status');const result=document.getElementById('audit-results');
+ const records=[];const controls=[...document.querySelectorAll('.model-card')];
+ document.querySelectorAll('.model-card,#lite,#quality').forEach(b=>b.disabled=true);
+ try{
+  for(const card of controls){
+   for(const variant of ['lite','quality']){
+    const path=card.dataset[variant];const started=performance.now();
+    const state=await new Promise(resolve=>{
+     let timeout;function done(value){clearTimeout(timeout);model.removeEventListener('load',loaded);model.removeEventListener('error',failed);resolve(value)}
+     function loaded(){done('loaded')}function failed(){done('error')}
+     model.addEventListener('load',loaded);model.addEventListener('error',failed);
+     timeout=setTimeout(()=>done('timeout'),15000);
+     if(model.getAttribute('src')===path&&model.loaded)done('loaded');else setSource(path);
+    });
+    records.push({id:card.dataset.key,variant,path,state,loadMs:Math.round(performance.now()-started)});
+    progress.textContent=`Kontrol: ${records.length}/${controls.length*2} GLB — ${records.filter(r=>r.state!=='loaded').length} sorun`;
+   }
+  }
+  const thumbs=[];for(const card of controls){const img=card.querySelector('img');img.loading='eager';try{await img.decode();thumbs.push({id:card.dataset.key,loaded:img.naturalWidth>0,source:img.getAttribute('src')})}catch(_){thumbs.push({id:card.dataset.key,loaded:false,source:img.getAttribute('src')})}}
+  result.textContent=JSON.stringify({variants:records,thumbnails:thumbs},null,2);
+  progress.textContent=`Tamamlandı: ${records.filter(r=>r.state==='loaded').length}/${records.length} GLB, ${thumbs.filter(t=>t.loaded).length}/${thumbs.length} küçük resim`;
+ }finally{button.disabled=false;document.querySelectorAll('.model-card,#lite,#quality').forEach(b=>b.disabled=false)}
+};
+</script></body></html>

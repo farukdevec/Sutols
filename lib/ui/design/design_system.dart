@@ -40,6 +40,7 @@ ThemeData _buildThemeData({
     useMaterial3: true,
     brightness: brightness,
     fontFamily: AppTypography.fontFamily,
+    fontFamilyFallback: const ['Inter Extended', 'Roboto Extended'],
     scaffoldBackgroundColor: appColors.surface,
     colorScheme: ColorScheme.fromSeed(
       brightness: brightness,
