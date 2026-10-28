@@ -18,6 +18,7 @@ import 'design/design_system.dart';
 import 'design/sutol_widgets.dart';
 import 'widgets/contact_social_widget.dart';
 import 'widgets/republic_day_banner.dart';
+import '../services/republic_day_campaign.dart';
 
 class SutolHomePage extends StatefulWidget {
   const SutolHomePage({super.key});
@@ -62,6 +63,7 @@ class _SutolHomePageState extends State<SutolHomePage> {
   bool _highlightLogin = false;
   Timer? _highlightTimer;
   Timer? _generationTimer;
+  Timer? _republicDayExpiryTimer;
   double _generationElapsedSeconds = 0.0;
   int _slideCount = 5;
   String _userTier = 'free';
@@ -76,6 +78,13 @@ class _SutolHomePageState extends State<SutolHomePage> {
   @override
   void initState() {
     super.initState();
+    final untilExpiry =
+        republicDayCampaignEnd.difference(DateTime.now().toUtc());
+    if (untilExpiry > Duration.zero) {
+      _republicDayExpiryTimer = Timer(untilExpiry, () {
+        if (mounted) setState(() {});
+      });
+    }
     _user = AuthService.instance.currentUser;
     _authSub = AuthService.instance.authStateChanges.listen((u) {
       if (!mounted) return;
@@ -120,6 +129,7 @@ class _SutolHomePageState extends State<SutolHomePage> {
 
   @override
   void dispose() {
+    _republicDayExpiryTimer?.cancel();
     _highlightTimer?.cancel();
     _generationTimer?.cancel();
     _authSub.cancel();
@@ -374,6 +384,7 @@ class _SutolHomePageState extends State<SutolHomePage> {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final republicDayActive = isRepublicDayCampaignActive(DateTime.now());
 
     return Scaffold(
       resizeToAvoidBottomInset: true,
@@ -385,21 +396,22 @@ class _SutolHomePageState extends State<SutolHomePage> {
             child: _AmbientGlowBackground(),
           ),
 
-          Positioned(
-            right: -100,
-            bottom: 20,
-            child: IgnorePointer(
-                child: ExcludeSemantics(
-                    child: Opacity(
-              opacity: 0.045,
-              child: CustomPaint(
-                  size: const Size(600, 400), painter: TurkishFlagPainter()),
-            ))),
-          ),
+          if (republicDayActive)
+            Positioned(
+              right: -100,
+              bottom: 20,
+              child: IgnorePointer(
+                  child: ExcludeSemantics(
+                      child: Opacity(
+                opacity: 0.045,
+                child: CustomPaint(
+                    size: const Size(600, 400), painter: TurkishFlagPainter()),
+              ))),
+            ),
           // Content
           Column(
             children: [
-              const RepublicDayBanner(),
+              if (republicDayActive) const RepublicDayBanner(),
               // Navbar
               LayoutBuilder(
                 builder: (context, constraints) {
