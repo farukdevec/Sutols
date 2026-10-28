@@ -211,7 +211,10 @@ class PresentationKeywordCatalog {
   static bool _isKnownLexicalCollision(String a, String b) {
     final shorter = a.length <= b.length ? a : b;
     final longer = a.length > b.length ? a : b;
-    return shorter == 'evre' && longer.startsWith('evren');
+    return (a.startsWith('evren') &&
+            (b == 'evre' || b.startsWith('evreler'))) ||
+        (b.startsWith('evren') && (a == 'evre' || a.startsWith('evreler'))) ||
+        (shorter == 'evre' && longer.startsWith('evren'));
   }
 
   static bool _isSignificantShortWordInflection(

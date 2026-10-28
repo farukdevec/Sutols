@@ -355,6 +355,7 @@ enum PresentationBackgroundKind {
   studioGamingEntertainment,
   studioSky,
   studioNightSky,
+  republicDay,
 }
 
 enum PresentationTransitionKind {
@@ -1610,6 +1611,26 @@ const List<PresentationBackgroundDefinition> sutolStudioBackgroundLibrary =
 
 const List<PresentationBackgroundDefinition> presentationBackgroundLibrary =
     <PresentationBackgroundDefinition>[
+  PresentationBackgroundDefinition(
+    kind: PresentationBackgroundKind.republicDay,
+    label: '29 Ekim • Türk Bayrağı',
+    category: 'Tarih ve Kültür',
+    tags: <String>[
+      '29 ekim',
+      'cumhuriyet',
+      'bayrak',
+      'türkiye',
+      'atatürk',
+      'republic',
+      'turkish flag'
+    ],
+    previewColors: <Color>[
+      Color(0xFF690917),
+      Color(0xFFE30A17),
+      Color(0xFFFFFFFF)
+    ],
+    icon: Icons.flag_rounded,
+  ),
   PresentationBackgroundDefinition(
     kind: PresentationBackgroundKind.plainWhite,
     label: 'Arka Plansız (Beyaz)',

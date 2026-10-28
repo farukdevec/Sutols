@@ -6758,7 +6758,7 @@ class _Html3DModelControlsState extends State<_Html3DModelControls> {
               crossAxisCount: columns,
               mainAxisSpacing: 10,
               crossAxisSpacing: 10,
-              mainAxisExtent: cellWidth + 28,
+              mainAxisExtent: cellWidth + 60,
             ),
             itemCount: 9,
             itemBuilder: (context, index) {
@@ -6897,7 +6897,7 @@ class _Html3DModelControlsState extends State<_Html3DModelControls> {
             crossAxisCount: columns,
             mainAxisSpacing: 10,
             crossAxisSpacing: 10,
-            mainAxisExtent: cellWidth + 28,
+            mainAxisExtent: cellWidth + 60,
           ),
           itemCount: filtered.length,
           itemBuilder: (context, index) {
@@ -8352,58 +8352,6 @@ class _Model3DLibraryCardState extends State<_Model3DLibraryCard> {
                       fit: StackFit.expand,
                       children: <Widget>[
                         _thumbnail(context),
-                        if (widget.onToggleFavorite != null)
-                          Positioned(
-                            right: 0,
-                            bottom: 0,
-                            child: IconButton.filledTonal(
-                              tooltip: widget.isFavorite
-                                  ? tr('Favoriden çıkar', 'Remove favorite')
-                                  : tr('Favorilere ekle', 'Add favorite'),
-                              onPressed: widget.onToggleFavorite,
-                              icon: Icon(
-                                  widget.isFavorite
-                                      ? Icons.star_rounded
-                                      : Icons.star_outline_rounded,
-                                  size: 20),
-                            ),
-                          ),
-                        if (widget.onDismissRecommendation != null)
-                          Positioned(
-                            top: 0,
-                            left: 0,
-                            child: IconButton.filledTonal(
-                              key: ValueKey(
-                                  'dismiss-model-suggestion-${widget.model.id}'),
-                              tooltip: tr('Bu slayt için uygun değil',
-                                  'Not suitable for this slide'),
-                              onPressed: widget.onDismissRecommendation,
-                              icon: const Icon(Icons.thumb_down_off_alt_rounded,
-                                  size: 20),
-                            ),
-                          ),
-                        if (widget.recommendationReason != null)
-                          Positioned(
-                            bottom: 4,
-                            left: 4,
-                            child: Tooltip(
-                              message: widget.recommendationReason!,
-                              child: const Icon(Icons.info_outline_rounded,
-                                  size: 20),
-                            ),
-                          ),
-                        if (widget.onShowSimilar != null)
-                          Positioned(
-                            top: 0,
-                            right: 0,
-                            child: IconButton.filledTonal(
-                              tooltip: tr(
-                                  'Benzerlerini göster', 'Show similar models'),
-                              onPressed: widget.onShowSimilar,
-                              icon: const Icon(Icons.manage_search_rounded,
-                                  size: 20),
-                            ),
-                          ),
                         if (widget.isSelected)
                           Positioned(
                             top: 6,
@@ -8443,7 +8391,7 @@ class _Model3DLibraryCardState extends State<_Model3DLibraryCard> {
                   ),
                   const SizedBox(height: 6),
                   Tooltip(
-                    message: widget.model.label,
+                    message: widget.recommendationReason ?? widget.model.label,
                     waitDuration: const Duration(milliseconds: 500),
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 6),
@@ -8460,6 +8408,65 @@ class _Model3DLibraryCardState extends State<_Model3DLibraryCard> {
                             ),
                       ),
                     ),
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      if (widget.onDismissRecommendation != null)
+                        IconButton(
+                            key: ValueKey(
+                                'dismiss-model-suggestion-${widget.model.id}'),
+                            tooltip: tr('Bu slayt için uygun değil',
+                                'Not suitable for this slide'),
+                            onPressed: widget.onDismissRecommendation,
+                            icon: const Icon(Icons.thumb_down_off_alt_rounded,
+                                size: 16),
+                            style: IconButton.styleFrom(
+                              fixedSize: const Size(32, 32),
+                              minimumSize: const Size(32, 32),
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              visualDensity: VisualDensity.compact,
+                            ),
+                            constraints: const BoxConstraints.tightFor(
+                                width: 32, height: 32),
+                            padding: EdgeInsets.zero),
+                      if (widget.onShowSimilar != null)
+                        IconButton(
+                            tooltip: tr(
+                                'Benzerlerini göster', 'Show similar models'),
+                            onPressed: widget.onShowSimilar,
+                            icon: const Icon(Icons.manage_search_rounded,
+                                size: 17),
+                            style: IconButton.styleFrom(
+                              fixedSize: const Size(32, 32),
+                              minimumSize: const Size(32, 32),
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              visualDensity: VisualDensity.compact,
+                            ),
+                            constraints: const BoxConstraints.tightFor(
+                                width: 32, height: 32),
+                            padding: EdgeInsets.zero),
+                      if (widget.onToggleFavorite != null)
+                        IconButton(
+                            tooltip: widget.isFavorite
+                                ? tr('Favoriden çıkar', 'Remove favorite')
+                                : tr('Favorilere ekle', 'Add favorite'),
+                            onPressed: widget.onToggleFavorite,
+                            icon: Icon(
+                                widget.isFavorite
+                                    ? Icons.star_rounded
+                                    : Icons.star_outline_rounded,
+                                size: 17),
+                            style: IconButton.styleFrom(
+                              fixedSize: const Size(32, 32),
+                              minimumSize: const Size(32, 32),
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              visualDensity: VisualDensity.compact,
+                            ),
+                            constraints: const BoxConstraints.tightFor(
+                                width: 32, height: 32),
+                            padding: EdgeInsets.zero),
+                    ],
                   ),
                   const SizedBox(height: 4),
                 ],
@@ -8499,7 +8506,6 @@ class _HtmlTemplateControls extends StatelessWidget {
               ),
         ),
         const SizedBox(height: 16),
-
         Text(tr('SEÇİLİ SLAYTIN DÜZENİ', 'CURRENT SLIDE LAYOUT'),
             style: Theme.of(context).textTheme.labelSmall?.copyWith(
                 color: context._htmlAccent, fontWeight: FontWeight.w800)),
@@ -8550,33 +8556,6 @@ class _HtmlTemplateControls extends StatelessWidget {
                 )),
         ]),
         const SizedBox(height: 20),
-        // === TEMPLATES COLLECTION (templates/{templateId}) ===
-        Padding(
-          padding: const EdgeInsets.only(bottom: 8),
-          child: Text(
-            'KOLEKSİYON ŞABLONLARI',
-            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: context._htmlAccent,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 1.1,
-                ),
-          ),
-        ),
-        for (final sutolTemplate in allSutolTemplateCatalog) ...<Widget>[
-          _SutolCollectionTemplateCard(
-            template: sutolTemplate,
-            isSelected: controller.pages.isNotEmpty &&
-                controller.pages.every(
-                  (page) => page.templateId == sutolTemplate.id,
-                ),
-            onTap: () {
-              controller.applySutolTemplate(sutolTemplate);
-            },
-          ),
-          const SizedBox(height: 10),
-        ],
-
-        const SizedBox(height: 16),
         Padding(
           padding: const EdgeInsets.only(bottom: 8),
           child: Text(
@@ -8603,130 +8582,6 @@ class _HtmlTemplateControls extends StatelessWidget {
           const SizedBox(height: 10),
         ],
       ],
-    );
-  }
-}
-
-class _SutolCollectionTemplateCard extends StatelessWidget {
-  const _SutolCollectionTemplateCard({
-    required this.template,
-    required this.isSelected,
-    required this.onTap,
-  });
-
-  final SutolTemplateModel template;
-  final bool isSelected;
-  final VoidCallback onTap;
-
-  Color _parseHexColor(String hex) {
-    final clean = hex.replaceAll('#', '');
-    final val = int.tryParse(clean, radix: 16) ?? 0xFF000000;
-    return Color(0xFF000000 | val);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Material(
-      color: isSelected
-          ? (isDark
-              ? context.colors.primary.withValues(alpha: 0.18)
-              : const Color(0xFFF0F6FF))
-          : context.sutolColors.surface,
-      borderRadius: BorderRadius.circular(16),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        child: Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: isSelected
-                  ? context._htmlAccent
-                  : context.sutolColors.outline,
-              width: isSelected ? 1.6 : 1,
-            ),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Row(
-                children: <Widget>[
-                  Expanded(
-                    child: Text(
-                      template.name,
-                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                            color: context._htmlInk,
-                            fontWeight: FontWeight.w900,
-                          ),
-                    ),
-                  ),
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                    decoration: BoxDecoration(
-                      color: context._htmlAccent.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      template.category.toUpperCase(),
-                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                            color: context._htmlAccent,
-                            fontWeight: FontWeight.w800,
-                            fontSize: 10,
-                          ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 6),
-              Row(
-                children: <Widget>[
-                  for (final hex in template.colorPalette) ...<Widget>[
-                    Container(
-                      width: 14,
-                      height: 14,
-                      margin: const EdgeInsets.only(right: 4),
-                      decoration: BoxDecoration(
-                        color: _parseHexColor(hex),
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: Colors.black12,
-                          width: 0.5,
-                        ),
-                      ),
-                    ),
-                  ],
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      '${template.fontPair['heading']} + ${template.fontPair['body']}',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: context._htmlMuted,
-                            fontWeight: FontWeight.w700,
-                            fontSize: 11,
-                          ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 6),
-              Text(
-                template.description,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: context._htmlMuted,
-                      fontWeight: FontWeight.w500,
-                    ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
-          ),
-        ),
-      ),
     );
   }
 }

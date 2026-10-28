@@ -17,6 +17,7 @@ import 'widgets/looping_loading_video.dart';
 import 'design/design_system.dart';
 import 'design/sutol_widgets.dart';
 import 'widgets/contact_social_widget.dart';
+import 'widgets/republic_day_banner.dart';
 
 class SutolHomePage extends StatefulWidget {
   const SutolHomePage({super.key});
@@ -384,9 +385,21 @@ class _SutolHomePageState extends State<SutolHomePage> {
             child: _AmbientGlowBackground(),
           ),
 
+          Positioned(
+            right: -100,
+            bottom: 20,
+            child: IgnorePointer(
+                child: ExcludeSemantics(
+                    child: Opacity(
+              opacity: 0.045,
+              child: CustomPaint(
+                  size: const Size(600, 400), painter: TurkishFlagPainter()),
+            ))),
+          ),
           // Content
           Column(
             children: [
+              const RepublicDayBanner(),
               // Navbar
               LayoutBuilder(
                 builder: (context, constraints) {
